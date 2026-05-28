@@ -1,0 +1,933 @@
+"use client";
+
+import { useState, useTransition, useMemo, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { OwnerLead } from "@/lib/types";
+import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
+import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import Link from "next/link";
+import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
+import { ConvertToTenancyDialog } from "@/components/convert-to-tenancy-dialog";
+import { CommissionConfirmDialog } from "@/components/commission-confirm-dialog";
+import { ConfirmListedDialog } from "@/components/confirm-listed-dialog";
+import { toast } from "sonner";
+import { FilterSelect } from "@/components/filter-select";
+import { AvailabilityTimeline } from "@/components/availability-timeline";
+
+type Stage = OwnerLead["stage"];
+
+interface ColMeta {
+  stage: Stage;
+  label: string;
+  hint: string;
+  ink: string;
+  soft: string;
+  dot: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}
+
+// Visible columns — terminal stages (own_stay, archived) hidden by default.
+// Imported leads are managed in the Outreach tab — Pipeline shows responded+ only.
+const COLUMNS: ColMeta[] = [
+  { stage: "listed",   label: "Listed",     hint: "Build the tenant pack. Find the right tenant and close the deal.", ink: "#004C99", soft: "rgba(0,113,227,0.18)", dot: "var(--kk-blue)", Icon: Megaphone },
+  { stage: "matched",  label: "Rented",     hint: "Well done, proud of you!",                                         ink: "#003D80", soft: "rgba(0,113,227,0.30)", dot: "#004C99", Icon: Check     },
+];
+
+// Terminal stages — hidden by default
+const TERMINAL_COLUMNS: ColMeta[] = [
+  { stage: "own_stay",   label: "Own stay",      hint: "Declined. Keeping it for themselves.",      ink: "var(--kk-ink-mute)",  soft: "var(--kk-surface-2)", dot: "#9E9E9E", Icon: XCircle },
+  { stage: "archived",   label: "Archived",      hint: "Out of pipeline. No further action.",       ink: "var(--kk-ink-faint)", soft: "var(--kk-surface-2)", dot: "#6E6E73", Icon: Archive },
+];
+
+interface Props {
+  leads: OwnerLead[];
+  openLeadId?: string;
+  highlightId?: string;
+  tenantsByLeadId?: Record<string, { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }>;
+  rankedLeadIds?: Set<string>;
+}
+
+export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set() }: Props) {
+  const router = useRouter();
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeLead, setActiveLead] = useState<OwnerLead | null>(null);
+  const [editingLead, setEditingLead] = useState<OwnerLead | null>(null);
+  const [matchingLead, setMatchingLead] = useState<OwnerLead | null>(null);
+  const [commissionLead, setCommissionLead] = useState<{ lead: OwnerLead; tenancyId: string } | null>(null);
+
+  // Filter state
+  const [propertyFilter, setPropertyFilter] = useState<string>("");
+  const [minRent, setMinRent] = useState<string>("");
+  const [monthFilter, setMonthFilter] = useState<string>("");
+  const [showTerminal, setShowTerminal] = useState(false);
+
+  const [local, setLocal] = useState<OwnerLead[]>(leads);
+  useEffect(() => { setLocal(leads); }, [leads]);
+
+  // Auto-refresh every 15s while any lead has an intake sent but not completed
+  useEffect(() => {
+    const hasPending = local.some((l) => l.intake_sent_at && !l.intake_completed_at);
+    if (!hasPending) return;
+    const id = setInterval(() => router.refresh(), 15_000);
+    return () => clearInterval(id);
+  }, [local, router]);
+
+  // Auto-open a specific lead when navigated from another page (only once)
+  const hasAutoOpened = useRef(false);
+  useEffect(() => {
+    if (openLeadId && !hasAutoOpened.current) {
+      const lead = leads.find((l) => l.id === openLeadId);
+      if (lead) {
+        setEditingLead(lead);
+        hasAutoOpened.current = true;
+        router.replace("/leads", { scroll: false });
+      }
+    }
+  }, [openLeadId, leads, router]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const timer = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
+      if (!el) return;
+
+      // Phase 1: scroll page to board
+      if (boardRef.current) {
+        boardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      // Phase 2: after page scroll settles, scroll column with correct positions
+      setTimeout(() => {
+        const el2 = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
+        if (!el2) return;
+        const colBody = el2.closest<HTMLElement>(".kk-board-col-body");
+        if (colBody) {
+          const cardTop = el2.getBoundingClientRect().top - colBody.getBoundingClientRect().top + colBody.scrollTop;
+          colBody.scrollTo({ top: Math.max(0, cardTop - 12), behavior: "smooth" });
+        }
+        // Phase 3: flash after column scroll settles
+        setTimeout(() => {
+          const el3 = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
+          if (!el3) return;
+          el3.style.removeProperty("box-shadow");
+          el3.classList.add("kk-flash-green");
+          setTimeout(() => el3.classList.remove("kk-flash-green"), 2100);
+        }, 500);
+      }, 700);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightId]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  // Unique property names + counts for the dropdown
+  const propertyOptions = useMemo(() => {
+    const counts: Record<string, number> = {};
+    local.forEach((l) => {
+      if (!l.property_name || ["own_stay", "archived", "imported"].includes(l.stage)) return;
+      counts[l.property_name] = (counts[l.property_name] ?? 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [local]);
+
+  const filtered = useMemo(() => {
+    return local.filter((l) => {
+      if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
+      if (minRent && (l.expected_rent ?? 0) < parseFloat(minRent)) return false;
+      if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
+      if (monthFilter && !["listed", "wants_rent", "replied"].includes(l.stage)) return false;
+      return true;
+    });
+  }, [local, propertyFilter, minRent, monthFilter]);
+
+  const byStage = useMemo(() => {
+    const out: Record<Stage, OwnerLead[]> = {
+      imported: [], replied: [], wants_rent: [], listed: [], matched: [], own_stay: [], archived: [],
+    };
+    filtered.forEach((l) => {
+      // Imported leads belong in the Outreach tab, not the Pipeline board
+      if (l.stage === "imported") return;
+      // wants_rent and replied both map to listed (owner responded → auto-listed)
+      const stage = (l.stage === "wants_rent" || l.stage === "replied") ? "listed" : l.stage;
+      // Hide matched leads whose tenancy commission has been collected (active lifecycle)
+      if (stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage === "active") return;
+      out[stage].push(l);
+    });
+    return out;
+  }, [filtered, tenantsByLeadId]);
+
+  async function handleDragEnd(e: DragEndEvent) {
+    setDraggingId(null);
+    if (!e.over) return;
+    const id = String(e.active.id);
+    const target = String(e.over.id) as Stage;
+    const lead = local.find((x) => x.id === id);
+    if (!lead || lead.stage === target) return;
+
+    // Gate on Listed — require property details + availability date before allowing move
+    if (target === "listed") {
+      const hasRequired = lead.property_name && lead.expected_rent && lead.available_from && lead.bedrooms != null && lead.bathrooms != null;
+      if (!hasRequired) {
+        setEditingLead(lead);
+        toast.error("Fill in property name, rent, availability date, bedrooms and bathrooms before marking as Listed.");
+        return;
+      }
+    }
+
+    // Gate on Matched — open tenancy creation dialog instead of moving directly
+    if (target === "matched") {
+      setMatchingLead(lead);
+      return;
+    }
+
+    // Optimistic — move now, no confirm
+    const optimistic = { ...lead, stage: target };
+    setLocal((prev) => prev.map((l) => (l.id === id ? optimistic : l)));
+
+    const res = await setOwnerLeadStage(id, target);
+    if (res.ok) {
+      router.refresh();
+    } else {
+      setLocal(leads);
+      toast.error("Could not move card.");
+    }
+  }
+
+  // Per-lead commission: override > formula (renewal 50%, new tenant 100%)
+  function leadCommission(l: OwnerLead): number {
+    if (l.commission_override_rm != null) return l.commission_override_rm;
+    const rent = l.expected_rent ?? 0;
+    return l.is_renewal ? rent * 0.5 : rent;
+  }
+
+  return (
+    <>
+      {/* Sentinel used by the highlight effect to scroll the page to the board */}
+      <div ref={boardRef} style={{ scrollMarginTop: 80 }} />
+
+      {/* Availability bar chart — respects property filter */}
+      <div className="kk-section p-5 mb-5">
+        <AvailabilityTimeline
+          leads={local.filter((l) => {
+            if (propertyFilter && l.property_name !== propertyFilter) return false;
+            return l.stage === "listed" || l.stage === "wants_rent" || l.stage === "replied";
+          })}
+          commissionPct={100}
+          selectedMonth={monthFilter}
+          onMonthClick={(key) => setMonthFilter((prev) => (prev === key ? "" : key))}
+        />
+      </div>
+
+      {/* Filter row */}
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <FilterSelect
+          value={propertyFilter}
+          onChange={setPropertyFilter}
+          options={[{ value: "", label: "All properties" }, ...propertyOptions.map(([p, count]) => ({ value: p, label: `${p} (${count})` }))]}
+          minWidth={180}
+        />
+        <input
+          type="number"
+          placeholder="Min rent (RM)"
+          value={minRent}
+          onChange={(e) => setMinRent(e.target.value)}
+          className="text-[13px] px-4 py-1.5 rounded-full font-medium"
+          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 148 }}
+        />
+        {(propertyFilter || minRent) && (
+          <button
+            onClick={() => { setPropertyFilter(""); setMinRent(""); }}
+            className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
+            style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
+          >
+            <XIcon className="w-3 h-3" /> Clear
+          </button>
+        )}
+        <button
+          onClick={() => setShowTerminal((v) => !v)}
+          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
+          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
+          title="Show or hide uninterested leads (Own stay, Archived)"
+        >
+          {showTerminal ? "Hide uninterested lead" : "Show uninterested lead"}
+          <span className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-faint)" }}>
+            {byStage.own_stay.length + byStage.archived.length}
+          </span>
+        </button>
+        <span className="ml-auto text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+          {filtered.length} of {local.length} leads
+        </span>
+      </div>
+
+      <DndContext
+        id="kakisewa-owner-pipeline"
+        sensors={sensors}
+        onDragStart={(e) => {
+          const id = String(e.active.id);
+          setDraggingId(id);
+          setActiveLead(local.find((l) => l.id === id) ?? null);
+        }}
+        onDragEnd={(e) => { setActiveLead(null); handleDragEnd(e); }}
+        onDragCancel={() => { setDraggingId(null); setActiveLead(null); }}
+      >
+        <div className="kk-board-shell -mx-3 lg:-mx-5">
+          <div className="kk-board-row px-3 lg:px-5">
+          {(() => {
+            // Base columns always fill the viewport evenly; terminal columns stay 340px fixed
+            const visibleCols = [...COLUMNS, ...(showTerminal ? TERMINAL_COLUMNS : [])];
+            const isTerminalCol = (col: ColMeta) => TERMINAL_COLUMNS.some((tc) => tc.stage === col.stage);
+
+            return visibleCols.map((col) => {
+              // Responded column is 2× wider — it's the focus of daily work.
+              // Terminal cols use fixed width so the board scrolls when shown.
+              const colFlex: React.CSSProperties = showTerminal
+                ? { width: "calc((min(100vw, 1440px) - 64px) / 3)", flexShrink: 0 }
+                : isTerminalCol(col) ? {}
+                : col.stage === "listed" ? { flex: 2, minWidth: 380 }
+                : { flex: 1, minWidth: 280 };
+              const cards = byStage[col.stage];
+              const columnContent = cards.length === 0 ? (
+                <EmptyDrop col={col} />
+              ) : (
+                cards.map((l) => (
+                  <Card
+                    key={l.id}
+                    l={l}
+                    col={col}
+                    isDragging={draggingId === l.id}
+                    onEdit={() => setEditingLead(l)}
+                    tenantInfo={tenantsByLeadId[l.id]}
+                    hasOwnerRanking={rankedLeadIds.has(l.id)}
+                    onCommission={(tenancyId) => setCommissionLead({ lead: l, tenancyId })}
+                  />
+                ))
+              );
+
+              if (col.stage === "listed") {
+                return (
+                  <div key={col.stage} style={{ position: "relative", minHeight: 0, display: "flex", flexDirection: "column", ...colFlex }}>
+                    {/* Messenger-style chat bubble floating above the column */}
+                    {!monthFilter && (
+                      <div style={{ position: "absolute", top: -50, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
+                        <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,113,227,0.92)", borderRadius: 22, padding: "10px 20px", boxShadow: "0 4px 14px rgba(0,113,227,0.35), 0 1px 4px rgba(0,0,0,0.10)" }}>
+                          <Banknote className="w-4 h-4" style={{ color: "#fff" }} />
+                          <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>Make new money here!</span>
+                          <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid rgba(0,113,227,0.92)" }} />
+                        </div>
+                      </div>
+                    )}
+                    <Column col={col} count={cards.length} extraStyle={{ flex: 1, width: "100%" }}>
+                      {columnContent}
+                    </Column>
+                  </div>
+                );
+              }
+
+              return (
+                <Column key={col.stage} col={col} count={cards.length} extraStyle={colFlex}>
+                  {columnContent}
+                </Column>
+              );
+            });
+          })()}
+          </div>
+        </div>
+        <DragOverlay dropAnimation={{ duration: 150, easing: "ease" }}>
+          {activeLead ? (
+            <CardPreview l={activeLead} />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      <EditOwnerLeadDialog
+        lead={editingLead}
+        open={!!editingLead}
+        onOpenChange={(o) => !o && setEditingLead(null)}
+        onSaved={(updates) => {
+          if (!editingLead) return;
+          setLocal((prev) =>
+            prev.map((l) => (l.id === editingLead.id ? { ...l, ...updates } : l))
+          );
+        }}
+        tenantInfo={tenantsByLeadId[editingLead?.id ?? ""]}
+      />
+
+      <ConvertToTenancyDialog
+        lead={matchingLead}
+        open={!!matchingLead}
+        onOpenChange={(o) => !o && setMatchingLead(null)}
+        onConverted={() => {
+          if (!matchingLead) return;
+          setLocal((prev) =>
+            prev.map((l) => (l.id === matchingLead.id ? { ...l, stage: "matched" } : l))
+          );
+          setMatchingLead(null);
+          router.refresh();
+        }}
+      />
+
+      <CommissionConfirmDialog
+        open={!!commissionLead}
+        onOpenChange={(o) => !o && setCommissionLead(null)}
+        ownerName={commissionLead?.lead.owner_name ?? ""}
+        propertyName={commissionLead?.lead.property_name ?? null}
+        commissionRm={commissionLead?.lead.commission_override_rm ?? (commissionLead?.lead.expected_rent ?? 0) * (commissionLead?.lead.is_renewal ? 0.5 : 1)}
+        onConfirm={async () => {
+          if (!commissionLead) return;
+          const res = await markCommissionCollected(commissionLead.tenancyId);
+          if (res.ok) {
+            toast.success("Commission marked as collected!");
+            router.refresh();
+          } else {
+            toast.error(res.message ?? "Something went wrong.");
+          }
+        }}
+      />
+
+    </>
+  );
+}
+
+function colMeta(s: Stage): ColMeta { return COLUMNS.find((c) => c.stage === s)!; }
+
+function formatMonthKey(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${months[m - 1]} '${String(y).slice(2)}`;
+}
+
+function formatAvailDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[m - 1]} '${String(y).slice(2)}`;
+}
+
+function Column({ col, count, children, extraStyle, headerExtra }: { col: ColMeta; count: number; children: React.ReactNode; extraStyle?: React.CSSProperties; headerExtra?: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.stage });
+  const Icon = col.Icon;
+  return (
+    <div
+      ref={setNodeRef}
+      id={`kk-col-${col.stage}`}
+      className="kk-board-col"
+      style={{
+        background: isOver
+          ? col.soft
+          : col.stage === "listed"
+            ? "radial-gradient(ellipse 110% 70% at 50% 25%, rgba(0,113,227,0.30) 0%, rgba(0,113,227,0.14) 40%, var(--kk-surface) 68%)"
+            : "var(--kk-surface)",
+        outline: isOver
+          ? `2px solid ${col.ink}`
+          : col.stage === "listed"
+            ? "1px solid rgba(0,113,227,0.38)"
+            : "1px solid transparent",
+        outlineOffset: "-1px",
+        boxShadow: isOver
+          ? undefined
+          : col.stage === "listed"
+            ? "0 0 0 1px rgba(0,113,227,0.32), 0 0 14px 5px rgba(0,113,227,0.26)"
+            : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+        ...extraStyle,
+      }}
+    >
+      <div className="kk-board-col-header" style={{ borderBottomColor: col.soft, ...(col.stage === "listed" ? { background: "rgb(235,244,255)" } : {}) }}>
+        <div className="flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: col.soft, color: col.ink }}>
+            <Icon className="w-3 h-3" />
+          </span>
+          <span className="kk-overline whitespace-nowrap" style={{ color: "var(--kk-ink-soft)" }}>{col.label}</span>
+          <span className="ml-1 text-[11px] font-semibold tabular-nums px-1.5 rounded-full"
+            style={{ color: "var(--kk-ink-mute)", background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            {count}
+          </span>
+          {headerExtra && <div className="ml-auto">{headerExtra}</div>}
+        </div>
+        <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
+      </div>
+      <div className="kk-board-col-body">{children}</div>
+    </div>
+  );
+}
+
+function EmptyDrop({ col }: { col: ColMeta }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl py-10 px-4 text-center gap-2"
+      style={{ border: "1.5px dashed var(--kk-line-strong)" }}>
+      <span className="opacity-40" style={{ color: "var(--kk-ink-faint)" }}><col.Icon className="w-4 h-4" /></span>
+      <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+        Drag a card here to mark as {col.label.toLowerCase()}
+      </span>
+    </div>
+  );
+}
+
+// Pure visual snapshot used by DragOverlay — no hooks, no buttons
+function CardPreview({ l }: { l: OwnerLead }) {
+  return (
+    <div
+      className="kk-card p-4 flex flex-col gap-3"
+      style={{ width: 300, opacity: 0.96, transform: "rotate(2deg)", boxShadow: "0 16px 40px rgba(0,0,0,0.22)", cursor: "grabbing" }}
+    >
+      <p className="kk-card-title break-words" style={{ color: "var(--kk-ink)" }}>{l.owner_name}</p>
+      {(l.property_name || l.address) && (
+        <p className="kk-card-sub break-words" style={{ color: "var(--kk-ink-mute)" }}>
+          {l.property_name ?? l.address}{l.unit ? ` · Unit ${l.unit}` : ""}
+        </p>
+      )}
+      {(l.expected_rent != null || l.bedrooms != null || l.bathrooms != null) && (
+        <div className="flex flex-wrap gap-1.5 text-[11px]">
+          {l.expected_rent != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
+          {l.bedrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bedrooms} bed</span>}
+          {l.bathrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bathrooms} bath</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+  return (
+    <>
+      <p className="kk-card-title break-words" style={{ color: "var(--kk-ink)" }}>{l.owner_name}</p>
+
+      {(l.property_name || l.address) && (
+        <p className="kk-card-sub break-words" style={{ color: "var(--kk-ink-mute)" }}>
+          {l.property_name ?? l.address}{l.unit ? ` · Unit ${l.unit}` : ""}
+        </p>
+      )}
+
+      {(l.expected_rent != null || l.bedrooms != null || l.bathrooms != null) && (
+        <div className="flex flex-wrap gap-1.5 text-[11px]">
+          {l.expected_rent != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
+          {l.bedrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bedrooms} bed</span>}
+          {l.bathrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bathrooms} bath</span>}
+        </div>
+      )}
+
+      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} />
+    </>
+  );
+}
+
+function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+  const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
+
+  const cardStyle: React.CSSProperties = {
+    opacity: isDragging ? 0.2 : 1,
+    ...(col.stage === "listed" && !isDragging ? { boxShadow: "0 4px 14px rgba(0,113,227,0.18), 0 1px 4px rgba(0,0,0,0.06)" } : {}),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-card-id={l.id}
+      {...attributes}
+      {...listeners}
+      style={cardStyle}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-4 flex flex-col gap-3 cursor-grab active:cursor-grabbing touch-none select-none`}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("[data-card-action]")) return;
+        if (target.closest("[role='dialog']")) return;
+        if (target.closest("[data-radix-popper-content-wrapper]")) return;
+        onEdit();
+      }}
+    >
+      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} />
+    </div>
+  );
+}
+
+function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; stage: Stage; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+
+  function ping(template: "outreach_initial" | "outreach_followup" | "collect_details", advanceTo?: Stage) {
+    startTransition(async () => {
+      const res = await sendOwnerOutreach(l.id, template);
+      if (!res.ok) { toast.error(res.message); return; }
+      window.open(res.url, "_blank", "noopener,noreferrer");
+      if (advanceTo) await setOwnerLeadStage(l.id, advanceTo);
+      router.refresh();
+      toast.success("Message ready in WhatsApp");
+    });
+  }
+
+  if (stage === "imported") {
+    const count = l.outreach_count ?? 0;
+
+    async function moveToListed() {
+      await setOwnerLeadStage(l.id, "listed");
+      router.refresh();
+      toast.success("Moved to Listed!");
+    }
+
+    function sendIntakeForm() {
+      startTransition(async () => {
+        const res = await generateOwnerIntakeLink(l.id);
+        if (!res.ok) { toast.error(res.message); return; }
+        window.open(res.waUrl, "_blank", "noopener,noreferrer");
+        router.refresh();
+        toast.success("WhatsApp ready to send");
+      });
+    }
+
+    function handleArchive() {
+      startTransition(async () => {
+        await setOwnerLeadStage(l.id, "archived");
+        router.refresh();
+        toast.success("Archived.");
+      });
+    }
+
+    if (l.intake_completed_at) {
+      return (
+        <>
+          <div className="space-y-2">
+            <span className="text-[11px] flex items-center gap-1" style={{ color: "var(--kk-ink-mute)" }}>
+              <Check className="w-3 h-3" style={{ color: "var(--kk-green)" }} /> Form completed. Review details.
+            </span>
+            <button
+              type="button" data-card-action
+              onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+              disabled={pending}
+              className="kk-card-cta"
+              style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.30)", color: "#1F8B4C" }}
+            >
+              <span className="flex items-start gap-1.5 min-w-0 flex-1">
+                <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span>Confirm details</span>
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            </button>
+          </div>
+          <ConfirmListedDialog
+            open={confirming}
+            onOpenChange={setConfirming}
+            ownerName={l.owner_name}
+            propertyName={l.property_name ?? null}
+            unit={l.unit ?? null}
+            onConfirm={moveToListed}
+          />
+        </>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {count > 0 && <OutreachCountBadge count={count} />}
+        <button
+          type="button" data-card-action
+          onClick={(e) => { e.stopPropagation(); sendIntakeForm(); }}
+          disabled={pending}
+          className="kk-card-cta"
+        >
+          <span className="flex items-start gap-1.5 min-w-0 flex-1">
+            {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+            <span>Send property form</span>
+          </span>
+          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+        </button>
+        {count >= 2 && (
+          <button
+            type="button" data-card-action
+            onClick={(e) => { e.stopPropagation(); handleArchive(); }}
+            disabled={pending}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center transition-opacity hover:opacity-70"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
+          >
+            <Archive className="w-3 h-3" /> Archive — no response
+          </button>
+        )}
+      </div>
+    );
+  }
+  if (stage === "listed") {
+    return (
+      <div className="space-y-2">
+        <Link
+          href={`/matching/${l.id}`}
+          data-card-action
+          onClick={(e) => e.stopPropagation()}
+          className="kk-card-cta flex items-center justify-between w-full"
+          style={hasOwnerRanking ? { background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.30)", color: "#1F8B4C" } : {}}
+        >
+          <span className="flex items-start gap-1.5 min-w-0 flex-1">
+            <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>{hasOwnerRanking ? "Check owner ranking" : "Build tenant pack"}</span>
+          </span>
+          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+        </Link>
+      </div>
+    );
+  }
+  if (stage === "matched" && tenantInfo) {
+    return (
+      <button
+        type="button"
+        data-card-action
+        onClick={(e) => { e.stopPropagation(); onCommission(tenantInfo.tenancy_id); }}
+        className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
+      >
+        <span className="flex items-start gap-1.5 min-w-0 flex-1">
+          <Banknote className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <span>Moved in</span>
+        </span>
+        <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+      </button>
+    );
+  }
+  return (
+    <span className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-faint)" }}>
+      <Archive className="w-3.5 h-3.5" />
+      No action
+    </span>
+  );
+}
+
+// ─── Outreach count badge ──────────────────────────────────────────────────────
+
+const COUNT_STYLES: Record<number, { bg: string; color: string; label: string }> = {
+  1: { bg: "#FEF3C7", color: "#92400E", label: "Sent" },
+  2: { bg: "#FFEDD5", color: "#9A3412", label: "Sent twice" },
+};
+const COUNT_MANY = { bg: "#FEE2E2", color: "#991B1B", label: "Sent thrice or more" };
+
+function outreachStyle(count: number) {
+  return COUNT_STYLES[count] ?? COUNT_MANY;
+}
+
+function OutreachCountBadge({ count }: { count: number }) {
+  const s = outreachStyle(count);
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
+      style={{ background: s.bg, color: s.color }}
+    >
+      {s.label}
+    </span>
+  );
+}
+
+// ─── Bulk send dialog — compact table with daily batching ─────────────────────
+
+function BulkSendDialog({ leads, onClose }: { leads: OwnerLead[]; onClose: () => void }) {
+  const [batchSize, setBatchSize] = useState<50 | 100>(50);
+  const [sending, setSending] = useState<string | null>(null);
+  const [justSent, setJustSent] = useState<Set<string>>(new Set());
+  const router = useRouter();
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, [onClose]);
+
+  // All contactable imported leads in import order (oldest first)
+  const pool = [...leads]
+    .filter((l) => l.stage === "imported" && !l.intake_completed_at)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  // Split: today's batch = first N (unsent first within the batch for better UX)
+  const rawBatch = pool.slice(0, batchSize);
+  const futureBatch = pool.slice(batchSize, batchSize * 2);
+  const futureRemaining = pool.slice(batchSize * 2);
+
+  // Sort today's batch: unsent first, then sent — stable within each group
+  const todaysBatch = [
+    ...rawBatch.filter((l) => (l.outreach_count ?? 0) === 0 && !justSent.has(l.id)),
+    ...rawBatch.filter((l) => (l.outreach_count ?? 0) > 0 || justSent.has(l.id)),
+  ];
+
+  const todaysSentCount = rawBatch.filter((l) => (l.outreach_count ?? 0) > 0 || justSent.has(l.id)).length;
+  const todaysUnsent = todaysBatch.filter((l) => (l.outreach_count ?? 0) === 0 && !justSent.has(l.id));
+  const batchDone = todaysUnsent.length === 0 && rawBatch.length > 0;
+  const totalContacted = pool.filter((l) => (l.outreach_count ?? 0) > 0).length;
+
+  async function sendLead(id: string) {
+    if (sending) return;
+    setSending(id);
+    try {
+      const res = await generateOwnerIntakeLink(id);
+      if (!res.ok) { toast.error(res.message); return; }
+      window.open(res.waUrl, "_blank", "noopener,noreferrer");
+      setJustSent((prev) => new Set([...prev, id]));
+      router.refresh();
+    } finally {
+      setSending(null);
+    }
+  }
+
+  function sendNext() {
+    if (todaysUnsent[0]) sendLead(todaysUnsent[0].id);
+  }
+
+  const pct = rawBatch.length > 0 ? (todaysSentCount / rawBatch.length) * 100 : 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.50)" }} />
+      <div
+        className="relative z-10 w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl flex flex-col"
+        style={{ background: "var(--kk-surface)", maxHeight: "88dvh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── Header ── */}
+        <div className="px-5 py-4 border-b flex items-center gap-3 shrink-0" style={{ borderColor: "var(--kk-line)" }}>
+          <div className="flex-1 min-w-0">
+            <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Batch outreach</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+              {pool.length} leads · {totalContacted} contacted total
+            </p>
+          </div>
+          {/* Batch size toggle */}
+          <div className="flex items-center rounded-full p-0.5 shrink-0" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+            {([50, 100] as const).map((n) => (
+              <button
+                key={n}
+                onClick={() => setBatchSize(n)}
+                className="px-3 py-1 rounded-full text-[11px] font-semibold transition-all"
+                style={batchSize === n ? { background: "var(--kk-ink)", color: "#fff" } : { color: "var(--kk-ink-mute)" }}
+              >
+                {n}/day
+              </button>
+            ))}
+          </div>
+          {!batchDone && todaysUnsent.length > 0 && (
+            <button
+              onClick={sendNext}
+              disabled={!!sending}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold shrink-0 disabled:opacity-50"
+              style={{ background: "#25D366", color: "#fff" }}
+            >
+              {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WhatsAppIcon className="w-3.5 h-3.5" />}
+              Next ({todaysUnsent.length} left)
+            </button>
+          )}
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 hover:opacity-70"
+            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* ── Scrollable body ── */}
+        <div className="overflow-y-auto flex-1">
+
+          {/* Today's batch section header */}
+          <div className="sticky top-0 z-10 px-5 py-2 flex items-center gap-3" style={{ background: "var(--kk-surface)", borderBottom: "1px solid var(--kk-line)" }}>
+            <span className="text-[11px] font-semibold uppercase tracking-widest shrink-0" style={{ color: "var(--kk-ink-mute)" }}>
+              Today&apos;s batch
+            </span>
+            <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>
+              {todaysSentCount} / {rawBatch.length} sent
+            </span>
+            <div className="flex-1 h-1 rounded-full overflow-hidden min-w-0" style={{ background: "var(--kk-surface-2)" }}>
+              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: "var(--kk-green)" }} />
+            </div>
+            {batchDone && (
+              <span className="text-[11px] font-medium shrink-0" style={{ color: "var(--kk-green)" }}>Done ✓</span>
+            )}
+          </div>
+
+          {/* Today's batch rows */}
+          {pool.length === 0 ? (
+            <p className="text-center py-12 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No leads to contact.</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <tbody>
+                {todaysBatch.map((l) => {
+                  const count = l.outreach_count ?? 0;
+                  const isSentNow = justSent.has(l.id);
+                  const isSending = sending === l.id;
+                  const sent = count > 0 || isSentNow;
+                  return (
+                    <tr
+                      key={l.id}
+                      style={{ borderBottom: "1px solid var(--kk-line)", background: sent ? "var(--kk-green-soft)" : undefined }}
+                    >
+                      <td className="pl-5 pr-2 py-2.5 w-[45%]">
+                        <p className="text-[13px] font-medium leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{l.owner_name}</p>
+                        {l.property_name && (
+                          <p className="text-[11px] leading-tight truncate" style={{ color: "var(--kk-ink-mute)" }}>{l.property_name}</p>
+                        )}
+                      </td>
+                      <td className="px-2 py-2.5 w-28">
+                        {count > 0 && <OutreachCountBadge count={count} />}
+                      </td>
+                      <td className="pr-5 py-2.5 text-right">
+                        <button
+                          onClick={() => sendLead(l.id)}
+                          disabled={!!sending}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold disabled:opacity-40 transition-opacity hover:opacity-80"
+                          style={{ background: "#25D366", color: "#fff" }}
+                        >
+                          {isSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <WhatsAppIcon className="w-3 h-3" />}
+                          Send
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+
+          {/* Next batch — greyed preview */}
+          {futureBatch.length > 0 && (
+            <>
+              <div className="px-5 py-2 flex items-center gap-2 sticky top-[41px] z-10"
+                style={{ borderTop: "2px solid var(--kk-line)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
+                <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-ink-faint)" }}>
+                  Next batch
+                </span>
+                <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{futureBatch.length} leads</span>
+                <span className="ml-auto text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+                  {batchDone ? "Send tomorrow" : "Complete today's batch first"}
+                </span>
+              </div>
+              <table className="w-full border-collapse" style={{ opacity: 0.38 }}>
+                <tbody>
+                  {futureBatch.map((l) => (
+                    <tr key={l.id} style={{ borderBottom: "1px solid var(--kk-line)" }}>
+                      <td className="pl-5 pr-2 py-2.5 w-[45%]">
+                        <p className="text-[13px] font-medium leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{l.owner_name}</p>
+                        {l.property_name && (
+                          <p className="text-[11px] leading-tight truncate" style={{ color: "var(--kk-ink-mute)" }}>{l.property_name}</p>
+                        )}
+                      </td>
+                      <td className="px-2 py-2.5 w-28" />
+                      <td className="pr-5 py-2.5" />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+
+          {/* Future batches summary */}
+          {futureRemaining.length > 0 && (
+            <div className="px-5 py-4 text-center" style={{ borderTop: "1px solid var(--kk-line)" }}>
+              <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+                +{futureRemaining.length} more leads across {Math.ceil(futureRemaining.length / batchSize)} future batches
+              </p>
+            </div>
+          )}
+
+          {/* All done */}
+          {batchDone && futureBatch.length === 0 && (
+            <div className="px-5 py-5 text-center" style={{ borderTop: "1px solid var(--kk-line)" }}>
+              <p className="text-[13px] font-medium" style={{ color: "var(--kk-green)" }}>
+                All {pool.length} leads contacted!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
