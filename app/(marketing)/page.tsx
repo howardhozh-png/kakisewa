@@ -112,8 +112,8 @@ export default function LandingPage() {
             className="mx-auto mb-10"
             style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "var(--kk-ink-mute)", lineHeight: 1.6, maxWidth: "46ch" }}
           >
-            Stop losing track of renewals, close all open leads,
-            keep all your contacts. Nothing slips through the crack.
+            Track every contract renewal, close every owner lead,
+            send polished tenant packages — all in one place.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
@@ -173,7 +173,7 @@ export default function LandingPage() {
               className="serif mb-16"
               style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1.08, letterSpacing: "-0.022em" }}
             >
-              kakisewa is your personal assistant.
+              Four things kakisewa does<br />so you never miss a deal.
             </h2>
             <SolutionCards />
           </div>
@@ -285,10 +285,10 @@ export default function LandingPage() {
           <div className="max-w-[560px] mx-auto">
             <div className="flex justify-center mb-8"><BrandMark size={32} dark={false} /></div>
             <h2 className="serif text-white mb-4" style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1, letterSpacing: "-0.022em" }}>
-              Stop leaving money on the table every month.
+              Your first closed renewal<br />pays for the whole year.
             </h2>
             <p className="mb-10" style={{ fontSize: "var(--kk-body-lg)", color: "rgba(255,255,255,0.5)", maxWidth: "38ch", margin: "0 auto 40px" }}>
-              RM 500/month. One plan. Everything included.
+              One plan. Everything included. Beta pricing locked in for early adopters.
             </p>
             <Link
               href="/sign-up"

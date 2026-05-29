@@ -11,7 +11,7 @@ const PAINS: Array<{ segments: Seg[]; detail: string }> = [
       { t: "which contract is expiring" },
       " this month...",
     ],
-    detail: "You find out only when the owner texts asking for a new tenant.",
+    detail: "You find out only when the owner texts asking for a new tenant — and by then, someone else is already showing the unit.",
   },
   {
     segments: [
@@ -19,15 +19,15 @@ const PAINS: Array<{ segments: Seg[]; detail: string }> = [
       { t: "match owner with tenant on WhatsApp" },
       "...",
     ],
-    detail: "Copying photos, typing profiles. It still looks messy on their phone.",
+    detail: "Copying photos, typing profiles, forwarding screenshots. It still looks unprofessional on their phone.",
   },
   {
     segments: [
       "I ",
-      { t: "missed 2 contract renewals and 1 new lead" },
-      " this month...",
+      { t: "missed 2 renewals and a new lead" },
+      " last month...",
     ],
-    detail: "Leads pile up in WhatsApp. No follow up, no closure, no commission.",
+    detail: "Leads pile up in WhatsApp. No system, no follow-up, no closure. That's two commissions gone.",
   },
 ];
 
@@ -81,32 +81,43 @@ export function PainCards() {
             <div
               key={key}
               className="relative cursor-pointer select-none"
-              style={{ animation: isHovered ? "kk-shake 0.5s ease-in-out" : "none" }}
+              style={{ animation: isHovered ? "kk-shake 0.5s ease-in-out" : "none", paddingBottom: 10 }}
               onMouseEnter={() => setHoveredIdx(i)}
               onMouseLeave={() => setHoveredIdx(null)}
               onClick={() => handleClick(i)}
             >
               <div
-                className="rounded-3xl p-6"
+                className="rounded-3xl p-7"
                 style={{
                   background: "#fff",
-                  boxShadow: isHovered ? "0 8px 30px rgba(0,0,0,0.12)" : "0 2px 16px rgba(0,0,0,0.07)",
+                  boxShadow: isHovered ? "0 12px 40px rgba(0,0,0,0.13)" : "0 2px 16px rgba(0,0,0,0.07)",
                   transition: "box-shadow 0.2s ease",
+                  position: "relative",
+                  zIndex: 1,
                 }}
               >
-                <p className="serif font-semibold mb-3" style={{ fontSize: "var(--kk-h2)", color: "var(--kk-ink)", lineHeight: 1.3 }}>
+                <p className="serif font-semibold mb-4" style={{ fontSize: "var(--kk-h2)", color: "var(--kk-ink)", lineHeight: 1.3 }}>
                   &ldquo;{renderSegments(p.segments)}&rdquo;
                 </p>
-                <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.6 }}>
+                <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.65 }}>
                   {p.detail}
                 </p>
               </div>
 
+              {/* Speech bubble tail — only visible on hover */}
               <div
                 style={{
-                  position: "absolute", bottom: -9, left: 24,
-                  width: 18, height: 18, background: "#fff",
-                  transform: "rotate(45deg)", boxShadow: "3px 3px 6px rgba(0,0,0,0.06)", zIndex: -1,
+                  position: "absolute",
+                  bottom: 1,
+                  left: 32,
+                  width: 0,
+                  height: 0,
+                  borderLeft: "10px solid transparent",
+                  borderRight: "10px solid transparent",
+                  borderTop: "10px solid #fff",
+                  opacity: isHovered ? 1 : 0,
+                  transition: "opacity 0.15s ease",
+                  filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.08))",
                 }}
               />
 
@@ -121,6 +132,7 @@ export function PainCards() {
                     opacity: badge.fading ? 0 : 1,
                     transition: badge.fading ? "opacity 0.4s ease" : "none",
                     animation: badge.fading ? "none" : "kk-badge-pop 0.25s ease-out",
+                    zIndex: 2,
                   }}
                 >
                   +1
