@@ -111,7 +111,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
                 onClick={() => onMonthClick?.(m.key)}
                 style={{ cursor: onMonthClick ? "pointer" : "default" }}
               >
-                <div className="relative flex items-end" style={{ height: 80 }}>
+                <div className="relative flex items-end" style={{ height: 80, paddingTop: 6 }}>
                   <div
                     className="w-full rounded-t-md"
                     style={{

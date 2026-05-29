@@ -109,7 +109,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
               onClick={() => onMonthClick?.(m.key)}
               style={{ cursor: onMonthClick ? "pointer" : "default" }}
             >
-              <div className="relative h-20 flex items-end">
+              <div className="relative h-20 flex items-end pt-1.5">
                 <div
                   className="w-full rounded-t-md transition-all duration-500"
                   style={{

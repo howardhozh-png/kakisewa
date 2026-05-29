@@ -81,7 +81,7 @@ export function PainCards() {
             <div
               key={key}
               className="relative cursor-pointer select-none"
-              style={{ animation: isHovered ? "kk-shake 0.5s ease-in-out" : "none", paddingBottom: 10 }}
+              style={{ animation: isHovered ? "kk-shake 0.5s ease-in-out" : "none", paddingBottom: 14 }}
               onMouseEnter={() => setHoveredIdx(i)}
               onMouseLeave={() => setHoveredIdx(null)}
               onClick={() => handleClick(i)}
@@ -102,24 +102,24 @@ export function PainCards() {
                 <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.65 }}>
                   {p.detail}
                 </p>
-              </div>
 
-              {/* Speech bubble tail — only visible on hover */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 1,
-                  left: 32,
-                  width: 0,
-                  height: 0,
-                  borderLeft: "10px solid transparent",
-                  borderRight: "10px solid transparent",
-                  borderTop: "10px solid #fff",
-                  opacity: isHovered ? 1 : 0,
-                  transition: "opacity 0.15s ease",
-                  filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.08))",
-                }}
-              />
+                {/* Speech bubble tail — sits inside card so its top edge is flush with card bottom */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: -10,
+                    left: 32,
+                    width: 0,
+                    height: 0,
+                    borderLeft: "10px solid transparent",
+                    borderRight: "10px solid transparent",
+                    borderTop: "10px solid #fff",
+                    opacity: isHovered ? 1 : 0,
+                    transition: "opacity 0.15s ease",
+                    filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.08))",
+                  }}
+                />
+              </div>
 
               {cardBadges.map(badge => (
                 <div

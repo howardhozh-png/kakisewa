@@ -522,23 +522,16 @@ if (payCount === 0) {
 {
   type SeedLead = { id: string; owner_name: string; owner_phone: string; property_name: string | null; unit: string | null; expected_rent: number | null; bedrooms: number | null; bathrooms: number | null; stage: string; notes: string | null };
   const seedLeads: SeedLead[] = [
-    { id: "ol_seed_wr_1", owner_name: "Datin Rozita", owner_phone: "60112233001", property_name: "Verve Suites Mont Kiara", unit: null, expected_rent: null, bedrooms: null, bathrooms: null, stage: "wants_rent", notes: "Replied within 5 minutes, very interested" },
-    { id: "ol_seed_wr_2", owner_name: "Kevin Lim", owner_phone: "60112233002", property_name: "EcoSky Kuala Lumpur", unit: null, expected_rent: null, bedrooms: null, bathrooms: null, stage: "wants_rent", notes: null },
-    { id: "ol_seed_wr_3", owner_name: "Puan Sri Hajjah Norma", owner_phone: "60112233003", property_name: "Pavilion Residences KLCC", unit: null, expected_rent: null, bedrooms: null, bathrooms: null, stage: "wants_rent", notes: "Prefers long-term tenant" },
-    { id: "ol_seed_ls_1",  owner_name: "Encik Azlan",          owner_phone: "60112233011", property_name: "Agile Mont Kiara",         unit: "B-1802", expected_rent: 3800, bedrooms: 3, bathrooms: 2, stage: "listed", notes: "Fully furnished, prefer working professional" },
-    { id: "ol_seed_ls_2",  owner_name: "Michelle Ng",          owner_phone: "60112233012", property_name: "Skypark One City",          unit: "D-1105", expected_rent: 2500, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "No pets, no smoking" },
-    { id: "ol_seed_ls_3",  owner_name: "Hafiz Azman",          owner_phone: "60112233013", property_name: "Verdana Bukit Jalil",      unit: "A-0905", expected_rent: 2200, bedrooms: 3, bathrooms: 2, stage: "listed", notes: null },
-    { id: "ol_seed_ls_4",  owner_name: "Tan Sri Lim Wei",      owner_phone: "60112233041", property_name: "Agile Mont Kiara",         unit: "A-5205", expected_rent: 3000, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "High floor, city view" },
-    { id: "ol_seed_ls_5",  owner_name: "Puan Siti Rahimah",    owner_phone: "60112233042", property_name: "The Capers Sentul East",   unit: "C-1103", expected_rent: 1900, bedrooms: 2, bathrooms: 1, stage: "listed", notes: "Near LRT, prefer couples or single" },
-    { id: "ol_seed_ls_6",  owner_name: "Derek Chong",          owner_phone: "60112233043", property_name: "Arte S Ampang",            unit: "B-2208", expected_rent: 2800, bedrooms: 3, bathrooms: 2, stage: "listed", notes: "Partially furnished, flexible on move-in date" },
-    { id: "ol_seed_ls_7",  owner_name: "Nurul Izzah Ahmad",    owner_phone: "60112233044", property_name: "M Vertica Cheras",        unit: "T3-1502", expected_rent: 2100, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "No smokers, 1 month deposit" },
-    { id: "ol_seed_ls_8",  owner_name: "Jonathan Yap",         owner_phone: "60112233045", property_name: "KLCC Kia Peng Residences", unit: "11A",    expected_rent: 5200, bedrooms: 3, bathrooms: 3, stage: "listed", notes: "Full KLCC view, fully furnished, premium unit" },
-    { id: "ol_seed_ls_9",  owner_name: "Datin Faridah Hamid",  owner_phone: "60112233046", property_name: "Nadi Bangsar",            unit: "D-0802", expected_rent: 3400, bedrooms: 3, bathrooms: 2, stage: "listed", notes: "Walking distance to Bangsar Village, no pets" },
-    { id: "ol_seed_ls_10", owner_name: "Raj Kumar",            owner_phone: "60112233047", property_name: "Sunway Nexis Kota Damansara", unit: "B-1601", expected_rent: 2300, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "Near Sunway Giza, prefer professional tenants" },
-    { id: "ol_seed_ls_11", owner_name: "Cassandra Wong",       owner_phone: "60112233048", property_name: "Tropicana The Residences", unit: "A-2904", expected_rent: 4100, bedrooms: 3, bathrooms: 3, stage: "listed", notes: "Brand new, never lived in, fully furnished" },
-    { id: "ol_seed_ls_12", owner_name: "Encik Zulkifli Daud",  owner_phone: "60112233049", property_name: "Residensi Sefina TTDI",   unit: "C-0603", expected_rent: 2600, bedrooms: 3, bathrooms: 2, stage: "listed", notes: "Gated community, family preferred" },
-    { id: "ol_seed_ls_13", owner_name: "Shirley Teh",          owner_phone: "60112233050", property_name: "Setia Sky Residences",    unit: "E-1208", expected_rent: 3100, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "Infinity pool view, working professionals only" },
-    { id: "ol_seed_mt_1", owner_name: "Datuk Reza", owner_phone: "60112233021", property_name: "The Westside Two", unit: "C-2201", expected_rent: 5500, bedrooms: 4, bathrooms: 3, stage: "matched", notes: "Premium unit, great KLCC view" },
+    { id: "ol_seed_wr_1", owner_name: "Sarah Jane",          owner_phone: "60112233001", property_name: "Agile Mont Kiara",      unit: null,     expected_rent: null, bedrooms: null, bathrooms: null, stage: "wants_rent", notes: "Replied quickly, very interested" },
+    { id: "ol_seed_wr_2", owner_name: "Kevin Lim",           owner_phone: "60112233002", property_name: "KL Eco City Residences", unit: null,    expected_rent: null, bedrooms: null, bathrooms: null, stage: "wants_rent", notes: null },
+    { id: "ol_seed_wr_3", owner_name: "Wong Mei Ling",       owner_phone: "60112233003", property_name: "Agile Mont Kiara",      unit: null,     expected_rent: null, bedrooms: null, bathrooms: null, stage: "wants_rent", notes: "Prefers long-term tenant" },
+    { id: "ol_seed_ls_1", owner_name: "Encik Azlan",         owner_phone: "60112233011", property_name: "Agile Mont Kiara",      unit: "B-1802", expected_rent: 3800, bedrooms: 3, bathrooms: 2, stage: "listed", notes: "Fully furnished, prefer working professional" },
+    { id: "ol_seed_ls_2", owner_name: "Hafiz Rahman",        owner_phone: "60112233012", property_name: "Sentral Suites KLCC",   unit: "A-2012", expected_rent: 4500, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "High floor, city view" },
+    { id: "ol_seed_ls_3", owner_name: "Bryan Ong",           owner_phone: "60112233013", property_name: "TRX Residences",        unit: "A-1502", expected_rent: 5200, bedrooms: 3, bathrooms: 3, stage: "listed", notes: "Full city view, fully furnished, premium unit" },
+    { id: "ol_seed_ls_4", owner_name: "Chloe Tan",           owner_phone: "60112233041", property_name: "Sunway Velocity",       unit: "C-5-08", expected_rent: 2800, bedrooms: 2, bathrooms: 2, stage: "listed", notes: "No pets, no smoking" },
+    { id: "ol_seed_ls_5", owner_name: "Encik Zulkifli Daud", owner_phone: "60112233042", property_name: "KL Eco City Residences", unit: "C-0603", expected_rent: 2600, bedrooms: 3, bathrooms: 2, stage: "listed", notes: "Gated community, family preferred" },
+    { id: "ol_seed_mt_1", owner_name: "Datuk Reza",          owner_phone: "60112233021", property_name: "Agile Mont Kiara",      unit: "C-2201", expected_rent: 4200, bedrooms: 3, bathrooms: 2, stage: "matched", notes: "Great KLCC view" },
+    { id: "ol_seed_mt_2", owner_name: "Encik Nadzri Rahman", owner_phone: "60112233022", property_name: "Sentral Suites KLCC",   unit: "B-1407", expected_rent: 3800, bedrooms: 2, bathrooms: 2, stage: "matched", notes: "Fully furnished, prefers expat tenants" },
   ];
   const ins = db.prepare(
     `INSERT OR IGNORE INTO owner_leads (id, owner_name, owner_phone, property_name, unit, expected_rent, bedrooms, bathrooms, stage, notes, source)
@@ -554,7 +547,7 @@ if (payCount === 0) {
   const rentedPropSeeds = [
     { id: "prop_rent_1", name: "Sentral Suites KLCC", address: "Jalan Stesen Sentral 5, KL Sentral, 50470 Kuala Lumpur", unit: "E-1501", owner_name: "Cik Amalina Ahmad", owner_phone: "60112233031" },
     { id: "prop_rent_2", name: "Sunway Velocity", address: "Jalan Cheras, 55200 Kuala Lumpur", unit: "A-802", owner_name: "Puan Haslinda Mohd", owner_phone: "60112233032" },
-    { id: "prop_rent_3", name: "The Elements", address: "Jalan Ampang, 68000 Ampang, Selangor", unit: "B-1204", owner_name: "Encik Farouk Ibrahim", owner_phone: "60112233033" },
+    { id: "prop_rent_3", name: "KL Eco City Residences", address: "No. 3, Jalan Bangsar, 59200 Kuala Lumpur", unit: "B-1204", owner_name: "Encik Farouk Ibrahim", owner_phone: "60112233033" },
   ];
   const insertProp = db.prepare(
     `INSERT OR IGNORE INTO properties (id,name,address,unit,owner_name,owner_phone) VALUES (?,?,?,?,?,?)`
@@ -567,7 +560,7 @@ if (payCount === 0) {
   const rentedLeadSeeds = [
     { id: "ol_rent_1", owner_name: "Cik Amalina Ahmad", owner_phone: "60112233031", property_name: "Sentral Suites KLCC", unit: "E-1501", expected_rent: 3200, bedrooms: 2, bathrooms: 2, stage: "matched", notes: "High-floor unit, fully furnished" },
     { id: "ol_rent_2", owner_name: "Puan Haslinda Mohd", owner_phone: "60112233032", property_name: "Sunway Velocity", unit: "A-802", expected_rent: 2800, bedrooms: 3, bathrooms: 2, stage: "matched", notes: "Near Cheras Leisure Mall" },
-    { id: "ol_rent_3", owner_name: "Encik Farouk Ibrahim", owner_phone: "60112233033", property_name: "The Elements", unit: "B-1204", expected_rent: 2400, bedrooms: 2, bathrooms: 1, stage: "matched", notes: "Near Ampang Park" },
+    { id: "ol_rent_3", owner_name: "Encik Farouk Ibrahim", owner_phone: "60112233033", property_name: "KL Eco City Residences", unit: "B-1204", expected_rent: 2400, bedrooms: 2, bathrooms: 1, stage: "matched", notes: "Near Bangsar, fully furnished" },
   ];
   const insertLead = db.prepare(
     `INSERT OR IGNORE INTO owner_leads (id, owner_name, owner_phone, property_name, unit, expected_rent, bedrooms, bathrooms, stage, notes, source)
