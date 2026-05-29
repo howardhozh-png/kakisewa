@@ -1,6 +1,30 @@
 import db from "./db-client";
 import { Property, Tenancy, TenancyStatus, LhdnStatus, Tier, MonthlyCollection, PropertySupport, SupportType } from "./types";
 import { format } from "date-fns";
+import { headers } from "next/headers";
+
+function getAgentId(): string {
+  try {
+    const h = headers() as unknown as { get(name: string): string | null };
+    return h.get("x-agent-id") ?? "dev_agent_howard";
+  } catch {
+    return "dev_agent_howard";
+  }
+}
+
+function getAgentMeta(): { name: string | null; email: string | null; phone: string | null; agency: string | null } {
+  try {
+    const h = headers() as unknown as { get(name: string): string | null };
+    return {
+      name:   h.get("x-agent-name")   || null,
+      email:  h.get("x-agent-email")  || null,
+      phone:  h.get("x-agent-phone")  || null,
+      agency: h.get("x-agent-agency") || null,
+    };
+  } catch {
+    return { name: null, email: null, phone: null, agency: null };
+  }
+}
 
 // ─── Row types ────────────────────────────────────────────────────────────────
 
@@ -507,7 +531,13 @@ export function bumpLoginStreak(): number {
 
 export async function getAgentProfile(): Promise<AgentProfile> {
   const r = db.prepare("SELECT * FROM agent_profile WHERE id = 1").get() as AgentProfile | undefined;
-  return r ?? { id: 1 };
+  const base: AgentProfile = r ?? ({ id: 1 } as AgentProfile);
+  // Overlay the authenticated user's name/contact from the session header
+  const meta = getAgentMeta();
+  if (meta.name)   base.name   = meta.name;
+  if (meta.phone)  base.phone  = meta.phone;
+  if (meta.agency) base.agency = meta.agency;
+  return base;
 }
 
 export async function saveWhatsAppTemplates(overrides: import("./whatsapp-templates").TemplateOverrides): Promise<void> {
@@ -563,10 +593,10 @@ export async function getMonthlyCommissionTimeline(year: number = new Date().get
   const rows = db.prepare(
     `SELECT SUBSTR(earned_on, 1, 7) AS m, COALESCE(SUM(amount), 0) AS s
      FROM commission_events
-     WHERE agent_id = 'dev_agent_howard'
+     WHERE agent_id = ?
        AND SUBSTR(earned_on, 1, 7) IN (${placeholders})
      GROUP BY m`
-  ).all(...monthsRaw.map((m) => m.key)) as Array<{ m: string; s: number }>;
+  ).all(getAgentId(), ...monthsRaw.map((m) => m.key)) as Array<{ m: string; s: number }>;
   const byMonth = new Map(rows.map((r) => [r.m, r.s]));
 
   const todayMonthStart = new Date(today.getFullYear(), today.getMonth(), 1).getTime();
@@ -632,9 +662,9 @@ export async function getPerformanceSummary(): Promise<import("./types").Perform
     const r = db.prepare(
       `SELECT COALESCE(SUM(amount), 0) AS s, COUNT(*) AS c
        FROM commission_events
-       WHERE agent_id = 'dev_agent_howard'
+       WHERE agent_id = ?
          AND SUBSTR(earned_on, 1, 7) IN (${placeholders})`
-    ).get(...months) as { s: number; c: number };
+    ).get(getAgentId(), ...months) as { s: number; c: number };
     return { sum: r.s, count: r.c };
   };
 
@@ -760,23 +790,24 @@ export async function getLifetimeCommissionStats(): Promise<{
   const thisYear = new Date().getFullYear().toString();
   const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+  const agentId = getAgentId();
   const total = db.prepare(
-    `SELECT COUNT(*) as cnt, COALESCE(SUM(amount),0) as earned FROM commission_events WHERE agent_id = 'dev_agent_howard'`
-  ).get() as { cnt: number; earned: number };
+    `SELECT COUNT(*) as cnt, COALESCE(SUM(amount),0) as earned FROM commission_events WHERE agent_id = ?`
+  ).get(agentId) as { cnt: number; earned: number };
 
   const year = db.prepare(
-    `SELECT COUNT(*) as cnt, COALESCE(SUM(amount),0) as earned FROM commission_events WHERE agent_id = 'dev_agent_howard' AND SUBSTR(earned_on,1,4) = ?`
-  ).get(thisYear) as { cnt: number; earned: number };
+    `SELECT COUNT(*) as cnt, COALESCE(SUM(amount),0) as earned FROM commission_events WHERE agent_id = ? AND SUBSTR(earned_on,1,4) = ?`
+  ).get(agentId, thisYear) as { cnt: number; earned: number };
 
   const best = db.prepare(
     `SELECT SUBSTR(earned_on,1,7) as m, SUM(amount) as s FROM commission_events
-     WHERE agent_id = 'dev_agent_howard' GROUP BY m ORDER BY s DESC LIMIT 1`
-  ).get() as { m: string; s: number } | undefined;
+     WHERE agent_id = ? GROUP BY m ORDER BY s DESC LIMIT 1`
+  ).get(agentId) as { m: string; s: number } | undefined;
 
   const bestThisYear = db.prepare(
     `SELECT SUBSTR(earned_on,1,7) as m, SUM(amount) as s FROM commission_events
-     WHERE agent_id = 'dev_agent_howard' AND SUBSTR(earned_on,1,4) = ? GROUP BY m ORDER BY s DESC LIMIT 1`
-  ).get(thisYear) as { m: string; s: number } | undefined;
+     WHERE agent_id = ? AND SUBSTR(earned_on,1,4) = ? GROUP BY m ORDER BY s DESC LIMIT 1`
+  ).get(agentId, thisYear) as { m: string; s: number } | undefined;
 
   const agent = db.prepare("SELECT monthly_goal_rm FROM agent_profile WHERE id = 1").get() as { monthly_goal_rm: number | null } | undefined;
   const yearGoal = (agent?.monthly_goal_rm ?? 0) * 12;
@@ -1167,9 +1198,9 @@ export function getPropertySupports(): PropertySupport[] {
   return db.prepare(
     `SELECT id, name, phone, type, area, notes, starred, source, created_at
      FROM property_supports
-     WHERE agent_id = 'dev_agent_howard'
+     WHERE agent_id = ?
      ORDER BY starred DESC, type, name`
-  ).all() as PropertySupport[];
+  ).all(getAgentId()) as PropertySupport[];
 }
 
 export function createPropertySupport(data: {
