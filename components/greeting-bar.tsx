@@ -126,11 +126,12 @@ function StreakBadge({ streak, checkedIn, onBump }: { streak: number; checkedIn:
         <span className="sm:hidden">{streak}d</span>
       </span>
       {checkedIn ? (
-        <CheckCircle2
-          className="w-4 h-4 shrink-0"
-          style={{ color: "var(--kk-green)" }}
-          title="Checked in today"
-        />
+        <span title="Checked in today">
+          <CheckCircle2
+            className="w-4 h-4 shrink-0"
+            style={{ color: "var(--kk-green)" }}
+          />
+        </span>
       ) : (
         <button
           onClick={onBump}
