@@ -4,6 +4,9 @@ import { useEffect } from "react";
 
 export function ScrollSnap() {
   useEffect(() => {
+    history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, behavior: "instant" });
+
     let timer: ReturnType<typeof setTimeout>;
     let isSnapping = false;
 

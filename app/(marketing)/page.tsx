@@ -5,6 +5,7 @@ import { MoneyCalc } from "./money-calc";
 import { PainCards } from "./pain-cards";
 import { SolutionCards } from "./solution-cards";
 import { SmoothScrollButton } from "./smooth-scroll-button";
+import { ScrollSnap } from "./scroll-snap";
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
   return (
@@ -73,6 +74,7 @@ function TickCell({ value, isKaki }: { value: boolean | null; isKaki?: boolean }
 export default function LandingPage() {
   return (
     <>
+      <ScrollSnap />
       <main style={{ background: "var(--kk-bg)", color: "var(--kk-ink)" }}>
 
         {/* ── Nav ───────────────────────────────────────────────────────────── */}
