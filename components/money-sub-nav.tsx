@@ -10,11 +10,11 @@ interface Props {
 }
 
 export function MoneySubNav({ renewCount }: Props) {
-  const isRenew = usePathname().startsWith("/tenancies");
+  const isRenew = usePathname().startsWith("/existing-contracts");
 
   return (
     <div className="mb-8 flex items-center gap-1 border-b" style={{ borderColor: "var(--kk-line)" }}>
-      <Tab href="/tenancies" label="Existing contracts" count={renewCount} active={isRenew} />
+      <Tab href="/existing-contracts" label="Existing contracts" count={renewCount} active={isRenew} />
     </div>
   );
 }

@@ -88,7 +88,7 @@ export function LifecycleRadar({ tenancies, renewalCommissionPct = 50 }: Props) 
                 <li
                   key={t.id}
                   className="kk-card kk-card-hover flex items-center gap-3 px-4 py-3"
-                  onClick={() => router.push(`/tenancies?open=${t.id}`)}
+                  onClick={() => router.push(`/existing-contracts?open=${t.id}`)}
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -182,7 +182,7 @@ export function CloseableLeads({ leads, commissionPct }: CloseableLeadProps) {
                 <li
                   key={l.id}
                   className="kk-card kk-card-hover flex items-center gap-3 px-4 py-3"
-                  onClick={() => router.push(`/leads?open=${l.id}`)}
+                  onClick={() => router.push(`/new-owners?open=${l.id}`)}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="kk-card-title" style={{ color: "var(--kk-ink)" }}>

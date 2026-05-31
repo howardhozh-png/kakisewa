@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { X, Building2, MapPin, Phone, ImagePlus, Trash2, Loader2 } from "lucide-react";
 import { Property } from "@/lib/types";
+import { removeProperty } from "@/lib/actions";
 
 interface Props {
   property: Property;
@@ -10,10 +12,12 @@ interface Props {
 }
 
 export function PropertyDrawer({ property: p, tenantCount }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [photos, setPhotos] = useState<string[]>(p.photo_urls ?? []);
   const [uploading, setUploading] = useState(false);
-  const [, startTransition] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, startTransition] = useTransition();
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -148,6 +152,27 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
               )}
             </div>
           </div>
+
+          {/* Delete */}
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+              <p className="flex-1 text-[13px] font-medium" style={{ color: "#DC2626" }}>Delete this property permanently?</p>
+              <button onClick={() => setConfirmDelete(false)} className="text-[12px] font-medium px-3 py-1.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
+              <button disabled={deleting}
+                onClick={() => startTransition(async () => { await removeProperty(p.id); setOpen(false); router.refresh(); })}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold"
+                style={{ background: "#DC2626", color: "#fff" }}>
+                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {deleting ? "Deleting…" : "Yes, delete"}
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 text-[13px] font-medium transition-colors hover:opacity-80"
+              style={{ color: "var(--kk-ink-faint)" }}>
+              <Trash2 className="w-4 h-4" />
+              Delete property
+            </button>
+          )}
         </div>
       </div>
     </>

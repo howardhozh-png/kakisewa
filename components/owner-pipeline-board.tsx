@@ -83,7 +83,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (lead) {
         setEditingLead(lead);
         hasAutoOpened.current = true;
-        router.replace("/leads", { scroll: false });
+        router.replace("/new-owners", { scroll: false });
       }
     }
   }, [openLeadId, leads, router]);
@@ -666,16 +666,27 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
       </div>
     );
   }
-  if (stage === "matched" && tenantInfo) {
+  if (stage === "matched") {
     return (
       <button
         type="button"
         data-card-action
-        onClick={(e) => { e.stopPropagation(); onCommission(tenantInfo.tenancy_id); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (tenantInfo) { onCommission(tenantInfo.tenancy_id); }
+          else {
+            startTransition(async () => {
+              await setOwnerLeadStage(l.id, "archived");
+              router.refresh();
+              toast.success("Marked as moved in.");
+            });
+          }
+        }}
+        disabled={pending}
         className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
       >
         <span className="flex items-start gap-1.5 min-w-0 flex-1">
-          <Banknote className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <Banknote className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
           <span>Moved in</span>
         </span>
         <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />

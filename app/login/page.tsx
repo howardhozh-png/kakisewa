@@ -32,15 +32,27 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: "var(--kk-bg)" }}>
+
+      {/* Back link */}
+      <div className="w-full max-w-sm mb-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-60"
+          style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}
+        >
+          <svg viewBox="0 0 16 16" width={14} height={14} fill="currentColor" aria-hidden="true">
+            <path d="M10.5 3L5.5 8l5 5" stroke="currentColor" strokeWidth={1.5} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          kakisewa.com
+        </Link>
+      </div>
+
       <div className="w-full max-w-sm">
 
         {/* Logo */}
         <div className="text-center mb-8">
           <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>
             kakisewa
-          </p>
-          <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)", marginTop: 4 }}>
-            Sign in to your account
           </p>
         </div>
 
@@ -57,7 +69,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="kakisewa@example.com"
                 className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
                 style={{
                   fontSize: "var(--kk-body)",
@@ -71,17 +83,15 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
-                  Password
-                </label>
-              </div>
+              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
+                Password
+              </label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder=""
                 className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
                 style={{
                   fontSize: "var(--kk-body)",
@@ -120,7 +130,7 @@ export default function LoginPage() {
 
         <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
           Don&apos;t have an account?{" "}
-          <Link href="/signup" style={{ color: "var(--kk-green)", fontWeight: 600 }}>
+          <Link href="/signup" style={{ color: "var(--kk-ink)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
             Sign up
           </Link>
         </p>

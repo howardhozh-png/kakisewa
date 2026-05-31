@@ -30,7 +30,7 @@ export default async function PackBuilderPage({
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <Link
-        href="/leads?tab=pipeline"
+        href="/new-owners?tab=pipeline"
         className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 hover:opacity-70 transition-opacity"
         style={{ color: "var(--kk-ink-mute)" }}
       >

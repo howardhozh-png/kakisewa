@@ -6,7 +6,8 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Poin
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle } from "lucide-react";
+import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { RenewalCommissionDialog } from "@/components/renewal-commission-dialog";
 import { TenantLeavingDialog } from "@/components/tenant-leaving-dialog";
@@ -68,7 +69,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props)
       if (t) {
         setOpenTenancy(t);
         hasAutoOpened.current = true;
-        router.replace("/tenancies", { scroll: false });
+        router.replace("/existing-contracts", { scroll: false });
       }
     }
   }, [openTenancyId, tenancies, router]);
@@ -469,6 +470,9 @@ function Card({ t, col, today, isDragging, onOpen, onShowCommission, onShowTenan
         {t.contract_end && <span style={{ color: "var(--kk-ink-faint)" }}> &middot; exp {expiryDateStr}</span>}
       </p>
 
+      {/* Rent reminder — shown on any card based on contract dates */}
+      <RentReminderAction t={t} today={today} />
+
       {/* Column-specific action (Renewing / Active) */}
       {col.stage !== "headsup" && (
         <ColumnAction t={t} stage={col.stage} today={today} onShowCommission={onShowCommission} />
@@ -504,6 +508,46 @@ function RenewalResponses({ t }: { t: Tenancy }) {
       <span className="text-[11px] font-semibold" style={{ color: tenantColor }}>{tenantLabel}</span>
       <span className="text-[11px] font-semibold" style={{ color: ownerColor }}>{ownerLabel}</span>
     </div>
+  );
+}
+
+// ─── Rent reminder — date-driven, shown regardless of stage ──────────────────
+
+function RentReminderAction({ t, today }: { t: Tenancy; today: Date }) {
+  const [waUrl, setWaUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!t.contract_start || !t.tenant_phone) return;
+    const daysSinceStart = Math.round((today.getTime() - new Date(t.contract_start).getTime()) / 86400000);
+    const daysToEnd = t.contract_end
+      ? Math.round((new Date(t.contract_end).getTime() - today.getTime()) / 86400000)
+      : 999;
+    if (daysSinceStart < -7 || daysSinceStart > 90 || daysToEnd <= 0) return;
+    setWaUrl(buildWhatsAppPingUrl(
+      t.tenant_phone, t.tenant_name,
+      t.property_name ?? "your property", t.amount,
+      `${window.location.origin}/upload/${t.id}`,
+    ));
+  }, [t, today]);
+
+  if (!waUrl) return null;
+
+  return (
+    <a
+      href={waUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-card-action
+      onClick={e => e.stopPropagation()}
+      className="kk-card-cta kk-card-cta-soft-green"
+      style={{ textDecoration: "none" }}
+    >
+      <span className="flex items-start gap-1.5 min-w-0 flex-1">
+        <MessageCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+        <span>Send rent reminder</span>
+      </span>
+      <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+    </a>
   );
 }
 

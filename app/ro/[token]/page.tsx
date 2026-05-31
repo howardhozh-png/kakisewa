@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTenancyByOwnerRenewalToken, getAgentProfile } from "@/lib/db";
-import db from "@/lib/db-client";
 import { OwnerRenewalClient } from "./client";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +17,6 @@ export default async function OwnerRenewalPage({ params }: Props) {
 
   if (!tenancy) return notFound();
 
-  const row = db
-    .prepare("SELECT owner_renewal_completed_at FROM tenancies WHERE owner_renewal_token=?")
-    .get(token) as { owner_renewal_completed_at: string | null } | undefined;
-
   return (
     <OwnerRenewalClient
       token={token}
@@ -32,7 +27,7 @@ export default async function OwnerRenewalPage({ params }: Props) {
       currentRent={tenancy.amount}
       agentName={agent.name ?? "Your Agent"}
       agentAgency={agent.agency ?? ""}
-      alreadySubmitted={!!row?.owner_renewal_completed_at}
+      alreadySubmitted={!!tenancy.owner_renewal_completed_at}
       prevContinuing={tenancy.replied_owner === "yes" ? true : tenancy.replied_owner === "no" ? false : null}
       prevTenantIntent={(tenancy.owner_noted_tenant_intent as "yes" | "no" | "unsure" | null) ?? null}
       prevRent={tenancy.renewal_proposed_rent ?? null}

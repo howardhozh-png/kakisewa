@@ -18,15 +18,12 @@ export async function POST(request: NextRequest) {
     if (!tenancy) {
       return NextResponse.json({ ok: false, message: "Invalid or expired link" }, { status: 404 });
     }
-    const row = (await import("@/lib/db-client")).default
-      .prepare("SELECT tenant_renewal_completed_at FROM tenancies WHERE tenant_renewal_token=?")
-      .get(token) as { tenant_renewal_completed_at: string | null } | undefined;
-    if (row?.tenant_renewal_completed_at) {
+    if (tenancy.tenant_renewal_completed_at) {
       return NextResponse.json({ ok: false, message: "Already submitted" }, { status: 409 });
     }
 
     await completeTenantRenewalIntake(token, staying, newEndDate);
-    revalidatePath("/tenancies");
+    revalidatePath("/existing-contracts");
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[intake/renewal/tenant]", err);

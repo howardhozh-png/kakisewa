@@ -6,7 +6,7 @@ const shapes = [
   { label: "3 bed · 2 bath", sub: "Mont Kiara · RM 4,200/mo", x: "-5%", y: "15%", rotate: -8, delay: 0 },
   { label: "Lease renewed ✓", sub: "Damansara Perdana · 2 yr", x: "68%", y: "8%", rotate: 6, delay: 0.3 },
   { label: "New tenant matched", sub: "Aishah Tan · RM 2,800/mo", x: "10%", y: "62%", rotate: -4, delay: 0.6 },
-  { label: "Receipt verified", sub: "Maybank · RM 1,800", x: "72%", y: "55%", rotate: 5, delay: 0.15 },
+  { label: "Support contact saved ✓", sub: "TNB electrician · Ampang", x: "72%", y: "55%", rotate: 5, delay: 0.15 },
   { label: "Commission earned", sub: "RM 4,200 · Jun 2026", x: "38%", y: "78%", rotate: -6, delay: 0.45 },
 ];
 

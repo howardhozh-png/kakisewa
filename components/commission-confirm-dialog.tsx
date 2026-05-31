@@ -60,7 +60,11 @@ export function CommissionConfirmDialog({
           </div>
 
           <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
-            Confirming moves this tenancy to <strong>Active</strong> in the Existing Tenants board.
+            Confirming moves this tenancy to <strong>Active</strong> in the Existing Contracts board.
+          </p>
+
+          <p className="text-[12px] rounded-xl px-3.5 py-2.5" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
+            For <strong style={{ color: "var(--kk-ink)" }}>Silver</strong> users: this card will move to "Existing Contracts" which requires a <strong style={{ color: "var(--kk-ink)" }}>Platinum</strong> or <strong style={{ color: "var(--kk-ink)" }}>Elite</strong> subscription.
           </p>
 
           <div className="flex justify-end gap-2 pt-1">

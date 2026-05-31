@@ -60,7 +60,7 @@ function StatusBadge({ lead }: { lead: OwnerLead }) {
     bg = s.bg; color = s.color;
     label = count === 1 ? "Sent × 1" : count === 2 ? "Sent × 2" : `Sent × ${count}`;
   } else {
-    bg = "rgba(0,0,0,0.05)"; color = "var(--kk-ink-mute)"; label = "Unsent";
+    bg = "rgba(0,0,0,0.05)"; color = "var(--kk-ink-mute)"; label = "Uncontacted";
   }
 
   return (
@@ -356,7 +356,7 @@ function LeadPopup({
           {status === "listed" ? (
             <button
               type="button"
-              onClick={() => { onClose(); router.push(`/leads?tab=pipeline&highlight=${lead.id}`); }}
+              onClick={() => { onClose(); router.push(`/new-owners?tab=pipeline&highlight=${lead.id}`); }}
               className="w-full py-3 rounded-xl text-[14px] font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
               style={{ background: "var(--kk-blue)", color: "#fff" }}
             >
@@ -577,7 +577,7 @@ export function OutreachTable({ leads }: Props) {
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: "all",       label: `All ${counts.all}` },
-    { key: "unsent",    label: `Unsent ${counts.unsent}` },
+    { key: "unsent",    label: `Uncontacted ${counts.unsent}` },
     { key: "contacted", label: `Contacted ${counts.contacted}` },
     { key: "listed",    label: `Listed ${counts.listed}` },
     { key: "rented",    label: `Rented ${counts.rented}` },
@@ -618,12 +618,10 @@ export function OutreachTable({ leads }: Props) {
 
       {/* Table */}
       <div className="kk-section overflow-hidden p-0 kk-scroll-fade">
-        {visible.length === 0 ? (
+        {visible.length === 0 && !(filter === "all" && propertyFilter === "all") ? (
           <div className="flex flex-col items-center justify-center py-16 px-6">
             <p className="text-[14px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>
-              {filter === "all" && propertyFilter === "all"
-                ? "No owners yet — import a list to get started."
-                : "No owners match this filter."}
+              No owners match this filter.
             </p>
           </div>
         ) : (
@@ -649,11 +647,36 @@ export function OutreachTable({ leads }: Props) {
                 <th className="px-2 lg:px-4 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 94, color: "var(--kk-accent)" }}>Property</th>
                 <th className="px-2 lg:px-4 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 82, color: "var(--kk-accent)" }}>Status</th>
                 <th className="hidden lg:table-cell px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 80, color: "var(--kk-accent)" }}>Last sent</th>
-                <th className="hidden lg:table-cell px-4 py-3" style={{ width: 120 }}></th>
+                <th className="sticky right-0 lg:static px-2 lg:px-4 py-2 lg:py-3" style={{ width: 48, background: "var(--kk-surface)" }}></th>
               </tr>
             </thead>
             <tbody>
-              {visible.map((lead, i) => {
+              {visible.length === 0 ? (
+                <tr style={{ opacity: 0.5, pointerEvents: "none" }}>
+                  <td className="px-2 lg:px-3 py-2 lg:py-3" style={{ verticalAlign: "middle" }}>
+                    <input type="checkbox" disabled className="w-3.5 h-3.5 block" />
+                  </td>
+                  <td className="px-2 lg:px-4 py-2 lg:py-3">
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>Ahmad Hassan</p>
+                  </td>
+                  <td className="px-2 lg:px-4 py-2 lg:py-3">
+                    <p className="text-[12px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>0123456789</p>
+                  </td>
+                  <td className="hidden lg:table-cell px-4 py-3">
+                    <p className="text-[13px]" style={{ color: "var(--kk-ink)" }}>A-12-05</p>
+                  </td>
+                  <td className="px-2 lg:px-4 py-2 lg:py-3">
+                    <p className="text-[13px]" style={{ color: "var(--kk-ink)" }}>Agile Mont Kiara</p>
+                  </td>
+                  <td className="px-2 lg:px-4 py-2 lg:py-3">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)", border: "1px solid var(--kk-line)" }}>Sample</span>
+                  </td>
+                  <td className="hidden lg:table-cell px-4 py-3">
+                    <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                  </td>
+                  <td className="sticky right-0 lg:static px-2 lg:px-4 py-2 lg:py-3" style={{ background: "var(--kk-surface)" }} />
+                </tr>
+              ) : visible.map((lead, i) => {
                 const status = getStatus(lead);
                 const isLast = i === visible.length - 1;
                 return (
@@ -727,16 +750,16 @@ export function OutreachTable({ leads }: Props) {
                       </span>
                     </td>
 
-                    {/* Action — hidden on mobile; tap the row to open detail */}
-                    <td className="hidden lg:table-cell px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    {/* Action — sticky on mobile so button is always visible */}
+                    <td className="sticky right-0 lg:static px-2 lg:px-4 py-2 lg:py-3 text-right" style={{ background: "var(--kk-surface)" }} onClick={(e) => e.stopPropagation()}>
                       {(status === "listed" || status === "rented") ? (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); router.push(`/leads?tab=pipeline&highlight=${lead.id}`); }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-opacity hover:opacity-80"
+                          onClick={(e) => { e.stopPropagation(); router.push(`/new-owners?tab=pipeline&highlight=${lead.id}`); }}
+                          className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-[12px] font-semibold transition-opacity hover:opacity-80"
                           style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
                         >
-                          Go to card
+                          <span className="hidden lg:inline">Go to card</span>
                           <ArrowRight className="w-3 h-3" />
                         </button>
                       ) : (
@@ -744,7 +767,7 @@ export function OutreachTable({ leads }: Props) {
                           type="button"
                           disabled={sending === lead.id}
                           onClick={(e) => handleSend(lead, e)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-[12px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
                           style={{ background: "#25D366", color: "#fff" }}
                         >
                           {sending === lead.id ? (
@@ -752,7 +775,7 @@ export function OutreachTable({ leads }: Props) {
                           ) : (
                             <WhatsAppIcon className="w-3 h-3" />
                           )}
-                          Send form
+                          <span className="hidden lg:inline">Send form</span>
                         </button>
                       )}
                     </td>
@@ -877,7 +900,7 @@ export function OutreachTable({ leads }: Props) {
 type PropertyStats = Record<string, { unsent: number; contacted: number; listed: number; rented: number; declined: number }>;
 
 const STAT_COLS: { key: keyof PropertyStats[string]; label: string }[] = [
-  { key: "unsent",    label: "Unsent"    },
+  { key: "unsent",    label: "Uncontacted" },
   { key: "contacted", label: "Contacted" },
   { key: "listed",    label: "Listed"    },
   { key: "rented",    label: "Rented"    },

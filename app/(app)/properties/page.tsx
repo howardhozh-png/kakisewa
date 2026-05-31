@@ -1,6 +1,6 @@
 import { getProperties, getTenancies } from "@/lib/db";
 import { removeProperty } from "@/lib/actions";
-import { Building2, X } from "lucide-react";
+import { Building2, Phone, X } from "lucide-react";
 import { AddPropertyDialog } from "@/components/add-property-dialog";
 import { PropertyDrawer } from "@/components/property-drawer";
 
@@ -30,18 +30,27 @@ export default async function PropertiesPage() {
       </header>
 
       {properties.length === 0 ? (
-        <div className="kk-section flex flex-col items-center justify-center gap-5 py-24 px-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center"
-            style={{ background: "var(--kk-surface-2)" }}
-          >
-            <Building2 className="w-6 h-6" style={{ color: "var(--kk-ink-mute)" }} />
-          </div>
-          <div className="text-center max-w-sm">
-            <p className="kk-h3" style={{ color: "var(--kk-ink)" }}>No properties yet</p>
-            <p className="mt-2 kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-              Add your first property to start collecting rent.
-            </p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div style={{ opacity: 0.55, pointerEvents: "none" }}>
+            <div className="kk-card p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}>
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-[15px] font-semibold leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.011em" }}>Agile Mont Kiara</p>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)", border: "1px solid var(--kk-line)" }}>Sample</span>
+                  </div>
+                  <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Unit A-12-05</p>
+                  <p className="text-[13px] mt-3 truncate" style={{ color: "var(--kk-ink-mute)" }}>Jalan Duta, Kuala Lumpur</p>
+                  <div className="flex items-center gap-4 mt-4 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+                    <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />Ahmad Hassan</span>
+                    <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" />1 tenant</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (

@@ -52,7 +52,7 @@ const STAGE_DEFS: StageInfo[] = [
     hint: "Track the tenancy in the Renew Old Money tab to protect your renewal income when the contract approaches expiry.",
     icon: Check,
     actionLabel: "View tenancies →",
-    actionHref: "/tenancies",
+    actionHref: "/existing-contracts",
   },
   {
     key: "own_stay",

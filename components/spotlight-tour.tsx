@@ -8,11 +8,15 @@ const STORAGE_KEY = "kk_tour_v1";
 export const TOUR_EVENT = "kk:open-tour";
 
 const OVERLAY_Z = 99990;
-const CARD_Z = OVERLAY_Z + 5;
+const CARD_Z = 100001; // above mobile menu (100000) so it's always on top
 const CARD_W = 340;
+const CARD_MAX_H = 420; // conservative upper bound for card height
 const NAV_H = 64;
 const PAD = 10; // padding around the spotlight cutout
 const CUTOUT_R = 12; // border-radius of the cutout
+// iOS Safari shows a ~84px bottom toolbar that overlaps fixed-position content.
+// We reserve extra space so the Next button is never hidden behind it.
+const BOTTOM_SAFE = 110;
 
 interface TourStep {
   targetId?: string;
@@ -61,7 +65,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "tour-btn-upload-csv",
-    href: "/leads?tab=outreach",
+    href: "/new-owners?tab=outreach",
     label: "Workflow 1 of 3",
     title: "Get new owners listed",
     Icon: Upload,
@@ -73,7 +77,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "kk-col-listed",
-    href: "/leads?tab=pipeline",
+    href: "/new-owners?tab=pipeline",
     label: "Workflow 2 of 3",
     title: "Send the tenant pack",
     Icon: Send,
@@ -85,7 +89,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "kk-col-headsup",
-    href: "/tenancies",
+    href: "/existing-contracts",
     label: "Workflow 3 of 3",
     title: "Renew and collect commission",
     Icon: RefreshCw,
@@ -125,16 +129,36 @@ export function SpotlightTour() {
   const findRect = useCallback(() => {
     const step = STEPS[stepIndex];
     if (!step.targetId) { setLinkRect(null); return; }
-    const el = document.getElementById(step.targetId);
-    if (!el) { setLinkRect(null); return; }
-    const r = el.getBoundingClientRect();
-    setLinkRect(r.width > 0 ? r : null);
+    // On mobile, nav items are hidden — try the -mobile ID first
+    const isMobile = window.innerWidth < 1024;
+    const ids = isMobile && step.targetId.startsWith("tour-nav-")
+      ? [step.targetId + "-mobile", step.targetId]
+      : [step.targetId];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width > 0) { setLinkRect(r); return; }
+    }
+    setLinkRect(null);
   }, [stepIndex]);
 
   // Navigate if needed, then find the element rect
   useEffect(() => {
     if (!visible) return;
     const step = STEPS[stepIndex];
+    const isMobile = window.innerWidth < 1024;
+    const isNavStep = !!step.targetId?.startsWith("tour-nav-");
+
+    // On mobile: open the hamburger menu so nav tabs are visible during nav steps
+    if (isMobile) {
+      if (isNavStep) {
+        document.dispatchEvent(new CustomEvent("kk:tour-open-menu"));
+      } else {
+        document.dispatchEvent(new CustomEvent("kk:tour-close-menu"));
+      }
+    }
+
     if (step.href) {
       const cur = window.location.pathname + window.location.search;
       if (cur !== step.href) {
@@ -169,16 +193,26 @@ export function SpotlightTour() {
     return () => clearTimeout(timer);
   }, [navigating, visible, findRect, stepIndex]);
 
-  // Lock body scroll while tour is open
+  // Lock body scroll while tour is open.
+  // iOS Safari ignores overflow:hidden on body; fixing position prevents scroll.
   useEffect(() => {
-    if (visible) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    if (!visible) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
   }, [visible]);
 
   function close() {
     setVisible(false);
     localStorage.setItem(STORAGE_KEY, "seen");
+    document.dispatchEvent(new CustomEvent("kk:tour-close-menu"));
   }
 
   function next() {
@@ -204,6 +238,9 @@ export function SpotlightTour() {
   const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
   const vh = typeof window !== "undefined" ? window.innerHeight : 900;
 
+  // Responsive card width — never overflow the viewport on small phones
+  const cardW = Math.min(CARD_W, vw - 32);
+
   // Cutout geometry (what we punch out of the overlay)
   const cutout = linkRect && linkRect.width > 0 ? {
     x: linkRect.left - PAD,
@@ -217,32 +254,47 @@ export function SpotlightTour() {
   let arrowDir: "up" | "down" | null = null;
   let arrowLeft: number | null = null;
 
+  // Max top that still keeps the full card above the iOS bottom chrome
+  const maxCardTop = Math.max(80, vh - CARD_MAX_H - BOTTOM_SAFE);
+
   if (cutout && linkRect) {
     const cx = linkRect.left + linkRect.width / 2;
     const visibleH = Math.min(linkRect.height, Math.max(0, vh - linkRect.top));
     const cutoutVisBottom = linkRect.top + visibleH + PAD;
 
     if (isNavStep) {
-      cardTop = NAV_H + 20;
+      // On mobile the nav items are inside the full-screen menu; place card at bottom so it doesn't cover the list.
+      // On desktop the nav is a top bar; place card just below it.
+      if (vw < 1024) {
+        cardTop = vh - CARD_MAX_H - BOTTOM_SAFE;
+      } else if (linkRect.top > vh * 0.5) {
+        cardTop = Math.max(80, linkRect.top - CARD_MAX_H - 20);
+      } else {
+        cardTop = NAV_H + 20;
+      }
     } else {
       const below = cutoutVisBottom + 12;
-      const above = linkRect.top - PAD - 12 - 300;
-      cardTop = below + 300 < vh ? below : Math.max(80, above);
+      const above = linkRect.top - PAD - 12 - CARD_MAX_H;
+      cardTop = below + CARD_MAX_H < vh - BOTTOM_SAFE ? below : Math.max(80, above);
     }
 
-    cardLeft = Math.max(16, Math.min(vw - CARD_W - 16, cx - CARD_W / 2));
+    // Never let the card bottom fall behind iOS browser chrome
+    cardTop = Math.min(cardTop, maxCardTop);
+    cardTop = Math.max(80, cardTop);
+
+    cardLeft = Math.max(16, Math.min(vw - cardW - 16, cx - cardW / 2));
     arrowDir = cardTop > cutoutVisBottom ? "up" : "down";
-    arrowLeft = Math.max(20, Math.min(CARD_W - 28, cx - cardLeft));
+    arrowLeft = Math.max(20, Math.min(cardW - 28, cx - cardLeft));
   } else {
-    cardTop = Math.max(80, Math.round(vh / 2 - 160));
-    cardLeft = Math.round((vw - CARD_W) / 2);
+    cardTop = Math.max(80, Math.min(maxCardTop, Math.round(vh / 2 - 160)));
+    cardLeft = Math.round((vw - cardW) / 2);
   }
 
   return (
     <>
       {/* SVG overlay: dark background with a transparent spotlight cutout */}
       <svg
-        style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", zIndex: OVERLAY_Z, pointerEvents: "none" }}
+        style={{ position: "fixed", inset: 0, width: "100vw", height: "100dvh", zIndex: OVERLAY_Z, pointerEvents: "none" }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
@@ -275,7 +327,7 @@ export function SpotlightTour() {
               position: "absolute",
               top: cardTop,
               left: cardLeft,
-              width: CARD_W,
+              width: cardW,
               background: "#fff",
               borderRadius: 22,
               boxShadow: "0 28px 72px rgba(0,0,0,0.32), 0 4px 16px rgba(0,0,0,0.12)",

@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { Tenancy, computeContractBucket, daysUntil } from "@/lib/types";
-import { buildExpiryPingTenant, buildExpiryPingOwner, updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl } from "@/lib/actions";
+import { buildExpiryPingTenant, buildExpiryPingOwner, updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2 } from "lucide-react";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -46,6 +46,7 @@ function TenancyForm({
   onUpdated: (updated: Partial<Tenancy>) => void;
 }) {
   const [pending, startTransition] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [photos, setPhotos] = useState<string[]>(tenancy.property?.photo_urls ?? []);
   const [agreementUrl, setAgreementUrl] = useState<string | null>(tenancy.agreement_url ?? null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -447,16 +448,34 @@ function TenancyForm({
         )}
       </div>
 
-      {/* Save / Cancel */}
-      <div className="flex justify-end gap-2 pt-1">
-        <button type="button" className="kk-pill kk-pill-ghost" onClick={onClose} disabled={pending}>
-          Cancel
-        </button>
-        <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
-          {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-          {pending ? "Saving…" : "Save details"}
-        </button>
-      </div>
+      {/* Save / Cancel / Delete */}
+      {confirmDelete ? (
+        <div className="flex items-center gap-2 pt-1 rounded-xl px-3 py-2" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+          <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Delete this tenancy permanently?</p>
+          <button type="button" className="kk-pill kk-pill-ghost text-[12px]" onClick={() => setConfirmDelete(false)} disabled={pending}>Cancel</button>
+          <button type="button" disabled={pending}
+            onClick={() => startTransition(async () => { await removeTenancy(tenancy.id); onClose(); })}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+            style={{ background: "#DC2626", color: "#fff" }}>
+            {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+            {pending ? "Deleting…" : "Yes, delete"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 pt-1">
+          <button type="button" onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-red-50"
+            style={{ color: "var(--kk-ink-faint)" }}>
+            <Trash2 className="w-3 h-3" />
+            Delete
+          </button>
+          <div className="flex-1" />
+          <button type="button" className="kk-pill kk-pill-ghost" onClick={onClose} disabled={pending}>Cancel</button>
+          <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
+            {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+            {pending ? "Saving…" : "Save details"}
+          </button>
+        </div>
+      )}
 
       {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
     </div>

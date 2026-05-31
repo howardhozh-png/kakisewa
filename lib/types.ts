@@ -144,11 +144,14 @@ export interface OwnerLead {
   created_at: string;
 }
 
+export type SubscriptionStatus = "trial" | "active" | "expired" | "cancelled";
+
 export interface AgentProfile {
   id: number;
   name?: string | null;
   phone?: string | null;
   agency?: string | null;
+  ren_number?: string | null;
   photo_url?: string | null;
   accent_color?: string | null;
   commission_pct?: number;       // % of one month's rent earned per signed tenancy. Default 100 (= 1 month rent)
@@ -162,6 +165,9 @@ export interface AgentProfile {
   last_login_date?: string | null;
   motivation_photo_url?: string | null;
   whatsapp_templates?: string | null;
+  trial_started_at?: string | null;
+  trial_ends_at?: string | null;
+  subscription_status?: SubscriptionStatus | null;
 }
 
 export interface PerformanceSummary {

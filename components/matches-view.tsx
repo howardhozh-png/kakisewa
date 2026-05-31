@@ -276,7 +276,7 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
                       <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_name}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/tenancies?open=${t.tenancy_id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link href={`/existing-contracts?open=${t.tenancy_id}`} onClick={(e) => e.stopPropagation()}>
                         <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
                       </Link>
                     </td>
@@ -453,7 +453,7 @@ function PropertyDetailDialog({
             Save changes
           </button>
           {lead.stage === "matched" && tenantInfo ? (
-            <Link href={`/tenancies?open=${tenantInfo.tenancy_id}`} onClick={onClose}
+            <Link href={`/existing-contracts?open=${tenantInfo.tenancy_id}`} onClick={onClose}
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl text-[13px] font-semibold"
               style={{ background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}>
               <Users className="w-4 h-4" />

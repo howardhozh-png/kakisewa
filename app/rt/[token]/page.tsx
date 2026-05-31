@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTenancyByTenantRenewalToken, getAgentProfile } from "@/lib/db";
-import db from "@/lib/db-client";
 import { TenantRenewalClient } from "./client";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +17,7 @@ export default async function TenantRenewalPage({ params }: Props) {
 
   if (!tenancy) return notFound();
 
-  const row = db
-    .prepare("SELECT tenant_renewal_completed_at FROM tenancies WHERE tenant_renewal_token=?")
-    .get(token) as { tenant_renewal_completed_at: string | null } | undefined;
-
-  if (row?.tenant_renewal_completed_at) {
+  if (tenancy.tenant_renewal_completed_at) {
     return (
       <div
         className="flex flex-col items-center justify-center h-dvh px-6 text-center gap-4"

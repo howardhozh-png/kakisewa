@@ -17,10 +17,12 @@ import {
   getOwnerLeads,
   updateOwnerLead,
   getOwnerLead,
+  deleteOwnerLead,
   createTenantProfile,
   getTenantProfileByPhone,
   getTenantProfileByPhoneAndName,
   updateTenantProfile,
+  deleteTenantProfile,
   getOrCreateMatchPack,
   addTenantToPack,
   removeTenantFromPack,
@@ -73,6 +75,7 @@ export async function addProperty(formData: FormData) {
 export async function removeProperty(id: string) {
   await deleteProperty(id);
   revalidatePath("/properties");
+  revalidatePath("/directory");
   revalidatePath("/");
 }
 
@@ -149,14 +152,37 @@ export async function addTenancy(formData: FormData) {
     }
   }
 
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/tenants");
   revalidatePath("/");
 }
 
 export async function removeTenancy(id: string) {
+  // Also delete the linked owner_lead (if it's in "matched" stage — it lives in the Rented column)
+  try {
+    const tenancy = await getTenancy(id);
+    if (tenancy?.owner_lead_id) {
+      const lead = await getOwnerLead(tenancy.owner_lead_id);
+      if (lead && lead.stage === "matched") {
+        await deleteOwnerLead(tenancy.owner_lead_id);
+      }
+    }
+  } catch { /* non-critical */ }
   await deleteTenancy(id);
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
+  revalidatePath("/new-owners");
+  revalidatePath("/");
+}
+
+export async function removeOwnerLead(id: string) {
+  await deleteOwnerLead(id);
+  revalidatePath("/new-owners");
+  revalidatePath("/");
+}
+
+export async function removeTenantProfile(id: string) {
+  await deleteTenantProfile(id);
+  revalidatePath("/directory");
   revalidatePath("/");
 }
 
@@ -208,7 +234,7 @@ export async function updateTenancyContract(
     }
 
     await updateTenancy(id, updates);
-    revalidatePath("/tenancies");
+    revalidatePath("/existing-contracts");
     revalidatePath("/");
     return { ok: true, message: "Contract updated" };
   } catch {
@@ -222,7 +248,7 @@ export async function updateTenancyBasicInfo(
 ): Promise<{ ok: boolean; message: string }> {
   try {
     await updateTenancy(id, data);
-    revalidatePath("/tenancies");
+    revalidatePath("/existing-contracts");
     revalidatePath("/");
     return { ok: true, message: "Tenancy updated" };
   } catch {
@@ -232,7 +258,7 @@ export async function updateTenancyBasicInfo(
 
 export async function markReminderSent(id: string) {
   await updateTenancy(id, { status: "Reminder Sent" });
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/");
 }
 
@@ -251,7 +277,7 @@ export async function advanceTenancyStatus(id: string, target: Tenancy["status"]
   }
 
   await updateTenancy(id, updates);
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/");
   return { ok: true, message: `Moved to ${target}.` };
 }
@@ -300,14 +326,14 @@ export async function setActionStage(id: string, target: ActionStage) {
   }
 
   await updateTenancy(id, updates);
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/");
   return { ok: true, message: `Moved to ${stageLabel(target)}.` };
 }
 
 export async function markForwardedToOwner(id: string) {
   await updateTenancy(id, { forwarded_at: new Date().toISOString() });
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/");
 }
 
@@ -380,8 +406,8 @@ export async function setLifecycleStage(id: string, target: LifecycleStage) {
   }
 
   await updateTenancy(id, updates);
-  revalidatePath("/tenancies");
-  revalidatePath("/leads");
+  revalidatePath("/existing-contracts");
+  revalidatePath("/new-owners");
   return { ok: true, message: `Moved to ${target}.` };
 }
 
@@ -394,7 +420,7 @@ export async function setReplyChip(
   if (who === "tenant") updates.replied_tenant = state;
   else                  updates.replied_owner  = state;
   await updateTenancy(id, updates);
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   return { ok: true };
 }
 
@@ -471,7 +497,7 @@ export async function collectRenewalCommission(
       notes: `Renewal — new end ${opts.newContractEnd}`,
     });
 
-    revalidatePath("/tenancies");
+    revalidatePath("/existing-contracts");
     revalidatePath("/performance");
     revalidatePath("/");
     return { ok: true, message: "Commission recorded — tenancy restarted." };
@@ -513,8 +539,8 @@ export async function moveTenantLeaving(
     }
 
     await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "tenant_leaving" });
-    revalidatePath("/tenancies");
-    revalidatePath("/leads");
+    revalidatePath("/existing-contracts");
+    revalidatePath("/new-owners");
     revalidatePath("/");
     return { ok: true, message: "New listing created and tenancy archived." };
   } catch (e) {
@@ -568,8 +594,8 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     }
 
     await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "owner_leaving" });
-    revalidatePath("/tenancies");
-    revalidatePath("/leads");
+    revalidatePath("/existing-contracts");
+    revalidatePath("/new-owners");
     revalidatePath("/tenants");
     revalidatePath("/");
     return { ok: true, message: "Owner lead created, tenant marked as seeking, tenancy archived." };
@@ -666,7 +692,7 @@ export async function peekOwnerIntakeUrl(ownerLeadId: string): Promise<{ ok: boo
 
 export async function setOwnerLeadStage(id: string, stage: import("./types").OwnerLead["stage"]) {
   await updateOwnerLead(id, { stage });
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   return { ok: true, message: `Moved to ${stage.replace("_", " ")}.` };
 }
 
@@ -674,7 +700,7 @@ export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./type
   for (const id of ids) {
     await updateOwnerLead(id, { stage });
   }
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   return { ok: true };
 }
 
@@ -686,7 +712,7 @@ export async function bulkMarkOwnerLeadsContacted(ids: string[]) {
     await incrementOwnerOutreachCount(lead.id);
     await updateOwnerLead(lead.id, { intake_sent_at: now });
   }
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   return { ok: true };
 }
 
@@ -758,8 +784,8 @@ export async function convertLeadToTenancy(
 
     await updateOwnerLead(ownerLeadId, { stage: "matched" });
 
-    revalidatePath("/leads");
-    revalidatePath("/tenancies");
+    revalidatePath("/new-owners");
+    revalidatePath("/existing-contracts");
     revalidatePath("/");
     return { ok: true, message: "Tenancy created and lead marked as Matched." };
   } catch (e) {
@@ -859,7 +885,7 @@ export async function updateOwnerLeadDetails(
     promoted = true;
   }
 
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   revalidatePath("/matching");
   return {
     ok: true,
@@ -921,7 +947,7 @@ Reply here or I can send you a quick form — takes about 2 minutes 🙏
   if (template === "outreach_initial") {
     await updateOwnerLead(id, { intake_sent_at: new Date().toISOString() });
   }
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   return { ok: true, url: out.url, message: "Message ready" };
 }
 
@@ -1029,7 +1055,7 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
     });
   }
 
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   return {
     ok: valid.length > 0,
     imported: valid.length,
@@ -1078,7 +1104,7 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
     body,
   });
   await incrementOwnerOutreachCount(ownerLeadId);
-  revalidatePath("/leads");
+  revalidatePath("/new-owners");
   return { ok: true, url, waUrl: out.url, message: "Intake form link ready" };
 }
 
@@ -1177,7 +1203,7 @@ export async function addOwnerLeadAction(data: {
       available_from: null,
       tenant_preferences: null,
     });
-    revalidatePath("/leads");
+    revalidatePath("/new-owners");
     return { ok: true, id: lead.id };
   } catch (e) {
     return { ok: false, message: String(e) };
@@ -1263,7 +1289,7 @@ export async function submitReceiptUpload(
     status: "Paid - Pending Verification",
   });
 
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/");
   return { ok: true, message: "Receipt received. Your agent will verify it shortly." };
 }
@@ -1289,7 +1315,7 @@ export async function runAiVerification(
       status: "Verified",
       last_paid_month: format(new Date(), "MMMM yyyy"),
     });
-    revalidatePath("/tenancies");
+    revalidatePath("/existing-contracts");
     revalidatePath("/");
   }
 
@@ -1314,7 +1340,7 @@ export async function generateLhdn(
   });
 
   await updateTenancy(tenancyId, { lhdn_status: "generated" });
-  revalidatePath("/tenancies");
+  revalidatePath("/existing-contracts");
   revalidatePath("/");
 
   return { ok: true, xml, message: "e-Invois generated." };
@@ -1346,8 +1372,8 @@ export async function markCommissionCollected(
       }
     }
     await updateTenancy(tenancyId, { lifecycle_stage: "active" });
-    revalidatePath("/leads");
-    revalidatePath("/tenancies");
+    revalidatePath("/new-owners");
+    revalidatePath("/existing-contracts");
     revalidatePath("/");
     revalidatePath("/performance");
     return { ok: true };
@@ -1412,7 +1438,7 @@ export async function removeSupportContact(id: string): Promise<{ ok: boolean }>
 }
 
 export async function bumpStreak(): Promise<{ streak: number }> {
-  const streak = bumpLoginStreak();
+  const streak = await bumpLoginStreak();
   revalidatePath("/", "layout");
   return { streak };
 }

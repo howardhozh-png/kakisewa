@@ -12,8 +12,8 @@ interface Props {
 export function LeadsSubNav({ tab, outreachCount, pipelineCount }: Props) {
   return (
     <div className="mb-8 flex items-center gap-1 border-b overflow-x-auto" style={{ borderColor: "var(--kk-line)" }}>
-      <Tab href="/leads?tab=outreach" label="Outreach"     count={outreachCount} active={tab === "outreach"} />
-      <Tab href="/leads?tab=pipeline" label="Active Deals" count={pipelineCount}  active={tab === "pipeline"} />
+      <Tab href="/new-owners?tab=outreach" label="Outreach"     count={outreachCount} active={tab === "outreach"} />
+      <Tab href="/new-owners?tab=pipeline" label="Active Deals" count={pipelineCount}  active={tab === "pipeline"} />
     </div>
   );
 }

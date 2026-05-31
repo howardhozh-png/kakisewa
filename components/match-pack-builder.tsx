@@ -1019,19 +1019,23 @@ function ManualEntryContent({ packId, onAdded }: {
   function handleSave() {
     if (!name.trim()) return toast.error("Name is required");
     startTransition(async () => {
-      const res = await quickAddTenantToPack(packId, {
-        name: name.trim(), phone: phone || null,
-        age: age ? parseInt(age, 10) : null, occupation: occupation || null,
-        nationality: nationality || null, monthly_income: income ? parseFloat(income) : null,
-        budget_max: budget ? parseFloat(budget) : null, bedrooms_pref: beds ? parseInt(beds, 10) : null,
-        preferred_move_in: moveIn || null, occupants: occupants ? parseInt(occupants, 10) : null,
-        pets: pets ? 1 : 0, smoking: smoking ? 1 : 0, notes: notes || null, source: "manual",
-      });
-      if (res.ok) {
-        onAdded(res.tenant);
-        toast.success(`${res.tenant.name} added to pack`);
-      } else {
-        toast.error("Could not add");
+      try {
+        const res = await quickAddTenantToPack(packId, {
+          name: name.trim(), phone: phone || null,
+          age: age ? parseInt(age, 10) : null, occupation: occupation || null,
+          nationality: nationality || null, monthly_income: income ? parseFloat(income) : null,
+          budget_max: budget ? parseFloat(budget) : null, bedrooms_pref: beds ? parseInt(beds, 10) : null,
+          preferred_move_in: moveIn || null, occupants: occupants ? parseInt(occupants, 10) : null,
+          pets: pets ? 1 : 0, smoking: smoking ? 1 : 0, notes: notes || null, source: "manual",
+        });
+        if (res.ok) {
+          onAdded(res.tenant);
+          toast.success(`${res.tenant.name} added to pack`);
+        } else {
+          toast.error("Could not add tenant");
+        }
+      } catch {
+        toast.error("Could not add tenant — please try again");
       }
     });
   }

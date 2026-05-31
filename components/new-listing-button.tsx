@@ -111,8 +111,13 @@ export function NewListingButton() {
   }
 
   function handleSave() {
-    if (!form.owner_name.trim()) { toast.error("Owner name is required"); return; }
-    if (!form.owner_phone.trim()) { toast.error("Phone number is required"); return; }
+    if (!form.owner_name.trim())    { toast.error("Owner name is required"); return; }
+    if (!form.owner_phone.trim())   { toast.error("Phone number is required"); return; }
+    if (!form.property_name.trim()) { toast.error("Property name is required"); return; }
+    if (!form.unit.trim())          { toast.error("Unit number is required"); return; }
+    if (!form.expected_rent.trim()) { toast.error("Expected rent is required"); return; }
+    if (!form.bedrooms.trim())      { toast.error("Bedrooms is required"); return; }
+    if (!form.bathrooms.trim())     { toast.error("Bathrooms is required"); return; }
 
     startTransition(async () => {
       const res = await addOwnerLeadAction({
@@ -313,7 +318,7 @@ export function NewListingButton() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>
-                    Property name
+                    Property name <span style={{ color: "var(--kk-red)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -326,7 +331,7 @@ export function NewListingButton() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>
-                    Unit number
+                    Unit number <span style={{ color: "var(--kk-red)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -339,7 +344,7 @@ export function NewListingButton() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>
-                    Expected rent (RM/mo)
+                    Expected rent (RM/mo) <span style={{ color: "var(--kk-red)" }}>*</span>
                   </label>
                   <MoneyInput
                     value={form.expected_rent}
@@ -352,7 +357,7 @@ export function NewListingButton() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>
-                      Bedrooms
+                      Bedrooms <span style={{ color: "var(--kk-red)" }}>*</span>
                     </label>
                     <input
                       type="number"
@@ -366,7 +371,7 @@ export function NewListingButton() {
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>
-                      Bathrooms
+                      Bathrooms <span style={{ color: "var(--kk-red)" }}>*</span>
                     </label>
                     <input
                       type="number"

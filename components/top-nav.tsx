@@ -6,7 +6,7 @@ import { useRef, useState, useEffect, useTransition } from "react";
 import { Logo } from "@/components/logo";
 import { BetaCountdown } from "@/components/beta-countdown";
 import { cn } from "@/lib/utils";
-import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass } from "lucide-react";
+import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
 import { THEMES, getTheme, type Theme } from "@/components/accent-provider";
 import { AgentProfile } from "@/lib/types";
@@ -16,9 +16,9 @@ import { toast } from "sonner";
 
 const NAV = [
   { href: "/home",        label: "Home",               matchPaths: ["/home"],                                             tourId: "tour-nav-home" },
-  { href: "/leads",       label: "New Owners",         matchPaths: ["/leads"],                                            tourId: "tour-nav-new-owners" },
-  { href: "/tenancies",   label: "Existing Contracts", matchPaths: ["/tenancies"],                                        tourId: "tour-nav-contracts" },
-  { href: "/network",     label: "Directory",          matchPaths: ["/network", "/database", "/supports", "/tenants"],    tourId: "tour-nav-directory" },
+  { href: "/new-owners",       label: "New Owners",         matchPaths: ["/new-owners", "/leads"],                                       tourId: "tour-nav-new-owners" },
+  { href: "/existing-contracts",   label: "Existing Contracts", matchPaths: ["/existing-contracts", "/tenancies"],                     tourId: "tour-nav-contracts" },
+  { href: "/directory",     label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], tourId: "tour-nav-directory" },
   { href: "/performance", label: "Performance",        matchPaths: ["/performance"],                                      tourId: "tour-nav-performance" },
 ];
 
@@ -30,7 +30,7 @@ function initials(name?: string | null): string {
 }
 
 // ── Modal overlay wrapper ─────────────────────────────────────────────────────
-function Modal({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+function Modal({ onClose, children, wide }: { onClose: () => void; children: React.ReactNode; wide?: boolean }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
@@ -45,7 +45,7 @@ function Modal({ onClose, children }: { onClose: () => void; children: React.Rea
     >
       <div
         className="relative w-full bg-white rounded-3xl shadow-2xl overflow-hidden"
-        style={{ maxWidth: 520, maxHeight: "90vh", overflowY: "auto", border: "1px solid var(--kk-line)" }}
+        style={{ maxWidth: wide ? 780 : 520, maxHeight: "90vh", overflowY: "auto", border: "1px solid var(--kk-line)" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <button
@@ -221,22 +221,33 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
           <div className="flex gap-2">
             <div className="flex-1">
               <p className="kk-overline mb-1.5">First name</p>
-              <input type="text" value={first} onChange={(e) => setFirst(e.target.value)} placeholder="e.g. Howard" style={INPUT_STYLE} />
+              <input type="text" value={first} onChange={(e) => setFirst(e.target.value)} placeholder="e.g. Kakisewa" style={INPUT_STYLE} />
             </div>
             <div className="flex-1">
               <p className="kk-overline mb-1.5">Last name</p>
-              <input type="text" value={last} onChange={(e) => setLast(e.target.value)} placeholder="e.g. Ho" style={INPUT_STYLE} />
+              <input type="text" value={last} onChange={(e) => setLast(e.target.value)} placeholder="e.g. Agent" style={INPUT_STYLE} />
             </div>
           </div>
           <div>
             <p className="kk-overline mb-1.5">WhatsApp / phone</p>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 60107609699" style={INPUT_STYLE} />
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
             <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Used as sender in WhatsApp message templates.</p>
           </div>
           <div>
             <p className="kk-overline mb-1.5">Agency / company</p>
-            <input type="text" value={agency} onChange={(e) => setAgency(e.target.value)} placeholder="e.g. Wonders Property" style={INPUT_STYLE} />
+            <input type="text" value={agency} onChange={(e) => setAgency(e.target.value)} placeholder="e.g. Kakisewa Property" style={INPUT_STYLE} />
           </div>
+          {agent.ren_number && (
+            <div>
+              <p className="kk-overline mb-1.5">REN number</p>
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px]"
+                style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
+                <span className="flex-1">{agent.ren_number}</span>
+                <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md" style={{ background: "var(--kk-green-soft)", color: "var(--kk-green)" }}>Verified</span>
+              </div>
+              <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Contact support to update your REN number.</p>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -269,98 +280,203 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
 }
 
 // ── Subscription modal ────────────────────────────────────────────────────────
-const SOLO_FEATURES = [
-  "Up to 30 active tenancies",
-  "Renewal lifecycle board",
-  "WhatsApp check-in templates",
-  "Commission & performance tracking",
-  "CSV bulk import",
-];
 
-const PRO_FEATURES = [
-  "Unlimited properties & tenancies",
-  "Everything in Solo, plus:",
-  "Make new money pipeline",
-  "Owner & tenant intake forms",
-  "Tenant matching & share packs",
-  "AI-powered receipt verification",
-  "Priority support",
-];
+// Credit-card-inspired gradients
+const TIER_STYLES = {
+  Silver: {
+    bg: "linear-gradient(145deg, #f5f5f5 0%, #e2e2e2 35%, #ececec 60%, #d0d0d0 100%)",
+    shine: "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 50%)",
+    ring: "0 0 0 2px #b0b0b0, 0 8px 32px rgba(0,0,0,0.12)",
+    ink: "#1a1a1a",
+    mute: "#555",
+    faint: "#888",
+    badge: { bg: "#d8d8d8", ink: "#444" },
+    cta: { bg: "#1a1a1a", ink: "#fff" },
+    plus: "#3a7a5a",
+    check: "#3a7a5a",
+    roiBg: "rgba(0,0,0,0.05)",
+    roiBorder: "rgba(0,0,0,0.08)",
+    roiInk: "#555",
+    roiGreen: "#1F8B4C",
+    current: false,
+  },
+  Platinum: {
+    bg: "linear-gradient(145deg, #0b1f4a 0%, #1a3464 35%, #152a56 65%, #0a1a3c 100%)",
+    shine: "linear-gradient(135deg, rgba(100,160,255,0.18) 0%, rgba(255,255,255,0) 55%)",
+    ring: "0 0 0 2.5px #3d6cbf, 0 8px 32px rgba(26,52,100,0.45)",
+    ink: "#ffffff",
+    mute: "rgba(255,255,255,0.65)",
+    faint: "rgba(255,255,255,0.4)",
+    badge: { bg: "rgba(255,255,255,0.12)", ink: "rgba(255,255,255,0.7)" },
+    cta: { bg: "rgba(255,255,255,0.15)", ink: "#fff" },
+    plus: "#7dd3fc",
+    check: "rgba(255,255,255,0.5)",
+    roiBg: "rgba(255,255,255,0.07)",
+    roiBorder: "rgba(255,255,255,0.12)",
+    roiInk: "rgba(255,255,255,0.6)",
+    roiGreen: "#7dd3fc",
+    current: false,
+  },
+  Elite: {
+    bg: "linear-gradient(145deg, #6b3d1e 0%, #a8692e 25%, #c98840 50%, #9a5e28 75%, #5c3015 100%)",
+    shine: "linear-gradient(135deg, rgba(255,210,140,0.18) 0%, rgba(255,255,255,0) 50%)",
+    ring: "0 0 0 2.5px #d4a96a, 0 8px 40px rgba(139,94,60,0.55)",
+    ink: "#fff8f0",
+    mute: "rgba(255,240,210,0.75)",
+    faint: "rgba(255,230,190,0.5)",
+    badge: { bg: "rgba(255,220,160,0.2)", ink: "rgba(255,230,190,0.9)" },
+    cta: { bg: "rgba(255,240,210,0.18)", ink: "#fff8f0" },
+    plus: "#fde68a",
+    check: "rgba(255,240,200,0.55)",
+    roiBg: "rgba(0,0,0,0.12)",
+    roiBorder: "rgba(255,220,160,0.2)",
+    roiInk: "rgba(255,230,200,0.75)",
+    roiGreen: "#fde68a",
+    current: false,
+  },
+};
 
-function PlanCard({
-  name, price, features, current, accent,
-}: {
-  name: string;
-  price: string;
-  features: string[];
-  current?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className="flex-1 rounded-2xl p-4 flex flex-col gap-3"
-      style={{
-        background: accent ? "var(--kk-ink)" : "var(--kk-surface-2)",
-        border: accent ? "none" : "1px solid var(--kk-line)",
-        position: "relative",
-      }}
-    >
-      {current && (
-        <span
-          className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-          style={{ background: accent ? "rgba(255,255,255,0.18)" : "var(--kk-green-soft)", color: accent ? "#fff" : "#1F8B4C" }}
-        >
-          current
-        </span>
-      )}
-      <div>
-        <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: accent ? "rgba(255,255,255,0.55)" : "var(--kk-ink-faint)" }}>{name}</p>
-        <p className="text-[24px] font-bold tabular-nums mt-0.5" style={{ color: accent ? "#fff" : "var(--kk-ink)", letterSpacing: "-0.02em" }}>
-          {price}<span className="text-[13px] font-normal opacity-60 ml-1">/mo</span>
-        </p>
-      </div>
-      <ul className="space-y-1.5 flex-1">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-2">
-            <Check className="w-3 h-3 mt-0.5 shrink-0" style={{ color: accent ? "rgba(255,255,255,0.6)" : "var(--kk-green)" }} />
-            <span className="text-[12px] leading-snug" style={{ color: accent ? "rgba(255,255,255,0.8)" : "var(--kk-ink)", fontStyle: f === "Everything in Solo, plus:" ? "italic" : "normal", opacity: f === "Everything in Solo, plus:" ? 0.6 : 1 }}>
-              {f}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+const TIER_DATA = [
+  {
+    name: "Silver" as const,
+    price: "RM 198",
+    roiMonths: "10 months",
+    features: [
+      { label: "New Owners pipeline", plus: false },
+      { label: "Owner & tenant intake forms", plus: false },
+      { label: "WhatsApp outreach templates", plus: false },
+      { label: "CSV bulk import", plus: false },
+    ],
+  },
+  {
+    name: "Platinum" as const,
+    price: "RM 398",
+    roiMonths: "5 months",
+    features: [
+      { label: "Everything in Silver, plus:", italic: true },
+      { label: "Existing Contracts board", plus: true },
+      { label: "Renewal lifecycle tracking", plus: true },
+      { label: "Contract expiry alerts", plus: true },
+    ],
+  },
+  {
+    name: "Elite" as const,
+    price: "RM 498",
+    roiMonths: "4 months",
+    features: [
+      { label: "Everything in Platinum, plus:", italic: true },
+      { label: "Directory & support contacts", plus: true },
+      { label: "Performance dashboard", plus: true },
+      { label: "Analytics (coming soon)", plus: true },
+    ],
+  },
+];
 
 function BillingModal() {
+  // Current tier = trial (highlighted ring on Elite showing what trial unlocks)
+  const currentTier = "trial";
+
   return (
     <>
-      <div className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "var(--kk-line)" }}>
-        <p className="kk-overline mb-0.5">Settings</p>
-        <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Subscription</p>
+      <div className="px-7 pt-5 pb-4 border-b" style={{ borderColor: "var(--kk-line)" }}>
+        <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Subscription plan</p>
       </div>
-      <div className="px-6 py-5 space-y-4">
-        <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
-          You're on the <strong style={{ color: "var(--kk-ink)" }}>beta plan</strong>. All features unlocked until launch. Billing activates at public release.
-        </p>
+      <div className="px-7 py-5 space-y-5">
+
+        {/* ROI callout — top, shared */}
+        <div className="rounded-2xl px-5 py-4" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+          <p className="text-[12px] font-medium mb-3" style={{ color: "var(--kk-ink-mute)" }}>
+            Capture just <strong style={{ color: "var(--kk-ink)" }}>1 missed renewal at RM2,000</strong> means kakisewa is…
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            {TIER_DATA.map((t) => (
+              <div key={t.name} className="text-center">
+                <p className="text-[11px] font-bold uppercase tracking-wide mb-0.5" style={{ color: "var(--kk-ink-faint)" }}>{t.name}</p>
+                <p className="text-[18px] font-bold tabular-nums leading-none" style={{ color: "var(--kk-green)", letterSpacing: "-0.02em" }}>{t.roiMonths} free</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Plan cards */}
-        <div className="flex gap-3">
-          <PlanCard name="Solo" price="RM 79" features={SOLO_FEATURES} />
-          <PlanCard name="Pro" price="RM 199" features={PRO_FEATURES} accent current />
+        <div className="grid grid-cols-3 gap-3" style={{ position: "relative" }}>
+          {/* Free trial badge above Elite */}
+          <div className="absolute -top-3 right-0 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold"
+            style={{ background: "linear-gradient(90deg, #1F8B4C, #22c55e)", color: "#fff", boxShadow: "0 2px 8px rgba(34,197,94,0.4)" }}>
+            <Check className="w-3 h-3" />
+            Trial active · 7 days
+          </div>
+
+          {TIER_DATA.map((t) => {
+            const s = TIER_STYLES[t.name];
+            const isTrial = currentTier === "trial" && t.name === "Elite";
+            return (
+              <div key={t.name} className="rounded-2xl p-5 flex flex-col gap-4 overflow-hidden"
+                style={{
+                  background: s.bg,
+                  boxShadow: isTrial ? s.ring : "0 4px 16px rgba(0,0,0,0.10)",
+                  position: "relative",
+                }}
+              >
+                {/* Shine overlay */}
+                <div style={{
+                  position: "absolute", inset: 0, borderRadius: 16, pointerEvents: "none",
+                  background: s.shine,
+                }} />
+
+                {/* Header */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: s.faint }}>
+                    {t.name}
+                  </p>
+                  <p className="text-[26px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
+                    {t.price}
+                  </p>
+                  <p className="text-[11px] mt-1" style={{ color: s.mute }}>/month</p>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-2.5 flex-1">
+                  {t.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      {!("italic" in f && f.italic) && (
+                        <span className="text-[12px] font-bold shrink-0 mt-px leading-none"
+                          style={{ color: ("plus" in f && f.plus) ? s.plus : s.check }}>
+                          {("plus" in f && f.plus) ? "+" : "✓"}
+                        </span>
+                      )}
+                      <span className="text-[12.5px] leading-snug"
+                        style={{
+                          color: ("italic" in f && f.italic) ? s.faint : s.ink,
+                          fontStyle: ("italic" in f && f.italic) ? "italic" : "normal",
+                          fontWeight: ("plus" in f && f.plus) ? 600 : 400,
+                        }}>
+                        {f.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <button disabled
+                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold cursor-not-allowed transition-opacity"
+                  style={{
+                    background: s.cta.bg,
+                    color: s.cta.ink,
+                    border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.15)"}`,
+                    opacity: 0.5,
+                    backdropFilter: "blur(4px)",
+                  }}>
+                  Choose <strong>{t.name}</strong>
+                </button>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Payment */}
-        <div className="space-y-2 pt-1">
-          <button disabled className="w-full py-2.5 rounded-xl font-semibold text-[14px] opacity-40 cursor-not-allowed" style={{ background: "var(--kk-ink)", color: "#fff" }}>
-            Pay with Card (Stripe), coming soon
-          </button>
-          <button disabled className="w-full py-2.5 rounded-xl font-semibold text-[14px] opacity-40 cursor-not-allowed" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}>
-            Pay via FPX (Billplz), coming soon
-          </button>
-          <p className="text-[11px] text-center" style={{ color: "var(--kk-ink-faint)" }}>Cancel anytime. No lock-in.</p>
-        </div>
+        <p className="text-[11px] text-center" style={{ color: "var(--kk-ink-faint)" }}>
+          Stripe & FPX payments coming soon · Cancel anytime · No lock-in
+        </p>
       </div>
     </>
   );
@@ -436,11 +552,12 @@ function SupportModal() {
 // ── TopNav ────────────────────────────────────────────────────────────────────
 interface TopNavProps {
   agent: AgentProfile;
+  isAdmin?: boolean;
 }
 
 type ActiveModal = "account" | "billing" | "support" | null;
 
-export function TopNav({ agent }: TopNavProps) {
+export function TopNav({ agent, isAdmin }: TopNavProps) {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -456,9 +573,23 @@ export function TopNav({ agent }: TopNavProps) {
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const [tourMenuActive, setTourMenuActive] = useState(false);
+
   useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [path]);
+    if (!tourMenuActive) setMobileMenuOpen(false);
+  }, [path, tourMenuActive]);
+
+  // Tour can open/close the mobile menu to reveal nav items
+  useEffect(() => {
+    function onTourOpenMenu() { setTourMenuActive(true); setMobileMenuOpen(true); }
+    function onTourCloseMenu() { setTourMenuActive(false); setMobileMenuOpen(false); }
+    document.addEventListener("kk:tour-open-menu", onTourOpenMenu);
+    document.addEventListener("kk:tour-close-menu", onTourCloseMenu);
+    return () => {
+      document.removeEventListener("kk:tour-open-menu", onTourOpenMenu);
+      document.removeEventListener("kk:tour-close-menu", onTourCloseMenu);
+    };
+  }, []);
 
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
@@ -528,8 +659,9 @@ export function TopNav({ agent }: TopNavProps) {
     { icon: User,        label: "Account settings", action: () => openModal("account") },
     { icon: CreditCard,  label: "Subscription",     action: () => openModal("billing") },
     { icon: HelpCircle,  label: "Help & support",   action: () => openModal("support") },
+    ...(isAdmin ? [{ divider: true }, { icon: ShieldCheck, label: "Admin dashboard", action: () => { setMenuOpen(false); router.push("/admin"); } }] : []),
     { divider: true },
-    { icon: LogOut,      label: "Sign out", danger: true, action: () => { setMenuOpen(false); router.push("/sign-in"); } },
+    { icon: LogOut,      label: "Sign out", danger: true, action: () => { setMenuOpen(false); router.push("/auth/signout"); } },
   ];
 
   return (
@@ -706,7 +838,7 @@ export function TopNav({ agent }: TopNavProps) {
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[99990] lg:hidden flex flex-col" style={{ background: "var(--kk-topnav-bg)" }}>
+        <div className="fixed inset-0 lg:hidden flex flex-col" style={{ zIndex: tourMenuActive ? 100000 : 99990, background: "var(--kk-topnav-bg)" }}>
           {/* Top row */}
           <div className="flex items-center justify-between h-16 px-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
             <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5" style={{ color: "var(--kk-topnav-ink)" }}>
@@ -738,7 +870,8 @@ export function TopNav({ agent }: TopNavProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    id={item.tourId + "-mobile"}
+                    onClick={() => { if (!tourMenuActive) setMobileMenuOpen(false); }}
                     className="flex items-center px-4 h-12 rounded-2xl text-[15px] font-medium"
                     style={{
                       background: active ? "var(--kk-accent)" : "transparent",
@@ -815,7 +948,7 @@ export function TopNav({ agent }: TopNavProps) {
         </Modal>
       )}
       {activeModal === "billing" && (
-        <Modal onClose={() => setActiveModal(null)}>
+        <Modal onClose={() => setActiveModal(null)} wide>
           <BillingModal />
         </Modal>
       )}

@@ -6,9 +6,12 @@ const ADMIN_AGENT_ID = "dev_agent_howard"
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true
-  if (pathname === "/login" || pathname === "/signup") return true
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/sign-in" || pathname === "/sign-up") return true
+  if (pathname.startsWith("/auth/")) return true
   if (pathname.startsWith("/api/intake")) return true
   if (pathname.startsWith("/api/share")) return true
+  if (pathname.startsWith("/api/r/")) return true
+  if (pathname.startsWith("/terms") || pathname.startsWith("/privacy")) return true
   if (pathname.startsWith("/share")) return true
   if (pathname.startsWith("/pack")) return true
   return false
@@ -38,7 +41,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthPage = pathname === "/login" || pathname === "/signup"
+  const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/sign-in" || pathname === "/sign-up"
 
   if (!user && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone()

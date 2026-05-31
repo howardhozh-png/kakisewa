@@ -73,7 +73,9 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={name} className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>{label}</Label>
+      <Label htmlFor={name} className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
+        {label}{required && <span style={{ color: "var(--kk-red)" }}> *</span>}
+      </Label>
       <Input
         id={name}
         name={name}

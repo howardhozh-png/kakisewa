@@ -130,7 +130,7 @@ function ListedRow({ lead }: { lead: OwnerLead }) {
     <div
       className="flex items-center gap-3 px-5 py-3.5 kk-card-hover cursor-pointer"
       style={{ borderTop: "1px solid var(--kk-line)", transition: "transform 200ms cubic-bezier(0.32,0.72,0,1), box-shadow 200ms ease" }}
-      onClick={() => router.push(`/leads?highlight=${lead.id}`)}
+      onClick={() => router.push(`/new-owners?highlight=${lead.id}`)}
     >
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-semibold leading-tight" style={{ color: "var(--kk-ink)" }}>
@@ -218,7 +218,7 @@ function LeadsCol({ count }: { count: number }) {
 
   function followUp() {
     setFlashing(true);
-    setTimeout(() => router.push("/leads"), 600);
+    setTimeout(() => router.push("/new-owners"), 600);
   }
 
   return (
@@ -245,7 +245,7 @@ function LeadsCol({ count }: { count: number }) {
           </p>
         </div>
         <Link
-          href="/leads"
+          href="/new-owners"
           className="text-[12px] font-semibold flex items-center gap-1 shrink-0 mt-0.5"
           style={{ color: "var(--kk-ink-mute)" }}
         >
@@ -434,7 +434,7 @@ export function HomeDashboard({ expiring, agentName, leadsNeedingAttention, list
         <DashCol
           title="Contracts"
           count={sorted.length}
-          href="/tenancies"
+          href="/existing-contracts"
           subtitle={
             sorted.length === 0
               ? "No contracts expiring soon"
@@ -451,7 +451,7 @@ export function HomeDashboard({ expiring, agentName, leadsNeedingAttention, list
         <DashCol
           title="Listings"
           count={listedWithoutTenant.length}
-          href="/leads"
+          href="/new-owners"
           subtitle={
             listedWithoutTenant.length === 0
               ? "No open listings right now"

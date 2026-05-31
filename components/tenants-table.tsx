@@ -5,10 +5,10 @@ import Link from "next/link";
 import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import {
-  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home,
+  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { updateTenantProfileAction } from "@/lib/actions";
+import { updateTenantProfileAction, removeTenantProfile } from "@/lib/actions";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
 import { DateRangeFilter } from "@/components/date-range-filter";
@@ -30,6 +30,7 @@ const TH = "px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wid
 function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: () => void }) {
   const today = new Date().toISOString().split("T")[0];
   const [pending, startTransition]        = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName]                   = useState(profile.name);
   const [phone, setPhone]                 = useState(profile.phone ?? "");
   const [occupation, setOccupation]       = useState(profile.occupation ?? "");
@@ -143,16 +144,37 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
           </div>
         </div>
 
-        <div className="p-5 border-t" style={{ borderColor: "var(--kk-line)" }}>
-          <button
-            onClick={handleSave}
-            disabled={pending}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
-            style={{ background: "var(--kk-ink)", color: "#fff" }}
-          >
-            {pending && <Loader2 className="w-4 h-4 animate-spin" />}
-            Save changes
-          </button>
+        <div className="p-5 border-t space-y-2" style={{ borderColor: "var(--kk-line)" }}>
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+              <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Delete this tenant permanently?</p>
+              <button onClick={() => setConfirmDelete(false)} className="text-[12px] font-medium px-3 py-1.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
+              <button disabled={pending}
+                onClick={() => startTransition(async () => { await removeTenantProfile(profile.id); onClose(); })}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                style={{ background: "#DC2626", color: "#fff" }}>
+                {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                {pending ? "Deleting…" : "Yes, delete"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={pending}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
+                style={{ background: "var(--kk-ink)", color: "#fff" }}
+              >
+                {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save changes
+              </button>
+              <button onClick={() => setConfirmDelete(true)} className="flex items-center justify-center gap-2 w-full py-2 text-[13px] font-medium transition-colors hover:opacity-80"
+                style={{ color: "var(--kk-ink-faint)" }}>
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete tenant
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -225,7 +247,7 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
 
         <div className="p-5 border-t" style={{ borderColor: "var(--kk-line)" }}>
           <Link
-            href={`/tenancies?open=${t.tenancy_id}`}
+            href={`/existing-contracts?open=${t.tenancy_id}`}
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
             style={{ background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     await completeOwnerRenewalIntake(token, continuing, newRent, tenantIntent, newContractStart, durationYears);
-    revalidatePath("/tenancies");
+    revalidatePath("/existing-contracts");
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[intake/renewal/owner]", err);
