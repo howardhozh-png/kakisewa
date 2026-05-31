@@ -52,10 +52,7 @@ import {
 } from "./whatsapp";
 import { plansForStage } from "./lifecycle-templates";
 import { resolveTemplate, parseTemplateOverrides, type TemplateOverrides } from "./whatsapp-templates";
-
-const APP_URL = process.env.NODE_ENV === "development"
-  ? "http://localhost:3000"
-  : (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000");
+import { getBaseUrl } from "./origin";
 
 // ─── Properties ───────────────────────────────────────────────────────────────
 
@@ -344,7 +341,8 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
   if (!t || !t.contract_end) return null;
   const days = daysUntil(t.contract_end, new Date());
   const token = await generateTenantRenewalToken(tenancyId);
-  const formUrl = `${APP_URL}/rt/${token}`;
+  const siteUrl = await getBaseUrl();
+  const formUrl = `${siteUrl}/rt/${token}`;
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? undefined;
   const expiryWhen = days > 0
     ? `in ${days} day${days === 1 ? "" : "s"}`
@@ -610,7 +608,8 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
   if (!t || !t.contract_end || !t.property?.owner_phone) return null;
   const days = daysUntil(t.contract_end, new Date());
   const token = await generateOwnerRenewalToken(tenancyId);
-  const formUrl = `${APP_URL}/ro/${token}`;
+  const siteUrl = await getBaseUrl();
+  const formUrl = `${siteUrl}/ro/${token}`;
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? undefined;
   const expiryWhen = days > 0
     ? `in ${days} day${days === 1 ? "" : "s"}`
@@ -651,7 +650,8 @@ export async function bulkExportOwnerLeads(leadIds: string[]): Promise<{
   const agent = await getAgentProfile();
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? "";
   const company = agent.agency ?? "";
-  const samplePackUrl = `${APP_URL}/sample-tenant-pack`;
+  const siteUrl = await getBaseUrl();
+  const samplePackUrl = `${siteUrl}/sample-tenant-pack`;
 
   const rows: Array<{ name: string; number: string; property: string; unit: string; rent: string; link: string }> = [];
   for (const id of leadIds) {
@@ -664,7 +664,7 @@ export async function bulkExportOwnerLeads(leadIds: string[]): Promise<{
       property: lead.property_name ?? "",
       unit: lead.unit ?? "",
       rent: lead.expected_rent != null ? String(lead.expected_rent) : "",
-      link: `${APP_URL}/o/${token}`,
+      link: `${siteUrl}/o/${token}`,
     });
   }
 
@@ -687,7 +687,8 @@ export async function peekOwnerIntakeUrl(ownerLeadId: string): Promise<{ ok: boo
   if (!owner) return { ok: false, url: "" };
   const { getOrCreateOwnerIntakeToken } = await import("./db");
   const token = getOrCreateOwnerIntakeToken(ownerLeadId);
-  return { ok: true, url: `${APP_URL}/o/${token}` };
+  const siteUrl = await getBaseUrl();
+  return { ok: true, url: `${siteUrl}/o/${token}` };
 }
 
 export async function setOwnerLeadStage(id: string, stage: import("./types").OwnerLead["stage"]) {
@@ -1075,21 +1076,20 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
   if (!owner) return { ok: false, url: "", waUrl: "", message: "Owner lead not found." };
 
   const token = await generateOwnerIntakeToken(ownerLeadId);
-  const url = `${APP_URL}/o/${token}`;
+  const siteUrl = await getBaseUrl();
+  const url = `${siteUrl}/o/${token}`;
   const agent = await getAgentProfile();
 
-  const propertyLabel = owner.property_name
-    ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : `${owner.property_name}`
-    : "your property";
+  // First outreach uses property name only — no unit — keeps message concise
+  const propertyLabel = owner.property_name ?? "your property";
 
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? "Your agent";
-  const samplePackUrl = `${APP_URL}/sample-pack`;
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
   const body = resolveTemplate("owner_intake_form", overrides, {
     firstName,
     company: agent.agency ?? "",
     propertyName: propertyLabel,
-    tenantSamplePack: `${APP_URL}/sample-tenant-pack`,
+    tenantSamplePack: `${siteUrl}/sample-tenant-pack`,
     listingForm: url,
   });
 
@@ -1137,7 +1137,8 @@ export async function addInterestedTenantToListing(
     getOwnerLead(ownerLeadId),
     getAgentProfile(),
   ]);
-  const url = `${APP_URL}/t/${token}`;
+  const siteUrl = await getBaseUrl();
+  const url = `${siteUrl}/t/${token}`;
   const propertyName = lead?.property_name ?? "the property";
 
   const body = `Hi ${name}! I'm ${agent.name ?? "your agent"} from ${agent.agency ?? "kakisewa"}.
@@ -1154,7 +1155,8 @@ Takes about 1 minute. No login needed 🙏`;
 
 export async function generateTenantIntakeLink(): Promise<{ ok: boolean; url: string; waUrl: string; message: string }> {
   const token = await createTenantIntakeSession(await getAgentId(), {});
-  const url = `${APP_URL}/t/${token}`;
+  const siteUrl = await getBaseUrl();
+  const url = `${siteUrl}/t/${token}`;
 
   const { buildOutbound } = await import("./whatsapp");
   const agent = await getAgentProfile();
