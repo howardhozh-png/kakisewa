@@ -626,7 +626,7 @@ export function OutreachTable({ leads }: Props) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full" style={{ tableLayout: "fixed", minWidth: 380 }}>
+          <table className="w-full" style={{ minWidth: 380 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
                 {/* checkbox */}
