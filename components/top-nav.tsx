@@ -8,6 +8,7 @@ import { BetaCountdown } from "@/components/beta-countdown";
 import { cn } from "@/lib/utils";
 import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
+import { DEMO_EVENT } from "@/components/onboarding-demo-modal";
 import { THEMES, getTheme, type Theme } from "@/components/accent-provider";
 import { AgentProfile } from "@/lib/types";
 import { saveProfileDetails } from "@/lib/actions";
@@ -654,7 +655,7 @@ export function TopNav({ agent, isAdmin }: TopNavProps) {
   const currentTheme = THEMES.find((t) => t.key === themeKey) ?? THEMES[0];
 
   const MENU_ITEMS = [
-    { icon: Compass,     label: "Getting started",  action: () => { setMenuOpen(false); setMobileMenuOpen(false); document.dispatchEvent(new CustomEvent(TOUR_EVENT)); } },
+    { icon: Compass,     label: "Getting started",  action: () => { setMenuOpen(false); setMobileMenuOpen(false); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); } },
     { divider: true },
     { icon: User,        label: "Account settings", action: () => openModal("account") },
     { icon: CreditCard,  label: "Subscription",     action: () => openModal("billing") },
