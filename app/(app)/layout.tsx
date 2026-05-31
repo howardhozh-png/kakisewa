@@ -5,6 +5,7 @@ import { AccentProvider } from "@/components/accent-provider";
 import { SpotlightTour } from "@/components/spotlight-tour";
 import { TrialBanner } from "@/components/trial-banner";
 import { TrialGate } from "@/components/trial-gate";
+import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { getAgentProfile, recordLoginStreak } from "@/lib/db";
 
@@ -37,6 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <SpotlightTour />
       <Toaster richColors position="top-right" closeButton />
       {isTrialExpired && <TrialGate />}
+      <SessionGuard />
     </div>
   );
 }

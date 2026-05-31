@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { motion } from "framer-motion"
 
@@ -17,7 +17,13 @@ const SHAPES = [
 ]
 
 export default function SignInPage() {
+  return <Suspense><SignInForm /></Suspense>;
+}
+
+function SignInForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const timedOut = searchParams.get("reason") === "timeout"
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -91,6 +97,13 @@ export default function SignInPage() {
             kakisewa
           </p>
         </div>
+
+        {/* Session timeout notice */}
+        {timedOut && (
+          <div className="mb-4 rounded-xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: "#FEF3C7", color: "#92400E", border: "1px solid #FDE68A" }}>
+            Your session expired after 4 hours. Please log in again.
+          </div>
+        )}
 
         {/* Card */}
         <div className="rounded-2xl p-7" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
