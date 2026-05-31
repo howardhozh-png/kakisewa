@@ -101,7 +101,7 @@ function SignInForm() {
         {/* Session timeout notice */}
         {timedOut && (
           <div className="mb-4 rounded-xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: "#FEF3C7", color: "#92400E", border: "1px solid #FDE68A" }}>
-            Your session expired after 4 hours. Please log in again.
+            Your session has expired. Please log in again.
           </div>
         )}
 

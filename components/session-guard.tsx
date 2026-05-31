@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const IDLE_MS = 4 * 60 * 60 * 1000; // 4 hours
+const IDLE_MS = 2 * 60 * 60 * 1000; // 2 hours
 const KEY = "kk_last_active";
 
 function touch() {
