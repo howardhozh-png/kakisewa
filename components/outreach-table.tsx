@@ -495,11 +495,25 @@ export function OutreachTable({ leads }: Props) {
     e.stopPropagation();
     if (sending) return;
     setSending(lead.id);
+    // Open window immediately during user gesture — mobile browsers block window.open after await
+    const tab = window.open("", "_blank");
     try {
       const res = await generateOwnerIntakeLink(lead.id);
-      if (!res.ok) { toast.error(res.message); return; }
-      window.open(res.waUrl, "_blank", "noopener,noreferrer");
+      if (!res.ok) {
+        tab?.close();
+        toast.error(res.message);
+        return;
+      }
+      if (tab) {
+        tab.location.href = res.waUrl;
+      } else {
+        // Popup was blocked — fall back to same-tab navigation (opens WhatsApp on mobile)
+        window.location.href = res.waUrl;
+      }
       router.refresh();
+    } catch {
+      tab?.close();
+      toast.error("Failed to generate link");
     } finally {
       setSending(null);
     }
