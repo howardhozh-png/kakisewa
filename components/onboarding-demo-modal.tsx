@@ -602,14 +602,16 @@ function Scene2({ active }: { active: boolean }) {
 // RENEWING col: x=315..508 (w=193). Card center x≈411, y≈155.
 
 const M3: Phase[] = [
-  { id: "idle",           ms: 1100, caption: "Contracts expiring soon appear here — nothing to remember." },
-  { id: "show-card",      ms: 2000, caption: "60 days until Fikri Ibrahim's lease ends. Kakisewa flags it automatically." },
-  { id: "to-notify-o",   ms:  900, caption: "Tap Notify Owner first — do they still want to rent it out?" },
-  { id: "hover-notify-o", ms:  700, caption: "WhatsApp opens with an owner renewal form pre-filled." },
-  { id: "click-notify-o", ms:  500, caption: "Sending to owner..." },
-  { id: "owner-yes",      ms: 2000, caption: "Owner replied Yes — still wants to rent. You didn't make a single call." },
-  { id: "renewing",       ms: 2200, caption: "Card moves to Renewing. Commission and new end date are recorded." },
-  { id: "end",            ms: 1000, caption: "Zero chasing. Every renewal handled in two taps." },
+  { id: "idle",            ms: 1100, caption: "Contracts expiring soon appear here — nothing to remember." },
+  { id: "show-card",       ms: 2000, caption: "60 days until Fikri Ibrahim's lease ends. Kakisewa flags it automatically." },
+  { id: "to-notify-o",    ms:  900, caption: "Tap Notify Owner — do they still want to rent it out?" },
+  { id: "hover-notify-o", ms:  700, caption: "WhatsApp renewal form pre-filled with their tenancy details." },
+  { id: "click-notify-o", ms:  500, caption: "Sending renewal form to owner..." },
+  { id: "wa-sent",         ms:  900, caption: "Renewal form sent to Fikri via WhatsApp." },
+  { id: "owner-reply",     ms: 2400, caption: "Fikri opens the link and confirms — yes, he wants to renew." },
+  { id: "owner-yes",       ms: 1400, caption: "Owner confirmed — card updates automatically." },
+  { id: "renewing",        ms: 2200, caption: "Card moves to Renewing. Commission and new end date are recorded." },
+  { id: "end",             ms: 1000, caption: "Zero chasing. Every renewal handled in two taps." },
 ];
 
 const M3_CUR: Record<string, XY> = {
@@ -618,6 +620,8 @@ const M3_CUR: Record<string, XY> = {
   "to-notify-o":     { x: 165, y: 191 },
   "hover-notify-o":  { x: 165, y: 191 },
   "click-notify-o":  { x: 165, y: 191 },
+  "wa-sent":         { x: 165, y: 191 },
+  "owner-reply":     { x: 260, y: 170 },
   "owner-yes":       { x: 165, y: 191 },
   renewing:          { x: 411, y: 155 },
   end:               { x: 165, y: 160 },
@@ -647,8 +651,9 @@ function Scene3({ active }: { active: boolean }) {
   const { idx, phase, caption } = usePhaseCycle(M3, active);
   const cur = M3_CUR[phase] ?? { x: 165, y: 160 };
 
-  const ownerYes  = ["owner-yes", "renewing", "end"].includes(phase);
-  const isRenewing = phase === "renewing" || phase === "end";
+  const ownerYes    = ["owner-yes", "renewing", "end"].includes(phase);
+  const isRenewing  = phase === "renewing" || phase === "end";
+  const showWaOverlay = phase === "owner-reply";
 
   const notifyOHov = ["hover-notify-o", "click-notify-o"].includes(phase) && !ownerYes;
   const notifyOClk = phase === "click-notify-o";
@@ -822,7 +827,61 @@ function Scene3({ active }: { active: boolean }) {
 
         </div>
 
-        <DemoCursor x={cur.x} y={cur.y} clicking={clicking} />
+        {/* Owner WhatsApp reply overlay */}
+        {showWaOverlay && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 15,
+            background: "rgba(0,0,0,0.42)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <div style={{
+              width: 260, borderRadius: 14, overflow: "hidden",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
+              animation: "kk-demo-card-in 0.35s ease-out forwards",
+            }}>
+              {/* WA header */}
+              <div style={{ background: "#25D366", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.25)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
+                }}>F</div>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "#fff", lineHeight: 1.2 }}>Fikri Ibrahim</p>
+                  <p style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.2 }}>Owner · via WhatsApp</p>
+                </div>
+              </div>
+              {/* WA chat */}
+              <div style={{ background: "#ECE5DD", padding: "10px 10px", display: "flex", flexDirection: "column", gap: 7 }}>
+                <div style={{
+                  alignSelf: "flex-start", background: "#fff",
+                  borderRadius: "0 10px 10px 10px",
+                  padding: "7px 10px", maxWidth: "85%",
+                  fontSize: 10, color: "#1C1C1E", lineHeight: 1.4,
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+                }}>
+                  Hi Fikri! Your lease at The Park A5905 expires Jul 30. Would you like to renew? 🏠
+                </div>
+                <div style={{
+                  alignSelf: "flex-end", background: "#DCF8C6",
+                  borderRadius: "10px 0 10px 10px",
+                  padding: "7px 10px", maxWidth: "75%",
+                  fontSize: 10, color: "#1C1C1E", lineHeight: 1.4,
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+                }}>
+                  Yes, I&apos;d like to renew! 🙏
+                </div>
+                <div style={{
+                  alignSelf: "flex-end",
+                  fontSize: 9, color: "#6C6C70",
+                }}>✓✓ Seen</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DemoCursor x={cur.x} y={cur.y} clicking={clicking} hidden={showWaOverlay} />
       </SceneFrame>
       <p className="text-center mt-2" style={{ fontSize: 13, color: "#6C6C70", minHeight: 20 }}>
         {caption}
@@ -842,7 +901,7 @@ const MODULES = [
     Scene:     Scene1,
   },
   {
-    title:     "Owner fills intake — you track it",
+    title:     "Owner fills interest, you send tenant pack",
     valueProp: "Automatically track owner replies to send tenant pack",
     Scene:     Scene2,
   },
