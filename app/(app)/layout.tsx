@@ -8,6 +8,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { TrialGate } from "@/components/trial-gate";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
+import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak } from "@/lib/db";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <OnboardingDemoModal />
       <Toaster richColors position="top-right" closeButton />
       {isTrialExpired && <TrialGate />}
+      <FeedbackButton />
       <SessionGuard />
     </div>
   );

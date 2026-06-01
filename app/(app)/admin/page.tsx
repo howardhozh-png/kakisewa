@@ -67,5 +67,11 @@ export default async function AdminPage() {
     sends: l.sends_count ?? 0,
   }));
 
-  return <AdminView funnel={funnel} links={enrichedLinks} />;
+  const { data: feedbackRows } = await supabase
+    .from("feedback")
+    .select("id, agent_name, agent_email, category, message, page_url, resolved, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} />;
 }
