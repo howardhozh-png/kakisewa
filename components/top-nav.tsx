@@ -671,12 +671,12 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
     };
   }, []);
 
-  // After the first-time onboarding demo closes, show the subscription modal
+  // After the first-time onboarding demo closes, redirect to billing page
   useEffect(() => {
-    function onDemoFirstClose() { setTimeout(() => setActiveModal("billing"), 400); }
+    function onDemoFirstClose() { setTimeout(() => router.push("/billing"), 400); }
     document.addEventListener("kk:demo-first-close", onDemoFirstClose);
     return () => document.removeEventListener("kk:demo-first-close", onDemoFirstClose);
-  }, []);
+  }, [router]);
 
   // On every login during a trial, show the subscription modal once per session
   useEffect(() => {
@@ -688,7 +688,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
     // Delay so we don't clash with the demo modal on first login
     const demoSeen = localStorage.getItem("kk_demo_seen_v1");
     const delay = demoSeen ? 800 : 4000;
-    const t = setTimeout(() => setActiveModal("billing"), delay);
+    const t = setTimeout(() => router.push("/billing"), delay);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -738,7 +738,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
     { icon: Compass,     label: "Getting started",  action: () => { setMenuOpen(false); setMobileMenuOpen(false); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); } },
     { divider: true },
     { icon: User,        label: "Account settings", action: () => openModal("account") },
-    { icon: CreditCard,  label: "Subscription",     action: () => openModal("billing") },
+    { icon: CreditCard,  label: "Subscription",     action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/billing"); } },
     { icon: HelpCircle,  label: "Help & support",   action: () => openModal("support") },
     ...(isAdmin ? [{ divider: true }, { icon: ShieldCheck, label: "Admin dashboard", action: () => { setMenuOpen(false); router.push("/admin"); } }] : []),
     { divider: true },
