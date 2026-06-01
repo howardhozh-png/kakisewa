@@ -384,7 +384,7 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
   const days = daysUntil(t.contract_end, new Date());
   const token = await generateTenantRenewalToken(tenancyId);
   const siteUrl = await getBaseUrl();
-  const formUrl = `${siteUrl}/rt/${token}`;
+  const formUrl = `${siteUrl}/rt/${token}?t=${Date.now()}`;
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? undefined;
   const expiryWhen = days > 0
     ? `in ${days} day${days === 1 ? "" : "s"}`
@@ -656,7 +656,7 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
   const days = daysUntil(t.contract_end, new Date());
   const token = await generateOwnerRenewalToken(tenancyId);
   const siteUrl = await getBaseUrl();
-  const formUrl = `${siteUrl}/ro/${token}`;
+  const formUrl = `${siteUrl}/ro/${token}?t=${Date.now()}`;
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? undefined;
   const expiryWhen = days > 0
     ? `in ${days} day${days === 1 ? "" : "s"}`
