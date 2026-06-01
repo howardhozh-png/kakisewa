@@ -22,8 +22,8 @@ export default async function SubscriptionPage() {
 
   return (
     <SubscriptionClient
-      status={isAdmin ? "active" : status}
-      trialDaysLeft={isAdmin ? null : trialDaysLeft}
+      status={status}
+      trialDaysLeft={trialDaysLeft}
       currentPlan={currentPlan}
     />
   );

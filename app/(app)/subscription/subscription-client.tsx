@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,21 +11,21 @@ const TIER_STYLES = {
     bg: "linear-gradient(145deg, #f5f5f5 0%, #e2e2e2 35%, #ececec 60%, #d0d0d0 100%)",
     shine: "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 50%)",
     ring: "0 0 0 2px #b0b0b0, 0 8px 32px rgba(0,0,0,0.12)",
-    ink: "#1a1a1a", mute: "#555", faint: "#888",
+    ink: "#1a1a1a", mute: "#444", faint: "#777",
     roiGreen: "#1F8B4C",
   },
   Platinum: {
     bg: "linear-gradient(145deg, #0b1f4a 0%, #1a3464 35%, #152a56 65%, #0a1a3c 100%)",
     shine: "linear-gradient(135deg, rgba(100,160,255,0.18) 0%, rgba(255,255,255,0) 55%)",
     ring: "0 0 0 2.5px #3d6cbf, 0 8px 32px rgba(26,52,100,0.45)",
-    ink: "#ffffff", mute: "rgba(255,255,255,0.65)", faint: "rgba(255,255,255,0.4)",
+    ink: "#ffffff", mute: "rgba(255,255,255,0.82)", faint: "rgba(255,255,255,0.6)",
     roiGreen: "#7dd3fc",
   },
   Elite: {
     bg: "linear-gradient(145deg, #6b3d1e 0%, #a8692e 25%, #c98840 50%, #9a5e28 75%, #5c3015 100%)",
     shine: "linear-gradient(135deg, rgba(255,210,140,0.18) 0%, rgba(255,255,255,0) 50%)",
     ring: "0 0 0 2.5px #d4a96a, 0 8px 40px rgba(139,94,60,0.55)",
-    ink: "#fff8f0", mute: "rgba(255,240,210,0.75)", faint: "rgba(255,230,190,0.5)",
+    ink: "#fff8f0", mute: "rgba(255,240,210,0.88)", faint: "rgba(255,230,190,0.65)",
     roiGreen: "#fde68a",
   },
 };
@@ -82,10 +82,18 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
   const s = TIER_STYLES[plan.name];
   const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !loading) onCancel();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [loading, onCancel]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      style={{ background: "rgba(0,0,0,0.6)" }}
       onClick={onCancel}
     >
       <div
@@ -93,31 +101,44 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
         onClick={e => e.stopPropagation()}
         style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}
       >
-        <div className="p-5 relative" style={{ background: s.bg }}>
+        {/* Top section — ~75% of modal real estate */}
+        <div className="px-7 pt-8 pb-7 relative" style={{ background: s.bg }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: s.shine }} />
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: s.faint }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: s.faint }}>
             Confirm subscription
           </p>
-          <p className="text-[20px] font-bold" style={{ color: s.ink }}>
+          <p className="text-[28px] font-bold leading-tight mb-5" style={{ color: s.ink }}>
             kakisewa {plan.name}
           </p>
-          <p className="text-[13px] mt-1" style={{ color: s.mute }}>
-            {interval === "annual" ? "Annual" : "Monthly"} · RM {price}/mo
-            {interval === "annual" && (
-              <span className="ml-2 text-[11px] font-semibold" style={{ color: s.roiGreen }}>
-                save RM {plan.annualSavings}/year
-              </span>
-            )}
-          </p>
-          {interval === "annual" && (
-            <p className="text-[11px] mt-0.5" style={{ color: s.faint }}>
-              RM {plan.annualTotal.toLocaleString()} billed annually
+
+          {/* Price block */}
+          <div className="flex items-end gap-2 mb-2">
+            <span className="text-[42px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
+              RM {price}
+            </span>
+            <span className="text-[16px] pb-1.5" style={{ color: s.mute }}>/month</span>
+          </div>
+
+          {interval === "annual" ? (
+            <div className="space-y-1 mt-3">
+              <p className="text-[15px] font-semibold" style={{ color: s.mute }}>
+                RM {plan.annualTotal.toLocaleString()} billed annually
+              </p>
+              <p className="text-[13px] font-semibold" style={{ color: s.roiGreen }}>
+                Save RM {plan.annualSavings}/year · 2 months free
+              </p>
+            </div>
+          ) : (
+            <p className="text-[14px] mt-3" style={{ color: s.mute }}>
+              RM {plan.monthlyAnnualTotal.toLocaleString()} billed monthly over 12 months
             </p>
           )}
         </div>
-        <div className="p-5 space-y-4">
-          <p className="text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-            You&apos;ll be redirected to Stripe to complete payment securely. Your subscription activates immediately after payment.
+
+        {/* Bottom section — compact */}
+        <div className="px-6 pt-4 pb-5 space-y-4">
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--kk-ink-faint)" }}>
+            You&apos;ll be redirected to Stripe to complete payment securely. Subscription activates immediately after payment.
           </p>
           <div className="flex gap-2">
             <button
@@ -137,6 +158,9 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
               {loading ? "Redirecting…" : "Confirm & Pay →"}
             </button>
           </div>
+          <p className="text-[10px] text-center" style={{ color: "var(--kk-ink-faint)" }}>
+            Press Esc to cancel
+          </p>
         </div>
       </div>
     </div>
@@ -197,14 +221,14 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
       )}
 
       <div className="mx-auto max-w-[1040px] px-6 lg:px-10 py-10 lg:py-14">
-        {/* Header — matches other pages (Existing Contracts style) */}
+        {/* Header */}
         <header className="mb-10">
           <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>Subscription</h1>
           <p className="mt-2 kk-body" style={{ color: "var(--kk-ink-mute)" }}>
-            Capture just <strong style={{ color: "var(--kk-ink)" }}>1 missed renewal at RM 2,000</strong> means kakisewa pays for itself
+            If kakisewa helps you capture just 1 missed contract renewal at RM 2,000, it means kakisewa is <strong style={{ color: "var(--kk-ink)" }}>already paying for itself</strong>
           </p>
 
-          {/* Trial / active plan status pill */}
+          {/* Status pills */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {isOnTrial && (
               <span
@@ -212,7 +236,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                 style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-                Trial · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
+                Trial · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining — subscribe to keep full access
               </span>
             )}
             {currentPlan && status === "active" && (
@@ -258,26 +282,14 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                 >
                   <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: s.shine }} />
 
-                  {/* "Most popular" tag — top-right corner inside card */}
-                  {plan.popular && (
+                  {/* Badge: "Most popular" or "Your plan" — top-right inside card */}
+                  {(plan.popular || isCurrentPlan) && (
                     <div className="absolute top-4 right-4 z-10">
                       <span
                         className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
                         style={{ background: "var(--kk-green)", color: "#fff", whiteSpace: "nowrap" }}
                       >
-                        Most popular
-                      </span>
-                    </div>
-                  )}
-
-                  {/* "Your plan" tag — top-right if active */}
-                  {isCurrentPlan && (
-                    <div className="absolute top-4 right-4 z-10">
-                      <span
-                        className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
-                        style={{ background: "var(--kk-green)", color: "#fff", whiteSpace: "nowrap" }}
-                      >
-                        Your plan
+                        {isCurrentPlan ? "Your plan" : "Most popular"}
                       </span>
                     </div>
                   )}
@@ -335,31 +347,31 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       {/* Pay monthly */}
                       <button
                         onClick={() => setPending({ plan, interval: "monthly" })}
-                        className="w-full py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
+                        className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
                         style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
                       >
-                        <span className="text-[13px] font-semibold">Pay monthly</span>
-                        <span className="text-[11px]" style={{ color: "#888" }}>
+                        <span className="text-[15px] font-bold">Pay monthly</span>
+                        <span className="text-[12px]" style={{ color: "#888" }}>
                           RM {plan.monthlyAnnualTotal.toLocaleString()} total/year
                         </span>
                       </button>
 
-                      {/* Pay annually — with strikethrough comparison */}
+                      {/* Pay annually — strikethrough comparison */}
                       <button
                         onClick={() => setPending({ plan, interval: "annual" })}
-                        className="w-full py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
+                        className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
                         style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
                       >
-                        <span className="text-[13px] font-semibold">Pay annually</span>
-                        <span className="text-[11px] flex items-center justify-center gap-1.5 flex-wrap">
+                        <span className="text-[15px] font-bold">Pay annually</span>
+                        <span className="text-[12px] flex items-center justify-center gap-1.5 flex-wrap">
                           <span style={{ textDecoration: "line-through", color: "#aaa" }}>
                             RM {plan.monthlyAnnualTotal.toLocaleString()}
                           </span>
-                          <span style={{ color: "#1F8B4C", fontWeight: 600 }}>
+                          <span style={{ color: "#1F8B4C", fontWeight: 700 }}>
                             RM {plan.annualTotal.toLocaleString()}/year
                           </span>
                         </span>
-                        <span className="text-[10px] font-medium" style={{ color: "#1F8B4C" }}>
+                        <span className="text-[11px] font-medium" style={{ color: "#1F8B4C" }}>
                           save RM {plan.annualSavings} · 2 months free
                         </span>
                       </button>

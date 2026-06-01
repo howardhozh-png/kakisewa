@@ -17,24 +17,24 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
 
-  // Compute trial state — admins (x-is-admin header set by middleware) are always active
   const hdrs = await headers();
   const isAdmin = hdrs.get("x-is-admin") === "true";
   const status = agent.subscription_status ?? null;
   const trialEndsAt = agent.trial_ends_at ? new Date(agent.trial_ends_at) : null;
   const now = new Date();
   const trialDaysLeft = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000) : null;
+  // TrialGate (blocking overlay) never shows for admins; banner + countdown show for all users on trial
   const isTrialExpired = !isAdmin && (
     status === "expired" ||
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
-  const showTrialBanner = !isAdmin && !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
+  const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
 
   return (
     <div className="flex flex-col min-h-screen">
       <AccentProvider color={agent.accent_color} />
       {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} />}
-      <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={isAdmin ? null : trialDaysLeft} />
+      <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} />
       <GreetingBar name={agent.name} streak={streak} />
       <main className="flex-1">{children}</main>
       <SpotlightTour />
