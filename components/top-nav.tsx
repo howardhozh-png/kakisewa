@@ -340,7 +340,11 @@ const TIER_STYLES = {
 const TIER_DATA = [
   {
     name: "Silver" as const,
-    price: "RM 198",
+    planId: "silver" as const,
+    monthly: 198,
+    annualMonthly: 165,
+    annualTotal: 1980,
+    annualSavings: 396,
     roiMonths: "10 months",
     features: [
       { label: "Bulk owner list upload", plus: false },
@@ -352,7 +356,11 @@ const TIER_DATA = [
   },
   {
     name: "Platinum" as const,
-    price: "RM 398",
+    planId: "platinum" as const,
+    monthly: 398,
+    annualMonthly: 332,
+    annualTotal: 3980,
+    annualSavings: 796,
     roiMonths: "5 months",
     features: [
       { label: "Everything in Silver, plus:", italic: true },
@@ -364,7 +372,11 @@ const TIER_DATA = [
   },
   {
     name: "Elite" as const,
-    price: "RM 498",
+    planId: "elite" as const,
+    monthly: 498,
+    annualMonthly: 415,
+    annualTotal: 4980,
+    annualSavings: 996,
     roiMonths: "4 months",
     features: [
       { label: "Everything in Platinum, plus:", italic: true },
@@ -378,14 +390,50 @@ const TIER_DATA = [
 
 function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
   const currentTier = "trial";
+  const [interval, setIntervalMode] = useState<"monthly" | "annual">("monthly");
+  const [loading, setLoading] = useState<string | null>(null);
   const daysLabel = trialDaysLeft != null
     ? trialDaysLeft <= 0 ? "Trial ended" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`
     : "Trial active";
 
+  async function startCheckout(planId: string) {
+    setLoading(planId);
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planId, interval }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      toast.error(data.error ?? "Something went wrong");
+      setLoading(null);
+    }
+  }
+
   return (
     <>
       <div className="px-7 pt-5 pb-4 border-b" style={{ borderColor: "var(--kk-line)" }}>
-        <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Subscription plan</p>
+        <div className="flex items-center justify-between">
+          <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Subscription plan</p>
+          {/* Monthly / Annual toggle */}
+          <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+            {(["monthly", "annual"] as const).map(iv => (
+              <button key={iv} onClick={() => setIntervalMode(iv)}
+                className="px-3 py-1 rounded-md text-[11px] font-semibold transition-all"
+                style={{
+                  background: interval === iv ? "var(--kk-ink)" : "transparent",
+                  color: interval === iv ? "#fff" : "var(--kk-ink-mute)",
+                }}>
+                {iv === "monthly" ? "Monthly" : "Annual"}
+                {iv === "annual" && interval !== "annual" && (
+                  <span className="ml-1 text-[9px]" style={{ color: "var(--kk-green)" }}>−17%</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="px-7 py-5 space-y-5">
 
@@ -436,9 +484,19 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                     {t.name}
                   </p>
                   <p className="text-[26px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
-                    {t.price}
+                    RM {interval === "annual" ? t.annualMonthly : t.monthly}
                   </p>
-                  <p className="text-[11px] mt-1" style={{ color: s.mute }}>/month</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <p className="text-[11px]" style={{ color: s.mute }}>/month</p>
+                    {interval === "annual" && (
+                      <p className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.18)", color: s.roiGreen }}>
+                        save RM {t.annualSavings}
+                      </p>
+                    )}
+                  </div>
+                  {interval === "annual" && (
+                    <p className="text-[10px] mt-0.5" style={{ color: s.faint }}>RM {t.annualTotal} billed annually</p>
+                  )}
                 </div>
 
                 {/* Features */}
@@ -470,17 +528,20 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                     <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{t.recommended}</p>
                   </div>
-                  <a
-                    href="mailto:support@kakisewa.com?subject=Subscribe%20to%20kakisewa"
-                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-center transition-opacity hover:opacity-85 block"
+                  <button
+                    onClick={() => startCheckout(t.planId)}
+                    disabled={!!loading}
+                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-center transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
                     style={{
                       background: s.cta.bg,
                       color: s.cta.ink,
                       border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.25)"}`,
                       backdropFilter: "blur(4px)",
+                      opacity: loading ? 0.7 : 1,
                     }}>
-                    Choose <strong>{t.name}</strong>
-                  </a>
+                    {loading === t.planId && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {loading === t.planId ? "Redirecting…" : <><span>Choose</span> <strong>{t.name}</strong></>}
+                  </button>
                 </div>
               </div>
             );
@@ -488,7 +549,7 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
         </div>
 
         <p className="text-[11px] text-center" style={{ color: "var(--kk-ink-faint)" }}>
-          Stripe & FPX payments coming soon · Cancel anytime · No lock-in
+          Secure payment via Stripe · Cancel anytime · No lock-in
         </p>
       </div>
     </>
