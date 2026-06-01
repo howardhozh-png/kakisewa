@@ -51,7 +51,7 @@ export function TrialGate() {
         </div>
 
         <a
-          href="/billing"
+          href="/subscription"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-opacity hover:opacity-85 w-full justify-center"
           style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
         >

@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: priceId(plan, interval), quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?success=1`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?cancelled=1`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=1`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?cancelled=1`,
     metadata: { supabase_user_id: userId, plan, interval },
     subscription_data: {
       metadata: { supabase_user_id: userId, plan, interval },
