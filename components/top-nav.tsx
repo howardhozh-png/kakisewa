@@ -442,7 +442,7 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-2.5 flex-1">
+                <ul className="space-y-2.5">
                   {t.features.map((f, i) => (
                     <li key={i} className="flex items-start gap-2">
                       {!("italic" in f && f.italic) && (
@@ -463,24 +463,25 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                   ))}
                 </ul>
 
-                {/* Recommended for */}
-                <div className="px-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
-                  <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{t.recommended}</p>
+                {/* Divider + Recommended for + CTA — pinned to bottom via mt-auto */}
+                <div className="mt-auto flex flex-col gap-3">
+                  <div style={{ borderTop: `1px solid ${s.faint}`, opacity: 0.5 }} />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
+                    <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{t.recommended}</p>
+                  </div>
+                  <a
+                    href="mailto:support@kakisewa.com?subject=Subscribe%20to%20kakisewa"
+                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-center transition-opacity hover:opacity-85 block"
+                    style={{
+                      background: s.cta.bg,
+                      color: s.cta.ink,
+                      border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.25)"}`,
+                      backdropFilter: "blur(4px)",
+                    }}>
+                    Choose <strong>{t.name}</strong>
+                  </a>
                 </div>
-
-                {/* CTA */}
-                <a
-                  href="mailto:support@kakisewa.com?subject=Subscribe%20to%20kakisewa"
-                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-center transition-opacity hover:opacity-85 block"
-                  style={{
-                    background: s.cta.bg,
-                    color: s.cta.ink,
-                    border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.25)"}`,
-                    backdropFilter: "blur(4px)",
-                  }}>
-                  Choose <strong>{t.name}</strong>
-                </a>
               </div>
             );
           })}

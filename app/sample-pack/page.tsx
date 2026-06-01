@@ -1,4 +1,5 @@
 import { Logo } from "@/components/logo";
+import { Lock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,14 @@ function TenantCard({ tenant, rank }: { tenant: typeof TENANTS[0]; rank: number 
           <p className="text-[12px] mt-0.5" style={{ color: "#6C6C70" }}>
             {tenant.age} yrs · {tenant.nationality}
           </p>
+        </div>
+        {/* Locked badge */}
+        <div
+          className="flex items-center gap-1 px-2 py-1 rounded-full shrink-0"
+          style={{ background: "#F2F2F7", border: "1px solid rgba(0,0,0,0.06)" }}
+        >
+          <Lock className="w-2.5 h-2.5" style={{ color: "#8E8E93" }} />
+          <span className="text-[10px] font-medium" style={{ color: "#8E8E93" }}>Locked</span>
         </div>
       </div>
 
