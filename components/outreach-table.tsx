@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { OwnerLead } from "@/lib/types";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil } from "lucide-react";
 import { DateInput } from "@/components/ui/date-input";
@@ -92,11 +92,13 @@ function LeadPopup({
   onClose,
   onSaved,
   onMoveToListed,
+  onDelete,
 }: {
   lead: OwnerLead;
   onClose: () => void;
   onSaved: (id: string, updates: Partial<OwnerLead>) => void;
   onMoveToListed: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const [form, setForm] = useState({
     owner_name: lead.owner_name ?? "",
@@ -113,6 +115,8 @@ function LeadPopup({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<string[]>(lead.photo_urls ?? []);
   const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
@@ -386,6 +390,43 @@ function LeadPopup({
               Move to Listed
             </button>
           ) : null}
+
+          {/* Delete — always shown */}
+          {!deleteConfirm ? (
+            <button
+              type="button"
+              onClick={() => setDeleteConfirm(true)}
+              className="w-full py-2 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-70"
+              style={{ background: "transparent", color: "#AEAEB2", border: "1px solid rgba(0,0,0,0.08)" }}
+            >
+              Delete lead
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(false)}
+                className="flex-1 py-2 rounded-xl text-[13px] font-medium"
+                style={{ background: "transparent", color: "var(--kk-ink-mute)", border: "1px solid rgba(0,0,0,0.10)" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  await onDelete(lead.id);
+                  onClose();
+                }}
+                className="flex-1 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                style={{ background: "#FF3B30", color: "#fff" }}
+              >
+                {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Confirm delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -538,6 +579,11 @@ export function OutreachTable({ leads }: Props) {
   function handleSaved(id: string, updates: Partial<OwnerLead>) {
     // Optimistically update selectedLead so the popup stays in sync
     setSelectedLead((prev) => prev && prev.id === id ? { ...prev, ...updates } : prev);
+    router.refresh();
+  }
+
+  async function handleDelete(id: string) {
+    await removeOwnerLead(id);
     router.refresh();
   }
 
@@ -914,6 +960,7 @@ export function OutreachTable({ leads }: Props) {
           onClose={() => setSelectedLead(null)}
           onSaved={handleSaved}
           onMoveToListed={handleMoveToListed}
+          onDelete={handleDelete}
         />
       )}
     </div>
