@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono, DM_Serif_Display, Caveat } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,11 @@ const caveat = Caveat({
 export const metadata: Metadata = {
   title: "kakisewa — Tenancy CRM",
   description: "AI-powered rent receipt verification for Malaysian landlords",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
