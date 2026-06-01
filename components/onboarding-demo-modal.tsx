@@ -440,83 +440,7 @@ function Scene2({ active }: { active: boolean }) {
           </div>
         </div>
 
-        {!showAgent ? (
-          <>
-            <div className="flex flex-col justify-end gap-1.5 px-4 py-2 overflow-hidden" style={{ height: 182 }}>
-              {visible.map(m =>
-                m.side === "agent"
-                  ? <AgentBubble key={m.id} text={m.text} />
-                  : <UserBubble  key={m.id} text={m.text} />
-              )}
-              {showChoices && (
-                <div className="flex justify-center gap-2 mt-1">
-                  {["2", "3", "4", "5+"].map(n => (
-                    <div key={n} className="px-3 py-1 rounded-full text-[12px] font-medium" style={{
-                      background: (n === "3" && choice3Hov) ? "#1C1C1E" : "#fff",
-                      color: (n === "3" && choice3Hov) ? "#fff" : "#1C1C1E",
-                      border: "1.5px solid #C7C7CC",
-                      transform: (n === "3" && choice3Hov) ? "scale(0.95)" : "scale(1)",
-                      transition: "all 0.15s",
-                    }}>{n}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {showInput && (
-              <div className="flex items-center gap-2 px-3" style={{ height: 48, background: "#fff", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                <div className="flex-1 px-4 rounded-full text-[12px]" style={{
-                  background: "#F2F2F7", color: inputText ? "#1C1C1E" : "#AEAEB2",
-                  height: 32, display: "flex", alignItems: "center",
-                }}>
-                  {inputText || inputPlaceholder}
-                </div>
-                <div className="flex items-center justify-center rounded-full" style={{
-                  width: 32, height: 32, background: "#1C1C1E", flexShrink: 0,
-                  transform: cursorAtSend ? "scale(0.92)" : "scale(1)", transition: "transform 0.1s",
-                }}>
-                  <Send style={{ width: 14, height: 14, color: "#fff" }} />
-                </div>
-              </div>
-            )}
-          </>
-        ) : showAgent ? (
-          /* ── Pipeline view ── */
-          <div className="px-5 pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <span style={{ fontWeight: 700, fontSize: 15, color: "#1C1C1E" }}>New Owners</span>
-              <span style={{ fontSize: 10, color: "#AEAEB2" }}>Pipeline</span>
-            </div>
-            <div className="flex gap-2">
-              <div style={{ flex: 1, background: "#fff", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)", padding: "8px 10px" }}>
-                <p style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#AEAEB2", marginBottom: 8 }}>Outreach</p>
-                <div style={{ height: 58, borderRadius: 8, background: "#F2F2F7", border: "1px dashed rgba(0,0,0,0.08)" }} />
-              </div>
-              <div style={{ flex: 1, background: "#fff", borderRadius: 10, border: "1px solid rgba(52,199,89,0.25)", padding: "8px 10px" }}>
-                <p style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#1F8B4C", marginBottom: 8 }}>Wants Rent ✓</p>
-                <div style={{
-                  borderRadius: 8, background: "#fff",
-                  border: "1px solid rgba(52,199,89,0.3)",
-                  boxShadow: "0 2px 8px rgba(52,199,89,0.12)",
-                  padding: "8px 10px",
-                  animation: "kk-demo-card-in 0.45s ease-out forwards",
-                }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Ahmad Rashid</p>
-                  <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 2 }}>Residensi Mutiara · Block A</p>
-                  <p style={{ fontSize: 10, fontWeight: 600, color: "#1F8B4C", marginTop: 3 }}>RM 2,500/mo · 3 beds</p>
-                  <div className="flex items-center justify-between px-2 py-1.5 rounded-full mt-2" style={{
-                    background: packHov ? "rgba(0,122,255,0.14)" : "rgba(0,122,255,0.08)",
-                    border: packHov ? "1px solid rgba(0,122,255,0.28)" : "1px solid transparent",
-                    transform: packClk ? "scale(0.95)" : "scale(1)",
-                    transition: "all 0.15s",
-                  }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: "#0066CC" }}>Send tenant pack</span>
-                    <Send style={{ width: 10, height: 10, color: "#007AFF" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : showTenantPack ? (
+        {showTenantPack ? (
           /* ── Tenant pack sample ── */
           <div className="px-5 pt-3">
             <div className="flex items-center justify-between mb-1">
@@ -575,7 +499,83 @@ function Scene2({ active }: { active: boolean }) {
               </div>
             </div>
           </div>
-        ) : null}
+        ) : showAgent ? (
+          /* ── Pipeline view ── */
+          <div className="px-5 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <span style={{ fontWeight: 700, fontSize: 15, color: "#1C1C1E" }}>New Owners</span>
+              <span style={{ fontSize: 10, color: "#AEAEB2" }}>Pipeline</span>
+            </div>
+            <div className="flex gap-2">
+              <div style={{ flex: 1, background: "#fff", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)", padding: "8px 10px" }}>
+                <p style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#AEAEB2", marginBottom: 8 }}>Outreach</p>
+                <div style={{ height: 58, borderRadius: 8, background: "#F2F2F7", border: "1px dashed rgba(0,0,0,0.08)" }} />
+              </div>
+              <div style={{ flex: 1, background: "#fff", borderRadius: 10, border: "1px solid rgba(52,199,89,0.25)", padding: "8px 10px" }}>
+                <p style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#1F8B4C", marginBottom: 8 }}>Wants Rent ✓</p>
+                <div style={{
+                  borderRadius: 8, background: "#fff",
+                  border: "1px solid rgba(52,199,89,0.3)",
+                  boxShadow: "0 2px 8px rgba(52,199,89,0.12)",
+                  padding: "8px 10px",
+                  animation: "kk-demo-card-in 0.45s ease-out forwards",
+                }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Ahmad Rashid</p>
+                  <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 2 }}>Residensi Mutiara · Block A</p>
+                  <p style={{ fontSize: 10, fontWeight: 600, color: "#1F8B4C", marginTop: 3 }}>RM 2,500/mo · 3 beds</p>
+                  <div className="flex items-center justify-between px-2 py-1.5 rounded-full mt-2" style={{
+                    background: packHov ? "rgba(0,122,255,0.14)" : "rgba(0,122,255,0.08)",
+                    border: packHov ? "1px solid rgba(0,122,255,0.28)" : "1px solid transparent",
+                    transform: packClk ? "scale(0.95)" : "scale(1)",
+                    transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "#0066CC" }}>Send tenant pack</span>
+                    <Send style={{ width: 10, height: 10, color: "#007AFF" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col justify-end gap-1.5 px-4 py-2 overflow-hidden" style={{ height: 182 }}>
+              {visible.map(m =>
+                m.side === "agent"
+                  ? <AgentBubble key={m.id} text={m.text} />
+                  : <UserBubble  key={m.id} text={m.text} />
+              )}
+              {showChoices && (
+                <div className="flex justify-center gap-2 mt-1">
+                  {["2", "3", "4", "5+"].map(n => (
+                    <div key={n} className="px-3 py-1 rounded-full text-[12px] font-medium" style={{
+                      background: (n === "3" && choice3Hov) ? "#1C1C1E" : "#fff",
+                      color: (n === "3" && choice3Hov) ? "#fff" : "#1C1C1E",
+                      border: "1.5px solid #C7C7CC",
+                      transform: (n === "3" && choice3Hov) ? "scale(0.95)" : "scale(1)",
+                      transition: "all 0.15s",
+                    }}>{n}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {showInput && (
+              <div className="flex items-center gap-2 px-3" style={{ height: 48, background: "#fff", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+                <div className="flex-1 px-4 rounded-full text-[12px]" style={{
+                  background: "#F2F2F7", color: inputText ? "#1C1C1E" : "#AEAEB2",
+                  height: 32, display: "flex", alignItems: "center",
+                }}>
+                  {inputText || inputPlaceholder}
+                </div>
+                <div className="flex items-center justify-center rounded-full" style={{
+                  width: 32, height: 32, background: "#1C1C1E", flexShrink: 0,
+                  transform: cursorAtSend ? "scale(0.92)" : "scale(1)", transition: "transform 0.1s",
+                }}>
+                  <Send style={{ width: 14, height: 14, color: "#fff" }} />
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         <DemoCursor x={cur.x} y={cur.y} clicking={clicking} hidden={phase === "done"} />
       </SceneFrame>
@@ -602,25 +602,21 @@ function Scene2({ active }: { active: boolean }) {
 // RENEWING col: x=315..508 (w=193). Card center x≈411, y≈155.
 
 const M3: Phase[] = [
-  { id: "idle",            ms: 1100, caption: "Contracts expiring soon appear here — nothing to remember." },
-  { id: "show-card",       ms: 2000, caption: "60 days until Fikri Ibrahim's lease ends. Kakisewa flags it automatically." },
-  { id: "to-notify-o",    ms:  900, caption: "Tap Notify Owner — do they still want to rent it out?" },
-  { id: "hover-notify-o", ms:  700, caption: "WhatsApp renewal form pre-filled with their tenancy details." },
-  { id: "click-notify-o", ms:  500, caption: "Sending renewal form to owner..." },
-  { id: "wa-sent",         ms:  900, caption: "Renewal form sent to Fikri via WhatsApp." },
-  { id: "owner-reply",     ms: 2400, caption: "Fikri opens the link and confirms — yes, he wants to renew." },
-  { id: "owner-yes",       ms: 1400, caption: "Owner confirmed — card updates automatically." },
-  { id: "renewing",        ms: 2200, caption: "Card moves to Renewing. Commission and new end date are recorded." },
-  { id: "end",             ms: 1000, caption: "Zero chasing. Every renewal handled in two taps." },
+  { id: "idle",            ms:  900, caption: "Contracts expiring soon are flagged automatically — nothing to remember." },
+  { id: "to-notify-o",    ms:  900, caption: "Fikri's lease ends in 60 days — tap Notify Owner." },
+  { id: "hover-notify-o", ms:  700, caption: "kakisewa sends a pre-filled WhatsApp renewal message instantly." },
+  { id: "click-notify-o", ms:  500, caption: "Sending renewal message to Fikri..." },
+  { id: "owner-reply",     ms: 3000, caption: "Fikri sees your message — and confirms he wants to renew. ✓" },
+  { id: "owner-yes",       ms: 1400, caption: "Owner confirmed — board updates automatically." },
+  { id: "renewing",        ms: 2200, caption: "Card moves to Continue Renting. Commission and new end date recorded." },
+  { id: "end",             ms:  900, caption: "Zero chasing. Every renewal handled in two taps." },
 ];
 
 const M3_CUR: Record<string, XY> = {
   idle:              { x: 165, y: 160 },
-  "show-card":       { x: 165, y: 145 },
   "to-notify-o":     { x: 165, y: 191 },
   "hover-notify-o":  { x: 165, y: 191 },
   "click-notify-o":  { x: 165, y: 191 },
-  "wa-sent":         { x: 165, y: 191 },
   "owner-reply":     { x: 260, y: 170 },
   "owner-yes":       { x: 165, y: 191 },
   renewing:          { x: 411, y: 155 },
@@ -658,7 +654,7 @@ function Scene3({ active }: { active: boolean }) {
   const notifyOHov = ["hover-notify-o", "click-notify-o"].includes(phase) && !ownerYes;
   const notifyOClk = phase === "click-notify-o";
   const clicking   = notifyOClk;
-  const cardPulse  = phase === "show-card";
+  const cardPulse  = phase === "idle" || phase === "to-notify-o";
 
   return (
     <div>
@@ -770,7 +766,7 @@ function Scene3({ active }: { active: boolean }) {
               /* Empty state after card moves to Renewing */
               <div className="flex flex-col items-center justify-center gap-1" style={{ height: 140 }}>
                 <RefreshCw style={{ width: 16, height: 16, color: "#34C759" }} />
-                <p style={{ fontSize: 10, color: "#34C759", fontWeight: 600 }}>Moved to Renewing</p>
+                <p style={{ fontSize: 10, color: "#34C759", fontWeight: 600 }}>Moved to Continue Renting</p>
               </div>
             )}
           </div>
@@ -785,7 +781,7 @@ function Scene3({ active }: { active: boolean }) {
             <div className="px-3 py-2" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#1F8B4C" }}>
-                  ✓ Renewing
+                  ✓ Continue Renting
                 </span>
                 <div style={{
                   width: 16, height: 16, borderRadius: "50%",
@@ -796,7 +792,7 @@ function Scene3({ active }: { active: boolean }) {
                   transition: "background 0.4s",
                 }}>{isRenewing ? "1" : "0"}</div>
               </div>
-              <p style={{ fontSize: 9, color: "#AEAEB2" }}>Both confirmed. Collect commission and set the new end date.</p>
+              <p style={{ fontSize: 9, color: "#AEAEB2" }}>Owner confirmed. Collect commission and set the new end date.</p>
             </div>
 
             {isRenewing && (
