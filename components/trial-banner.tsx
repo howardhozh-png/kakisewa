@@ -1,20 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
-
 export function TrialBanner({ daysLeft }: { daysLeft: number }) {
-  const [dismissed, setDismissed] = useState(false);
-  if (dismissed) return null;
-
-  const urgent = daysLeft <= 3;
   const label = daysLeft === 1 ? "1 day" : `${daysLeft} days`;
 
   return (
     <div
-      className="relative flex items-center justify-center gap-2 px-4 py-2 text-center"
+      className="flex items-center justify-center gap-2 px-4 py-2.5 text-center"
       style={{
-        background: urgent ? "#DC2626" : "var(--kk-ink)",
+        background: "#DC2626",
         color: "#fff",
         fontSize: "var(--kk-sm)",
         lineHeight: 1.4,
@@ -23,20 +16,13 @@ export function TrialBanner({ daysLeft }: { daysLeft: number }) {
       <span>
         <strong>{label} left</strong> on your free trial.{" "}
         <a
-          href="mailto:support@kakisewa.com?subject=Subscribe%20to%20kakisewa"
+          href="/subscription"
           className="underline font-semibold opacity-90 hover:opacity-100 transition-opacity"
         >
-          Contact us to subscribe
+          Subscribe here
         </a>{" "}
-        and keep your data.
+        to keep your data and full access.
       </span>
-      <button
-        onClick={() => setDismissed(true)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full opacity-60 hover:opacity-100 transition-opacity"
-        aria-label="Dismiss"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
     </div>
   );
 }

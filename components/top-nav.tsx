@@ -15,12 +15,26 @@ import { PhotoCropModal } from "@/components/photo-crop-modal";
 import { toast } from "sonner";
 
 const NAV = [
-  { href: "/home",        label: "Home",               matchPaths: ["/home"],                                             tourId: "tour-nav-home" },
-  { href: "/new-owners",       label: "New Owners",         matchPaths: ["/new-owners", "/leads"],                                       tourId: "tour-nav-new-owners" },
-  { href: "/existing-contracts",   label: "Existing Contracts", matchPaths: ["/existing-contracts", "/tenancies"],                     tourId: "tour-nav-contracts" },
-  { href: "/directory",     label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], tourId: "tour-nav-directory" },
-  { href: "/performance", label: "Performance",        matchPaths: ["/performance"],                                      tourId: "tour-nav-performance" },
+  { href: "/home",               label: "Home",               matchPaths: ["/home"],                                                      tourId: "tour-nav-home",        minPlan: null },
+  { href: "/new-owners",         label: "New Owners",         matchPaths: ["/new-owners", "/leads"],                                      tourId: "tour-nav-new-owners",  minPlan: null },
+  { href: "/existing-contracts", label: "Existing Contracts", matchPaths: ["/existing-contracts", "/tenancies"],                          tourId: "tour-nav-contracts",   minPlan: "platinum" as const },
+  { href: "/directory",          label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"],tourId: "tour-nav-directory",   minPlan: null },
+  { href: "/performance",        label: "Performance",        matchPaths: ["/performance"],                                               tourId: "tour-nav-performance", minPlan: "elite" as const },
 ];
+
+const PLAN_RANK: Record<string, number> = { silver: 1, platinum: 2, elite: 3 };
+
+function navHasAccess(
+  minPlan: "platinum" | "elite" | null,
+  plan: string | null | undefined,
+  status: string | null | undefined,
+  isAdmin: boolean,
+): boolean {
+  if (isAdmin || !minPlan) return true;
+  if (status === "trial") return true; // Full access during trial
+  if (!plan) return false;
+  return (PLAN_RANK[plan] ?? 0) >= PLAN_RANK[minPlan];
+}
 
 function initials(name?: string | null): string {
   if (!name) return "KK";
@@ -610,6 +624,14 @@ function SupportModal() {
 // ── Tier badge ────────────────────────────────────────────────────────────────
 
 const TIER_BADGE = {
+  god: {
+    bg: "linear-gradient(135deg, #0a0a0a 0%, #1a0a00 30%, #5c3a00 55%, #c8960a 70%, #1a0a00 100%)",
+    shine: "linear-gradient(135deg, rgba(255,210,50,0.55) 0%, rgba(255,255,255,0) 50%)",
+    border: "rgba(200,150,10,0.95)",
+    ink: "#fff8dc",
+    shadow: "0 2px 14px rgba(180,120,0,0.6), inset 0 1px 0 rgba(255,215,0,0.35)",
+    label: "God tier",
+  },
   silver: {
     bg: "linear-gradient(135deg, #c8c8c8 0%, #f0f0f0 45%, #d4d4d4 70%, #b8b8b8 100%)",
     shine: "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 55%)",
@@ -636,10 +658,14 @@ const TIER_BADGE = {
   },
 } as const;
 
-function TierBadge({ plan, isOnTrial }: { plan?: "silver" | "platinum" | "elite" | null; isOnTrial?: boolean }) {
-  if (!plan && !isOnTrial) return null;
+function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean }) {
+  const key: keyof typeof TIER_BADGE | "trial" | null = isAdmin
+    ? "god"
+    : plan ?? (isOnTrial ? "trial" : null);
 
-  if (isOnTrial && !plan) {
+  if (!key) return null;
+
+  if (key === "trial") {
     return (
       <div
         className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
@@ -655,9 +681,7 @@ function TierBadge({ plan, isOnTrial }: { plan?: "silver" | "platinum" | "elite"
     );
   }
 
-  if (!plan) return null;
-  const t = TIER_BADGE[plan];
-
+  const t = TIER_BADGE[key];
   return (
     <div
       className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
@@ -825,6 +849,25 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
           <nav className="hidden lg:flex items-center gap-1">
             {NAV.map((NAV_ITEM) => {
               const active = NAV_ITEM.matchPaths.some((p) => path === p || path.startsWith(`${p}/`));
+              const locked = !navHasAccess(NAV_ITEM.minPlan, agent.subscription_plan, agent.subscription_status, !!isAdmin);
+              const upgradeTo = NAV_ITEM.minPlan === "elite" ? "Elite" : "Platinum";
+              if (locked) {
+                return (
+                  <button
+                    key={NAV_ITEM.href}
+                    id={NAV_ITEM.tourId}
+                    onClick={() => router.push("/subscription")}
+                    className="kk-topnav-link font-medium flex items-center gap-1 opacity-40 cursor-pointer"
+                    title={`${upgradeTo} plan required`}
+                  >
+                    {NAV_ITEM.label}
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.7 }}>
+                      <rect x="2" y="5" width="8" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M4 5V3.5a2 2 0 1 1 4 0V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                );
+              }
               return (
                 <Link key={NAV_ITEM.href} href={NAV_ITEM.href} id={NAV_ITEM.tourId} data-active={active} className={cn("kk-topnav-link font-medium")}>
                   {NAV_ITEM.label}
@@ -835,7 +878,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
           {/* Right cluster — desktop only */}
           <div className="ml-auto hidden lg:flex items-center gap-3">
-            <TierBadge plan={agent.subscription_plan} isOnTrial={!isAdmin && trialDaysLeft != null && trialDaysLeft > 0} />
+            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} />
 
             <button
               ref={btnRef}
@@ -1008,6 +1051,24 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
             <div className="px-4 py-4 space-y-1">
               {NAV.map((item) => {
                 const active = item.matchPaths.some((p) => path === p || path.startsWith(`${p}/`));
+                const locked = !navHasAccess(item.minPlan, agent.subscription_plan, agent.subscription_status, !!isAdmin);
+                if (locked) {
+                  return (
+                    <button
+                      key={item.href}
+                      id={item.tourId + "-mobile"}
+                      onClick={() => { setMobileMenuOpen(false); router.push("/subscription"); }}
+                      className="flex items-center justify-between w-full px-4 h-12 rounded-2xl text-[15px] font-medium opacity-40"
+                      style={{ color: "var(--kk-topnav-ink)" }}
+                    >
+                      <span>{item.label}</span>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <rect x="2" y="5" width="8" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M4 5V3.5a2 2 0 1 1 4 0V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  );
+                }
                 return (
                   <Link
                     key={item.href}
