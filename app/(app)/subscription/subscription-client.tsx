@@ -13,7 +13,8 @@ const TIER_STYLES = {
     shadow: "0 12px 40px rgba(0,0,0,0.13)",
     ink: "#1a1a1a", mute: "#444", faint: "#777",
     roiGreen: "#1F8B4C",
-    btnBg: "rgba(220,220,220,0.75)", btnInk: "#1a1a1a",
+    btnBg: "rgba(200,200,200,0.9)", btnInk: "#1a1a1a",
+    btnShadow: "0 2px 8px rgba(0,0,0,0.10)",
   },
   Platinum: {
     bg: "linear-gradient(145deg, #0b1f4a 0%, #1a3464 35%, #152a56 65%, #0a1a3c 100%)",
@@ -21,7 +22,8 @@ const TIER_STYLES = {
     shadow: "0 12px 40px rgba(26,52,100,0.5)",
     ink: "#ffffff", mute: "rgba(255,255,255,0.82)", faint: "rgba(255,255,255,0.6)",
     roiGreen: "#7dd3fc",
-    btnBg: "rgba(100,150,230,0.25)", btnInk: "#d6eaff",
+    btnBg: "rgba(255,255,255,0.20)", btnInk: "#d6eaff",
+    btnShadow: "0 3px 10px rgba(0,0,30,0.35)",
   },
   Elite: {
     bg: "linear-gradient(145deg, #6b3d1e 0%, #a8692e 25%, #c98840 50%, #9a5e28 75%, #5c3015 100%)",
@@ -29,7 +31,8 @@ const TIER_STYLES = {
     shadow: "0 12px 40px rgba(139,94,60,0.55)",
     ink: "#fff8f0", mute: "rgba(255,240,210,0.88)", faint: "rgba(255,230,190,0.65)",
     roiGreen: "#fde68a",
-    btnBg: "rgba(210,160,60,0.28)", btnInk: "#fff3d0",
+    btnBg: "rgba(255,215,80,0.35)", btnInk: "#fff3d0",
+    btnShadow: "0 3px 10px rgba(80,40,0,0.35)",
   },
 };
 
@@ -282,7 +285,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       <span
                         className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
                         style={{
-                          background: isCurrentPlan ? "var(--kk-green)" : "#C8960A",
+                          background: isCurrentPlan ? "var(--kk-green)" : "#EAB308",
                           color: "#fff",
                           whiteSpace: "nowrap",
                         }}
@@ -346,7 +349,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       <button
                         onClick={() => setPending({ plan, interval: "monthly" })}
                         className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
-                        style={{ background: s.btnBg, color: s.btnInk, border: "none" }}
+                        style={{ background: s.btnBg, color: s.btnInk, border: "none", boxShadow: s.btnShadow }}
                       >
                         <span className="text-[15px] font-bold">Pay monthly</span>
                         <span className="text-[12px] opacity-70">
@@ -358,7 +361,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       <button
                         onClick={() => setPending({ plan, interval: "annual" })}
                         className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
-                        style={{ background: s.btnBg, color: s.btnInk, border: "none" }}
+                        style={{ background: s.btnBg, color: s.btnInk, border: "none", boxShadow: s.btnShadow }}
                       >
                         <span className="text-[15px] font-bold">Pay annually</span>
                         <span className="text-[12px] flex items-center justify-center gap-1.5 flex-wrap">
