@@ -390,7 +390,7 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
       <div className="px-7 py-5 space-y-5">
 
         {/* ROI callout — top, shared */}
-        <div className="rounded-2xl px-5 py-4" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+        <div className="px-1 py-2">
           <p className="text-[12px] font-medium mb-3" style={{ color: "var(--kk-ink-mute)" }}>
             Capture just <strong style={{ color: "var(--kk-ink)" }}>1 missed renewal at RM2,000</strong> means kakisewa is…
           </p>
