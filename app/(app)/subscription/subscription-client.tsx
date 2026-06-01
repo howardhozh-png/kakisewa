@@ -14,7 +14,7 @@ const TIER_STYLES = {
     shadow: "0 12px 40px rgba(0,0,0,0.13)",
     ink: "#1a1a1a", mute: "#444", faint: "#777",
     roiGreen: "#1F8B4C",
-    btnBg: "rgba(200,200,200,0.9)", btnInk: "#1a1a1a",
+    btnBg: "rgba(255,255,255,0.95)", btnInk: "#1a1a1a",
     btnShadow: "0 2px 8px rgba(0,0,0,0.10)",
   },
   Platinum: {
@@ -23,8 +23,8 @@ const TIER_STYLES = {
     shadow: "0 12px 40px rgba(26,52,100,0.5)",
     ink: "#ffffff", mute: "rgba(255,255,255,0.82)", faint: "rgba(255,255,255,0.6)",
     roiGreen: "#7dd3fc",
-    btnBg: "rgba(255,255,255,0.20)", btnInk: "#d6eaff",
-    btnShadow: "0 3px 10px rgba(0,0,30,0.35)",
+    btnBg: "rgba(255,255,255,0.62)", btnInk: "#0b1f4a",
+    btnShadow: "0 3px 10px rgba(0,0,30,0.30)",
   },
   Elite: {
     bg: "linear-gradient(145deg, #6b3d1e 0%, #a8692e 25%, #c98840 50%, #9a5e28 75%, #5c3015 100%)",
@@ -32,8 +32,8 @@ const TIER_STYLES = {
     shadow: "0 12px 40px rgba(139,94,60,0.55)",
     ink: "#fff8f0", mute: "rgba(255,240,210,0.88)", faint: "rgba(255,230,190,0.65)",
     roiGreen: "#fde68a",
-    btnBg: "rgba(255,215,80,0.35)", btnInk: "#fff3d0",
-    btnShadow: "0 3px 10px rgba(80,40,0,0.35)",
+    btnBg: "rgba(255,255,255,0.62)", btnInk: "#5c3015",
+    btnShadow: "0 3px 10px rgba(80,40,0,0.28)",
   },
 };
 

@@ -1,4 +1,5 @@
 import { getMonthlyCommissionTimeline, getAgentProfile, getLifetimeCommissionStats } from "@/lib/db";
+import { checkTierGate } from "@/components/tier-gate";
 import { PerformanceOverview } from "@/components/performance-overview";
 import { TodayFocus } from "@/components/today-focus";
 import { DealMilestone } from "@/components/deal-milestone";
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
 interface Props { searchParams: Promise<{ year?: string }> }
 
 export default async function PerformancePage({ searchParams }: Props) {
+  const gate = await checkTierGate("elite");
+  if (gate) return gate;
+
   const { year: yearStr } = await searchParams;
   const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
   const [timeline, agent, lifetime] = await Promise.all([

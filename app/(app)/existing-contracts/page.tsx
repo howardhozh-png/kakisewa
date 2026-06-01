@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getLifecycleTenancies, getTenancies, getProperties, countOwnerLeads } from "@/lib/db";
+import { checkTierGate } from "@/components/tier-gate";
 import { format } from "date-fns";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
@@ -14,6 +15,9 @@ interface Props {
 }
 
 export default async function TenanciesPage({ searchParams }: Props) {
+  const gate = await checkTierGate("platinum");
+  if (gate) return gate;
+
   const { open, highlight } = await searchParams;
   const today = new Date();
   const [lifecycle, allTenancies, properties, makeCount] = await Promise.all([

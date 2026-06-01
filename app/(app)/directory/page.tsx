@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports } from "@/lib/db";
+import { checkTierGate } from "@/components/tier-gate";
 import { NetworkSubNav } from "@/components/network-sub-nav";
 import { MatchesView } from "@/components/matches-view";
 import { TenantsTable } from "@/components/tenants-table";
@@ -27,6 +28,9 @@ const VIEW_DESCS: Record<string, string> = {
 };
 
 export default async function NetworkPage({ searchParams }: Props) {
+  const gate = await checkTierGate("elite");
+  if (gate) return gate;
+
   const { view: rawView } = await searchParams;
   const view = rawView === "properties" ? "properties" : rawView === "tenants" ? "tenants" : "contacts";
 
