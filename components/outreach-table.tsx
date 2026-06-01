@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search } from "lucide-react";
 import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 
@@ -443,6 +443,7 @@ export function OutreachTable({ leads }: Props) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -453,7 +454,7 @@ export function OutreachTable({ leads }: Props) {
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => { setSelectedIds(new Set()); }, [filter, propertyFilter]);
+  useEffect(() => { setSelectedIds(new Set()); }, [filter, propertyFilter, search]);
 
   useEffect(() => {
     if (!exportOpen) return;
@@ -505,6 +506,8 @@ export function OutreachTable({ leads }: Props) {
     declined:  propertyFiltered.filter((l) => getStatus(l) === "declined").length,
   };
 
+  const searchLower = search.trim().toLowerCase();
+
   const visible = leads
     .filter((l) => {
       const s = getStatus(l);
@@ -514,6 +517,12 @@ export function OutreachTable({ leads }: Props) {
       else if (filter === "rented")    { if (s !== "rented")    return false; }
       else if (filter === "declined")  { if (s !== "declined")  return false; }
       if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
+      if (searchLower) {
+        const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
+          .map((v) => (v ?? "").toLowerCase())
+          .join(" ");
+        if (!haystack.includes(searchLower)) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -671,6 +680,36 @@ export function OutreachTable({ leads }: Props) {
 
   return (
     <div>
+      {/* Search bar */}
+      <div className="relative mb-4">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+          style={{ color: "var(--kk-ink-faint)" }}
+        />
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, number, unit, property…"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none"
+          style={{
+            background: "var(--kk-surface-2)",
+            border: "1px solid var(--kk-line)",
+            color: "var(--kk-ink)",
+          }}
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 transition-opacity hover:opacity-60"
+            style={{ color: "var(--kk-ink-faint)" }}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
       {/* Filter row */}
       <div className="flex items-center gap-2 mb-5 flex-wrap">
         {/* Property filter — popover table */}
@@ -703,10 +742,10 @@ export function OutreachTable({ leads }: Props) {
 
       {/* Table */}
       <div className="kk-section overflow-hidden p-0 kk-scroll-fade">
-        {visible.length === 0 && !(filter === "all" && propertyFilter === "all") ? (
+        {visible.length === 0 && !(filter === "all" && propertyFilter === "all" && !searchLower) ? (
           <div className="flex flex-col items-center justify-center py-16 px-6">
             <p className="text-[14px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>
-              No owners match this filter.
+              {searchLower ? `No results for "${search}"` : "No owners match this filter."}
             </p>
           </div>
         ) : (
