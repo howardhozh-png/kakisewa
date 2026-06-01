@@ -188,6 +188,12 @@ export async function removeOwnerLead(id: string) {
   revalidatePath("/");
 }
 
+export async function bulkDeleteOwnerLeads(ids: string[]): Promise<void> {
+  await Promise.all(ids.map((id) => deleteOwnerLead(id)));
+  revalidatePath("/new-owners");
+  revalidatePath("/");
+}
+
 export async function removeTenantProfile(id: string) {
   await deleteTenantProfile(id);
   revalidatePath("/directory");

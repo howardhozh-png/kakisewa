@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { OwnerLead } from "@/lib/types";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil } from "lucide-react";
 import { DateInput } from "@/components/ui/date-input";
@@ -447,6 +447,8 @@ export function OutreachTable({ leads }: Props) {
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [bulkContacting, setBulkContacting] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -585,6 +587,18 @@ export function OutreachTable({ leads }: Props) {
   async function handleDelete(id: string) {
     await removeOwnerLead(id);
     router.refresh();
+  }
+
+  async function handleBulkDelete() {
+    setBulkDeleting(true);
+    try {
+      await bulkDeleteOwnerLeads(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      setBulkDeleteConfirm(false);
+      router.refresh();
+    } finally {
+      setBulkDeleting(false);
+    }
   }
 
   async function handleExport(format: "xlsx" | "csv") {
@@ -941,10 +955,47 @@ export function OutreachTable({ leads }: Props) {
             )}
           </div>
 
+          {/* Delete selected */}
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
+          {!bulkDeleteConfirm ? (
+            <button
+              type="button"
+              onClick={() => setBulkDeleteConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
+              style={{ background: "rgba(255,59,48,0.25)", color: "#FF6B6B" }}
+            >
+              Delete
+            </button>
+          ) : (
+            <>
+              <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.7)" }}>
+                Delete {selectedIds.size} leads?
+              </span>
+              <button
+                type="button"
+                onClick={() => setBulkDeleteConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
+                style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={bulkDeleting}
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-50"
+                style={{ background: "#FF3B30", color: "#fff" }}
+              >
+                {bulkDeleting && <Loader2 className="w-3 h-3 animate-spin" />}
+                Confirm delete
+              </button>
+            </>
+          )}
+
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
           <button
             type="button"
-            onClick={() => setSelectedIds(new Set())}
+            onClick={() => { setSelectedIds(new Set()); setBulkDeleteConfirm(false); }}
             className="p-1.5 rounded-lg transition-opacity hover:opacity-60"
             style={{ color: "rgba(255,255,255,0.6)" }}
           >
