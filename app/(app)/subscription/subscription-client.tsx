@@ -10,23 +10,26 @@ const TIER_STYLES = {
   Silver: {
     bg: "linear-gradient(145deg, #f5f5f5 0%, #e2e2e2 35%, #ececec 60%, #d0d0d0 100%)",
     shine: "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 50%)",
-    ring: "0 0 0 2px #b0b0b0, 0 8px 32px rgba(0,0,0,0.12)",
+    shadow: "0 12px 40px rgba(0,0,0,0.13)",
     ink: "#1a1a1a", mute: "#444", faint: "#777",
     roiGreen: "#1F8B4C",
+    btnBg: "rgba(220,220,220,0.75)", btnInk: "#1a1a1a",
   },
   Platinum: {
     bg: "linear-gradient(145deg, #0b1f4a 0%, #1a3464 35%, #152a56 65%, #0a1a3c 100%)",
     shine: "linear-gradient(135deg, rgba(100,160,255,0.18) 0%, rgba(255,255,255,0) 55%)",
-    ring: "0 0 0 2.5px #3d6cbf, 0 8px 32px rgba(26,52,100,0.45)",
+    shadow: "0 12px 40px rgba(26,52,100,0.5)",
     ink: "#ffffff", mute: "rgba(255,255,255,0.82)", faint: "rgba(255,255,255,0.6)",
     roiGreen: "#7dd3fc",
+    btnBg: "rgba(100,150,230,0.25)", btnInk: "#d6eaff",
   },
   Elite: {
     bg: "linear-gradient(145deg, #6b3d1e 0%, #a8692e 25%, #c98840 50%, #9a5e28 75%, #5c3015 100%)",
     shine: "linear-gradient(135deg, rgba(255,210,140,0.18) 0%, rgba(255,255,255,0) 50%)",
-    ring: "0 0 0 2.5px #d4a96a, 0 8px 40px rgba(139,94,60,0.55)",
+    shadow: "0 12px 40px rgba(139,94,60,0.55)",
     ink: "#fff8f0", mute: "rgba(255,240,210,0.88)", faint: "rgba(255,230,190,0.65)",
     roiGreen: "#fde68a",
+    btnBg: "rgba(210,160,60,0.28)", btnInk: "#fff3d0",
   },
 };
 
@@ -225,7 +228,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
         <header className="mb-10">
           <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>Subscription</h1>
           <p className="mt-2 kk-body" style={{ color: "var(--kk-ink-mute)" }}>
-            If kakisewa helps you capture just 1 missed contract renewal at RM 2,000, it means kakisewa is <strong style={{ color: "var(--kk-ink)" }}>already paying for itself</strong>
+            If kakisewa helps you capture just 1 missed contract renewal at RM 2,000, it means kakisewa is...
           </p>
 
           {/* Status pills */}
@@ -275,8 +278,8 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                   style={{
                     background: s.bg,
                     boxShadow: isCurrentPlan
-                      ? `0 0 0 3px var(--kk-green), 0 8px 32px rgba(0,0,0,0.15)`
-                      : s.ring,
+                      ? `0 0 0 3px var(--kk-green), ${s.shadow}`
+                      : s.shadow,
                     position: "relative",
                   }}
                 >
@@ -348,10 +351,10 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       <button
                         onClick={() => setPending({ plan, interval: "monthly" })}
                         className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
-                        style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
+                        style={{ background: s.btnBg, color: s.btnInk, border: "none" }}
                       >
                         <span className="text-[15px] font-bold">Pay monthly</span>
-                        <span className="text-[12px]" style={{ color: "#888" }}>
+                        <span className="text-[12px] opacity-70">
                           RM {plan.monthlyAnnualTotal.toLocaleString()} total/year
                         </span>
                       </button>
@@ -360,18 +363,18 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       <button
                         onClick={() => setPending({ plan, interval: "annual" })}
                         className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
-                        style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
+                        style={{ background: s.btnBg, color: s.btnInk, border: "none" }}
                       >
                         <span className="text-[15px] font-bold">Pay annually</span>
                         <span className="text-[12px] flex items-center justify-center gap-1.5 flex-wrap">
-                          <span style={{ textDecoration: "line-through", color: "#aaa" }}>
+                          <span style={{ textDecoration: "line-through", opacity: 0.45 }}>
                             RM {plan.monthlyAnnualTotal.toLocaleString()}
                           </span>
-                          <span style={{ color: "#1F8B4C", fontWeight: 700 }}>
+                          <span style={{ color: s.roiGreen, fontWeight: 700 }}>
                             RM {plan.annualTotal.toLocaleString()}/year
                           </span>
                         </span>
-                        <span className="text-[11px] font-medium" style={{ color: "#1F8B4C" }}>
+                        <span className="text-[11px] font-medium" style={{ color: s.roiGreen }}>
                           save RM {plan.annualSavings} · 2 months free
                         </span>
                       </button>

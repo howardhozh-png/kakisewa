@@ -12,9 +12,9 @@ interface Props {
 
 export function NetworkSubNav({ propertiesCount, tenantsCount, contactsCount, view }: Props) {
   const tabs = [
-    { href: "/directory",                label: "All properties",    shortLabel: "Properties",  count: propertiesCount, key: "properties" },
-    { href: "/directory?view=tenants",   label: "All tenants",       shortLabel: "Tenants",     count: tenantsCount,    key: "tenants"    },
-    { href: "/directory?view=contacts",  label: "Support contacts",  shortLabel: "Contacts",    count: contactsCount,   key: "contacts"   },
+    { href: "/directory",                  label: "Support contacts",  shortLabel: "Contacts",    count: contactsCount,   key: "contacts"    },
+    { href: "/directory?view=properties",  label: "All properties",    shortLabel: "Properties",  count: propertiesCount, key: "properties"  },
+    { href: "/directory?view=tenants",     label: "All tenants",       shortLabel: "Tenants",     count: tenantsCount,    key: "tenants"     },
   ];
 
   return (
