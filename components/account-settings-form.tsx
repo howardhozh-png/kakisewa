@@ -592,15 +592,16 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
       </section>
 
       {/* ── WhatsApp Templates ── */}
-      <section className="kk-section p-6">
+      <section className="kk-section p-6" style={{ overflow: "visible" }}>
         <div className="flex items-center gap-2 mb-1">
           <h2 className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>WhatsApp Templates</h2>
-          <div className="relative group">
+          <div className="relative group" style={{ overflow: "visible" }}>
             <Info className="w-3.5 h-3.5 cursor-help" style={{ color: "var(--kk-ink-faint)" }} />
             <div
-              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 rounded-xl px-3 py-2.5 text-left pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50"
+              className="absolute left-0 top-full mt-2 w-64 rounded-xl px-3 py-2.5 text-left pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50"
               style={{ background: "var(--kk-ink)", color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.22)" }}
             >
+              <div className="absolute left-3 bottom-full w-2 h-2 rotate-45" style={{ background: "var(--kk-ink)", marginBottom: -4 }} />
               <p className="text-[11px] font-semibold mb-1.5 opacity-70 uppercase tracking-wide">Formatting guide</p>
               <div className="space-y-1 text-[12px] leading-relaxed">
                 <p><span className="opacity-50">Tokens:</span> {"{{variableName}}"} → replaced at send time</p>
@@ -610,7 +611,6 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
                 <p><span className="opacity-50">Link:</span> paste a URL — shown as blue underline</p>
                 <p><span className="opacity-50">Line break:</span> press Enter as normal</p>
               </div>
-              <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 rotate-45" style={{ background: "var(--kk-ink)", marginTop: -4 }} />
             </div>
           </div>
         </div>

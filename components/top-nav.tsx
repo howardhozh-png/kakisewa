@@ -501,7 +501,7 @@ const FAQS = [
   { q: "Why is only 1 WhatsApp message sending?", a: "Browsers block multiple window.open calls in quick succession. Use the card's detail dialog to send tenant and owner messages separately." },
   { q: "How does the renewal pipeline work?", a: "Tenancies within 60 days of expiry appear in Follow-up. Send check-ins, track T/O replies, then move to Pinged → Renewing once both confirm. Confirming commission resets the card to Active." },
   { q: "How is commission calculated?", a: "Default is 1 month's rent = 100%. Override per deal in the lead card, or change the agency default under Set goals." },
-  { q: "Is my data backed up?", a: "During beta, data is stored locally on the server. CSV export is coming soon. Automatic cloud backups will be added before public launch." },
+  { q: "Is my data backed up?", a: "Yes. All data is stored in Supabase (managed cloud database with daily backups and point-in-time recovery). You can also export your leads and tenancies to CSV at any time from the board header." },
 ];
 
 function SupportModal() {
@@ -521,15 +521,6 @@ function SupportModal() {
             <div className="min-w-0">
               <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>Email us</p>
               <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>support@kakisewa.com</p>
-            </div>
-          </a>
-          <a href="https://wa.me/60107609699" target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-2xl transition-colors" style={{ background: "var(--kk-surface-2)" }}>
-            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)", color: "var(--kk-green)" }}>
-              <MessageCircle className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>WhatsApp</p>
-              <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>Reply within 1 day</p>
             </div>
           </a>
         </div>
