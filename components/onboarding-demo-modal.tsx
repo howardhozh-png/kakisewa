@@ -465,9 +465,14 @@ function Scene2({ active }: { active: boolean }) {
               }}>
                 <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
                   <div style={{
-                    width: 28, height: 28, borderRadius: "50%", background: "#E5E5EA",
+                    width: 18, height: 18, borderRadius: "50%", background: "#1C1C1E",
                     flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 11, fontWeight: 700, color: "#6C6C70",
+                    fontSize: 9, fontWeight: 700, color: "#fff",
+                  }}>1</div>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%", background: "#E5E5EA",
+                    flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 700, color: "#6C6C70",
                   }}>P</div>
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Priya Sharma</p>
@@ -485,9 +490,14 @@ function Scene2({ active }: { active: boolean }) {
               }}>
                 <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
                   <div style={{
-                    width: 28, height: 28, borderRadius: "50%", background: "#E5E5EA",
+                    width: 18, height: 18, borderRadius: "50%", background: "#1C1C1E",
                     flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 11, fontWeight: 700, color: "#6C6C70",
+                    fontSize: 9, fontWeight: 700, color: "#fff",
+                  }}>2</div>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%", background: "#E5E5EA",
+                    flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 700, color: "#6C6C70",
                   }}>L</div>
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Lee Chong Wei</p>
@@ -823,7 +833,7 @@ function Scene3({ active }: { active: boolean }) {
 
         </div>
 
-        {/* Owner WhatsApp reply overlay */}
+        {/* Owner renewal form overlay */}
         {showWaOverlay && (
           <div style={{
             position: "absolute", inset: 0, zIndex: 15,
@@ -831,47 +841,66 @@ function Scene3({ active }: { active: boolean }) {
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <div style={{
-              width: 260, borderRadius: 14, overflow: "hidden",
+              width: 270, borderRadius: 14, overflow: "hidden",
               boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
+              background: "#F2F2F7",
               animation: "kk-demo-card-in 0.35s ease-out forwards",
             }}>
-              {/* WA header */}
-              <div style={{ background: "#25D366", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Form header — matches real /ro/[token] */}
+              <div style={{
+                background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)",
+                padding: "8px 12px", display: "flex", alignItems: "center", gap: 8,
+              }}>
                 <div style={{
-                  width: 30, height: 30, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.25)",
+                  width: 18, height: 18, borderRadius: 4, background: "#1C1C1E",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
-                }}>F</div>
+                  fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0,
+                }}>K</div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.01em" }}>kakisewa</span>
+                <div style={{ width: 1, height: 18, background: "rgba(0,0,0,0.10)", flexShrink: 0 }} />
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%", background: "#48484A",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 9, fontWeight: 700, color: "#fff", flexShrink: 0,
+                }}>A</div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "#fff", lineHeight: 1.2 }}>Fikri Ibrahim</p>
-                  <p style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.2 }}>Owner · via WhatsApp</p>
+                  <p style={{ fontSize: 10, fontWeight: 600, color: "#1C1C1E", lineHeight: 1.2 }}>Ahmad</p>
+                  <p style={{ fontSize: 8, color: "#6C6C70", lineHeight: 1.2 }}>Kakisewa Properties</p>
                 </div>
               </div>
-              {/* WA chat */}
-              <div style={{ background: "#ECE5DD", padding: "10px 10px", display: "flex", flexDirection: "column", gap: 7 }}>
+              {/* Chat area */}
+              <div style={{ padding: "10px 10px", display: "flex", flexDirection: "column", gap: 7 }}>
+                {/* Trust banner */}
+                <div style={{
+                  display: "flex", alignItems: "flex-start", gap: 5,
+                  background: "rgba(0,0,0,0.05)", borderRadius: 8,
+                  padding: "5px 8px",
+                }}>
+                  <span style={{ fontSize: 8, color: "#6C6C70", lineHeight: 1.4 }}>🔒 This form is private and secure. Only you and your agent can see your responses.</span>
+                </div>
+                {/* Agent bubble */}
                 <div style={{
                   alignSelf: "flex-start", background: "#fff",
                   borderRadius: "0 10px 10px 10px",
-                  padding: "7px 10px", maxWidth: "85%",
-                  fontSize: 10, color: "#1C1C1E", lineHeight: 1.4,
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
+                  padding: "6px 9px", maxWidth: "88%",
+                  fontSize: 9, color: "#1C1C1E", lineHeight: 1.4,
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
                 }}>
-                  Hi Fikri! Your lease at The Park A5905 expires Jul 30. Would you like to renew? 🏠
+                  Are you extending the contract with Fikri Ibrahim?
                 </div>
-                <div style={{
-                  alignSelf: "flex-end", background: "#DCF8C6",
-                  borderRadius: "10px 0 10px 10px",
-                  padding: "7px 10px", maxWidth: "75%",
-                  fontSize: 10, color: "#1C1C1E", lineHeight: 1.4,
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.10)",
-                }}>
-                  Yes, I&apos;d like to renew! 🙏
+                {/* Choice buttons — Yes selected */}
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <div style={{
+                    padding: "5px 10px", borderRadius: 20, fontSize: 9, fontWeight: 600,
+                    background: "#25D366", color: "#fff",
+                    boxShadow: "0 2px 8px rgba(37,211,102,0.35)",
+                    animation: "kk-demo-card-in 0.3s ease-out 0.6s both",
+                  }}>Yes, extend</div>
+                  <div style={{
+                    padding: "5px 10px", borderRadius: 20, fontSize: 9, fontWeight: 600,
+                    background: "rgba(0,0,0,0.06)", color: "#AEAEB2", opacity: 0.5,
+                  }}>No</div>
                 </div>
-                <div style={{
-                  alignSelf: "flex-end",
-                  fontSize: 9, color: "#6C6C70",
-                }}>✓✓ Seen</div>
               </div>
             </div>
           </div>
@@ -893,7 +922,7 @@ function Scene3({ active }: { active: boolean }) {
 const MODULES = [
   {
     title:     "Import leads & send outreach",
-    valueProp: "Personalised owner link, downloadable for bulk send",
+    valueProp: "Export for bulk send with personalized owner link",
     Scene:     Scene1,
   },
   {
