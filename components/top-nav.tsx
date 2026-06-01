@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState, useEffect, useTransition } from "react";
 import { Logo } from "@/components/logo";
-import { BetaCountdown } from "@/components/beta-countdown";
 import { cn } from "@/lib/utils";
 import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
@@ -608,6 +607,68 @@ function SupportModal() {
 }
 
 // ── TopNav ────────────────────────────────────────────────────────────────────
+// ── Tier badge ────────────────────────────────────────────────────────────────
+
+const TIER_BADGE = {
+  silver: {
+    bg: "linear-gradient(135deg, #c8c8c8 0%, #f0f0f0 45%, #d4d4d4 70%, #b8b8b8 100%)",
+    shine: "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(160,160,160,0.8)",
+    ink: "#1a1a1a",
+    shadow: "0 2px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.6)",
+    label: "Silver",
+  },
+  platinum: {
+    bg: "linear-gradient(135deg, #0b1f4a 0%, #2040a0 40%, #152a56 70%, #0a1a3c 100%)",
+    shine: "linear-gradient(135deg, rgba(120,170,255,0.35) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(80,130,220,0.9)",
+    ink: "#ffffff",
+    shadow: "0 2px 10px rgba(26,52,100,0.55), inset 0 1px 0 rgba(120,170,255,0.3)",
+    label: "Platinum",
+  },
+  elite: {
+    bg: "linear-gradient(135deg, #5c3015 0%, #c98840 40%, #a8692e 65%, #6b3d1e 100%)",
+    shine: "linear-gradient(135deg, rgba(255,215,120,0.45) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(200,160,80,0.9)",
+    ink: "#fff8f0",
+    shadow: "0 2px 10px rgba(100,60,20,0.5), inset 0 1px 0 rgba(255,220,100,0.3)",
+    label: "Elite",
+  },
+} as const;
+
+function TierBadge({ plan, isOnTrial }: { plan?: "silver" | "platinum" | "elite" | null; isOnTrial?: boolean }) {
+  if (!plan && !isOnTrial) return null;
+
+  if (isOnTrial && !plan) {
+    return (
+      <div
+        className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
+        style={{
+          background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%)",
+          border: "1px solid rgba(217,119,6,0.8)",
+          boxShadow: "0 2px 8px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.35)",
+        }}
+      >
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }} />
+        <span className="text-[11px] font-bold tracking-widest uppercase relative" style={{ color: "#78350f", letterSpacing: "0.12em" }}>Trial</span>
+      </div>
+    );
+  }
+
+  if (!plan) return null;
+  const t = TIER_BADGE[plan];
+
+  return (
+    <div
+      className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
+      style={{ background: t.bg, border: `1px solid ${t.border}`, boxShadow: t.shadow }}
+    >
+      <div className="absolute inset-0 pointer-events-none" style={{ background: t.shine }} />
+      <span className="text-[11px] font-bold tracking-widest uppercase relative" style={{ color: t.ink, letterSpacing: "0.12em" }}>{t.label}</span>
+    </div>
+  );
+}
+
 interface TopNavProps {
   agent: AgentProfile;
   isAdmin?: boolean;
@@ -774,7 +835,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
           {/* Right cluster — desktop only */}
           <div className="ml-auto hidden lg:flex items-center gap-3">
-            <BetaCountdown />
+            <TierBadge plan={agent.subscription_plan} isOnTrial={!isAdmin && trialDaysLeft != null && trialDaysLeft > 0} />
 
             <button
               ref={btnRef}
