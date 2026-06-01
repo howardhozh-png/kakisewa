@@ -12,6 +12,7 @@ export default function ResetPasswordPage() {
   const [confirm, setConfirm]    = useState("")
   const [loading, setLoading]    = useState(false)
   const [error, setError]        = useState<string | null>(null)
+  const [done, setDone]          = useState(false)
 
   useEffect(() => {
     const hash = window.location.hash.slice(1)
@@ -42,7 +43,9 @@ export default function ResetPasswordPage() {
     const { error: err } = await createClient().auth.updateUser({ password })
     setLoading(false)
     if (err) { setError(err.message); return }
-    router.push("/home")
+    await createClient().auth.signOut()
+    setDone(true)
+    setTimeout(() => router.push("/login"), 3000)
   }
 
   return (
@@ -53,7 +56,13 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="rounded-2xl p-7" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-          {linkError ? (
+          {done ? (
+            <div className="text-center py-2 flex flex-col gap-3">
+              <p className="text-2xl">✓</p>
+              <p className="font-semibold" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>Password reset successful</p>
+              <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Redirecting you to login…</p>
+            </div>
+          ) : linkError ? (
             <div className="flex flex-col gap-4">
               <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>
                 {linkError}
