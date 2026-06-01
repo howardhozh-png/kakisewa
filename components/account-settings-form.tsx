@@ -604,12 +604,11 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
               <div className="absolute left-3 bottom-full w-2 h-2 rotate-45" style={{ background: "var(--kk-ink)", marginBottom: -4 }} />
               <p className="text-[11px] font-semibold mb-1.5 opacity-70 uppercase tracking-wide">Formatting guide</p>
               <div className="space-y-1 text-[12px] leading-relaxed">
-                <p><span className="opacity-50">Tokens:</span> {"{{variableName}}"} → replaced at send time</p>
+                <p><span className="opacity-50">Token:</span> &ldquo;Owner name&rdquo; → replaced with actual owner name when sent</p>
                 <p><span className="opacity-50">Bold:</span> *word* → <strong>word</strong></p>
                 <p><span className="opacity-50">Italic:</span> _word_ → <em>word</em></p>
                 <p><span className="opacity-50">Strike:</span> ~word~ → <del>word</del></p>
-                <p><span className="opacity-50">Link:</span> paste a URL — shown as blue underline</p>
-                <p><span className="opacity-50">Line break:</span> press Enter as normal</p>
+                <p><span className="opacity-50">Next line:</span> press Enter as normal</p>
               </div>
             </div>
           </div>
