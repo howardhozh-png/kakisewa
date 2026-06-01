@@ -650,15 +650,15 @@ export async function bumpLoginStreak(): Promise<number> {
   return next;
 }
 
-export async function getAgentProfileByUserId(userId: string): Promise<{ name: string | null; agency: string | null }> {
+export async function getAgentProfileByUserId(userId: string): Promise<{ name: string | null; agency: string | null; photo_url: string | null }> {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("agent_profiles")
-    .select("name, agency")
+    .select("name, agency, photo_url")
     .eq("id", userId)
     .maybeSingle();
-  const row = data as { name?: string | null; agency?: string | null } | null;
-  return { name: row?.name ?? null, agency: row?.agency ?? null };
+  const row = data as { name?: string | null; agency?: string | null; photo_url?: string | null } | null;
+  return { name: row?.name ?? null, agency: row?.agency ?? null, photo_url: row?.photo_url ?? null };
 }
 
 export async function getAgentProfile(): Promise<AgentProfile> {

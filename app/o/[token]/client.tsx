@@ -7,9 +7,10 @@ interface Props {
   ownerName: string;
   agentName: string;
   agentAgency: string;
+  agentPhotoUrl: string | null;
 }
 
-export function OwnerIntakeClient({ token, ownerName, agentName, agentAgency }: Props) {
+export function OwnerIntakeClient({ token, ownerName, agentName, agentAgency, agentPhotoUrl }: Props) {
   const questions: IntakeQuestion[] = [
     {
       key: "unit",
@@ -78,7 +79,8 @@ export function OwnerIntakeClient({ token, ownerName, agentName, agentAgency }: 
       agentName={agentName}
       agentAgency={agentAgency}
       agentInitial={initial}
-      greeting={`Hi ${ownerName}! I'm ${agentName} from ${agentAgency}. I have a few quality tenants in queue. Just 30 seconds to fill this in and I'll handle the rest for you.`}
+      agentPhotoUrl={agentPhotoUrl}
+      greeting={`Hi ${ownerName}! I'm ${agentName} from ${agentAgency}. I have a few quality tenants interested. Just 30 seconds to fill this in and I'll handle the rest for you.`}
       questions={questions}
       onComplete={handleComplete}
       thankYouMessage={`Thank you, ${ownerName}! I've received your property details and will get back to you shortly with next steps. 🙏`}

@@ -18,6 +18,7 @@ interface Props {
   agentName: string;
   agentAgency: string;
   agentInitial: string;
+  agentPhotoUrl?: string | null;
   greeting: string;
   questions: IntakeQuestion[];
   onComplete: (answers: Record<string, string>) => Promise<{ ok: boolean; message?: string }>;
@@ -41,6 +42,7 @@ export function IntakeChat({
   agentName,
   agentAgency,
   agentInitial,
+  agentPhotoUrl,
   greeting,
   questions,
   onComplete,
@@ -51,21 +53,22 @@ export function IntakeChat({
   const [inputValue, setInputValue] = useState("");
   const [status, setStatus] = useState<"active" | "submitting" | "done" | "error">("active");
   const [errorMsg, setErrorMsg] = useState("");
-  const [viewportH, setViewportH] = useState<number | null>(null);
+  const [bottomOffset, setBottomOffset] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Fix mobile keyboard overlap: use visualViewport height when available
+  // Keep layout above keyboard on iOS: track keyboard height via visualViewport
   useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
     function update() {
-      const h = window.visualViewport?.height ?? window.innerHeight;
-      setViewportH(h);
+      const offset = window.innerHeight - vv!.offsetTop - vv!.height;
+      setBottomOffset(Math.max(0, offset));
     }
-    update();
-    window.visualViewport?.addEventListener("resize", update);
-    window.addEventListener("resize", update);
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
     return () => {
-      window.visualViewport?.removeEventListener("resize", update);
-      window.removeEventListener("resize", update);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
     };
   }, []);
 
@@ -114,10 +117,9 @@ export function IntakeChat({
   }
 
   return (
-    // Use measured visualViewport height so mobile keyboard doesn't overlap content
     <div
       className="flex flex-col overflow-hidden"
-      style={{ background: C.bg, height: viewportH ? `${viewportH}px` : "100dvh" }}
+      style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: bottomOffset, background: C.bg }}
     >
       {/* Header — no fontFamily override so Logo serif renders correctly */}
       <div
@@ -131,12 +133,21 @@ export function IntakeChat({
         {/* Divider */}
         <div className="w-px h-7 shrink-0" style={{ background: "rgba(0,0,0,0.10)" }} />
         {/* Agent avatar + name */}
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
-          style={{ background: C.avatar, fontFamily: CHAT_FONT }}
-        >
-          {agentInitial}
-        </div>
+        {agentPhotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={agentPhotoUrl}
+            alt={agentName}
+            className="w-8 h-8 rounded-full object-cover shrink-0"
+          />
+        ) : (
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
+            style={{ background: C.avatar, fontFamily: CHAT_FONT }}
+          >
+            {agentInitial}
+          </div>
+        )}
         <div className="min-w-0" style={{ fontFamily: CHAT_FONT }}>
           <p className="font-semibold text-[14px] leading-tight truncate" style={{ color: C.ink }}>{agentName}</p>
           <p className="text-[11px] leading-tight truncate" style={{ color: C.muted }}>{agentAgency}</p>

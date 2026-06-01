@@ -14,7 +14,7 @@ export default async function OwnerIntakePage({ params }: Props) {
   const lead = await getOwnerLeadByIntakeToken(token);
   if (!lead) return notFound();
 
-  const agent = lead.user_id ? await getAgentProfileByUserId(lead.user_id) : { name: null, agency: null };
+  const agent = lead.user_id ? await getAgentProfileByUserId(lead.user_id) : { name: null, agency: null, photo_url: null };
 
   if (lead.intake_completed_at) {
     return (
@@ -46,6 +46,7 @@ export default async function OwnerIntakePage({ params }: Props) {
       ownerName={lead.owner_name}
       agentName={agent.name ?? "Your Agent"}
       agentAgency={agent.agency ?? "kakisewa"}
+      agentPhotoUrl={agent.photo_url ?? null}
     />
   );
 }
