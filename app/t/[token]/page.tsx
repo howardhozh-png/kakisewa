@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "kakisewa",
-  openGraph: { images: [] },
+  
 };
 
 interface Props {
