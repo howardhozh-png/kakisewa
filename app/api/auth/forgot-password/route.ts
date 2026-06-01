@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "kakisewa <noreply@kakisewa.com>",
+      from: "kakisewa <onboarding@resend.dev>",
       to: [email],
       subject: "Reset your password",
       html: `
