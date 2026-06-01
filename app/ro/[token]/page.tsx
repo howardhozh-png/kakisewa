@@ -33,6 +33,7 @@ export default async function OwnerRenewalPage({ params }: Props) {
       currentRent={tenancy.amount}
       agentName={agent.name ?? "Your Agent"}
       agentAgency={agent.agency ?? ""}
+      agentPhotoUrl={agent.photo_url ?? null}
       alreadySubmitted={!!tenancy.owner_renewal_completed_at}
       prevContinuing={tenancy.replied_owner === "yes" ? true : tenancy.replied_owner === "no" ? false : null}
       prevTenantIntent={(tenancy.owner_noted_tenant_intent as "yes" | "no" | "unsure" | null) ?? null}

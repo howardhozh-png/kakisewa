@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { CalendarDays, Send, CheckCircle, Camera, X as XIcon } from "lucide-react";
+import { CalendarDays, Send, CheckCircle, Camera, X as XIcon, Lock } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
@@ -159,6 +159,8 @@ export function IntakeChat({
 
       {/* Chat bubbles */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2" style={{ fontFamily: CHAT_FONT }}>
+        {/* Trust banner */}
+        <TrustBanner />
         <AgentBubble text={greeting} />
 
         {questions.slice(0, currentIdx + 1).map((q, i) => (
@@ -233,6 +235,21 @@ export function IntakeChat({
           </form>
         </div>
       )}
+    </div>
+  );
+}
+
+function TrustBanner() {
+  const today = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
+  return (
+    <div
+      className="flex items-start gap-2 mx-auto max-w-xs px-4 py-2.5 rounded-xl text-center"
+      style={{ background: "rgba(0,0,0,0.05)", fontFamily: CHAT_FONT }}
+    >
+      <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: C.muted }} />
+      <p className="text-[11px] leading-relaxed" style={{ color: C.muted }}>
+        This form is private and secure. Only you and your agent can see your responses. · {today}
+      </p>
     </div>
   );
 }

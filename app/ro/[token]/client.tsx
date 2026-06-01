@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Lock } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 interface Props {
   token: string;
@@ -12,6 +13,7 @@ interface Props {
   currentRent: number;
   agentName: string;
   agentAgency: string;
+  agentPhotoUrl?: string | null;
   alreadySubmitted?: boolean;
   prevContinuing?: boolean | null;
   prevTenantIntent?: "yes" | "no" | "unsure" | null;
@@ -25,7 +27,7 @@ type TenantIntent = "yes" | "no" | "unsure";
 
 const STEP_ORDER: Step[] = ["choice", "tenant_intent", "rent", "contract_date", "duration", "submitting", "done", "error"];
 
-export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName, contractEnd, currentRent, agentName, agentAgency, alreadySubmitted, prevContinuing, prevTenantIntent, prevRent, prevStart, prevMonths }: Props) {
+export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName, contractEnd, currentRent, agentName, agentAgency, agentPhotoUrl, alreadySubmitted, prevContinuing, prevTenantIntent, prevRent, prevStart, prevMonths }: Props) {
   const [step, setStep] = useState<Step | null>(null);
   const [continuing, setContinuing] = useState<boolean | null>(alreadySubmitted ? (prevContinuing ?? null) : null);
   const [tenantIntent, setTenantIntent] = useState<TenantIntent | null>(alreadySubmitted ? (prevTenantIntent ?? null) : null);
@@ -125,24 +127,45 @@ export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName,
       })()
     : null;
 
+  const todayLabel = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
+
   return (
     <div
       className="flex flex-col h-dvh"
-      style={{ background: "#ECE5DD", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+      style={{ background: "#F2F2F7", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3" style={{ background: "#075E54", color: "#fff" }}>
-        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0" style={{ background: "#25D366" }}>
-          {initial}
-        </div>
-        <div>
-          <p className="text-[14px] font-semibold leading-tight">{agentName}</p>
-          {agentAgency && <p className="text-[11px] opacity-70">{agentAgency}</p>}
+      {/* Header — matches IntakeChat style */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}>
+        <Logo size={22} />
+        <span className="text-[15px] font-semibold" style={{ color: "#1C1C1E", letterSpacing: "-0.01em" }}>kakisewa</span>
+        <div className="ml-auto flex items-center gap-2.5">
+          {agentPhotoUrl ? (
+            <img src={agentPhotoUrl} alt={agentName} width={32} height={32}
+              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
+              style={{ background: "#1C1C1E", color: "#fff" }}>
+              {initial}
+            </div>
+          )}
+          <div className="text-right">
+            <p className="text-[13px] font-semibold leading-tight" style={{ color: "#1C1C1E" }}>{agentName}</p>
+            {agentAgency && <p className="text-[11px]" style={{ color: "#6C6C70" }}>{agentAgency}</p>}
+          </div>
         </div>
       </div>
 
       {/* Chat */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+
+        {/* Trust banner */}
+        <div className="flex items-start gap-2 mx-auto max-w-xs text-center px-4 py-2.5 rounded-xl"
+          style={{ background: "rgba(0,0,0,0.05)" }}>
+          <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#6C6C70" }} />
+          <p className="text-[11px] leading-relaxed" style={{ color: "#6C6C70" }}>
+            This form is private and secure. Only you and your agent can see your responses. · {todayLabel}
+          </p>
+        </div>
 
         {/* Opening message */}
         <AgentBubble>
@@ -331,7 +354,7 @@ function AgentBubble({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap"
-      style={{ background: "#fff", color: "#111", boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}
+      style={{ background: "#fff", color: "#1C1C1E", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}
     >
       {children}
     </div>
@@ -345,8 +368,13 @@ function ChoiceButton({ label, active, disabled, onClick, color }: {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-opacity"
-      style={{ background: color, opacity: disabled && !active ? 0.35 : 1 }}
+      className="rounded-full px-4 py-2 text-[13px] font-semibold transition-opacity"
+      style={{
+        background: active ? color : disabled ? "rgba(0,0,0,0.06)" : "#fff",
+        color: active ? "#fff" : disabled ? "#AEAEB2" : "#1C1C1E",
+        border: active ? "none" : "1px solid rgba(0,0,0,0.12)",
+        opacity: disabled && !active ? 0.5 : 1,
+      }}
     >
       {label}
     </button>
