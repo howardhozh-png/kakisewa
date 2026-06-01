@@ -87,6 +87,7 @@ export interface Tenancy {
   created_at: string;
   property?: Property;
   owner_lead_id?: string | null;
+  user_id?: string | null;
 }
 
 // Default stage for a tenancy that doesn't have lifecycle_stage explicitly

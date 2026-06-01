@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation";
-import { getTenancyByTenantRenewalToken, getAgentProfile } from "@/lib/db";
+import type { Metadata } from "next";
+import { getTenancyByTenantRenewalToken, getAgentProfileByUserId } from "@/lib/db";
 import { TenantRenewalClient } from "./client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "kakisewa",
+  openGraph: { images: [] },
+};
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -10,12 +16,12 @@ interface Props {
 
 export default async function TenantRenewalPage({ params }: Props) {
   const { token } = await params;
-  const [tenancy, agent] = await Promise.all([
-    getTenancyByTenantRenewalToken(token),
-    getAgentProfile(),
-  ]);
-
+  const tenancy = await getTenancyByTenantRenewalToken(token);
   if (!tenancy) return notFound();
+
+  const agent = tenancy.user_id
+    ? await getAgentProfileByUserId(tenancy.user_id)
+    : { name: null, agency: null, photo_url: null };
 
   if (tenancy.tenant_renewal_completed_at) {
     return (

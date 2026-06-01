@@ -1,9 +1,15 @@
 import { getOwnerLeadByIntakeToken } from "@/lib/db";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Logo } from "@/components/logo";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "kakisewa",
+  openGraph: { images: [] },
+};
 
 const TENANTS = [
   {

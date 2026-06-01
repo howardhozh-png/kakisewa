@@ -94,6 +94,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
     property_name: prop?.name as string | undefined,
     property,
     owner_lead_id: (r.owner_lead_id as string | null) ?? null,
+    user_id: (r.user_id as string | null) ?? null,
   };
 }
 

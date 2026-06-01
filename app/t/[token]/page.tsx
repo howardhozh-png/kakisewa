@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation";
-import { getTenantIntakeSession, getAgentProfile } from "@/lib/db";
+import type { Metadata } from "next";
+import { getTenantIntakeSession, getAgentProfileByUserId } from "@/lib/db";
 import { TenantIntakeClient } from "./client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "kakisewa",
+  openGraph: { images: [] },
+};
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -10,12 +16,10 @@ interface Props {
 
 export default async function TenantIntakePage({ params }: Props) {
   const { token } = await params;
-  const [session, agent] = await Promise.all([
-    getTenantIntakeSession(token),
-    getAgentProfile(),
-  ]);
-
+  const session = await getTenantIntakeSession(token);
   if (!session) return notFound();
+
+  const agent = await getAgentProfileByUserId(session.agent_id);
 
   if (session.completed_at) {
     return (

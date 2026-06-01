@@ -1,9 +1,15 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getOwnerLeadByIntakeToken, getAgentProfileByUserId } from "@/lib/db";
 import { Logo } from "@/components/logo";
 import { OwnerIntakeClient } from "./client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "kakisewa",
+  openGraph: { images: [] },
+};
 
 interface Props {
   params: Promise<{ token: string }>;
