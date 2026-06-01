@@ -136,7 +136,7 @@ function SignInForm() {
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
                   Password
                 </label>
-                <Link href="/forgot-password" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                <Link href="/forgot-password" tabIndex={-1} style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", textDecoration: "underline", textUnderlineOffset: 3 }}>
                   Forgot password?
                 </Link>
               </div>
