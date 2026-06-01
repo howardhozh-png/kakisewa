@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getOwnerLeadByIntakeToken, getAgentProfile } from "@/lib/db";
+import { getOwnerLeadByIntakeToken, getAgentProfileByUserId } from "@/lib/db";
 import { Logo } from "@/components/logo";
 import { OwnerIntakeClient } from "./client";
 
@@ -11,12 +11,10 @@ interface Props {
 
 export default async function OwnerIntakePage({ params }: Props) {
   const { token } = await params;
-  const [lead, agent] = await Promise.all([
-    getOwnerLeadByIntakeToken(token),
-    getAgentProfile(),
-  ]);
-
+  const lead = await getOwnerLeadByIntakeToken(token);
   if (!lead) return notFound();
+
+  const agent = lead.user_id ? await getAgentProfileByUserId(lead.user_id) : { name: null, agency: null };
 
   if (lead.intake_completed_at) {
     return (

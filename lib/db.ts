@@ -650,6 +650,17 @@ export async function bumpLoginStreak(): Promise<number> {
   return next;
 }
 
+export async function getAgentProfileByUserId(userId: string): Promise<{ name: string | null; agency: string | null }> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("agent_profiles")
+    .select("name, agency")
+    .eq("id", userId)
+    .maybeSingle();
+  const row = data as { name?: string | null; agency?: string | null } | null;
+  return { name: row?.name ?? null, agency: row?.agency ?? null };
+}
+
 export async function getAgentProfile(): Promise<AgentProfile> {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();

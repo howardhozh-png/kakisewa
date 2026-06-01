@@ -15,8 +15,9 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/terms") || pathname.startsWith("/privacy")) return true
   if (pathname.startsWith("/share")) return true
   if (pathname.startsWith("/pack")) return true
-  // Owner/tenant intake forms — recipients are not logged in
+  // Owner/tenant intake forms and sample pack — recipients are not logged in
   if (pathname.startsWith("/o/")) return true
+  if (pathname.startsWith("/s/")) return true
   if (pathname.startsWith("/t/")) return true
   if (pathname.startsWith("/ro/")) return true
   if (pathname.startsWith("/rt/")) return true

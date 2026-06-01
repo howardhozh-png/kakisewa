@@ -28,7 +28,7 @@ const CHAT_FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 const C = {
   bg: "#F2F2F7",
-  header: "#1C1C1E",
+  header: "#fff",
   avatar: "#48484A",
   ink: "#1C1C1E",
   muted: "#6C6C70",
@@ -122,14 +122,14 @@ export function IntakeChat({
       {/* Header — no fontFamily override so Logo serif renders correctly */}
       <div
         className="flex items-center gap-3 px-4 py-3 shrink-0"
-        style={{ background: C.header, boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }}
+        style={{ background: C.header, borderBottom: "1px solid rgba(0,0,0,0.08)" }}
       >
         {/* kakisewa wordmark — first thing owner sees, uses .serif class correctly */}
-        <div className="shrink-0" style={{ color: "rgba(255,255,255,0.92)" }}>
+        <div className="shrink-0" style={{ color: C.ink }}>
           <Logo variant="wordmark" size={24} />
         </div>
         {/* Divider */}
-        <div className="w-px h-7 shrink-0" style={{ background: "rgba(255,255,255,0.18)" }} />
+        <div className="w-px h-7 shrink-0" style={{ background: "rgba(0,0,0,0.10)" }} />
         {/* Agent avatar + name */}
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
@@ -138,8 +138,8 @@ export function IntakeChat({
           {agentInitial}
         </div>
         <div className="min-w-0" style={{ fontFamily: CHAT_FONT }}>
-          <p className="text-white font-semibold text-[14px] leading-tight truncate">{agentName}</p>
-          <p className="text-[11px] leading-tight truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{agentAgency}</p>
+          <p className="font-semibold text-[14px] leading-tight truncate" style={{ color: C.ink }}>{agentName}</p>
+          <p className="text-[11px] leading-tight truncate" style={{ color: C.muted }}>{agentAgency}</p>
         </div>
       </div>
 
