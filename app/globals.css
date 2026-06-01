@@ -245,7 +245,6 @@
 
 /* ─── Top nav — solid header ──────────────────────────────────────────────── */
 .kk-topnav {
-  position: sticky; top: 0; z-index: 50;
   background: var(--kk-topnav-bg);
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
