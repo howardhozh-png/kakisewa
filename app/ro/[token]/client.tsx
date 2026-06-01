@@ -22,55 +22,56 @@ interface Props {
   prevMonths?: number | null;
 }
 
-type Step = "choice" | "tenant_intent" | "rent" | "contract_date" | "duration" | "submitting" | "done" | "error";
-type TenantIntent = "yes" | "no" | "unsure";
+type Step = "extend_tenant" | "rent_out" | "rent" | "submitting" | "done" | "error";
 
-const STEP_ORDER: Step[] = ["choice", "tenant_intent", "rent", "contract_date", "duration", "submitting", "done", "error"];
+const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
-export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName, contractEnd, currentRent, agentName, agentAgency, agentPhotoUrl, alreadySubmitted, prevContinuing, prevTenantIntent, prevRent, prevStart, prevMonths }: Props) {
+export function OwnerRenewalClient({
+  token, ownerName, propertyName, tenantName, contractEnd, currentRent,
+  agentName, agentAgency, agentPhotoUrl, alreadySubmitted,
+}: Props) {
   const [step, setStep] = useState<Step | null>(null);
-  const [continuing, setContinuing] = useState<boolean | null>(alreadySubmitted ? (prevContinuing ?? null) : null);
-  const [tenantIntent, setTenantIntent] = useState<TenantIntent | null>(alreadySubmitted ? (prevTenantIntent ?? null) : null);
-  const [newRent, setNewRent] = useState(alreadySubmitted && prevRent ? String(prevRent) : String(currentRent));
-  const [renewalStart, setRenewalStart] = useState(alreadySubmitted && prevStart ? prevStart : contractEnd ?? "");
-  const [durationYears, setDurationYears] = useState<number | null>(alreadySubmitted && prevMonths ? prevMonths / 12 : null);
+  const [extendTenant, setExtendTenant] = useState<boolean | null>(null);
+  const [rentOut, setRentOut] = useState<boolean | null>(null);
+  const [newRent, setNewRent] = useState(String(currentRent));
+  const [rentLocked, setRentLocked] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (alreadySubmitted) { setStep("done"); return; }
-    const t = setTimeout(() => setStep("choice"), 700);
+    const t = setTimeout(() => setStep("extend_tenant"), 700);
     return () => clearTimeout(t);
   }, [alreadySubmitted]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [step, continuing, tenantIntent, durationYears]);
+  }, [step, extendTenant, rentOut, rentLocked]);
 
   const initial = agentName.charAt(0).toUpperCase();
 
-  // true if the given step has been reached (inclusive)
-  const pastStep = (s: Step) =>
-    step !== null && STEP_ORDER.indexOf(step) >= STEP_ORDER.indexOf(s);
+  const formattedEnd = contractEnd
+    ? new Date(contractEnd).toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })
+    : "";
 
-  async function submitAll(years: number) {
+  const todayLabel = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
+
+  async function submit(opts: { extending: boolean; newTenant: boolean; rent?: number }) {
     setStep("submitting");
-    const parsedRent = parseFloat(newRent);
+    const continuing = opts.extending || opts.newTenant;
     try {
       const res = await fetch("/api/intake/renewal/owner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token,
-          continuing: continuing!,
-          newRent: isNaN(parsedRent) ? undefined : parsedRent,
-          newContractStart: renewalStart || undefined,
-          durationYears: years,
-          tenantIntent: tenantIntent ?? "unsure",
+          continuing,
+          tenantIntent: opts.extending ? "yes" : "no",
+          newRent: opts.rent,
         }),
       });
       const data = (await res.json()) as { ok: boolean; message?: string };
-      if (data.ok) { setStep("done"); }
+      if (data.ok) setStep("done");
       else { setErrorMsg(data.message ?? "Something went wrong."); setStep("error"); }
     } catch {
       setErrorMsg("Network error. Please try again.");
@@ -78,151 +79,137 @@ export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName,
     }
   }
 
-  function handleChoice(choice: boolean) {
-    setContinuing(choice);
-    setTimeout(() => setStep("tenant_intent"), 400);
+  function handleExtendTenant(val: boolean) {
+    setExtendTenant(val);
+    if (val) {
+      setTimeout(() => setStep("rent"), 400);
+    } else {
+      setTimeout(() => setStep("rent_out"), 400);
+    }
   }
 
-  function handleTenantIntent(intent: TenantIntent) {
-    setTenantIntent(intent);
-    setTimeout(() => setStep("rent"), 400);
+  function handleRentOut(val: boolean) {
+    setRentOut(val);
+    if (val) {
+      setTimeout(() => setStep("rent"), 400);
+    } else {
+      submit({ extending: false, newTenant: false });
+    }
   }
 
   function handleRentSubmit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parseFloat(newRent);
-    setNewRent(isNaN(parsed) ? String(currentRent) : String(parsed));
-    setTimeout(() => setStep("contract_date"), 400);
-  }
-
-  function handleDateSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setTimeout(() => setStep("duration"), 400);
-  }
-
-  function handleDuration(years: number) {
-    setDurationYears(years);
-    submitAll(years);
+    const rent = isNaN(parsed) ? currentRent : parsed;
+    setRentLocked(rent);
+    setNewRent(String(rent));
+    submit({ extending: extendTenant === true, newTenant: rentOut === true, rent });
   }
 
   function handleRestart() {
-    setContinuing(null);
-    setTenantIntent(null);
+    setExtendTenant(null);
+    setRentOut(null);
     setNewRent(String(currentRent));
-    setRenewalStart(contractEnd ?? "");
-    setDurationYears(null);
+    setRentLocked(null);
     setErrorMsg("");
-    setTimeout(() => setStep("choice"), 50);
+    setTimeout(() => setStep("extend_tenant"), 50);
   }
 
-  const formattedEnd = contractEnd
-    ? new Date(contractEnd).toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })
-    : "";
-
-  const afterYears = renewalStart && durationYears
-    ? (() => {
-        const d = new Date(renewalStart);
-        d.setFullYear(d.getFullYear() + durationYears);
-        return d.toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-      })()
-    : null;
-
-  const todayLabel = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
+  const afterDone = step === "submitting" || step === "done" || step === "error";
 
   return (
-    <div
-      className="flex flex-col h-dvh"
-      style={{ background: "#F2F2F7", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
-    >
-      {/* Header — matches IntakeChat style */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}>
-        <Logo size={22} />
-        <span className="text-[15px] font-semibold" style={{ color: "#1C1C1E", letterSpacing: "-0.01em" }}>kakisewa</span>
-        <div className="ml-auto flex items-center gap-2.5">
-          {agentPhotoUrl ? (
-            <img src={agentPhotoUrl} alt={agentName} width={32} height={32}
-              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
-          ) : (
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
-              style={{ background: "#1C1C1E", color: "#fff" }}>
-              {initial}
-            </div>
-          )}
-          <div className="text-right">
-            <p className="text-[13px] font-semibold leading-tight" style={{ color: "#1C1C1E" }}>{agentName}</p>
-            {agentAgency && <p className="text-[11px]" style={{ color: "#6C6C70" }}>{agentAgency}</p>}
+    <div className="flex flex-col h-dvh" style={{ background: "#F2F2F7", fontFamily: FONT }}>
+      {/* Header — exact IntakeChat layout */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 shrink-0"
+        style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)" }}
+      >
+        <div className="shrink-0" style={{ color: "#1C1C1E" }}>
+          <Logo variant="wordmark" size={24} />
+        </div>
+        <div className="w-px h-7 shrink-0" style={{ background: "rgba(0,0,0,0.10)" }} />
+        {agentPhotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={agentPhotoUrl} alt={agentName} className="w-8 h-8 rounded-full object-cover shrink-0" />
+        ) : (
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0"
+            style={{ background: "#48484A", color: "#fff" }}
+          >
+            {initial}
           </div>
+        )}
+        <div className="min-w-0">
+          <p className="font-semibold text-[14px] leading-tight truncate" style={{ color: "#1C1C1E" }}>{agentName}</p>
+          {agentAgency && <p className="text-[11px] leading-tight truncate" style={{ color: "#6C6C70" }}>{agentAgency}</p>}
         </div>
       </div>
 
-      {/* Chat */}
+      {/* Chat scroll area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
 
         {/* Trust banner */}
-        <div className="flex items-start gap-2 mx-auto max-w-xs text-center px-4 py-2.5 rounded-xl"
-          style={{ background: "rgba(0,0,0,0.05)" }}>
+        <div
+          className="flex items-start gap-2 mx-auto max-w-xs px-4 py-2.5 rounded-xl"
+          style={{ background: "rgba(0,0,0,0.05)" }}
+        >
           <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#6C6C70" }} />
           <p className="text-[11px] leading-relaxed" style={{ color: "#6C6C70" }}>
             This form is private and secure. Only you and your agent can see your responses. · {todayLabel}
           </p>
         </div>
 
-        {/* Opening message */}
-        <AgentBubble>
-          Hi {ownerName || "there"}! The tenancy at <strong>{propertyName}</strong> with {tenantName} is expiring on {formattedEnd}.
-          {"\n\n"}
-          Would you like to continue renting it out?
-        </AgentBubble>
-
-        {/* Q1: Choice buttons — active while on "choice" step */}
-        {step === "choice" && (
-          <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, continue" active={continuing === true} disabled={continuing !== null} onClick={() => handleChoice(true)} color="#25D366" />
-            <ChoiceButton label="No, I'll stop" active={continuing === false} disabled={continuing !== null} onClick={() => handleChoice(false)} color="#E53E3E" />
-          </div>
-        )}
-        {/* Q1: Show locked selection once past choice step */}
-        {pastStep("tenant_intent") && continuing !== null && (
-          <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, continue" active={continuing === true} disabled onClick={() => {}} color="#25D366" />
-            <ChoiceButton label="No, I'll stop" active={continuing === false} disabled onClick={() => {}} color="#E53E3E" />
-          </div>
-        )}
-
-        {/* Q2: Tenant intent */}
-        {pastStep("tenant_intent") && (
+        {/* Opening */}
+        {step !== null && (
           <AgentBubble>
-            {continuing
-              ? `One more thing — has ${tenantName} indicated whether they want to stay on?`
-              : `Got it. Has ${tenantName} said anything about their plans?`}
+            Hi {ownerName || "there"}! The tenancy at <strong>{propertyName}</strong> with {tenantName} is expiring on {formattedEnd}.
           </AgentBubble>
         )}
-        {step === "tenant_intent" && (
-          <div className="flex gap-2 justify-end flex-wrap mt-1">
-            <ChoiceButton label="Yes, staying" active={tenantIntent === "yes"} disabled={tenantIntent !== null} onClick={() => handleTenantIntent("yes")} color="#25D366" />
-            <ChoiceButton label="No, leaving" active={tenantIntent === "no"} disabled={tenantIntent !== null} onClick={() => handleTenantIntent("no")} color="#E53E3E" />
-            <ChoiceButton label="Not sure" active={tenantIntent === "unsure"} disabled={tenantIntent !== null} onClick={() => handleTenantIntent("unsure")} color="#888" />
+
+        {/* Q1: Extend with same tenant? */}
+        {step !== null && (
+          <AgentBubble>Are you extending the contract with {tenantName}?</AgentBubble>
+        )}
+        {step === "extend_tenant" && (
+          <div className="flex gap-2 justify-end mt-1">
+            <ChoiceButton label="Yes, extend" active={false} disabled={false} onClick={() => handleExtendTenant(true)} color="#25D366" />
+            <ChoiceButton label="No" active={false} disabled={false} onClick={() => handleExtendTenant(false)} color="#E53E3E" />
           </div>
         )}
-        {/* Q2: Show locked selection once past tenant_intent */}
-        {pastStep("rent") && tenantIntent !== null && (
-          <div className="flex gap-2 justify-end flex-wrap mt-1">
-            <ChoiceButton label="Yes, staying" active={tenantIntent === "yes"} disabled onClick={() => {}} color="#25D366" />
-            <ChoiceButton label="No, leaving" active={tenantIntent === "no"} disabled onClick={() => {}} color="#E53E3E" />
-            <ChoiceButton label="Not sure" active={tenantIntent === "unsure"} disabled onClick={() => {}} color="#888" />
+        {extendTenant !== null && step !== "extend_tenant" && (
+          <div className="flex gap-2 justify-end mt-1">
+            <ChoiceButton label="Yes, extend" active={extendTenant === true} disabled onClick={() => {}} color="#25D366" />
+            <ChoiceButton label="No" active={extendTenant === false} disabled onClick={() => {}} color="#E53E3E" />
           </div>
         )}
 
-        {/* Q3: Rent */}
-        {pastStep("rent") && (
+        {/* Q2: Continue renting to new tenant? (only if Q1 = No) */}
+        {extendTenant === false && (step === "rent_out" || step === "rent" || afterDone) && (
           <AgentBubble>
-            The current rent is RM {currentRent.toLocaleString()}/mo. Any changes to the amount?
+            Got it. Are you planning to continue renting out {propertyName} with a new tenant?
           </AgentBubble>
+        )}
+        {step === "rent_out" && (
+          <div className="flex gap-2 justify-end mt-1">
+            <ChoiceButton label="Yes, new tenant" active={false} disabled={false} onClick={() => handleRentOut(true)} color="#25D366" />
+            <ChoiceButton label="No, I'll stop" active={false} disabled={false} onClick={() => handleRentOut(false)} color="#E53E3E" />
+          </div>
+        )}
+        {rentOut !== null && step !== "rent_out" && (
+          <div className="flex gap-2 justify-end mt-1">
+            <ChoiceButton label="Yes, new tenant" active={rentOut === true} disabled onClick={() => {}} color="#25D366" />
+            <ChoiceButton label="No, I'll stop" active={rentOut === false} disabled onClick={() => {}} color="#E53E3E" />
+          </div>
+        )}
+
+        {/* Q3: Rent amount (only if extending or new tenant) */}
+        {(extendTenant === true || rentOut === true) && (step === "rent" || (rentLocked !== null && afterDone)) && (
+          <AgentBubble>What will be the rent per month moving forward?</AgentBubble>
         )}
         {step === "rent" && (
           <form onSubmit={handleRentSubmit} className="flex justify-end gap-2 items-center mt-1">
             <div className="flex items-center gap-1 rounded-2xl px-3 py-2 text-[14px]" style={{ background: "#fff", color: "#111" }}>
-              <span className="text-[13px] text-gray-500">RM</span>
+              <span className="text-[13px]" style={{ color: "#6C6C70" }}>RM</span>
               <input
                 type="number"
                 value={newRent}
@@ -232,73 +219,25 @@ export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName,
                 className="w-24 outline-none bg-transparent text-right"
                 style={{ color: "#111" }}
               />
-              <span className="text-[13px] text-gray-500">/mo</span>
+              <span className="text-[13px]" style={{ color: "#6C6C70" }}>/mo</span>
             </div>
-            <button type="submit" className="rounded-full px-4 py-2 text-[13px] font-semibold text-white" style={{ background: "#25D366" }}>
+            <button
+              type="submit"
+              className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
+              style={{ background: "#25D366" }}
+            >
               Confirm
             </button>
           </form>
         )}
-
-        {/* Q3: Locked rent answer */}
-        {pastStep("contract_date") && (
+        {rentLocked !== null && step !== "rent" && (
           <div className="flex justify-end mt-1">
-            <div className="rounded-2xl rounded-tr-sm px-4 py-2 text-[14px] font-medium" style={{ background: "#DCF8C6", color: "#111" }}>
-              RM {parseFloat(newRent).toLocaleString()}/mo
+            <div
+              className="rounded-2xl rounded-tr-sm px-4 py-2 text-[14px] font-medium"
+              style={{ background: "#E5E5EA", color: "#111" }}
+            >
+              RM {rentLocked.toLocaleString()}/mo
             </div>
-          </div>
-        )}
-
-        {/* Q4: Contract start date */}
-        {pastStep("contract_date") && (
-          <AgentBubble>
-            When should the new contract start?
-          </AgentBubble>
-        )}
-        {step === "contract_date" && (
-          <form onSubmit={handleDateSubmit} className="flex justify-end gap-2 items-center mt-1">
-            <input
-              type="date"
-              value={renewalStart}
-              onChange={(e) => setRenewalStart(e.target.value)}
-              required
-              className="rounded-2xl px-3 py-2 text-[14px] border-0 outline-none"
-              style={{ background: "#fff", color: "#111" }}
-            />
-            <button type="submit" className="rounded-full px-4 py-2 text-[13px] font-semibold text-white" style={{ background: "#25D366" }}>
-              Confirm
-            </button>
-          </form>
-        )}
-
-        {/* Q4: Locked date answer */}
-        {pastStep("duration") && renewalStart && (
-          <div className="flex justify-end mt-1">
-            <div className="rounded-2xl rounded-tr-sm px-4 py-2 text-[14px] font-medium" style={{ background: "#DCF8C6", color: "#111" }}>
-              {new Date(renewalStart).toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" })}
-            </div>
-          </div>
-        )}
-
-        {/* Q5: Duration */}
-        {pastStep("duration") && (
-          <AgentBubble>
-            How many years for the new contract?
-          </AgentBubble>
-        )}
-        {step === "duration" && (
-          <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="1 year"  active={durationYears === 1} disabled={durationYears !== null} onClick={() => handleDuration(1)} color="#25D366" />
-            <ChoiceButton label="2 years" active={durationYears === 2} disabled={durationYears !== null} onClick={() => handleDuration(2)} color="#25D366" />
-            <ChoiceButton label="3 years" active={durationYears === 3} disabled={durationYears !== null} onClick={() => handleDuration(3)} color="#25D366" />
-          </div>
-        )}
-        {/* Q5: Locked duration answer */}
-        {pastStep("done") && durationYears !== null && (
-          <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="1 year"  active={durationYears === 1} disabled onClick={() => {}} color="#25D366" />
-            <ChoiceButton label="2 years" active={durationYears === 2} disabled onClick={() => {}} color="#25D366" />
-            <ChoiceButton label="3 years" active={durationYears === 3} disabled onClick={() => {}} color="#25D366" />
           </div>
         )}
 
@@ -308,24 +247,26 @@ export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName,
             <AgentBubble>
               <span className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 inline shrink-0" style={{ color: "#25D366" }} />
-                {continuing === null
-                  ? `You've already responded — thank you! Your agent will be in touch soon.`
-                  : continuing
-                    ? afterYears
-                      ? `Got it! New contract from ${new Date(renewalStart).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })} for ${durationYears} year${durationYears === 1 ? "" : "s"} (until ${afterYears}). I'll be in touch soon.`
-                      : `Got it! I'll work on the contract details and keep you posted.`
-                    : `Understood — I'll find a new tenant. Thanks for the details!`}
+                {alreadySubmitted
+                  ? "You've already responded — thank you! Your agent will be in touch soon."
+                  : extendTenant === true
+                  ? `Perfect! I'll prepare the renewal documents for ${tenantName}. I'll be in touch soon.`
+                  : rentOut === true
+                  ? `Noted — I'll start sourcing a new tenant${rentLocked ? ` at RM ${rentLocked.toLocaleString()}/mo` : ""}. I'll keep you updated.`
+                  : `Understood — thank you for letting me know! I'll note that the property won't be rented out after the contract ends.`}
               </span>
             </AgentBubble>
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={handleRestart}
-                className="text-[12px] underline underline-offset-2"
-                style={{ color: "#888", background: "none", border: "none", cursor: "pointer" }}
-              >
-                Filled in wrong details? Don&apos;t worry, you can fill in again.
-              </button>
-            </div>
+            {!alreadySubmitted && (
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={handleRestart}
+                  className="text-[12px] underline underline-offset-2"
+                  style={{ color: "#888", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  Filled in wrong details? You can fill in again.
+                </button>
+              </div>
+            )}
           </>
         )}
 
@@ -353,7 +294,7 @@ export function OwnerRenewalClient({ token, ownerName, propertyName, tenantName,
 function AgentBubble({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap"
+      className="max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-3 text-[14px] leading-relaxed"
       style={{ background: "#fff", color: "#1C1C1E", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}
     >
       {children}
@@ -370,9 +311,9 @@ function ChoiceButton({ label, active, disabled, onClick, color }: {
       disabled={disabled}
       className="rounded-full px-4 py-2 text-[13px] font-semibold transition-opacity"
       style={{
-        background: active ? color : disabled ? "rgba(0,0,0,0.06)" : "#fff",
-        color: active ? "#fff" : disabled ? "#AEAEB2" : "#1C1C1E",
-        border: active ? "none" : "1px solid rgba(0,0,0,0.12)",
+        background: disabled ? (active ? color : "rgba(0,0,0,0.06)") : color,
+        color: disabled ? (active ? "#fff" : "#AEAEB2") : "#fff",
+        border: "none",
         opacity: disabled && !active ? 0.5 : 1,
       }}
     >
