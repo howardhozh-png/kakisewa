@@ -2,29 +2,30 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { SolutionCards } from "./solution-cards";
+import { HowItWorks } from "./how-it-works";
+import { Faq } from "./faq";
 
 interface Comparison {
   before: string;
-  after: string;
+  after: React.ReactNode;
 }
 
 const COMPARISONS: Comparison[] = [
   {
     before: "Tracks owner interest manually on Excel — no visibility on who responded or dropped off",
-    after: "KakiSewa auto-tracks every owner response and pings you the moment interest comes in",
+    after: <>KakiSewa <strong>auto-tracks</strong> every owner response and <strong>pings you</strong> the moment interest comes in</>,
   },
   {
     before: "Memorises (or forgets) contract expiry dates across dozens of listings — finds out too late",
-    after: "Automatic 60-day reminder so you follow up first, before another agent takes your listing",
+    after: <>Automatic <strong>60-day reminder</strong> so you <strong>follow up first</strong>, before another agent takes your listing</>,
   },
   {
     before: "Sends tenant profiles one-by-one on WhatsApp with no branding — looks like everyone else",
-    after: "One branded tenant pack link. Owner picks from a shortlist. You close without the back-and-forth.",
+    after: <>One <strong>branded tenant pack</strong> link. Owner picks from a shortlist. You close <strong>without the back-and-forth</strong>.</>,
   },
   {
     before: "Hard to look professional or trustworthy, especially with new owners who don't know you",
-    after: "First message already looks like a top agency — structured owner form + polished tenant pack from day one",
+    after: <>First message already looks like a <strong>top agency</strong> — structured owner form + <strong>polished tenant pack</strong> from day one</>,
   },
 ];
 
@@ -44,7 +45,6 @@ interface Point {
   hook: React.ReactNode;
   quote: string;
   role: string;
-  bg: string;
 }
 
 const POINTS: Point[] = [
@@ -60,7 +60,6 @@ const POINTS: Point[] = [
     ),
     quote: "I forgot which contract was expiring. Found out when the owner texted me asking for a new tenant. Someone else was already showing the unit by then.",
     role: "Property agent · 6 years · Kuala Lumpur",
-    bg: "var(--kk-bg)",
   },
   {
     num: "02",
@@ -74,7 +73,6 @@ const POINTS: Point[] = [
     ),
     quote: "I had no idea who was still interested. Just names on WhatsApp and gut feel. No stages, no history. I still missed deals.",
     role: "Independent negotiator · 4 years · Petaling Jaya",
-    bg: "var(--kk-surface-2)",
   },
   {
     num: "03",
@@ -86,7 +84,6 @@ const POINTS: Point[] = [
     ),
     quote: "I keep feeling like money is slipping through my fingers but I can't prove it. I don't even know how many deals I've lost because I had no system to follow up.",
     role: "Real estate agent · 3 years · Shah Alam",
-    bg: "var(--kk-bg)",
   },
 ];
 
@@ -113,7 +110,7 @@ export default function LandingPage() {
             className="px-5 py-2 rounded-full font-semibold transition-opacity hover:opacity-90"
             style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
           >
-            Start free trial
+            Start trial, expiring soon
           </Link>
         </div>
       </header>
@@ -141,10 +138,10 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-90"
             style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body-lg)" }}
           >
-            Start free trial <ArrowRight className="w-4 h-4" />
+            Start trial, expiring soon <ArrowRight className="w-4 h-4" />
           </Link>
           <a
-            href="#calculator"
+            href="#comparison"
             className="px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-70"
             style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", fontSize: "var(--kk-body-lg)" }}
           >
@@ -218,7 +215,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Today vs KakiSewa ─────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
+      <section id="comparison" className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[960px] mx-auto">
           <div className="text-center mb-14">
             <p
@@ -239,23 +236,18 @@ export default function LandingPage() {
           </div>
 
           {/* Column headers */}
-          <div
-            className="grid gap-px mb-px"
-            style={{ gridTemplateColumns: "1fr 1fr", background: "var(--kk-line)" }}
-          >
-            <div className="flex items-center gap-2 px-7 py-3.5" style={{ background: "#FEF2F2" }}>
-              <span style={{ fontSize: "1rem" }}>✕</span>
+          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <div className="px-7 py-4" style={{ background: "#FEF2F2", borderTop: "3px solid #DC2626" }}>
               <span
-                className="font-semibold uppercase tracking-widest"
+                className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "#DC2626", letterSpacing: "0.12em" }}
               >
                 Agents today
               </span>
             </div>
-            <div className="flex items-center gap-2 px-7 py-3.5" style={{ background: "#F0FDF4" }}>
-              <span style={{ fontSize: "1rem", color: "var(--kk-green)" }}>✓</span>
+            <div className="px-7 py-4" style={{ background: "#F0FDF4", borderTop: "3px solid var(--kk-green)", borderLeft: "1px solid var(--kk-line)" }}>
               <span
-                className="font-semibold uppercase tracking-widest"
+                className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", letterSpacing: "0.12em" }}
               >
                 With kakisewa
@@ -267,38 +259,36 @@ export default function LandingPage() {
           {COMPARISONS.map((row, i) => (
             <div
               key={i}
-              className="grid gap-px mb-px"
-              style={{ gridTemplateColumns: "1fr 1fr", background: "var(--kk-line)" }}
+              className="grid"
+              style={{ gridTemplateColumns: "1fr 1fr", borderTop: "1px solid var(--kk-line)" }}
             >
               <div
-                className="flex items-start gap-3 px-7 py-6"
+                className="px-7 py-6"
                 style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}
               >
-                <span style={{ color: "#DC2626", fontSize: "0.875rem", marginTop: "0.2rem", flexShrink: 0 }}>✕</span>
-                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink-mute)" }}>{row.before}</p>
+                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink-mute)", fontStyle: "italic" }}>{row.before}</p>
               </div>
               <div
-                className="flex items-start gap-3 px-7 py-6"
-                style={{ background: i % 2 === 0 ? "#F9FFF9" : "#F4FCF4" }}
+                className="px-7 py-6"
+                style={{ background: i % 2 === 0 ? "#F9FFF9" : "#F4FCF4", borderLeft: "1px solid var(--kk-line)" }}
               >
-                <span style={{ color: "var(--kk-green)", fontSize: "0.875rem", marginTop: "0.2rem", flexShrink: 0 }}>✓</span>
-                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink)", fontWeight: 500 }}>{row.after}</p>
+                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink)" }}>{row.after}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Solution ──────────────────────────────────────────────────────── */}
+      {/* ── How It Works ──────────────────────────────────────────────────── */}
       <section className="px-6 lg:px-12 py-24" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[1100px] mx-auto">
           <h2
             className="serif mb-16"
             style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1.08, letterSpacing: "-0.022em", maxWidth: "22ch" }}
           >
-            Stop losing deals to agents with better tools.
+            Set up in minutes.<br />See results in days.
           </h2>
-          <SolutionCards />
+          <HowItWorks />
         </div>
       </section>
 
@@ -313,7 +303,6 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-px" style={{ background: "var(--kk-line)" }}>
 
-            {/* Stat 1 — The problem */}
             <div className="px-8 py-10" style={{ background: "var(--kk-surface-2)" }}>
               <p className="serif font-black tabular-nums mb-3" style={{ fontSize: "clamp(2.6rem, 4vw, 3.5rem)", color: "#DC2626", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 −RM 6,000
@@ -334,7 +323,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Stat 2 — The ROI */}
             <div className="px-8 py-10" style={{ background: "var(--kk-surface-2)" }}>
               <p className="serif font-black mb-3" style={{ fontSize: "clamp(2.6rem, 4vw, 3.5rem)", color: "var(--kk-green)", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 10 months free
@@ -344,7 +332,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Stat 3 — The scale proof */}
             <div className="px-8 py-10" style={{ background: "var(--kk-surface-2)" }}>
               <p className="serif font-black mb-3" style={{ fontSize: "clamp(2.6rem, 4vw, 3.5rem)", color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 50% miss rate
@@ -358,6 +345,27 @@ export default function LandingPage() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
+        <div className="max-w-[720px] mx-auto">
+          <div className="text-center mb-14">
+            <p
+              className="uppercase font-semibold mb-5"
+              style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
+            >
+              Common questions
+            </p>
+            <h2
+              className="serif"
+              style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.5rem)", lineHeight: 1.1, letterSpacing: "-0.022em" }}
+            >
+              Got questions?
+            </h2>
+          </div>
+          <Faq />
         </div>
       </section>
 
@@ -376,7 +384,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-90"
             style={{ background: "#fff", color: "var(--kk-ink)", fontSize: "var(--kk-body-lg)" }}
           >
-            Start free trial <ArrowRight className="w-4 h-4" />
+            Start trial, expiring soon <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
@@ -392,7 +400,7 @@ export default function LandingPage() {
           <Link href="/terms" className="transition-opacity hover:opacity-70" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Terms</Link>
           <Link href="/privacy" className="transition-opacity hover:opacity-70" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Privacy</Link>
           <Link href="/sign-in" className="transition-opacity hover:opacity-70" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Sign in</Link>
-          <Link href="/sign-up" className="transition-opacity hover:opacity-70" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Start free trial</Link>
+          <Link href="/sign-up" className="transition-opacity hover:opacity-70" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Start trial</Link>
         </div>
       </footer>
     </main>
