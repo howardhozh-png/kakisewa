@@ -1,15 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const [ready, setReady]     = useState(false)
   const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [confirm, setConfirm]   = useState("")
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+
+  // Supabase sends hash-fragment tokens: #access_token=...&type=recovery
+  // The browser client picks them up automatically via detectSessionInUrl (default: true).
+  // We listen for PASSWORD_RECOVERY so we only show the form once the session is live.
+  useEffect(() => {
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setReady(true)
+    })
+    // If already has a valid session (e.g. user navigated back), show form immediately
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -32,55 +48,61 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="rounded-2xl p-7" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <p className="font-semibold mb-1" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>Set new password</p>
-              <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Choose a strong password for your account.</p>
+          {!ready ? (
+            <div className="text-center py-4">
+              <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Verifying reset link…</p>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div>
+                <p className="font-semibold mb-1" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>Set new password</p>
+                <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Choose a strong password for your account.</p>
+              </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>New password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Min. 8 characters"
-                className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
-                style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
-                onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
-                onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
-              />
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>New password</label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Min. 8 characters"
+                  className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
+                  style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
+                />
+              </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Confirm password</label>
-              <input
-                type="password"
-                required
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                placeholder=""
-                className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
-                style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
-                onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
-                onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
-              />
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Confirm password</label>
+                <input
+                  type="password"
+                  required
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  placeholder=""
+                  className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
+                  style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
+                />
+              </div>
 
-            {error && (
-              <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>{error}</p>
-            )}
+              {error && (
+                <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>{error}</p>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
-              style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
-            >
-              {loading ? "Updating…" : "Update password"}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
+                style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+              >
+                {loading ? "Updating…" : "Update password"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

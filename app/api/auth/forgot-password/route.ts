@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     type: "recovery",
     email,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password`,
+      redirectTo: "https://www.kakisewa.com/reset-password",
     },
   })
 
