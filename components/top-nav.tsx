@@ -344,10 +344,11 @@ const TIER_DATA = [
     roiMonths: "10 months",
     features: [
       { label: "New Owners pipeline", plus: false },
-      { label: "Owner & tenant intake forms", plus: false },
-      { label: "WhatsApp outreach templates", plus: false },
       { label: "CSV bulk import", plus: false },
+      { label: "Owner & tenant intake forms", plus: false },
+      { label: "Send branded tenant pack", plus: false },
     ],
+    recommended: "New agents who rely on new leads and need to track hundreds of owners, convert them with customised templates.",
   },
   {
     name: "Platinum" as const,
@@ -356,9 +357,10 @@ const TIER_DATA = [
     features: [
       { label: "Everything in Silver, plus:", italic: true },
       { label: "Existing Contracts board", plus: true },
-      { label: "Renewal lifecycle tracking", plus: true },
-      { label: "Contract expiry alerts", plus: true },
+      { label: "Automated renewal notifications", plus: true },
+      { label: "WhatsApp message to owner for renewal", plus: true },
     ],
+    recommended: "Experienced agents with many existing contracts where protecting renewal income is the priority.",
   },
   {
     name: "Elite" as const,
@@ -370,12 +372,15 @@ const TIER_DATA = [
       { label: "Performance dashboard", plus: true },
       { label: "Analytics (coming soon)", plus: true },
     ],
+    recommended: "Advanced agents who want everything in one place — support contacts, goal planning, notes, and performance tracking.",
   },
 ];
 
-function BillingModal() {
-  // Current tier = trial (highlighted ring on Elite showing what trial unlocks)
+function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
   const currentTier = "trial";
+  const daysLabel = trialDaysLeft != null
+    ? trialDaysLeft <= 0 ? "Trial ended" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`
+    : "Trial active";
 
   return (
     <>
@@ -405,7 +410,7 @@ function BillingModal() {
           <div className="absolute -top-3 right-0 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold"
             style={{ background: "linear-gradient(90deg, #1F8B4C, #22c55e)", color: "#fff", boxShadow: "0 2px 8px rgba(34,197,94,0.4)" }}>
             <Check className="w-3 h-3" />
-            Trial active · 7 days
+            {daysLabel}
           </div>
 
           {TIER_DATA.map((t) => {
@@ -457,6 +462,12 @@ function BillingModal() {
                     </li>
                   ))}
                 </ul>
+
+                {/* Recommended if */}
+                <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(0,0,0,0.12)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended if…</p>
+                  <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{t.recommended}</p>
+                </div>
 
                 {/* CTA */}
                 <button disabled
@@ -554,11 +565,12 @@ function SupportModal() {
 interface TopNavProps {
   agent: AgentProfile;
   isAdmin?: boolean;
+  trialDaysLeft?: number | null;
 }
 
 type ActiveModal = "account" | "billing" | "support" | null;
 
-export function TopNav({ agent, isAdmin }: TopNavProps) {
+export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -611,6 +623,28 @@ export function TopNav({ agent, isAdmin }: TopNavProps) {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKeyDown);
     };
+  }, []);
+
+  // After the first-time onboarding demo closes, show the subscription modal
+  useEffect(() => {
+    function onDemoFirstClose() { setTimeout(() => setActiveModal("billing"), 400); }
+    document.addEventListener("kk:demo-first-close", onDemoFirstClose);
+    return () => document.removeEventListener("kk:demo-first-close", onDemoFirstClose);
+  }, []);
+
+  // On every login during a trial, show the subscription modal once per session
+  useEffect(() => {
+    if (isAdmin) return;
+    if (trialDaysLeft == null) return;
+    const SESSION_KEY = "kk_sub_shown";
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+    sessionStorage.setItem(SESSION_KEY, "1");
+    // Delay so we don't clash with the demo modal on first login
+    const demoSeen = localStorage.getItem("kk_demo_seen_v1");
+    const delay = demoSeen ? 800 : 4000;
+    const t = setTimeout(() => setActiveModal("billing"), delay);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function pickTheme(t: Theme) {
@@ -950,7 +984,7 @@ export function TopNav({ agent, isAdmin }: TopNavProps) {
       )}
       {activeModal === "billing" && (
         <Modal onClose={() => setActiveModal(null)} wide>
-          <BillingModal />
+          <BillingModal trialDaysLeft={trialDaysLeft} />
         </Modal>
       )}
       {activeModal === "support" && (

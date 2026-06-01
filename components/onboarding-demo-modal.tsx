@@ -916,8 +916,10 @@ export function OnboardingDemoModal() {
   const openModal = useCallback(() => { setOpen(true); setPlaying(true); }, []);
 
   const close = useCallback(() => {
+    const isFirstClose = !localStorage.getItem(STORAGE_KEY);
     setOpen(false); setPlaying(false); setMod(0);
     localStorage.setItem(STORAGE_KEY, "1");
+    if (isFirstClose) document.dispatchEvent(new CustomEvent("kk:demo-first-close"));
   }, []);
 
   const goTo = useCallback((m: number) => {

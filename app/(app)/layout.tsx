@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex flex-col min-h-screen">
       <AccentProvider color={agent.accent_color} />
       {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} />}
-      <TopNav agent={agent} isAdmin={isAdmin} />
+      <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={isAdmin ? null : trialDaysLeft} />
       <GreetingBar name={agent.name} streak={streak} />
       <main className="flex-1">{children}</main>
       <SpotlightTour />
