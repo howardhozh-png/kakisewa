@@ -1,9 +1,24 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "./supabase/server";
 import { createServiceClient } from "./supabase/service";
 import { headers } from "next/headers";
 import type { Property, Tenancy, TenancyStatus, LhdnStatus, Tier, MonthlyCollection, PropertySupport, SupportType } from "./types";
 import type { WhatsAppLogEntry, WhatsAppTemplate } from "./types";
 import type { OwnerLead, AgentProfile, TenantProfile, MatchPack, PackTenant } from "./types";
+
+// ─── Per-request helpers ───────────────────────────────────────────────────────
+
+// Real user UUID from middleware header — safe inside unstable_cache (no cookies).
+// Wrapped with React cache() so repeated calls within one render share one lookup.
+const getCurrentUserId = cache(async (): Promise<string> => {
+  try {
+    const h = await headers();
+    return (h as unknown as { get(name: string): string | null }).get("x-user-id") ?? "";
+  } catch {
+    return "";
+  }
+});
 
 // ─── Header helpers (middleware injects these) ────────────────────────────────
 
@@ -105,16 +120,174 @@ function parseOwnerLead(r: Record<string, unknown>): OwnerLead {
   };
 }
 
+// ─── Cached data fetchers ─────────────────────────────────────────────────────
+// unstable_cache caches across requests (up to 60s). Cannot use cookies() inside;
+// use service client + explicit user_id filter instead.
+
+const _cachedProperties = unstable_cache(
+  async (userId: string): Promise<Property[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r: unknown) => toProp(r as Record<string, unknown>));
+  },
+  ["kk-properties"],
+  { tags: ["kk-properties"], revalidate: 60 }
+);
+
+const _cachedTenancies = unstable_cache(
+  async (userId: string): Promise<Tenancy[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).order("due_day", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
+  },
+  ["kk-tenancies"],
+  { tags: ["kk-tenancies"], revalidate: 60 }
+);
+
+const _cachedLifecycleTenancies = unstable_cache(
+  async (userId: string): Promise<Tenancy[]> => {
+    const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).not("contract_end", "is", null).gte("contract_end", earliest).order("contract_end", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
+  },
+  ["kk-lifecycle-tenancies"],
+  { tags: ["kk-tenancies"], revalidate: 60 }
+);
+
+const _cachedOwnerLeads = unstable_cache(
+  async (userId: string): Promise<OwnerLead[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
+  },
+  ["kk-owner-leads"],
+  { tags: ["kk-owner-leads"], revalidate: 60 }
+);
+
+const _cachedListedOwnerLeads = unstable_cache(
+  async (userId: string): Promise<OwnerLead[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).in("stage", ["listed", "matched"]).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
+  },
+  ["kk-listed-owner-leads"],
+  { tags: ["kk-owner-leads"], revalidate: 60 }
+);
+
+const _cachedAllTenantProfiles = unstable_cache(
+  async (userId: string): Promise<TenantProfile[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("tenant_profiles").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as TenantProfile[];
+  },
+  ["kk-tenant-profiles"],
+  { tags: ["kk-tenant-profiles"], revalidate: 60 }
+);
+
+const _cachedPropertySupports = unstable_cache(
+  async (userId: string): Promise<PropertySupport[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("property_supports").select("id, name, phone, type, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as PropertySupport[];
+  },
+  ["kk-supports"],
+  { tags: ["kk-supports"], revalidate: 60 }
+);
+
+const _cachedHomeDashboardStats = unstable_cache(
+  async (userId: string) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const in60  = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
+    const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+    const svc = createServiceClient();
+    const [
+      { count: totalOwners },
+      { count: uncontacted },
+      { count: pipeline },
+      { count: listedWithoutTenant },
+      { count: activeContracts },
+      { count: expiringIn60 },
+    ] = await Promise.all([
+      svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId),
+      svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("stage", "imported").or("outreach_count.is.null,outreach_count.eq.0"),
+      svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).in("stage", ["replied","wants_rent","listed","matched"]),
+      svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("stage", "listed"),
+      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).not("contract_end", "is", null).gte("contract_end", earliest),
+      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", in60),
+    ]);
+    return {
+      totalOwners: totalOwners ?? 0,
+      uncontacted: uncontacted ?? 0,
+      pipeline: pipeline ?? 0,
+      listedWithoutTenant: listedWithoutTenant ?? 0,
+      activeContracts: activeContracts ?? 0,
+      expiringIn60: expiringIn60 ?? 0,
+    };
+  },
+  ["kk-home-stats"],
+  { tags: ["kk-owner-leads", "kk-tenancies"], revalidate: 30 }
+);
+
+const _cachedAllActiveTenants = unstable_cache(
+  async (userId: string) => {
+    const svc = createServiceClient();
+    const { data, error } = await svc
+      .from("tenancies")
+      .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, property_id, owner_lead_id")
+      .eq("user_id", userId)
+      .not("lifecycle_stage", "eq", "closed")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+
+    const rows = (data ?? []) as Record<string, unknown>[];
+    const propIds = [...new Set(rows.map(r => r.property_id as string).filter(Boolean))];
+    const olIds   = [...new Set(rows.filter(r => !r.property_id && r.owner_lead_id).map(r => r.owner_lead_id as string))];
+
+    const [propsRes, olsRes] = await Promise.all([
+      propIds.length > 0 ? svc.from("properties").select("id, name, unit").in("id", propIds) : Promise.resolve({ data: [] as {id:string;name:string;unit:string|null}[] }),
+      olIds.length > 0   ? svc.from("owner_leads").select("id, property_name, unit").in("id", olIds) : Promise.resolve({ data: [] as {id:string;property_name:string|null;unit:string|null}[] }),
+    ]);
+
+    const propMap = Object.fromEntries((propsRes.data ?? []).map((p: {id:string;name:string;unit:string|null}) => [p.id, p]));
+    const olMap   = Object.fromEntries((olsRes.data   ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
+
+    return rows.map(row => {
+      const prop = row.property_id ? propMap[row.property_id as string] : null;
+      const ol   = (!row.property_id && row.owner_lead_id) ? olMap[row.owner_lead_id as string] : null;
+      return {
+        tenancy_id:      row.id as string,
+        tenant_name:     row.tenant_name as string,
+        tenant_phone:    row.tenant_phone as string | null,
+        property_name:   (prop?.name ?? ol?.property_name ?? null) as string | null,
+        unit:            (prop?.unit ?? ol?.unit ?? null) as string | null,
+        amount:          row.amount as number | null,
+        lifecycle_stage: row.lifecycle_stage as string | null,
+      };
+    });
+  },
+  ["kk-active-tenants"],
+  { tags: ["kk-tenancies", "kk-properties", "kk-owner-leads"], revalidate: 60 }
+);
+
 // ─── Properties ───────────────────────────────────────────────────────────────
 
 export async function getProperties(): Promise<Property[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(r => toProp(r as Record<string, unknown>));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("properties").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(r => toProp(r as Record<string, unknown>));
+  }
+  return _cachedProperties(userId);
 }
 
 export async function getProperty(id: string): Promise<Property | null> {
@@ -169,13 +342,14 @@ export async function deleteProperty(id: string): Promise<void> {
 const TENANCY_SELECT = "*, properties!property_id(*)";
 
 export async function getTenancies(): Promise<Tenancy[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tenancies")
-    .select(TENANCY_SELECT)
-    .order("due_day", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).order("due_day", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
+  }
+  return _cachedTenancies(userId);
 }
 
 export async function getTenancy(id: string): Promise<Tenancy | null> {
@@ -460,16 +634,15 @@ export async function getRecentWhatsAppForRelated(
 // ─── Lifecycle board ─────────────────────────────────────────────────────────
 
 export async function getLifecycleTenancies(): Promise<Tenancy[]> {
-  const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tenancies")
-    .select(TENANCY_SELECT)
-    .not("contract_end", "is", null)
-    .gte("contract_end", earliest)
-    .order("contract_end", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).gte("contract_end", earliest).order("contract_end", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
+  }
+  return _cachedLifecycleTenancies(userId);
 }
 
 export async function countOwnerLeads(): Promise<number> {
@@ -501,11 +674,13 @@ export async function getHomeDashboardStats(): Promise<{
   activeContracts: number;
   expiringIn60: number;
 }> {
+  const userId = await getCurrentUserId();
+  if (userId) return _cachedHomeDashboardStats(userId);
+
   const today = new Date().toISOString().slice(0, 10);
   const in60  = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
   const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
   const supabase = await createClient();
-
   const [
     { count: totalOwners },
     { count: uncontacted },
@@ -521,7 +696,6 @@ export async function getHomeDashboardStats(): Promise<{
     supabase.from("tenancies").select("*", { count: "exact", head: true }).not("contract_end", "is", null).gte("contract_end", earliest),
     supabase.from("tenancies").select("*", { count: "exact", head: true }).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", in60),
   ]);
-
   return {
     totalOwners: totalOwners ?? 0,
     uncontacted: uncontacted ?? 0,
@@ -662,7 +836,7 @@ export async function getAgentProfileByUserId(userId: string): Promise<{ name: s
   return { name: row?.name ?? null, agency: row?.agency ?? null, photo_url: row?.photo_url ?? null };
 }
 
-export async function getAgentProfile(): Promise<AgentProfile> {
+export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
@@ -709,7 +883,7 @@ export async function getAgentProfile(): Promise<AgentProfile> {
   if (headerMeta.agency) base.agency = headerMeta.agency;
   base.ren_number = (user.user_metadata?.ren_number as string | null) ?? null;
   return base;
-}
+});
 
 export async function saveWhatsAppTemplates(overrides: import("./whatsapp-templates").TemplateOverrides): Promise<void> {
   const supabase = await createClient();
@@ -867,13 +1041,14 @@ export async function getPerformanceSummary(): Promise<import("./types").Perform
 // ─── Owner leads ─────────────────────────────────────────────────────────────
 
 export async function getOwnerLeads(): Promise<OwnerLead[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("owner_leads")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("owner_leads").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+  }
+  return _cachedOwnerLeads(userId);
 }
 
 export async function createOwnerLead(data: Omit<OwnerLead, "id" | "created_at">): Promise<OwnerLead> {
@@ -1067,14 +1242,14 @@ export async function getLifetimeCommissionStats(): Promise<{
 }
 
 export async function getListedOwnerLeads(): Promise<OwnerLead[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("owner_leads")
-    .select("*")
-    .in("stage", ["listed", "matched"])
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("owner_leads").select("*").in("stage", ["listed", "matched"]).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+  }
+  return _cachedListedOwnerLeads(userId);
 }
 
 export async function getOwnerLead(id: string): Promise<OwnerLead | null> {
@@ -1464,13 +1639,14 @@ export async function completeTenantIntake(
 }
 
 export async function getAllTenantProfiles(): Promise<TenantProfile[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tenant_profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as TenantProfile[];
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("tenant_profiles").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as TenantProfile[];
+  }
+  return _cachedAllTenantProfiles(userId);
 }
 
 export async function getTenantProfileByPhone(phone: string): Promise<TenantProfile | null> {
@@ -1595,6 +1771,9 @@ export async function getAllActiveTenants(): Promise<Array<{
   amount: number | null;
   lifecycle_stage: string | null;
 }>> {
+  const userId = await getCurrentUserId();
+  if (userId) return _cachedAllActiveTenants(userId);
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tenancies")
@@ -1672,15 +1851,14 @@ export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<R
 // ─── Property Supports ────────────────────────────────────────────────────────
 
 export async function getPropertySupports(): Promise<PropertySupport[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("property_supports")
-    .select("id, name, phone, type, area, notes, starred, source, created_at")
-    .order("starred", { ascending: false })
-    .order("type", { ascending: true })
-    .order("name", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as PropertySupport[];
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("property_supports").select("id, name, phone, type, area, notes, starred, source, created_at").order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as PropertySupport[];
+  }
+  return _cachedPropertySupports(userId);
 }
 
 export async function createPropertySupport(data: {

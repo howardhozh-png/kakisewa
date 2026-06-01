@@ -79,6 +79,7 @@ export async function middleware(request: NextRequest) {
     const agentId = user.email === ADMIN_EMAIL ? ADMIN_AGENT_ID : user.id
     const meta = (user.user_metadata ?? {}) as Record<string, string>
     requestHeaders.set("x-agent-id", agentId)
+    requestHeaders.set("x-user-id", user.id)
     requestHeaders.set("x-is-admin", user.email === ADMIN_EMAIL ? "true" : "false")
     requestHeaders.set("x-agent-name", meta.full_name ?? meta.name ?? "")
     requestHeaders.set("x-agent-email", user.email ?? "")
