@@ -506,9 +506,9 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                     disabled={!!loading}
                     className="w-full py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-1.5"
                     style={{
-                      background: "transparent",
-                      color: t.name === "Silver" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.85)",
-                      border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.28)"}`,
+                      background: "rgba(255,255,255,0.92)",
+                      color: "#111",
+                      border: "none",
                       opacity: loading ? 0.6 : 1,
                     }}>
                     {loading === `${t.planId}-monthly`
@@ -521,16 +521,16 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                     disabled={!!loading}
                     className="w-full py-2.5 rounded-xl text-center transition-all hover:scale-[1.03] active:scale-[0.98] flex flex-col items-center justify-center gap-0"
                     style={{
-                      background: "transparent",
-                      color: t.name === "Silver" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.85)",
-                      border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.28)"}`,
+                      background: "rgba(255,255,255,0.92)",
+                      color: "#111",
+                      border: "none",
                       opacity: loading ? 0.6 : 1,
                     }}>
                     {loading === `${t.planId}-annual`
                       ? <span className="text-[12px] font-semibold flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" /> Redirecting…</span>
                       : <>
                           <span className="text-[12px] font-semibold leading-snug">Annual plan</span>
-                          <span className="text-[10px] font-medium leading-snug" style={{ color: t.name === "Silver" ? "#1F8B4C" : s.roiGreen }}>
+                          <span className="text-[10px] font-medium leading-snug" style={{ color: "#1F8B4C" }}>
                             save RM {t.annualSavings}/year
                           </span>
                         </>}
