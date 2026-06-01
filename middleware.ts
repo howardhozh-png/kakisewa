@@ -31,6 +31,15 @@ function isPublicPath(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  // Redirect the Vercel preview URL to the canonical domain
+  const host = request.headers.get("host") ?? "";
+  if (host.endsWith(".vercel.app")) {
+    const url = request.nextUrl.clone();
+    url.host = "www.kakisewa.com";
+    url.port = "";
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
   // If Supabase env vars are not set (e.g. preview without secrets), allow public
   // paths through and redirect everything else to login so the site doesn't 500.
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
