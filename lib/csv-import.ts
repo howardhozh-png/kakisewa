@@ -250,15 +250,17 @@ export function parseOwnerAddress(raw: string): {
   const rest = raw.slice(commaIdx + 1).trim();
   const words = rest.split(/\s+/);
 
-  // Find first street keyword
-  const stopIdx = words.findIndex((w) => STREET_KEYWORDS.has(w.toUpperCase()));
+  // Strip punctuation before checking so "JALAN," is still recognised
+  const stopIdx = words.findIndex((w) => STREET_KEYWORDS.has(w.replace(/\W/g, "").toUpperCase()));
+
+  // Strip commas from individual words when building the property name
+  const cleanWord = (w: string) => toTitleCase(w.replace(/,/g, ""));
 
   let propertyName: string | null = null;
   if (stopIdx > 0) {
-    propertyName = words.slice(0, stopIdx).map(toTitleCase).join(" ");
+    propertyName = words.slice(0, stopIdx).map(cleanWord).join(" ").trim() || null;
   } else if (stopIdx === -1 && words.length > 0) {
-    // No street keyword found — whole remainder might be the condo name
-    propertyName = words.map(toTitleCase).join(" ");
+    propertyName = words.map(cleanWord).join(" ").trim() || null;
   }
 
   return { unit, propertyName, address: rest };
