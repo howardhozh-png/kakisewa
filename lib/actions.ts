@@ -1099,6 +1099,56 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
   };
 }
 
+/**
+ * Faster alternative to importOwnerCsv: accepts already-parsed rows from the
+ * client so we skip the file re-upload and second server-side parse entirely.
+ */
+export async function importParsedOwnerLeads(
+  rows: Record<string, string>[],
+  mapping: ColumnMapping
+): Promise<ImportResult> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session!.user.id;
+
+  const parsed: ImportRow[] = rows.map((r, i) => canonicaliseWithMapping(r, mapping, i + 2));
+  const valid = parsed.filter((r) => r.errors.length === 0);
+  const invalid = parsed.filter((r) => r.errors.length > 0);
+
+  const batch = `batch_${Date.now()}`;
+  await bulkCreateOwnerLeads(
+    valid.map((row) => ({
+      owner_name: row.owner_name,
+      owner_phone: row.owner_phone,
+      property_name: row.property_name ?? null,
+      unit: row.unit ?? null,
+      address: row.address ?? null,
+      expected_rent: row.expected_rent ?? null,
+      bedrooms: row.bedrooms ?? null,
+      bathrooms: row.bathrooms ?? null,
+      notes: row.notes ?? null,
+      source: "csv" as const,
+      import_batch_id: batch,
+      stage: "imported" as const,
+      available_from: null,
+    })),
+    userId
+  );
+
+  revalidatePath("/new-owners");
+  return {
+    ok: valid.length > 0,
+    imported: valid.length,
+    skipped: invalid.length,
+    errors: invalid,
+    total: rows.length,
+    message: valid.length === 0
+      ? `No valid rows found (${rows.length} total).`
+      : `Imported ${valid.length} owner${valid.length === 1 ? "" : "s"}${invalid.length > 0 ? `; ${invalid.length} skipped` : ""}.`,
+  };
+}
+
 // ─── Intake form links ────────────────────────────────────────────────────────
 
 export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok: boolean; url: string; waUrl: string; message: string }> {

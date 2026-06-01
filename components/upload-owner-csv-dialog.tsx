@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { importOwnerCsv, type ImportResult } from "@/lib/actions";
+import { importParsedOwnerLeads, type ImportResult } from "@/lib/actions";
 import {
   detectColumns, refreshMappingFlags, parseOwnerAddress, parseSpreadsheetRows,
   type ColumnMapping,
 } from "@/lib/csv-import";
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, X, Download, ArrowRight, ChevronLeft } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle2, X, Download, ArrowRight, ChevronLeft } from "lucide-react";
+import { UploadRing } from "@/components/ui/upload-ring";
 import { toast } from "sonner";
 
 type Step = "pick" | "map" | "result";
@@ -46,7 +47,7 @@ export function UploadOwnerCsvDialog() {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [importProgress, setImportProgress] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -100,22 +101,33 @@ export function UploadOwnerCsvDialog() {
     setMapping(refreshMappingFlags(updated));
   }
 
-  function handleImport() {
-    if (!file || !mapping) return;
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("mapping", JSON.stringify(mapping));
-    startTransition(async () => {
-      const res = await importOwnerCsv(fd);
+  async function handleImport() {
+    if (!parsedData || !mapping) return;
+    setImportProgress(0);
+
+    // Animate progress while server processes — ticks up fast then slows near 90%
+    const ticker = setInterval(() => {
+      setImportProgress((p) => {
+        if (p === null || p >= 90) return p;
+        return p + (p < 50 ? 9 : p < 75 ? 5 : 1);
+      });
+    }, 120);
+
+    try {
+      const res = await importParsedOwnerLeads(parsedData.rows, mapping);
+      clearInterval(ticker);
+      setImportProgress(100);
+      await new Promise((r) => setTimeout(r, 280));
+      setImportProgress(null);
       setResult(res);
       setStep("result");
-      if (res.ok) {
-        toast.success(res.message);
-        router.refresh();
-      } else {
-        toast.error(res.message);
-      }
-    });
+      if (res.ok) { toast.success(res.message); router.refresh(); }
+      else toast.error(res.message);
+    } catch {
+      clearInterval(ticker);
+      setImportProgress(null);
+      toast.error("Import failed. Please try again.");
+    }
   }
 
   function downloadSample() {
@@ -302,12 +314,29 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
                   </button>
                   <button
                     type="button"
-                    className="kk-pill kk-pill-primary"
-                    disabled={!canImport || pending}
+                    className="kk-pill kk-pill-primary relative overflow-hidden"
+                    disabled={!canImport || importProgress !== null}
                     onClick={handleImport}
+                    style={{ minWidth: 148 }}
                   >
-                    {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                    {pending ? "Importing…" : `Import ${parsedData.total} rows`}
+                    {importProgress !== null ? (
+                      <>
+                        <UploadRing progress={importProgress} size={15} color="#fff" />
+                        Importing…
+                        {/* Thin fill bar along the button bottom */}
+                        <span
+                          style={{
+                            position: "absolute", bottom: 0, left: 0, height: 2,
+                            width: `${importProgress}%`,
+                            background: "rgba(255,255,255,0.45)",
+                            borderRadius: 99,
+                            transition: "width 0.12s ease",
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>Import {parsedData.total} rows</>
+                    )}
                   </button>
                 </div>
               </>
