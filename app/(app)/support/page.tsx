@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, BookOpen, ChevronDown } from "lucide-react";
+import { Mail, BookOpen, ChevronDown } from "lucide-react";
 
 export const metadata = { title: "Help & support — kakisewa" };
 
@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "Is my data backed up?",
-    a: "During beta, data is stored locally on the server. We strongly recommend exporting your leads regularly using the CSV export (coming soon). Before public launch, we'll add automatic cloud backups.",
+    a: "Yes. All data is stored in Supabase (a managed cloud database with daily backups and point-in-time recovery). You can also export your leads and tenancies to CSV at any time from the board header.",
   },
 ];
 
@@ -56,22 +56,6 @@ export default function SupportPage() {
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium">Email support</p>
                   <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>support@kakisewa.com</p>
-                </div>
-              </a>
-              <a
-                href="https://wa.me/60107609699"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="kk-scale-hover flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
-                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}
-              >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: "var(--kk-green-soft)", color: "var(--kk-green)" }}>
-                  <MessageCircle className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-medium">WhatsApp us</p>
-                  <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>Typically reply within 1 day</p>
                 </div>
               </a>
             </div>
