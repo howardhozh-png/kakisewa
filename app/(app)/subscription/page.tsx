@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,8 @@ const PLANS = [
   {
     name: "Silver" as const, planId: "silver" as const,
     monthly: 198, annualMonthly: 165, annualTotal: 1980, annualSavings: 396,
-    roiMonths: "10 months",
+    monthlyAnnualTotal: 2376,
+    roiMonths: "10 months free",
     features: [
       { label: "Bulk owner list upload" },
       { label: "Automatically track owner reply" },
@@ -45,22 +46,27 @@ const PLANS = [
     ],
     plusFeatures: [] as string[],
     recommended: "New agents who need support in tracking owner responses and converting more new owners with branded profile and messaging.",
+    popular: false,
   },
   {
     name: "Platinum" as const, planId: "platinum" as const,
     monthly: 398, annualMonthly: 332, annualTotal: 3980, annualSavings: 796,
-    roiMonths: "5 months",
+    monthlyAnnualTotal: 4776,
+    roiMonths: "5 months free",
     features: [{ label: "Everything in Silver, plus:", italic: true }],
     plusFeatures: ["Unlock \"Existing contracts\"", "Capture all renewal commission", "Contract renewal reminder and messaging"],
     recommended: "Experienced agent who needs support in capturing all contract renewal income by tracking existing contracts.",
+    popular: true,
   },
   {
     name: "Elite" as const, planId: "elite" as const,
     monthly: 498, annualMonthly: 415, annualTotal: 4980, annualSavings: 996,
-    roiMonths: "4 months",
+    monthlyAnnualTotal: 5976,
+    roiMonths: "4 months free",
     features: [{ label: "Everything in Platinum, plus:", italic: true }],
     plusFeatures: ["Property support management", "Performance dashboard", "Analytics and newsletter"],
     recommended: "Elite agent who wants everything in one-place, including goal planning, performance tracking, property services contacts.",
+    popular: false,
   },
 ];
 
@@ -89,7 +95,6 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
         onClick={e => e.stopPropagation()}
         style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}
       >
-        {/* Mini plan card header */}
         <div className="p-5 relative" style={{ background: s.bg }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: s.shine }} />
           <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: s.faint }}>
@@ -144,7 +149,7 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function BillingPage() {
+export default function SubscriptionPage() {
   const [pending, setPending] = useState<{ plan: typeof PLANS[number]; interval: "monthly" | "annual" } | null>(null);
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -188,94 +193,125 @@ export default function BillingPage() {
       )}
 
       <div className="mx-auto max-w-[1040px] px-6 lg:px-10 py-10 lg:py-14">
-        <header className="mb-10">
-          <p className="kk-overline mb-2">Settings</p>
-          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>Subscription</h1>
-          <p className="mt-2 kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-            Beta pricing locked in for early adopters. Cancel anytime.
+        {/* Header */}
+        <header className="mb-12 text-center">
+          <p className="kk-overline mb-3">Subscription</p>
+          <h1 className="serif kk-display mb-4" style={{ color: "var(--kk-ink)" }}>
+            Your kakisewa subscription plan
+          </h1>
+          <p className="text-[15px] max-w-xl mx-auto" style={{ color: "var(--kk-ink-mute)", lineHeight: 1.7 }}>
+            Capture just <strong style={{ color: "var(--kk-ink)" }}>1 missed renewal at RM 2,000</strong> means kakisewa pays for itself
           </p>
         </header>
 
-        {/* ROI callout */}
-        <div className="mb-8 px-5 py-4 rounded-2xl flex flex-wrap gap-6 items-center"
-          style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-          <p className="text-[13px] font-medium shrink-0" style={{ color: "var(--kk-ink-mute)" }}>
-            Capture just <strong style={{ color: "var(--kk-ink)" }}>1 missed renewal at RM2,000</strong> means kakisewa pays for itself…
-          </p>
-          <div className="flex gap-6">
-            {PLANS.map(p => (
-              <div key={p.name} className="text-center">
-                <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--kk-ink-faint)" }}>{p.name}</p>
-                <p className="text-[16px] font-bold tabular-nums" style={{ color: "var(--kk-green)", letterSpacing: "-0.02em" }}>{p.roiMonths} free</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Plan cards */}
-        <div className="grid lg:grid-cols-3 gap-5 mb-10">
+        <div className="grid lg:grid-cols-3 gap-5 mb-12">
           {PLANS.map(plan => {
             const s = TIER_STYLES[plan.name];
             return (
-              <div key={plan.name} className="rounded-2xl flex flex-col overflow-hidden"
-                style={{ background: s.bg, boxShadow: s.ring, position: "relative" }}>
-                <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: s.shine }} />
+              <div key={plan.name} className="flex flex-col">
+                {/* ROI label above card */}
+                <div className="text-center mb-3">
+                  <span
+                    className="text-[13px] font-bold tracking-wide"
+                    style={{ color: "var(--kk-green)" }}
+                  >
+                    {plan.roiMonths}
+                  </span>
+                </div>
 
-                <div className="p-6 flex flex-col gap-5 flex-1">
-                  {/* Header */}
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: s.faint }}>{plan.name}</p>
-                    <p className="text-[32px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
-                      RM {plan.monthly}
-                    </p>
-                    <p className="text-[12px] mt-1" style={{ color: s.mute }}>/month</p>
+                {/* Most popular badge */}
+                {plan.popular && (
+                  <div className="text-center mb-2">
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                      style={{ background: "var(--kk-green)", color: "#fff" }}
+                    >
+                      Most popular
+                    </span>
                   </div>
+                )}
+                {/* Spacer for non-popular cards to keep cards aligned */}
+                {!plan.popular && <div className="mb-[26px]" />}
 
-                  {/* Features */}
-                  <ul className="space-y-2.5 flex-1">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        {"italic" in f && f.italic ? null : (
-                          <span className="text-[12px] font-bold shrink-0 mt-px" style={{ color: s.roiGreen }}>✓</span>
-                        )}
-                        <span className="text-[13px] leading-snug"
-                          style={{ color: "italic" in f && f.italic ? s.faint : s.ink, fontStyle: "italic" in f && f.italic ? "italic" : "normal" }}>
-                          {f.label}
+                {/* Card */}
+                <div
+                  className="rounded-2xl flex flex-col overflow-hidden flex-1"
+                  style={{ background: s.bg, boxShadow: s.ring, position: "relative" }}
+                >
+                  <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: s.shine }} />
+
+                  <div className="p-6 flex flex-col gap-5 flex-1">
+                    {/* Header */}
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: s.faint }}>{plan.name}</p>
+                      <p className="text-[32px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
+                        RM {plan.monthly}
+                      </p>
+                      <p className="text-[12px] mt-1" style={{ color: s.mute }}>/month</p>
+                    </div>
+
+                    {/* Features */}
+                    <ul className="space-y-2.5 flex-1">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          {"italic" in f && f.italic ? null : (
+                            <span className="text-[12px] font-bold shrink-0 mt-px" style={{ color: s.roiGreen }}>✓</span>
+                          )}
+                          <span
+                            className="text-[13px] leading-snug"
+                            style={{
+                              color: "italic" in f && f.italic ? s.faint : s.ink,
+                              fontStyle: "italic" in f && f.italic ? "italic" : "normal",
+                            }}
+                          >
+                            {f.label}
+                          </span>
+                        </li>
+                      ))}
+                      {plan.plusFeatures.map((f, i) => (
+                        <li key={`plus-${i}`} className="flex items-start gap-2.5">
+                          <span
+                            className="font-black shrink-0 leading-none"
+                            style={{ color: s.roiGreen, fontSize: "18px", marginTop: "1px" }}
+                          >
+                            +
+                          </span>
+                          <span className="text-[13px] font-semibold leading-snug" style={{ color: s.ink }}>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Recommended for */}
+                    <div>
+                      <div style={{ borderTop: `1px solid ${s.faint}`, opacity: 0.4, marginBottom: 10 }} />
+                      <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
+                      <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => setPending({ plan, interval: "monthly" })}
+                        className="w-full py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
+                        style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
+                      >
+                        <span className="text-[13px] font-semibold">Monthly plan</span>
+                        <span className="text-[11px]" style={{ color: "#888" }}>
+                          RM {plan.monthlyAnnualTotal.toLocaleString()} total/year
                         </span>
-                      </li>
-                    ))}
-                    {plan.plusFeatures.map((f, i) => (
-                      <li key={`plus-${i}`} className="flex items-start gap-2">
-                        <span className="text-[12px] font-bold shrink-0 mt-px" style={{ color: s.roiGreen }}>+</span>
-                        <span className="text-[13px] font-semibold leading-snug" style={{ color: s.ink }}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Recommended for */}
-                  <div>
-                    <div style={{ borderTop: `1px solid ${s.faint}`, opacity: 0.4, marginBottom: 10 }} />
-                    <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
-                    <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
-                  </div>
-
-                  {/* Buttons */}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => setPending({ plan, interval: "monthly" })}
-                      className="w-full py-3 rounded-xl text-[13px] font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                      style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
-                    >
-                      Monthly plan
-                    </button>
-                    <button
-                      onClick={() => setPending({ plan, interval: "annual" })}
-                      className="w-full py-3 rounded-xl text-[13px] font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center"
-                      style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
-                    >
-                      <span>Annual plan</span>
-                      <span className="text-[11px] font-medium" style={{ color: "#1F8B4C" }}>save RM {plan.annualSavings}/year</span>
-                    </button>
+                      </button>
+                      <button
+                        onClick={() => setPending({ plan, interval: "annual" })}
+                        className="w-full py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
+                        style={{ background: "rgba(255,255,255,0.92)", color: "#111", border: "none" }}
+                      >
+                        <span className="text-[13px] font-semibold">Annual plan</span>
+                        <span className="text-[11px] font-medium" style={{ color: "#1F8B4C" }}>
+                          save RM {plan.annualSavings}/year · 2 months free
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -283,51 +319,25 @@ export default function BillingPage() {
           })}
         </div>
 
-        {/* Bottom row: features + manage */}
-        <div className="grid lg:grid-cols-2 gap-5">
-          <section className="kk-section p-6">
-            <p className="kk-overline mb-4">Everything included in all plans</p>
-            <ul className="space-y-3">
-              {[
-                "Unlimited properties & tenancies",
-                "WhatsApp-style owner & tenant intake forms",
-                "AI-powered receipt verification",
-                "Tenant matching & share packs",
-                "Contract lifecycle board",
-                "Commission & performance tracking",
-                "LHDN e-Invois generation",
-                "CSV bulk import",
-              ].map(f => (
-                <li key={f} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
-                    <Check className="w-3 h-3" style={{ color: "var(--kk-green)" }} />
-                  </div>
-                  <span className="text-[13px]" style={{ color: "var(--kk-ink)" }}>{f}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="kk-section p-6 flex flex-col gap-4">
-            <div>
-              <p className="kk-overline mb-2">Manage subscription</p>
-              <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)", lineHeight: 1.6 }}>
-                Update payment method, download invoices, change plan, or cancel — all from the Stripe customer portal.
-              </p>
-            </div>
-            <button
-              onClick={openPortal}
-              disabled={portalLoading}
-              className="w-full py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
-              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line-strong)", opacity: portalLoading ? 0.6 : 1 }}
-            >
-              {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {portalLoading ? "Opening…" : "Manage billing →"}
-            </button>
-            <p className="text-[11px] text-center" style={{ color: "var(--kk-ink-faint)" }}>
-              Secure payment via Stripe · No lock-in · Cancel anytime
-            </p>
-          </section>
+        {/* Manage billing */}
+        <div className="text-center">
+          <button
+            onClick={openPortal}
+            disabled={portalLoading}
+            className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-85"
+            style={{
+              background: "var(--kk-surface-2)",
+              color: "var(--kk-ink)",
+              border: "1px solid var(--kk-line-strong)",
+              opacity: portalLoading ? 0.6 : 1,
+            }}
+          >
+            {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {portalLoading ? "Opening…" : "Manage billing →"}
+          </button>
+          <p className="mt-3 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+            Secure payment via Stripe · No lock-in · Cancel anytime
+          </p>
         </div>
       </div>
     </>
