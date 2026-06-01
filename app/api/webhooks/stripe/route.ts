@@ -73,14 +73,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (event.type === "invoice.payment_failed") {
-    const invoice = event.data.object as Stripe.Invoice;
-    const sub = invoice.subscription ? await stripe.subscriptions.retrieve(invoice.subscription as string) : null;
-    const userId = sub?.metadata?.supabase_user_id;
-    if (userId) {
-      await admin.from("agent_profiles").update({ subscription_status: "expired" }).eq("id", userId);
-    }
-  }
+  // payment_failed is handled via customer.subscription.updated → past_due → expired above
 
   return NextResponse.json({ received: true });
 }

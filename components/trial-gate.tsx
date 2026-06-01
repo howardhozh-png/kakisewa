@@ -29,17 +29,24 @@ export function TrialGate() {
         <div className="flex flex-col gap-3 mb-6">
           <div className="px-5 py-4 rounded-2xl text-left" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
             <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Pro</p>
-              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 99 / month</p>
+              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Silver</p>
+              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 198 / month</p>
             </div>
-            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>Up to 50 properties · AI receipt verification</p>
+            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>For agents starting to systematise their portfolio</p>
           </div>
           <div className="px-5 py-4 rounded-2xl text-left" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
             <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Elite</p>
-              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 299 / month</p>
+              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Platinum</p>
+              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 398 / month</p>
             </div>
-            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>Unlimited properties · All features</p>
+            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>For full-time agents managing a growing book</p>
+          </div>
+          <div className="px-5 py-4 rounded-2xl text-left" style={{ background: "var(--kk-surface-2)", border: "2px solid var(--kk-green)" }}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Elite</p>
+              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 498 / month</p>
+            </div>
+            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>For top performers who want every edge</p>
           </div>
         </div>
 
