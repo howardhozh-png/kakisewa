@@ -433,6 +433,7 @@ function MappingTable({
         const isLast = i === fieldsToShow.length - 1;
         const mappedHeader = mapping[field as keyof ColumnMapping] as string | null;
         const isRequired = REQUIRED_FIELDS.includes(field as typeof REQUIRED_FIELDS[number]);
+        const showAsterisk = isRequired || field === "address";
         const isMissing = isRequired && !mappedHeader;
 
         const sampleValues = mappedHeader
@@ -456,7 +457,7 @@ function MappingTable({
             <div className="w-[120px] shrink-0 pt-0.5">
               <p className="text-[12px] font-semibold" style={{ color: isMissing ? "var(--kk-red)" : "var(--kk-ink)" }}>
                 {FIELD_LABELS[field]}
-                {isRequired && <span style={{ color: "var(--kk-red)" }}> *</span>}
+                {showAsterisk && <span style={{ color: "var(--kk-red)" }}> *</span>}
               </p>
             </div>
 
