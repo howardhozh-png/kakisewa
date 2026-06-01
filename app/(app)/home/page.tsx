@@ -15,7 +15,7 @@ export default async function HomePage() {
     {
       number: 1,
       icon: Upload,
-      title: "New Owners",
+      title: "Reach out to owner",
       description: "Upload and contact owners. Automatically records who is interested.",
       href: "/new-owners",
       accent: "#1F8B4C",
@@ -27,7 +27,7 @@ export default async function HomePage() {
     {
       number: 2,
       icon: Users,
-      title: "Active Deals",
+      title: "Send tenant pack to owner",
       description: "Build a tenant package for interested owners and close the deal.",
       href: "/new-owners?tab=pipeline",
       accent: "var(--kk-blue)",
@@ -39,7 +39,7 @@ export default async function HomePage() {
     {
       number: 3,
       icon: RefreshCw,
-      title: "Existing Contracts",
+      title: "Renew contract with owner",
       description: "Get notified before contract expiry and capture renewal income.",
       href: "/existing-contracts",
       accent: "#C2410C",
