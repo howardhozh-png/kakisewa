@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { X, Building2, MapPin, Phone, ImagePlus, Trash2 } from "lucide-react";
+import { X, Building2, MapPin, Phone, ImagePlus, Trash2, Loader2 } from "lucide-react";
 import { Property } from "@/lib/types";
 import { removeProperty } from "@/lib/actions";
 import { UploadRing } from "@/components/ui/upload-ring";

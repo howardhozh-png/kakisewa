@@ -376,7 +376,7 @@ function PhotoUploadCard({
 
       <button
         type="button"
-        disabled={!canSubmit || uploading}
+        disabled={!canSubmit || uploadProgress !== null}
         onClick={() => onConfirm(photos.map((p) => p.url))}
         className="w-full py-3.5 text-[14px] font-semibold transition-colors disabled:opacity-50"
         style={{ background: canSubmit ? "#1C1C1E" : "#AEAEB2", color: "#fff" }}
