@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
         subscription_plan: PLAN_FROM_PRICE[priceId] ?? session.metadata?.plan,
         subscription_interval: session.metadata?.interval,
         subscription_status: "active",
-        subscription_current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
       }).eq("id", userId);
     }
   }
@@ -59,7 +58,6 @@ export async function POST(req: NextRequest) {
         stripe_price_id: priceId,
         subscription_plan: PLAN_FROM_PRICE[priceId],
         subscription_status: status,
-        subscription_current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
       }).eq("id", userId);
     }
   }
