@@ -7,7 +7,12 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "kakisewa",
-  openGraph: { images: [] },
+  description: "kakisewa, #1 property agent platform",
+  openGraph: {
+    title: "kakisewa",
+    description: "kakisewa, #1 property agent platform",
+    siteName: "kakisewa",
+  },
 };
 
 interface Props {
