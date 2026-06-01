@@ -22,6 +22,8 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/ro/")) return true
   if (pathname.startsWith("/rt/")) return true
   if (pathname.startsWith("/sample-pack")) return true
+  // OG image and favicon — must be publicly accessible for WhatsApp/social previews
+  if (pathname === "/opengraph-image" || pathname === "/icon") return true
   return false
 }
 
