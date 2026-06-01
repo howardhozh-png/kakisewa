@@ -504,32 +504,36 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                   <button
                     onClick={() => startCheckout(t.planId, "monthly")}
                     disabled={!!loading}
-                    className="w-full py-2 rounded-xl text-[12px] font-semibold text-center transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-1.5"
                     style={{
-                      background: s.cta.bg,
-                      color: s.cta.ink,
-                      border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.25)"}`,
-                      backdropFilter: "blur(4px)",
-                      opacity: loading ? 0.7 : 1,
+                      background: "transparent",
+                      color: t.name === "Silver" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.85)",
+                      border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.28)"}`,
+                      opacity: loading ? 0.6 : 1,
                     }}>
-                    {loading === `${t.planId}-monthly` && <Loader2 className="w-3 h-3 animate-spin" />}
-                    {loading === `${t.planId}-monthly` ? "Redirecting…" : `Monthly — RM ${t.monthly}/mo`}
+                    {loading === `${t.planId}-monthly`
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Redirecting…</>
+                      : "Monthly plan"}
                   </button>
                   {/* Annual CTA */}
                   <button
                     onClick={() => startCheckout(t.planId, "annual")}
                     disabled={!!loading}
-                    className="w-full py-2 rounded-xl text-[12px] font-semibold text-center transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl text-center transition-all hover:scale-[1.03] active:scale-[0.98] flex flex-col items-center justify-center gap-0"
                     style={{
-                      background: "rgba(34,197,94,0.18)",
-                      color: s.roiGreen,
-                      border: "1px solid rgba(34,197,94,0.35)",
-                      opacity: loading ? 0.7 : 1,
+                      background: "transparent",
+                      color: t.name === "Silver" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.85)",
+                      border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.28)"}`,
+                      opacity: loading ? 0.6 : 1,
                     }}>
-                    {loading === `${t.planId}-annual` && <Loader2 className="w-3 h-3 animate-spin" />}
                     {loading === `${t.planId}-annual`
-                      ? "Redirecting…"
-                      : `Annual — RM ${t.annualMonthly}/mo · save RM ${t.annualSavings}`}
+                      ? <span className="text-[12px] font-semibold flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" /> Redirecting…</span>
+                      : <>
+                          <span className="text-[12px] font-semibold leading-snug">Annual plan</span>
+                          <span className="text-[10px] font-medium leading-snug" style={{ color: t.name === "Silver" ? "#1F8B4C" : s.roiGreen }}>
+                            save RM {t.annualSavings}/year
+                          </span>
+                        </>}
                   </button>
                 </div>
               </div>
