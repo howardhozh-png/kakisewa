@@ -2,9 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { X, Building2, MapPin, Phone, ImagePlus, Trash2, Loader2 } from "lucide-react";
+import { X, Building2, MapPin, Phone, ImagePlus, Trash2 } from "lucide-react";
 import { Property } from "@/lib/types";
 import { removeProperty } from "@/lib/actions";
+import { UploadRing } from "@/components/ui/upload-ring";
+import { compressImage } from "@/lib/compress-image";
+import { uploadWithProgress } from "@/lib/upload-with-progress";
 
 interface Props {
   property: Property;
@@ -15,21 +18,21 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [photos, setPhotos] = useState<string[]>(p.photo_urls ?? []);
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, startTransition] = useTransition();
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || photos.length >= 4) return;
-    setUploading(true);
+    setUploadProgress(0);
     try {
+      const compressed = await compressImage(file);
       const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = (await res.json()) as { url: string };
-      const next = [...photos, url];
+      fd.append("file", compressed);
+      const { ok, data } = await uploadWithProgress("/api/upload", fd, setUploadProgress);
+      if (!ok) throw new Error("Upload failed");
+      const next = [...photos, data.url as string];
       setPhotos(next);
       await fetch(`/api/properties/${p.id}/photos`, {
         method: "PATCH",
@@ -37,7 +40,7 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
         body: JSON.stringify({ urls: next }),
       });
     } catch { /* ignore */ } finally {
-      setUploading(false);
+      setUploadProgress(null);
       e.target.value = "";
     }
   }
@@ -133,19 +136,20 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
                   style={{
                     border: "1.5px dashed var(--kk-line-strong)",
                     background: "var(--kk-surface-2)",
-                    color: uploading ? "var(--kk-blue)" : "var(--kk-ink-mute)",
+                    color: uploadProgress !== null ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                    pointerEvents: uploadProgress !== null ? "none" : undefined,
                   }}
                 >
-                  {uploading
-                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                  {uploadProgress !== null
+                    ? <UploadRing progress={uploadProgress} size={44} />
                     : <ImagePlus className="w-5 h-5" />
                   }
-                  <span className="text-[12px] font-medium">{uploading ? "Uploading…" : "Add photo"}</span>
+                  {uploadProgress === null && <span className="text-[12px] font-medium">Add photo</span>}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    disabled={uploading}
+                    disabled={uploadProgress !== null}
                     onChange={handlePhotoUpload}
                   />
                 </label>

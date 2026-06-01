@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { CalendarDays, Send, CheckCircle, Camera, X as XIcon } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UploadRing } from "@/components/ui/upload-ring";
+import { compressImage } from "@/lib/compress-image";
+import { uploadWithProgress } from "@/lib/upload-with-progress";
 
 export interface IntakeQuestion {
   key: string;
@@ -281,26 +284,27 @@ function PhotoUploadCard({
   onConfirm: (urls: string[]) => void;
 }) {
   const [photos, setPhotos] = useState<{ url: string; preview: string }[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    setUploading(true);
+    const list = Array.from(files).slice(0, 5 - photos.length);
+    if (!list.length) return;
+    setUploadProgress(0);
     const added: { url: string; preview: string }[] = [];
-    for (const file of Array.from(files)) {
-      if (photos.length + added.length >= 5) break;
-      const preview = URL.createObjectURL(file);
+    for (let i = 0; i < list.length; i++) {
+      const preview = URL.createObjectURL(list[i]);
+      const compressed = await compressImage(list[i]);
       const form = new FormData();
       form.append("token", uploadToken);
-      form.append("file", file);
-      const res = await fetch("/api/intake/photo", { method: "POST", body: form });
-      if (res.ok) {
-        const data = await res.json();
-        added.push({ url: data.url as string, preview });
-      }
+      form.append("file", compressed);
+      const { ok, data } = await uploadWithProgress("/api/intake/photo", form, (pct) => {
+        setUploadProgress(Math.round((i * 100 + pct) / list.length));
+      });
+      if (ok && data.url) added.push({ url: data.url as string, preview });
     }
-    setUploading(false);
+    setUploadProgress(null);
     setPhotos((prev) => [...prev, ...added]);
   }
 
@@ -344,13 +348,13 @@ function PhotoUploadCard({
         {photos.length < 5 && (
           <button
             type="button"
-            disabled={uploading}
+            disabled={uploadProgress !== null}
             onClick={() => fileRef.current?.click()}
             className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 transition-opacity disabled:opacity-50"
             style={{ background: "#F2F2F7", border: "2px dashed #C7C7CC" }}
           >
-            {uploading ? (
-              <div className="w-4 h-4 rounded-full border-2 border-[#1C1C1E] border-t-transparent animate-spin" />
+            {uploadProgress !== null ? (
+              <UploadRing progress={uploadProgress} size={32} />
             ) : (
               <>
                 <Camera className="w-5 h-5" style={{ color: "#48484A" }} />

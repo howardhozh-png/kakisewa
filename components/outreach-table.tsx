@@ -6,6 +6,9 @@ import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search } from "lucide-react";
+import { UploadRing } from "@/components/ui/upload-ring";
+import { compressImage } from "@/lib/compress-image";
+import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 
@@ -118,7 +121,7 @@ function LeadPopup({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<string[]>(lead.photo_urls ?? []);
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -196,16 +199,18 @@ function LeadPopup({
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    setUploading(true);
+    setUploadProgress(0);
     try {
       const newUrls: string[] = [];
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const compressed = await compressImage(files[i]);
         const fd = new FormData();
         fd.append("leadId", lead.id);
-        fd.append("file", file);
-        const res = await fetch("/api/agent/photo", { method: "POST", body: fd });
-        const data = await res.json() as { ok?: boolean; url?: string };
-        if (data.ok && data.url) newUrls.push(data.url);
+        fd.append("file", compressed);
+        const { ok, data } = await uploadWithProgress("/api/agent/photo", fd, (pct) => {
+          setUploadProgress(Math.round((i * 100 + pct) / files.length));
+        });
+        if (ok && data.url) newUrls.push(data.url as string);
       }
       if (newUrls.length > 0) {
         const updated = [...photos, ...newUrls];
@@ -216,7 +221,7 @@ function LeadPopup({
     } catch {
       toast.error("Photo upload failed");
     } finally {
-      setUploading(false);
+      setUploadProgress(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -340,16 +345,21 @@ function LeadPopup({
                 </button>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 shrink-0 transition-opacity hover:opacity-70 disabled:opacity-40"
-              style={{ border: "1.5px dashed var(--kk-line)", color: "var(--kk-ink-mute)" }}
-            >
-              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-              {!uploading && <span className="text-[10px] font-medium">Add</span>}
-            </button>
+            {uploadProgress !== null ? (
+              <div className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0" style={{ border: "1.5px solid var(--kk-line)" }}>
+                <UploadRing progress={uploadProgress} size={36} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 shrink-0 transition-opacity hover:opacity-70"
+                style={{ border: "1.5px dashed var(--kk-line)", color: "var(--kk-ink-mute)" }}
+              >
+                <Camera className="w-4 h-4" />
+                <span className="text-[10px] font-medium">Add</span>
+              </button>
+            )}
             <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
           </div>
         </div>
