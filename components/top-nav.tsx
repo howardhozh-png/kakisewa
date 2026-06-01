@@ -390,14 +390,14 @@ const TIER_DATA = [
 
 function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
   const currentTier = "trial";
-  const [interval, setIntervalMode] = useState<"monthly" | "annual">("monthly");
   const [loading, setLoading] = useState<string | null>(null);
   const daysLabel = trialDaysLeft != null
     ? trialDaysLeft <= 0 ? "Trial ended" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`
     : "Trial active";
 
-  async function startCheckout(planId: string) {
-    setLoading(planId);
+  async function startCheckout(planId: string, interval: "monthly" | "annual") {
+    const key = `${planId}-${interval}`;
+    setLoading(key);
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -415,25 +415,7 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
   return (
     <>
       <div className="px-7 pt-5 pb-4 border-b" style={{ borderColor: "var(--kk-line)" }}>
-        <div className="flex items-center justify-between">
-          <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Subscription plan</p>
-          {/* Monthly / Annual toggle */}
-          <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-            {(["monthly", "annual"] as const).map(iv => (
-              <button key={iv} onClick={() => setIntervalMode(iv)}
-                className="px-3 py-1 rounded-md text-[11px] font-semibold transition-all"
-                style={{
-                  background: interval === iv ? "var(--kk-ink)" : "transparent",
-                  color: interval === iv ? "#fff" : "var(--kk-ink-mute)",
-                }}>
-                {iv === "monthly" ? "Monthly" : "Annual"}
-                {iv === "annual" && interval !== "annual" && (
-                  <span className="ml-1 text-[9px]" style={{ color: "var(--kk-green)" }}>−17%</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Subscription plan</p>
       </div>
       <div className="px-7 py-5 space-y-5">
 
@@ -484,19 +466,9 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                     {t.name}
                   </p>
                   <p className="text-[26px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
-                    RM {interval === "annual" ? t.annualMonthly : t.monthly}
+                    RM {t.monthly}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <p className="text-[11px]" style={{ color: s.mute }}>/month</p>
-                    {interval === "annual" && (
-                      <p className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.18)", color: s.roiGreen }}>
-                        save RM {t.annualSavings}
-                      </p>
-                    )}
-                  </div>
-                  {interval === "annual" && (
-                    <p className="text-[10px] mt-0.5" style={{ color: s.faint }}>RM {t.annualTotal} billed annually</p>
-                  )}
+                  <p className="text-[11px] mt-1" style={{ color: s.mute }}>/month</p>
                 </div>
 
                 {/* Features */}
@@ -528,10 +500,11 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                     <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{t.recommended}</p>
                   </div>
+                  {/* Monthly CTA */}
                   <button
-                    onClick={() => startCheckout(t.planId)}
+                    onClick={() => startCheckout(t.planId, "monthly")}
                     disabled={!!loading}
-                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-center transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
+                    className="w-full py-2 rounded-xl text-[12px] font-semibold text-center transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
                     style={{
                       background: s.cta.bg,
                       color: s.cta.ink,
@@ -539,8 +512,24 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                       backdropFilter: "blur(4px)",
                       opacity: loading ? 0.7 : 1,
                     }}>
-                    {loading === t.planId && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    {loading === t.planId ? "Redirecting…" : <><span>Choose</span> <strong>{t.name}</strong></>}
+                    {loading === `${t.planId}-monthly` && <Loader2 className="w-3 h-3 animate-spin" />}
+                    {loading === `${t.planId}-monthly` ? "Redirecting…" : `Monthly — RM ${t.monthly}/mo`}
+                  </button>
+                  {/* Annual CTA */}
+                  <button
+                    onClick={() => startCheckout(t.planId, "annual")}
+                    disabled={!!loading}
+                    className="w-full py-2 rounded-xl text-[12px] font-semibold text-center transition-opacity hover:opacity-85 flex items-center justify-center gap-1.5"
+                    style={{
+                      background: "rgba(34,197,94,0.18)",
+                      color: s.roiGreen,
+                      border: "1px solid rgba(34,197,94,0.35)",
+                      opacity: loading ? 0.7 : 1,
+                    }}>
+                    {loading === `${t.planId}-annual` && <Loader2 className="w-3 h-3 animate-spin" />}
+                    {loading === `${t.planId}-annual`
+                      ? "Redirecting…"
+                      : `Annual — RM ${t.annualMonthly}/mo · save RM ${t.annualSavings}`}
                   </button>
                 </div>
               </div>
