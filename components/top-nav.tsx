@@ -343,12 +343,12 @@ const TIER_DATA = [
     price: "RM 198",
     roiMonths: "10 months",
     features: [
-      { label: "New Owners pipeline", plus: false },
-      { label: "CSV bulk import", plus: false },
-      { label: "Owner & tenant intake forms", plus: false },
-      { label: "Send branded tenant pack", plus: false },
+      { label: "Bulk owner list upload", plus: false },
+      { label: "Automatically track owner reply", plus: false },
+      { label: "Customized and branded tenant pack", plus: false },
+      { label: "Close more owners", plus: false },
     ],
-    recommended: "New agents who rely on new leads and need to track hundreds of owners, convert them with customised templates.",
+    recommended: "New agents who need support in tracking owner responses and converting more new owners with branded profile and messaging.",
   },
   {
     name: "Platinum" as const,
@@ -356,11 +356,11 @@ const TIER_DATA = [
     roiMonths: "5 months",
     features: [
       { label: "Everything in Silver, plus:", italic: true },
-      { label: "Existing Contracts board", plus: true },
-      { label: "Automated renewal notifications", plus: true },
-      { label: "WhatsApp message to owner for renewal", plus: true },
+      { label: "Unlock \"Existing contracts\"", plus: true },
+      { label: "Capture all renewal commission", plus: true },
+      { label: "Contract renewal reminder and messaging", plus: true },
     ],
-    recommended: "Experienced agents with many existing contracts where protecting renewal income is the priority.",
+    recommended: "Experienced agent who needs support in capturing all contract renewal income by tracking existing contracts.",
   },
   {
     name: "Elite" as const,
@@ -368,11 +368,11 @@ const TIER_DATA = [
     roiMonths: "4 months",
     features: [
       { label: "Everything in Platinum, plus:", italic: true },
-      { label: "Directory & support contacts", plus: true },
+      { label: "Property support management", plus: true },
       { label: "Performance dashboard", plus: true },
-      { label: "Analytics (coming soon)", plus: true },
+      { label: "Analytics and newsletter", plus: true },
     ],
-    recommended: "Advanced agents who want everything in one place — support contacts, goal planning, notes, and performance tracking.",
+    recommended: "Elite agent who wants everything in one-place, including goal planning, performance tracking, property services contacts. Elite members get priority to all future updates.",
   },
 ];
 
@@ -463,24 +463,24 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
                   ))}
                 </ul>
 
-                {/* Recommended if */}
-                <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(0,0,0,0.12)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended if…</p>
+                {/* Recommended for */}
+                <div className="px-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
                   <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{t.recommended}</p>
                 </div>
 
                 {/* CTA */}
-                <button disabled
-                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold cursor-not-allowed transition-opacity"
+                <a
+                  href="mailto:support@kakisewa.com?subject=Subscribe%20to%20kakisewa"
+                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-center transition-opacity hover:opacity-85 block"
                   style={{
                     background: s.cta.bg,
                     color: s.cta.ink,
-                    border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.15)"}`,
-                    opacity: 0.5,
+                    border: `1px solid ${t.name === "Silver" ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.25)"}`,
                     backdropFilter: "blur(4px)",
                   }}>
                   Choose <strong>{t.name}</strong>
-                </button>
+                </a>
               </div>
             );
           })}
