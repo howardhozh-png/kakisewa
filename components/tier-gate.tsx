@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { getAgentProfile } from "@/lib/db";
 import Link from "next/link";
 
@@ -101,9 +100,6 @@ function TierGateOverlay({ minPlan }: { minPlan: "platinum" | "elite" }) {
 }
 
 export async function checkTierGate(minPlan: "platinum" | "elite"): Promise<React.ReactElement | null> {
-  const hdrs = await headers();
-  if (hdrs.get("x-is-admin") === "true") return null;
-
   const agent = await getAgentProfile();
   if (agent.subscription_status === "trial") return null;
 
