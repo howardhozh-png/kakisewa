@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { HowItWorks } from "./how-it-works";
 import { Faq } from "./faq";
+import { SeeHowButton } from "./see-how-button";
 
 interface Comparison {
   before: string;
@@ -140,13 +141,7 @@ export default function LandingPage() {
           >
             Start trial, expiring soon <ArrowRight className="w-4 h-4" />
           </Link>
-          <a
-            href="#comparison"
-            className="px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-70"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", fontSize: "var(--kk-body-lg)" }}
-          >
-            See how it works
-          </a>
+          <SeeHowButton />
         </div>
       </section>
 
