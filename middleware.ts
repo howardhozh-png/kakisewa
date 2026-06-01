@@ -7,6 +7,7 @@ const ADMIN_AGENT_ID = "dev_agent_howard"
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true
   if (pathname === "/login" || pathname === "/signup" || pathname === "/sign-in" || pathname === "/sign-up") return true
+  if (pathname === "/forgot-password" || pathname === "/reset-password") return true
   if (pathname.startsWith("/auth/")) return true
   if (pathname.startsWith("/api/intake")) return true
   if (pathname.startsWith("/api/share")) return true
