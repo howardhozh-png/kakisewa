@@ -2,17 +2,17 @@ const STEPS = [
   {
     num: "01",
     title: "Add your listings once",
-    desc: "Enter each property with its contract end date. KakiSewa starts tracking renewals and leads automatically from day one.",
+    desc: "Enter each property with its contract end date. kakisewa starts tracking renewals and leads from day one.",
   },
   {
     num: "02",
-    title: "KakiSewa watches. You get notified.",
-    desc: "60 days before every expiry — and every time a tenant shows interest — you get an alert. No spreadsheet. No gut feel.",
+    title: "kakisewa watches. You get notified.",
+    desc: "60-day expiry alert. Instant ping when a tenant shows interest. No spreadsheet needed.",
   },
   {
     num: "03",
     title: "You close first. Every time.",
-    desc: "Send one branded tenant pack link. The owner picks. You look like a top agency before you even walk in.",
+    desc: "Send one branded tenant pack link. The owner picks. Done.",
   },
 ];
 

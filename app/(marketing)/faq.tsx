@@ -13,7 +13,7 @@ const FAQS = [
     a: "You'll get a reminder before it expires. To keep your listings, leads, and history, simply pick a plan. Nothing is deleted.",
   },
   {
-    q: "How does KakiSewa remind me about expiring contracts?",
+    q: "How does kakisewa remind me about expiring contracts?",
     a: "You get WhatsApp and in-app alerts 60 days before a contract expires — then again at 30 and 7 days. You always follow up first, before another agent does.",
   },
   {
@@ -25,7 +25,7 @@ const FAQS = [
     a: "Yes. Add listings manually or in bulk. If you need help migrating your current data, reach out and we'll handle it.",
   },
   {
-    q: "Is KakiSewa only for Malaysian rental agents?",
+    q: "Is kakisewa only for Malaysian rental agents?",
     a: "For now, yes. It's purpose-built for residential rental agents in Malaysia — pricing in RM, workflows tuned for how the local market runs.",
   },
   {

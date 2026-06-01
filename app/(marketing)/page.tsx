@@ -13,20 +13,20 @@ interface Comparison {
 
 const COMPARISONS: Comparison[] = [
   {
-    before: "Tracks owner interest manually on Excel — no visibility on who responded or dropped off",
-    after: <>KakiSewa <strong>auto-tracks</strong> every owner response and <strong>pings you</strong> the moment interest comes in</>,
+    before: "No idea who responded or dropped off. Chasing everyone on WhatsApp.",
+    after: <>kakisewa <strong>tracks every response</strong> and <strong>pings you</strong> the moment interest comes in</>,
   },
   {
-    before: "Memorises (or forgets) contract expiry dates across dozens of listings — finds out too late",
-    after: <>Automatic <strong>60-day reminder</strong> so you <strong>follow up first</strong>, before another agent takes your listing</>,
+    before: "Misses contract expiry dates. Finds out when the owner is already talking to someone else.",
+    after: <><strong>60-day reminder</strong> before every expiry. You follow up <strong>before another agent does</strong>.</>,
   },
   {
-    before: "Sends tenant profiles one-by-one on WhatsApp with no branding — looks like everyone else",
-    after: <>One <strong>branded tenant pack</strong> link. Owner picks from a shortlist. You close <strong>without the back-and-forth</strong>.</>,
+    before: "Sends profiles one by one on WhatsApp. Looks unprofessional, feels like spam.",
+    after: <>One <strong>branded tenant pack</strong> link. No more spam-like messages.</>,
   },
   {
-    before: "Hard to look professional or trustworthy, especially with new owners who don't know you",
-    after: <>First message already looks like a <strong>top agency</strong> — structured owner form + <strong>polished tenant pack</strong> from day one</>,
+    before: "On your own when a tenant emergency or owner dispute comes up.",
+    after: <><strong>Support contacts</strong> for any emergency. Someone always picks up.</>,
   },
 ];
 
@@ -227,6 +227,7 @@ export default function LandingPage() {
               <span style={{ color: "#DC2626" }}>today</span>{" "}
               vs{" "}
               <span style={{ color: "var(--kk-green)" }}>with kakisewa</span>
+
             </h2>
           </div>
 
@@ -245,7 +246,7 @@ export default function LandingPage() {
                 className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", letterSpacing: "0.12em" }}
               >
-                With kakisewa
+                Close faster than other agents
               </span>
             </div>
           </div>
