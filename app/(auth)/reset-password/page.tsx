@@ -6,35 +6,40 @@ import { createClient } from "@/lib/supabase/client"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const [ready, setReady]     = useState(false)
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm]   = useState("")
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState<string | null>(null)
+  const [ready, setReady]       = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
+  const [password, setPassword]  = useState("")
+  const [confirm, setConfirm]    = useState("")
+  const [loading, setLoading]    = useState(false)
+  const [error, setError]        = useState<string | null>(null)
 
-  // Supabase sends hash-fragment tokens: #access_token=...&type=recovery
-  // The browser client picks them up automatically via detectSessionInUrl (default: true).
-  // We listen for PASSWORD_RECOVERY so we only show the form once the session is live.
   useEffect(() => {
-    const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true)
-    })
-    // If already has a valid session (e.g. user navigated back), show form immediately
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true)
-    })
-    return () => subscription.unsubscribe()
+    const hash = window.location.hash.slice(1)
+    const params = new URLSearchParams(hash)
+    const access_token  = params.get("access_token")
+    const refresh_token = params.get("refresh_token")
+    const type          = params.get("type")
+
+    if (!access_token || !refresh_token || type !== "recovery") {
+      setLinkError("Invalid or expired reset link. Please request a new one.")
+      return
+    }
+
+    createClient()
+      .auth.setSession({ access_token, refresh_token })
+      .then(({ error }) => {
+        if (error) setLinkError("Link has expired. Please request a new password reset.")
+        else setReady(true)
+      })
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     if (password !== confirm) { setError("Passwords don't match."); return }
-    if (password.length < 8) { setError("Password must be at least 8 characters."); return }
+    if (password.length < 8)  { setError("Password must be at least 8 characters."); return }
     setLoading(true)
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.updateUser({ password })
+    const { error: err } = await createClient().auth.updateUser({ password })
     setLoading(false)
     if (err) { setError(err.message); return }
     router.push("/home")
@@ -48,10 +53,18 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="rounded-2xl p-7" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-          {!ready ? (
-            <div className="text-center py-4">
-              <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Verifying reset link…</p>
+          {linkError ? (
+            <div className="flex flex-col gap-4">
+              <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                {linkError}
+              </p>
+              <a href="/forgot-password" className="w-full rounded-xl py-2.5 font-semibold text-center block transition-opacity"
+                style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff" }}>
+                Request new link
+              </a>
             </div>
+          ) : !ready ? (
+            <p className="text-center py-4" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Verifying…</p>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
@@ -61,44 +74,28 @@ export default function ResetPasswordPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>New password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Min. 8 characters"
-                  className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
+                <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="Min. 8 characters" className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
                   style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
-                />
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"} />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Confirm password</label>
-                <input
-                  type="password"
-                  required
-                  value={confirm}
-                  onChange={e => setConfirm(e.target.value)}
-                  placeholder=""
-                  className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
+                <input type="password" required value={confirm} onChange={e => setConfirm(e.target.value)}
+                  placeholder="" className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
                   style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
-                />
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"} />
               </div>
 
               {error && (
                 <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>{error}</p>
               )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
-                style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
-              >
+              <button type="submit" disabled={loading} className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
+                style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
                 {loading ? "Updating…" : "Update password"}
               </button>
             </form>
