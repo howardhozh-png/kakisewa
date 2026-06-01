@@ -330,7 +330,7 @@ export function canonicaliseWithMapping(
   }
   if (!mapping.parseAddressForCondo) {
     const p = col("property_name");
-    if (p) out.property_name = p;
+    if (p) out.property_name = p.replace(/[,\s]+$/, "");
   }
 
   const rent = col("expected_rent");

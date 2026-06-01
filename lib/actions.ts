@@ -14,6 +14,7 @@ import {
   getAgentProfile,
   updateAgentProfile,
   createOwnerLead,
+  bulkCreateOwnerLeads,
   getOwnerLeads,
   updateOwnerLead,
   getOwnerLead,
@@ -1056,8 +1057,12 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
   const invalid = rows.filter((r) => r.errors.length > 0);
 
   const batch = `batch_${Date.now()}`;
-  for (const row of valid) {
-    await createOwnerLead({
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session!.user.id;
+  await bulkCreateOwnerLeads(
+    valid.map(row => ({
       owner_name: row.owner_name,
       owner_phone: row.owner_phone,
       property_name: row.property_name ?? null,
@@ -1067,11 +1072,13 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
       bedrooms: row.bedrooms ?? null,
       bathrooms: row.bathrooms ?? null,
       notes: row.notes ?? null,
-      source: "csv",
+      source: "csv" as const,
       import_batch_id: batch,
-      stage: "imported",
-    });
-  }
+      stage: "imported" as const,
+      available_from: null,
+    })),
+    userId
+  );
 
   revalidatePath("/new-owners");
   return {

@@ -891,6 +891,38 @@ export async function createOwnerLead(data: Omit<OwnerLead, "id" | "created_at">
   return parseOwnerLead(fresh as Record<string, unknown>);
 }
 
+export async function bulkCreateOwnerLeads(
+  rows: Array<Omit<OwnerLead, "id" | "created_at">>,
+  userId: string
+): Promise<number> {
+  if (rows.length === 0) return 0;
+  const supabase = await createClient();
+  const now = Date.now();
+  const records = rows.map((data, i) => ({
+    id: `olead_${now}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+    user_id: userId,
+    owner_name: data.owner_name,
+    owner_phone: data.owner_phone,
+    property_name: data.property_name ?? null,
+    unit: data.unit ?? null,
+    address: data.address ?? null,
+    expected_rent: data.expected_rent ?? null,
+    bedrooms: data.bedrooms ?? null,
+    bathrooms: data.bathrooms ?? null,
+    notes: data.notes ?? null,
+    source: data.source ?? "csv",
+    import_batch_id: data.import_batch_id ?? null,
+    stage: data.stage ?? "imported",
+    available_from: data.available_from ?? null,
+  }));
+  const CHUNK = 200;
+  for (let i = 0; i < records.length; i += CHUNK) {
+    const { error } = await supabase.from("owner_leads").insert(records.slice(i, i + CHUNK));
+    if (error) throw error;
+  }
+  return records.length;
+}
+
 export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Promise<void> {
   const updates: Record<string, unknown> = {};
   if (data.owner_name !== undefined)             updates.owner_name = data.owner_name;
