@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       : sub.status;
     if (userId) {
       await admin.from("agent_profiles").update({
+        stripe_subscription_id: sub.id,
         stripe_price_id: priceId,
         subscription_plan: PLAN_FROM_PRICE[priceId],
         subscription_status: status,

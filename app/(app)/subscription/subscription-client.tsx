@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -185,6 +186,19 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
   const [pending, setPending] = useState<{ plan: typeof PLANS[number]; interval: "monthly" | "annual" } | null>(null);
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get("success") === "1") {
+      toast.success("Subscription activated — welcome aboard!");
+      router.replace("/subscription");
+    } else if (searchParams.get("cancelled") === "1") {
+      toast.info("Checkout cancelled.");
+      router.replace("/subscription");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isOnTrial = status === "trial" && trialDaysLeft !== null && trialDaysLeft > 0;
 
@@ -197,7 +211,12 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
       body: JSON.stringify({ plan: pending.plan.planId, interval: pending.interval }),
     });
     const data = await res.json();
-    if (data.url) {
+    if (data.upgraded) {
+      toast.success("Plan updated — prorated charge applied to your next invoice.");
+      setPending(null);
+      setLoading(false);
+      router.refresh();
+    } else if (data.url) {
       window.location.href = data.url;
     } else {
       toast.error(data.error ?? "Something went wrong");

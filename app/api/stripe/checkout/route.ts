@@ -18,13 +18,28 @@ export async function POST(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Get or create Stripe customer
   const { data: profile } = await admin
     .from("agent_profiles")
-    .select("stripe_customer_id, name")
+    .select("stripe_customer_id, stripe_subscription_id, subscription_status, name")
     .eq("id", userId)
     .single();
 
+  // ── Upgrade/downgrade existing active subscription ────────────────────────────
+  if (profile?.stripe_subscription_id && profile?.subscription_status === "active") {
+    const sub = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
+    const itemId = sub.items.data[0]?.id;
+    if (!itemId) return NextResponse.json({ error: "Subscription item not found" }, { status: 400 });
+
+    const newPriceId = priceId(plan, interval);
+    await stripe.subscriptions.update(profile.stripe_subscription_id, {
+      items: [{ id: itemId, price: newPriceId }],
+      proration_behavior: "create_prorations",
+    });
+
+    return NextResponse.json({ upgraded: true });
+  }
+
+  // ── New subscription via Checkout Session ─────────────────────────────────────
   let customerId: string = profile?.stripe_customer_id ?? "";
   if (!customerId) {
     const customer = await stripe.customers.create({
