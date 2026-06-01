@@ -20,7 +20,8 @@ export function SessionGuard() {
       const last = raw ? Number(raw) : 0;
 
       if (last > 0 && Date.now() - last > IDLE_MS) {
-        // Idle too long — sign out and redirect
+        // Clear timestamp before sign-out so re-login doesn't immediately re-trigger
+        localStorage.removeItem(KEY);
         const supabase = createClient();
         await supabase.auth.signOut();
         router.replace("/sign-in?reason=timeout");

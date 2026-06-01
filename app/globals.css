@@ -493,6 +493,11 @@
   100% { transform: scale(1.6); opacity: 0; }
 }
 
+@keyframes kk-demo-card-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 /* ─── Table ──────────────────────────────────────────────────────────────── */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table thead th {

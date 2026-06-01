@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2 } from "lucide-react";
@@ -399,6 +400,8 @@ function Field({ label, value, onChange, placeholder, type = "text", full, money
       <label className="text-[13px] font-medium" style={{ color: highlight ? "#B45309" : "var(--kk-ink-soft)" }}>{label}</label>
       {money
         ? <MoneyInput value={value} onChange={onChange} placeholder={placeholder} className={cls} style={sty} />
+        : type === "date"
+        ? <DateInput value={value} onChange={onChange} className={cls} style={sty} />
         : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} style={sty} />
       }
     </div>

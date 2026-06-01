@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, computeContractBucket, daysUntil } from "@/lib/types";
 import { buildExpiryPingTenant, buildExpiryPingOwner, updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2 } from "lucide-react";
@@ -331,10 +332,9 @@ function TenancyForm({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Start date</label>
-            <input
-              type="date"
+            <DateInput
               value={contractStart}
-              onChange={(e) => { setContractStart(e.target.value); recomputeEnd(e.target.value, contractDuration); }}
+              onChange={(v) => { setContractStart(v); recomputeEnd(v, contractDuration); }}
               className="w-full text-[13px] px-3 py-2 rounded-xl"
               style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
             />
@@ -352,10 +352,9 @@ function TenancyForm({
           </div>
           <div className="space-y-1.5 col-span-2">
             <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>End date</label>
-            <input
-              type="date"
+            <DateInput
               value={contractEnd}
-              onChange={(e) => { setContractEnd(e.target.value); recomputeDuration(contractStart, e.target.value); }}
+              onChange={(v) => { setContractEnd(v); recomputeDuration(contractStart, v); }}
               className="w-full text-[13px] px-3 py-2 rounded-xl"
               style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
             />

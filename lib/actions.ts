@@ -54,6 +54,16 @@ import { plansForStage } from "./lifecycle-templates";
 import { resolveTemplate, parseTemplateOverrides, type TemplateOverrides } from "./whatsapp-templates";
 import { getBaseUrl } from "./origin";
 
+function parseFlexDate(s: string): string | null {
+  if (!s) return null;
+  if (s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
+  if (s.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    const [d, m, y] = s.split("/");
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return null;
+}
+
 // ─── Properties ───────────────────────────────────────────────────────────────
 
 export async function addProperty(formData: FormData) {
@@ -95,7 +105,7 @@ export async function addTenancy(formData: FormData) {
     propertyId = newProp.id;
   }
 
-  const contractStart = (formData.get("contract_start") as string) || null;
+  const contractStart = parseFlexDate((formData.get("contract_start") as string) || "");
   const durationStr   = formData.get("contract_duration_months") as string;
   const durationMonths = durationStr ? parseInt(durationStr, 10) : null;
   let contractEnd: string | null = null;
@@ -651,7 +661,7 @@ export async function bulkExportOwnerLeads(leadIds: string[]): Promise<{
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? "";
   const company = agent.agency ?? "";
   const siteUrl = await getBaseUrl();
-  const samplePackUrl = `${siteUrl}/sample-tenant-pack`;
+  const samplePackUrl = `${siteUrl}/sample-pack`.replace(/^https?:\/\//, "");
 
   const rows: Array<{ name: string; number: string; property: string; unit: string; rent: string; link: string }> = [];
   for (const id of leadIds) {
@@ -748,7 +758,8 @@ export async function convertLeadToTenancy(
       });
     }
 
-    const [y, m, d] = data.contract_start.split("-").map(Number);
+    const isoStart = parseFlexDate(data.contract_start) ?? data.contract_start;
+    const [y, m, d] = isoStart.split("-").map(Number);
     const end = new Date(y, m - 1 + data.contract_duration_months, d);
     const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 
@@ -764,7 +775,7 @@ export async function convertLeadToTenancy(
       last_receipt_url: null,
       lhdn_status: "none",
       status: "Pending",
-      contract_start: data.contract_start,
+      contract_start: isoStart,
       contract_end: contractEnd,
       contract_duration_months: data.contract_duration_months,
       replied_tenant: "pending",
@@ -779,7 +790,7 @@ export async function convertLeadToTenancy(
       owner_lead_id: ownerLeadId,
       type: "new_signing",
       amount: commissionOverride ?? Math.round(data.amount * (agent.commission_pct ?? 100) / 100),
-      earned_on: data.contract_start,
+      earned_on: isoStart,
       notes: commissionOverride ? "override applied" : null,
     });
 
@@ -806,10 +817,16 @@ export async function quickAddTenantToPack(
   packId: string,
   data: Omit<import("./types").TenantProfile, "id" | "created_at">
 ) {
-  const tenant = await createTenantProfile(data);
-  await addTenantToPack(packId, tenant.id);
-  revalidatePath("/matching");
-  return { ok: true, tenant };
+  try {
+    const tenant = await createTenantProfile(data);
+    await addTenantToPack(packId, tenant.id);
+    revalidatePath("/matching");
+    return { ok: true as const, tenant };
+  } catch (err) {
+    console.error("[quickAddTenantToPack] error:", err);
+    const msg = err instanceof Error ? err.message : ((err as { message?: string })?.message ?? "Database error");
+    return { ok: false as const, message: msg };
+  }
 }
 
 export async function addExistingTenantToPack(packId: string, tenantId: string) {
@@ -1085,12 +1102,14 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
 
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? "Your agent";
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
+  const short = (u: string) => u.replace(/^https?:\/\//, "");
   const body = resolveTemplate("owner_intake_form", overrides, {
     firstName,
+    ownerName: owner.owner_name ?? "",
     company: agent.agency ?? "",
     propertyName: propertyLabel,
-    tenantSamplePack: `${siteUrl}/sample-tenant-pack`,
-    listingForm: url,
+    tenantSamplePack: short(`${siteUrl}/s/${token}`),
+    listingForm: short(url),
   });
 
   const { buildOutbound } = await import("./whatsapp");

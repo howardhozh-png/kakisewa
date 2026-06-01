@@ -7,6 +7,7 @@ import {
 import { MoneyInput } from "@/components/ui/money-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateInput } from "@/components/ui/date-input";
 import { convertLeadToTenancy } from "@/lib/actions";
 import { OwnerLead } from "@/lib/types";
 import { toast } from "sonner";
@@ -120,15 +121,10 @@ function Field({
       <Label htmlFor={name} className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
         {label}{required && <span style={{ color: "var(--kk-red)" }}> *</span>}
       </Label>
-      <Input
-        id={name}
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        required={required}
-        defaultValue={defaultValue}
-        className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
-      />
+      {type === "date"
+        ? <DateInput value={defaultValue ?? ""} onChange={() => {}} name={name} required={required} className="h-9 w-full min-w-0 rounded-3xl border px-3 py-1 text-base outline-none md:text-sm bg-secondary border-border text-foreground" />
+        : <Input id={name} name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} className="bg-secondary border-border text-foreground placeholder:text-muted-foreground" />
+      }
     </div>
   );
 }

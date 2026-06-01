@@ -51,7 +51,23 @@ export function IntakeChat({
   const [inputValue, setInputValue] = useState("");
   const [status, setStatus] = useState<"active" | "submitting" | "done" | "error">("active");
   const [errorMsg, setErrorMsg] = useState("");
+  const [viewportH, setViewportH] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Fix mobile keyboard overlap: use visualViewport height when available
+  useEffect(() => {
+    function update() {
+      const h = window.visualViewport?.height ?? window.innerHeight;
+      setViewportH(h);
+    }
+    update();
+    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -98,8 +114,11 @@ export function IntakeChat({
   }
 
   return (
-    // No fontFamily here — keeps Logo's .serif class intact
-    <div className="flex flex-col h-dvh max-h-dvh" style={{ background: C.bg }}>
+    // Use measured visualViewport height so mobile keyboard doesn't overlap content
+    <div
+      className="flex flex-col overflow-hidden"
+      style={{ background: C.bg, height: viewportH ? `${viewportH}px` : "100dvh" }}
+    >
       {/* Header — no fontFamily override so Logo serif renders correctly */}
       <div
         className="flex items-center gap-3 px-4 py-3 shrink-0"
@@ -360,41 +379,57 @@ function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      try { inputRef.current?.showPicker?.(); } catch { /* not supported */ }
-    }, 300);
-    return () => clearTimeout(t);
+    // Scroll into view so it's visible above the keyboard
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Try to open picker automatically (desktop/Android — iOS opens on tap)
+      try { inputRef.current?.showPicker?.(); } catch { /* expected on iOS */ }
+    }, 350);
   }, []);
 
-  const displayDate = value ? value.split("-").reverse().join("/") : "";
+  const displayDate = value
+    ? (() => {
+        try {
+          const [y, m, d] = value.split("-").map(Number);
+          return `${d} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${y}`;
+        } catch { return value; }
+      })()
+    : "";
 
   return (
-    <div className="mt-3 mx-auto w-full max-w-[280px] rounded-2xl overflow-hidden"
-      style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.10)" }}>
-      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+    <div className="mt-3 mx-auto w-full max-w-[300px] rounded-2xl overflow-hidden"
+      style={{ background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}>
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3">
         <CalendarDays className="w-5 h-5" style={{ color: "#48484A" }} />
-        <span className="text-[13px] font-semibold" style={{ color: "#1C1C1E" }}>Select move-in date</span>
+        <span className="text-[14px] font-semibold" style={{ color: "#1C1C1E" }}>Select move-in date</span>
       </div>
-      <div className="px-4 pb-2">
+      <div className="px-4 pb-3">
+        {/* Visible tap target that wraps the native input */}
+        <label
+          htmlFor="intake-date"
+          className="flex items-center justify-between w-full px-4 py-3 rounded-xl cursor-pointer"
+          style={{ background: "#F2F2F7", border: value ? "1.5px solid #1C1C1E" : "1.5px solid #C7C7CC" }}
+        >
+          <span className="text-[15px]" style={{ color: value ? "#1C1C1E" : "#AEAEB2" }}>
+            {displayDate || "Tap to choose date"}
+          </span>
+          <CalendarDays className="w-4 h-4" style={{ color: "#8E8E93" }} />
+        </label>
         <input
           ref={inputRef}
+          id="intake-date"
           type="date"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full text-[15px] px-3 py-2.5 rounded-xl outline-none"
-          style={{ background: "#F2F2F7", border: "none", color: "#111" }}
+          className="sr-only"
+          style={{ position: "absolute", opacity: 0, width: 1, height: 1 }}
         />
-        {displayDate && (
-          <p className="text-[12px] mt-1 text-center" style={{ color: "#48484A" }}>
-            {displayDate}
-          </p>
-        )}
       </div>
       <button
         type="button"
         disabled={!value}
         onClick={() => value && onConfirm(value)}
-        className="w-full py-3 text-[14px] font-semibold transition-opacity"
+        className="w-full py-3.5 text-[14px] font-semibold"
         style={{ background: value ? "#1C1C1E" : "#AEAEB2", color: "#fff" }}
       >
         {value ? `Confirm: ${displayDate}` : "Pick a date above"}

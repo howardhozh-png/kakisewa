@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tenancy } from "@/lib/types";
 import { collectRenewalCommission } from "@/lib/actions";
 import { CheckCircle, Loader2, X } from "lucide-react";
+import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 
 interface Props {
@@ -103,20 +104,18 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>New contract start</label>
-              <input
-                type="date"
+              <DateInput
                 value={newStart}
-                onChange={(e) => setNewStart(e.target.value)}
+                onChange={setNewStart}
                 className="kk-input"
                 style={{ fontSize: 14 }}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>New contract end</label>
-              <input
-                type="date"
+              <DateInput
                 value={newEnd}
-                onChange={(e) => setNewEnd(e.target.value)}
+                onChange={setNewEnd}
                 className="kk-input"
                 style={{ fontSize: 14 }}
               />

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { OwnerLead } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search } from "lucide-react";
 import { updateOwnerLeadDetails } from "@/lib/actions";
 import { toast } from "sonner";
@@ -425,7 +426,7 @@ function PropertyDetailDialog({
           </div>
           <div>
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Available from</label>
-            <input type="date" className={inputCls} style={inputStyle} value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)} />
+            <DateInput className={inputCls} style={inputStyle} value={availableFrom} onChange={setAvailableFrom} />
           </div>
           <div>
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Notes</label>

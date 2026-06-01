@@ -1,4 +1,7 @@
+import { getOwnerLeadByIntakeToken } from "@/lib/db";
+import { notFound } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +12,6 @@ const TENANTS = [
     age: 32,
     occupation: "Software Engineer",
     nationality: "Malaysian",
-    movein: "Jul 2026",
     occupants: 2,
     pets: false,
     smoking: false,
@@ -21,7 +23,6 @@ const TENANTS = [
     age: 28,
     occupation: "Accountant",
     nationality: "Malaysian",
-    movein: "Aug 2026",
     occupants: 1,
     pets: false,
     smoking: false,
@@ -33,7 +34,6 @@ const TENANTS = [
     age: 35,
     occupation: "Marketing Manager",
     nationality: "Malaysian",
-    movein: "Sep 2026",
     occupants: 3,
     pets: false,
     smoking: false,
@@ -52,7 +52,6 @@ function TenantCard({ tenant, rank }: { tenant: typeof TENANTS[0]; rank: number 
       className="rounded-2xl overflow-hidden"
       style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
     >
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0"
@@ -68,7 +67,6 @@ function TenantCard({ tenant, rank }: { tenant: typeof TENANTS[0]; rank: number 
         </div>
       </div>
 
-      {/* Info grid */}
       <div className="px-4 pb-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
         <InfoCell label="Occupation" value={tenant.occupation} />
         <InfoCell label="Occupants" value={`${tenant.occupants} pax`} />
@@ -83,7 +81,6 @@ function TenantCard({ tenant, rank }: { tenant: typeof TENANTS[0]; rank: number 
         )}
       </div>
 
-      {/* Placeholder note area */}
       <div className="px-4 pb-4">
         <div
           className="w-full px-3 py-2 rounded-xl text-[13px]"
@@ -96,35 +93,43 @@ function TenantCard({ tenant, rank }: { tenant: typeof TENANTS[0]; rank: number 
   );
 }
 
-function InfoCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function InfoCell({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-[9px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#AEAEB2" }}>
         {label}
       </p>
-      <p className="text-[13px]" style={{ color: highlight ? "#007AFF" : "#1C1C1E" }}>{value}</p>
+      <p className="text-[13px]" style={{ color: "#1C1C1E" }}>{value}</p>
     </div>
   );
 }
 
-export default async function SamplePackPage({
-  searchParams,
+export default async function SamplePackShortPage({
+  params,
 }: {
-  searchParams: Promise<{ p?: string; a?: string; o?: string; t?: string; ph?: string }>;
+  params: Promise<{ token: string }>;
 }) {
-  const { p, a, o, t, ph } = await searchParams;
-  const propertyName = p ? decodeURIComponent(p) : "Residensi Mutiara";
-  const agentName = a ? decodeURIComponent(a) : null;
+  const { token } = await params;
+  const owner = await getOwnerLeadByIntakeToken(token);
+  if (!owner) notFound();
+
+  let agentName: string | null = null;
+  let agentPhone: string | null = null;
+  if (owner.user_id) {
+    const supabase = createServiceClient();
+    const { data } = await supabase
+      .from("agent_profiles")
+      .select("name, phone")
+      .eq("id", owner.user_id)
+      .maybeSingle();
+    const row = data as { name?: string; phone?: string } | null;
+    agentName = row?.name ?? null;
+    agentPhone = row?.phone ?? null;
+  }
+
   const agentFirstName = agentName?.trim().split(/\s+/)[0] ?? null;
-  const ownerName = o ? decodeURIComponent(o) : null;
-  const intakeToken = t ?? null;
-  const agentPhone = ph ? decodeURIComponent(ph).replace(/\D/g, "") : null;
-  // Primary CTA: intake form. Fallback: WhatsApp the agent directly.
-  const ctaHref = intakeToken
-    ? `/o/${intakeToken}`
-    : agentPhone
-    ? `https://wa.me/${agentPhone}?text=${encodeURIComponent("Hi! I'm interested in listing my property.")}`
-    : null;
+  const propertyName = owner.property_name ?? "your property";
+  const intakeUrl = `/o/${token}`;
 
   return (
     <div className="min-h-screen" style={{ background: "#F2F2F7" }}>
@@ -146,10 +151,10 @@ export default async function SamplePackPage({
           <h1 className="text-[22px] font-bold tracking-tight leading-tight" style={{ color: "#1C1C1E", letterSpacing: "-0.02em" }}>
             {propertyName}
           </h1>
-          {(ownerName || agentFirstName) && (
+          {(owner.owner_name || agentFirstName) && (
             <p className="text-[18px] mt-0.5 font-bold italic leading-snug" style={{ color: "#1C1C1E" }}>
-              {ownerName && <>For {ownerName}</>}
-              {ownerName && agentFirstName && <> · </>}
+              {owner.owner_name && <>For {owner.owner_name}</>}
+              {owner.owner_name && agentFirstName && <> · </>}
               {agentFirstName && <>by {agentFirstName}</>}
             </p>
           )}
@@ -164,7 +169,6 @@ export default async function SamplePackPage({
           ))}
         </div>
 
-        {/* Unlock CTA */}
         <div
           className="mt-6 rounded-2xl px-5 py-6"
           style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 8px 40px rgba(0,0,0,0.14)" }}
@@ -172,18 +176,16 @@ export default async function SamplePackPage({
           <p className="text-[22px] font-bold leading-snug mb-2" style={{ color: "#1C1C1E" }}>
             Tenants are waiting!
           </p>
-          <p className="text-[14px] leading-relaxed" style={{ color: "#6C6C70" }}>
+          <p className="text-[14px] leading-relaxed mb-5" style={{ color: "#6C6C70" }}>
             To unlock above, 30 seconds from you and I&apos;ll take care of the rest!
           </p>
-          {ctaHref && (
-            <a
-              href={ctaHref}
-              className="block w-full text-center px-4 py-4 rounded-2xl text-[16px] font-bold mt-5"
-              style={{ background: "#007AFF", color: "#fff" }}
-            >
-              Fill in my details →
-            </a>
-          )}
+          <a
+            href={intakeUrl}
+            className="block w-full text-center px-4 py-4 rounded-2xl text-[16px] font-bold"
+            style={{ background: "#007AFF", color: "#fff" }}
+          >
+            Fill in my details →
+          </a>
         </div>
 
         <p className="text-center text-[11px] mt-6 mb-2" style={{ color: "#C7C7CC" }}>

@@ -60,7 +60,7 @@ Just reply here so I can update my notes.
     label: "New Leads: Owner",
     description: "Sent to collect property details and list the unit.",
     defaultBody:
-`Great day to you! I'm {{firstName}} from {{company}}. If you're looking to rent out {{propertyName}}, I have a few quality tenants in queue.
+`Great day to you, {{ownerName}}! I'm {{firstName}} from {{company}}. If you're looking to rent out {{propertyName}}, I have a few quality tenants in queue.
 
 30 secs from you and I'll take care of the rest:
 {{listingForm}}
@@ -69,6 +69,7 @@ Here's a sample of tenant package I put together for you:
 {{tenantSamplePack}}`,
     variables: [
       { key: "firstName",        description: "Your first name" },
+      { key: "ownerName",        description: "Owner's name" },
       { key: "company",          description: "Your agency / company name" },
       { key: "propertyName",     description: "Property name + unit" },
       { key: "tenantSamplePack", description: "Link to sample tenant pack" },

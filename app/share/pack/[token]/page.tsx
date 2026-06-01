@@ -1,7 +1,8 @@
-import { getMatchPackByToken, getPackTenants } from "@/lib/db";
+import { getMatchPackByToken, getPackTenants, getOwnerLead } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { SharePackViewer } from "@/components/share-pack-viewer";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
@@ -15,41 +16,68 @@ export default async function SharePackPage({
   if (!pack) notFound();
   const tenants = await getPackTenants(pack.id);
 
+  // Fetch agent name and owner name in parallel
+  const [agentData, ownerLead] = await Promise.all([
+    pack.user_id
+      ? createServiceClient()
+          .from("agent_profiles")
+          .select("name")
+          .eq("id", pack.user_id)
+          .maybeSingle()
+          .then(({ data }: { data: { name?: string } | null }) => data?.name ?? null)
+      : Promise.resolve(null),
+    pack.owner_lead_id ? getOwnerLead(pack.owner_lead_id) : Promise.resolve(null),
+  ]);
+
+  const agentFirstName = agentData?.trim().split(/\s+/)[0] ?? null;
+  const ownerName = ownerLead?.owner_name ?? null;
+  const propertyLabel = pack.property_label ?? "Your property";
+
   return (
-    <div className="min-h-screen" style={{ background: "var(--kk-bg)" }}>
-      <header className="border-b" style={{ borderColor: "var(--kk-line)" }}>
-        <div className="mx-auto max-w-[900px] px-6 py-5 flex items-center gap-2.5">
-          <Logo size={26} />
-          <span className="serif text-[18px] tracking-tight" style={{ color: "var(--kk-ink)" }}>kakisewa</span>
-          <span className="ml-3 text-[11px] uppercase tracking-widest font-semibold" style={{ color: "var(--kk-ink-faint)" }}>
-            Tenant pack
+    <div className="min-h-screen" style={{ background: "#F2F2F7" }}>
+      <header style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", background: "#fff" }}>
+        <div className="mx-auto max-w-[600px] px-5 py-4 flex items-center gap-2.5">
+          <Logo size={24} />
+          <span className="font-semibold text-[16px]" style={{ color: "#1C1C1E", letterSpacing: "-0.01em" }}>kakisewa</span>
+          <span className="ml-2 text-[10px] uppercase tracking-widest font-semibold" style={{ color: "#AEAEB2" }}>
+            Tenant Pack
           </span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[900px] px-6 py-12 lg:py-16">
-        <div className="mb-10">
-          <p className="kk-overline mb-3">Tenants for</p>
-          <h1 className="serif text-[34px] tracking-tight leading-tight" style={{ color: "var(--kk-ink)" }}>
-            {pack.property_label ?? "Your property"}
+      <main className="mx-auto max-w-[600px] px-4 py-6">
+        {/* Property header */}
+        <div className="mb-5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#AEAEB2" }}>
+            Tenants for
+          </p>
+          <h1 className="text-[22px] font-bold tracking-tight leading-tight" style={{ color: "#1C1C1E", letterSpacing: "-0.02em" }}>
+            {propertyLabel}
           </h1>
-          <p className="mt-3 text-[15px]" style={{ color: "var(--kk-ink-mute)" }}>
-            Drag the cards to rank tenants in your preferred order. Tap the heart on the ones you&apos;d like to schedule a viewing with. Your agent will receive your ranking instantly.
+          {(ownerName || agentFirstName) && (
+            <p className="text-[18px] mt-0.5 font-bold italic leading-snug" style={{ color: "#1C1C1E" }}>
+              {ownerName && <>For {ownerName}</>}
+              {ownerName && agentFirstName && <> · </>}
+              {agentFirstName && <>by {agentFirstName}</>}
+            </p>
+          )}
+          <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "#6C6C70" }}>
+            Drag to rank tenants. Leave notes if any. I get notified instantly to schedule house viewing.
           </p>
           {(pack.property_rent || pack.property_beds || pack.property_baths) && (
-            <div className="flex flex-wrap gap-1.5 mt-4 text-[12px]">
+            <div className="flex flex-wrap gap-1.5 mt-3">
               {pack.property_rent != null && (
-                <span className="px-2.5 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}>
+                <span className="px-2.5 py-1 rounded-full text-[12px] font-medium" style={{ background: "#fff", color: "#1C1C1E", border: "1px solid rgba(0,0,0,0.08)" }}>
                   RM {pack.property_rent.toLocaleString()}/mo
                 </span>
               )}
               {pack.property_beds != null && (
-                <span className="px-2.5 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                <span className="px-2.5 py-1 rounded-full text-[12px]" style={{ background: "#fff", color: "#6C6C70", border: "1px solid rgba(0,0,0,0.08)" }}>
                   {pack.property_beds} bed
                 </span>
               )}
               {pack.property_baths != null && (
-                <span className="px-2.5 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                <span className="px-2.5 py-1 rounded-full text-[12px]" style={{ background: "#fff", color: "#6C6C70", border: "1px solid rgba(0,0,0,0.08)" }}>
                   {pack.property_baths} bath
                 </span>
               )}
@@ -58,10 +86,13 @@ export default async function SharePackPage({
         </div>
 
         {tenants.length === 0 ? (
-          <div className="kk-section flex flex-col items-center justify-center gap-3 py-20 px-6 text-center">
-            <p className="kk-h3" style={{ color: "var(--kk-ink)" }}>No tenants in this pack yet</p>
-            <p className="kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-              Your agent is still putting it together. Please check back shortly.
+          <div
+            className="rounded-2xl flex flex-col items-center justify-center gap-3 py-16 px-6 text-center"
+            style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}
+          >
+            <p className="text-[16px] font-semibold" style={{ color: "#1C1C1E" }}>No tenants yet</p>
+            <p className="text-[13px]" style={{ color: "#6C6C70" }}>
+              Your agent is still putting it together. Check back shortly.
             </p>
           </div>
         ) : (
@@ -69,7 +100,7 @@ export default async function SharePackPage({
         )}
       </main>
 
-      <footer className="mx-auto max-w-[900px] px-6 py-8 text-center text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+      <footer className="text-center text-[11px] py-8 px-4" style={{ color: "#C7C7CC" }}>
         Powered by kakisewa · AI-powered tenancy CRM
       </footer>
     </div>

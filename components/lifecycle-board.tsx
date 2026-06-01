@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
-import { setLifecycleStage } from "@/lib/actions";
+import { setLifecycleStage, buildExpiryPingOwner } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2 } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { RenewalCommissionDialog } from "@/components/renewal-commission-dialog";
@@ -478,15 +478,18 @@ function Card({ t, col, today, isDragging, onOpen, onShowCommission, onShowTenan
         <ColumnAction t={t} stage={col.stage} today={today} onShowCommission={onShowCommission} />
       )}
 
-      {/* Expiring: dropdown + proposed terms + response status */}
+      {/* Expiring: notify owner + dropdown */}
       {col.stage === "headsup" && (
-        <WhatsNext
-          t={t}
-          onMoveToStage={onMoveToStage}
-          onShowTenantLeaving={onShowTenantLeaving}
-          onShowOwnerLeaving={onShowOwnerLeaving}
-          onShowCommission={onShowCommission}
-        />
+        <>
+          <HeadsupOwnerAction t={t} />
+          <WhatsNext
+            t={t}
+            onMoveToStage={onMoveToStage}
+            onShowTenantLeaving={onShowTenantLeaving}
+            onShowOwnerLeaving={onShowOwnerLeaving}
+            onShowCommission={onShowCommission}
+          />
+        </>
       )}
     </div>
   );
@@ -631,6 +634,39 @@ const OUTCOME_META: Record<Exclude<OutcomeChoice, "">, {
     Icon: Lock,
   },
 };
+
+// ─── Headsup: notify owner ────────────────────────────────────────────────────
+
+function HeadsupOwnerAction({ t }: { t: Tenancy }) {
+  const [pending, startTransition] = useTransition();
+
+  if (!t.property?.owner_phone) return null;
+
+  function handleClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    startTransition(async () => {
+      const res = await buildExpiryPingOwner(t.id);
+      if (res) window.open(res.url, "_blank", "noopener");
+    });
+  }
+
+  return (
+    <button
+      data-card-action
+      onClick={handleClick}
+      disabled={pending}
+      className="kk-card-cta kk-card-cta-soft-blue"
+    >
+      <span className="flex items-start gap-1.5 min-w-0 flex-1">
+        {pending
+          ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" />
+          : <MessageCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+        <span>Notify owner</span>
+      </span>
+      <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+    </button>
+  );
+}
 
 function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving }: {
   t: Tenancy;

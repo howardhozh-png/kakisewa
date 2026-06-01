@@ -3,6 +3,7 @@
 import { useState, useTransition, useMemo } from "react";
 import { Plus, Building2, Phone } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogTrigger,
@@ -250,8 +251,10 @@ function FormField({ label, name, placeholder, required, type = "text", hint, de
   return (
     <div className="space-y-1">
       <FieldLabel required={required}>{label}</FieldLabel>
-      <Input id={name} name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue}
-        className="bg-secondary border-border text-foreground placeholder:text-muted-foreground" />
+      {type === "date"
+        ? <DateInput value={defaultValue ?? ""} onChange={() => {}} name={name} required={required} className="h-9 w-full min-w-0 rounded-3xl border px-3 py-1 text-base outline-none md:text-sm bg-secondary border-border text-foreground" />
+        : <Input id={name} name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} className="bg-secondary border-border text-foreground placeholder:text-muted-foreground" />
+      }
       {hint && <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{hint}</p>}
     </div>
   );

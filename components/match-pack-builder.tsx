@@ -3,6 +3,7 @@
 import { useState, useTransition, useMemo, useEffect, useCallback } from "react";
 import { MatchPack, PackTenant, TenantProfile, PendingIntake } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   quickAddTenantToPack,
   detachTenantFromPack,
@@ -518,7 +519,7 @@ function TenantDetailModal({
   const [budgetMax, setBudgetMax]     = useState(t.budget_max != null ? String(t.budget_max) : "");
   const [income, setIncome]           = useState(t.monthly_income != null ? String(t.monthly_income) : "");
   const [bedsPref, setBedsPref]       = useState(t.bedrooms_pref != null ? String(t.bedrooms_pref) : "");
-  const [moveIn, setMoveIn]           = useState(t.preferred_move_in ?? "");
+  const [moveIn, setMoveIn]           = useState(t.preferred_move_in ? isoToDMY(t.preferred_move_in) : "");
   const [occupants, setOccupants]     = useState(t.occupants != null ? String(t.occupants) : "");
   const [notes, setNotes]             = useState(t.notes ?? "");
 
@@ -538,7 +539,7 @@ function TenantDetailModal({
         budget_max: budgetMax ? parseFloat(budgetMax) : null,
         monthly_income: income ? parseFloat(income) : null,
         bedrooms_pref: bedsPref ? parseInt(bedsPref, 10) : null,
-        preferred_move_in: moveIn || null,
+        preferred_move_in: dmyToIso(moveIn) || null,
         occupants: occupants ? parseInt(occupants, 10) : null,
         notes: notes.trim() || null,
       };
@@ -660,7 +661,7 @@ function TenantDetailModal({
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Move-in date</label>
-                  <input type="date" className={inputCls} style={inputStyle} value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
+                  <input type="text" placeholder="DD/MM/YYYY" className={inputCls} style={inputStyle} value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Occupants</label>
@@ -1017,7 +1018,13 @@ function ManualEntryContent({ packId, onAdded }: {
   const [notes, setNotes]         = useState("");
 
   function handleSave() {
-    if (!name.trim()) return toast.error("Name is required");
+    if (!name.trim())       return toast.error("Name is required");
+    if (!phone.trim())      return toast.error("Phone is required");
+    if (!age.trim())        return toast.error("Age is required");
+    if (!nationality.trim()) return toast.error("Nationality is required");
+    if (!occupation.trim()) return toast.error("Occupation is required");
+    if (!budget.trim())     return toast.error("Max budget is required");
+    if (!moveIn.trim())     return toast.error("Move-in date is required");
     startTransition(async () => {
       try {
         const res = await quickAddTenantToPack(packId, {
@@ -1025,16 +1032,17 @@ function ManualEntryContent({ packId, onAdded }: {
           age: age ? parseInt(age, 10) : null, occupation: occupation || null,
           nationality: nationality || null, monthly_income: income ? parseFloat(income) : null,
           budget_max: budget ? parseFloat(budget) : null, bedrooms_pref: beds ? parseInt(beds, 10) : null,
-          preferred_move_in: moveIn || null, occupants: occupants ? parseInt(occupants, 10) : null,
+          preferred_move_in: dmyToIso(moveIn) || null, occupants: occupants ? parseInt(occupants, 10) : null,
           pets: pets ? 1 : 0, smoking: smoking ? 1 : 0, notes: notes || null, source: "manual",
         });
         if (res.ok) {
           onAdded(res.tenant);
           toast.success(`${res.tenant.name} added to pack`);
         } else {
-          toast.error("Could not add tenant");
+          toast.error(res.message ?? "Could not add tenant");
         }
-      } catch {
+      } catch (err) {
+        console.error("[ManualEntry] add failed:", err);
         toast.error("Could not add tenant — please try again");
       }
     });
@@ -1044,21 +1052,34 @@ function ManualEntryContent({ packId, onAdded }: {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Name" value={name} onChange={setName} placeholder="Full name" required full />
-        <Field label="Phone" value={phone} onChange={setPhone} placeholder="60123456789" />
-        <Field label="Age" value={age} onChange={setAge} type="number" />
-        <Field label="Nationality" value={nationality} onChange={setNationality} placeholder="Malaysian" />
-        <Field label="Occupation" value={occupation} onChange={setOccupation} placeholder="Engineer" />
+        <Field label="Phone" value={phone} onChange={setPhone} placeholder="60123456789" required />
+        <Field label="Age" value={age} onChange={setAge} type="number" required />
+        <Field label="Nationality" value={nationality} onChange={setNationality} placeholder="Malaysian" required />
+        <Field label="Occupation" value={occupation} onChange={setOccupation} placeholder="Engineer" required />
         <Field label="Monthly income (RM)" value={income} onChange={setIncome} money placeholder="e.g. 6,000" />
-        <Field label="Max budget (RM/mo)" value={budget} onChange={setBudget} money placeholder="e.g. 2,000" />
+        <Field label="Max budget (RM/mo)" value={budget} onChange={setBudget} money placeholder="e.g. 2,000" required />
         <Field label="Preferred bedrooms" value={beds} onChange={setBeds} type="number" placeholder="2" />
-        <Field label="Move-in date" value={moveIn} onChange={setMoveIn} type="date" />
+        <div className="space-y-1.5">
+          <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
+            Move-in date <span style={{ color: "var(--kk-red)" }}>*</span>
+          </label>
+          <DateInput
+            value={dmyToIso(moveIn)}
+            onChange={(iso) => setMoveIn(isoToDMY(iso))}
+            className="w-full text-[14px] px-3 py-2 rounded-xl"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            required
+          />
+        </div>
         <Field label="Number of occupants" value={occupants} onChange={setOccupants} type="number" placeholder="2" />
-        <label className="flex items-center gap-2 text-[13px] col-span-1" style={{ color: "var(--kk-ink-soft)" }}>
-          <input type="checkbox" checked={pets} onChange={(e) => setPets(e.target.checked)} /> Has pets
-        </label>
-        <label className="flex items-center gap-2 text-[13px] col-span-1" style={{ color: "var(--kk-ink-soft)" }}>
-          <input type="checkbox" checked={smoking} onChange={(e) => setSmoking(e.target.checked)} /> Smokes
-        </label>
+        <div className="col-span-2 flex items-center gap-6">
+          <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--kk-ink-soft)" }}>
+            <input type="checkbox" checked={pets} onChange={(e) => setPets(e.target.checked)} /> Has pets
+          </label>
+          <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--kk-ink-soft)" }}>
+            <input type="checkbox" checked={smoking} onChange={(e) => setSmoking(e.target.checked)} /> Smokes
+          </label>
+        </div>
       </div>
       <div className="space-y-1.5">
         <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Notes</label>
@@ -1114,4 +1135,21 @@ function formatDate(iso: string): string {
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     return `${months[m - 1]} ${d}, ${y}`;
   } catch { return iso; }
+}
+
+function isoToDMY(iso: string): string {
+  if (!iso || !iso.match(/^\d{4}-\d{2}-\d{2}$/)) return iso;
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function dmyToIso(dmy: string): string {
+  if (!dmy) return "";
+  const parts = dmy.split("/");
+  if (parts.length === 3 && parts[2].length === 4) {
+    const [d, m, y] = parts;
+    const iso = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    if (!isNaN(new Date(iso).getTime())) return iso;
+  }
+  return "";
 }

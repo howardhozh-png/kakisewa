@@ -4,6 +4,7 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { UserPlus, Loader2, ChevronDown, MessageCircle, PenLine } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import { addTenantProfileAction, generateTenantIntakeLink } from "@/lib/actions";
 import { toast } from "sonner";
 
@@ -253,10 +254,9 @@ export function AddTenantButton() {
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>
                     Preferred move-in date
                   </label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={form.preferred_move_in}
-                    onChange={(e) => setForm((f) => ({ ...f, preferred_move_in: e.target.value }))}
+                    onChange={(v) => setForm((f) => ({ ...f, preferred_move_in: v }))}
                     className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                     style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                   />

@@ -6,6 +6,7 @@ import { Tenancy } from "@/lib/types";
 import { moveTenantLeaving } from "@/lib/actions";
 import { RefreshCw, Loader2, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { DateInput } from "@/components/ui/date-input";
 
 interface Props {
   t: Tenancy;
@@ -75,7 +76,7 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>Available from</label>
-              <input type="date" value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)} className="kk-input" style={{ fontSize: 14 }} />
+              <DateInput value={availableFrom} onChange={setAvailableFrom} className="kk-input" style={{ fontSize: 14 }} />
             </div>
           </div>
 

@@ -4,6 +4,30 @@ import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SolutionCards } from "./solution-cards";
 
+interface Comparison {
+  before: string;
+  after: string;
+}
+
+const COMPARISONS: Comparison[] = [
+  {
+    before: "Tracks owner interest manually on Excel — no visibility on who responded or dropped off",
+    after: "KakiSewa auto-tracks every owner response and pings you the moment interest comes in",
+  },
+  {
+    before: "Memorises (or forgets) contract expiry dates across dozens of listings — finds out too late",
+    after: "Automatic 60-day reminder so you follow up first, before another agent takes your listing",
+  },
+  {
+    before: "Sends tenant profiles one-by-one on WhatsApp with no branding — looks like everyone else",
+    after: "One branded tenant pack link. Owner picks from a shortlist. You close without the back-and-forth.",
+  },
+  {
+    before: "Hard to look professional or trustworthy, especially with new owners who don't know you",
+    after: "First message already looks like a top agency — structured owner form + polished tenant pack from day one",
+  },
+];
+
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2.5" style={{ color: dark ? "var(--kk-ink)" : "#fff" }}>
@@ -106,10 +130,10 @@ export default function LandingPage() {
 
         <p
           className="mx-auto mb-10"
-          style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "var(--kk-ink-mute)", lineHeight: 1.6, maxWidth: "46ch" }}
+          style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "var(--kk-ink-mute)", lineHeight: 1.6, maxWidth: "48ch" }}
         >
-          Track every contract renewal, close every owner lead,
-          send polished tenant packages. All in one place.
+          Other agents track renewals on Excel, forget expiry dates, and lose listings.
+          kakisewa handles it for you — automatically.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
@@ -188,6 +212,78 @@ export default function LandingPage() {
               >
                 {pt.role}
               </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Today vs KakiSewa ─────────────────────────────────────────────── */}
+      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
+        <div className="max-w-[960px] mx-auto">
+          <div className="text-center mb-14">
+            <p
+              className="uppercase font-semibold mb-5"
+              style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
+            >
+              The difference
+            </p>
+            <h2
+              className="serif mx-auto"
+              style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1, letterSpacing: "-0.022em", maxWidth: "28ch" }}
+            >
+              How agents work{" "}
+              <span style={{ color: "#DC2626" }}>today</span>{" "}
+              vs{" "}
+              <span style={{ color: "var(--kk-green)" }}>with kakisewa</span>
+            </h2>
+          </div>
+
+          {/* Column headers */}
+          <div
+            className="grid gap-px mb-px"
+            style={{ gridTemplateColumns: "1fr 1fr", background: "var(--kk-line)" }}
+          >
+            <div className="flex items-center gap-2 px-7 py-3.5" style={{ background: "#FEF2F2" }}>
+              <span style={{ fontSize: "1rem" }}>✕</span>
+              <span
+                className="font-semibold uppercase tracking-widest"
+                style={{ fontSize: "var(--kk-xs)", color: "#DC2626", letterSpacing: "0.12em" }}
+              >
+                Agents today
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-7 py-3.5" style={{ background: "#F0FDF4" }}>
+              <span style={{ fontSize: "1rem", color: "var(--kk-green)" }}>✓</span>
+              <span
+                className="font-semibold uppercase tracking-widest"
+                style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", letterSpacing: "0.12em" }}
+              >
+                With kakisewa
+              </span>
+            </div>
+          </div>
+
+          {/* Comparison rows */}
+          {COMPARISONS.map((row, i) => (
+            <div
+              key={i}
+              className="grid gap-px mb-px"
+              style={{ gridTemplateColumns: "1fr 1fr", background: "var(--kk-line)" }}
+            >
+              <div
+                className="flex items-start gap-3 px-7 py-6"
+                style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}
+              >
+                <span style={{ color: "#DC2626", fontSize: "0.875rem", marginTop: "0.2rem", flexShrink: 0 }}>✕</span>
+                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink-mute)" }}>{row.before}</p>
+              </div>
+              <div
+                className="flex items-start gap-3 px-7 py-6"
+                style={{ background: i % 2 === 0 ? "#F9FFF9" : "#F4FCF4" }}
+              >
+                <span style={{ color: "var(--kk-green)", fontSize: "0.875rem", marginTop: "0.2rem", flexShrink: 0 }}>✓</span>
+                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink)", fontWeight: 500 }}>{row.after}</p>
+              </div>
             </div>
           ))}
         </div>

@@ -948,7 +948,7 @@ export async function createTenantProfile(
     budget_max: data.budget_max ?? null,
     bedrooms_pref: data.bedrooms_pref ?? null,
     notes: data.notes ?? null,
-    source: data.source ?? "manual",
+    // source column not yet in DB — add via migration 20260531_tenant_profile_source.sql
   };
   if (data.employer !== undefined)           row.employer = data.employer;
   if (data.budget_min !== undefined)         row.budget_min = data.budget_min;
@@ -1206,13 +1206,13 @@ export async function getOrCreateOwnerIntakeToken(ownerLeadId: string): Promise<
     .maybeSingle();
   const existing = (data as Record<string, unknown> | null)?.intake_token as string | null;
   if (existing) return existing;
-  const token = `oi_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const token = Math.random().toString(36).slice(2, 6) + Math.random().toString(36).slice(2, 6);
   await supabase.from("owner_leads").update({ intake_token: token }).eq("id", ownerLeadId);
   return token;
 }
 
 export async function generateOwnerIntakeToken(ownerLeadId: string): Promise<string> {
-  const token = `oi_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const token = Math.random().toString(36).slice(2, 6) + Math.random().toString(36).slice(2, 6);
   const supabase = await createClient();
   await supabase
     .from("owner_leads")

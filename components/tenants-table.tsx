@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2,
 } from "lucide-react";
@@ -131,11 +132,11 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Preferred move-in</label>
-              <input type="date" className={inputCls} style={inputStyle} value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
+              <DateInput className={inputCls} style={inputStyle} value={moveIn} onChange={setMoveIn} />
             </div>
             <div>
               <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Available from</label>
-              <input type="date" className={inputCls} style={inputStyle} value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)} />
+              <DateInput className={inputCls} style={inputStyle} value={availableFrom} onChange={setAvailableFrom} />
             </div>
           </div>
           <div>

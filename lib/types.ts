@@ -119,6 +119,7 @@ export function defaultLifecycleStage(t: Tenancy, today: Date): LifecycleStage |
 
 export interface OwnerLead {
   id: string;
+  user_id?: string | null;
   owner_name: string;
   owner_phone: string;
   property_name?: string | null;
@@ -221,6 +222,7 @@ export interface PendingIntake {
 
 export interface MatchPack {
   id: string;
+  user_id?: string | null;
   owner_lead_id: string;
   share_token: string;
   property_label?: string | null;

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil } from "lucide-react";
+import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 
 type Filter = "all" | "unsent" | "contacted" | "listed" | "rented" | "declined";
@@ -116,6 +117,7 @@ function LeadPopup({
   const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const status = getStatus(lead);
 
   const dirty =
@@ -236,18 +238,30 @@ function LeadPopup({
       >
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--kk-line)" }}>
-          <div className="flex-1 min-w-0 mr-3 space-y-1">
-            <input
-              value={form.owner_name}
-              onChange={(e) => set("owner_name", e.target.value)}
-              className="text-[16px] font-semibold w-full bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)]"
-              style={{ color: "var(--kk-ink)" }}
-              placeholder="Owner name"
-            />
+          <div className="flex-1 min-w-0 mr-3">
+            <div className="flex items-center gap-1.5">
+              <input
+                ref={nameInputRef}
+                value={form.owner_name}
+                onChange={(e) => set("owner_name", e.target.value)}
+                className="text-[16px] font-semibold flex-1 min-w-0 bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)]"
+                style={{ color: "var(--kk-ink)" }}
+                placeholder="Owner name"
+              />
+              <button
+                type="button"
+                onClick={() => nameInputRef.current?.focus()}
+                className="shrink-0 p-1 rounded-full transition-opacity hover:opacity-60"
+                style={{ color: "var(--kk-ink-faint)" }}
+                aria-label="Edit owner name and phone"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <input
               value={form.owner_phone}
               onChange={(e) => set("owner_phone", e.target.value)}
-              className="text-[12px] w-full bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)]"
+              className="text-[12px] w-full bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] mt-1"
               style={{ color: "var(--kk-ink-mute)" }}
               placeholder="Phone"
             />
@@ -274,13 +288,10 @@ function LeadPopup({
               <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: fieldErrors.has(field) ? "#ef4444" : "var(--kk-ink-faint)" }}>
                 {label}{req && status === "contacted" && <span style={{ color: "#ef4444" }}> *</span>}
               </p>
-              <input
-                type={type ?? "text"}
-                value={form[field]}
-                onChange={(e) => set(field, e.target.value)}
-                style={{ ...FIELD_STYLE, borderColor: fieldErrors.has(field) ? "#ef4444" : "var(--kk-line)" }}
-                placeholder={placeholder}
-              />
+              {type === "date"
+                ? <DateInput value={form[field]} onChange={(v) => set(field, v)} style={{ ...FIELD_STYLE, borderColor: fieldErrors.has(field) ? "#ef4444" : "var(--kk-line)" }} />
+                : <input type={type ?? "text"} value={form[field]} onChange={(e) => set(field, e.target.value)} style={{ ...FIELD_STYLE, borderColor: fieldErrors.has(field) ? "#ef4444" : "var(--kk-line)" }} placeholder={placeholder} />
+              }
             </div>
           ))}
           <div className="col-span-2">

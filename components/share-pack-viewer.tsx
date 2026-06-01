@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
-import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useState, useTransition, useCallback, useEffect } from "react";
+import {
+  DndContext, DragEndEvent, DragOverlay,
+  useDraggable, useDroppable,
+  PointerSensor, TouchSensor, useSensor, useSensors,
+} from "@dnd-kit/core";
 import { PackTenant } from "@/lib/types";
 import { saveOwnerPackRanking } from "@/lib/actions";
 import { Heart, GripVertical, Check, Loader2 } from "lucide-react";
@@ -10,6 +14,25 @@ import { toast } from "sonner";
 interface Props {
   packId: string;
   initialTenants: PackTenant[];
+}
+
+function maskName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length < 2) return parts[0]?.[0] ? `${parts[0][0]}.` : name;
+  return `${parts[0][0]}. ${parts.slice(1).join(" ")}`;
+}
+
+function fmtDate(iso: string): string {
+  try {
+    const [y, m] = iso.split("-").map(Number);
+    return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1]} ${y}`;
+  } catch { return iso; }
+}
+
+function lifestyleText(pets: number | null, smoking: number | null): string {
+  const p = pets === 1 ? "Has pets" : "No pets";
+  const s = smoking === 1 ? "Smoker" : "Non-smoker";
+  return `${p} · ${s}`;
 }
 
 export function SharePackViewer({ packId, initialTenants }: Props) {
@@ -22,7 +45,7 @@ export function SharePackViewer({ packId, initialTenants }: Props) {
 
   const [order, setOrder] = useState<PackTenant[]>(sorted);
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragWidth, setDragWidth] = useState<number>(600);
+  const [dragWidth, setDragWidth] = useState<number>(500);
   const [notes, setNotes] = useState<Record<string, string>>(() => {
     const m: Record<string, string> = {};
     for (const t of sorted) if (t.owner_note) m[t.id] = t.owner_note;
@@ -32,7 +55,11 @@ export function SharePackViewer({ packId, initialTenants }: Props) {
   const [pending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<Date | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  // TouchSensor for mobile drag — requires a 250ms press-and-hold activation
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+  );
 
   const handleDragEnd = useCallback((e: DragEndEvent) => {
     setDraggingId(null);
@@ -79,7 +106,7 @@ export function SharePackViewer({ packId, initialTenants }: Props) {
   const draggingTenant = draggingId ? order.find((t) => t.id === draggingId) ?? null : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <DndContext
         id="kakisewa-pack-rank"
         sensors={sensors}
@@ -106,29 +133,38 @@ export function SharePackViewer({ packId, initialTenants }: Props) {
         </div>
 
         <DragOverlay dropAnimation={{ duration: 100, easing: "ease" }}>
-          {draggingTenant ? <CardOverlay t={draggingTenant} rankNumber={order.findIndex((t) => t.id === draggingId) + 1} width={dragWidth} /> : null}
+          {draggingTenant
+            ? <CardOverlay t={draggingTenant} rankNumber={order.findIndex((t) => t.id === draggingId) + 1} width={dragWidth} />
+            : null}
         </DragOverlay>
       </DndContext>
 
       {/* Sticky save bar */}
-      <div className="sticky bottom-4 mt-8 flex items-center justify-between gap-3 px-5 py-4 rounded-2xl"
-        style={{ background: "var(--kk-ink)", color: "#fff", boxShadow: "0 12px 32px rgba(0,0,0,0.16)" }}>
-        <p className="text-[13px] flex-1">
-          {dirty ? "Your ranking has unsaved changes" :
-            savedAt ? "Saved. Your agent has been notified." :
-            "Drag the cards to set your preferred order"}
+      <div
+        className="sticky bottom-4 mt-6 flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl"
+        style={{ background: "#1C1C1E", color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.20)" }}
+      >
+        <p className="text-[13px] flex-1 leading-snug">
+          {dirty
+            ? "Tap Save to send your ranking"
+            : savedAt
+            ? "Saved — your agent has been notified."
+            : "Drag cards to set your preferred order"}
         </p>
         <button
           onClick={save}
           disabled={!dirty || pending}
-          className="px-4 py-2 rounded-full text-[13px] font-medium"
+          className="shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold"
           style={{
-            background: dirty ? "#fff" : "rgba(255,255,255,0.18)",
-            color: dirty ? "var(--kk-ink)" : "rgba(255,255,255,0.6)",
+            background: dirty ? "#fff" : "rgba(255,255,255,0.15)",
+            color: dirty ? "#1C1C1E" : "rgba(255,255,255,0.5)",
           }}
         >
-          {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1" /> : null}
-          {pending ? "Saving…" : savedAt && !dirty ? <><Check className="w-3.5 h-3.5 inline mr-1" /> Saved</> : "Save my ranking"}
+          {pending
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" />
+            : savedAt && !dirty
+            ? <><Check className="w-3.5 h-3.5 inline mr-1" />Saved</>
+            : "Save my ranking"}
         </button>
       </div>
     </div>
@@ -145,84 +181,102 @@ function RankedCard({ t, rankNumber, isDragging, note, onLike, onNote }: {
   return (
     <div
       ref={drop.setNodeRef}
-      className="relative rounded-3xl p-6 flex items-start gap-4"
+      className="rounded-2xl overflow-hidden"
       style={{
-        background: "var(--kk-surface)",
-        border: drop.isOver ? "2px solid var(--kk-blue)" : "1px solid var(--kk-line)",
-        opacity: isDragging ? 0.2 : 1,
-        willChange: isDragging ? "opacity" : undefined,
+        background: "#fff",
+        border: drop.isOver ? "2px solid #007AFF" : "1px solid rgba(0,0,0,0.08)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        opacity: isDragging ? 0.15 : 1,
       }}
     >
-      {/* Rank pill */}
-      <div
-        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-[15px] font-semibold tabular-nums"
-        style={{ background: "var(--kk-ink)", color: "#fff" }}
-      >
-        {rankNumber}
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0"
+          style={{ background: "#1C1C1E", color: "#fff" }}
+        >
+          {rankNumber}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-semibold leading-tight truncate" style={{ color: "#1C1C1E" }}>
+            {maskName(t.name)}
+          </p>
+          <p className="text-[12px] mt-0.5" style={{ color: "#6C6C70" }}>
+            {[t.age ? `${t.age} yrs` : null, t.nationality].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        {/* Like button */}
+        <button
+          onClick={onLike}
+          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+          style={{
+            background: t.liked === 1 ? "rgba(239,68,68,0.10)" : "#F2F2F7",
+            color: t.liked === 1 ? "#DC2626" : "#8E8E93",
+          }}
+          aria-label="Shortlist"
+        >
+          <Heart className="w-4.5 h-4.5" style={{ fill: t.liked === 1 ? "currentColor" : "none", width: 18, height: 18 }} />
+        </button>
+        {/* Drag handle */}
+        <button
+          ref={drag.setNodeRef}
+          {...drag.attributes}
+          {...drag.listeners}
+          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
+          style={{ background: "#F2F2F7", color: "#8E8E93" }}
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Tenant info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="serif text-[20px] leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.014em" }}>
-              {t.name}
+      {/* Structured info grid */}
+      <div className="px-4 pb-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
+        {t.occupation && (
+          <InfoCell label="Occupation" value={t.occupation} />
+        )}
+        {t.preferred_move_in && (
+          <InfoCell label="Move-in" value={fmtDate(t.preferred_move_in)} highlight />
+        )}
+        {t.occupants != null && (
+          <InfoCell label="Occupants" value={`${t.occupants} pax`} />
+        )}
+        <InfoCell
+          label="Lifestyle"
+          value={lifestyleText(t.pets ?? null, t.smoking ?? null)}
+        />
+        {t.notes && (
+          <div className="col-span-2">
+            <p className="text-[9px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#AEAEB2" }}>
+              Agent note
             </p>
-            <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-              {t.age ? `${t.age} years old` : ""}
-              {t.occupation ? ` · ${t.occupation}` : ""}
-              {t.nationality ? ` · ${t.nationality}` : ""}
+            <p className="text-[13px] leading-snug" style={{ color: "#6C6C70" }}>
+              {t.notes}
             </p>
           </div>
-          <button
-            onClick={onLike}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110"
-            style={{
-              background: t.liked === 1 ? "var(--kk-red-soft)" : "var(--kk-surface-2)",
-              color: t.liked === 1 ? "var(--kk-red)" : "var(--kk-ink-mute)",
-              transition: "background 0.15s, color 0.15s, transform 0.1s",
-            }}
-            aria-label="Want to view"
-          >
-            <Heart className="w-5 h-5" style={{ fill: t.liked === 1 ? "currentColor" : "none" }} />
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 mt-3 text-[12px]">
-          {t.budget_max != null && (
-            <Pill bg="var(--kk-green-soft)" ink="#1F8B4C">Budget up to RM {t.budget_max.toLocaleString()}/mo</Pill>
-          )}
-          {t.nationality && <Pill>{t.nationality}</Pill>}
-          {t.monthly_income != null && (
-            <Pill>Income RM {t.monthly_income.toLocaleString()}/mo</Pill>
-          )}
-          {t.bedrooms_pref != null && <Pill>{t.bedrooms_pref} bed</Pill>}
-          {t.preferred_move_in && (
-            <Pill bg="var(--kk-blue-soft)" ink="var(--kk-blue)">Move in {formatDate(t.preferred_move_in)}</Pill>
-          )}
-          {t.occupants != null && <Pill>{t.occupants} occupant{t.occupants === 1 ? "" : "s"}</Pill>}
-          {t.pets === 1 && <Pill>🐾 has pets</Pill>}
-          {t.smoking === 1 && <Pill>🚬 smokes</Pill>}
-        </div>
-
-        {t.notes && (
-          <p className="text-[13px] mt-3 leading-relaxed break-words" style={{ color: "var(--kk-ink-soft)" }}>
-            {t.notes}
-          </p>
         )}
+      </div>
 
-        {/* Owner private note */}
+      {t.liked === 1 && (
+        <div className="mx-4 mb-3 px-3 py-1.5 rounded-lg text-[12px] font-medium text-center"
+          style={{ background: "rgba(239,68,68,0.08)", color: "#DC2626" }}>
+          ❤ Shortlisted for viewing
+        </div>
+      )}
+
+      {/* Owner private note */}
+      <div className="px-4 pb-4">
         <textarea
           value={note}
           onChange={(e) => onNote(e.target.value)}
           placeholder="Add a private note for your agent…"
           rows={1}
-          className="w-full mt-3 text-[13px] px-3 py-2 rounded-xl resize-none"
+          className="w-full text-[13px] px-3 py-2 rounded-xl resize-none outline-none"
           style={{
-            background: "var(--kk-surface-2)",
-            border: "1px solid var(--kk-line)",
-            color: "var(--kk-ink)",
-            minHeight: 40,
+            background: "#F2F2F7",
+            border: "none",
+            color: "#1C1C1E",
+            minHeight: 38,
           }}
           onInput={(e) => {
             const el = e.currentTarget;
@@ -231,69 +285,48 @@ function RankedCard({ t, rankNumber, isDragging, note, onLike, onNote }: {
           }}
         />
       </div>
-
-      {/* Drag handle */}
-      <button
-        ref={drag.setNodeRef}
-        {...drag.attributes}
-        {...drag.listeners}
-        className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-        style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
     </div>
   );
 }
 
-// Floating overlay shown while dragging — lightweight, no interactive elements
+function InfoCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <p className="text-[9px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#AEAEB2" }}>
+        {label}
+      </p>
+      <p className="text-[13px]" style={{ color: highlight ? "#007AFF" : "#1C1C1E" }}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
 function CardOverlay({ t, rankNumber, width }: { t: PackTenant; rankNumber: number; width: number }) {
   return (
     <div
-      className="rounded-3xl p-6 flex items-start gap-4"
+      className="rounded-2xl overflow-hidden"
       style={{
-        background: "var(--kk-surface)",
-        border: "2px solid var(--kk-blue)",
-        boxShadow: "0 20px 48px rgba(0,0,0,0.24)",
+        background: "#fff",
+        border: "2px solid #007AFF",
+        boxShadow: "0 20px 48px rgba(0,0,0,0.20)",
         transform: "rotate(1.5deg) scale(1.02)",
         cursor: "grabbing",
-        opacity: 0.96,
         width,
       }}
     >
-      <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-[15px] font-semibold"
-        style={{ background: "var(--kk-ink)", color: "#fff" }}>
-        {rankNumber}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="serif text-[20px] leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.014em" }}>{t.name}</p>
-        <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-          {t.occupation ?? ""}
-          {t.nationality ? ` · ${t.nationality}` : ""}
-        </p>
-      </div>
-      <div className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
-        style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
-        <GripVertical className="w-4 h-4" />
+      <div className="flex items-center gap-3 px-4 py-4">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0"
+          style={{ background: "#1C1C1E", color: "#fff" }}>
+          {rankNumber}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>{maskName(t.name)}</p>
+          <p className="text-[12px] mt-0.5" style={{ color: "#6C6C70" }}>
+            {[t.age ? `${t.age} yrs` : null, t.nationality].filter(Boolean).join(" · ")}
+          </p>
+        </div>
       </div>
     </div>
   );
-}
-
-function Pill({ bg, ink, children }: { bg?: string; ink?: string; children: React.ReactNode }) {
-  return (
-    <span className="px-2.5 py-1 rounded-full"
-      style={{ background: bg ?? "var(--kk-surface-2)", color: ink ?? "var(--kk-ink-mute)" }}>
-      {children}
-    </span>
-  );
-}
-
-function formatDate(iso: string): string {
-  try {
-    const [y, m, d] = iso.split("-").map(Number);
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return `${months[m - 1]} ${d}, ${y}`;
-  } catch { return iso; }
 }
