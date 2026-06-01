@@ -659,9 +659,8 @@ const TIER_BADGE = {
 } as const;
 
 function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean }) {
-  const key: keyof typeof TIER_BADGE | "trial" | null = isAdmin
-    ? "god"
-    : plan ?? (isOnTrial ? "trial" : null);
+  const key: keyof typeof TIER_BADGE | "trial" | null =
+    plan ?? (isAdmin ? "god" : (isOnTrial ? "trial" : null));
 
   if (!key) return null;
 

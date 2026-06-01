@@ -38,7 +38,7 @@ const PLANS = [
     name: "Silver" as const, planId: "silver" as const,
     monthly: 198, annualMonthly: 165, annualTotal: 1980, annualSavings: 396,
     monthlyAnnualTotal: 2376,
-    roiMonths: "10 months free",
+    roiMonths: "12 months free",
     features: [
       { label: "Bulk owner list upload" },
       { label: "Automatically track owner reply" },
@@ -53,7 +53,7 @@ const PLANS = [
     name: "Platinum" as const, planId: "platinum" as const,
     monthly: 398, annualMonthly: 332, annualTotal: 3980, annualSavings: 796,
     monthlyAnnualTotal: 4776,
-    roiMonths: "5 months free",
+    roiMonths: "6 months free",
     features: [{ label: "Everything in Silver, plus:", italic: true }],
     plusFeatures: ["Unlock \"Existing contracts\"", "Capture all renewal commission", "Contract renewal reminder and messaging"],
     recommended: "Experienced agent who needs support in capturing all contract renewal income by tracking existing contracts.",
@@ -63,7 +63,7 @@ const PLANS = [
     name: "Elite" as const, planId: "elite" as const,
     monthly: 498, annualMonthly: 415, annualTotal: 4980, annualSavings: 996,
     monthlyAnnualTotal: 5976,
-    roiMonths: "4 months free",
+    roiMonths: "5 months free",
     features: [{ label: "Everything in Platinum, plus:", italic: true }],
     plusFeatures: ["Property support management", "Performance dashboard", "Analytics and newsletter"],
     recommended: "Elite agent who wants everything in one-place, including goal planning, performance tracking, property services contacts.",
@@ -242,15 +242,6 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                 Trial · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining — subscribe to keep full access
               </span>
             )}
-            {currentPlan && status === "active" && (
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
-                style={{ background: "var(--kk-green-soft)", color: "var(--kk-green)", border: "1px solid var(--kk-green)" }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "var(--kk-green)" }} />
-                Active · {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} plan
-              </span>
-            )}
           </div>
         </header>
 
@@ -290,9 +281,13 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                     <div className="absolute top-4 right-4 z-10">
                       <span
                         className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
-                        style={{ background: "var(--kk-green)", color: "#fff", whiteSpace: "nowrap" }}
+                        style={{
+                          background: isCurrentPlan ? "var(--kk-green)" : "#C8960A",
+                          color: "#fff",
+                          whiteSpace: "nowrap",
+                        }}
                       >
-                        {isCurrentPlan ? "Your plan" : "Most popular"}
+                        {isCurrentPlan ? "Active plan" : "Most popular"}
                       </span>
                     </div>
                   )}
