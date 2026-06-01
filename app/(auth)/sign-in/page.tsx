@@ -132,9 +132,14 @@ function SignInForm() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
+                  Password
+                </label>
+                <Link href="/forgot-password" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 required

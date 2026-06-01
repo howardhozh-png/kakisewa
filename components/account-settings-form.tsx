@@ -488,6 +488,25 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const [agency, setAgency] = useState(agent.agency ?? "");
   const [pending, startTransition] = useTransition();
 
+  // Change password state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwPending, setPwPending] = useState(false);
+
+  async function handleChangePassword() {
+    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters."); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords don't match."); return; }
+    setPwPending(true);
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPwPending(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Password updated");
+    setNewPassword("");
+    setConfirmPassword("");
+  }
+
   const dirty =
     name !== (agent.name ?? "") ||
     phone !== (agent.phone ?? "") ||
@@ -606,6 +625,48 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
         >
           {tplPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {tplPending ? "Saving…" : "Save templates"}
+        </button>
+      </section>
+
+      {/* ── Change Password ── */}
+      <section className="kk-section p-6">
+        <h2 className="text-[15px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Change password</h2>
+        <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>Set a new password for your account.</p>
+        <div className="space-y-3">
+          <div>
+            <p className="kk-overline mb-1.5">New password</p>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="Min. 8 characters"
+              style={{ ...INPUT_STYLE }}
+            />
+          </div>
+          <div>
+            <p className="kk-overline mb-1.5">Confirm new password</p>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder=""
+              style={{ ...INPUT_STYLE }}
+            />
+          </div>
+        </div>
+        <button
+          onClick={handleChangePassword}
+          disabled={pwPending || !newPassword || !confirmPassword}
+          className="kk-pill mt-5 flex items-center gap-2"
+          style={{
+            background: newPassword && confirmPassword ? "var(--kk-ink)" : "var(--kk-surface-2)",
+            color: newPassword && confirmPassword ? "#fff" : "var(--kk-ink-faint)",
+            cursor: pwPending || !newPassword || !confirmPassword ? "not-allowed" : "pointer",
+            opacity: pwPending ? 0.7 : 1,
+          }}
+        >
+          {pwPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {pwPending ? "Updating…" : "Update password"}
         </button>
       </section>
 
