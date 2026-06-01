@@ -44,15 +44,15 @@ export function TrialGate() {
         </div>
 
         <a
-          href="mailto:support@kakisewa.com?subject=Subscribe%20to%20kakisewa&body=Hi%2C%20I%20would%20like%20to%20subscribe%20to%20kakisewa."
+          href="/billing"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-opacity hover:opacity-85 w-full justify-center"
           style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
         >
-          Subscribe now <ArrowRight className="w-4 h-4" />
+          Choose a plan <ArrowRight className="w-4 h-4" />
         </a>
 
         <p className="mt-4" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
-          Reply to this email within 24 hours and we will unlock your account the same day.
+          Cancel anytime. Your data is always safe.
         </p>
       </div>
     </div>

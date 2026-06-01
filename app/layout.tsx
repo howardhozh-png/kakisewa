@@ -22,7 +22,17 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   title: "kakisewa — Tenancy CRM",
-  description: "AI-powered rent receipt verification for Malaysian landlords",
+  description: "kakisewa, #1 property agent platform",
+  openGraph: {
+    title: "kakisewa — Tenancy CRM",
+    description: "kakisewa, #1 property agent platform",
+    siteName: "kakisewa",
+  },
+  twitter: {
+    card: "summary",
+    title: "kakisewa — Tenancy CRM",
+    description: "kakisewa, #1 property agent platform",
+  },
 };
 
 export const viewport: Viewport = {

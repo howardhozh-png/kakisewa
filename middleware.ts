@@ -13,6 +13,8 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/api/share")) return true
   if (pathname.startsWith("/api/r/")) return true
   if (pathname.startsWith("/api/auth/")) return true
+  if (pathname.startsWith("/api/webhooks/stripe")) return true
+  if (pathname.startsWith("/api/stripe/")) return true
   if (pathname.startsWith("/terms") || pathname.startsWith("/privacy")) return true
   if (pathname.startsWith("/share")) return true
   if (pathname.startsWith("/pack")) return true
