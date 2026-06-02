@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextRequest, NextResponse } from "next/server"
 
-const ADMIN_EMAIL = "howardhozh@gmail.com"
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "howardhozh@gmail.com"
 const ADMIN_AGENT_ID = "dev_agent_howard"
 
 function isPublicPath(pathname: string): boolean {

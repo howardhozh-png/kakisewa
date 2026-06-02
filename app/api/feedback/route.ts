@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-const HOWARD_EMAIL = "howardhozh@gmail.com";
+const HOWARD_EMAIL = process.env.ADMIN_EMAIL ?? "howardhozh@gmail.com";
 
 export async function POST(req: NextRequest) {
   const agentId    = req.headers.get("x-agent-id") ?? "";

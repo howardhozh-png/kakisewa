@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/service";
 
-const ADMIN_EMAIL = "howardhozh@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "howardhozh@gmail.com";
 
 async function requireAdmin(): Promise<boolean> {
   const cookieStore = await cookies();

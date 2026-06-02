@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { motion } from "framer-motion"
 
-const ADMIN_EMAIL = "howardhozh@gmail.com"
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
 const SHAPES = [
   { label: "3 bed · 2 bath",       sub: "Mont Kiara · RM 4,200/mo",    x: "-2%",  y: "12%", rotate: -8, delay: 0    },
