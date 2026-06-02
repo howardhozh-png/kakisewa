@@ -987,6 +987,13 @@ export function OnboardingDemoModal() {
     if (!localStorage.getItem(STORAGE_KEY)) setTimeout(openModal, 600);
   }, [openModal]);
 
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, close]);
+
   if (!open) return null;
 
   const { title, valueProp, Scene } = MODULES[mod];

@@ -60,7 +60,7 @@ export default async function HomePage() {
         <h1 className="serif text-[38px] lg:text-[46px] leading-tight tracking-tight mb-4" style={{ color: "var(--kk-ink)" }}>
           {firstName ? `Welcome, ${firstName}.` : "Welcome to kakisewa."}
         </h1>
-        <p className="text-[16px] leading-relaxed" style={{ color: "var(--kk-ink-mute)", maxWidth: 480 }}>
+        <p className="text-[16px] leading-relaxed whitespace-nowrap" style={{ color: "var(--kk-ink-mute)" }}>
           Three steps. Each one turns your database into recurring income.
         </p>
       </div>

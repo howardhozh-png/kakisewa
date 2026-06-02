@@ -87,10 +87,10 @@ export default async function NetworkPage({ searchParams }: Props) {
               noVideo
               pageTitle="Directory — your full property network"
               bullets={[
+                "Contacts tab: add trusted support contacts like plumbers, electricians, cleaners",
+                "Support contacts are shown to owners and tenants when emergencies come up",
                 "Properties tab: every unit you manage or are actively marketing",
                 "Tenants tab: all prospects and active tenants across your portfolio",
-                "Contacts tab: add trusted support contacts — plumbers, electricians, cleaners",
-                "Support contacts are shown to owners and tenants when emergencies come up",
               ]}
             />
           }
