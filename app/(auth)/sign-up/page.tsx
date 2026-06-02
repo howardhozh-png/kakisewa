@@ -33,6 +33,8 @@ function SignUpForm() {
   const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", agency: "", ren_number: "", password: "", confirm: "" })
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [renStatus, setRenStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle")
+  const [renHint, setRenHint] = useState<string | null>(null)
 
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL
 
@@ -40,11 +42,38 @@ function SignUpForm() {
     return (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [field]: e.target.value }))
   }
 
+  async function validateRen(ren: string) {
+    const numeric = ren.replace(/^REN\s*/i, "").trim()
+    if (!numeric || !/^\d+$/.test(numeric)) {
+      setRenStatus("invalid")
+      setRenHint("Format: REN followed by numbers, e.g. REN07128")
+      return
+    }
+    setRenStatus("checking")
+    setRenHint(null)
+    try {
+      const res = await fetch(`/api/validate-ren?ren=${encodeURIComponent(ren)}`)
+      const data = await res.json()
+      if (data.valid) {
+        setRenStatus("valid")
+        const parts = [data.name, data.firm].filter(Boolean)
+        setRenHint(parts.length ? parts.join(" · ") : (data.active === false ? "Found — not active" : "Verified"))
+      } else {
+        setRenStatus("invalid")
+        setRenHint("REN not found in LPPEH registry")
+      }
+    } catch {
+      setRenStatus("idle")
+      setRenHint(null)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     if (form.password !== form.confirm) { setError("Passwords do not match."); return }
     if (!isAdmin && !form.ren_number.trim()) { setError("REN number is required."); return }
+    if (!isAdmin && renStatus === "invalid") { setError("Please enter a valid REN number."); return }
     setLoading(true)
     const supabase = createClient()
     const { error: err } = await supabase.auth.signUp({
@@ -155,7 +184,29 @@ function SignUpForm() {
                 </label>
                 {isAdmin && <span className="text-[11px] font-semibold" style={{ color: "var(--kk-green)" }}>Admin — not required</span>}
               </div>
-              <input type="text" required={!isAdmin} value={form.ren_number} onChange={set("ren_number")} placeholder="REN12345" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+              <input
+                type="text"
+                required={!isAdmin}
+                value={form.ren_number}
+                onChange={e => { set("ren_number")(e); setRenStatus("idle"); setRenHint(null) }}
+                onBlur={e => { onBlur(e); if (!isAdmin && e.target.value.trim()) validateRen(e.target.value.trim()) }}
+                placeholder="REN07128"
+                className={inputCls}
+                style={{
+                  ...inputStyle,
+                  borderColor: renStatus === "valid" ? "var(--kk-green)" : renStatus === "invalid" ? "#DC2626" : undefined,
+                }}
+                onFocus={onFocus}
+              />
+              {renStatus === "checking" && (
+                <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>Checking LPPEH registry…</p>
+              )}
+              {renHint && renStatus === "valid" && (
+                <p className="text-[11px] font-medium" style={{ color: "var(--kk-green)" }}>✓ {renHint}</p>
+              )}
+              {renHint && renStatus === "invalid" && (
+                <p className="text-[11px]" style={{ color: "#DC2626" }}>{renHint}</p>
+              )}
             </div>
 
             <div style={{ height: 1, background: "var(--kk-line)" }} />

@@ -277,6 +277,43 @@ const _cachedAllActiveTenants = unstable_cache(
   { tags: ["kk-tenancies", "kk-properties", "kk-owner-leads"], revalidate: 60 }
 );
 
+// ─── Email helpers ────────────────────────────────────────────────────────────
+
+async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "kakisewa <noreply@kakisewa.com>",
+      to: [email],
+      subject: "Welcome to kakisewa — your 14-day trial has started",
+      html: `
+<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+  <p style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 24px">kakisewa</p>
+  <h1 style="font-size:18px;font-weight:600;margin:0 0 8px">Welcome, ${firstName}!</h1>
+  <p style="font-size:14px;color:#6C6C70;margin:0 0 16px">
+    Your 14-day free trial has started. Here's what you can do right now:
+  </p>
+  <ul style="font-size:14px;color:#6C6C70;margin:0 0 24px;padding-left:20px;line-height:1.8">
+    <li>Add your first property and track its tenancy</li>
+    <li>Set your commission percentage and monthly goal</li>
+    <li>Send a tenant pack to a prospective landlord</li>
+  </ul>
+  <a href="https://www.kakisewa.com/home"
+    style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
+           padding:12px 24px;border-radius:10px;text-decoration:none">
+    Go to dashboard
+  </a>
+  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">
+    Questions? Just reply to this email — we read everything.
+  </p>
+</div>`,
+    }),
+  });
+}
+
 // ─── Properties ───────────────────────────────────────────────────────────────
 
 export async function getProperties(): Promise<Property[]> {
@@ -853,16 +890,24 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
     const meta = user.user_metadata ?? {};
     const trialStart = new Date().toISOString();
     const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const renRaw = (meta.ren_number as string | null) ?? null;
+    const renNumber = renRaw ? renRaw.toUpperCase().replace(/^REN\s*/i, "REN").trim() : null;
     await supabase.from("agent_profiles").upsert({
       id: user.id,
       name: meta.full_name ?? null,
       phone: meta.phone ?? null,
       agency: meta.agency ?? null,
+      ren_number: renNumber,
       trial_started_at: trialStart,
       trial_ends_at: trialEnd,
       subscription_status: "trial",
       referral_slug: (meta.referral_slug as string | null) ?? null,
     });
+    // Send welcome email non-blocking
+    if (user.email) {
+      const firstName = ((meta.full_name as string | null) ?? "").split(" ")[0] || "there";
+      sendWelcomeEmail(user.email, firstName).catch(() => {});
+    }
     const { data: fresh } = await supabase
       .from("agent_profiles")
       .select("*")
@@ -881,7 +926,6 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   if (headerMeta.name)   base.name   = headerMeta.name;
   if (headerMeta.phone)  base.phone  = headerMeta.phone;
   if (headerMeta.agency) base.agency = headerMeta.agency;
-  base.ren_number = (user.user_metadata?.ren_number as string | null) ?? null;
   return base;
 });
 

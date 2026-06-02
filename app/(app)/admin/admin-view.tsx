@@ -33,6 +33,19 @@ interface FeedbackRow {
   created_at: string;
 }
 
+interface AgentRow {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  agency: string | null;
+  ren_number: string | null;
+  subscription_status: string | null;
+  subscription_plan: string | null;
+  trial_days_left: number | null;
+  joined_at: string;
+}
+
 function FunnelBar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0;
   return (
@@ -48,8 +61,22 @@ const CATEGORY_STYLE: Record<string, { bg: string; color: string; label: string 
   question:   { bg: "rgba(99,102,241,0.12)", color: "#4338CA", label: "❓ Question" },
 };
 
-export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback }: { funnel: Funnel; links: Link[]; feedback: FeedbackRow[] }) {
-  const [tab, setTab] = useState<"funnel" | "feedback">("funnel");
+const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  trial:   { bg: "rgba(16,185,129,0.10)",  color: "#065F46", label: "Trial" },
+  expired: { bg: "rgba(220,38,38,0.10)",   color: "#DC2626", label: "Expired" },
+  active:  { bg: "rgba(0,113,227,0.10)",   color: "#0071E3", label: "Paid" },
+};
+
+const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
+  silver:   { bg: "rgba(107,114,128,0.12)", color: "#374151" },
+  platinum: { bg: "rgba(11,31,74,0.12)",    color: "#0b1f4a" },
+  elite:    { bg: "rgba(107,61,30,0.12)",   color: "#6b3d1e" },
+};
+
+export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents }: {
+  funnel: Funnel; links: Link[]; feedback: FeedbackRow[]; agents: AgentRow[];
+}) {
+  const [tab, setTab] = useState<"funnel" | "feedback" | "agents">("funnel");
   const [links, setLinks] = useState<Link[]>(initialLinks);
   const [feedback, setFeedback] = useState<FeedbackRow[]>(initialFeedback);
   const [newLabel, setNewLabel] = useState("");
@@ -140,14 +167,16 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
           Admin Dashboard
         </h1>
         <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-          {(["funnel", "feedback"] as const).map(t => (
+          {(["funnel", "agents", "feedback"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all capitalize"
               style={{
                 background: tab === t ? "var(--kk-ink)" : "transparent",
                 color: tab === t ? "#fff" : "var(--kk-ink-mute)",
               }}>
-              {t === "feedback" ? `Feedback${openFeedback.length ? ` (${openFeedback.length})` : ""}` : "Funnel & Links"}
+              {t === "feedback" ? `Feedback${openFeedback.length ? ` (${openFeedback.length})` : ""}`
+                : t === "agents" ? `Agents (${agents.length})`
+                : "Funnel & Links"}
             </button>
           ))}
         </div>
@@ -182,6 +211,50 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
                   </div>
                 </div>
                 <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--kk-ink-mute)" }}>{f.message}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === "agents" && (
+        <div className="space-y-2">
+          {agents.length === 0 && (
+            <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No agents yet.</p>
+          )}
+          {agents.map(a => {
+            const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? { bg: "rgba(0,0,0,0.06)", color: "var(--kk-ink-mute)", label: "—" };
+            const planStyle = a.subscription_plan ? PLAN_STYLE[a.subscription_plan] : null;
+            const joinDate = new Date(a.joined_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+            const trialLabel = a.subscription_status === "trial" && a.trial_days_left !== null
+              ? (a.trial_days_left > 0 ? `${a.trial_days_left}d left` : "Expired") : null;
+            return (
+              <div key={a.id} className="rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                <div className="flex-1 min-w-[140px]">
+                  <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {a.ren_number && (
+                    <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                      {a.ren_number}
+                    </span>
+                  )}
+                  {a.agency && (
+                    <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{a.agency}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statusStyle.bg, color: statusStyle.color }}>
+                    {statusStyle.label}{trialLabel ? ` · ${trialLabel}` : ""}
+                  </span>
+                  {planStyle && a.subscription_plan && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize" style={{ background: planStyle.bg, color: planStyle.color }}>
+                      {a.subscription_plan}
+                    </span>
+                  )}
+                  <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{joinDate}</span>
+                </div>
               </div>
             );
           })}

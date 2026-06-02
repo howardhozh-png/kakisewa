@@ -9,22 +9,23 @@ export default async function AdminPage() {
 
   const supabase = createServiceClient();
 
-  // Funnel: all agent profiles
+  // Funnel + agents: all agent profiles
   const { data: profiles } = await supabase
     .from("agent_profiles")
-    .select("id, name, subscription_status, trial_ends_at, created_at, referral_slug");
+    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, trial_ends_at, created_at, referral_slug")
+    .order("created_at", { ascending: false });
 
-  const now = new Date();
+  const nowTs = new Date();
   const funnel = {
     total: (profiles ?? []).length,
     trial: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "trial" &&
       p.trial_ends_at &&
-      new Date(p.trial_ends_at) > now
+      new Date(p.trial_ends_at) > nowTs
     ).length,
     expired: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "expired" ||
-      (p.subscription_status === "trial" && p.trial_ends_at && new Date(p.trial_ends_at) <= now)
+      (p.subscription_status === "trial" && p.trial_ends_at && new Date(p.trial_ends_at) <= nowTs)
     ).length,
     active: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
       p.subscription_status === "active"
@@ -73,5 +74,35 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} />;
+  // Fetch emails from auth.users
+  const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+  const emailById: Record<string, string> = {};
+  const createdById: Record<string, string> = {};
+  (authUsers ?? []).forEach((u: { id: string; email?: string; created_at: string }) => {
+    if (u.email) emailById[u.id] = u.email;
+    if (u.created_at) createdById[u.id] = u.created_at;
+  });
+
+  const agents = (profiles ?? []).map((p: {
+    id: string; name: string | null; phone: string | null; agency: string | null;
+    ren_number: string | null; subscription_status: string | null; subscription_plan: string | null;
+    trial_ends_at: string | null; created_at: string;
+  }) => {
+    const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at) : null;
+    const trialDaysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - nowTs.getTime()) / 86400000) : null;
+    return {
+      id: p.id,
+      name: p.name,
+      email: emailById[p.id] ?? null,
+      phone: p.phone,
+      agency: p.agency,
+      ren_number: p.ren_number,
+      subscription_status: p.subscription_status,
+      subscription_plan: p.subscription_plan,
+      trial_days_left: trialDaysLeft,
+      joined_at: createdById[p.id] ?? p.created_at,
+    };
+  });
+
+  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} />;
 }
