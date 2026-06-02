@@ -35,11 +35,8 @@ const COMPARISONS: Comparison[] = [
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2.5" style={{ color: dark ? "var(--kk-ink)" : "#fff" }}>
-      <Logo size={size} />
-      <span className="serif tracking-tight leading-none" style={{ fontSize: size * 0.625 }}>
-        kakisewa
-      </span>
+    <span style={{ color: dark ? "var(--kk-ink)" : "#fff" }}>
+      <Logo variant="wordmark" size={size} />
     </span>
   );
 }

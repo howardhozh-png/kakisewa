@@ -423,15 +423,15 @@ export function SupportsDirectory({ initialContacts }: Props) {
   return (
     <>
       {/* Search + filter */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, area, or notes…"
-            className="w-full pl-9 pr-4 py-2 rounded-full text-[13px] outline-none"
+            className="w-full pl-9 pr-4 py-1.5 rounded-full text-[13px] outline-none"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
           />
         </div>

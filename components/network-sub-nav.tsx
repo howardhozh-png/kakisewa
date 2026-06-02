@@ -14,7 +14,7 @@ interface Props {
 
 export function NetworkSubNav({ propertiesCount, tenantsCount, contactsCount, view, helpSlot }: Props) {
   const tabs = [
-    { href: "/directory",                  label: "Support contacts",  shortLabel: "Contacts",    count: contactsCount,   key: "contacts"    },
+    { href: "/directory",                  label: "Service contacts",  shortLabel: "Services",    count: contactsCount,   key: "contacts"    },
     { href: "/directory?view=properties",  label: "All properties",    shortLabel: "Properties",  count: propertiesCount, key: "properties"  },
     { href: "/directory?view=tenants",     label: "All tenants",       shortLabel: "Tenants",     count: tenantsCount,    key: "tenants"     },
   ];
