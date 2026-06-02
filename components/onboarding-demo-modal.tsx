@@ -102,8 +102,10 @@ function DemoCursor({ x, y, clicking, hidden }: { x: number; y: number; clicking
   if (hidden) return null;
   return (
     <div style={{
-      position: "absolute", left: x, top: y, pointerEvents: "none", zIndex: 20,
-      transition: "left 0.9s cubic-bezier(0.33,1,0.68,1), top 0.9s cubic-bezier(0.33,1,0.68,1)",
+      position: "absolute", left: 0, top: 0, pointerEvents: "none", zIndex: 20,
+      transform: `translate(${x}px, ${y}px)`,
+      transition: "transform 0.9s cubic-bezier(0.33,1,0.68,1)",
+      willChange: "transform",
     }}>
       {clicking && (
         <div style={{
