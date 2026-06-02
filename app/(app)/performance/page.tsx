@@ -26,11 +26,15 @@ export default async function PerformancePage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <header className="mb-8">
         <p className="kk-overline mb-3">Income tracker</p>
-        <div className="flex items-center gap-2.5">
-          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-            Track your goals
-          </h1>
+        <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
+          Track your goals
+        </h1>
+        <div className="flex items-end justify-between gap-4 mt-3">
+          <p className="kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
+            Track your earned commissions, set monthly targets and plan your income goals.
+          </p>
           <PageHelpButton
+            variant="question"
             module={2}
             noVideo
             pageTitle="Performance — your passive income dashboard"
@@ -42,9 +46,6 @@ export default async function PerformancePage({ searchParams }: Props) {
             ]}
           />
         </div>
-        <p className="mt-3 kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-          Track your earned commissions, set monthly targets and plan your income goals.
-        </p>
       </header>
 
       <GoalProvider initial={timeline.monthlyGoal ?? 0}>

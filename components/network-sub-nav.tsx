@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface Props {
   propertiesCount: number;
   tenantsCount: number;
   contactsCount: number;
   view: string;
+  helpSlot?: ReactNode;
 }
 
-export function NetworkSubNav({ propertiesCount, tenantsCount, contactsCount, view }: Props) {
+export function NetworkSubNav({ propertiesCount, tenantsCount, contactsCount, view, helpSlot }: Props) {
   const tabs = [
     { href: "/directory",                  label: "Support contacts",  shortLabel: "Contacts",    count: contactsCount,   key: "contacts"    },
     { href: "/directory?view=properties",  label: "All properties",    shortLabel: "Properties",  count: propertiesCount, key: "properties"  },
@@ -18,7 +20,8 @@ export function NetworkSubNav({ propertiesCount, tenantsCount, contactsCount, vi
   ];
 
   return (
-    <div className="mb-8 flex items-center gap-1 border-b overflow-x-auto" style={{ borderColor: "var(--kk-line)" }}>
+    <div className="mb-8 flex items-center justify-between border-b" style={{ borderColor: "var(--kk-line)" }}>
+      <div className="flex items-center gap-1 overflow-x-auto">
       {tabs.map((t) => (
         <Link
           key={t.key}
@@ -40,6 +43,8 @@ export function NetworkSubNav({ propertiesCount, tenantsCount, contactsCount, vi
           )}
         </Link>
       ))}
+      </div>
+      {helpSlot && <div className="pb-1 shrink-0 pl-4">{helpSlot}</div>}
     </div>
   );
 }

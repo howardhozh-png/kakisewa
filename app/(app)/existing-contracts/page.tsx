@@ -39,21 +39,9 @@ export default async function TenanciesPage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-              Existing Contracts
-            </h1>
-            <PageHelpButton
-              module={2}
-              pageTitle="Existing Contracts — capture your passive income"
-              bullets={[
-                "Add each active tenancy with its contract expiry date",
-                "kakisewa alerts you 60 days before any contract expires",
-                "Reach out to the owner before another agent does",
-                "Renew the contract and earn one month's rent in commission — automatically tracked",
-              ]}
-            />
-          </div>
+          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
+            Existing Contracts
+          </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Your renewal commission is passive income. Never miss an expiry again.
           </p>
@@ -62,7 +50,23 @@ export default async function TenanciesPage({ searchParams }: Props) {
       </header>
 
       <Suspense fallback={null}>
-        <MoneySubNav makeCount={makeCount} renewCount={lifecycle.filter(t => { const s = defaultLifecycleStage(t, today); return s !== null && s !== "closed"; }).length} />
+        <MoneySubNav
+          makeCount={makeCount}
+          renewCount={lifecycle.filter(t => { const s = defaultLifecycleStage(t, today); return s !== null && s !== "closed"; }).length}
+          helpSlot={
+            <PageHelpButton
+              variant="question"
+              module={2}
+              pageTitle="Existing Contracts — capture your passive income"
+              bullets={[
+                "Add each active tenancy with its contract expiry date",
+                "kakisewa alerts you 60 days before any contract expires",
+                "Reach out to the owner before another agent does",
+                "Renew the contract and earn half a month's rent in commission. Automatically tracked.",
+              ]}
+            />
+          }
+        />
       </Suspense>
 
       {lifecycle.length === 0 ? (() => {

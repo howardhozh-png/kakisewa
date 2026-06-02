@@ -3,18 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface Props {
   makeCount?: number;
   renewCount?: number;
+  helpSlot?: ReactNode;
 }
 
-export function MoneySubNav({ renewCount }: Props) {
+export function MoneySubNav({ renewCount, helpSlot }: Props) {
   const isRenew = usePathname().startsWith("/existing-contracts");
 
   return (
-    <div className="mb-8 flex items-center gap-1 border-b" style={{ borderColor: "var(--kk-line)" }}>
-      <Tab href="/existing-contracts" label="Existing contracts" count={renewCount} active={isRenew} />
+    <div className="mb-8 flex items-center justify-between border-b" style={{ borderColor: "var(--kk-line)" }}>
+      <div className="flex items-center gap-1">
+        <Tab href="/existing-contracts" label="Existing contracts" count={renewCount} active={isRenew} />
+      </div>
+      {helpSlot && <div className="pb-1 shrink-0 pl-4">{helpSlot}</div>}
     </div>
   );
 }

@@ -22,11 +22,11 @@ export function PageHelpButton({ module, pageTitle, bullets, noVideo, variant = 
       <button
         onClick={open}
         aria-label={`How ${pageTitle} works`}
-        className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-70 active:scale-95"
+        className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-80 active:scale-95"
         style={{
           fontSize: 12,
-          fontWeight: 500,
-          color: "var(--kk-ink-mute)",
+          fontWeight: 600,
+          color: "#92600A",
           background: "none",
           border: "none",
           cursor: "pointer",
@@ -38,9 +38,9 @@ export function PageHelpButton({ module, pageTitle, bullets, noVideo, variant = 
           style={{
             width: 18,
             height: 18,
-            background: "var(--kk-surface-2)",
-            border: "1.5px solid var(--kk-line-strong)",
-            color: "var(--kk-ink-mute)",
+            background: "#FEF3C7",
+            border: "1.5px solid #F59E0B",
+            color: "#92600A",
             fontSize: 10,
             fontWeight: 700,
             flexShrink: 0,
