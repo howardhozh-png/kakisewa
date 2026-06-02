@@ -1,4 +1,5 @@
 import { getAgentProfile } from "@/lib/db";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 const PLAN_RANK: Record<string, number> = { silver: 1, platinum: 2, elite: 3 };
@@ -56,7 +57,7 @@ function TierGateOverlay({ minPlan }: { minPlan: "platinum" | "elite" }) {
             </svg>
           </div>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] mb-1.5" style={{ color: "rgba(255,255,255,0.6)" }}>
-            {cfg.name} plan required
+            {minPlan === "platinum" ? "Platinum or Elite required" : `${cfg.name} plan required`}
           </p>
           <p className="text-[22px] font-bold leading-snug" style={{ color: "#fff" }}>
             Upgrade to unlock this
@@ -66,7 +67,7 @@ function TierGateOverlay({ minPlan }: { minPlan: "platinum" | "elite" }) {
         {/* Body */}
         <div className="px-8 py-6">
           <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
-            {cfg.name} members get access to:
+            {minPlan === "platinum" ? "Platinum and Elite members get access to:" : `${cfg.name} members get access to:`}
           </p>
           <ul className="space-y-3 mb-7">
             {cfg.features.map((f) => (
@@ -88,7 +89,7 @@ function TierGateOverlay({ minPlan }: { minPlan: "platinum" | "elite" }) {
             className="block w-full py-3.5 rounded-2xl text-center text-[14px] font-bold transition-opacity hover:opacity-85"
             style={{ background: cfg.gradient, color: "#fff" }}
           >
-            View {cfg.name} plan →
+            View {minPlan === "platinum" ? "plans" : `${cfg.name} plan`} →
           </Link>
           <p className="text-center text-[11px] mt-3" style={{ color: "var(--kk-ink-faint)" }}>
             Upgrade takes effect immediately · Cancel anytime
@@ -100,6 +101,9 @@ function TierGateOverlay({ minPlan }: { minPlan: "platinum" | "elite" }) {
 }
 
 export async function checkTierGate(minPlan: "platinum" | "elite"): Promise<React.ReactElement | null> {
+  const hdrs = await headers();
+  if (hdrs.get("x-is-admin") === "true") return null;
+
   const agent = await getAgentProfile();
   if (agent.subscription_status === "trial") return null;
 

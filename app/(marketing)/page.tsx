@@ -6,27 +6,30 @@ import { HowItWorks } from "./how-it-works";
 import { Faq } from "./faq";
 import { SeeHowButton } from "./see-how-button";
 
+const X = () => <span style={{ color: "#DC2626", fontWeight: 900, fontSize: "1.1em", marginRight: 6 }}>✗</span>;
+const V = () => <span style={{ color: "#16a34a", fontWeight: 900, fontSize: "1.1em", marginRight: 6 }}>✓</span>;
+
 interface Comparison {
-  before: string;
+  before: React.ReactNode;
   after: React.ReactNode;
 }
 
 const COMPARISONS: Comparison[] = [
   {
-    before: "✗  Works hard to close a tenancy, then earns nothing when the contract renews. Passive income — gone.",
-    after: <>✓  <strong>Every renewal tracked automatically.</strong> One month's rent in commission, captured without lifting a finger.</>,
+    before: <><X />Works hard to close a tenancy, then earns nothing when the contract renews. Passive income gone.</>,
+    after: <><V /><strong>Every renewal tracked automatically.</strong> Half a month's rent in commission, captured without lifting a finger.</>,
   },
   {
-    before: "✗  Misses contract expiry dates. Finds out when the owner is already talking to another agent.",
-    after: <>✓  <strong>60-day reminder</strong> before every expiry. You follow up <strong>before anyone else does</strong>.</>,
+    before: <><X />Misses contract expiry dates. Finds out when the owner is already talking to another agent.</>,
+    after: <><V /><strong>60-day reminder</strong> before every expiry. You follow up <strong>before anyone else does</strong>.</>,
   },
   {
-    before: "✗  No idea who responded or dropped off. Chasing everyone on WhatsApp.",
-    after: <>✓  kakisewa <strong>tracks every response</strong> and <strong>pings you</strong> the moment interest comes in.</>,
+    before: <><X />No brand, no tracking. Loses leads with no way to know who's interested.</>,
+    after: <><V />kakisewa gives you a <strong>branded profile</strong>, auto-tracks every lead's interest and pings you the moment someone responds.</>,
   },
   {
-    before: "✗  Sends profiles one by one on WhatsApp. Looks unprofessional, feels like spam.",
-    after: <>✓  One <strong>branded tenant pack</strong> link. Owners take you seriously from the first message.</>,
+    before: <><X />Sends profiles one by one on WhatsApp. Looks unprofessional, feels like spam.</>,
+    after: <><V />One <strong>branded tenant pack</strong> link. Owners take you seriously from the first message.</>,
   },
 ];
 
@@ -59,7 +62,7 @@ const POINTS: Point[] = [
         <span style={{ color: "var(--kk-ink-mute)" }}>You just can&rsquo;t see it.</span>
       </>
     ),
-    quote: "I forgot which contract was expiring. Found out when the owner texted asking for a new tenant — someone else was already showing the unit. That renewal commission was mine and I lost it.",
+    quote: "I forgot which contract was expiring. Found out when the owner texted asking for a new tenant. Someone else was already showing the unit. That renewal commission was mine and I lost it.",
     role: "Property agent · 6 years · Kuala Lumpur",
   },
   {
@@ -67,7 +70,7 @@ const POINTS: Point[] = [
     hook: (
       <>
         Every missed renewal is{" "}
-        <span style={{ color: "#DC2626" }}>one month&rsquo;s rent</span>
+        <span style={{ color: "#DC2626" }}>half a month&rsquo;s rent</span>
         {" "}
         <span style={{ color: "var(--kk-ink-mute)" }}>you worked for and never collected.</span>
       </>
@@ -79,14 +82,14 @@ const POINTS: Point[] = [
     num: "03",
     hook: (
       <>
-        Renewal commission is{" "}
-        <span style={{ color: "#DC2626" }}>passive income.</span>
+        Sending WhatsApp texts to owners.{" "}
+        <span style={{ color: "#DC2626" }}>No brand, no tracking.</span>
         {" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>Most agents never capture it.</span>
+        <span style={{ color: "var(--kk-ink-mute)" }}>Converting far fewer leads than you should.</span>
       </>
     ),
-    quote: "The first deal is hard work. The renewal should be easy money — just follow up at the right time. I was always too late because I had nothing tracking it for me.",
-    role: "Real estate agent · 3 years · Shah Alam",
+    quote: "I'd send 10 WhatsApp messages and get 1 reply. Once I started using a branded tenant pack link, owners responded faster and took me more seriously. Conversion went up straight away.",
+    role: "Senior negotiator · 5 years · Subang Jaya",
   },
 ];
 

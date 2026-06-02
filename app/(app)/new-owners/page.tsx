@@ -54,16 +54,29 @@ export default async function LeadsPage({ searchParams }: Props) {
             <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
               New Owners
             </h1>
-            <PageHelpButton
-              module={0}
-              pageTitle="New Owners — find and convert landlords"
-              bullets={[
-                "Upload your Excel owner list or add owners one by one",
-                "Download the bulk-send sheet and text all owners via WhatsApp Business",
-                "Or tap the WhatsApp icon to send each owner a personalised intake link",
-                "Move interested owners to Active Deals and send them a tenant pack",
-              ]}
-            />
+            {activeTab === "outreach" ? (
+              <PageHelpButton
+                module={0}
+                pageTitle="Outreach — find and message landlords"
+                bullets={[
+                  "Upload your Excel owner list or add owners one by one",
+                  "Download the bulk-send sheet and text all owners via WhatsApp Business",
+                  "Or tap the WhatsApp icon to send each owner a personalised intake link",
+                  "Move interested owners to Active Deals and send them a tenant pack",
+                ]}
+              />
+            ) : (
+              <PageHelpButton
+                module={0}
+                pageTitle="Active Deals — your listing pipeline"
+                bullets={[
+                  "Move owners here once they respond and want to proceed",
+                  "Send your branded tenant pack to build trust and credibility",
+                  "kakisewa auto-tracks when owners open your pack and their interest level",
+                  "Once matched with a tenant, the deal moves to Existing Contracts",
+                ]}
+              />
+            )}
           </div>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track every owner from first message to listing in one place.
