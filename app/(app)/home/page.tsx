@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload, Users, RefreshCw, ChevronRight, AlertCircle } from "lucide-react";
+import { Upload, Users, RefreshCw, AlertCircle, ChevronRight } from "lucide-react";
 import { getAgentProfile, getHomeDashboardStats } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -67,15 +67,28 @@ export default async function HomePage() {
 
       {/* Steps */}
       <div className="space-y-4">
-        {STEPS.map((step) => {
-          const Icon = step.icon;
-          return (
-            <Link
-              key={step.number}
-              href={step.href}
-              className="kk-card kk-card-hover flex items-start gap-5 p-6 relative overflow-hidden"
-              style={{ textDecoration: "none" }}
+        {STEPS.map((step) => (
+          <Link
+            key={step.number}
+            href={step.href}
+            className="kk-card kk-card-hover flex overflow-hidden"
+            style={{ textDecoration: "none", minHeight: 120 }}
+          >
+            {/* Left step block */}
+            <div
+              className="flex flex-col items-center justify-center shrink-0 px-5 gap-1"
+              style={{ background: step.soft, width: 80, borderRight: `1px solid rgba(0,0,0,0.06)` }}
             >
+              <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: step.accent, opacity: 0.7 }}>
+                Step
+              </span>
+              <span className="text-[32px] font-bold leading-none tabular-nums" style={{ color: step.accent }}>
+                {step.number}
+              </span>
+            </div>
+
+            {/* Right content */}
+            <div className="flex-1 min-w-0 p-5 relative">
               {/* Corner breadcrumb */}
               <span
                 className="absolute top-0 right-0 flex items-center gap-0.5 px-3 py-1.5 rounded-bl-2xl text-[10px] font-medium tracking-wide"
@@ -90,37 +103,26 @@ export default async function HomePage() {
                 )}
               </span>
 
-              {/* Number badge */}
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-[15px] font-bold tabular-nums"
-                style={{ background: step.soft, color: step.accent }}
-              >
-                {step.number}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 pr-2">
-                <h2 className="text-[16px] font-semibold leading-snug mb-1 pr-20" style={{ color: "var(--kk-ink)", letterSpacing: "-0.012em" }}>
-                  {step.title}
-                </h2>
-                <p className="text-[13px] leading-relaxed mb-3" style={{ color: "var(--kk-ink-mute)" }}>
-                  {step.description}
-                </p>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[12px] font-medium" style={{ color: "var(--kk-ink-faint)" }}>
-                    {step.stat}
+              <h2 className="text-[16px] font-semibold leading-snug mb-1 pr-24 mt-1" style={{ color: "var(--kk-ink)", letterSpacing: "-0.012em" }}>
+                {step.title}
+              </h2>
+              <p className="text-[13px] leading-relaxed mb-3" style={{ color: "var(--kk-ink-mute)" }}>
+                {step.description}
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-[12px] font-medium" style={{ color: "var(--kk-ink-faint)" }}>
+                  {step.stat}
+                </span>
+                {step.alert && (
+                  <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: step.accent }}>
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    {step.alert}
                   </span>
-                  {step.alert && (
-                    <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: step.accent }}>
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {step.alert}
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
-            </Link>
-          );
-        })}
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

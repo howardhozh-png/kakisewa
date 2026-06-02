@@ -250,7 +250,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
         <header className="mb-10">
           <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>Subscription</h1>
           <p className="mt-2 kk-body" style={{ color: "var(--kk-ink-mute)" }}>
-            If kakisewa helps you capture just 1 missed contract renewal at RM 2,000, it means kakisewa is...
+            If kakisewa helps you <strong style={{ color: "var(--kk-ink)" }}>capture just 1 missed contract renewal at RM 2,000</strong>, it means kakisewa is...
           </p>
 
           {/* Status pills */}
