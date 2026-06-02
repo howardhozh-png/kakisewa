@@ -617,6 +617,9 @@
   .kk-topnav-desktop { display: none; }
   .kk-topnav-hamburger { display: flex; }
 
+  /* Prevent iOS Safari from auto-zooming when tapping any input (iOS zooms inputs < 16px) */
+  input, select, textarea { font-size: 16px; }
+
   /* Kanban boards: remove sticky viewport-height behaviour — let them scroll
      naturally on the page with horizontal swipe for columns */
   .kk-board-shell {

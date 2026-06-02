@@ -104,17 +104,16 @@ export default function LandingPage() {
         }}
       >
         <Link href="/"><BrandMark size={28} /></Link>
-        <div className="flex items-center gap-4">
-          <Link href="/sign-in" className="hidden sm:block font-medium transition-opacity hover:opacity-60" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink-mute)" }}>
+        <div className="flex items-center gap-3">
+          <Link href="/sign-in" className="font-medium transition-opacity hover:opacity-60 whitespace-nowrap" style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>
             Sign in
           </Link>
           <Link
             href="/sign-up"
-            className="px-4 sm:px-5 py-2 rounded-full font-semibold transition-opacity hover:opacity-90 whitespace-nowrap"
-            style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
+            className="px-4 py-2 rounded-full font-semibold transition-opacity hover:opacity-90 whitespace-nowrap"
+            style={{ background: "var(--kk-ink)", color: "#fff", fontSize: 13 }}
           >
-            <span className="sm:hidden">Start free trial</span>
-            <span className="hidden sm:inline">Start trial, expiring soon</span>
+            Free trial
           </Link>
         </div>
       </header>
