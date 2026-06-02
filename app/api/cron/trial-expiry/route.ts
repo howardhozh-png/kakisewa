@@ -33,7 +33,11 @@ export async function GET(req: NextRequest) {
     .eq("subscription_status", "trial")
     .gte("trial_ends_at", w3.start).lte("trial_ends_at", w3.end);
 
-  const expiring = [...(expiring1 ?? []).map(a => ({ ...a, days: 1 })), ...(expiring3 ?? []).map(a => ({ ...a, days: 3 }))];
+  type AgentRow = { id: string; name: string | null };
+  const expiring = [
+    ...(expiring1 ?? []).map((a: AgentRow) => ({ ...a, days: 1 })),
+    ...(expiring3 ?? []).map((a: AgentRow) => ({ ...a, days: 3 })),
+  ];
 
   if (!expiring || expiring.length === 0) {
     return NextResponse.json({ sent: 0 });
