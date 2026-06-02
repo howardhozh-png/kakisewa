@@ -941,6 +941,7 @@ interface PageHelpPayload {
   module: number;
   pageTitle: string;
   bullets: string[];
+  noVideo?: boolean;
 }
 
 export const PAGE_HELP_EVENT = "kk:open-page-help";
@@ -1022,12 +1023,14 @@ export function OnboardingDemoModal() {
             </button>
           </div>
 
-          {/* Animated scene */}
-          <div className="px-6 pb-0">
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
-              <Scene active={playing} />
+          {/* Animated scene — hidden when noVideo */}
+          {!pageHelp.noVideo && (
+            <div className="px-6 pb-0">
+              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
+                <Scene active={playing} />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Bullets */}
           <div className="px-6 py-5">
@@ -1057,13 +1060,15 @@ export function OnboardingDemoModal() {
             >
               Got it
             </button>
-            <button
-              onClick={() => { close(); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); }}
-              className="px-4 py-2 rounded-full"
-              style={{ fontSize: 13, fontWeight: 600, background: "#F2F2F7", color: "#1C1C1E", border: "none", cursor: "pointer" }}
-            >
-              Watch full walkthrough →
-            </button>
+            {!pageHelp.noVideo && (
+              <button
+                onClick={() => { close(); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); }}
+                className="px-4 py-2 rounded-full"
+                style={{ fontSize: 13, fontWeight: 600, background: "#F2F2F7", color: "#1C1C1E", border: "none", cursor: "pointer" }}
+              >
+                Watch full walkthrough →
+              </button>
+            )}
           </div>
         </div>
       </div>

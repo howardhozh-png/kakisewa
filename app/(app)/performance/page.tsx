@@ -32,12 +32,13 @@ export default async function PerformancePage({ searchParams }: Props) {
           </h1>
           <PageHelpButton
             module={2}
+            noVideo
             pageTitle="Performance — your passive income dashboard"
             bullets={[
               "Set a monthly commission target to stay focused",
               "Every signed deal and renewal auto-logs to your income tracker",
               "See year-to-date earnings, best months, and deal count",
-              "Your renewal income compounds here — this is where passive income shows up",
+              "Your renewal income compounds here. This is where passive income shows up.",
             ]}
           />
         </div>

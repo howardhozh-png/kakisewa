@@ -68,6 +68,7 @@ export default async function NetworkPage({ searchParams }: Props) {
             </h1>
             <PageHelpButton
               module={1}
+              noVideo
               pageTitle="Directory — your full property network"
               bullets={[
                 "Properties tab: every unit you manage or are actively marketing",

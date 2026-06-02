@@ -6,12 +6,50 @@ interface Props {
   module: 0 | 1 | 2;
   pageTitle: string;
   bullets: string[];
+  noVideo?: boolean;
+  variant?: "info" | "question";
 }
 
-export function PageHelpButton({ module, pageTitle, bullets }: Props) {
+export function PageHelpButton({ module, pageTitle, bullets, noVideo, variant = "info" }: Props) {
   function open() {
     document.dispatchEvent(
-      new CustomEvent(PAGE_HELP_EVENT, { detail: { module, pageTitle, bullets } })
+      new CustomEvent(PAGE_HELP_EVENT, { detail: { module, pageTitle, bullets, noVideo } })
+    );
+  }
+
+  if (variant === "question") {
+    return (
+      <button
+        onClick={open}
+        aria-label={`How ${pageTitle} works`}
+        className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-70 active:scale-95"
+        style={{
+          fontSize: 12,
+          fontWeight: 500,
+          color: "var(--kk-ink-mute)",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "2px 0",
+        }}
+      >
+        <span
+          className="inline-flex items-center justify-center rounded-full"
+          style={{
+            width: 18,
+            height: 18,
+            background: "var(--kk-surface-2)",
+            border: "1.5px solid var(--kk-line-strong)",
+            color: "var(--kk-ink-mute)",
+            fontSize: 10,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          ?
+        </span>
+        How this works
+      </button>
     );
   }
 

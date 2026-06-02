@@ -2,18 +2,23 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface Props {
   tab: "outreach" | "pipeline";
   outreachCount: number;
   pipelineCount: number;
+  helpSlot?: ReactNode;
 }
 
-export function LeadsSubNav({ tab, outreachCount, pipelineCount }: Props) {
+export function LeadsSubNav({ tab, outreachCount, pipelineCount, helpSlot }: Props) {
   return (
-    <div className="mb-8 flex items-center gap-1 border-b overflow-x-auto" style={{ borderColor: "var(--kk-line)" }}>
-      <Tab href="/new-owners?tab=outreach" label="Outreach"     count={outreachCount} active={tab === "outreach"} />
-      <Tab href="/new-owners?tab=pipeline" label="Active Deals" count={pipelineCount}  active={tab === "pipeline"} />
+    <div className="mb-8 flex items-center justify-between border-b" style={{ borderColor: "var(--kk-line)" }}>
+      <div className="flex items-center gap-1 overflow-x-auto">
+        <Tab href="/new-owners?tab=outreach" label="Outreach"     count={outreachCount} active={tab === "outreach"} />
+        <Tab href="/new-owners?tab=pipeline" label="Active Deals" count={pipelineCount}  active={tab === "pipeline"} />
+      </div>
+      {helpSlot && <div className="pb-1 shrink-0 pl-4">{helpSlot}</div>}
     </div>
   );
 }

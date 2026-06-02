@@ -306,7 +306,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-px" style={{ background: "var(--kk-line)" }}>
 
-            <div className="px-8 py-10" style={{ background: "var(--kk-surface-2)" }}>
+            <div className="px-8 py-10" style={{ background: "#fff" }}>
               <p className="serif font-black tabular-nums mb-3" style={{ fontSize: "clamp(2.6rem, 4vw, 3.5rem)", color: "#DC2626", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 −RM 6,000
               </p>
@@ -326,7 +326,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="px-8 py-10" style={{ background: "var(--kk-surface-2)" }}>
+            <div className="px-8 py-10" style={{ background: "#fff" }}>
               <p className="serif font-black mb-3" style={{ fontSize: "clamp(2.6rem, 4vw, 3.5rem)", color: "var(--kk-green)", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 10 months free
               </p>
@@ -335,7 +335,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="px-8 py-10" style={{ background: "var(--kk-surface-2)" }}>
+            <div className="px-8 py-10" style={{ background: "#fff" }}>
               <p className="serif font-black mb-3" style={{ fontSize: "clamp(2.6rem, 4vw, 3.5rem)", color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: 1 }}>
                 50% miss rate
               </p>
@@ -343,7 +343,7 @@ export default function LandingPage() {
                 Property agents on average miss <strong style={{ color: "var(--kk-ink)" }}>50% of renewals</strong> due to lack of tracking. kakisewa helps you capture all of them.
               </p>
               <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.6 }}>
-                Agents with ~20 listings will have an additional <strong style={{ color: "var(--kk-ink)" }}>~10 renewals captured</strong> — that&apos;s around <strong style={{ color: "var(--kk-ink)" }}>RM 20,000 per year</strong>, or RM 1,667 per month.
+                Agents with ~20 listings will have an additional <strong style={{ color: "var(--kk-ink)" }}>~10 renewals captured</strong>, around <strong style={{ color: "var(--kk-ink)" }}>RM 20,000 per year</strong>, or RM 1,667 per month.
               </p>
             </div>
 
@@ -351,8 +351,28 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Mid-page CTA ──────────────────────────────────────────────────── */}
+      <section className="px-6 lg:px-12 py-16 text-center" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+        <p
+          className="serif mx-auto mb-2"
+          style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)", lineHeight: 1.15, letterSpacing: "-0.022em", maxWidth: "30ch", color: "var(--kk-ink)" }}
+        >
+          One renewal pays for a whole year of kakisewa.
+        </p>
+        <p className="mb-8" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
+          Start your free trial. No credit card needed.
+        </p>
+        <Link
+          href="/sign-up"
+          className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold transition-opacity hover:opacity-90"
+          style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
+        >
+          Start trial, expiring soon <ArrowRight className="w-4 h-4" />
+        </Link>
+      </section>
+
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-24" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[720px] mx-auto">
           <div className="text-center mb-14">
             <p
