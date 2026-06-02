@@ -526,7 +526,7 @@ function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: numbe
             {count} sent today
           </span>
           <span className="text-[11px] font-medium" style={{ color: count >= cap ? color : "var(--kk-ink-faint)" }}>
-            {count >= cap ? statusLabel : `${remaining} remaining · ${statusLabel}`}
+            {count >= cap ? statusLabel : count >= warn ? `${remaining} remaining · ${statusLabel}` : `${remaining} remaining`}
           </span>
         </div>
         <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.07)" }}>
@@ -539,7 +539,7 @@ function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: numbe
 
       {/* Editable cap */}
       <div className="flex items-center gap-1 shrink-0">
-        <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>daily cap:</span>
+        <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>Daily cap:</span>
         {editing ? (
           <input
             ref={inputRef}
@@ -550,13 +550,13 @@ function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: numbe
             onBlur={commitEdit}
             onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditing(false); }}
             className="text-[12px] font-semibold text-center outline-none rounded-md px-1"
-            style={{ width: 46, background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "var(--kk-ink)" }}
+            style={{ width: 46, background: "#fff", border: "1px solid rgba(0,0,0,0.12)", color: "var(--kk-ink)", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }}
           />
         ) : (
           <button
             onClick={startEdit}
-            className="text-[12px] font-semibold px-2 py-0.5 rounded-md transition-colors hover:opacity-70"
-            style={{ background: "rgba(0,0,0,0.07)", color: "var(--kk-ink)", border: "1px solid transparent" }}
+            className="text-[12px] font-semibold px-2.5 py-0.5 rounded-md transition-opacity hover:opacity-70"
+            style={{ background: "#fff", color: "var(--kk-ink)", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }}
           >
             {cap}
           </button>
