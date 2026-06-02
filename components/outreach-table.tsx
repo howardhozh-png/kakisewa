@@ -45,6 +45,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
 import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { FilterSelect } from "@/components/filter-select";
 import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
@@ -926,26 +927,17 @@ export function OutreachTable({ leads }: Props) {
           </button>
         ))}
 
-        {/* Purpose filter pills */}
-        {(["rent", "sell"] as const).map((p) => {
-          const active = purposeFilter === p;
-          const isRent = p === "rent";
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPurposeFilter(active ? "all" : p)}
-              className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all"
-              style={{
-                background: active ? (isRent ? "var(--kk-blue)" : "#7C3AED") : "var(--kk-surface-2)",
-                color: active ? "#fff" : "var(--kk-ink-mute)",
-                border: `1px solid ${active ? (isRent ? "var(--kk-blue)" : "#7C3AED") : "var(--kk-line)"}`,
-              }}
-            >
-              {isRent ? "For Rent" : "For Sale"}
-            </button>
-          );
-        })}
+        {/* Purpose filter dropdown */}
+        <FilterSelect
+          value={purposeFilter}
+          onChange={(v) => setPurposeFilter(v as PurposeFilter)}
+          options={[
+            { value: "all",  label: "All purposes" },
+            { value: "rent", label: "For Rent" },
+            { value: "sell", label: "For Sale" },
+          ]}
+          minWidth={140}
+        />
 
       </div>
 

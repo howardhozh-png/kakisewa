@@ -60,6 +60,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
   // Filter state
   const [propertyFilter, setPropertyFilter] = useState<string>("");
+  const [purposeFilter, setPurposeFilter] = useState<"" | "rent" | "sell">("");
   const [minRent, setMinRent] = useState<string>("");
   const [monthFilter, setMonthFilter] = useState<string>("");
   const [showTerminal, setShowTerminal] = useState(false);
@@ -136,12 +137,13 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const filtered = useMemo(() => {
     return local.filter((l) => {
       if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
+      if (purposeFilter && l.listing_purpose !== purposeFilter) return false;
       if (minRent && (l.expected_rent ?? 0) < parseFloat(minRent)) return false;
       if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
       if (monthFilter && !["listed", "wants_rent", "replied"].includes(l.stage)) return false;
       return true;
     });
-  }, [local, propertyFilter, minRent, monthFilter]);
+  }, [local, propertyFilter, purposeFilter, minRent, monthFilter]);
 
   const byStage = useMemo(() => {
     const out: Record<Stage, OwnerLead[]> = {
@@ -229,6 +231,16 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           options={[{ value: "", label: "All properties" }, ...propertyOptions.map(([p, count]) => ({ value: p, label: `${p} (${count})` }))]}
           minWidth={180}
         />
+        <FilterSelect
+          value={purposeFilter}
+          onChange={(v) => setPurposeFilter(v as "" | "rent" | "sell")}
+          options={[
+            { value: "",     label: "All purposes" },
+            { value: "rent", label: "For Rent" },
+            { value: "sell", label: "For Sale" },
+          ]}
+          minWidth={140}
+        />
         <input
           type="number"
           placeholder="Min rent (RM)"
@@ -237,9 +249,9 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           className="text-[13px] px-4 py-1.5 rounded-full font-medium"
           style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 148 }}
         />
-        {(propertyFilter || minRent) && (
+        {(propertyFilter || purposeFilter || minRent) && (
           <button
-            onClick={() => { setPropertyFilter(""); setMinRent(""); }}
+            onClick={() => { setPropertyFilter(""); setPurposeFilter(""); setMinRent(""); }}
             className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
             style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
           >
