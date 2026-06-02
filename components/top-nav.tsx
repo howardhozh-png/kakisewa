@@ -845,7 +845,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
           </Link>
 
           {/* Nav — desktop only */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="kk-topnav-desktop items-center gap-1">
             {NAV.map((NAV_ITEM) => {
               const active = NAV_ITEM.matchPaths.some((p) => path === p || path.startsWith(`${p}/`));
               const locked = !navHasAccess(NAV_ITEM.minPlan, agent.subscription_plan, agent.subscription_status, !!isAdmin);
@@ -876,7 +876,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
           </nav>
 
           {/* Right cluster — desktop only */}
-          <div className="ml-auto hidden lg:flex items-center gap-3">
+          <div className="kk-topnav-desktop ml-auto items-center gap-3">
             <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} />
 
             <button
@@ -936,7 +936,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
           {/* Hamburger — mobile only */}
           <button
-            className="ml-auto lg:hidden flex items-center justify-center w-11 h-11 rounded-full"
+            className="kk-topnav-hamburger ml-auto items-center justify-center w-11 h-11 rounded-full"
             onClick={() => setMobileMenuOpen((o) => !o)}
             style={{ color: "var(--kk-topnav-ink)" }}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -1022,7 +1022,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 lg:hidden flex flex-col" style={{ zIndex: tourMenuActive ? 100000 : 99990, background: "var(--kk-topnav-bg)" }}>
+        <div className="kk-topnav-hamburger fixed inset-0 flex-col" style={{ zIndex: tourMenuActive ? 100000 : 99990, background: "var(--kk-topnav-bg)" }}>
           {/* Top row */}
           <div className="flex items-center justify-between h-16 px-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
             <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5" style={{ color: "var(--kk-topnav-ink)" }}>

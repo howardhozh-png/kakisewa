@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { TopNav } from "@/components/top-nav";
 import { GreetingBar } from "@/components/greeting-bar";
 import { AccentProvider } from "@/components/accent-provider";
-import { SpotlightTour } from "@/components/spotlight-tour";
 import { OnboardingDemoModal } from "@/components/onboarding-demo-modal";
 import { TrialBanner } from "@/components/trial-banner";
 import { TrialGate } from "@/components/trial-gate";
@@ -39,7 +38,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <GreetingBar name={agent.name} streak={streak} />
       <main className="flex-1">{children}</main>
-      <SpotlightTour />
       <OnboardingDemoModal />
       <Toaster richColors position="top-right" closeButton />
       {isTrialExpired && <TrialGate />}

@@ -613,6 +613,10 @@
   /* Scale down 48px display headings to 36px so "Existing Contracts" fits */
   .kk-display { font-size: var(--kk-display-3); }
 
+  /* Ensure desktop-only nav sections never bleed through on mobile */
+  .kk-topnav-desktop { display: none; }
+  .kk-topnav-hamburger { display: flex; }
+
   /* Kanban boards: remove sticky viewport-height behaviour — let them scroll
      naturally on the page with horizontal swipe for columns */
   .kk-board-shell {
@@ -645,6 +649,12 @@
     pointer-events: none;
     border-radius: 0 18px 18px 0;
   }
+}
+
+/* ─── Desktop nav visibility (≥ 1024px) ─────────────────────────────────── */
+@media (min-width: 1024px) {
+  .kk-topnav-desktop { display: flex; }
+  .kk-topnav-hamburger { display: none; }
 }
 
 /* Sonner toast — compact width, left-aligned text, × at top-right outside box */
