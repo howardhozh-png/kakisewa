@@ -157,11 +157,9 @@ export default async function SamplePackShortPage({
           <h1 className="text-[22px] font-bold tracking-tight leading-tight" style={{ color: "#1C1C1E", letterSpacing: "-0.02em" }}>
             {propertyName}
           </h1>
-          {(owner.owner_name || agentFirstName) && (
+          {agentFirstName && (
             <p className="text-[18px] mt-0.5 font-bold italic leading-snug" style={{ color: "#1C1C1E" }}>
-              {owner.owner_name && <>For {owner.owner_name}</>}
-              {owner.owner_name && agentFirstName && <> · </>}
-              {agentFirstName && <>by {agentFirstName}</>}
+              by {agentFirstName}
             </p>
           )}
           <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "#6C6C70" }}>

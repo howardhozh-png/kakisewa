@@ -54,11 +54,9 @@ export default async function SharePackPage({
           <h1 className="text-[22px] font-bold tracking-tight leading-tight" style={{ color: "#1C1C1E", letterSpacing: "-0.02em" }}>
             {propertyLabel}
           </h1>
-          {(ownerName || agentFirstName) && (
+          {agentFirstName && (
             <p className="text-[18px] mt-0.5 font-bold italic leading-snug" style={{ color: "#1C1C1E" }}>
-              {ownerName && <>For {ownerName}</>}
-              {ownerName && agentFirstName && <> · </>}
-              {agentFirstName && <>by {agentFirstName}</>}
+              by {agentFirstName}
             </p>
           )}
           <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "#6C6C70" }}>

@@ -49,7 +49,6 @@ export default async function OwnerIntakePage({ params }: Props) {
   return (
     <OwnerIntakeClient
       token={token}
-      ownerName={lead.owner_name}
       agentName={agent.name ?? "Your Agent"}
       agentAgency={agent.agency ?? "kakisewa"}
       agentPhotoUrl={agent.photo_url ?? null}
