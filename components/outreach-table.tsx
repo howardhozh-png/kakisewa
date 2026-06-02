@@ -1,7 +1,38 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+
+const WA_DAILY_KEY = "kk_wa_daily";
+const WA_SOFT_CAP = 40;
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function useDailyWaCount(): [number, () => void] {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(WA_DAILY_KEY);
+      if (raw) {
+        const { date, count: n } = JSON.parse(raw);
+        if (date === todayStr()) setCount(n);
+      }
+    } catch {}
+  }, []);
+
+  const increment = useCallback(() => {
+    setCount((prev) => {
+      const next = prev + 1;
+      try { localStorage.setItem(WA_DAILY_KEY, JSON.stringify({ date: todayStr(), count: next })); } catch {}
+      return next;
+    });
+  }, []);
+
+  return [count, increment];
+}
 import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -443,6 +474,46 @@ function LeadPopup({
   );
 }
 
+// ─── Daily WA counter widget ──────────────────────────────────────────────────
+
+function WaDailyCounter({ count }: { count: number }) {
+  const pct = Math.min((count / WA_SOFT_CAP) * 100, 100);
+  const remaining = Math.max(WA_SOFT_CAP - count, 0);
+
+  const { color, bg, statusLabel } =
+    count >= WA_SOFT_CAP
+      ? { color: "#DC2626", bg: "rgba(220,38,38,0.08)", statusLabel: "Stop for today" }
+      : count >= 30
+      ? { color: "#D97706", bg: "rgba(217,119,6,0.08)", statusLabel: "Slow down" }
+      : { color: "#1F8B4C", bg: "rgba(52,199,89,0.07)", statusLabel: "Safe" };
+
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-2.5 rounded-xl mb-4"
+      style={{ background: bg, border: `1px solid ${color}22` }}
+    >
+      <WhatsAppIcon className="w-4 h-4 shrink-0" style={{ color }} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-[12px] font-semibold" style={{ color }}>
+            {count} sent today
+          </span>
+          <span className="text-[11px] font-medium" style={{ color: count >= WA_SOFT_CAP ? color : "var(--kk-ink-faint)" }}>
+            {count >= WA_SOFT_CAP ? "Daily cap reached" : `${remaining} remaining · ${statusLabel}`}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.07)" }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${pct}%`, background: color }}
+          />
+        </div>
+      </div>
+      <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>cap: {WA_SOFT_CAP}</span>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -451,6 +522,7 @@ interface Props {
 
 export function OutreachTable({ leads }: Props) {
   const router = useRouter();
+  const [waCount, incrementWaCount] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -583,6 +655,7 @@ export function OutreachTable({ leads }: Props) {
         // Popup was blocked — fall back to same-tab navigation (opens WhatsApp on mobile)
         window.location.href = res.waUrl;
       }
+      incrementWaCount();
       router.refresh();
     } catch {
       tab?.close();
@@ -749,6 +822,9 @@ export function OutreachTable({ leads }: Props) {
         ))}
 
       </div>
+
+      {/* Daily WA counter */}
+      <WaDailyCounter count={waCount} />
 
       {/* Table */}
       <div className="kk-section overflow-hidden p-0 kk-scroll-fade">
