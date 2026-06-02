@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import {
   X, Upload, MessageCircle, Check, Download,
   FileSpreadsheet, ChevronDown, RefreshCw, Send, ArrowRight,
@@ -115,6 +115,29 @@ function DemoCursor({ x, y, clicking, hidden }: { x: number; y: number; clicking
       <svg width="18" height="22" viewBox="0 0 18 22" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.35))" }}>
         <path d="M2 1L2 17L6 12.5L9.5 20.5L11.5 19.5L8 11.5L13.5 11.5Z" fill="white" stroke="#111" strokeWidth="1.4" strokeLinejoin="round" />
       </svg>
+    </div>
+  );
+}
+
+function ScaleToFit({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setScale(Math.min(1, el.offsetWidth / 520));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ overflow: "hidden", width: "100%", height: Math.round(270 * scale) }}>
+      <div style={{ width: 520, height: 270, transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: "top left", flexShrink: 0 }}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -1034,7 +1057,9 @@ export function OnboardingDemoModal() {
           {!pageHelp.noVideo && (
             <div className="px-6 pb-0">
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
-                <Scene active={playing} />
+                <ScaleToFit>
+                  <Scene active={playing} />
+                </ScaleToFit>
               </div>
             </div>
           )}
@@ -1124,7 +1149,9 @@ export function OnboardingDemoModal() {
           <ValuePropBanner text={valueProp} />
         </div>
 
-        <Scene active={playing} />
+        <ScaleToFit>
+          <Scene active={playing} />
+        </ScaleToFit>
 
         <div className="flex items-center justify-between mt-4">
           <button onClick={close} style={{ fontSize: 13, color: "#AEAEB2", background: "none", border: "none", cursor: "pointer" }}>

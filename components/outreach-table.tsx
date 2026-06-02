@@ -493,8 +493,14 @@ function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: numbe
   function startEdit() {
     setDraft(String(cap));
     setEditing(true);
-    setTimeout(() => inputRef.current?.select(), 0);
   }
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
 
   function commitEdit() {
     const n = parseInt(draft, 10);
@@ -543,10 +549,11 @@ function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: numbe
         {editing ? (
           <input
             ref={inputRef}
-            type="number"
-            min={1}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
             onBlur={commitEdit}
             onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditing(false); }}
             className="text-[12px] font-semibold text-center outline-none rounded-md px-1"

@@ -51,7 +51,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 lg:py-24">
+    <div className="mx-auto max-w-2xl px-4 py-6 lg:py-16">
       {/* Header */}
       <div className="mb-10">
         <p className="text-[12px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--kk-ink-faint)" }}>
@@ -60,7 +60,7 @@ export default async function HomePage() {
         <h1 className="serif text-[38px] lg:text-[46px] leading-tight tracking-tight mb-4" style={{ color: "var(--kk-ink)" }}>
           {firstName ? `Welcome, ${firstName}.` : "Welcome to kakisewa."}
         </h1>
-        <p className="text-[16px] leading-relaxed sm:whitespace-nowrap" style={{ color: "var(--kk-ink-mute)" }}>
+        <p className="text-[16px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
           Three steps. Each one turns your database into recurring income.
         </p>
       </div>
