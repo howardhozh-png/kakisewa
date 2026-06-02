@@ -623,10 +623,10 @@ const M3: Phase[] = [
 ];
 
 const M3_CUR: Record<string, XY> = {
-  idle:              { x: 165, y: 160 },
-  "to-notify-o":     { x: 165, y: 191 },
-  "hover-notify-o":  { x: 165, y: 191 },
-  "click-notify-o":  { x: 165, y: 191 },
+  idle:              { x: 165, y: 153 },
+  "to-notify-o":     { x: 165, y: 192 },
+  "hover-notify-o":  { x: 165, y: 192 },
+  "click-notify-o":  { x: 165, y: 192 },
   "owner-reply":     { x: 260, y: 170 },
   "owner-yes":       { x: 165, y: 191 },
   renewing:          { x: 411, y: 155 },

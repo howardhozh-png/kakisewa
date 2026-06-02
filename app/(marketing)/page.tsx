@@ -28,7 +28,7 @@ const COMPARISONS: Comparison[] = [
     after: <><V />kakisewa gives you a <strong>branded profile</strong>, auto-tracks every lead's interest and pings you the moment someone responds.</>,
   },
   {
-    before: <><X />Sends profiles one by one on WhatsApp. Looks unprofessional, feels like spam.</>,
+    before: <><X />Sends tenant profiles one by one on WhatsApp. Looks unprofessional, feels like spam.</>,
     after: <><V />One <strong>branded tenant pack</strong> link. Owners take you seriously from the first message.</>,
   },
 ];
@@ -151,16 +151,18 @@ export default function LandingPage() {
       </section>
 
       {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-10 py-20 lg:py-28" style={{ background: "var(--kk-bg)", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-10 py-20 lg:py-28" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[1500px] mx-auto grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-[color:var(--kk-line)]">
           {POINTS.map((pt, i) => (
             <div
               key={pt.num}
-              className={`text-center flex flex-col py-12 lg:py-0${i > 0 ? " border-t lg:border-t-0" : ""}`}
-              style={{
-                paddingLeft: i > 0 ? "clamp(2.5rem, 5vw, 5rem)" : 0,
-                paddingRight: i < 2 ? "clamp(2.5rem, 5vw, 5rem)" : 0,
-              }}
+              className={[
+                "text-center flex flex-col py-12 lg:py-0 px-6 sm:px-12",
+                i === 0 ? "lg:pl-0 lg:pr-[clamp(2.5rem,5vw,5rem)]" : "",
+                i === 1 ? "lg:px-[clamp(2.5rem,5vw,5rem)]" : "",
+                i === 2 ? "lg:pr-0 lg:pl-[clamp(2.5rem,5vw,5rem)]" : "",
+                i > 0 ? "border-t lg:border-t-0" : "",
+              ].filter(Boolean).join(" ")}
             >
               <p
                 className="serif font-black"
@@ -294,7 +296,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Numbers ───────────────────────────────────────────────────────── */}
-      <section id="calculator" className="px-6 lg:px-12 py-20 lg:py-24" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+      <section id="calculator" className="px-6 lg:px-12 py-20 lg:py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[1400px] mx-auto">
 
           <p className="font-semibold tracking-widest uppercase mb-12 text-center"
@@ -350,7 +352,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-12 py-24" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[720px] mx-auto">
           <div className="text-center mb-14">
             <p

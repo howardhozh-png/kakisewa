@@ -39,7 +39,6 @@ export default async function LeadsPage({ searchParams }: Props) {
     getTenantsForOwnerLeads(matchedLeadIds),
     getRankedLeadIds(),
   ]);
-  // Count only leads visible in the Listing kanban (not own_stay/archived/commission-collected)
   const pipelineLeads = ownerLeads.filter((l) => {
     if (["own_stay", "archived", "imported"].includes(l.stage)) return false;
     if (l.stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage === "active") return false;
@@ -50,34 +49,9 @@ export default async function LeadsPage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-              New Owners
-            </h1>
-            {activeTab === "outreach" ? (
-              <PageHelpButton
-                module={0}
-                pageTitle="Outreach — find and message landlords"
-                bullets={[
-                  "Upload your Excel owner list or add owners one by one",
-                  "Download the bulk-send sheet and text all owners via WhatsApp Business",
-                  "Or tap the WhatsApp icon to send each owner a personalised intake link",
-                  "Move interested owners to Active Deals and send them a tenant pack",
-                ]}
-              />
-            ) : (
-              <PageHelpButton
-                module={0}
-                pageTitle="Active Deals — your listing pipeline"
-                bullets={[
-                  "Move owners here once they respond and want to proceed",
-                  "Send your branded tenant pack to build trust and credibility",
-                  "kakisewa auto-tracks when owners open your pack and their interest level",
-                  "Once matched with a tenant, the deal moves to Existing Contracts",
-                ]}
-              />
-            )}
-          </div>
+          <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
+            New Owners
+          </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track every owner from first message to listing in one place.
           </p>
@@ -95,6 +69,41 @@ export default async function LeadsPage({ searchParams }: Props) {
           pipelineCount={pipelineLeads.length}
         />
       </Suspense>
+
+      {/* Contextual help — different per tab */}
+      {activeTab === "outreach" ? (
+        <div className="mb-6 flex items-center gap-2.5 px-4 py-2.5 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+          <PageHelpButton
+            module={0}
+            pageTitle="Outreach — find and message landlords"
+            bullets={[
+              "Upload your Excel owner list or add owners one by one",
+              "Download the bulk-send sheet and text all owners via WhatsApp Business",
+              "Or tap the WhatsApp icon to send each owner a personalised intake link",
+              "Move interested owners to Active Deals and send them a tenant pack",
+            ]}
+          />
+          <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+            How Outreach works
+          </p>
+        </div>
+      ) : (
+        <div className="mb-6 flex items-center gap-2.5 px-4 py-2.5 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+          <PageHelpButton
+            module={1}
+            pageTitle="Active Deals — send your tenant pack"
+            bullets={[
+              "Move owners here once they respond and want to proceed",
+              "Send your branded tenant pack link to build trust and credibility",
+              "kakisewa auto-tracks when owners open your pack and their interest level",
+              "Once matched with a tenant, the deal moves to Existing Contracts",
+            ]}
+          />
+          <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+            How Active Deals works
+          </p>
+        </div>
+      )}
 
       {activeTab === "outreach" ? (
         <OutreachTable leads={ownerLeads} />
