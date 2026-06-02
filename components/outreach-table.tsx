@@ -4,14 +4,16 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 const WA_DAILY_KEY = "kk_wa_daily";
-const WA_SOFT_CAP = 40;
+const WA_CAP_KEY   = "kk_wa_cap";
+const WA_DEFAULT_CAP = 40;
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function useDailyWaCount(): [number, () => void] {
+function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   const [count, setCount] = useState(0);
+  const [cap, setCap] = useState(WA_DEFAULT_CAP);
 
   useEffect(() => {
     try {
@@ -20,6 +22,8 @@ function useDailyWaCount(): [number, () => void] {
         const { date, count: n } = JSON.parse(raw);
         if (date === todayStr()) setCount(n);
       }
+      const savedCap = localStorage.getItem(WA_CAP_KEY);
+      if (savedCap) setCap(parseInt(savedCap, 10) || WA_DEFAULT_CAP);
     } catch {}
   }, []);
 
@@ -31,7 +35,12 @@ function useDailyWaCount(): [number, () => void] {
     });
   }, []);
 
-  return [count, increment];
+  const updateCap = useCallback((n: number) => {
+    setCap(n);
+    try { localStorage.setItem(WA_CAP_KEY, String(n)); } catch {}
+  }, []);
+
+  return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
@@ -476,14 +485,32 @@ function LeadPopup({
 
 // ─── Daily WA counter widget ──────────────────────────────────────────────────
 
-function WaDailyCounter({ count }: { count: number }) {
-  const pct = Math.min((count / WA_SOFT_CAP) * 100, 100);
-  const remaining = Math.max(WA_SOFT_CAP - count, 0);
+function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: number; onCapChange: (n: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(cap));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function startEdit() {
+    setDraft(String(cap));
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  }
+
+  function commitEdit() {
+    const n = parseInt(draft, 10);
+    if (n > 0) onCapChange(n);
+    else setDraft(String(cap));
+    setEditing(false);
+  }
+
+  const pct = Math.min((count / cap) * 100, 100);
+  const remaining = Math.max(cap - count, 0);
+  const warn = cap > 1 ? Math.round(cap * 0.75) : cap;
 
   const { color, bg, statusLabel } =
-    count >= WA_SOFT_CAP
-      ? { color: "#DC2626", bg: "rgba(220,38,38,0.08)", statusLabel: "Stop for today" }
-      : count >= 30
+    count >= cap
+      ? { color: "#DC2626", bg: "rgba(220,38,38,0.08)", statusLabel: "Daily cap reached" }
+      : count >= warn
       ? { color: "#D97706", bg: "rgba(217,119,6,0.08)", statusLabel: "Slow down" }
       : { color: "#1F8B4C", bg: "rgba(52,199,89,0.07)", statusLabel: "Safe" };
 
@@ -498,8 +525,8 @@ function WaDailyCounter({ count }: { count: number }) {
           <span className="text-[12px] font-semibold" style={{ color }}>
             {count} sent today
           </span>
-          <span className="text-[11px] font-medium" style={{ color: count >= WA_SOFT_CAP ? color : "var(--kk-ink-faint)" }}>
-            {count >= WA_SOFT_CAP ? "Daily cap reached" : `${remaining} remaining · ${statusLabel}`}
+          <span className="text-[11px] font-medium" style={{ color: count >= cap ? color : "var(--kk-ink-faint)" }}>
+            {count >= cap ? statusLabel : `${remaining} remaining · ${statusLabel}`}
           </span>
         </div>
         <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.07)" }}>
@@ -509,7 +536,32 @@ function WaDailyCounter({ count }: { count: number }) {
           />
         </div>
       </div>
-      <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>cap: {WA_SOFT_CAP}</span>
+
+      {/* Editable cap */}
+      <div className="flex items-center gap-1 shrink-0">
+        <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>daily cap:</span>
+        {editing ? (
+          <input
+            ref={inputRef}
+            type="number"
+            min={1}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditing(false); }}
+            className="text-[12px] font-semibold text-center outline-none rounded-md px-1"
+            style={{ width: 46, background: "rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.15)", color: "var(--kk-ink)" }}
+          />
+        ) : (
+          <button
+            onClick={startEdit}
+            className="text-[12px] font-semibold px-2 py-0.5 rounded-md transition-colors hover:opacity-70"
+            style={{ background: "rgba(0,0,0,0.07)", color: "var(--kk-ink)", border: "1px solid transparent" }}
+          >
+            {cap}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -522,7 +574,7 @@ interface Props {
 
 export function OutreachTable({ leads }: Props) {
   const router = useRouter();
-  const [waCount, incrementWaCount] = useDailyWaCount();
+  const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -824,7 +876,7 @@ export function OutreachTable({ leads }: Props) {
       </div>
 
       {/* Daily WA counter */}
-      <WaDailyCounter count={waCount} />
+      <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />
 
       {/* Table */}
       <div className="kk-section overflow-hidden p-0 kk-scroll-fade">
