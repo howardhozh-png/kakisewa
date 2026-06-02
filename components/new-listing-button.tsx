@@ -17,6 +17,7 @@ interface FormData {
   bathrooms: string;
   notes: string;
   sendWhatsApp: boolean;
+  listing_purpose: "rent" | "sell" | null;
 }
 
 const EMPTY_FORM: FormData = {
@@ -29,10 +30,11 @@ const EMPTY_FORM: FormData = {
   bathrooms: "",
   notes: "",
   sendWhatsApp: false,
+  listing_purpose: null,
 };
 
-interface WaForm { owner_name: string; owner_phone: string; property_name: string; }
-const EMPTY_WA: WaForm = { owner_name: "", owner_phone: "", property_name: "" };
+interface WaForm { owner_name: string; owner_phone: string; property_name: string; listing_purpose: "rent" | "sell" | null; }
+const EMPTY_WA: WaForm = { owner_name: "", owner_phone: "", property_name: "", listing_purpose: null };
 
 export function NewListingButton() {
   const router = useRouter();
@@ -94,6 +96,7 @@ export function NewListingButton() {
         owner_phone: waForm.owner_phone.trim(),
         property_name: waForm.property_name.trim() || null,
         unit: null, expected_rent: null, bedrooms: null, bathrooms: null, notes: null,
+        listing_purpose: waForm.listing_purpose,
       });
       if (!res.ok) { toast.error(res.message ?? "Could not create listing"); return; }
       if (res.id) {
@@ -129,6 +132,7 @@ export function NewListingButton() {
         bedrooms: form.bedrooms ? parseInt(form.bedrooms, 10) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
         notes: form.notes.trim() || null,
+        listing_purpose: form.listing_purpose,
       });
 
       if (!res.ok) {
@@ -250,6 +254,26 @@ export function NewListingButton() {
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>Property name</label>
                 <input type="text" value={waForm.property_name} onChange={(e) => setWaForm((f) => ({ ...f, property_name: e.target.value }))} placeholder="e.g. Residensi Mutiara" className="w-full px-3 py-2 rounded-xl text-[13px] outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--kk-ink-mute)" }}>Rent or sell?</label>
+                <div className="flex gap-2">
+                  {(["rent", "sell"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setWaForm((f) => ({ ...f, listing_purpose: f.listing_purpose === v ? null : v }))}
+                      className="px-4 py-1.5 rounded-full text-[13px] font-medium capitalize transition-all"
+                      style={{
+                        background: waForm.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                        color: waForm.listing_purpose === v ? "#fff" : "var(--kk-ink-mute)",
+                        border: `1px solid ${waForm.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                      }}
+                    >
+                      {v === "rent" ? "For Rent" : "For Sale"}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setWaDialogOpen(false)} disabled={pending} className="flex-1 py-2.5 rounded-xl text-[13px] font-medium" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
@@ -396,6 +420,28 @@ export function NewListingButton() {
                     className="w-full px-3 py-2 rounded-xl text-[13px] outline-none resize-none"
                     style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                   />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+                    Rent or sell?
+                  </label>
+                  <div className="flex gap-2">
+                    {(["rent", "sell"] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, listing_purpose: f.listing_purpose === v ? null : v }))}
+                        className="px-4 py-1.5 rounded-full text-[13px] font-medium transition-all"
+                        style={{
+                          background: form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                          color: form.listing_purpose === v ? "#fff" : "var(--kk-ink-mute)",
+                          border: `1px solid ${form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                        }}
+                      >
+                        {v === "rent" ? "For Rent" : "For Sale"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--kk-ink-mute)" }}>Photos</label>

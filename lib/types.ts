@@ -143,6 +143,7 @@ export interface OwnerLead {
   photo_urls?: string[];
   agreement_url?: string | null;
   outreach_count?: number | null;
+  listing_purpose?: "rent" | "sell" | null;
   created_at: string;
 }
 

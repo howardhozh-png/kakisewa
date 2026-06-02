@@ -719,6 +719,8 @@ export async function bulkExportOwnerLeads(leadIds: string[]): Promise<{
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
   const template = resolveTemplate("owner_intake_form", overrides, {
     firstName,
+    ownerName: "{{Name}}",
+    renNumber: agent.ren_number ?? "",
     company,
     propertyName: "{{Property}}",
     tenantSamplePack: samplePackUrl,
@@ -927,7 +929,7 @@ No login needed — link is private 🙏
 
 export async function updateOwnerLeadDetails(
   id: string,
-  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "notes" | "is_renewal" | "commission_override_rm" | "available_from">>
+  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "notes" | "is_renewal" | "commission_override_rm" | "available_from" | "listing_purpose">>
 ) {
   await updateOwnerLead(id, data);
 
@@ -973,6 +975,7 @@ export async function sendOwnerOutreach(
     body = resolveTemplate("owner_outreach_initial", overrides, {
       ownerName: owner.owner_name,
       agentName: agent.name ?? "Your agent",
+      renNumber: agent.ren_number ?? "",
       agencyLine: agent.agency ? ` from ${agent.agency}` : "",
       propertyName: propertyLabel,
     });
@@ -980,6 +983,7 @@ export async function sendOwnerOutreach(
     body = resolveTemplate("owner_outreach_followup", overrides, {
       ownerName: owner.owner_name,
       agentName: agent.name ?? "Your agent",
+      renNumber: agent.ren_number ?? "",
       propertyName: propertyLabel,
     });
   } else {
@@ -1207,6 +1211,7 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
   const body = resolveTemplate("owner_intake_form", overrides, {
     firstName,
     ownerName: owner.owner_name ?? "",
+    renNumber: agent.ren_number ?? "",
     company: agent.agency ?? "",
     propertyName: propertyLabel,
     tenantSamplePack: short(`${siteUrl}/s/${token}`),
@@ -1303,6 +1308,7 @@ export async function addOwnerLeadAction(data: {
   bedrooms: number | null;
   bathrooms: number | null;
   notes: string | null;
+  listing_purpose?: "rent" | "sell" | null;
 }): Promise<{ ok: boolean; id?: string; message?: string }> {
   const { createOwnerLead } = await import("@/lib/db");
   try {
@@ -1324,6 +1330,7 @@ export async function addOwnerLeadAction(data: {
       intake_completed_at: null,
       available_from: null,
       tenant_preferences: null,
+      listing_purpose: data.listing_purpose ?? null,
     });
     invalidateCache();
     revalidatePath("/new-owners");

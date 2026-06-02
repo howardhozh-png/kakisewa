@@ -1116,6 +1116,7 @@ export async function createOwnerLead(data: Omit<OwnerLead, "id" | "created_at">
     import_batch_id: data.import_batch_id ?? null,
     stage: data.stage ?? "imported",
     available_from: data.available_from ?? null,
+    listing_purpose: data.listing_purpose ?? null,
   });
   if (error) throw error;
   const { data: fresh } = await supabase.from("owner_leads").select("*").eq("id", id).single();

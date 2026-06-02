@@ -16,7 +16,7 @@ export default async function HomePage() {
       number: 1,
       icon: Upload,
       title: "Upload owner list and text all of them",
-      description: "Upload your Excel list, download a bulk-send sheet, and message every owner instantly. Personalised for each one.",
+      description: "Upload your Excel list and bulk-send to every owner instantly. Personalised for each one.",
       href: "/new-owners",
       accent: "#1F8B4C",
       soft: "var(--kk-green-soft)",
@@ -28,7 +28,7 @@ export default async function HomePage() {
       number: 2,
       icon: Users,
       title: "Send your branded tenant pack",
-      description: "Win over owners with a professional, branded profile. Not a wall of WhatsApp text. Build trust, close faster.",
+      description: "Win over owners with a professional branded profile. Build trust, close faster.",
       href: "/new-owners?tab=pipeline",
       accent: "var(--kk-blue)",
       soft: "var(--kk-blue-soft)",
@@ -40,7 +40,7 @@ export default async function HomePage() {
       number: 3,
       icon: RefreshCw,
       title: "Renew contracts and earn passive income",
-      description: "kakisewa alerts you 60 days before every expiry. Every renewal = half a month's rent in your pocket. Captured automatically.",
+      description: "Get alerted 60 days before every expiry. Every renewal = half a month's rent, captured automatically.",
       href: "/existing-contracts",
       accent: "#C2410C",
       soft: "rgba(234,88,12,0.10)",
@@ -106,7 +106,7 @@ export default async function HomePage() {
               <h2 className="text-[16px] font-semibold leading-snug mb-1 pr-24 mt-1" style={{ color: "var(--kk-ink)", letterSpacing: "-0.012em" }}>
                 {step.title}
               </h2>
-              <p className="text-[13px] leading-relaxed mb-3" style={{ color: "var(--kk-ink-mute)" }}>
+              <p className="text-[12px] leading-relaxed mb-3" style={{ color: "var(--kk-ink-mute)" }}>
                 {step.description}
               </p>
               <div className="flex items-center gap-3 flex-wrap">

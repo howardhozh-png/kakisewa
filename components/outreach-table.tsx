@@ -53,6 +53,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 
 type Filter = "all" | "unsent" | "contacted" | "listed" | "rented" | "declined";
+type PurposeFilter = "all" | "rent" | "sell";
 type ContactStatus = "listed" | "rented" | "contacted" | "unsent" | "declined";
 
 function getStatus(lead: OwnerLead): ContactStatus {
@@ -117,6 +118,22 @@ function StatusBadge({ lead }: { lead: OwnerLead }) {
   );
 }
 
+function PurposeBadge({ purpose }: { purpose: "rent" | "sell" | null | undefined }) {
+  if (!purpose) return null;
+  const isRent = purpose === "rent";
+  return (
+    <span
+      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+      style={{
+        background: isRent ? "rgba(0,113,227,0.08)" : "rgba(124,58,237,0.08)",
+        color: isRent ? "var(--kk-blue)" : "#7C3AED",
+      }}
+    >
+      {isRent ? "Rent" : "Sell"}
+    </span>
+  );
+}
+
 // ─── Lead detail popup (fully editable) ──────────────────────────────────────
 
 const FIELD_STYLE: React.CSSProperties = {
@@ -148,6 +165,7 @@ function LeadPopup({
     owner_phone: lead.owner_phone ?? "",
     property_name: lead.property_name ?? "",
     unit: lead.unit ?? "",
+    listing_purpose: lead.listing_purpose ?? null as "rent" | "sell" | null,
     expected_rent: lead.expected_rent != null ? String(lead.expected_rent) : "",
     bedrooms: lead.bedrooms != null ? String(lead.bedrooms) : "",
     bathrooms: lead.bathrooms != null ? String(lead.bathrooms) : "",
@@ -176,7 +194,8 @@ function LeadPopup({
     form.bedrooms !== (lead.bedrooms != null ? String(lead.bedrooms) : "") ||
     form.bathrooms !== (lead.bathrooms != null ? String(lead.bathrooms) : "") ||
     form.notes !== (lead.notes ?? "") ||
-    form.available_from !== (lead.available_from ?? "");
+    form.available_from !== (lead.available_from ?? "") ||
+    form.listing_purpose !== (lead.listing_purpose ?? null);
 
   // ESC to close
   useEffect(() => {
@@ -204,6 +223,7 @@ function LeadPopup({
         bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
         notes: form.notes || undefined,
         available_from: form.available_from || undefined,
+        listing_purpose: form.listing_purpose ?? null,
       };
       await updateOwnerLeadDetails(lead.id, updates);
       onSaved(lead.id, updates);
@@ -352,6 +372,30 @@ function LeadPopup({
               style={{ ...FIELD_STYLE, resize: "none" }}
               placeholder="e.g. No pets, working professional preferred"
             />
+          </div>
+          <div className="col-span-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--kk-ink-faint)" }}>Rent or sell?</p>
+            <div className="flex gap-2">
+              {(["rent", "sell"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => {
+                    const next = form.listing_purpose === v ? null : v;
+                    setForm((prev) => ({ ...prev, listing_purpose: next }));
+                    setSaved(false);
+                  }}
+                  className="px-3 py-1 rounded-full text-[12px] font-medium transition-all"
+                  style={{
+                    background: form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                    color: form.listing_purpose === v ? "#fff" : "var(--kk-ink-mute)",
+                    border: `1px solid ${form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                  }}
+                >
+                  {v === "rent" ? "For Rent" : "For Sale"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Read-only info */}
@@ -583,6 +627,7 @@ export function OutreachTable({ leads }: Props) {
   const router = useRouter();
   const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
+  const [purposeFilter, setPurposeFilter] = useState<PurposeFilter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
@@ -595,7 +640,7 @@ export function OutreachTable({ leads }: Props) {
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => { setSelectedIds(new Set()); }, [filter, propertyFilter, search]);
+  useEffect(() => { setSelectedIds(new Set()); }, [filter, purposeFilter, propertyFilter, search]);
 
   useEffect(() => {
     if (!exportOpen) return;
@@ -657,6 +702,7 @@ export function OutreachTable({ leads }: Props) {
       else if (filter === "listed")    { if (s !== "listed")    return false; }
       else if (filter === "rented")    { if (s !== "rented")    return false; }
       else if (filter === "declined")  { if (s !== "declined")  return false; }
+      if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter) return false;
       if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
       if (searchLower) {
         const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
@@ -880,6 +926,27 @@ export function OutreachTable({ leads }: Props) {
           </button>
         ))}
 
+        {/* Purpose filter pills */}
+        {(["rent", "sell"] as const).map((p) => {
+          const active = purposeFilter === p;
+          const isRent = p === "rent";
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPurposeFilter(active ? "all" : p)}
+              className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all"
+              style={{
+                background: active ? (isRent ? "var(--kk-blue)" : "#7C3AED") : "var(--kk-surface-2)",
+                color: active ? "#fff" : "var(--kk-ink-mute)",
+                border: `1px solid ${active ? (isRent ? "var(--kk-blue)" : "#7C3AED") : "var(--kk-line)"}`,
+              }}
+            >
+              {isRent ? "For Rent" : "For Sale"}
+            </button>
+          );
+        })}
+
       </div>
 
       {/* Daily WA counter */}
@@ -1009,7 +1076,10 @@ export function OutreachTable({ leads }: Props) {
 
                     {/* Status */}
                     <td className="px-2 lg:px-4 py-2 lg:py-3">
-                      <StatusBadge lead={lead} />
+                      <div className="flex flex-col items-start gap-1">
+                        <StatusBadge lead={lead} />
+                        <PurposeBadge purpose={lead.listing_purpose} />
+                      </div>
                     </td>
 
                     {/* Last sent */}

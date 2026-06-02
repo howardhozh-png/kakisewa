@@ -25,7 +25,7 @@ export const TEMPLATE_SPECS: TemplateSpec[] = [
     label: "Owner outreach — First contact",
     description: "Sent when you first reach out to a new owner lead.",
     defaultBody:
-`Hi {{ownerName}}! I'm {{agentName}}{{agencyLine}}.
+`I'm {{agentName}} ({{renNumber}}){{agencyLine}}.
 
 I'd love to help you find a quality tenant for {{propertyName}}. No charge until we close a deal.
 
@@ -34,6 +34,7 @@ Are you looking to rent it out?
     variables: [
       { key: "ownerName",    description: "Owner's full name" },
       { key: "agentName",    description: "Your name" },
+      { key: "renNumber",    description: "Your REN number" },
       { key: "agencyLine",   description: "' from Agency' or blank" },
       { key: "propertyName", description: "Property name + unit" },
     ],
@@ -43,15 +44,16 @@ Are you looking to rent it out?
     label: "Owner outreach — Follow-up",
     description: "Sent as a follow-up when the owner hasn't responded.",
     defaultBody:
-`Hi {{ownerName}}! Following up on {{propertyName}}.
+`Following up on {{propertyName}}.
 
 Still looking to rent it out, or have you decided to keep it for own stay?
 
 Just reply here so I can update my notes.
-— {{agentName}}`,
+— {{agentName}} ({{renNumber}})`,
     variables: [
       { key: "ownerName",    description: "Owner's full name" },
       { key: "agentName",    description: "Your name" },
+      { key: "renNumber",    description: "Your REN number" },
       { key: "propertyName", description: "Property name + unit" },
     ],
   },
@@ -60,7 +62,7 @@ Just reply here so I can update my notes.
     label: "New Leads: Owner",
     description: "Sent to collect property details and list the unit.",
     defaultBody:
-`Great day to you, {{ownerName}}! I'm {{firstName}} from {{company}}. If you're looking to rent out {{propertyName}}, I have a few quality tenants interested.
+`I'm {{firstName}} ({{renNumber}}) from {{company}}. If you're looking to rent out {{propertyName}}, I have a few quality tenants interested.
 
 30 secs from you and I'll take care of the rest:
 {{listingForm}}
@@ -70,6 +72,7 @@ Here's a sample tenant package I put together for you, ready for houseviewing:
     variables: [
       { key: "firstName",        description: "Your first name" },
       { key: "ownerName",        description: "Owner's name" },
+      { key: "renNumber",        description: "Your REN number" },
       { key: "company",          description: "Your agency / company name" },
       { key: "propertyName",     description: "Property name + unit" },
       { key: "tenantSamplePack", description: "Link to sample tenant pack" },
