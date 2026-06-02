@@ -74,7 +74,51 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // payment_failed is handled via customer.subscription.updated → past_due → expired above
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    if (customerId) {
+      const { data: profile } = await admin
+        .from("agent_profiles")
+        .select("id, name")
+        .eq("stripe_customer_id", customerId)
+        .maybeSingle();
+      if (profile) {
+        const { data: { users } } = await admin.auth.admin.listUsers({ perPage: 1000 });
+        const user = (users ?? []).find((u: { id: string }) => u.id === profile.id);
+        const email = user?.email;
+        const firstName = (profile.name ?? "").split(" ")[0] || "there";
+        const resendKey = process.env.RESEND_API_KEY;
+        if (email && resendKey) {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "kakisewa <noreply@kakisewa.com>",
+              to: [email],
+              subject: "Payment failed — please update your card",
+              html: `
+<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+  <p style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 24px">kakisewa</p>
+  <h1 style="font-size:18px;font-weight:600;margin:0 0 8px">Hi ${firstName}, your payment didn't go through</h1>
+  <p style="font-size:14px;color:#6C6C70;margin:0 0 24px">
+    We couldn't process your subscription payment. Please update your payment method to keep your account active.
+  </p>
+  <a href="https://www.kakisewa.com/subscription"
+    style="display:inline-block;background:#DC2626;color:#fff;font-size:14px;font-weight:600;
+           padding:12px 24px;border-radius:10px;text-decoration:none">
+    Update payment method
+  </a>
+  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">
+    If you think this is a mistake, reply to this email and we'll sort it out.
+  </p>
+</div>`,
+            }),
+          });
+        }
+      }
+    }
+  }
 
   return NextResponse.json({ received: true });
 }

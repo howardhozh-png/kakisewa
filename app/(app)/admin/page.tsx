@@ -74,14 +74,20 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  // Fetch emails from auth.users
-  const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+  // Paginate through all auth users (handles >1000 agents)
   const emailById: Record<string, string> = {};
   const createdById: Record<string, string> = {};
-  (authUsers ?? []).forEach((u: { id: string; email?: string; created_at: string }) => {
-    if (u.email) emailById[u.id] = u.email;
-    if (u.created_at) createdById[u.id] = u.created_at;
-  });
+  let page = 1;
+  while (true) {
+    const { data: { users: batch } } = await supabase.auth.admin.listUsers({ perPage: 1000, page });
+    if (!batch || batch.length === 0) break;
+    batch.forEach((u: { id: string; email?: string; created_at: string }) => {
+      if (u.email) emailById[u.id] = u.email;
+      if (u.created_at) createdById[u.id] = u.created_at;
+    });
+    if (batch.length < 1000) break;
+    page++;
+  }
 
   const agents = (profiles ?? []).map((p: {
     id: string; name: string | null; phone: string | null; agency: string | null;

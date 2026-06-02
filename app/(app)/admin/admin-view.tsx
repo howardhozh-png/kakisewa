@@ -218,7 +218,41 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
       )}
 
       {tab === "agents" && (
-        <div className="space-y-2">
+        <div>
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <button
+              onClick={() => {
+                const emails = agents.filter(a => a.email).map(a => a.email).join(", ");
+                navigator.clipboard.writeText(emails);
+                toast.success(`${agents.filter(a => a.email).length} emails copied`);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            >
+              <Copy className="w-3.5 h-3.5" /> Copy all emails
+            </button>
+            <button
+              onClick={() => {
+                const rows = [
+                  ["Name", "Email", "Phone", "Agency", "REN", "Status", "Plan", "Joined"].join(","),
+                  ...agents.map(a => [
+                    a.name ?? "", a.email ?? "", a.phone ?? "", a.agency ?? "",
+                    a.ren_number ?? "", a.subscription_status ?? "", a.subscription_plan ?? "",
+                    new Date(a.joined_at).toLocaleDateString("en-MY"),
+                  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
+                ];
+                const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a"); a.href = url; a.download = `agents-${Date.now()}.csv`; a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Export CSV
+            </button>
+          </div>
+          <div className="space-y-2">
           {agents.length === 0 && (
             <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No agents yet.</p>
           )}
@@ -258,6 +292,7 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
