@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports } from "@/lib/db";
 import { checkTierGate } from "@/components/tier-gate";
+import { PageHelpButton } from "@/components/page-help-button";
 import { NetworkSubNav } from "@/components/network-sub-nav";
 import { MatchesView } from "@/components/matches-view";
 import { TenantsTable } from "@/components/tenants-table";
@@ -61,9 +62,21 @@ export default async function NetworkPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="kk-overline mb-3">Directory</p>
-          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-            {VIEW_TITLES[view]}
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
+              {VIEW_TITLES[view]}
+            </h1>
+            <PageHelpButton
+              module={1}
+              pageTitle="Directory — your full property network"
+              bullets={[
+                "Properties tab: every unit you manage or are actively marketing",
+                "Tenants tab: all prospects and active tenants across your portfolio",
+                "Contacts tab: add trusted support contacts — plumbers, electricians, cleaners",
+                "Support contacts are shown to owners and tenants when emergencies come up",
+              ]}
+            />
+          </div>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             {VIEW_DESCS[view]}
           </p>

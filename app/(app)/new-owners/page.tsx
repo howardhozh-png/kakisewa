@@ -5,6 +5,7 @@ import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { NewListingButton } from "@/components/new-listing-button";
 import { LeadsSubNav } from "@/components/leads-sub-nav";
 import { OutreachTable } from "@/components/outreach-table";
+import { PageHelpButton } from "@/components/page-help-button";
 import type { OwnerLead } from "@/lib/types";
 
 const DEMO_LEAD: OwnerLead = {
@@ -49,9 +50,21 @@ export default async function LeadsPage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-            New Owners
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
+              New Owners
+            </h1>
+            <PageHelpButton
+              module={0}
+              pageTitle="New Owners — find and convert landlords"
+              bullets={[
+                "Upload your Excel owner list or add owners one by one",
+                "Download the bulk-send sheet and text all owners via WhatsApp Business",
+                "Or tap the WhatsApp icon to send each owner a personalised intake link",
+                "Move interested owners to Active Deals and send them a tenant pack",
+              ]}
+            />
+          </div>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track every owner from first message to listing in one place.
           </p>

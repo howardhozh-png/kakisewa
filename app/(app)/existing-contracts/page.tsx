@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
 import { MoneySubNav } from "@/components/money-sub-nav";
+import { PageHelpButton } from "@/components/page-help-button";
 import { defaultLifecycleStage } from "@/lib/types";
 import type { Tenancy } from "@/lib/types";
 
@@ -38,11 +39,23 @@ export default async function TenanciesPage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-            Existing Contracts
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
+              Existing Contracts
+            </h1>
+            <PageHelpButton
+              module={2}
+              pageTitle="Existing Contracts — capture your passive income"
+              bullets={[
+                "Add each active tenancy with its contract expiry date",
+                "kakisewa alerts you 60 days before any contract expires",
+                "Reach out to the owner before another agent does",
+                "Renew the contract and earn one month's rent in commission — automatically tracked",
+              ]}
+            />
+          </div>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
-            Retain your easy money with owners you have built relationship with.
+            Your renewal commission is passive income. Never miss an expiry again.
           </p>
         </div>
         <AddTenancyDialog properties={properties} />

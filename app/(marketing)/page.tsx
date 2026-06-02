@@ -13,20 +13,20 @@ interface Comparison {
 
 const COMPARISONS: Comparison[] = [
   {
-    before: "No idea who responded or dropped off. Chasing everyone on WhatsApp.",
-    after: <>kakisewa <strong>tracks every response</strong> and <strong>pings you</strong> the moment interest comes in</>,
+    before: "✗  Works hard to close a tenancy, then earns nothing when the contract renews. Passive income — gone.",
+    after: <>✓  <strong>Every renewal tracked automatically.</strong> One month's rent in commission, captured without lifting a finger.</>,
   },
   {
-    before: "Misses contract expiry dates. Finds out when the owner is already talking to someone else.",
-    after: <><strong>60-day reminder</strong> before every expiry. You follow up <strong>before another agent does</strong>.</>,
+    before: "✗  Misses contract expiry dates. Finds out when the owner is already talking to another agent.",
+    after: <>✓  <strong>60-day reminder</strong> before every expiry. You follow up <strong>before anyone else does</strong>.</>,
   },
   {
-    before: "Sends profiles one by one on WhatsApp. Looks unprofessional, feels like spam.",
-    after: <>One <strong>branded tenant pack</strong> link. No more spam-like messages.</>,
+    before: "✗  No idea who responded or dropped off. Chasing everyone on WhatsApp.",
+    after: <>✓  kakisewa <strong>tracks every response</strong> and <strong>pings you</strong> the moment interest comes in.</>,
   },
   {
-    before: "On your own when a tenant emergency or owner dispute comes up.",
-    after: <><strong>Support contacts</strong> for any emergency. Someone always picks up.</>,
+    before: "✗  Sends profiles one by one on WhatsApp. Looks unprofessional, feels like spam.",
+    after: <>✓  One <strong>branded tenant pack</strong> link. Owners take you seriously from the first message.</>,
   },
 ];
 
@@ -53,37 +53,39 @@ const POINTS: Point[] = [
     num: "01",
     hook: (
       <>
-        You&rsquo;re leaking{" "}
-        <span style={{ color: "#DC2626" }}>−RM 6,000</span>
+        You&rsquo;re losing{" "}
+        <span style={{ color: "#DC2626" }}>passive income</span>
         {" "}every month.{" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>You just don&rsquo;t know it.</span>
+        <span style={{ color: "var(--kk-ink-mute)" }}>You just can&rsquo;t see it.</span>
       </>
     ),
-    quote: "I forgot which contract was expiring. Found out when the owner texted me asking for a new tenant. Someone else was already showing the unit by then.",
+    quote: "I forgot which contract was expiring. Found out when the owner texted asking for a new tenant — someone else was already showing the unit. That renewal commission was mine and I lost it.",
     role: "Property agent · 6 years · Kuala Lumpur",
   },
   {
     num: "02",
     hook: (
       <>
-        2–3 hours{" "}
-        <span style={{ color: "#DC2626" }}>managing leads</span>
+        Every missed renewal is{" "}
+        <span style={{ color: "#DC2626" }}>one month&rsquo;s rent</span>
         {" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>without clear interest tracking.</span>
+        <span style={{ color: "var(--kk-ink-mute)" }}>you worked for and never collected.</span>
       </>
     ),
-    quote: "I had no idea who was still interested. Just names on WhatsApp and gut feel. No stages, no history. I still missed deals.",
+    quote: "I signed 15 tenancies last year. I have no idea how many renewed without me. That's potentially RM 30,000 in passive income I can't even account for.",
     role: "Independent negotiator · 4 years · Petaling Jaya",
   },
   {
     num: "03",
     hook: (
       <>
-        Every lead you can&rsquo;t track is{" "}
-        <span style={{ color: "#DC2626" }}>income you&rsquo;ll never see.</span>
+        Renewal commission is{" "}
+        <span style={{ color: "#DC2626" }}>passive income.</span>
+        {" "}
+        <span style={{ color: "var(--kk-ink-mute)" }}>Most agents never capture it.</span>
       </>
     ),
-    quote: "I keep feeling like money is slipping through my fingers but I can't prove it. I don't even know how many deals I've lost because I had no system to follow up.",
+    quote: "The first deal is hard work. The renewal should be easy money — just follow up at the right time. I was always too late because I had nothing tracking it for me.",
     role: "Real estate agent · 3 years · Shah Alam",
   },
 ];
@@ -130,8 +132,8 @@ export default function LandingPage() {
           className="mx-auto mb-10"
           style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "var(--kk-ink-mute)", lineHeight: 1.6, maxWidth: "48ch" }}
         >
-          Other agents track renewals on Excel, forget expiry dates, and lose listings.
-          kakisewa handles it for you — automatically.
+          Renewal commission is passive income. Most agents leave it on the table
+          because they have no system. kakisewa makes sure you never miss another one.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
@@ -217,7 +219,7 @@ export default function LandingPage() {
               className="uppercase font-semibold mb-5"
               style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
             >
-              The difference
+              The income gap
             </p>
             <h2
               className="serif mx-auto"
@@ -233,7 +235,7 @@ export default function LandingPage() {
 
           {/* Column headers */}
           <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
-            <div className="px-7 py-4" style={{ background: "#FEF2F2", borderTop: "3px solid #DC2626" }}>
+            <div className="px-7 py-4" style={{ borderTop: "3px solid #DC2626" }}>
               <span
                 className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "#DC2626", letterSpacing: "0.12em" }}
@@ -241,12 +243,12 @@ export default function LandingPage() {
                 Agents today
               </span>
             </div>
-            <div className="px-7 py-4" style={{ background: "#F0FDF4", borderTop: "3px solid var(--kk-green)", borderLeft: "1px solid var(--kk-line)" }}>
+            <div className="px-7 py-4" style={{ borderTop: "3px solid var(--kk-green)", borderLeft: "1px solid var(--kk-line)" }}>
               <span
                 className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", letterSpacing: "0.12em" }}
               >
-                Close faster than other agents
+                With kakisewa
               </span>
             </div>
           </div>
@@ -262,11 +264,11 @@ export default function LandingPage() {
                 className="px-7 py-6"
                 style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}
               >
-                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink-mute)", fontStyle: "italic" }}>{row.before}</p>
+                <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink-mute)" }}>{row.before}</p>
               </div>
               <div
                 className="px-7 py-6"
-                style={{ background: i % 2 === 0 ? "#F9FFF9" : "#F4FCF4", borderLeft: "1px solid var(--kk-line)" }}
+                style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA", borderLeft: "1px solid var(--kk-line)" }}
               >
                 <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink)" }}>{row.after}</p>
               </div>

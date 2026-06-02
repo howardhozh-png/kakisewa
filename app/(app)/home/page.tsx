@@ -15,8 +15,8 @@ export default async function HomePage() {
     {
       number: 1,
       icon: Upload,
-      title: "Reach out to owner",
-      description: "Upload and contact owners. Automatically records who is interested.",
+      title: "Upload owner list and text all of them",
+      description: "Upload your Excel list, download a bulk-send sheet, and message every owner instantly — personalised for each one.",
       href: "/new-owners",
       accent: "#1F8B4C",
       soft: "var(--kk-green-soft)",
@@ -27,8 +27,8 @@ export default async function HomePage() {
     {
       number: 2,
       icon: Users,
-      title: "Send tenant pack to owner",
-      description: "Build a tenant package for interested owners and close the deal.",
+      title: "Send your branded tenant pack",
+      description: "Win over owners with a professional, branded profile — not a wall of WhatsApp text. Build trust, close faster.",
       href: "/new-owners?tab=pipeline",
       accent: "var(--kk-blue)",
       soft: "var(--kk-blue-soft)",
@@ -39,8 +39,8 @@ export default async function HomePage() {
     {
       number: 3,
       icon: RefreshCw,
-      title: "Renew contract with owner",
-      description: "Get notified before contract expiry and capture renewal income.",
+      title: "Renew contracts and earn passive income",
+      description: "kakisewa alerts you 60 days before every expiry. Every renewal = one month's rent in your pocket — captured automatically.",
       href: "/existing-contracts",
       accent: "#C2410C",
       soft: "rgba(234,88,12,0.10)",
@@ -61,7 +61,7 @@ export default async function HomePage() {
           {firstName ? `Welcome, ${firstName}.` : "Welcome to kakisewa."}
         </h1>
         <p className="text-[16px] leading-relaxed" style={{ color: "var(--kk-ink-mute)", maxWidth: 480 }}>
-          kakisewa is your business partner. Three steps to maximize your income.
+          Three steps. Each one turns your database into recurring income.
         </p>
       </div>
 

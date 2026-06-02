@@ -4,6 +4,7 @@ import { PerformanceOverview } from "@/components/performance-overview";
 import { TodayFocus } from "@/components/today-focus";
 import { DealMilestone } from "@/components/deal-milestone";
 import { GoalProvider } from "@/components/goal-context";
+import { PageHelpButton } from "@/components/page-help-button";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +26,23 @@ export default async function PerformancePage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
       <header className="mb-8">
         <p className="kk-overline mb-3">Income tracker</p>
-        <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-          Track your goals
-        </h1>
+        <div className="flex items-center gap-2.5">
+          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
+            Track your goals
+          </h1>
+          <PageHelpButton
+            module={2}
+            pageTitle="Performance — your passive income dashboard"
+            bullets={[
+              "Set a monthly commission target to stay focused",
+              "Every signed deal and renewal auto-logs to your income tracker",
+              "See year-to-date earnings, best months, and deal count",
+              "Your renewal income compounds here — this is where passive income shows up",
+            ]}
+          />
+        </div>
         <p className="mt-3 kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-          Track your earned commissions, set monthly target and plan your goals.
+          Track your earned commissions, set monthly targets and plan your income goals.
         </p>
       </header>
 

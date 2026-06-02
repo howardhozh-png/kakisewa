@@ -937,16 +937,25 @@ const MODULES = [
   },
 ];
 
+interface PageHelpPayload {
+  module: number;
+  pageTitle: string;
+  bullets: string[];
+}
+
+export const PAGE_HELP_EVENT = "kk:open-page-help";
+
 export function OnboardingDemoModal() {
   const [open, setOpen]       = useState(false);
   const [playing, setPlaying] = useState(false);
   const [mod, setMod]         = useState(0);
+  const [pageHelp, setPageHelp] = useState<PageHelpPayload | null>(null);
 
   const openModal = useCallback(() => { setOpen(true); setPlaying(true); }, []);
 
   const close = useCallback(() => {
     const isFirstClose = !localStorage.getItem(STORAGE_KEY);
-    setOpen(false); setPlaying(false); setMod(0);
+    setOpen(false); setPlaying(false); setMod(0); setPageHelp(null);
     localStorage.setItem(STORAGE_KEY, "1");
     if (isFirstClose) document.dispatchEvent(new CustomEvent("kk:demo-first-close"));
   }, []);
@@ -962,6 +971,18 @@ export function OnboardingDemoModal() {
   }, [openModal]);
 
   useEffect(() => {
+    function handlePageHelp(e: Event) {
+      const detail = (e as CustomEvent<PageHelpPayload>).detail;
+      setPageHelp(detail);
+      setMod(detail.module);
+      setOpen(true);
+      setPlaying(true);
+    }
+    document.addEventListener(PAGE_HELP_EVENT, handlePageHelp);
+    return () => document.removeEventListener(PAGE_HELP_EVENT, handlePageHelp);
+  }, []);
+
+  useEffect(() => {
     if (!localStorage.getItem(STORAGE_KEY)) setTimeout(openModal, 600);
   }, [openModal]);
 
@@ -969,6 +990,87 @@ export function OnboardingDemoModal() {
 
   const { title, valueProp, Scene } = MODULES[mod];
 
+  // ── Page-help mode ────────────────────────────────────────────────────────────
+  if (pageHelp) {
+    return (
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50 p-4"
+        style={{ background: "rgba(0,0,0,0.50)", backdropFilter: "blur(6px)" }}
+        onClick={close}
+      >
+        <div
+          className="relative rounded-2xl overflow-hidden"
+          style={{ background: "#fff", boxShadow: "0 28px 72px rgba(0,0,0,0.22)", maxWidth: 600, width: "100%" }}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#AEAEB2" }}>
+                How this works
+              </p>
+              <h2 className="font-bold" style={{ fontSize: 20, color: "#1C1C1E", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                {pageHelp.pageTitle}
+              </h2>
+            </div>
+            <button
+              onClick={close}
+              className="shrink-0 flex items-center justify-center rounded-full mt-0.5"
+              style={{ width: 32, height: 32, background: "#F2F2F7", color: "#6C6C70", border: "none", cursor: "pointer" }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Animated scene */}
+          <div className="px-6 pb-0">
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
+              <Scene active={playing} />
+            </div>
+          </div>
+
+          {/* Bullets */}
+          <div className="px-6 py-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "#AEAEB2" }}>
+              What to do here
+            </p>
+            <ul className="space-y-2.5">
+              {pageHelp.bullets.map((b, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span
+                    className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5"
+                    style={{ background: "#1C1C1E", color: "#fff" }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span style={{ fontSize: 13, color: "#3C3C43", lineHeight: 1.55 }}>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 pb-5 flex items-center justify-between">
+            <button
+              onClick={close}
+              style={{ fontSize: 13, color: "#AEAEB2", background: "none", border: "none", cursor: "pointer" }}
+            >
+              Got it
+            </button>
+            <button
+              onClick={() => { close(); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); }}
+              className="px-4 py-2 rounded-full"
+              style={{ fontSize: 13, fontWeight: 600, background: "#F2F2F7", color: "#1C1C1E", border: "none", cursor: "pointer" }}
+            >
+              Watch full walkthrough →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Getting-started mode (original) ───────────────────────────────────────────
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50 p-4"
