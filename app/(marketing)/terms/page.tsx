@@ -46,7 +46,7 @@ export default function TermsPage() {
           Terms of Service
         </h1>
         <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)", marginBottom: 48 }}>
-          Effective date: 30 May 2026 · Last updated: 30 May 2026
+          Effective date: 30 May 2026 · Last updated: 2 June 2026
         </p>
 
         <Prose>
@@ -79,30 +79,33 @@ export default function TermsPage() {
 
           <Section title="4. Trial Period and Subscription">
             <p>
-              New users may access the Service under a <strong>14-day free trial</strong>. A one-time commitment fee of <strong>RM 9.90</strong> is charged at the start of your trial to verify your payment method. This amount is non-refundable and is credited toward your first subscription invoice if you continue.
+              New users may access the Service under a <strong>14-day free trial</strong>. No payment is required to start your trial. After the trial period, continued access requires an active paid subscription. If you do not subscribe before your trial expires, your account will be placed in read-only mode — your data will be preserved, but you will not be able to add or edit records until you activate a plan.
             </p>
             <p>
-              After the trial period, continued access requires an active paid subscription. If you do not subscribe before your trial expires, your account will be placed in read-only mode — your data will be preserved, but you will not be able to add or edit records until you activate a plan.
-            </p>
-            <p>
-              Available plans (beta pricing, subject to change):
+              Available plans:
             </p>
             <ul>
-              <li><strong>Starter</strong> — Free. Up to 10 properties. Core features.</li>
-              <li><strong>Pro</strong> — RM 99 per month. Up to 50 properties. AI receipt verification, automated reminders.</li>
-              <li><strong>Elite</strong> — RM 299 per month. Unlimited properties. All features including LHDN filing assistance.</li>
+              <li>
+                <strong>Silver</strong> — RM 198/month (or RM 165/month billed annually at RM 1,980/year).
+                Includes contract tracking, owner lead management, bulk upload, owner reply tracking, and branded tenant packs.
+              </li>
+              <li>
+                <strong>Platinum</strong> — RM 398/month (or RM 332/month billed annually at RM 3,980/year).
+                Everything in Silver, plus existing contract import, renewal commission tracking, and automated renewal reminders.
+              </li>
+              <li>
+                <strong>Elite</strong> — RM 498/month (or RM 415/month billed annually at RM 4,980/year).
+                Everything in Platinum, plus property support management, performance dashboard, and advanced analytics.
+              </li>
             </ul>
             <p>
-              Subscriptions are billed monthly in advance. You may cancel at any time; cancellation takes effect at the end of the current billing cycle.
+              All fees are stated in Malaysian Ringgit (MYR). Subscriptions are billed monthly or annually in advance depending on the interval you select. You may cancel at any time from your subscription settings; cancellation takes effect at the end of the current billing cycle.
             </p>
           </Section>
 
           <Section title="5. Payments and Refunds">
             <p>
-              Payments are processed securely by Stripe. We accept credit cards and debit cards (Visa, Mastercard). We do not store your full card details on our servers.
-            </p>
-            <p>
-              All fees are stated in Malaysian Ringgit (MYR) and are exclusive of any applicable taxes. You are responsible for any taxes or duties imposed by your local jurisdiction.
+              Payments are processed securely by Stripe. We accept credit cards and debit cards (Visa, Mastercard). We do not store your full card details on our servers. All fees are exclusive of any applicable taxes; you are responsible for any taxes or duties imposed by your local jurisdiction.
             </p>
             <p>
               We do not offer refunds for partial months of service. If you believe a charge is in error, contact us within 14 days of the charge at <a href="mailto:support@kakisewa.com">support@kakisewa.com</a>.

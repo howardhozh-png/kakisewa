@@ -104,16 +104,17 @@ export default function LandingPage() {
         }}
       >
         <Link href="/"><BrandMark size={28} /></Link>
-        <div className="flex items-center gap-5">
-          <Link href="/sign-in" className="font-medium transition-opacity hover:opacity-60" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink-mute)" }}>
+        <div className="flex items-center gap-4">
+          <Link href="/sign-in" className="hidden sm:block font-medium transition-opacity hover:opacity-60" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink-mute)" }}>
             Sign in
           </Link>
           <Link
             href="/sign-up"
-            className="px-5 py-2 rounded-full font-semibold transition-opacity hover:opacity-90"
+            className="px-4 sm:px-5 py-2 rounded-full font-semibold transition-opacity hover:opacity-90 whitespace-nowrap"
             style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
           >
-            Start trial, expiring soon
+            <span className="sm:hidden">Start free trial</span>
+            <span className="hidden sm:inline">Start trial, expiring soon</span>
           </Link>
         </div>
       </header>
@@ -237,7 +238,7 @@ export default function LandingPage() {
 
           {/* Column headers */}
           <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
-            <div className="px-7 py-4" style={{ borderTop: "3px solid #DC2626" }}>
+            <div className="px-4 sm:px-7 py-4" style={{ borderTop: "3px solid #DC2626" }}>
               <span
                 className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "#DC2626", letterSpacing: "0.12em" }}
@@ -245,7 +246,7 @@ export default function LandingPage() {
                 Agents today
               </span>
             </div>
-            <div className="px-7 py-4" style={{ borderTop: "3px solid var(--kk-green)", borderLeft: "1px solid var(--kk-line)" }}>
+            <div className="px-4 sm:px-7 py-4" style={{ borderTop: "3px solid var(--kk-green)", borderLeft: "1px solid var(--kk-line)" }}>
               <span
                 className="font-semibold uppercase"
                 style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", letterSpacing: "0.12em" }}
@@ -263,13 +264,13 @@ export default function LandingPage() {
               style={{ gridTemplateColumns: "1fr 1fr", borderTop: "1px solid var(--kk-line)" }}
             >
               <div
-                className="px-7 py-6"
+                className="px-4 sm:px-7 py-5 sm:py-6"
                 style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}
               >
                 <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink-mute)" }}>{row.before}</p>
               </div>
               <div
-                className="px-7 py-6"
+                className="px-4 sm:px-7 py-5 sm:py-6"
                 style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA", borderLeft: "1px solid var(--kk-line)" }}
               >
                 <p style={{ fontSize: "var(--kk-sm)", lineHeight: 1.65, color: "var(--kk-ink)" }}>{row.after}</p>
