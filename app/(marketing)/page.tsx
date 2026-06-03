@@ -16,24 +16,24 @@ interface Comparison {
 
 const COMPARISONS: Comparison[] = [
   {
-    before: <><X />Works hard to close a tenancy, then earns nothing when the contract renews. Passive income gone.</>,
-    after: <><V /><strong>Every renewal tracked automatically.</strong> Half a month's rent in commission, captured without lifting a finger.</>,
+    before: <><X />Closes a deal. Earns nothing when it renews.</>,
+    after: <><V /><strong>Every renewal = half a month's rent.</strong> Tracked automatically.</>,
   },
   {
-    before: <><X />Misses contract expiry dates. Finds out when the owner is already talking to another agent.</>,
-    after: <><V /><strong>60-day reminder</strong> before every expiry. You follow up <strong>before anyone else does</strong>.</>,
+    before: <><X />No idea which contracts expire next month. Or next year.</>,
+    after: <><V /><strong>60-day alert.</strong> You follow up before anyone else does.</>,
   },
   {
-    before: <><X />No brand, no tracking. Loses leads with no way to know who's interested.</>,
-    after: <><V />kakisewa gives you a <strong>branded profile</strong>, auto-tracks every lead's interest and pings you the moment someone responds.</>,
+    before: <><X />Zero visibility into income 6, 12, 24 months from now.</>,
+    after: <><V /><strong>See your full pipeline 1-3 years ahead.</strong> Plan, don't react.</>,
   },
   {
-    before: <><X />Sends tenant profiles one by one on WhatsApp. Looks unprofessional, feels like spam.</>,
-    after: <><V />One <strong>branded tenant pack</strong> link. Owners take you seriously from the first message.</>,
+    before: <><X />Texts owners. No brand. No tracking. Low reply rate.</>,
+    after: <><V /><strong>Branded profile.</strong> Owners know who you are before they reply.</>,
   },
   {
-    before: <><X />No idea which units are coming available or which contracts expire in 6, 12, 24 months. Income is a guessing game.</>,
-    after: <><V /><strong>See your income pipeline 1-3 years ahead.</strong> Know exactly which owners become available and which contracts expire — plan before anyone else does.</>,
+    before: <><X />Sends tenant profiles one by one. Looks like spam.</>,
+    after: <><V /><strong>One tenant pack link.</strong> Owners take you seriously instantly.</>,
   },
 ];
 
@@ -70,13 +70,13 @@ const POINTS: Point[] = [
     num: "02",
     hook: (
       <>
-        Every missed renewal is{" "}
-        <span style={{ color: "#DC2626" }}>half a month&rsquo;s rent</span>
+        You can&rsquo;t see{" "}
+        <span style={{ color: "#DC2626" }}>the next 3 years</span>
         {" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>you worked for and never collected.</span>
+        <span style={{ color: "var(--kk-ink-mute)" }}>of your own income.</span>
       </>
     ),
-    quote: "I signed 15 tenancies last year. I have no idea how many renewed without me. That's potentially RM 30,000 in passive income I can't even account for.",
+    quote: "I had no idea which contracts were expiring or which owners would be free in 6 months. I was always reacting. kakisewa shows me the next 2 years at a glance.",
     role: "Independent negotiator · 4 years · Petaling Jaya",
   },
   {
