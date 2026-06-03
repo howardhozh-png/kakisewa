@@ -8,7 +8,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <script dangerouslySetInnerHTML={{ __html: "history.scrollRestoration='manual'" }} />
       <Suspense><AuthCodeRedirect /></Suspense>
       {children}
-      <OnboardingDemoModal />
+      <OnboardingDemoModal autoOpen={false} />
     </>
   );
 }

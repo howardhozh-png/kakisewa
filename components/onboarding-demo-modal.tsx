@@ -971,7 +971,7 @@ interface PageHelpPayload {
 
 export const PAGE_HELP_EVENT = "kk:open-page-help";
 
-export function OnboardingDemoModal() {
+export function OnboardingDemoModal({ autoOpen = true }: { autoOpen?: boolean }) {
   const [open, setOpen]       = useState(false);
   const [playing, setPlaying] = useState(false);
   const [mod, setMod]         = useState(0);
@@ -1009,8 +1009,8 @@ export function OnboardingDemoModal() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) setTimeout(openModal, 600);
-  }, [openModal]);
+    if (autoOpen && !localStorage.getItem(STORAGE_KEY)) setTimeout(openModal, 600);
+  }, [autoOpen, openModal]);
 
   useEffect(() => {
     if (!open) return;
