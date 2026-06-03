@@ -187,8 +187,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props)
     <>
       <div className="kk-section p-5 mb-5">
         <div className="mb-4">
-          <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>Contract expiry timeline</p>
-          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Your renewal income for the next 1-3 years — 60-day advance notice before every contract expires.</p>
+          <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>See your renewal income for each month over the next 1-3 years to plan your income</p>
         </div>
         <TenanciesTimeline
           tenancies={local.filter((t) => {
