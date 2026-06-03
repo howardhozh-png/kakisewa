@@ -4,6 +4,8 @@ import { getAgentProfile, getHomeDashboardStats } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+const ALERT_COLOR = "#991B1B";
+
 export default async function HomePage() {
   const [agent, stats] = await Promise.all([
     getAgentProfile(),
@@ -19,7 +21,6 @@ export default async function HomePage() {
       description: "Once you upload the list, it will be here forever and you'll never lose track of leads.",
       href: "/new-owners",
       accent: "#1F8B4C",
-      soft: "var(--kk-green-soft)",
       crumb: { parent: "New Owners", child: "Outreach" },
       stat: `${stats.totalOwners} owner${stats.totalOwners !== 1 ? "s" : ""} tracked`,
       alert: stats.uncontacted > 0 ? `${stats.uncontacted} not yet contacted` : null,
@@ -31,7 +32,6 @@ export default async function HomePage() {
       description: "Win over owners with a professional tenant package. Build trust and close fast.",
       href: "/new-owners?tab=pipeline",
       accent: "var(--kk-blue)",
-      soft: "var(--kk-blue-soft)",
       crumb: { parent: "New Owners", child: "Active Deals" },
       stat: `${stats.pipeline} deal${stats.pipeline !== 1 ? "s" : ""} in pipeline`,
       alert: stats.listedWithoutTenant > 0 ? `${stats.listedWithoutTenant} listed, awaiting tenant` : null,
@@ -43,7 +43,6 @@ export default async function HomePage() {
       description: "Get alerted 60 days before every expiry. Every renewal = half a month's rent, captured automatically.",
       href: "/existing-contracts",
       accent: "#C2410C",
-      soft: "rgba(234,88,12,0.10)",
       crumb: { parent: "Existing Contracts", child: undefined },
       stat: `${stats.activeContracts} active contract${stats.activeContracts !== 1 ? "s" : ""}`,
       alert: stats.expiringIn60 > 0 ? `${stats.expiringIn60} expiring within 60 days` : null,
@@ -74,10 +73,10 @@ export default async function HomePage() {
             className="kk-card kk-card-hover flex overflow-hidden"
             style={{ textDecoration: "none", minHeight: 120 }}
           >
-            {/* Left step block */}
+            {/* Left step block — same neutral background for all steps */}
             <div
               className="flex flex-col items-center justify-center shrink-0 px-5 gap-1"
-              style={{ background: step.soft, width: 80, borderRight: `1px solid rgba(0,0,0,0.06)` }}
+              style={{ background: "var(--kk-surface-2)", width: 80, borderRight: `1px solid rgba(0,0,0,0.06)` }}
             >
               <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: step.accent, opacity: 0.7 }}>
                 Step
@@ -103,7 +102,7 @@ export default async function HomePage() {
                 )}
               </span>
 
-              <h2 className="text-[16px] font-semibold leading-snug mb-1 pr-24 mt-1" style={{ color: "var(--kk-ink)", letterSpacing: "-0.012em" }}>
+              <h2 className="text-[16px] font-semibold leading-snug mb-1 pr-16 lg:pr-24 mt-1" style={{ color: "var(--kk-ink)", letterSpacing: "-0.012em" }}>
                 {step.title}
               </h2>
               <p className="text-[12px] leading-relaxed mb-3" style={{ color: "var(--kk-ink-mute)" }}>
@@ -114,7 +113,7 @@ export default async function HomePage() {
                   {step.stat}
                 </span>
                 {step.alert && (
-                  <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: step.accent }}>
+                  <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: ALERT_COLOR }}>
                     <AlertCircle className="w-3.5 h-3.5" />
                     {step.alert}
                   </span>
