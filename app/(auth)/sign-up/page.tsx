@@ -80,7 +80,7 @@ function SignUpForm() {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/home`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { full_name: `${form.first_name.trim()} ${form.last_name.trim()}`.trim(), phone: form.phone, agency: form.agency || null, ren_number: form.ren_number || null, is_admin: isAdmin, referral_slug: refSlug },
       },
     })
