@@ -27,7 +27,7 @@ export async function GET(
             d="M5.5 3 L5.5 21 M5.5 12 L19.5 3.5 M5.5 12 L19.5 20.5"
             stroke="#000000"
             strokeWidth="3.2"
-            strokeLinecap="round"
+            strokeLinecap="square"
           />
         </svg>
       </div>
