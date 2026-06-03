@@ -327,10 +327,10 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
                     {/* Messenger-style chat bubble floating above the column */}
                     {!monthFilter && (
                       <div style={{ position: "absolute", top: -50, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-                        <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,113,227,0.92)", borderRadius: 22, padding: "10px 20px", boxShadow: "0 4px 14px rgba(0,113,227,0.35), 0 1px 4px rgba(0,0,0,0.10)" }}>
+                        <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, background: "var(--kk-theme-dark)", borderRadius: 22, padding: "10px 20px", boxShadow: "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 35%, transparent), 0 1px 4px rgba(0,0,0,0.10)" }}>
                           <Banknote className="w-4 h-4" style={{ color: "#fff" }} />
                           <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>Make new money here!</span>
-                          <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid rgba(0,113,227,0.92)" }} />
+                          <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid var(--kk-theme-dark)" }} />
                         </div>
                       </div>
                     )}
@@ -432,23 +432,23 @@ function Column({ col, count, children, extraStyle, headerExtra }: { col: ColMet
         background: isOver
           ? col.soft
           : col.stage === "listed"
-            ? "radial-gradient(ellipse 110% 70% at 50% 25%, rgba(0,113,227,0.30) 0%, rgba(0,113,227,0.14) 40%, var(--kk-surface) 68%)"
+            ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, var(--kk-theme-dark) 20%, transparent) 0%, color-mix(in srgb, var(--kk-theme-dark) 10%, transparent) 40%, var(--kk-surface) 68%)"
             : "var(--kk-surface)",
         outline: isOver
           ? `2px solid ${col.ink}`
           : col.stage === "listed"
-            ? "1px solid rgba(0,113,227,0.38)"
+            ? "1px solid color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)"
             : "1px solid transparent",
         outlineOffset: "-1px",
         boxShadow: isOver
           ? undefined
           : col.stage === "listed"
-            ? "0 0 0 1px rgba(0,113,227,0.32), 0 0 14px 5px rgba(0,113,227,0.26)"
+            ? "0 0 0 1px color-mix(in srgb, var(--kk-theme-dark) 22%, transparent), 0 0 14px 5px color-mix(in srgb, var(--kk-theme-dark) 18%, transparent)"
             : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
         ...extraStyle,
       }}
     >
-      <div className="kk-board-col-header" style={{ borderBottomColor: col.soft, ...(col.stage === "listed" ? { background: "rgb(235,244,255)" } : {}) }}>
+      <div className="kk-board-col-header" style={{ borderBottomColor: col.soft, ...(col.stage === "listed" ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}) }}>
         <div className="flex items-center gap-2">
           <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
             style={{ background: col.soft, color: col.ink }}>
@@ -533,7 +533,7 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
 
   const cardStyle: React.CSSProperties = {
     opacity: isDragging ? 0.2 : 1,
-    ...(col.stage === "listed" && !isDragging ? { boxShadow: "0 4px 14px rgba(0,113,227,0.18), 0 1px 4px rgba(0,0,0,0.06)" } : {}),
+    ...(col.stage === "listed" && !isDragging ? { boxShadow: "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 18%, transparent), 0 1px 4px rgba(0,0,0,0.06)" } : {}),
   };
 
   return (

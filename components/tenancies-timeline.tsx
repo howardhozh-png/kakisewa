@@ -59,7 +59,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
           <p className="kk-overline mb-2">
             Renewal income · next {windowMonths} month{windowMonths === 1 ? "" : "s"}
           </p>
-          <p className="kk-metric-lg" style={{ color: "#F4511E" }}>
+          <p className="kk-metric-lg" style={{ color: "var(--kk-theme-dark)" }}>
             RM {Math.round(total.potential).toLocaleString()}
           </p>
           <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: "var(--kk-ink-faint)" }}>
@@ -115,9 +115,9 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
                   style={{
                     height: `${b.count > 0 ? Math.max(8, heightPct) : 4}%`,
                     background: b.count > 0
-                      ? (isCurrent ? "rgba(0,0,0,0.18)" : selectedMonth === m.key ? "rgba(180,40,10,0.90)" : "rgba(244,81,30,0.55)")
-                      : selectedMonth === m.key ? "rgba(180,40,10,0.25)" : "var(--kk-surface-2)",
-                    outline: selectedMonth === m.key ? "2px solid rgba(180,40,10,0.60)" : "none",
+                      ? (isCurrent ? "rgba(0,0,0,0.18)" : selectedMonth === m.key ? "color-mix(in srgb, var(--kk-theme-dark) 90%, transparent)" : "color-mix(in srgb, var(--kk-theme-dark) 55%, transparent)")
+                      : selectedMonth === m.key ? "color-mix(in srgb, var(--kk-theme-dark) 25%, transparent)" : "var(--kk-surface-2)",
+                    outline: selectedMonth === m.key ? "2px solid color-mix(in srgb, var(--kk-theme-dark) 60%, transparent)" : "none",
                     outlineOffset: "2px",
                   }}
                 />
@@ -129,7 +129,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
                 <p className="text-[11px] mt-1 leading-none whitespace-nowrap" style={{ color: "var(--kk-ink-faint)" }}>
                   {m.label} &apos;{String(m.year).slice(2)}
                 </p>
-                <p className="text-[10px] mt-0.5 leading-none font-medium" style={{ color: "#F4511E", visibility: isCurrent ? "visible" : "hidden" }}>
+                <p className="text-[10px] mt-0.5 leading-none font-medium" style={{ color: "var(--kk-theme-dark)", visibility: isCurrent ? "visible" : "hidden" }}>
                   ·now
                 </p>
                 <p className="text-[11px] mt-0.5 tabular-nums leading-none" style={{ color: "var(--kk-ink-mute)", visibility: b.potential > 0 ? "visible" : "hidden" }}>

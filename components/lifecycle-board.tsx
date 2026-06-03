@@ -248,10 +248,10 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props)
                 return (
                   <div key={col.stage} style={{ position: "relative", flex: 2, minWidth: 380, minHeight: 0, display: "flex", flexDirection: "column" }}>
                     <div style={{ position: "absolute", top: -50, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-                      <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(244,81,30,0.90)", borderRadius: 22, padding: "10px 20px", boxShadow: "0 4px 14px rgba(244,81,30,0.30), 0 1px 4px rgba(0,0,0,0.10)" }}>
+                      <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, background: "var(--kk-theme-dark)", borderRadius: 22, padding: "10px 20px", boxShadow: "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 30%, transparent), 0 1px 4px rgba(0,0,0,0.10)" }}>
                         <Banknote className="w-4 h-4" style={{ color: "#fff" }} />
                         <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>Don&apos;t forget your money!</span>
-                        <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid rgba(244,81,30,0.90)" }} />
+                        <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid var(--kk-theme-dark)" }} />
                       </div>
                     </div>
                     <Column col={col} count={cards.length} extraStyle={{ flex: 1, width: "100%" }}>
@@ -363,18 +363,18 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         background: isOver
           ? col.soft
           : isHeadsup
-            ? "radial-gradient(ellipse 110% 70% at 50% 25%, rgba(244,81,30,0.22) 0%, rgba(244,81,30,0.08) 40%, var(--kk-surface) 68%)"
+            ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, var(--kk-theme-dark) 18%, transparent) 0%, color-mix(in srgb, var(--kk-theme-dark) 8%, transparent) 40%, var(--kk-surface) 68%)"
             : "var(--kk-surface)",
         outline: isOver
           ? `2px solid ${col.ink}`
           : isHeadsup
-            ? "1px solid rgba(244,81,30,0.35)"
+            ? "1px solid color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)"
             : "1px solid transparent",
         outlineOffset: "-1px",
         boxShadow: isOver
           ? undefined
           : isHeadsup
-            ? "0 0 0 1px rgba(244,81,30,0.28), 0 0 14px 5px rgba(244,81,30,0.18)"
+            ? "0 0 0 1px color-mix(in srgb, var(--kk-theme-dark) 22%, transparent), 0 0 14px 5px color-mix(in srgb, var(--kk-theme-dark) 15%, transparent)"
             : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
         ...extraStyle,
       }}
@@ -428,7 +428,7 @@ function Card({ t, col, today, isDragging, onOpen, onShowCommission, onShowTenan
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
   if (col.stage === "headsup" && !isDragging) {
-    cardStyle.boxShadow = "0 4px 14px rgba(244,81,30,0.14), 0 1px 4px rgba(0,0,0,0.06)";
+    cardStyle.boxShadow = "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 14%, transparent), 0 1px 4px rgba(0,0,0,0.06)";
   }
 
   const days = t.contract_end ? daysUntil(t.contract_end, today) : 0;
