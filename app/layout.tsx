@@ -34,6 +34,9 @@ export const metadata: Metadata = {
     title: "kakisewa — Tenancy CRM",
     description: "kakisewa, #1 property agent platform",
   },
+  icons: {
+    apple: [{ url: "/pwa-icon/180?v=2", sizes: "180x180", type: "image/png" }],
+  },
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",

@@ -667,7 +667,7 @@ function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "platinum" 
   if (key === "trial") {
     return (
       <div
-        className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
         style={{
           background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%)",
           border: "1px solid rgba(217,119,6,0.8)",
@@ -683,7 +683,7 @@ function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "platinum" 
   const t = TIER_BADGE[key];
   return (
     <div
-      className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
       style={{ background: t.bg, border: `1px solid ${t.border}`, boxShadow: t.shadow }}
     >
       <div className="absolute inset-0 pointer-events-none" style={{ background: t.shine }} />
@@ -834,6 +834,11 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
               </span>
             </span>
           </Link>
+
+          {/* Tier badge — mobile only, sits right after brand */}
+          <div className="md:hidden">
+            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} />
+          </div>
 
           {/* Nav — desktop only */}
           <nav className="kk-topnav-desktop items-center gap-1">

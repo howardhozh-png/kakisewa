@@ -899,8 +899,8 @@ export function OutreachTable({ leads }: Props) {
         )}
       </div>
 
-      {/* Filter row */}
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
+      {/* Filter row — scrollable on mobile, wraps on desktop */}
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-0.5 lg:flex-wrap">
         {/* Property filter — popover table */}
         {propertyNames.length > 0 && (
           <PropertyPopover
@@ -916,7 +916,7 @@ export function OutreachTable({ leads }: Props) {
             key={key}
             type="button"
             onClick={() => setFilter(key)}
-            className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all"
+            className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all shrink-0"
             style={{
               background: filter === key ? "var(--kk-ink)" : "var(--kk-surface-2)",
               color: filter === key ? "#fff" : "var(--kk-ink-mute)",
