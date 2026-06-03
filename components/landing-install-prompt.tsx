@@ -160,10 +160,10 @@ export function LandingInstallPrompt() {
           <>
             <div className="flex items-center gap-4 mb-5">
               <div className="shrink-0 rounded-2xl flex items-center justify-center" style={{ width: 56, height: 56, background: "#fff" }}>
-                <svg viewBox="0 0 24 24" width={36} height={36} fill="#1C1C1E">
-                  <rect x="3.5" y="3" width="4" height="18" rx="0.5" />
-                  <path d="M7.5 12 L18.5 3 L21 5.5 L10 14.5 Z" />
-                  <path d="M7.5 12 L10 9.5 L21 18.5 L18.5 21 Z" />
+                <svg viewBox="0 0 24 24" width={36} height={36} fill="#000000">
+                  <rect x="3.5" y="3" width="4" height="18" />
+                  <path d="M6.53 10.54 L20.03 1.54 L21.97 4.46 L8.47 13.46 Z" />
+                  <path d="M8.47 10.54 L21.97 19.54 L20.03 22.46 L6.53 13.46 Z" />
                 </svg>
               </div>
               <div>
