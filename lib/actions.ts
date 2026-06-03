@@ -393,7 +393,7 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
   const body = resolveTemplate("expiry_check_tenant", overrides, {
     tenantName: t.tenant_name,
-    agentLine: firstName ? `I'm ${firstName}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
+    agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
     propertyName: t.property_name ?? t.property_id,
     expiryWhen,
     renewalForm: formUrl,
@@ -665,7 +665,7 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
   const body = resolveTemplate("expiry_check_owner", overrides, {
     ownerName: t.property.owner_name,
-    agentLine: firstName ? `I'm ${firstName}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
+    agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
     propertyName: t.property_name ?? t.property_id,
     tenantName: t.tenant_name,
     expiryWhen,

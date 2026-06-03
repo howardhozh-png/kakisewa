@@ -222,14 +222,12 @@ const SAMPLE_VARS: Partial<Record<TemplateKey, Record<string, string>>> = {
   },
   expiry_check_tenant: {
     tenantName: "Ahmad Firdaus",
-    agentLine: "I'm Howard from Property Max. ",
     propertyName: "Agile Mont Kiara",
     expiryWhen: "in 14 days",
     renewalForm: "kakisewa.com/rt/abc123xyz",
   },
   expiry_check_owner: {
     ownerName: "Encik Azlan",
-    agentLine: "I'm Howard from Property Max. ",
     propertyName: "Agile Mont Kiara",
     tenantName: "Ahmad Firdaus",
     expiryWhen: "in 14 days",
@@ -264,14 +262,22 @@ function WhatsAppPreviewModal({
   spec,
   body,
   renNumber,
+  agentName,
+  agency,
   onClose,
 }: {
   spec: TemplateSpec;
   body: string;
   renNumber: string;
+  agentName: string;
+  agency: string;
   onClose: () => void;
 }) {
-  const sampleVars = { renNumber, ...SAMPLE_VARS[spec.key as TemplateKey] };
+  const firstName = agentName.trim().split(" ")[0];
+  const agentLine = firstName
+    ? `I'm ${firstName}${renNumber ? ` (${renNumber})` : ""}${agency ? ` from ${agency}` : ""}. `
+    : "";
+  const sampleVars = { renNumber, agentLine, ...SAMPLE_VARS[spec.key as TemplateKey] };
   const html = renderWAHtml(body, sampleVars);
 
   useEffect(() => {
@@ -344,6 +350,8 @@ function TemplateCard({
   isOpen,
   isCustomised,
   renNumber,
+  agentName,
+  agency,
   onChange,
   onToggle,
 }: {
@@ -352,6 +360,8 @@ function TemplateCard({
   isOpen: boolean;
   isCustomised: boolean;
   renNumber: string;
+  agentName: string;
+  agency: string;
   onChange: (v: string) => void;
   onToggle: () => void;
 }) {
@@ -361,7 +371,7 @@ function TemplateCard({
   return (
     <>
       {showPreview && (
-        <WhatsAppPreviewModal spec={spec} body={value} renNumber={renNumber} onClose={() => setShowPreview(false)} />
+        <WhatsAppPreviewModal spec={spec} body={value} renNumber={renNumber} agentName={agentName} agency={agency} onClose={() => setShowPreview(false)} />
       )}
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
         {/* Header */}
@@ -639,6 +649,8 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
               isOpen={openKey === spec.key}
               isCustomised={bodies[spec.key] !== spec.defaultBody}
               renNumber={renNumber}
+              agentName={name}
+              agency={agency}
               onChange={(v) => setBodies((prev) => ({ ...prev, [spec.key]: v }))}
               onToggle={() => setOpenKey(openKey === spec.key ? null : spec.key)}
             />
