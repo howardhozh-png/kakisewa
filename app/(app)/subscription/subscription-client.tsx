@@ -43,6 +43,8 @@ const PLANS = [
     monthly: 198, annualMonthly: 165, annualTotal: 1980, annualSavings: 396,
     monthlyAnnualTotal: 2376,
     roiMonths: "12 months free",
+    headline: "Get your pipeline\nmoving.",
+    tagline: "Track owner responses and close more leads with a branded profile and tenant pack.",
     features: [
       { label: "Bulk owner list upload" },
       { label: "Automatically track owner reply" },
@@ -58,6 +60,8 @@ const PLANS = [
     monthly: 398, annualMonthly: 332, annualTotal: 3980, annualSavings: 796,
     monthlyAnnualTotal: 4776,
     roiMonths: "6 months free",
+    headline: "Never miss\na renewal.",
+    tagline: "One missed renewal at RM 2,000 pays for years of kakisewa. Capture every one.",
     features: [{ label: "Everything in Silver, plus:", italic: true }],
     plusFeatures: ["Unlock \"Existing contracts\"", "Capture all renewal commission", "Contract renewal reminder and messaging"],
     recommended: "Experienced agent who needs support in capturing all contract renewal income by tracking existing contracts.",
@@ -68,6 +72,8 @@ const PLANS = [
     monthly: 498, annualMonthly: 415, annualTotal: 4980, annualSavings: 996,
     monthlyAnnualTotal: 5976,
     roiMonths: "5 months free",
+    headline: "Your complete\nops hub.",
+    tagline: "Goal planning, performance tracking, and property services — everything in one place.",
     features: [{ label: "Everything in Platinum, plus:", italic: true }],
     plusFeatures: ["Property support management", "Performance dashboard", "Analytics and newsletter"],
     recommended: "Elite agent who wants everything in one-place, including goal planning, performance tracking, property services contacts.",
@@ -250,7 +256,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
         <header className="mb-10">
           <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>Subscription</h1>
           <p className="mt-2 kk-body" style={{ color: "var(--kk-ink-mute)" }}>
-            If kakisewa helps you <strong style={{ color: "var(--kk-ink)" }}>capture just 1 missed contract renewal at RM 2,000</strong>, it means kakisewa is...
+            One missed renewal at RM 2,000 pays for <strong style={{ color: "var(--kk-ink)" }}>years</strong> of kakisewa. Never miss one again.
           </p>
 
           {/* Status pills */}
@@ -275,16 +281,6 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
 
             return (
               <div key={plan.name} className="flex flex-col">
-                {/* ROI label above card */}
-                <div className="text-center mb-3 h-8 flex items-end justify-center">
-                  <span
-                    className="text-[22px] font-bold tracking-tight leading-none"
-                    style={{ color: "var(--kk-green)" }}
-                  >
-                    {plan.roiMonths}
-                  </span>
-                </div>
-
                 {/* Card */}
                 <div
                   className="rounded-2xl flex flex-col overflow-hidden flex-1"
@@ -315,14 +311,41 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                   )}
 
                   <div className="p-6 flex flex-col gap-5 flex-1">
-                    {/* Name + price */}
+                    {/* Outcome headline */}
                     <div className={plan.popular || isCurrentPlan ? "pr-24" : ""}>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: s.faint }}>{plan.name}</p>
-                      <p className="text-[32px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
-                        RM {plan.monthly}
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3" style={{ color: s.faint }}>{plan.name}</p>
+                      <p className="text-[26px] font-bold leading-[1.15]" style={{ color: s.ink }}>
+                        {plan.headline.split("\n").map((line, i) => (
+                          <span key={i}>{line}{i < plan.headline.split("\n").length - 1 && <br />}</span>
+                        ))}
                       </p>
-                      <p className="text-[12px] mt-1" style={{ color: s.mute }}>/month</p>
+                      <p className="text-[12px] mt-2 leading-relaxed" style={{ color: s.mute }}>{plan.tagline}</p>
                     </div>
+
+                    {/* Price block */}
+                    <div>
+                      <div className="flex items-end gap-2">
+                        <span className="text-[36px] font-bold leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>
+                          RM {plan.monthly}
+                        </span>
+                        <span className="text-[13px] pb-1" style={{ color: s.mute }}>/month</span>
+                      </div>
+                      {/* Savings badge */}
+                      <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                        <span
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold"
+                          style={{ background: s.roiGreen, color: "#fff" }}
+                        >
+                          {plan.roiMonths}
+                        </span>
+                        <span className="text-[11px]" style={{ color: s.faint }}>
+                          when billed annually · save RM {plan.annualSavings}/yr
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ borderTop: `1px solid ${s.faint}`, opacity: 0.3 }} />
 
                     {/* Features */}
                     <ul className="space-y-2.5 flex-1">
@@ -344,12 +367,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                       ))}
                       {plan.plusFeatures.map((f, i) => (
                         <li key={`plus-${i}`} className="flex items-start gap-2.5">
-                          <span
-                            className="font-black shrink-0 leading-none"
-                            style={{ color: s.roiGreen, fontSize: "18px", marginTop: "1px" }}
-                          >
-                            +
-                          </span>
+                          <span className="text-[12px] font-bold shrink-0 mt-px" style={{ color: s.roiGreen }}>✓</span>
                           <span className="text-[13px] font-semibold leading-snug" style={{ color: s.ink }}>{f}</span>
                         </li>
                       ))}
@@ -357,26 +375,14 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
 
                     {/* Recommended for */}
                     <div>
-                      <div style={{ borderTop: `1px solid ${s.faint}`, opacity: 0.4, marginBottom: 10 }} />
-                      <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Recommended for</p>
+                      <div style={{ borderTop: `1px solid ${s.faint}`, opacity: 0.3, marginBottom: 10 }} />
+                      <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: s.faint }}>Best for</p>
                       <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
                     </div>
 
                     {/* Buttons */}
                     <div className="flex flex-col gap-2">
-                      {/* Pay monthly */}
-                      <button
-                        onClick={() => setPending({ plan, interval: "monthly" })}
-                        className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
-                        style={{ background: s.btnBg, color: s.btnInk, border: "none", boxShadow: s.btnShadow }}
-                      >
-                        <span className="text-[15px] font-bold">Pay monthly</span>
-                        <span className="text-[12px] opacity-70">
-                          RM {plan.monthlyAnnualTotal.toLocaleString()} total/year
-                        </span>
-                      </button>
-
-                      {/* Pay annually — strikethrough comparison */}
+                      {/* Pay annually — primary */}
                       <button
                         onClick={() => setPending({ plan, interval: "annual" })}
                         className="w-full py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex flex-col items-center gap-0.5"
@@ -391,9 +397,15 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                             RM {plan.annualTotal.toLocaleString()}/year
                           </span>
                         </span>
-                        <span className="text-[11px] font-medium" style={{ color: s.roiGreen }}>
-                          save RM {plan.annualSavings} · 2 months free
-                        </span>
+                      </button>
+
+                      {/* Pay monthly — secondary */}
+                      <button
+                        onClick={() => setPending({ plan, interval: "monthly" })}
+                        className="w-full py-2.5 rounded-xl transition-all hover:opacity-80 active:scale-[0.98]"
+                        style={{ background: "transparent", color: s.mute, border: `1px solid ${s.faint}` }}
+                      >
+                        <span className="text-[13px]">Pay monthly · RM {plan.monthly}/mo</span>
                       </button>
                     </div>
                   </div>
