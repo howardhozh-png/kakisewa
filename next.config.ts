@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      // Serve the new kakisewa icon for all direct /favicon.ico requests (Google, browsers)
+      { source: "/favicon.ico", destination: "/pwa-icon/32" },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {
