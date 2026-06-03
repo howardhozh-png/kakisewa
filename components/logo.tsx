@@ -43,6 +43,7 @@ function LogoMark({ size = 28, className }: { size?: number; className?: string 
       role="img"
       aria-label="kakisewa"
       fill="none"
+      shapeRendering="crispEdges"
       className={className}
     >
       <path

@@ -179,10 +179,10 @@ export function LandingInstallPrompt() {
               </div>
               <div>
                 <p className="text-[18px] font-bold leading-tight" style={{ color: "#fff" }}>
-                  No download required
+                  For a better experience
                 </p>
                 <p className="text-[13px] mt-1 leading-snug" style={{ color: "rgba(255,255,255,0.5)" }}>
-                  Add kakisewa to your home screen as an app
+                  Add kakisewa as an app on your homepage, no App Store needed
                 </p>
               </div>
             </div>
@@ -192,7 +192,7 @@ export function LandingInstallPrompt() {
               className="w-full py-4 rounded-2xl text-[16px] font-bold transition-opacity hover:opacity-90 active:opacity-75"
               style={{ background: "#34C759", color: "#fff" }}
             >
-              Add to Home Screen →
+              Add to Homepage →
             </button>
             <button
               onClick={dismiss}
