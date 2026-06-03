@@ -24,7 +24,7 @@ export async function GET(
       >
         <svg viewBox="0 0 24 24" width={logoSz} height={logoSz} fill="none">
           <path
-            d="M5 2.5 L5 20.5 L20 20.5 M5 20.5 L20 5.5"
+            d="M6 3 L6 21 L17 21 M6 12 L17 4"
             stroke="#000000"
             strokeWidth="2.8"
             strokeLinecap="butt"

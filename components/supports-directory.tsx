@@ -66,7 +66,7 @@ function ContactCard({
       {/* Preferred badge — fades out on hover to reveal action buttons */}
       {preferred && (
         <span
-          className="absolute top-0 right-0 text-[10px] font-bold px-2.5 py-1 rounded-bl-2xl pointer-events-none group-hover:opacity-0 transition-opacity duration-150"
+          className="absolute top-0 right-0 text-[10px] font-bold px-2.5 py-1 rounded-bl-2xl pointer-events-none group-hover:opacity-0 [@media(hover:none)]:opacity-0 transition-opacity duration-150"
           style={{ background: "rgba(254,243,199,0.95)", color: "#92400E", zIndex: 10, border: "1px solid rgba(217,119,6,0.25)", borderTop: "none", borderRight: "none", borderTopRightRadius: 16 }}
         >
           ⭐ Preferred
@@ -75,7 +75,7 @@ function ContactCard({
 
       {/* Action buttons — absolute top-right, swap in on hover */}
       <div
-        className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-150"
         style={{ zIndex: 20 }}
       >
         <Tip label={contact.starred ? "Unstar" : "Star"}>
