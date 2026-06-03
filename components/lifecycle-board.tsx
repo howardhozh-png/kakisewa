@@ -383,7 +383,7 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         className="kk-board-col-header"
         style={{
           borderBottomColor: col.soft,
-          ...(isHeadsup ? { background: "rgb(255,241,237)" } : {}),
+          ...(isHeadsup ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}),
         }}
       >
         <div className="flex items-center gap-2">

@@ -91,7 +91,7 @@ export function getTheme(key?: string | null): Theme {
   return THEMES.find((t) => t.key === key) ?? THEMES[0];
 }
 
-function applyTheme(t: Theme) {
+export function applyTheme(t: Theme) {
   const r = document.documentElement;
   r.style.setProperty("--kk-bg", t.bg);
   r.style.setProperty("--kk-topnav-bg", t.topnavBg);

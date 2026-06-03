@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
 import { DEMO_EVENT } from "@/components/onboarding-demo-modal";
-import { THEMES, getTheme, type Theme } from "@/components/accent-provider";
+import { THEMES, getTheme, applyTheme, type Theme } from "@/components/accent-provider";
 import { AgentProfile } from "@/lib/types";
 import { saveProfileDetails } from "@/lib/actions";
 import { PhotoCropModal } from "@/components/photo-crop-modal";
@@ -779,16 +779,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
   function pickTheme(t: Theme) {
     setThemeKey(t.key);
-    const r = document.documentElement;
-    r.style.setProperty("--kk-bg", t.bg);
-    r.style.setProperty("--kk-topnav-bg", t.topnavBg);
-    r.style.setProperty("--kk-bar-bg", t.barBg);
-    r.style.setProperty("--kk-accent", t.accent);
-    r.style.setProperty("--kk-topnav-ink", t.topnavInk ?? "var(--kk-ink)");
-    r.style.setProperty("--kk-topnav-mute", t.topnavMute ?? "var(--kk-ink-mute)");
-    r.style.setProperty("--kk-topnav-active", t.topnavActive ?? t.accent);
-    r.style.setProperty("--kk-bar-ink", t.barInk ?? "var(--kk-ink)");
-    r.style.setProperty("--kk-bar-mute", t.barMute ?? "var(--kk-ink-mute)");
+    applyTheme(t);
     saveProfileDetails({ accent_color: t.key });
   }
 
