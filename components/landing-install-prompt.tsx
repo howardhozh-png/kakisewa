@@ -168,30 +168,12 @@ export function LandingInstallPrompt() {
               </div>
               <div>
                 <p className="text-[18px] font-bold leading-tight" style={{ color: "#fff" }}>
-                  kakisewa works like an app
+                  No download required
                 </p>
                 <p className="text-[13px] mt-1 leading-snug" style={{ color: "rgba(255,255,255,0.5)" }}>
-                  Better experience. No App Store.
+                  Add kakisewa to your home screen as an app
                 </p>
               </div>
-            </div>
-
-            {/* Value props */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              {[
-                "No browser bar",
-                "Launches instantly",
-                "Zero storage used",
-                "Works offline",
-              ].map((f) => (
-                <span
-                  key={f}
-                  className="text-[12px] font-medium px-3 py-1 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.65)" }}
-                >
-                  {f}
-                </span>
-              ))}
             </div>
 
             <button
@@ -201,10 +183,6 @@ export function LandingInstallPrompt() {
             >
               Add to Home Screen →
             </button>
-
-            <p className="text-center text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.3)" }}>
-              Takes 10 seconds · No download required
-            </p>
           </>
         ) : (
           /* ── Step-by-step ── */
