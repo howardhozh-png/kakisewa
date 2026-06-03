@@ -22,16 +22,16 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "kakisewa — Tenancy CRM",
+  title: "kakisewa",
   description: "kakisewa, #1 property agent platform",
   openGraph: {
-    title: "kakisewa — Tenancy CRM",
+    title: "kakisewa",
     description: "kakisewa, #1 property agent platform",
     siteName: "kakisewa",
   },
   twitter: {
     card: "summary",
-    title: "kakisewa — Tenancy CRM",
+    title: "kakisewa",
     description: "kakisewa, #1 property agent platform",
   },
   icons: {
