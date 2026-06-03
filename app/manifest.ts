@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Tenancy CRM for Malaysian real estate agents",
     start_url: "/home",
     display: "standalone",
-    background_color: "#1C1C1E",
+    background_color: "#FFFFFF",
     theme_color: "#FFFFFF",
     orientation: "portrait-primary",
     lang: "en-MY",
