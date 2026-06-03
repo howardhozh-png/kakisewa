@@ -311,14 +311,16 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                   )}
 
                   <div className="p-6 flex flex-col gap-5 flex-1">
-                    {/* Outcome headline */}
-                    <div className={plan.popular || isCurrentPlan ? "pr-24" : ""}>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3" style={{ color: s.faint }}>{plan.name}</p>
-                      <p className="text-[26px] font-bold leading-[1.15]" style={{ color: s.ink }}>
-                        {plan.headline.split("\n").map((line, i) => (
-                          <span key={i}>{line}{i < plan.headline.split("\n").length - 1 && <br />}</span>
-                        ))}
-                      </p>
+                    {/* Outcome headline — min-height so price row aligns across all cards */}
+                    <div style={{ minHeight: 140 }}>
+                      <div className={plan.popular || isCurrentPlan ? "pr-24" : ""}>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3" style={{ color: s.faint }}>{plan.name}</p>
+                        <p className="text-[26px] font-bold leading-[1.15]" style={{ color: s.ink }}>
+                          {plan.headline.split("\n").map((line, i) => (
+                            <span key={i}>{line}{i < plan.headline.split("\n").length - 1 && <br />}</span>
+                          ))}
+                        </p>
+                      </div>
                       <p className="text-[12px] mt-2 leading-relaxed" style={{ color: s.mute }}>{plan.tagline}</p>
                     </div>
 
