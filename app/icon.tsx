@@ -17,11 +17,11 @@ export default function Icon() {
           justifyContent: "center",
         }}
       >
-        <svg viewBox="0 0 24 24" width={22} height={22} fill="none">
+        <svg viewBox="0 0 24 24" width={28} height={28} fill="none">
           <path
-            d="M6.5 3.5 L6.5 18.5 L15.5 18.5 M6.5 18.5 L15.5 9.5"
+            d="M5 2.5 L5 20.5 L20 20.5 M5 20.5 L20 5.5"
             stroke="#000000"
-            strokeWidth="3.2"
+            strokeWidth="2.8"
             strokeLinecap="butt"
             strokeLinejoin="miter"
           />

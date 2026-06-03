@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     description: "kakisewa, #1 property agent platform",
   },
   icons: {
-    apple: [{ url: "/pwa-icon/180?v=10", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/pwa-icon/180?v=11", sizes: "180x180", type: "image/png" }],
   },
   other: {
     "mobile-web-app-capable": "yes",
@@ -48,6 +48,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: "cover",
 };
 

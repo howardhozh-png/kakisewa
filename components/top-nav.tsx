@@ -755,17 +755,20 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
     };
   }, []);
 
-  // After the first-time onboarding demo closes, redirect to billing page
+  // After the first-time onboarding demo closes, redirect to billing — trial users only
   useEffect(() => {
-    function onDemoFirstClose() { setTimeout(() => router.push("/subscription"), 400); }
+    function onDemoFirstClose() {
+      if (agent.subscription_status !== "trial") return;
+      setTimeout(() => router.push("/subscription"), 400);
+    }
     document.addEventListener("kk:demo-first-close", onDemoFirstClose);
     return () => document.removeEventListener("kk:demo-first-close", onDemoFirstClose);
-  }, [router]);
+  }, [router, agent.subscription_status]);
 
-  // On every login during a trial, show the subscription modal once per session
+  // On every login during a trial, nudge to subscription once per session
   useEffect(() => {
     if (isAdmin) return;
-    if (trialDaysLeft == null) return;
+    if (agent.subscription_status !== "trial") return;
     const SESSION_KEY = "kk_sub_shown";
     if (sessionStorage.getItem(SESSION_KEY)) return;
     sessionStorage.setItem(SESSION_KEY, "1");

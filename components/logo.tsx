@@ -46,9 +46,9 @@ function LogoMark({ size = 28, className }: { size?: number; className?: string 
       className={className}
     >
       <path
-        d="M6.5 3.5 L6.5 18.5 L15.5 18.5 M6.5 18.5 L15.5 9.5"
+        d="M5 2.5 L5 20.5 L20 20.5 M5 20.5 L20 5.5"
         stroke="currentColor"
-        strokeWidth="3.2"
+        strokeWidth="2.8"
         strokeLinecap="butt"
         strokeLinejoin="miter"
       />
