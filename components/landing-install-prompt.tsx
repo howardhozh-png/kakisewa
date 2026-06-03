@@ -164,10 +164,10 @@ export function LandingInstallPrompt() {
               <div className="shrink-0 rounded-2xl flex items-center justify-center" style={{ width: 56, height: 56, background: "#fff" }}>
                 <svg viewBox="0 0 24 24" width={36} height={36} fill="none">
                   <path
-                    d="M6 3 L6 19 L21 19 M6 19 L20.5 4"
+                    d="M6.5 3.5 L6.5 18.5 L15.5 18.5 M6.5 18.5 L15.5 9.5"
                     stroke="#000000"
                     strokeWidth="3.2"
-                    strokeLinecap="square"
+                    strokeLinecap="butt"
                     strokeLinejoin="miter"
                   />
                 </svg>

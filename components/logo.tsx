@@ -46,10 +46,10 @@ function LogoMark({ size = 28, className }: { size?: number; className?: string 
       className={className}
     >
       <path
-        d="M6 3 L6 19 L21 19 M6 19 L20.5 4"
+        d="M6.5 3.5 L6.5 18.5 L15.5 18.5 M6.5 18.5 L15.5 9.5"
         stroke="currentColor"
         strokeWidth="3.2"
-        strokeLinecap="square"
+        strokeLinecap="butt"
         strokeLinejoin="miter"
       />
     </svg>
