@@ -640,7 +640,7 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
           type="button" data-card-action
           onClick={(e) => { e.stopPropagation(); sendIntakeForm(); }}
           disabled={pending}
-          className="kk-card-cta"
+          className="kk-card-cta kk-card-cta-soft-green"
         >
           <span className="flex items-start gap-1.5 min-w-0 flex-1">
             {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
@@ -669,8 +669,7 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
           href={`/matching/${l.id}`}
           data-card-action
           onClick={(e) => e.stopPropagation()}
-          className="kk-card-cta flex items-center justify-between w-full"
-          style={hasOwnerRanking ? { background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.30)", color: "#1F8B4C" } : {}}
+          className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
         >
           <span className="flex items-start gap-1.5 min-w-0 flex-1">
             <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
