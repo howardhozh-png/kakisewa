@@ -58,7 +58,7 @@ export default async function NetworkPage({ searchParams }: Props) {
   }));
 
   return (
-    <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
+    <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="kk-overline mb-3">Directory</p>

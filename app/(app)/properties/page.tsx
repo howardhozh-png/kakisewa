@@ -15,7 +15,7 @@ export default async function PropertiesPage() {
   }, {});
 
   return (
-    <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-12 lg:py-16">
+    <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
       <header className="flex items-end justify-between gap-6 mb-12 lg:mb-16">
         <div>
           <p className="kk-overline mb-3">Portfolio</p>

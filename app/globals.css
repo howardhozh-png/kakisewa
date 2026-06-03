@@ -610,8 +610,10 @@
 
 /* ─── Mobile responsive overrides (< 1024px) ─────────────────────────────── */
 @media (max-width: 1023px) {
-  /* Scale down 48px display headings to 36px so "Existing Contracts" fits */
-  .kk-display { font-size: var(--kk-display-3); }
+  /* Scale down headings for mobile */
+  .kk-display { font-size: 1.625rem; } /* 26px — was 48px desktop / 36px mid */
+  .kk-h1      { font-size: 1.375rem; } /* 22px */
+  .kk-body    { font-size: var(--kk-body); }    /* 15px instead of 17px */
 
   /* Ensure desktop-only nav sections never bleed through on mobile */
   .kk-topnav-desktop { display: none; }
