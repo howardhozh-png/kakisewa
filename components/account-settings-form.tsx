@@ -263,13 +263,15 @@ function renderWAHtml(template: string, vars: Record<string, string>): string {
 function WhatsAppPreviewModal({
   spec,
   body,
+  renNumber,
   onClose,
 }: {
   spec: TemplateSpec;
   body: string;
+  renNumber: string;
   onClose: () => void;
 }) {
-  const sampleVars = SAMPLE_VARS[spec.key as TemplateKey] ?? {};
+  const sampleVars = { renNumber, ...SAMPLE_VARS[spec.key as TemplateKey] };
   const html = renderWAHtml(body, sampleVars);
 
   useEffect(() => {
@@ -341,6 +343,7 @@ function TemplateCard({
   value,
   isOpen,
   isCustomised,
+  renNumber,
   onChange,
   onToggle,
 }: {
@@ -348,6 +351,7 @@ function TemplateCard({
   value: string;
   isOpen: boolean;
   isCustomised: boolean;
+  renNumber: string;
   onChange: (v: string) => void;
   onToggle: () => void;
 }) {
@@ -357,7 +361,7 @@ function TemplateCard({
   return (
     <>
       {showPreview && (
-        <WhatsAppPreviewModal spec={spec} body={value} onClose={() => setShowPreview(false)} />
+        <WhatsAppPreviewModal spec={spec} body={value} renNumber={renNumber} onClose={() => setShowPreview(false)} />
       )}
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
         {/* Header */}
@@ -634,6 +638,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
               value={bodies[spec.key]}
               isOpen={openKey === spec.key}
               isCustomised={bodies[spec.key] !== spec.defaultBody}
+              renNumber={renNumber}
               onChange={(v) => setBodies((prev) => ({ ...prev, [spec.key]: v }))}
               onToggle={() => setOpenKey(openKey === spec.key ? null : spec.key)}
             />
