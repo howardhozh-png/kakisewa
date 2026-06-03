@@ -17,6 +17,8 @@ export type Theme = {
   barMute?: string;
   stepPanelBg?: string;      // home step card left panel background
   stepPanelInk?: string;     // home step card number/label color
+  themeDark?: string;        // --kk-theme-dark: solid themed ink for boards/badges
+  themeLight?: string;       // --kk-theme-light: soft tinted bg for boards/badges
 };
 
 export const THEMES: Theme[] = [
@@ -30,6 +32,8 @@ export const THEMES: Theme[] = [
     accent: "#1D1D1F",
     stepPanelBg: "#EBEBF0",
     stepPanelInk: "#1D1D1F",
+    themeDark: "#3D3D44",
+    themeLight: "rgba(60,60,67,0.10)",
   },
   {
     key: "navy_blue",
@@ -46,6 +50,8 @@ export const THEMES: Theme[] = [
     barMute: "rgba(255,255,255,0.75)",
     stepPanelBg: "#001F3F",
     stepPanelInk: "#FFFFFF",
+    themeDark: "#004B87",
+    themeLight: "rgba(0,75,135,0.12)",
   },
   {
     key: "autumn_red",
@@ -60,6 +66,8 @@ export const THEMES: Theme[] = [
     topnavActive: "#FFFFFF",
     stepPanelBg: "#8B3D3D",
     stepPanelInk: "#FFFFFF",
+    themeDark: "#8B3D3D",
+    themeLight: "rgba(139,61,61,0.12)",
   },
   {
     key: "matcha",
@@ -74,6 +82,8 @@ export const THEMES: Theme[] = [
     topnavActive: "#FFFFFF",
     stepPanelBg: "#2D6A4F",
     stepPanelInk: "#FFFFFF",
+    themeDark: "#2D6A4F",
+    themeLight: "rgba(45,106,79,0.12)",
   },
 ];
 
@@ -94,6 +104,8 @@ function applyTheme(t: Theme) {
   r.style.setProperty("--kk-bar-mute", t.barMute ?? "var(--kk-ink-mute)");
   r.style.setProperty("--kk-step-panel-bg", t.stepPanelBg ?? "#EBEBF0");
   r.style.setProperty("--kk-step-panel-ink", t.stepPanelInk ?? "var(--kk-ink)");
+  r.style.setProperty("--kk-theme-dark", t.themeDark ?? "#3D3D44");
+  r.style.setProperty("--kk-theme-light", t.themeLight ?? "rgba(60,60,67,0.10)");
 }
 
 export function AccentProvider({ color }: { color?: string | null }) {

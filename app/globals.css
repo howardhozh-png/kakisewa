@@ -103,6 +103,8 @@
   --kk-bar-mute:     var(--kk-ink-mute);
   --kk-step-panel-bg:  #EBEBF0;        /* home step card left panel — theme override */
   --kk-step-panel-ink: var(--kk-ink);  /* home step card number color */
+  --kk-theme-dark:     #3D3D44;        /* board/badge solid ink — theme override */
+  --kk-theme-light:    rgba(60,60,67,0.10); /* board/badge soft bg — theme override */
   --kk-ink:          #1D1D1F;          /* primary text */
   --kk-ink-soft:     #424245;          /* secondary text */
   --kk-ink-mute:     #6E6E73;          /* muted */
@@ -378,6 +380,7 @@
 .kk-card-cta-soft-green  { background: var(--kk-green-soft);  color: #1F8B4C; border-color: rgba(52,199,89,0.20); }
 .kk-card-cta-soft-purple { background: var(--kk-purple-soft); color: #6F2DA8; border-color: rgba(175,82,222,0.20); }
 .kk-card-cta-soft-blue   { background: var(--kk-blue-soft);   color: var(--kk-blue); border-color: rgba(0,113,227,0.20); }
+.kk-card-cta-soft-theme  { background: var(--kk-theme-light); color: var(--kk-theme-dark); border-color: var(--kk-theme-light); }
 .kk-card-cta-soft-red    { background: var(--kk-red-soft);    color: #C62828; border-color: rgba(255,59,48,0.20); }
 
 /* ─── Icon button (small circle, e.g. contact card actions) ────────────────── */

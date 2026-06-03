@@ -27,7 +27,7 @@ interface ColMeta {
 }
 
 const COLUMNS: ColMeta[] = [
-  { stage: "headsup",  label: "Expiring",  hint: "Expires soon. Use 'What's next?' on the card to choose the outcome.", dot: "#F4511E",             soft: "rgba(244,81,30,0.12)", ink: "#C03810",            Icon: AlertTriangle },
+  { stage: "headsup",  label: "Expiring",  hint: "Expires soon. Use 'What's next?' on the card to choose the outcome.", dot: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", ink: "var(--kk-theme-dark)", Icon: AlertTriangle },
   { stage: "renewing", label: "Renewing",  hint: "Both confirmed. Collect commission and set the new end date.",         dot: "var(--kk-green)",     soft: "var(--kk-green-soft)", ink: "#1F8B4C",            Icon: CheckCircle   },
   { stage: "active",   label: "Active",    hint: "Tenancy in good standing. Nothing due yet.",                           dot: "var(--kk-ink-faint)", soft: "var(--kk-surface-2)",  ink: "var(--kk-ink-mute)", Icon: CircleDashed  },
 ];
@@ -624,8 +624,8 @@ const OUTCOME_META: Record<Exclude<OutcomeChoice, "">, {
     label: "Find new tenant",
     description: "This will keep the property listed for a new tenant. You'll be prompted to create the listing through Make New Money.",
     confirm: "Set up new listing",
-    soft: "var(--kk-blue-soft)",
-    ink: "var(--kk-blue)",
+    soft: "var(--kk-theme-light)",
+    ink: "var(--kk-theme-dark)",
     Icon: ArrowRight,
   },
   stop: {
@@ -658,7 +658,7 @@ function HeadsupOwnerAction({ t }: { t: Tenancy }) {
       data-card-action
       onClick={handleClick}
       disabled={pending}
-      className="kk-card-cta kk-card-cta-soft-blue"
+      className="kk-card-cta kk-card-cta-soft-theme"
     >
       <span className="flex items-start gap-1.5 min-w-0 flex-1">
         {pending

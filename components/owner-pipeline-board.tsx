@@ -31,8 +31,8 @@ interface ColMeta {
 // Visible columns — terminal stages (own_stay, archived) hidden by default.
 // Imported leads are managed in the Outreach tab — Pipeline shows responded+ only.
 const COLUMNS: ColMeta[] = [
-  { stage: "listed",   label: "Listed",     hint: "Build the tenant pack. Find the right tenant and close the deal.", ink: "#004C99", soft: "rgba(0,113,227,0.18)", dot: "var(--kk-blue)", Icon: Megaphone },
-  { stage: "matched",  label: "Rented",     hint: "Well done, proud of you!",                                         ink: "#003D80", soft: "rgba(0,113,227,0.30)", dot: "#004C99", Icon: Check     },
+  { stage: "listed",   label: "Listed",     hint: "Build the tenant pack. Find the right tenant and close the deal.", ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Megaphone },
+  { stage: "matched",  label: "Rented",     hint: "Well done, proud of you!",                                         ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Check     },
 ];
 
 // Terminal stages — hidden by default
