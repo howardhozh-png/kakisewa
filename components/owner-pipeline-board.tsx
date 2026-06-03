@@ -63,15 +63,17 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [purposeFilter, setPurposeFilter] = useState<"" | "rent" | "sell">("");
   const [minRent, setMinRent] = useState<string>("");
   const [monthFilter, setMonthFilter] = useState<string>("");
+  const [ownerRespondedFilter, setOwnerRespondedFilter] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
 
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
 
-  // Auto-refresh every 15s while any lead has an intake sent but not completed
+  // Auto-refresh every 15s while any lead has pending intake OR active listed deals (catches owner pack rankings)
   useEffect(() => {
     const hasPending = local.some((l) => l.intake_sent_at && !l.intake_completed_at);
-    if (!hasPending) return;
+    const hasActive = local.some((l) => ["listed", "wants_rent", "replied"].includes(l.stage));
+    if (!hasPending && !hasActive) return;
     const id = setInterval(() => router.refresh(), 15_000);
     return () => clearInterval(id);
   }, [local, router]);
@@ -141,9 +143,10 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (minRent && (l.expected_rent ?? 0) < parseFloat(minRent)) return false;
       if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
       if (monthFilter && !["listed", "wants_rent", "replied"].includes(l.stage)) return false;
+      if (ownerRespondedFilter && ["listed", "wants_rent", "replied"].includes(l.stage) && !rankedLeadIds.has(l.id)) return false;
       return true;
     });
-  }, [local, propertyFilter, purposeFilter, minRent, monthFilter]);
+  }, [local, propertyFilter, purposeFilter, minRent, monthFilter, ownerRespondedFilter, rankedLeadIds]);
 
   const byStage = useMemo(() => {
     const out: Record<Stage, OwnerLead[]> = {
@@ -252,9 +255,20 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           className="text-[13px] px-4 py-1.5 rounded-full font-medium"
           style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 148 }}
         />
-        {(propertyFilter || purposeFilter || minRent) && (
+        <button
+          onClick={() => setOwnerRespondedFilter((v) => !v)}
+          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
+          style={{
+            background: ownerRespondedFilter ? "rgba(52,199,89,0.12)" : "rgba(0,0,0,0.06)",
+            border: ownerRespondedFilter ? "1px solid rgba(52,199,89,0.40)" : "1px solid var(--kk-line)",
+            color: ownerRespondedFilter ? "#1F8B4C" : "var(--kk-ink-mute)",
+          }}
+        >
+          <CheckCircle2 className="w-3 h-3" /> Owner responded
+        </button>
+        {(propertyFilter || purposeFilter || minRent || ownerRespondedFilter) && (
           <button
-            onClick={() => { setPropertyFilter(""); setPurposeFilter(""); setMinRent(""); }}
+            onClick={() => { setPropertyFilter(""); setPurposeFilter(""); setMinRent(""); setOwnerRespondedFilter(false); }}
             className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
             style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
           >
@@ -520,6 +534,11 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l:
           {l.expected_rent != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
           {l.bedrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bedrooms} bed</span>}
           {l.bathrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bathrooms} bath</span>}
+          {hasOwnerRanking && (
+            <span className="px-2 py-0.5 rounded-full font-semibold flex items-center gap-1" style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C", border: "1px solid rgba(52,199,89,0.25)" }}>
+              <CheckCircle2 className="w-2.5 h-2.5" /> Owner responded
+            </span>
+          )}
         </div>
       )}
 
@@ -665,6 +684,21 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
   if (stage === "listed") {
     return (
       <div className="space-y-2">
+        {hasOwnerRanking && (
+          <Link
+            href={`/matching/${l.id}`}
+            data-card-action
+            onClick={(e) => e.stopPropagation()}
+            className="kk-card-cta flex items-center justify-between w-full"
+            style={{ background: "#34C759", color: "#fff", border: "none" }}
+          >
+            <span className="flex items-start gap-1.5 min-w-0 flex-1">
+              <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>Review owner&apos;s response</span>
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          </Link>
+        )}
         <Link
           href={`/matching/${l.id}`}
           data-card-action
@@ -673,7 +707,7 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
         >
           <span className="flex items-start gap-1.5 min-w-0 flex-1">
             <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>{hasOwnerRanking ? "Check owner ranking" : "Build tenant pack"}</span>
+            <span>Build tenant pack</span>
           </span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
         </Link>
