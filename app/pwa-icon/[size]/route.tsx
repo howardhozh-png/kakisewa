@@ -22,10 +22,13 @@ export async function GET(
           justifyContent: "center",
         }}
       >
-        <svg viewBox="0 0 24 24" width={logoSz} height={logoSz} fill="#000000">
-          <rect x="3.5" y="3" width="4" height="18" rx="0.5" />
-          <path d="M7.5 12 L18.5 3 L21 5.5 L10 14.5 Z" />
-          <path d="M7.5 12 L10 9.5 L21 18.5 L18.5 21 Z" />
+        <svg viewBox="0 0 24 24" width={logoSz} height={logoSz} fill="none">
+          <path
+            d="M5.5 3 L5.5 21 M5.5 12 L19.5 3.5 M5.5 12 L19.5 20.5"
+            stroke="#000000"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
     ),

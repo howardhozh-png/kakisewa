@@ -42,16 +42,15 @@ function LogoMark({ size = 28, className }: { size?: number; className?: string 
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="kakisewa"
+      fill="none"
       className={className}
     >
-      <g fill="currentColor">
-        {/* Stem */}
-        <rect x="3.5" y="3" width="4" height="18" rx="0.5" />
-        {/* Upper arm — diagonal key shaft */}
-        <path d="M7.5 12 L18.5 3 L21 5.5 L10 14.5 Z" />
-        {/* Lower arm — diagonal key blade */}
-        <path d="M7.5 12 L10 9.5 L21 18.5 L18.5 21 Z" />
-      </g>
+      <path
+        d="M5.5 3 L5.5 21 M5.5 12 L19.5 3.5 M5.5 12 L19.5 20.5"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
