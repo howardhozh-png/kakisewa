@@ -486,6 +486,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const [name, setName] = useState(agent.name ?? "");
   const [phone, setPhone] = useState(agent.phone ?? "");
   const [agency, setAgency] = useState(agent.agency ?? "");
+  const [renNumber, setRenNumber] = useState(agent.ren_number ?? "");
   const [pending, startTransition] = useTransition();
 
   // Change password state
@@ -510,11 +511,12 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const dirty =
     name !== (agent.name ?? "") ||
     phone !== (agent.phone ?? "") ||
-    agency !== (agent.agency ?? "");
+    agency !== (agent.agency ?? "") ||
+    renNumber !== (agent.ren_number ?? "");
 
   function handleSave() {
     startTransition(async () => {
-      const res = await saveProfileDetails({ name: name.trim(), phone: phone.trim(), agency: agency.trim() });
+      const res = await saveProfileDetails({ name: name.trim(), phone: phone.trim(), agency: agency.trim(), ren_number: renNumber.trim() || null });
       if (res.ok) toast.success("Profile saved");
       else toast.error("Failed to save");
     });
@@ -573,6 +575,13 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           <div>
             <p className="kk-overline mb-1.5">Agency / company</p>
             <input type="text" value={agency} onChange={(e) => setAgency(e.target.value)} placeholder="e.g. Wonders Property" style={INPUT_STYLE} />
+          </div>
+          <div>
+            <p className="kk-overline mb-1.5">REN number</p>
+            <input type="text" value={renNumber} onChange={(e) => setRenNumber(e.target.value)} placeholder="e.g. REN12345" style={INPUT_STYLE} />
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--kk-ink-faint)" }}>
+              Appended to your name in outreach messages — e.g. &ldquo;Ahmad (REN12345)&rdquo;.
+            </p>
           </div>
         </div>
         <button

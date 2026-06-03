@@ -212,6 +212,10 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
       {/* Availability bar chart — respects property filter */}
       <div className="kk-section p-5 mb-5">
+        <div className="mb-4">
+          <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>Owner availability pipeline</p>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>See which units become available over the next 1-3 years — reach owners before anyone else does.</p>
+        </div>
         <AvailabilityTimeline
           leads={local.filter((l) => {
             if (propertyFilter && l.property_name !== propertyFilter) return false;

@@ -31,6 +31,10 @@ const COMPARISONS: Comparison[] = [
     before: <><X />Sends tenant profiles one by one on WhatsApp. Looks unprofessional, feels like spam.</>,
     after: <><V />One <strong>branded tenant pack</strong> link. Owners take you seriously from the first message.</>,
   },
+  {
+    before: <><X />No idea which units are coming available or which contracts expire in 6, 12, 24 months. Income is a guessing game.</>,
+    after: <><V /><strong>See your income pipeline 1-3 years ahead.</strong> Know exactly which owners become available and which contracts expire — plan before anyone else does.</>,
+  },
 ];
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
