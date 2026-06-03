@@ -23,9 +23,9 @@ export async function GET(
         }}
       >
         <svg viewBox="0 0 24 24" width={logoSz} height={logoSz} fill="#000000">
-          <rect x="3.5" y="3" width="4" height="18" />
-          <path d="M6.53 10.54 L20.03 1.54 L21.97 4.46 L8.47 13.46 Z" />
-          <path d="M8.47 10.54 L21.97 19.54 L20.03 22.46 L6.53 13.46 Z" />
+          <rect x="3.5" y="3" width="4" height="18" rx="0.5" />
+          <path d="M7.5 12 L18.5 3 L21 5.5 L10 14.5 Z" />
+          <path d="M7.5 12 L10 9.5 L21 18.5 L18.5 21 Z" />
         </svg>
       </div>
     ),
