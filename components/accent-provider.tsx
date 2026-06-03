@@ -106,6 +106,7 @@ export function applyTheme(t: Theme) {
   r.style.setProperty("--kk-step-panel-ink", t.stepPanelInk ?? "var(--kk-ink)");
   r.style.setProperty("--kk-theme-dark", t.themeDark ?? "#3D3D44");
   r.style.setProperty("--kk-theme-light", t.themeLight ?? "rgba(60,60,67,0.10)");
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute("content", t.topnavBg);
 }
 
 export function AccentProvider({ color }: { color?: string | null }) {

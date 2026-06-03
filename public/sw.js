@@ -1,0 +1,59 @@
+const CACHE = 'kk-v1';
+const OFFLINE_URL = '/offline';
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.add(OFFLINE_URL))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // Only handle same-origin GET requests
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Skip API and auth routes — let them fall through
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) return;
+
+  // Static assets: cache-first
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.open(CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+      })
+    );
+    return;
+  }
+
+  // Navigation: network-first, fall back to cache then offline page
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        const offlinePage = await caches.match(OFFLINE_URL);
+        return offlinePage ?? Response.error();
+      })
+    );
+    return;
+  }
+
+  // Everything else: network only
+});

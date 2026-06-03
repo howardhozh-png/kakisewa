@@ -179,6 +179,14 @@
 * { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 
+/* ─── PWA / Native app feel ─────────────────────────────────────────────── */
+html, body {
+  overscroll-behavior: none;
+}
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ─── Type utilities ─────────────────────────────────────────────────────── */
 .serif { font-family: var(--font-serif), "New York", Georgia, serif; }
 
@@ -251,6 +259,7 @@
 .kk-topnav {
   background: var(--kk-topnav-bg);
   border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-top: env(safe-area-inset-top);
 }
 .kk-topnav-link {
   position: relative;
@@ -622,7 +631,7 @@
 
   /* Ensure desktop-only nav sections never bleed through on mobile */
   .kk-topnav-desktop { display: none; }
-  .kk-topnav-hamburger { display: flex; }
+  .kk-topnav-hamburger { display: flex; padding-top: env(safe-area-inset-top); }
 
   /* Prevent iOS Safari from auto-zooming when tapping any input (iOS zooms inputs < 16px) */
   input, select, textarea { font-size: 16px; }
