@@ -423,8 +423,8 @@ export function SupportsDirectory({ initialContacts }: Props) {
   return (
     <>
       {/* Search + filter */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
           <input
             type="text"
@@ -436,7 +436,7 @@ export function SupportsDirectory({ initialContacts }: Props) {
           />
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {(["all", "starred", ...SUPPORT_TYPES] as const).map((t) => {
             if (t !== "all" && t !== "starred") {
               if (!contacts.some((c) => c.type === t)) return null;
@@ -449,7 +449,7 @@ export function SupportsDirectory({ initialContacts }: Props) {
               <button
                 key={t}
                 onClick={() => setFilterType(isActive && t !== "all" ? "all" : t)}
-                className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium"
+                className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium shrink-0"
                 style={{
                   background: isPreferred && isActive ? "rgba(254,243,199,0.9)" : isPreferred ? "rgba(254,249,231,0.7)" : isActive ? "var(--kk-ink)" : "var(--kk-surface-2)",
                   color: isPreferred ? "#92400E" : isActive ? "#fff" : "var(--kk-ink-mute)",
