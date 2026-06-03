@@ -100,21 +100,24 @@ export function LandingInstallPrompt() {
     }
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
 
-    const t = setTimeout(() => setVisible(true), 1500);
+    function onInstalled() { setVisible(false); }
+    window.addEventListener("appinstalled", onInstalled);
+
+    const t = setTimeout(() => setVisible(true), 600);
     return () => {
       clearTimeout(t);
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
 
-  function close() {
+  function dismiss() {
     setVisible(false);
     setShowSteps(false);
   }
 
   function handleCta() {
     if (platform === "android" && deferredPrompt.current) {
-      // Trigger native dialog immediately AND show steps as backup
       deferredPrompt.current.prompt();
     }
     setShowSteps(true);
@@ -129,11 +132,11 @@ export function LandingInstallPrompt() {
       className="fixed inset-0 z-[99990] flex items-end pointer-events-none"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {/* Backdrop */}
+      {/* Backdrop — only dismissible after steps shown */}
       <div
         className="absolute inset-0 pointer-events-auto"
-        style={{ background: "rgba(0,0,0,0.5)" }}
-        onClick={close}
+        style={{ background: "rgba(0,0,0,0.6)" }}
+        onClick={showSteps ? dismiss : undefined}
       />
 
       {/* Sheet */}
@@ -148,14 +151,16 @@ export function LandingInstallPrompt() {
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: "rgba(255,255,255,0.18)" }} />
 
-        {/* Close */}
-        <button
-          onClick={close}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
-          style={{ background: "rgba(255,255,255,0.1)" }}
-        >
-          <X className="w-4 h-4" style={{ color: "rgba(255,255,255,0.6)" }} />
-        </button>
+        {/* Close — only shown after steps */}
+        {showSteps && (
+          <button
+            onClick={dismiss}
+            className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+          >
+            <X className="w-4 h-4" style={{ color: "rgba(255,255,255,0.6)" }} />
+          </button>
+        )}
 
         {!showSteps ? (
           /* ── Landing view ── */
@@ -189,12 +194,19 @@ export function LandingInstallPrompt() {
             >
               Add to Home Screen →
             </button>
+            <button
+              onClick={dismiss}
+              className="w-full mt-3 py-2 text-[13px] transition-opacity hover:opacity-70"
+              style={{ color: "rgba(255,255,255,0.35)" }}
+            >
+              Maybe later
+            </button>
           </>
         ) : (
           /* ── Step-by-step ── */
           <>
             <p className="text-[17px] font-bold mb-1" style={{ color: "#fff" }}>
-              {platform === "ios" ? "Add kakisewa to Safari" : "Add kakisewa to Home Screen"}
+              Add kakisewa to your home screen
             </p>
             <p className="text-[13px] mb-6" style={{ color: "rgba(255,255,255,0.45)" }}>
               {platform === "ios"
@@ -220,7 +232,7 @@ export function LandingInstallPrompt() {
             </div>
 
             <button
-              onClick={close}
+              onClick={dismiss}
               className="w-full py-4 rounded-2xl text-[16px] font-bold transition-opacity hover:opacity-90"
               style={{ background: "#34C759", color: "#fff" }}
             >

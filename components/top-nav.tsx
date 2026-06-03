@@ -30,7 +30,7 @@ function navHasAccess(
   status: string | null | undefined,
   isAdmin: boolean,
 ): boolean {
-  if (!minPlan) return true;
+  if (isAdmin || !minPlan) return true;
   if (status === "trial") return true; // Full access during trial
   if (!plan) return false;
   return (PLAN_RANK[plan] ?? 0) >= PLAN_RANK[minPlan];
