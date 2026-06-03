@@ -101,6 +101,8 @@
   --kk-bar-bg:       var(--kk-bg);    /* greeting bar bg */
   --kk-bar-ink:      var(--kk-ink);   /* greeting bar text — theme override */
   --kk-bar-mute:     var(--kk-ink-mute);
+  --kk-step-panel-bg:  #EBEBF0;        /* home step card left panel — theme override */
+  --kk-step-panel-ink: var(--kk-ink);  /* home step card number color */
   --kk-ink:          #1D1D1F;          /* primary text */
   --kk-ink-soft:     #424245;          /* secondary text */
   --kk-ink-mute:     #6E6E73;          /* muted */

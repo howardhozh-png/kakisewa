@@ -15,6 +15,8 @@ export type Theme = {
   topnavActive?: string;
   barInk?: string;           // white for dark greeting bars
   barMute?: string;
+  stepPanelBg?: string;      // home step card left panel background
+  stepPanelInk?: string;     // home step card number/label color
 };
 
 export const THEMES: Theme[] = [
@@ -26,6 +28,8 @@ export const THEMES: Theme[] = [
     topnavBg: "#FFFFFF",
     barBg: "#F5F5F7",
     accent: "#1D1D1F",
+    stepPanelBg: "#EBEBF0",
+    stepPanelInk: "#1D1D1F",
   },
   {
     key: "navy_blue",
@@ -40,6 +44,8 @@ export const THEMES: Theme[] = [
     topnavActive: "#FFFFFF",
     barInk: "#FFFFFF",
     barMute: "rgba(255,255,255,0.75)",
+    stepPanelBg: "#001F3F",
+    stepPanelInk: "#FFFFFF",
   },
   {
     key: "autumn_red",
@@ -52,6 +58,8 @@ export const THEMES: Theme[] = [
     topnavInk: "#FFFFFF",
     topnavMute: "rgba(255,255,255,0.65)",
     topnavActive: "#FFFFFF",
+    stepPanelBg: "#8B3D3D",
+    stepPanelInk: "#FFFFFF",
   },
   {
     key: "matcha",
@@ -64,6 +72,8 @@ export const THEMES: Theme[] = [
     topnavInk: "#FFFFFF",
     topnavMute: "rgba(255,255,255,0.65)",
     topnavActive: "#FFFFFF",
+    stepPanelBg: "#2D6A4F",
+    stepPanelInk: "#FFFFFF",
   },
 ];
 
@@ -82,6 +92,8 @@ function applyTheme(t: Theme) {
   r.style.setProperty("--kk-topnav-active", t.topnavActive ?? t.accent);
   r.style.setProperty("--kk-bar-ink", t.barInk ?? "var(--kk-ink)");
   r.style.setProperty("--kk-bar-mute", t.barMute ?? "var(--kk-ink-mute)");
+  r.style.setProperty("--kk-step-panel-bg", t.stepPanelBg ?? "#EBEBF0");
+  r.style.setProperty("--kk-step-panel-ink", t.stepPanelInk ?? "var(--kk-ink)");
 }
 
 export function AccentProvider({ color }: { color?: string | null }) {

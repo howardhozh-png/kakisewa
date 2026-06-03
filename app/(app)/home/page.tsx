@@ -73,15 +73,15 @@ export default async function HomePage() {
             className="kk-card kk-card-hover flex overflow-hidden"
             style={{ textDecoration: "none", minHeight: 120 }}
           >
-            {/* Left step block — same neutral background for all steps */}
+            {/* Left step block — uses theme panel color */}
             <div
               className="flex flex-col items-center justify-center shrink-0 px-5 gap-1"
-              style={{ background: "var(--kk-surface-2)", width: 80, borderRight: `1px solid rgba(0,0,0,0.06)` }}
+              style={{ background: "var(--kk-step-panel-bg)", width: 80, borderRight: `1px solid rgba(0,0,0,0.06)` }}
             >
-              <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: step.accent, opacity: 0.7 }}>
+              <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-step-panel-ink)", opacity: 0.7 }}>
                 Step
               </span>
-              <span className="text-[32px] font-bold leading-none tabular-nums" style={{ color: step.accent }}>
+              <span className="text-[32px] font-bold leading-none tabular-nums" style={{ color: "var(--kk-step-panel-ink)" }}>
                 {step.number}
               </span>
             </div>
