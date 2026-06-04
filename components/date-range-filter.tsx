@@ -40,7 +40,9 @@ export function DateRangeFilter({ label = "Available from", from, to, onFrom, on
   function handleToggle() {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 8, left: r.left });
+      const panelWidth = Math.min(280, window.innerWidth - 16);
+      const left = Math.min(r.left, window.innerWidth - panelWidth - 8);
+      setPos({ top: r.bottom + 8, left: Math.max(8, left) });
     }
     setOpen((o) => !o);
   }
@@ -91,7 +93,7 @@ export function DateRangeFilter({ label = "Available from", from, to, onFrom, on
             borderRadius: 20,
             boxShadow: "0 16px 40px rgba(0,0,0,0.14)",
             padding: 20,
-            minWidth: 280,
+            width: Math.min(280, window.innerWidth - 16),
           }}
         >
           <p className="text-[11px] font-semibold mb-3 uppercase tracking-wide" style={{ color: "var(--kk-ink-faint)" }}>

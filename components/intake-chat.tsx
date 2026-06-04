@@ -411,11 +411,8 @@ function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Scroll into view so it's visible above the keyboard
     setTimeout(() => {
       inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Try to open picker automatically (desktop/Android — iOS opens on tap)
-      try { inputRef.current?.showPicker?.(); } catch { /* expected on iOS */ }
     }, 350);
   }, []);
 
@@ -436,26 +433,35 @@ function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
         <span className="text-[14px] font-semibold" style={{ color: "#1C1C1E" }}>Select move-in date</span>
       </div>
       <div className="px-4 pb-3">
-        {/* Visible tap target that wraps the native input */}
-        <label
-          htmlFor="intake-date"
-          className="flex items-center justify-between w-full px-4 py-3 rounded-xl cursor-pointer"
+        {/* Tap target — native date input is a transparent overlay so iOS opens picker directly */}
+        <div
+          className="relative flex items-center justify-between w-full px-4 py-3 rounded-xl"
           style={{ background: "#F2F2F7", border: value ? "1.5px solid #1C1C1E" : "1.5px solid #C7C7CC" }}
         >
-          <span className="text-[15px]" style={{ color: value ? "#1C1C1E" : "#AEAEB2" }}>
+          <span className="text-[15px] pointer-events-none" style={{ color: value ? "#1C1C1E" : "#AEAEB2" }}>
             {displayDate || "Tap to choose date"}
           </span>
-          <CalendarDays className="w-4 h-4" style={{ color: "#8E8E93" }} />
-        </label>
-        <input
-          ref={inputRef}
-          id="intake-date"
-          type="date"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="sr-only"
-          style={{ position: "absolute", opacity: 0, width: 1, height: 1 }}
-        />
+          <CalendarDays className="w-4 h-4 pointer-events-none" style={{ color: "#8E8E93" }} />
+          {/* Transparent native input covers the entire tap target */}
+          <input
+            ref={inputRef}
+            id="intake-date"
+            type="date"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              cursor: "pointer",
+              width: "100%",
+              height: "100%",
+              border: "none",
+              padding: 0,
+              margin: 0,
+            }}
+          />
+        </div>
       </div>
       <button
         type="button"

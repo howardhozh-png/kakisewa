@@ -36,14 +36,15 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
   const allDone = missions.every((m) => m.done);
   const doneCount = missions.filter((m) => m.done).length;
 
-  // Auto-open modal once per session on load
+  // Auto-open modal once per session on load (only if tasks are incomplete)
   useEffect(() => {
-    if (!isNewAgent || allDone) return;
+    if (!isNewAgent) return;
+    if (allDone) return; // don't interrupt when everything is done
     const wasDismissed = sessionStorage.getItem(SESSION_KEY) === "1";
     if (!wasDismissed) setModalOpen(true);
   }, [isNewAgent, allDone]);
 
-  if (!isNewAgent || allDone) return null;
+  if (!isNewAgent) return null;
 
   // CTA click: close modal but don't set dismiss flag — floating button stays accessible
   function go(href: string) {
@@ -51,7 +52,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
     router.push(href);
   }
 
-  // X button: dismiss for session, floating button hides too
+  // X button: sets session flag so modal won't auto-open next navigation, but button stays
   function dismissSession() {
     sessionStorage.setItem(SESSION_KEY, "1");
     setModalOpen(false);
@@ -65,7 +66,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
           onClick={() => setModalOpen(true)}
           className="fixed bottom-5 left-5 z-40 flex items-center gap-2 px-3.5 py-2 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
           style={{
-            background: "var(--kk-ink)",
+            background: allDone ? "var(--kk-green)" : "var(--kk-ink)",
             color: "#fff",
             fontSize: 12,
             fontWeight: 600,
@@ -104,10 +105,12 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
               Getting started
             </p>
             <h2 className="font-bold text-[18px] leading-tight mb-1" style={{ color: "var(--kk-ink)" }}>
-              Your setup checklist
+              {allDone ? "You're all set up!" : "Your setup checklist"}
             </h2>
             <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
-              {doneCount}/4 done — complete these to get the most out of kakisewa.
+              {allDone
+                ? "All 4 steps done. kakisewa is working for you."
+                : `${doneCount}/4 done — complete these to get the most out of kakisewa.`}
             </p>
 
             {/* Progress bar */}

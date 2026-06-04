@@ -40,12 +40,6 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  function openPicker() {
-    const el = nativeRef.current;
-    if (!el) return;
-    try { el.showPicker(); } catch { el.focus(); el.click(); }
-  }
-
   return (
     <div className="relative">
       <input
@@ -73,7 +67,19 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
           }
         }}
       />
-      {/* Hidden native date picker — value kept in sync for showPicker() to work */}
+
+      {/* Calendar icon — visual only */}
+      <div
+        className="absolute right-2.5 top-1/2 -translate-y-1/2"
+        style={{ color: "var(--kk-ink-faint)", pointerEvents: "none", zIndex: 1 }}
+        aria-hidden="true"
+      >
+        <CalendarDays className="w-4 h-4" />
+      </div>
+
+      {/* Transparent native date input covering the icon area.
+          On mobile iOS, tapping this directly opens the native date picker.
+          opacity:0 hides it visually while keeping it interactive. */}
       <input
         ref={nativeRef}
         type="date"
@@ -85,18 +91,20 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
         }}
         tabIndex={-1}
         aria-hidden="true"
-        style={{ position: "absolute", opacity: 0, width: 1, height: 1, top: 0, left: 0, pointerEvents: "none", border: "none", padding: 0 }}
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          width: 40,
+          height: "100%",
+          opacity: 0,
+          cursor: "pointer",
+          zIndex: 2,
+          border: "none",
+          padding: 0,
+          margin: 0,
+        }}
       />
-      <button
-        type="button"
-        onClick={openPicker}
-        tabIndex={-1}
-        className="absolute right-2.5 top-1/2 -translate-y-1/2"
-        style={{ color: "var(--kk-ink-faint)" }}
-        aria-label="Open date picker"
-      >
-        <CalendarDays className="w-4 h-4" />
-      </button>
     </div>
   );
 }
