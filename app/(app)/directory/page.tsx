@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports } from "@/lib/db";
+import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports, getAgentProfile } from "@/lib/db";
 import { checkTierGate } from "@/components/tier-gate";
 import { PageHelpButton } from "@/components/page-help-button";
 import { NetworkSubNav } from "@/components/network-sub-nav";
@@ -35,7 +35,8 @@ export default async function NetworkPage({ searchParams }: Props) {
   const { view: rawView } = await searchParams;
   const view = rawView === "properties" ? "properties" : rawView === "tenants" ? "tenants" : "contacts";
 
-  const [listed, tenantProfiles, activeTenants, supports] = await Promise.all([
+  const [agent, listed, tenantProfiles, activeTenants, supports] = await Promise.all([
+    getAgentProfile().catch(() => null),
     getListedOwnerLeads().catch(() => [] as Awaited<ReturnType<typeof getListedOwnerLeads>>),
     getAllTenantProfiles().catch(() => [] as Awaited<ReturnType<typeof getAllTenantProfiles>>),
     getAllActiveTenants().catch(() => [] as Awaited<ReturnType<typeof getAllActiveTenants>>),
@@ -104,7 +105,7 @@ export default async function NetworkPage({ searchParams }: Props) {
         <TenantsTable profiles={tenantProfiles} propertyTenants={propertyTenants} />
       )}
       {view === "contacts" && (
-        <SupportsDirectory initialContacts={supports} />
+        <SupportsDirectory initialContacts={supports} whatsappTemplates={agent?.whatsapp_templates} />
       )}
     </div>
   );

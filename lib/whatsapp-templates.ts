@@ -7,7 +7,8 @@ export type TemplateKey =
   | "owner_intake_form"
   | "expiry_check_tenant"
   | "expiry_check_owner"
-  | "rent_reminder";
+  | "rent_reminder"
+  | "service_contact_share";
 
 export interface TemplateVar { key: string; description: string }
 
@@ -127,6 +128,25 @@ Thank you!`,
       { key: "amount",       description: "Rent amount e.g. 2500.00" },
       { key: "propertyName", description: "Property name" },
       { key: "uploadUrl",    description: "Receipt upload link" },
+    ],
+  },
+  {
+    key: "service_contact_share",
+    label: "Share service contact",
+    description: "Sent when you share a trusted service contact (plumber, cleaner, etc.) via WhatsApp.",
+    defaultBody:
+`Hi! Here's a trusted {{contactType}} I recommend:
+
+*{{contactName}}*
+Tel: +{{contactPhone}}{{contactAreaLine}}{{contactNotesLine}}
+
+Feel free to contact them directly.`,
+    variables: [
+      { key: "contactType",     description: "Service type e.g. Cleaner, Plumber" },
+      { key: "contactName",     description: "Contact's name" },
+      { key: "contactPhone",    description: "Phone number (digits only)" },
+      { key: "contactAreaLine", description: "'\\nArea: ...' or blank" },
+      { key: "contactNotesLine", description: "'\\nNote: ...' or blank" },
     ],
   },
 ];

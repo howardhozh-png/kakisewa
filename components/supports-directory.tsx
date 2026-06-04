@@ -4,18 +4,25 @@ import { useState, useTransition, useMemo } from "react";
 import { Star, Pencil, Trash2, Share2, X, Check, Loader2, Search } from "lucide-react";
 import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_ICONS } from "@/lib/types";
 import { savePropertySupport, toggleSupportStar, removeSupportContact } from "@/lib/actions";
+import { resolveTemplate, parseTemplateOverrides } from "@/lib/whatsapp-templates";
 import { toast } from "sonner";
 
 interface Props {
   initialContacts: PropertySupport[];
+  whatsappTemplates?: string | null;
 }
 
 // ── Share via WhatsApp ────────────────────────────────────────────────────────
-function shareContact(c: PropertySupport) {
-  const label = SUPPORT_LABELS[c.type];
+function shareContact(c: PropertySupport, templateOverrides: ReturnType<typeof parseTemplateOverrides>) {
   const phone = c.phone.replace(/\D/g, "");
   const text = encodeURIComponent(
-    `Hi! Here's a trusted ${label} I recommend:\n\n*${c.name}*\nTel: +${phone}${c.area ? `\nArea: ${c.area}` : ""}${c.notes ? `\nNote: ${c.notes}` : ""}\n\nFeel free to contact them directly 🙂`
+    resolveTemplate("service_contact_share", templateOverrides, {
+      contactType:     SUPPORT_LABELS[c.type],
+      contactName:     c.name,
+      contactPhone:    phone,
+      contactAreaLine: c.area  ? `\nArea: ${c.area}`  : "",
+      contactNotesLine: c.notes ? `\nNote: ${c.notes}` : "",
+    })
   );
   window.open(`https://wa.me/?text=${text}`, "_blank", "noopener");
 }
@@ -41,11 +48,13 @@ function ContactCard({
   onEdit,
   onDelete,
   onStar,
+  onShare,
 }: {
   contact: PropertySupport;
   onEdit: (c: PropertySupport) => void;
   onDelete: (c: PropertySupport) => void;
   onStar: (c: PropertySupport) => void;
+  onShare: (c: PropertySupport) => void;
 }) {
   const phone = contact.phone.replace(/\D/g, "");
 
@@ -92,7 +101,7 @@ function ContactCard({
         </Tip>
         <Tip label="Share via WhatsApp">
           <button
-            onClick={() => shareContact(contact)}
+            onClick={() => onShare(contact)}
             className="kk-icon-btn w-7 h-7 rounded-full flex items-center justify-center"
             style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}
           >
@@ -359,7 +368,8 @@ function DeleteConfirm({ contact, onCancel, onConfirmed }: {
 }
 
 // ── Main directory ────────────────────────────────────────────────────────────
-export function SupportsDirectory({ initialContacts }: Props) {
+export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props) {
+  const templateOverrides = useMemo(() => parseTemplateOverrides(whatsappTemplates), [whatsappTemplates]);
   const [contacts, setContacts] = useState<PropertySupport[]>(initialContacts);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<SupportType | "all" | "starred">("all");
@@ -492,6 +502,7 @@ export function SupportsDirectory({ initialContacts }: Props) {
                     onEdit={setEditTarget}
                     onDelete={setDeleteTarget}
                     onStar={handleStar}
+                    onShare={(c) => shareContact(c, templateOverrides)}
                   />
                 ))}
               </div>
