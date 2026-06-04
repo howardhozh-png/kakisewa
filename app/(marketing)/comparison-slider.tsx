@@ -145,32 +145,35 @@ const KANBAN = [
   {
     id: "expiring",
     title: "EXPIRING",
-    icon: "⚠",
-    accent: "#F4511E",
+    icon: "△",
+    iconColor: "#F4511E",
+    subtitle: "Expires soon. Use 'What's next?' to choose the outcome.",
     cards: [
-      { name: "Aiman Hafiz",  prop: "The Park · A5905 · exp 15 Jul 2026", badge: "⚠ 41d",  badgeColor: "#F4511E" },
-      { name: "Nur Farhana",  prop: "Sri Damansara",                       badge: "⚠ 22d",  badgeColor: "#F4511E" },
+      { name: "Aiman Hafiz", prop: "The Park · A5905 · exp 15 Jul 2026", badge: "41d", badgeColor: "#F4511E" },
+      { name: "Nur Farhana", prop: "Sri Damansara · exp 28 Jun 2026",     badge: "22d", badgeColor: "#F4511E" },
     ],
   },
   {
     id: "renewing",
     title: "RENEWING",
     icon: "✓",
-    accent: "#34C759",
+    iconColor: "#34C759",
+    subtitle: "Both confirmed. Collect commission and set the new end date.",
     cards: [
-      { name: "Rajesh Kumar", prop: "Bangsar South",      badge: "✓ Commission due", badgeColor: "#34C759" },
-      { name: "Lee Wei",      prop: "Mutiara Damansara",  badge: "✓ Commission due", badgeColor: "#34C759" },
+      { name: "Rajesh Kumar", prop: "Bangsar South · Unit 8-2A",     badge: "Commission due", badgeColor: "#34C759" },
+      { name: "Lee Wei",      prop: "Mutiara Damansara · Unit 12-B",  badge: "Commission due", badgeColor: "#34C759" },
     ],
   },
   {
     id: "active",
     title: "ACTIVE",
     icon: "○",
-    accent: "#AEAEB2",
+    iconColor: "#AEAEB2",
+    subtitle: "Tenancy in good standing. Nothing due yet.",
     cards: [
-      { name: "Ahmad S.",  prop: "Puchong Perdana", badge: "✓ 198d remain", badgeColor: "#34C759" },
-      { name: "Priya N.",  prop: "Subang Mewah",    badge: "✓ 156d remain", badgeColor: "#34C759" },
-      { name: "Hasrul",    prop: "Kepong C-12",      badge: "✓ 89d remain",  badgeColor: "#34C759" },
+      { name: "Ahmad S.",  prop: "Puchong Perdana · exp Mar 2027", badge: "198d remain", badgeColor: "#34C759" },
+      { name: "Priya N.",  prop: "Subang Mewah · exp Feb 2027",    badge: "156d remain", badgeColor: "#34C759" },
+      { name: "Hasrul",    prop: "Kepong C-12 · exp Sep 2026",     badge: "89d remain",  badgeColor: "#F4511E" },
     ],
   },
 ];
@@ -293,7 +296,7 @@ function KakiSewaPanel() {
               <div key={i} style={{ flex: 1 }}>
                 <div style={{
                   width: "100%", borderRadius: "2px 2px 0 0",
-                  background: v === CHART_MAX ? "#1D9244" : "#34C759",
+                  background: v === CHART_MAX ? "#636366" : "#AEAEB2",
                   height: `${Math.round((v / CHART_MAX) * 40)}px`,
                   minHeight: 3,
                 }} />
@@ -308,44 +311,66 @@ function KakiSewaPanel() {
         </div>
 
         {/* Kanban */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, flex: 1 }}>
-          {KANBAN.map(col => (
-            <div key={col.id} style={{
-              background: "#fff", borderRadius: 10,
-              border: col.id === "active"
-                ? "1px solid rgba(0,0,0,0.1)"
-                : `1px solid ${col.accent}`,
-              overflow: "hidden",
+        <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+          {/* "Don't forget your money!" tooltip above EXPIRING */}
+          <div style={{ position: "absolute", top: -26, left: "1%", zIndex: 10, pointerEvents: "none" }}>
+            <div style={{
+              background: "#1D1D1F", color: "#fff", borderRadius: 20,
+              padding: "4px 10px", fontSize: 8.5, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
             }}>
-              <div style={{ padding: "6px 8px 5px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                <span style={{
-                  fontSize: 8.5, fontWeight: 700, textTransform: "uppercase",
-                  letterSpacing: "0.07em", color: col.accent,
-                }}>
-                  {col.title} {col.cards.length}
-                </span>
-              </div>
-              <div style={{ padding: "5px 7px", display: "flex", flexDirection: "column", gap: 4 }}>
-                {col.cards.map(card => (
-                  <div key={card.name} style={{
-                    background: "#fff", borderRadius: 7,
-                    border: "1px solid rgba(0,0,0,0.07)",
-                    padding: "6px 8px",
-                  }}>
-                    <p style={{ fontSize: 10, fontWeight: 600, color: "#1D1D1F", lineHeight: 1.2 }}>{card.name}</p>
-                    <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 1 }}>{card.prop}</p>
-                    <div style={{
-                      marginTop: 4, display: "inline-flex", padding: "1px 6px",
-                      borderRadius: 20, fontSize: 8, fontWeight: 600,
-                      background: `${card.badgeColor}18`, color: card.badgeColor,
-                    }}>
-                      {card.badge}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <span>💸</span> Don&apos;t forget your money!
             </div>
-          ))}
+            <div style={{
+              width: 0, height: 0,
+              borderLeft: "5px solid transparent",
+              borderRight: "5px solid transparent",
+              borderTop: "5px solid #1D1D1F",
+              marginLeft: 18,
+            }} />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, flex: 1 }}>
+            {KANBAN.map(col => (
+              <div key={col.id} style={{
+                background: "#F5F5F7",
+                borderRadius: 10,
+                border: "1px solid rgba(0,0,0,0.08)",
+                overflow: "hidden",
+                display: "flex", flexDirection: "column",
+              }}>
+                {/* Column header */}
+                <div style={{ padding: "7px 9px 4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#1D1D1F", display: "flex", alignItems: "center", gap: 3 }}>
+                      <span style={{ color: col.iconColor }}>{col.icon}</span> {col.title}
+                    </span>
+                    <span style={{ fontSize: 8.5, color: "#86868B", fontWeight: 600 }}>{col.cards.length}</span>
+                  </div>
+                  <p style={{ fontSize: 7.5, color: "#86868B", marginTop: 2, lineHeight: 1.4 }}>{col.subtitle}</p>
+                </div>
+                {/* Cards */}
+                <div style={{ padding: "4px 7px 7px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                  {col.cards.map(card => (
+                    <div key={card.name} style={{
+                      background: "#fff", borderRadius: 7,
+                      border: "1px solid rgba(0,0,0,0.07)",
+                      padding: "6px 8px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <p style={{ fontSize: 10, fontWeight: 600, color: "#1D1D1F", lineHeight: 1 }}>{card.name}</p>
+                        <span style={{
+                          fontSize: 8, fontWeight: 600, color: card.badgeColor,
+                          background: `${card.badgeColor}18`, borderRadius: 20, padding: "1px 5px",
+                        }}>{card.badge}</span>
+                      </div>
+                      <p style={{ fontSize: 8.5, color: "#6E6E73", marginTop: 2 }}>{card.prop}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
