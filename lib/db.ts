@@ -712,11 +712,11 @@ export async function countTenantProfiles(): Promise<number> {
   return count ?? 0;
 }
 
-export async function countPropertySupports(): Promise<number> {
+export async function countPropertySupports(since?: Date): Promise<number> {
   const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("property_supports")
-    .select("*", { count: "exact", head: true });
+  let q = supabase.from("property_supports").select("*", { count: "exact", head: true });
+  if (since) q = q.gte("created_at", since.toISOString());
+  const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
 }

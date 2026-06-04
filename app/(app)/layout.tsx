@@ -12,12 +12,13 @@ import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTena
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [agent, leadCount, contractCount, tenantCount, supportCount] = await Promise.all([
-    getAgentProfile(),
+  const agent = await getAgentProfile();
+  const trialStart = agent.trial_started_at ? new Date(agent.trial_started_at) : undefined;
+  const [leadCount, contractCount, tenantCount, supportCount] = await Promise.all([
     countOwnerLeads().catch(() => null),
     countLifecycleTenancies().catch(() => null),
     countTenantProfiles().catch(() => null),
-    countPropertySupports().catch(() => null),
+    countPropertySupports(trialStart).catch(() => null),
   ]);
   // Fire streak update without blocking the render — only writes once per day
   recordLoginStreak().catch(() => {});
@@ -36,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
   const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
-  const trialStartedAt = agent.trial_started_at ? new Date(agent.trial_started_at) : null;
+  const trialStartedAt = trialStart ?? null;
   const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 999;
   const isNewAgent = daysSinceSignup <= 30;
 
