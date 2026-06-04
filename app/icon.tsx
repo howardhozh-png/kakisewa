@@ -31,7 +31,7 @@ export default function Icon() {
           justifyContent: "center",
         }}
       >
-        <div style={{ position: "relative", width: L, height: L }}>
+        <div style={{ position: "relative", display: "flex", width: L, height: L }}>
           <div style={{ position: "absolute", left: stemLeft, top: stemTop, width: sw, height: stemH, background: "#000000" }} />
           <div style={{ position: "absolute", left: midX, top: midY - sw / 2, width: ARM1_LEN_FRAC * L, height: sw, background: "#000000", transformOrigin: "0 50%", transform: `rotate(${ARM1_ANGLE}deg)` }} />
           <div style={{ position: "absolute", left: midX, top: midY - sw / 2, width: ARM2_LEN_FRAC * L, height: sw, background: "#000000", transformOrigin: "0 50%", transform: `rotate(${ARM2_ANGLE}deg)` }} />

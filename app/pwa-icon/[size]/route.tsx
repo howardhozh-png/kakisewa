@@ -36,7 +36,7 @@ export async function GET(
         }}
       >
         {/* Pure CSS divs — no SVG, no stroke rendering, no 3D fringe */}
-        <div style={{ position: "relative", width: L, height: L }}>
+        <div style={{ position: "relative", display: "flex", width: L, height: L }}>
           {/* Vertical stem */}
           <div
             style={{
