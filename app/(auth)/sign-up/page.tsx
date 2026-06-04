@@ -37,6 +37,7 @@ function SignUpForm() {
   const [renHint, setRenHint] = useState<string | null>(null)
   const [renLppehName, setRenLppehName] = useState<string | null>(null)
   const [renConfirmed, setRenConfirmed] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL
 
@@ -83,6 +84,7 @@ function SignUpForm() {
     e.preventDefault()
     setError(null)
     if (form.password !== form.confirm) { setError("Passwords do not match."); return }
+    if (!form.agency.trim()) { setError("Agency/Company is required."); return }
     if (!isAdmin && !form.ren_number.trim()) { setError("REN number is required."); return }
     if (!isAdmin && renStatus === "invalid") { setError("Please enter a valid REN number."); return }
     if (!isAdmin && renStatus === "valid" && renLppehName && !renConfirmed) { setError("Please confirm this is your LPPEH registration."); return }
@@ -97,7 +99,8 @@ function SignUpForm() {
       },
     })
     if (err) { setError(err.message); setLoading(false); return }
-    router.push("/sign-up/verify")
+    setLoading(false)
+    setSubmitted(true)
   }
 
   const inputCls = "w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
@@ -155,21 +158,44 @@ function SignUpForm() {
           <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>
             kakisewa
           </p>
-          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Create your agent account</p>
+          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{submitted ? "Check your email" : "Create your agent account"}</p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+        {submitted ? (
+          <div className="rounded-2xl p-7 flex flex-col items-center gap-4 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--kk-green-subtle, #DCFCE7)" }}>
+              <svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="var(--kk-green)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <p className="font-semibold" style={{ color: "var(--kk-ink)", fontSize: "var(--kk-body)" }}>Verify your email to activate</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                An email has been sent to{" "}
+                <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>{form.email}</span>.
+                Kindly click the link to activate your account.
+              </p>
+              <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
+                If you don't click the link, no account will be created.
+              </p>
+            </div>
+            <Link href="/sign-in" className="w-full rounded-xl py-2.5 font-semibold text-center transition-opacity hover:opacity-80"
+              style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", marginTop: 4 }}>
+              Back to sign in
+            </Link>
+          </div>
+        ) : (
+          <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>First name <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="text" required value={form.first_name} onChange={set("first_name")} placeholder="Ahmad" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <input type="text" required value={form.first_name} onChange={set("first_name")} placeholder="Jane" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Last name <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="text" required value={form.last_name} onChange={set("last_name")} placeholder="Firdaus" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <input type="text" required value={form.last_name} onChange={set("last_name")} placeholder="Lo" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
               </div>
             </div>
 
@@ -181,11 +207,11 @@ function SignUpForm() {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Phone <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="tel" required value={form.phone} onChange={set("phone")} placeholder="60107609699" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <input type="tel" required value={form.phone} onChange={set("phone")} placeholder="601xxxxxxxx" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Agency/Company</label>
-                <input type="text" value={form.agency} onChange={set("agency")} placeholder="IQI Global" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Agency/Company <span style={{ color: "#DC2626" }}>*</span></label>
+                <input type="text" required value={form.agency} onChange={set("agency")} placeholder="kakisewa" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
               </div>
             </div>
 
@@ -202,7 +228,7 @@ function SignUpForm() {
                 value={form.ren_number}
                 onChange={e => { set("ren_number")(e); setRenStatus("idle"); setRenHint(null) }}
                 onBlur={e => { onBlur(e); if (!isAdmin && e.target.value.trim()) validateRen(e.target.value.trim()) }}
-                placeholder="REN07128"
+                placeholder="RENxxxxx"
                 className={inputCls}
                 style={{
                   ...inputStyle,
@@ -260,14 +286,17 @@ function SignUpForm() {
             </button>
 
           </form>
-        </div>
+          </div>
+        )}
 
-        <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
-          Already have an account?{" "}
-          <Link href="/sign-in" style={{ color: "var(--kk-ink)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
-            Sign in
-          </Link>
-        </p>
+        {!submitted && (
+          <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
+            Already have an account?{" "}
+            <Link href="/sign-in" style={{ color: "var(--kk-ink)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
+              Sign in
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   )
