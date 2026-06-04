@@ -6,6 +6,7 @@ import { HowItWorks } from "./how-it-works";
 import { Faq } from "./faq";
 import { AnimatedHero } from "./animated-hero";
 import { ComparisonSlider } from "./comparison-slider";
+import { PainPointCards } from "./pain-point-cards";
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
   return (
@@ -14,55 +15,6 @@ function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }
     </span>
   );
 }
-
-interface Point {
-  num: string;
-  hook: React.ReactNode;
-  quote: string;
-  role: string;
-}
-
-const POINTS: Point[] = [
-  {
-    num: "01",
-    hook: (
-      <>
-        You&rsquo;re losing{" "}
-        <span style={{ color: "#DC2626" }}>passive income</span>
-        {" "}every month.{" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>You just can&rsquo;t see it.</span>
-      </>
-    ),
-    quote: "I forgot which contract was expiring. Found out when the owner texted asking for a new tenant. Someone else was already showing the unit. That renewal commission was mine and I lost it.",
-    role: "Property agent · 6 years · Kuala Lumpur",
-  },
-  {
-    num: "02",
-    hook: (
-      <>
-        You can&rsquo;t see{" "}
-        <span style={{ color: "#DC2626" }}>the next 3 years</span>
-        {" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>of your own income.</span>
-      </>
-    ),
-    quote: "I had no idea which contracts were expiring or which owners would be free in 6 months. I was always reacting. kakisewa shows me the next 2 years at a glance.",
-    role: "Independent negotiator · 4 years · Petaling Jaya",
-  },
-  {
-    num: "03",
-    hook: (
-      <>
-        Sending WhatsApp texts to owners.{" "}
-        <span style={{ color: "#DC2626" }}>No brand, no tracking.</span>
-        {" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>Converting far fewer leads than you should.</span>
-      </>
-    ),
-    quote: "I'd send 10 WhatsApp messages and get 1 reply. Once I started using a branded tenant pack link, owners responded faster and took me more seriously. Conversion went up straight away.",
-    role: "Senior negotiator · 5 years · Subang Jaya",
-  },
-];
 
 export default function LandingPage() {
   return (
@@ -97,68 +49,7 @@ export default function LandingPage() {
 
       {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
       <section className="px-6 lg:px-10 py-20 lg:py-28" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
-        <div className="max-w-[1500px] mx-auto grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-[color:var(--kk-line)]">
-          {POINTS.map((pt, i) => (
-            <div
-              key={pt.num}
-              className={[
-                "text-center flex flex-col py-12 lg:py-0 px-6 sm:px-12",
-                i === 0 ? "lg:pl-0 lg:pr-[clamp(2.5rem,5vw,5rem)]" : "",
-                i === 1 ? "lg:px-[clamp(2.5rem,5vw,5rem)]" : "",
-                i === 2 ? "lg:pr-0 lg:pl-[clamp(2.5rem,5vw,5rem)]" : "",
-                i > 0 ? "border-t lg:border-t-0" : "",
-              ].filter(Boolean).join(" ")}
-            >
-              <p
-                className="serif font-black"
-                style={{
-                  fontSize: "clamp(3.5rem, 5vw, 5.5rem)",
-                  color: "var(--kk-line-strong)",
-                  lineHeight: 1,
-                  marginBottom: "1.75rem",
-                  letterSpacing: "-0.04em",
-                }}
-              >
-                {pt.num}
-              </p>
-              <h2
-                className="serif mb-5"
-                style={{
-                  fontSize: "clamp(1.7rem, 2.2vw, 2.6rem)",
-                  lineHeight: 1.15,
-                  letterSpacing: "-0.022em",
-                  color: "var(--kk-ink)",
-                }}
-              >
-                {pt.hook}
-              </h2>
-              <p
-                className="mb-4"
-                style={{
-                  fontSize: "clamp(0.78rem, 0.9vw, 0.88rem)",
-                  color: "var(--kk-ink-faint)",
-                  fontStyle: "italic",
-                  lineHeight: 1.75,
-                }}
-              >
-                &ldquo;{pt.quote}&rdquo;
-              </p>
-              <p
-                style={{
-                  fontSize: "var(--kk-xs)",
-                  color: "var(--kk-ink-faint)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  fontWeight: 500,
-                  marginTop: "auto",
-                  opacity: 0.6,
-                }}
-              >
-                {pt.role}
-              </p>
-            </div>
-          ))}
-        </div>
+        <PainPointCards />
       </section>
 
       {/* ── Today vs KakiSewa ─────────────────────────────────────────────── */}
@@ -180,7 +71,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Mid-page CTA ──────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-16 text-center" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-12 py-16 text-center" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <p
           className="serif mx-auto mb-2"
           style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)", lineHeight: 1.15, letterSpacing: "-0.022em", maxWidth: "30ch", color: "var(--kk-ink)" }}
@@ -200,7 +91,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-12 py-24" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[720px] mx-auto">
           <div className="text-center mb-14">
             <p

@@ -103,20 +103,25 @@ function DemoCursor({ x, y, clicking, hidden }: { x: number; y: number; clicking
   return (
     <div style={{
       position: "absolute", left: 0, top: 0, pointerEvents: "none", zIndex: 20,
-      transform: `translate(${x}px, ${y}px)`,
+      transform: `translate(${x - 11}px, ${y - 11}px)`,
       transition: "transform 0.9s cubic-bezier(0.33,1,0.68,1)",
       willChange: "transform",
     }}>
       {clicking && (
         <div style={{
-          position: "absolute", width: 30, height: 30, left: -6, top: -6,
-          borderRadius: "50%", background: "rgba(0,122,255,0.18)",
+          position: "absolute", width: 44, height: 44, left: -11, top: -11,
+          borderRadius: "50%", background: "rgba(80,80,80,0.15)",
           animation: "kk-demo-click 0.45s ease-out forwards",
         }} />
       )}
-      <svg width="18" height="22" viewBox="0 0 18 22" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.35))" }}>
-        <path d="M2 1L2 17L6 12.5L9.5 20.5L11.5 19.5L8 11.5L13.5 11.5Z" fill="white" stroke="#111" strokeWidth="1.4" strokeLinejoin="round" />
-      </svg>
+      <div style={{
+        width: 22, height: 22, borderRadius: "50%",
+        background: "rgba(255,255,255,0.60)",
+        border: "1.5px solid rgba(80,80,80,0.35)",
+        boxShadow: "0 1px 5px rgba(0,0,0,0.20)",
+        transform: clicking ? "scale(0.82)" : "scale(1)",
+        transition: "transform 0.12s",
+      }} />
     </div>
   );
 }

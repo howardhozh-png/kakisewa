@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Medal, Circle, CheckCircle2 } from "lucide-react";
+import { Star, Circle, CheckCircle2 } from "lucide-react";
 import { bumpStreak } from "@/lib/actions";
 
 function formatTime(d: Date): string {
@@ -120,7 +120,7 @@ function saveState(s: FortuneState) {
 function StreakBadge({ streak, checkedIn, onBump }: { streak: number; checkedIn: boolean; onBump: () => void }) {
   return (
     <div className="flex items-center gap-2 shrink-0">
-      <Medal className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--kk-bar-ink)", opacity: 0.75 }} />
+      <Star className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--kk-bar-ink)", opacity: 0.75 }} />
       <span className="text-[12px] font-medium tabular-nums" style={{ color: "var(--kk-bar-ink)", opacity: 0.75 }}>
         <span className="hidden sm:inline">{streak} days show up</span>
         <span className="sm:hidden">{streak}d</span>
