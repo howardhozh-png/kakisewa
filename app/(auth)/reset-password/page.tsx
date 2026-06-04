@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
     if (err) { setError(err.message); return }
     await createClient().auth.signOut()
     setDone(true)
-    setTimeout(() => router.push("/login"), 3000)
+    setTimeout(() => router.push("/sign-in"), 3000)
   }
 
   return (
