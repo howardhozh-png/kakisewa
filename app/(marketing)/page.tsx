@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { HowItWorks } from "./how-it-works";
 import { Faq } from "./faq";
-import { SeeHowButton } from "./see-how-button";
+import { AnimatedHero } from "./animated-hero";
 
 const X = () => <span style={{ color: "#DC2626", fontWeight: 900, fontSize: "1.1em", marginRight: 6 }}>✗</span>;
 const V = () => <span style={{ color: "#16a34a", fontWeight: 900, fontSize: "1.1em", marginRight: 6 }}>✓</span>;
@@ -123,33 +123,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 pt-24 pb-28 text-center" style={{ background: "var(--kk-bg)" }}>
-        <h1
-          className="serif mx-auto"
-          style={{ fontSize: "clamp(3rem, 7vw, 6rem)", lineHeight: 1.05, letterSpacing: "-0.025em", maxWidth: "18ch", marginBottom: 36 }}
-        >
-          Make more money from property{" "}
-          <span style={{ color: "var(--kk-green)" }}>with kakisewa.</span>
-        </h1>
-
-        <p
-          className="mx-auto mb-10"
-          style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "var(--kk-ink-mute)", lineHeight: 1.6, maxWidth: "48ch" }}
-        >
-          Renewal commission is passive income. Most agents leave it on the table
-          because they have no system. kakisewa makes sure you never miss another one.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-90"
-            style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body-lg)" }}
-          >
-            Start trial, expiring soon <ArrowRight className="w-4 h-4" />
-          </Link>
-          <SeeHowButton />
-        </div>
-      </section>
+      <AnimatedHero />
 
       {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
       <section className="px-6 lg:px-10 py-20 lg:py-28" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
