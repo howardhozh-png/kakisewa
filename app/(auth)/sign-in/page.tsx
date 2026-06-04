@@ -143,9 +143,7 @@ function SignInForm() {
                 </Link>
               </div>
               <input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
+                type="tel"
                 required
                 autoComplete="current-password"
                 maxLength={8}
@@ -159,7 +157,8 @@ function SignInForm() {
                   background: "var(--kk-bg)",
                   color: "var(--kk-ink)",
                   letterSpacing: "0.4em",
-                }}
+                  WebkitTextSecurity: "disc",
+                } as React.CSSProperties}
                 onFocus={e => {
                   e.currentTarget.style.borderColor = "var(--kk-green)";
                   e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });

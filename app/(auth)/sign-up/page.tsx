@@ -269,18 +269,18 @@ function SignUpForm() {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Passcode <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="password" inputMode="numeric" pattern="[0-9]*" required maxLength={8}
+                <input type="tel" required maxLength={8}
                   value={form.passcode} onChange={set("passcode")} placeholder="8 digits"
                   className={`${inputCls} text-center tracking-widest`}
-                  style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em" }}
+                  style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
                   onFocus={onFocus} onBlur={onBlur} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Confirm <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="password" inputMode="numeric" pattern="[0-9]*" required maxLength={8}
+                <input type="tel" required maxLength={8}
                   value={form.confirmPasscode} onChange={set("confirmPasscode")} placeholder="8 digits"
                   className={`${inputCls} text-center tracking-widest`}
-                  style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em" }}
+                  style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
                   onFocus={onFocus} onBlur={onBlur} />
               </div>
             </div>

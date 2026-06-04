@@ -84,20 +84,20 @@ export default function ResetPasswordPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>New passcode</label>
-                <input type="password" inputMode="numeric" pattern="[0-9]*" required maxLength={8}
+                <input type="tel" required maxLength={8}
                   value={password} onChange={e => setPassword(onlyDigits(e.target.value))}
                   placeholder="8 digits" className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all text-center tracking-widest"
-                  style={{ fontSize: "1.25rem", letterSpacing: "0.4em", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
+                  style={{ fontSize: "1.25rem", letterSpacing: "0.4em", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)", WebkitTextSecurity: "disc" } as React.CSSProperties}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
                   onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"} />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Confirm passcode</label>
-                <input type="password" inputMode="numeric" pattern="[0-9]*" required maxLength={8}
+                <input type="tel" required maxLength={8}
                   value={confirm} onChange={e => setConfirm(onlyDigits(e.target.value))}
                   placeholder="8 digits" className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all text-center tracking-widest"
-                  style={{ fontSize: "1.25rem", letterSpacing: "0.4em", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
+                  style={{ fontSize: "1.25rem", letterSpacing: "0.4em", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)", WebkitTextSecurity: "disc" } as React.CSSProperties}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
                   onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"} />
               </div>
