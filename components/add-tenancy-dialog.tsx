@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { Plus, Building2, Phone } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
@@ -19,6 +20,7 @@ const todayISO = () => new Date().toISOString().split("T")[0];
 export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [capBlock, setCapBlock] = useState<{ nearestExpiryDays: number | null } | null>(null);
 
   // Property autocomplete
   const [propertyName, setPropertyName] = useState("");
@@ -64,14 +66,25 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
     fd.set("owner_phone", ownerPhone);
     fd.set("amount", amount);
     startTransition(async () => {
-      await addTenancy(fd);
-      reset();
-      setOpen(false);
-      toast.success("Tenancy added.");
+      const res = await addTenancy(fd);
+      if (!res.ok && res.reason === "plan_cap_reached") {
+        setOpen(false);
+        setCapBlock({ nearestExpiryDays: res.nearest_expiry_days ?? null });
+      } else {
+        reset();
+        setOpen(false);
+        toast.success("Tenancy added.");
+      }
     });
   }
 
   return (
+    <>
+    <PlanCapDialog
+      open={!!capBlock}
+      nearestExpiryDays={capBlock?.nearestExpiryDays ?? null}
+      onClose={() => setCapBlock(null)}
+    />
     <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); setOpen(o); }}>
       <DialogTrigger
         render={
@@ -217,6 +230,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 

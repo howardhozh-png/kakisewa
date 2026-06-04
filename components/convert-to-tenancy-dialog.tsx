@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -22,6 +23,7 @@ interface Props {
 export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }: Props) {
   const [pending, startTransition] = useTransition();
   const [amount, setAmount] = useState(lead?.expected_rent != null ? String(lead.expected_rent) : "");
+  const [capBlock, setCapBlock] = useState<{ nearestExpiryDays: number | null } | null>(null);
 
   useEffect(() => {
     setAmount(lead?.expected_rent != null ? String(lead.expected_rent) : "");
@@ -46,6 +48,9 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
         toast.success("Tenancy created and lead marked as Matched.");
         onOpenChange(false);
         onConverted();
+      } else if (res.message === "plan_cap_reached") {
+        onOpenChange(false);
+        setCapBlock({ nearestExpiryDays: res.nearest_expiry_days ?? null });
       } else {
         toast.error(res.message);
       }
@@ -59,6 +64,12 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
     : (lead.property_name ?? "Property");
 
   return (
+    <>
+    <PlanCapDialog
+      open={!!capBlock}
+      nearestExpiryDays={capBlock?.nearestExpiryDays ?? null}
+      onClose={() => setCapBlock(null)}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
@@ -108,6 +119,7 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 

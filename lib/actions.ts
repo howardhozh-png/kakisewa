@@ -104,7 +104,7 @@ export async function removeProperty(id: string) {
 
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-export async function addTenancy(formData: FormData): Promise<{ ok: boolean; reason?: string; upgrade_to?: string }> {
+export async function addTenancy(formData: FormData): Promise<{ ok: boolean; reason?: string; upgrade_to?: string; nearest_expiry_days?: number | null }> {
   // Resolve property — use existing or create new
   let propertyId = (formData.get("property_id") as string) || "";
   if (!propertyId) {
@@ -132,7 +132,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; rea
   }
 
   const cap = await checkRenewalCardCap();
-  if (!cap.allowed) return { ok: false, reason: cap.reason, upgrade_to: cap.upgrade_to };
+  if (!cap.allowed) return { ok: false, reason: cap.reason, upgrade_to: cap.upgrade_to, nearest_expiry_days: cap.nearest_expiry_days };
 
   const newTenancy = await createTenancy({
     property_id: propertyId,
@@ -784,7 +784,7 @@ export async function convertLeadToTenancy(
     contract_start: string;
     contract_duration_months: number;
   }
-): Promise<{ ok: boolean; message: string; upgrade_to?: string }> {
+): Promise<{ ok: boolean; message: string; upgrade_to?: string; nearest_expiry_days?: number | null }> {
   try {
     const lead = await getOwnerLead(ownerLeadId);
     if (!lead) return { ok: false, message: "Owner lead not found." };
@@ -811,7 +811,7 @@ export async function convertLeadToTenancy(
     const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 
     const cap = await checkRenewalCardCap();
-    if (!cap.allowed) return { ok: false, message: cap.reason, upgrade_to: cap.upgrade_to };
+    if (!cap.allowed) return { ok: false, message: cap.reason, upgrade_to: cap.upgrade_to, nearest_expiry_days: cap.nearest_expiry_days };
 
     const signedTenancy = await createTenancy({
       property_id: property.id,

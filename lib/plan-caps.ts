@@ -2,7 +2,7 @@ import { createClient } from "./supabase/server";
 
 export type CapCheckResult =
   | { allowed: true }
-  | { allowed: false; reason: "plan_cap_reached"; upgrade_to: "platinum" };
+  | { allowed: false; reason: "plan_cap_reached"; upgrade_to: "platinum"; nearest_expiry_days: number | null };
 
 type ProfileRow = { subscription_plan: string | null; subscription_status: string | null };
 
@@ -45,9 +45,25 @@ export async function checkRenewalCardCap(): Promise<CapCheckResult> {
     .eq("outcome", "pending")
     .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed");
 
-  if ((count ?? 0) >= cap) {
-    return { allowed: false, reason: "plan_cap_reached", upgrade_to: "platinum" };
-  }
+  if ((count ?? 0) < cap) return { allowed: true };
 
-  return { allowed: true };
+  // Blocked — find how many days until the nearest expiring contract
+  const { data: soonest } = await supabase
+    .from("tenancies")
+    .select("contract_end")
+    .eq("user_id", user.id)
+    .not("contract_end", "is", null)
+    .eq("outcome", "pending")
+    .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed")
+    .order("contract_end", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nearestExpiryDays = soonest?.contract_end
+    ? Math.max(0, Math.ceil((new Date(soonest.contract_end as string).getTime() - today.getTime()) / 86400000))
+    : null;
+
+  return { allowed: false, reason: "plan_cap_reached", upgrade_to: "platinum", nearest_expiry_days: nearestExpiryDays };
 }
