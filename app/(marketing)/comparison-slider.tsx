@@ -229,12 +229,18 @@ function KakiSewaPanel() {
           }}>{l.label}</span>
         ))}
         <div style={{ flex: 1 }} />
-        {/* GOD TIER badge */}
+        {/* ELITE TIER badge */}
         <span style={{
           fontSize: 8, fontWeight: 800, padding: "2px 7px", borderRadius: 20,
           background: "linear-gradient(135deg, #b8962e, #e8c84a, #9a7a22)",
           color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0,
-        }}>GOD TIER</span>
+        }}>ELITE TIER</span>
+        {/* SAMPLE tag */}
+        <span style={{
+          fontSize: 7.5, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
+          background: "rgba(0,0,0,0.08)", color: "#86868B",
+          letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0,
+        }}>SAMPLE</span>
         <div style={{
           width: 24, height: 24, borderRadius: "50%", background: "#e8e8e8",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -461,7 +467,7 @@ export function ComparisonSlider() {
       {/* Labels above the slider */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, padding: "0 2px" }}>
         <span style={{
-          background: "rgba(0,0,0,0.08)", color: "#ef4444",
+          background: "rgba(0,0,0,0.08)", color: "#1D1D1F",
           fontSize: 10, fontWeight: 700, padding: "4px 12px",
           borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.08em",
         }}>✗ Today</span>
