@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
-import { loadDmSerifFont } from "@/lib/load-dm-serif";
+import { loadDmSerifFontSync } from "@/lib/load-dm-serif";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-export default async function Icon() {
-  const fontData = await loadDmSerifFont();
+export default function Icon() {
+  const fontData = loadDmSerifFontSync();
 
   return new ImageResponse(
     (

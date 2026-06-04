@@ -1,17 +1,18 @@
 import { ImageResponse } from "next/og";
-import { loadDmSerifFont } from "@/lib/load-dm-serif";
+import { loadDmSerifFontEdge } from "@/lib/load-dm-serif";
 
 export const runtime = "edge";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ size: string }> }
 ) {
   const { size: s } = await params;
   const sz = Math.min(512, Math.max(16, parseInt(s) || 192));
   const fontSize = Math.round(sz * 0.68);
 
-  const fontData = await loadDmSerifFont();
+  const origin = new URL(req.url).origin;
+  const fontData = await loadDmSerifFontEdge(origin);
 
   return new ImageResponse(
     (
