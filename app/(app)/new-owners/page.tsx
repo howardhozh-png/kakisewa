@@ -102,7 +102,18 @@ export default async function LeadsPage({ searchParams }: Props) {
       {activeTab === "outreach" ? (
         ownerLeads.length === 0 ? <OutreachEmptyState /> : <OutreachTable leads={ownerLeads} />
       ) : pipelineLeads.length === 0 ? (
-        <ActiveDealsEmptyState />
+        <>
+          <ActiveDealsEmptyState />
+          <div style={{ opacity: 0.4, pointerEvents: "none" }}>
+            <OwnerPipelineBoard
+              leads={[DEMO_LEAD]}
+              openLeadId={undefined}
+              highlightId={undefined}
+              tenantsByLeadId={{}}
+              rankedLeadIds={new Set<string>()}
+            />
+          </div>
+        </>
       ) : (
         <OwnerPipelineBoard
           leads={ownerLeads}
