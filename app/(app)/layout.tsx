@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
+import { ProfileSetupModal } from "@/components/profile-setup-modal";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
@@ -58,6 +59,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       />
       <main className="flex-1">{children}</main>
       <OnboardingDemoModal />
+      <ProfileSetupModal
+        needsSetup={!isAdmin && (!agent.phone || !agent.ren_number)}
+        agentName={agent.name}
+      />
       <Toaster richColors position="top-right" closeButton />
       {isTrialExpired && <TrialGate />}
       <FeedbackButton />
