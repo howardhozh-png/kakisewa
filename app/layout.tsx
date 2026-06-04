@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     description: "Make more money from property with kakisewa. Track every contract renewal, close every owner lead, send polished tenant packages. All in one place.",
   },
   icons: {
-    apple: [{ url: "/pwa-icon/180?v=16", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/pwa-icon/180?v=17", sizes: "180x180", type: "image/png" }],
   },
   other: {
     "mobile-web-app-capable": "yes",

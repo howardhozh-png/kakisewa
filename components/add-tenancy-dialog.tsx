@@ -164,7 +164,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
               </div>
               <div className="space-y-1.5">
                 <FieldLabel icon={<Phone className="w-3 h-3" />}>Owner phone</FieldLabel>
-                <Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)}
+                <Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value.replace(/[^\d+\s-]/g, ""))}
                   placeholder="e.g. 60123456789"
                   className="bg-secondary border-border text-foreground placeholder:text-muted-foreground" />
               </div>

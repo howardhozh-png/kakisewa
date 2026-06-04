@@ -581,7 +581,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           </div>
           <div>
             <p className="kk-overline mb-1.5">WhatsApp / phone</p>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 60107609699" style={INPUT_STYLE} />
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s-]/g, ""))} placeholder="e.g. 60107609699" style={INPUT_STYLE} />
             <p className="text-[11px] mt-1.5" style={{ color: "var(--kk-ink-faint)" }}>
               Used as the sender in WhatsApp message templates.
             </p>

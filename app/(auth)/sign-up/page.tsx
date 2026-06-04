@@ -35,11 +35,16 @@ function SignUpForm() {
   const [loading, setLoading] = useState(false)
   const [renStatus, setRenStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle")
   const [renHint, setRenHint] = useState<string | null>(null)
+  const [renLppehName, setRenLppehName] = useState<string | null>(null)
+  const [renConfirmed, setRenConfirmed] = useState(false)
 
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL
 
   function set(field: keyof typeof form) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [field]: e.target.value }))
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = field === "phone" ? e.target.value.replace(/[^\d+\s-]/g, "") : e.target.value;
+      setForm(f => ({ ...f, [field]: v }));
+    };
   }
 
   async function validateRen(ren: string) {
@@ -47,17 +52,23 @@ function SignUpForm() {
     if (!numeric || !/^\d+$/.test(numeric)) {
       setRenStatus("invalid")
       setRenHint("Format: REN followed by numbers, e.g. REN07128")
+      setRenLppehName(null)
+      setRenConfirmed(false)
       return
     }
     setRenStatus("checking")
     setRenHint(null)
+    setRenLppehName(null)
+    setRenConfirmed(false)
     try {
       const res = await fetch(`/api/validate-ren?ren=${encodeURIComponent(ren)}`)
       const data = await res.json()
       if (data.valid) {
         setRenStatus("valid")
-        const parts = [data.name, data.firm].filter(Boolean)
-        setRenHint(parts.length ? parts.join(" · ") : (data.active === false ? "Found — not active" : "Verified"))
+        const nameParts = [data.name, data.firm].filter(Boolean)
+        const displayName = nameParts.length ? nameParts.join(" · ") : null
+        setRenLppehName(displayName)
+        setRenHint(displayName ?? (data.active === false ? "Found — not active" : "Verified"))
       } else {
         setRenStatus("invalid")
         setRenHint("REN not found in LPPEH registry")
@@ -74,6 +85,7 @@ function SignUpForm() {
     if (form.password !== form.confirm) { setError("Passwords do not match."); return }
     if (!isAdmin && !form.ren_number.trim()) { setError("REN number is required."); return }
     if (!isAdmin && renStatus === "invalid") { setError("Please enter a valid REN number."); return }
+    if (!isAdmin && renStatus === "valid" && renLppehName && !renConfirmed) { setError("Please confirm this is your LPPEH registration."); return }
     setLoading(true)
     const supabase = createClient()
     const { error: err } = await supabase.auth.signUp({
@@ -203,6 +215,20 @@ function SignUpForm() {
               )}
               {renHint && renStatus === "valid" && (
                 <p className="text-[11px] font-medium" style={{ color: "var(--kk-green)" }}>✓ {renHint}</p>
+              )}
+              {renStatus === "valid" && renLppehName && (
+                <label className="flex items-start gap-2 cursor-pointer mt-1">
+                  <input
+                    type="checkbox"
+                    checked={renConfirmed}
+                    onChange={e => setRenConfirmed(e.target.checked)}
+                    className="mt-0.5 flex-shrink-0"
+                    style={{ accentColor: "var(--kk-green)", width: 14, height: 14 }}
+                  />
+                  <span className="text-[11px] leading-snug" style={{ color: "var(--kk-ink-mute)" }}>
+                    Yes, this is my LPPEH registration
+                  </span>
+                </label>
               )}
               {renHint && renStatus === "invalid" && (
                 <p className="text-[11px]" style={{ color: "#DC2626" }}>{renHint}</p>

@@ -132,7 +132,7 @@ export function AddSupportButton() {
 
               <div>
                 <p className="kk-overline mb-1.5">Phone (WhatsApp)</p>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s-]/g, ""))} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
               </div>
 
               <div>

@@ -247,7 +247,7 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
           </div>
           <div>
             <p className="kk-overline mb-1.5">WhatsApp / phone</p>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s-]/g, ""))} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
             <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Used as sender in WhatsApp message templates.</p>
           </div>
           <div>
@@ -657,7 +657,7 @@ const TIER_BADGE = {
 
 function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean }) {
   const key: keyof typeof TIER_BADGE | "trial" | null =
-    plan ?? (isAdmin ? "god" : (isOnTrial ? "trial" : null));
+    isAdmin ? "god" : (plan ?? (isOnTrial ? "trial" : null));
 
   if (!key) return null;
 
