@@ -19,7 +19,7 @@ export default function Icon() {
       >
         <svg viewBox="0 0 24 24" width={26} height={26} fill="none">
           <path
-            d="M 6 4 L 6 22 M 12 13 C 13 11 2 13 3 14 C 22 24 3 22 2 20"
+            d="M 6 -1 L 6 24 M 18 13 C 11 10 4 9 1 14 C 28 18 33 31 -4 21"
             stroke="#000000"
             strokeWidth="3"
             strokeLinecap="round"
