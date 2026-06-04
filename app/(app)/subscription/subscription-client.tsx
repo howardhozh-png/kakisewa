@@ -192,7 +192,7 @@ function PricingCard({
 
         <div className="p-6 flex flex-col gap-5 flex-1 relative z-10">
           {/* Header */}
-          <div style={{ minHeight: 110 }} className={plan.popular || isCurrentPlan ? "pr-24" : ""}>
+          <div style={{ minHeight: 110 }}>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2.5" style={{ color: s.faint }}>
               {plan.name}
             </p>
