@@ -194,13 +194,6 @@ export function LandingInstallPrompt() {
             >
               Add to Homepage →
             </button>
-            <button
-              onClick={dismiss}
-              className="w-full mt-3 py-2 text-[13px] transition-opacity hover:opacity-70"
-              style={{ color: "rgba(255,255,255,0.35)" }}
-            >
-              Maybe later
-            </button>
           </>
         ) : (
           /* ── Step-by-step ── */

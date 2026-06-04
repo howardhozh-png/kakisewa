@@ -1581,3 +1581,30 @@ export async function bumpStreak(): Promise<{ streak: number }> {
   revalidatePath("/", "layout");
   return { streak };
 }
+
+export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) return { ok: false };
+
+  const svc = createServiceClient();
+  await Promise.all([
+    svc.from("owner_leads").delete().eq("user_id", uid),
+    svc.from("tenancies").delete().eq("user_id", uid),
+    svc.from("tenant_profiles").delete().eq("user_id", uid),
+    svc.from("properties").delete().eq("user_id", uid),
+  ]);
+  await svc.from("agent_profiles").update({
+    login_streak: 0,
+    longest_streak: 0,
+    last_login_date: null,
+    trial_started_at: new Date().toISOString(),
+    trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+  }).eq("id", uid);
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { adminResetMyAccount } from "@/lib/actions";
 
 interface Link {
   id: string;
@@ -85,6 +86,7 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingSends, setEditingSends] = useState<string | null>(null);
   const [sendsInput, setSendsInput] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   function autoSlug(label: string) {
     return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -462,6 +464,41 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
             })}
           </div>
         )}
+      </section>
+
+      {/* Dev Tools */}
+      <section className="mt-12 pt-8" style={{ borderTop: "1px solid var(--kk-line)" }}>
+        <p className="kk-overline mb-4">Dev Tools</p>
+        <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid #FECACA" }}>
+          <p className="font-semibold text-[13px] mb-1" style={{ color: "#DC2626" }}>Reset my account to Day 1</p>
+          <p className="text-[12px] mb-4" style={{ color: "var(--kk-ink-mute)" }}>
+            Deletes all your leads, tenancies, tenant profiles, and properties. Resets streak and trial to fresh start. Cannot be undone.
+          </p>
+          <button
+            onClick={async () => {
+              if (!confirm("Delete all your data and reset to Day 1? This cannot be undone.")) return;
+              setResetting(true);
+              try {
+                const result = await adminResetMyAccount();
+                if (result.ok) {
+                  toast.success("Account reset. Reloading...");
+                  setTimeout(() => window.location.href = "/home", 1200);
+                } else {
+                  toast.error("Reset failed");
+                }
+              } catch {
+                toast.error("Reset failed");
+              } finally {
+                setResetting(false);
+              }
+            }}
+            disabled={resetting}
+            className="px-4 py-2 rounded-xl font-semibold text-[13px] transition-opacity hover:opacity-80 disabled:opacity-40"
+            style={{ background: "#DC2626", color: "#fff" }}
+          >
+            {resetting ? "Resetting…" : "Reset my account"}
+          </button>
+        </div>
       </section>
       </>}
     </div>

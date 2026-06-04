@@ -116,6 +116,8 @@ function SignInForm() {
               <input
                 type="email"
                 required
+                autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="kakisewa@example.com"
@@ -143,6 +145,7 @@ function SignInForm() {
               <input
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder=""
@@ -153,7 +156,10 @@ function SignInForm() {
                   background: "var(--kk-bg)",
                   color: "var(--kk-ink)",
                 }}
-                onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
+                onFocus={e => {
+                  e.currentTarget.style.borderColor = "var(--kk-green)";
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
                 onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
               />
             </div>
