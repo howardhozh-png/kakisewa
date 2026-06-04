@@ -4,6 +4,7 @@ import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { GoogleSignInButton } from "@/components/google-sign-in-button"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
@@ -83,15 +84,6 @@ function SignUpForm() {
     setSubmitted(true)
   }
 
-  async function handleGoogle() {
-    setGoogleLoading(true)
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    })
-  }
-
   if (submitted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
@@ -151,16 +143,10 @@ function SignUpForm() {
         <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
 
           {/* Google button */}
-          <button
-            type="button"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-            className="flex items-center justify-center gap-2.5 w-full rounded-xl py-2.5 font-medium transition-opacity hover:opacity-80"
-            style={{ border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)", fontSize: "var(--kk-body)", opacity: googleLoading ? 0.6 : 1 }}
-          >
-            <GoogleIcon />
-            {googleLoading ? "Redirecting…" : "Continue with Google"}
-          </button>
+          <GoogleSignInButton
+            onError={setError}
+            onLoadingChange={setGoogleLoading}
+          />
 
           {/* Divider */}
           <div className="relative flex items-center gap-3 my-1">
