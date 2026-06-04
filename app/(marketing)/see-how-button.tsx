@@ -6,10 +6,10 @@ export function SeeHowButton() {
   return (
     <button
       onClick={() => document.dispatchEvent(new CustomEvent(DEMO_EVENT))}
-      className="px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-70"
-      style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", fontSize: "var(--kk-body-lg)" }}
+      className="px-8 py-3.5 rounded-full font-semibold transition-opacity hover:opacity-85"
+      style={{ background: "var(--kk-green)", color: "#fff", fontSize: "var(--kk-body-lg)" }}
     >
-      See how it works
+      Play quick demo
     </button>
   );
 }

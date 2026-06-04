@@ -22,13 +22,6 @@ export function AnimatedHero() {
 
   return (
     <section className="px-6 lg:px-12 pt-24 pb-28 text-center" style={{ background: "var(--kk-bg)" }}>
-      <Link
-        href="/sign-up"
-        className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium mb-10 transition-opacity hover:opacity-80"
-        style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
-      >
-        Free trial available — limited spots <ArrowRight className="w-3 h-3" />
-      </Link>
 
       <h1
         className="serif mx-auto"
@@ -73,6 +66,9 @@ export function AnimatedHero() {
         </Link>
         <SeeHowButton />
       </div>
+      <p className="mt-4 text-xs" style={{ color: "var(--kk-ink-faint)" }}>
+        Limited spots available
+      </p>
     </section>
   )
 }
