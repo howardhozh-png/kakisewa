@@ -47,16 +47,17 @@ const TIER_STYLES = {
 const PLANS = [
   {
     name: "Silver" as const, planId: "silver" as const,
-    monthly: 198, annualMonthly: 165, annualTotal: 1980, annualSavings: 396,
-    monthlyAnnualTotal: 2376,
-    savingsLabel: "2 months free",
+    monthly: 79, annualMonthly: 59, annualTotal: 708, annualSavings: 240,
+    monthlyAnnualTotal: 948,
+    savingsLabel: "3 months free",
     headline: "Get your pipeline moving.",
     tagline: "Track owner responses and close more leads with a branded profile and tenant pack.",
     features: [
-      "Bulk owner list upload",
-      "Automatically track owner reply",
-      "Customized and branded tenant pack",
-      "Close more owners",
+      "Owner pipeline (unlimited)",
+      "5 renewal tracking cards",
+      "12-month forward timeline",
+      "Vacancy planner",
+      "Contract document storage",
     ],
     recommended: "New agents who need support in tracking owner responses and converting more new owners.",
     archetype: "New hustler · <RM6k/month",
@@ -64,16 +65,19 @@ const PLANS = [
   },
   {
     name: "Platinum" as const, planId: "platinum" as const,
-    monthly: 398, annualMonthly: 332, annualTotal: 3980, annualSavings: 796,
-    monthlyAnnualTotal: 4776,
-    savingsLabel: "2 months free",
+    monthly: 159, annualMonthly: 119, annualTotal: 1428, annualSavings: 480,
+    monthlyAnnualTotal: 1908,
+    savingsLabel: "3 months free",
     headline: "Never miss a renewal.",
     tagline: "One missed renewal at RM 2,000 pays for years of kakisewa. Capture every one.",
     features: [
       "Everything in Silver, plus:",
-      "Unlock Existing Contracts",
-      "Capture all renewal commission",
-      "Contract renewal reminder and messaging",
+      "Unlimited renewal cards",
+      "24-month timeline + history",
+      "WA reminders — 60, 30, 7 days",
+      "24-month commission history",
+      "Directory",
+      "Private agent profile",
     ],
     recommended: "Experienced agent who needs to capture all contract renewal income by tracking existing contracts.",
     archetype: "Steady operator · RM7-12k/month",
@@ -81,16 +85,18 @@ const PLANS = [
   },
   {
     name: "Elite" as const, planId: "elite" as const,
-    monthly: 498, annualMonthly: 415, annualTotal: 4980, annualSavings: 996,
-    monthlyAnnualTotal: 5976,
-    savingsLabel: "2 months free",
+    monthly: 299, annualMonthly: 229, annualTotal: 2748, annualSavings: 840,
+    monthlyAnnualTotal: 3588,
+    savingsLabel: "3 months free",
     headline: "Your complete ops hub.",
     tagline: "Goal planning, performance tracking, and property services — everything in one place.",
     features: [
       "Everything in Platinum, plus:",
-      "Property support management",
-      "Performance dashboard",
-      "Analytics and newsletter",
+      "WA reminder same-day trigger",
+      "Commission forecast",
+      "Benchmarking",
+      "Portfolio score",
+      "Public + searchable agent profile",
     ],
     recommended: "Elite agent who wants everything in one place, including goal planning and performance tracking.",
     archetype: "High earner · >RM12k/month",
@@ -315,7 +321,7 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
           {interval === "annual" ? (
             <div className="space-y-1 mt-3">
               <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {plan.annualTotal.toLocaleString()} billed annually</p>
-              <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Save RM {plan.annualSavings}/year · 2 months free</p>
+              <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Save RM {plan.annualSavings}/year · {plan.savingsLabel}</p>
             </div>
           ) : (
             <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {plan.monthlyAnnualTotal.toLocaleString()} billed monthly over 12 months</p>
@@ -421,7 +427,14 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             Choose your plan
           </h1>
           <p className="kk-body max-w-md mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
-            One missed renewal at RM 2,000 pays for <strong style={{ color: "var(--kk-ink)" }}>years</strong> of kakisewa.
+            You pay{" "}
+            <span style={{ color: "#DC2626", fontWeight: 600 }}>RM 360/month</span>
+            {" "}to PropertyGuru to find tenants.
+          </p>
+          <p className="kk-body max-w-md mx-auto mt-1" style={{ color: "var(--kk-ink-mute)" }}>
+            Pay{" "}
+            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM 159/month</span>
+            {" "}to kakisewa so you never lose them.
           </p>
 
           {isOnTrial && (
@@ -467,7 +480,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                   color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)",
                 }}
               >
-                −17%
+                −25%
               </span>
             </button>
           </div>
@@ -484,6 +497,56 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               onSelect={() => setPending({ plan, interval })}
             />
           ))}
+        </div>
+
+        {/* Comparison table */}
+        <div className="mb-12 overflow-x-auto">
+          <table className="w-full text-left border-collapse" style={{ fontSize: "var(--kk-sm)" }}>
+            <thead>
+              <tr style={{ borderBottom: "2px solid var(--kk-line-strong)" }}>
+                <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "36%" }} />
+                {PLANS.map(p => (
+                  <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)" }}>
+                    <div>{p.name}</div>
+                    <div className="text-[11px] font-normal mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+                      RM {p.monthly}/mo
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Owner pipeline",        "Unlimited",    "Unlimited",        "Unlimited"],
+                ["Renewal tracking",      "5 cards",      "Unlimited",        "Unlimited"],
+                ["Renewal timeline",      "12 mo fwd",    "24 mo + history",  "24 mo + history"],
+                ["Vacancy planner",       "Flexible",     "Flexible",         "Flexible"],
+                ["WA reminders",          "—",            "60/30/7 days",     "60/30/7d + same day"],
+                ["Commission history",    "—",            "24 months",        "24 months"],
+                ["Directory",             "—",            "Yes",              "Yes"],
+                ["Contract documents",    "Yes",          "Yes",              "Yes"],
+                ["Agent profile",         "—",            "Private",          "Public + searchable"],
+                ["Commission forecast",   "—",            "—",                "Yes"],
+                ["Benchmarking",          "—",            "—",                "Yes"],
+                ["Portfolio score",       "—",            "—",                "Yes"],
+              ].map(([feature, silver, platinum, elite], i) => (
+                <tr
+                  key={feature}
+                  style={{
+                    borderBottom: "1px solid var(--kk-line)",
+                    background: i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
+                  }}
+                >
+                  <td className="py-2.5 pr-6 font-medium" style={{ color: "var(--kk-ink-mute)" }}>{feature}</td>
+                  {[silver, platinum, elite].map((val, j) => (
+                    <td key={j} className="py-2.5 px-3 text-center" style={{ color: val === "—" ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: val !== "—" ? 500 : 400 }}>
+                      {val}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Manage billing */}
