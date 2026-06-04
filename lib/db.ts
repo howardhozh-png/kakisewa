@@ -907,7 +907,7 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
     // First login — seed profile from user_metadata and start trial
     const meta = user.user_metadata ?? {};
     const trialStart = new Date().toISOString();
-    const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const trialEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
     const renRaw = (meta.ren_number as string | null) ?? null;
     const renNumber = renRaw ? renRaw.toUpperCase().replace(/^REN\s*/i, "REN").trim() : null;
     await supabase.from("agent_profiles").upsert({

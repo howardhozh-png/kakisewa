@@ -824,6 +824,10 @@ addIfMissing("tenancies", "renewal_proposed_start",  "TEXT");
 addIfMissing("tenancies", "renewal_proposed_months", "INTEGER");
 addIfMissing("tenancies", "renewal_proposed_rent",   "REAL");
 
+// v17 — renewal outcome tracking (Platinum/Elite historical chart)
+addIfMissing("tenancies", "resolved_at", "TEXT");
+addIfMissing("tenancies", "outcome",     "TEXT NOT NULL DEFAULT 'pending'");
+
 // v14 — tenant seeking status (set when owner leaves so tenant appears in All Tenants)
 addIfMissing("tenant_profiles", "is_seeking",         "INTEGER NOT NULL DEFAULT 0");
 addIfMissing("tenant_profiles", "seeking_from",       "TEXT");
@@ -834,5 +838,8 @@ addIfMissing("agent_profile", "motivation_photo_url", "TEXT");
 
 // v16 — customisable WhatsApp templates (JSON object keyed by TemplateKey)
 addIfMissing("agent_profile", "whatsapp_templates", "TEXT");
+
+// v18 — agent-editable renewal reminder copy (Platinum/Elite)
+addIfMissing("agent_profile", "reminder_template", "TEXT");
 
 export default db;
