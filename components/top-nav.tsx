@@ -126,6 +126,7 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
   const [last, setLast] = useState(lastName);
   const [phone, setPhone] = useState(agent.phone ?? "");
   const [agency, setAgency] = useState(agent.agency ?? "");
+  const [ren, setRen] = useState(agent.ren_number ?? "");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -138,6 +139,7 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
     fullName !== (agent.name ?? "") ||
     phone !== (agent.phone ?? "") ||
     agency !== (agent.agency ?? "") ||
+    ren !== (agent.ren_number ?? "") ||
     avatarBlob !== null;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -176,6 +178,7 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
         name: fullName,
         phone: phone.trim(),
         agency: agency.trim(),
+        ren_number: ren.trim() || null,
         photo_url,
       });
       if (res.ok) { toast.success("Profile saved"); onClose(); }
@@ -251,17 +254,11 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
             <p className="kk-overline mb-1.5">Agency / company</p>
             <input type="text" value={agency} onChange={(e) => setAgency(e.target.value)} placeholder="e.g. Kakisewa Property" style={INPUT_STYLE} />
           </div>
-          {agent.ren_number && (
-            <div>
-              <p className="kk-overline mb-1.5">REN number</p>
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px]"
-                style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
-                <span className="flex-1">{agent.ren_number}</span>
-                <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md" style={{ background: "var(--kk-green-soft)", color: "var(--kk-green)" }}>Verified</span>
-              </div>
-              <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Contact support to update your REN number.</p>
-            </div>
-          )}
+          <div>
+            <p className="kk-overline mb-1.5">REN number</p>
+            <input type="text" value={ren} onChange={(e) => setRen(e.target.value)} placeholder="e.g. REN07128" style={INPUT_STYLE} />
+            <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Appended to your name in outreach messages. Leave blank if you don&apos;t have one.</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
