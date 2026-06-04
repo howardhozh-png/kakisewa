@@ -182,17 +182,32 @@ function KakiSewaPanel() {
       fontFamily: "system-ui, sans-serif",
       height: 480, display: "flex", flexDirection: "column",
     }}>
-      {/* Nav bar */}
+      {/* Nav bar — matches actual dark topnav */}
       <div style={{
-        background: "#1C1C1E", padding: "0 14px", flexShrink: 0,
-        display: "flex", alignItems: "center", gap: 10, height: 38,
+        background: "#000", padding: "0 14px", flexShrink: 0,
+        display: "flex", alignItems: "center", gap: 10, height: 42,
       }}>
-        <div style={{
-          width: 22, height: 22, borderRadius: 5, background: "#fff",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 11, fontWeight: 800, color: "#1C1C1E", flexShrink: 0,
-        }}>K</div>
-        <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>kakisewa</span>
+        {/* Logo: serif k + wordmark + Japanese */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
+          <span style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: 22, fontWeight: 400, color: "#fff", lineHeight: 1,
+            letterSpacing: "-0.02em",
+          }}>k</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, lineHeight: 1 }}>
+            <span style={{
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontSize: 13, fontWeight: 400, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1,
+            }}>kakisewa</span>
+            <span style={{
+              fontSize: 7.5, color: "rgba(255,255,255,0.4)", letterSpacing: "0.18em",
+              fontFamily: "'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
+              display: "flex", gap: 1,
+            }}>
+              {["カ","キ","セ","ワ"].map((c, i) => <span key={i}>{c}</span>)}
+            </span>
+          </div>
+        </div>
         <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
         {[
           { label: "Home", active: false },
@@ -202,15 +217,16 @@ function KakiSewaPanel() {
           <span key={l.label} style={{
             fontSize: 11,
             color: l.active ? "#fff" : "rgba(255,255,255,0.45)",
-            fontWeight: l.active ? 700 : 400,
+            fontWeight: l.active ? 600 : 400,
             borderBottom: l.active ? "1.5px solid #fff" : "none",
-            paddingBottom: l.active ? 1 : 0,
+            paddingBottom: l.active ? 2 : 0,
           }}>{l.label}</span>
         ))}
         <div style={{ flex: 1 }} />
         <div style={{
           width: 26, height: 26, borderRadius: "50%",
-          background: "#48484A", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "#2c2c2e", border: "1px solid rgba(255,255,255,0.15)",
+          display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 10, fontWeight: 700, color: "#fff",
         }}>A</div>
       </div>
@@ -375,18 +391,18 @@ export function ComparisonSlider() {
           userSelect: "none",
         }}
       >
-        {/* Bottom layer — Excel (Today) */}
+        {/* Bottom layer — KakiSewa (always fully visible behind) */}
         <div style={{ position: "absolute", inset: 0 }}>
-          <ExcelPanel />
+          <KakiSewaPanel />
         </div>
 
-        {/* Top layer — KakiSewa, clipped to show right portion */}
+        {/* Top layer — Excel (Today), clipped to show left portion */}
         <div style={{
           position: "absolute",
           inset: 0,
-          clipPath: `inset(0 ${100 - position}% 0 0)`,
+          clipPath: `inset(0 ${position}% 0 0)`,
         }}>
-          <KakiSewaPanel />
+          <ExcelPanel />
         </div>
 
         {/* Divider line */}
