@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { GripVertical } from "lucide-react";
 
 // ─── Excel panel data ──────────────────────────────────────────────────────────
 
 const ROWS = [
-  { no: 1,  name: "Aiman Hafiz",    prop: "Taman PJ · B-3-12",     phone: "012-3***456", date: "01/06", reply: "Yes", notes: "Wants to renew" },
-  { no: 2,  name: "Nur Farhana",    prop: "Sri Damansara A-5-8",    phone: "017-8***901", date: "01/06", reply: "",    notes: "" },
-  { no: 3,  name: "Rajesh Kumar",   prop: "Taman Midah 15-3",       phone: "016-2***345", date: "02/06", reply: "",    notes: "" },
-  { no: 4,  name: "Lee Soo Yin",    prop: "Kuchai Lama C-2-11",     phone: "018-6***789", date: "02/06", reply: "Yes", notes: "3BR wanted" },
-  { no: 5,  name: "Ahmad Zamri",    prop: "Bukit Jalil C-12-05",    phone: "012-7***890", date: "03/06", reply: "",    notes: "" },
-  { no: 6,  name: "Priya Nair",     prop: "Bangsar South 8-2A",     phone: "014-3***456", date: "03/06", reply: "",    notes: "" },
-  { no: 7,  name: "Hasrul Nizam",   prop: "Pudu Ulu · Block 12-B",  phone: "011-5***678", date: "04/06", reply: "Yes", notes: "" },
-  { no: 8,  name: "Mei Ling Tan",   prop: "Kepong Baru 5C",         phone: "013-9***012", date: "04/06", reply: "No",  notes: "" },
-  { no: 9,  name: "Suffian Mansor", prop: "OUG Parklane A-3-11",    phone: "016-1***234", date: "05/06", reply: "",    notes: "" },
-  { no: 10, name: "Lily Tang",      prop: "Connaught · 8-5B",       phone: "019-4***567", date: "05/06", reply: "Yes", notes: "Maybe later" },
+  { no: 1,  name: "Aiman Hafiz",   prop: "Taman PJ · B-3-12",    phone: "012-3***456", date: "01/06", reply: "Yes", notes: "Wants to renew" },
+  { no: 2,  name: "Nur Farhana",   prop: "Sri Damansara A-5-8",   phone: "017-8***901", date: "01/06", reply: "",    notes: "" },
+  { no: 3,  name: "Rajesh Kumar",  prop: "Taman Midah 15-3",      phone: "016-2***345", date: "02/06", reply: "",    notes: "" },
+  { no: 4,  name: "Lee Soo Yin",   prop: "Kuchai Lama C-2-11",    phone: "018-6***789", date: "02/06", reply: "Yes", notes: "3BR wanted" },
+  { no: 5,  name: "Ahmad Zamri",   prop: "Bukit Jalil C-12-05",   phone: "012-7***890", date: "03/06", reply: "",    notes: "" },
+  { no: 6,  name: "Priya Nair",    prop: "Bangsar South 8-2A",    phone: "014-3***456", date: "03/06", reply: "",    notes: "" },
+  { no: 7,  name: "Hasrul Nizam",  prop: "Pudu Ulu · 12-B",       phone: "011-5***678", date: "04/06", reply: "Yes", notes: "" },
+  { no: 8,  name: "Lily Tang",     prop: "Connaught · 8-5B",      phone: "019-4***567", date: "05/06", reply: "Yes", notes: "Maybe later" },
 ];
 
 function rowBg(reply: string) {
@@ -25,10 +24,14 @@ function rowBg(reply: string) {
 
 function ExcelPanel() {
   return (
-    <div style={{ background: "#fff", userSelect: "none", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{
+      background: "#fff", userSelect: "none",
+      fontFamily: "system-ui, sans-serif",
+      height: 480, display: "flex", flexDirection: "column",
+    }}>
       {/* Google Sheets-style green header */}
       <div style={{
-        background: "#0f9d58", padding: "7px 12px",
+        background: "#0f9d58", padding: "7px 12px", flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -44,7 +47,7 @@ function ExcelPanel() {
 
       {/* Toolbar */}
       <div style={{
-        background: "#f8f9fa", borderBottom: "1px solid #dadce0",
+        background: "#f8f9fa", borderBottom: "1px solid #dadce0", flexShrink: 0,
         padding: "3px 10px", display: "flex", alignItems: "center", gap: 10,
         fontSize: 11, color: "#444",
       }}>
@@ -55,7 +58,7 @@ function ExcelPanel() {
 
       {/* Formula bar */}
       <div style={{
-        background: "#fff", borderBottom: "1px solid #e0e0e0",
+        background: "#fff", borderBottom: "1px solid #e0e0e0", flexShrink: 0,
         padding: "3px 8px", display: "flex", gap: 6, alignItems: "center",
       }}>
         <span style={{
@@ -70,9 +73,8 @@ function ExcelPanel() {
       </div>
 
       {/* Spreadsheet grid */}
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-          {/* Column letter headers */}
           <thead>
             <tr style={{ background: "#f2f2f2" }}>
               <th style={{ width: 26, border: "1px solid #e0e0e0", padding: "3px 0", background: "#f2f2f2" }} />
@@ -80,7 +82,6 @@ function ExcelPanel() {
                 <th key={c} style={{ border: "1px solid #e0e0e0", padding: "3px 8px", color: "#666", fontSize: 10, fontWeight: 500, textAlign: "center", background: "#f2f2f2", whiteSpace: "nowrap" }}>{c}</th>
               ))}
             </tr>
-            {/* Data headers row */}
             <tr style={{ background: "#e8f0fe" }}>
               <td style={{ textAlign: "center", fontSize: 10, color: "#888", border: "1px solid #e0e0e0", background: "#f2f2f2", padding: "4px 0" }}>1</td>
               {["No.", "Owner Name", "Property", "Phone", "Date", "Reply", "Notes"].map(h => (
@@ -102,7 +103,7 @@ function ExcelPanel() {
                   {row.reply === "No"  && <span style={{ color: "#e57700" }}>No</span>}
                   {!row.reply          && <span style={{ color: "#ccc" }}>—</span>}
                 </td>
-                <td style={{ border: "1px solid #e0e0e0", padding: "3px 8px", color: "#666", fontStyle: row.notes ? "normal" : "italic", whiteSpace: "nowrap" }}>
+                <td style={{ border: "1px solid #e0e0e0", padding: "3px 8px", color: "#666", whiteSpace: "nowrap" }}>
                   {row.notes || <span style={{ color: "#ccc" }}>—</span>}
                 </td>
               </tr>
@@ -113,8 +114,8 @@ function ExcelPanel() {
 
       {/* Sheet tabs */}
       <div style={{
-        background: "#f1f3f4", borderTop: "1px solid #dadce0",
-        display: "flex", alignItems: "center", gap: 0, overflow: "hidden",
+        background: "#f1f3f4", borderTop: "1px solid #dadce0", flexShrink: 0,
+        display: "flex", alignItems: "center", overflow: "hidden",
       }}>
         <div style={{ padding: "6px 10px", fontSize: 10, color: "#666", opacity: 0.7 }}>+</div>
         {["Owner Leads", "Messages", "Renewals 2025", "Expiring Soon"].map((tab, i) => (
@@ -136,48 +137,54 @@ function ExcelPanel() {
 
 // ─── KakiSewa panel data ───────────────────────────────────────────────────────
 
-const CHART = [
-  { m: "Jan", n: 2 }, { m: "Feb", n: 3 }, { m: "Mar", n: 4 },
-  { m: "Apr", n: 2 }, { m: "May", n: 3 }, { m: "Jun", n: 5 },
-  { m: "Jul", n: 4 }, { m: "Aug", n: 2 }, { m: "Sep", n: 3 },
-  { m: "Oct", n: 2 }, { m: "Nov", n: 3 }, { m: "Dec", n: 2 },
-];
-const CHART_MAX = 5;
+const CHART_DATA = [750, 1250, 1750, 900, 1250, 2400, 1750, 900, 1250, 900, 1250, 900];
+const CHART_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const CHART_MAX = 2400;
 
 const KANBAN = [
   {
-    title: "Follow Up",
+    id: "expiring",
+    title: "EXPIRING",
+    icon: "⚠",
     accent: "#F4511E",
     cards: [
-      { name: "Aiman Hafiz",  prop: "The Park · A5905",    tag: "60d", tagColor: "#F4511E" },
-      { name: "Nur Farhana",  prop: "Sri Damansara",       tag: "45d", tagColor: "#F4511E" },
+      { name: "Aiman Hafiz",  prop: "The Park · A5905 · exp 15 Jul 2026", badge: "⚠ 41d",  badgeColor: "#F4511E" },
+      { name: "Nur Farhana",  prop: "Sri Damansara",                       badge: "⚠ 22d",  badgeColor: "#F4511E" },
     ],
   },
   {
-    title: "Active Contract",
-    accent: "#1a73e8",
+    id: "renewing",
+    title: "RENEWING",
+    icon: "✓",
+    accent: "#34C759",
     cards: [
-      { name: "Rajesh Kumar", prop: "Bangsar South",       tag: "RM 2,800/mo", tagColor: "#1a73e8" },
-      { name: "Lee Wei",      prop: "Mutiara Damansara",   tag: "RM 3,200/mo", tagColor: "#1a73e8" },
-      { name: "Ahmad S.",     prop: "Puchong Perdana",     tag: "RM 2,100/mo", tagColor: "#1a73e8" },
+      { name: "Rajesh Kumar", prop: "Bangsar South",      badge: "✓ Commission due", badgeColor: "#34C759" },
+      { name: "Lee Wei",      prop: "Mutiara Damansara",  badge: "✓ Commission due", badgeColor: "#34C759" },
     ],
   },
   {
-    title: "Renew",
-    accent: "#1e8e3e",
+    id: "active",
+    title: "ACTIVE",
+    icon: "○",
+    accent: "#AEAEB2",
     cards: [
-      { name: "Priya N.",     prop: "Subang Mewah",        tag: "+RM 2,800",   tagColor: "#1e8e3e" },
-      { name: "Hasrul",       prop: "Kepong · C-12",       tag: "+RM 2,400",   tagColor: "#1e8e3e" },
+      { name: "Ahmad S.",  prop: "Puchong Perdana", badge: "✓ 198d remain", badgeColor: "#34C759" },
+      { name: "Priya N.",  prop: "Subang Mewah",    badge: "✓ 156d remain", badgeColor: "#34C759" },
+      { name: "Hasrul",    prop: "Kepong C-12",      badge: "✓ 89d remain",  badgeColor: "#34C759" },
     ],
   },
 ];
 
 function KakiSewaPanel() {
   return (
-    <div style={{ background: "#f8f9fa", userSelect: "none", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{
+      background: "#F2F2F7", userSelect: "none",
+      fontFamily: "system-ui, sans-serif",
+      height: 480, display: "flex", flexDirection: "column",
+    }}>
       {/* Nav bar */}
       <div style={{
-        background: "#1C1C1E", padding: "0 14px",
+        background: "#1C1C1E", padding: "0 14px", flexShrink: 0,
         display: "flex", alignItems: "center", gap: 10, height: 38,
       }}>
         <div style={{
@@ -187,11 +194,18 @@ function KakiSewaPanel() {
         }}>K</div>
         <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>kakisewa</span>
         <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
-        {["Home", "Contracts", "New Owners"].map((l, i) => (
-          <span key={l} style={{
-            fontSize: 11, color: i === 1 ? "#fff" : "rgba(255,255,255,0.45)",
-            fontWeight: i === 1 ? 600 : 400,
-          }}>{l}</span>
+        {[
+          { label: "Home", active: false },
+          { label: "Existing Contracts", active: true },
+          { label: "New Owners", active: false },
+        ].map(l => (
+          <span key={l.label} style={{
+            fontSize: 11,
+            color: l.active ? "#fff" : "rgba(255,255,255,0.45)",
+            fontWeight: l.active ? 700 : 400,
+            borderBottom: l.active ? "1.5px solid #fff" : "none",
+            paddingBottom: l.active ? 1 : 0,
+          }}>{l.label}</span>
         ))}
         <div style={{ flex: 1 }} />
         <div style={{
@@ -201,92 +215,90 @@ function KakiSewaPanel() {
         }}>A</div>
       </div>
 
-      <div style={{ padding: "16px 16px 12px" }}>
-        {/* Chart header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.01em" }}>
-              Contracts Expiring — Next 12 Months
-            </p>
-            <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 1 }}>35 contracts tracked</p>
-          </div>
-          <div style={{
-            padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 600,
-            background: "rgba(30,142,62,0.1)", color: "#1e8e3e",
-          }}>
-            2026
+      <div style={{ flex: 1, padding: 14, overflowY: "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Page title */}
+        <div>
+          <p style={{ fontSize: 18, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Georgia, serif" }}>
+            Existing Contracts
+          </p>
+          <p style={{ fontSize: 11, color: "#AEAEB2", marginTop: 2 }}>Your renewal commission is passive income.</p>
+          <div style={{ marginTop: 8, borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 6 }}>
+            <span style={{
+              fontSize: 12, fontWeight: 600, color: "#1C1C1E",
+              borderBottom: "2px solid #1C1C1E", paddingBottom: 6,
+            }}>
+              Existing contracts&nbsp;&nbsp;35
+            </span>
           </div>
         </div>
 
-        {/* Bar chart */}
+        {/* Chart box */}
         <div style={{
-          background: "#fff", borderRadius: 10, padding: "12px 10px 6px",
-          border: "1px solid rgba(0,0,0,0.07)",
-          marginBottom: 14,
+          background: "#fff", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)",
+          padding: "10px 12px",
         }}>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 72, paddingBottom: 0 }}>
-            {CHART.map(d => (
-              <div key={d.m} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <div>
+              <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#AEAEB2" }}>
+                RENEWAL INCOME · NEXT 12 MONTHS
+              </p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.03em", marginTop: 2 }}>RM 14,800</p>
+              <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 1 }}>35 contracts · 50% commission per renewal</p>
+            </div>
+            <span style={{ fontSize: 10, color: "#AEAEB2" }}>Next 12 months</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 60, marginTop: 6 }}>
+            {CHART_DATA.map((v, i) => (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                 <div style={{
-                  width: "100%", borderRadius: "3px 3px 0 0",
-                  background: d.n === CHART_MAX ? "#0f9d58" : d.n >= 4 ? "#34C759" : "#a8d5b7",
-                  height: `${(d.n / CHART_MAX) * 58}px`,
-                  minHeight: 6,
-                  transition: "height 0.3s",
+                  width: "100%", borderRadius: "2px 2px 0 0",
+                  background: v === CHART_MAX ? "#0f9d58" : "#34C759",
+                  height: `${Math.round((v / CHART_MAX) * 52)}px`,
+                  minHeight: 4,
                 }} />
               </div>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-            {CHART.map(d => (
-              <div key={d.m} style={{ flex: 1, textAlign: "center", fontSize: 8, color: "#AEAEB2", fontWeight: 500 }}>
-                {d.m}
-              </div>
+          <div style={{ display: "flex", gap: 3, marginTop: 3 }}>
+            {CHART_MONTHS.map(m => (
+              <div key={m} style={{ flex: 1, textAlign: "center", fontSize: 7, color: "#AEAEB2", fontWeight: 500 }}>{m}</div>
             ))}
           </div>
         </div>
 
-        {/* Kanban board */}
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#AEAEB2", marginBottom: 8 }}>
-          Pipeline
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+        {/* Kanban */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, flex: 1 }}>
           {KANBAN.map(col => (
-            <div key={col.title} style={{
+            <div key={col.id} style={{
               background: "#fff", borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.07)",
+              borderTop: `2px solid ${col.accent}`,
+              border: `1px solid rgba(0,0,0,0.07)`,
+              borderTopColor: col.accent,
               overflow: "hidden",
             }}>
-              {/* Column header */}
-              <div style={{
-                padding: "7px 10px", borderBottom: `2px solid ${col.accent}`,
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-              }}>
-                <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: col.accent }}>
-                  {col.title}
+              <div style={{ padding: "7px 10px 5px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.06em", color: col.accent,
+                }}>
+                  {col.icon} {col.title}&nbsp;&nbsp;{col.cards.length}
                 </span>
-                <div style={{
-                  width: 16, height: 16, borderRadius: "50%",
-                  background: col.accent, color: "#fff",
-                  fontSize: 9, fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>{col.cards.length}</div>
               </div>
-              {/* Cards */}
               <div style={{ padding: "6px 8px", display: "flex", flexDirection: "column", gap: 5 }}>
                 {col.cards.map(card => (
                   <div key={card.name} style={{
-                    borderRadius: 7, padding: "6px 8px",
-                    background: "#f8f9fa", border: "1px solid rgba(0,0,0,0.06)",
+                    background: "#fff", borderRadius: 8,
+                    border: "1px solid rgba(0,0,0,0.07)",
+                    padding: "8px 10px",
                   }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>{card.name}</p>
-                    <p style={{ fontSize: 9, color: "#6C6C70", marginTop: 1, lineHeight: 1.2 }}>{card.prop}</p>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>{card.name}</p>
+                    <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 1, lineHeight: 1.2 }}>{card.prop}</p>
                     <div style={{
-                      marginTop: 4, display: "inline-flex", padding: "2px 6px",
-                      borderRadius: 10, fontSize: 9, fontWeight: 600,
-                      background: `${col.accent}18`, color: col.accent,
+                      marginTop: 5, display: "inline-flex", padding: "2px 7px",
+                      borderRadius: 20, fontSize: 9, fontWeight: 600,
+                      background: `${card.badgeColor}1a`, color: card.badgeColor,
                     }}>
-                      {card.tag}
+                      {card.badge}
                     </div>
                   </div>
                 ))}
@@ -299,58 +311,36 @@ function KakiSewaPanel() {
   );
 }
 
-// ─── Slider shell ──────────────────────────────────────────────────────────────
+// ─── ClipPath drag slider ──────────────────────────────────────────────────────
 
 export function ComparisonSlider() {
-  const [activePanel, setActivePanel] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [offset, setOffset] = useState(0);
+  const [position, setPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
-  const startX = useRef(0);
-  const startOffset = useRef(0);
   const dragging = useRef(false);
+  const startX = useRef(0);
+  const startPos = useRef(50);
 
-  function getWidth() {
-    return containerRef.current?.offsetWidth ?? 0;
-  }
-
-  const goToPanel = useCallback((panel: number) => {
-    const w = getWidth();
-    setActivePanel(panel);
-    setOffset(panel * w);
+  const getPos = useCallback((clientX: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return 50;
+    return Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
   }, []);
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     dragging.current = true;
-    setIsDragging(true);
     startX.current = e.clientX;
-    startOffset.current = offset;
+    startPos.current = position;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!dragging.current) return;
-    const delta = startX.current - e.clientX;
-    const w = getWidth();
-    setOffset(Math.max(0, Math.min(w, startOffset.current + delta)));
+    setPosition(getPos(e.clientX));
   }
 
   function onPointerUp() {
-    if (!dragging.current) return;
     dragging.current = false;
-    setIsDragging(false);
-    const w = getWidth();
-    const pct = offset / w;
-    const target = pct > 0.5 ? 1 : 0;
-    setActivePanel(target);
-    setOffset(target * w);
   }
-
-  // Sync offset when panel changes via button
-  useEffect(() => {
-    setOffset(activePanel * getWidth());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className="max-w-[960px] mx-auto">
@@ -365,33 +355,7 @@ export function ComparisonSlider() {
           vs{" "}
           <span style={{ color: "var(--kk-green)" }}>with kakisewa</span>
         </h2>
-      </div>
-
-      {/* Tab nav */}
-      <div className="flex justify-center mb-5">
-        <div className="inline-flex rounded-full overflow-hidden" style={{ border: "1px solid var(--kk-line)", background: "#fff" }}>
-          <button
-            onClick={() => goToPanel(0)}
-            className="px-6 py-2 text-[12px] font-semibold transition-all"
-            style={{
-              background: activePanel === 0 ? "#141414" : "transparent",
-              color: activePanel === 0 ? "#fff" : "#888",
-              borderRight: "1px solid var(--kk-line)",
-            }}
-          >
-            ✗ Today
-          </button>
-          <button
-            onClick={() => goToPanel(1)}
-            className="px-6 py-2 text-[12px] font-semibold transition-all"
-            style={{
-              background: activePanel === 1 ? "var(--kk-green)" : "transparent",
-              color: activePanel === 1 ? "#fff" : "#888",
-            }}
-          >
-            ✓ With kakisewa
-          </button>
-        </div>
+        <p style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginTop: 8 }}>Drag the handle to compare</p>
       </div>
 
       {/* Slider container */}
@@ -402,35 +366,95 @@ export function ComparisonSlider() {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={{
+          position: "relative",
           overflow: "hidden",
+          height: 480,
           borderRadius: "1rem",
           border: "1px solid var(--kk-line)",
-          cursor: isDragging ? "grabbing" : "grab",
-          touchAction: "pan-y",
+          cursor: "ew-resize",
+          userSelect: "none",
         }}
       >
-        <div
+        {/* Bottom layer — Excel (Today) */}
+        <div style={{ position: "absolute", inset: 0 }}>
+          <ExcelPanel />
+        </div>
+
+        {/* Top layer — KakiSewa, clipped to show right portion */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          clipPath: `inset(0 ${100 - position}% 0 0)`,
+        }}>
+          <KakiSewaPanel />
+        </div>
+
+        {/* Divider line */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: `${position}%`,
+          width: 2,
+          background: "rgba(255,255,255,0.85)",
+          boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+          zIndex: 20,
+          pointerEvents: "none",
+          transform: "translateX(-1px)",
+        }} />
+
+        {/* Drag handle */}
+        <button
           style={{
+            position: "absolute",
+            left: `${position}%`,
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 21,
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "#fff",
+            border: "1.5px solid rgba(0,0,0,0.12)",
+            cursor: "ew-resize",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
             display: "flex",
-            width: "200%",
-            transform: `translateX(-${offset}px)`,
-            transition: isDragging ? "none" : "transform 0.42s cubic-bezier(0.22,1,0.36,1)",
-            willChange: "transform",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
           }}
         >
-          <div style={{ width: "50%", flexShrink: 0, pointerEvents: "none" }}>
-            <ExcelPanel />
-          </div>
-          <div style={{ width: "50%", flexShrink: 0, pointerEvents: "none" }}>
-            <KakiSewaPanel />
-          </div>
+          <GripVertical style={{ width: 15, height: 15, color: "#888" }} />
+        </button>
+
+        {/* "✗ Today" label */}
+        <div style={{ position: "absolute", bottom: 12, left: 14, zIndex: 15, pointerEvents: "none" }}>
+          <span style={{
+            background: "rgba(0,0,0,0.55)",
+            color: "#ef4444",
+            fontSize: 10,
+            fontWeight: 700,
+            padding: "3px 8px",
+            borderRadius: 20,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}>✗ Today</span>
+        </div>
+
+        {/* "✓ With kakisewa" label */}
+        <div style={{ position: "absolute", bottom: 12, right: 14, zIndex: 15, pointerEvents: "none" }}>
+          <span style={{
+            background: "rgba(0,0,0,0.55)",
+            color: "#34C759",
+            fontSize: 10,
+            fontWeight: 700,
+            padding: "3px 8px",
+            borderRadius: 20,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}>✓ With kakisewa</span>
         </div>
       </div>
-
-      {/* Drag hint */}
-      <p className="text-center mt-3 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
-        Drag left or right to compare
-      </p>
     </div>
   );
 }

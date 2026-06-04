@@ -1,19 +1,15 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export default function SignOutPage() {
-  const router = useRouter()
-
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.signOut().then(() => {
-      router.push("/sign-in")
-      router.refresh()
+      window.location.href = "/sign-in"
     })
-  }, [router])
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--kk-bg)" }}>

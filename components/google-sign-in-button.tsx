@@ -25,8 +25,7 @@ export function GoogleSignInButton({ onError, onLoadingChange }: Props) {
         onError?.(error.message);
         onLoadingChange?.(false);
       } else {
-        router.push("/home");
-        router.refresh();
+        window.location.href = "/home";
       }
     },
     [router, onError, onLoadingChange]

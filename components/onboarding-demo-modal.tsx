@@ -472,71 +472,61 @@ function Scene2({ active }: { active: boolean }) {
 
         {showTenantPack ? (
           /* ── Tenant pack sample ── */
-          <div className="px-5 pt-3">
-            <div className="flex items-center justify-between mb-1">
-              <span style={{ fontWeight: 700, fontSize: 14, color: "#1C1C1E" }}>Tenant Pack</span>
-              <div className="flex items-center gap-1" style={{
+          <div className="px-4 pt-3 overflow-hidden">
+            {/* Pack header */}
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.01em" }}>
+                  Tenants for Residensi Mutiara
+                </p>
+                <p style={{ fontSize: 10, fontStyle: "italic", color: "#1C1C1E" }}>by Ahmad</p>
+                <p style={{ fontSize: 9, color: "#AEAEB2", marginTop: 2 }}>
+                  Drag to rank · leave notes for your agent
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0" style={{
                 background: "rgba(52,199,89,0.12)", borderRadius: 20,
-                padding: "3px 10px", fontSize: 10, fontWeight: 600, color: "#1F8B4C",
+                padding: "3px 8px", fontSize: 9, fontWeight: 600, color: "#1F8B4C",
               }}>
-                <Check style={{ width: 10, height: 10 }} />
-                Sent to Ahmad ✓
+                <Check style={{ width: 9, height: 9 }} /> Sent ✓
               </div>
             </div>
-            <p style={{ fontSize: 10, color: "#AEAEB2", marginBottom: 10 }}>
-              Shortlisted · Residensi Mutiara · 3 beds · RM 2,500/mo
-            </p>
-            <div className="flex gap-2">
-              {/* Tenant 1 */}
-              <div style={{
-                flex: 1, background: "#fff", borderRadius: 10,
-                border: "1px solid rgba(0,0,0,0.08)", padding: "10px 12px",
-                animation: "kk-demo-card-in 0.4s ease-out forwards",
-              }}>
-                <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: "50%", background: "#1C1C1E",
-                    flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 9, fontWeight: 700, color: "#fff",
-                  }}>1</div>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%", background: "#E5E5EA",
-                    flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 700, color: "#6C6C70",
-                  }}>P</div>
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Priya Sharma</p>
-                    <p style={{ fontSize: 9, color: "#6C6C70" }}>Software Engineer</p>
+            {/* Tenant cards */}
+            <div className="flex flex-col gap-2">
+              {[
+                { rank: 1, name: "Priya Sharma",    meta: "28 yrs · Malaysian", occ: "Software Engineer",  lifestyle: "No pets · Non-smoker", delay: "0s" },
+                { rank: 2, name: "Lee Chong Wei",   meta: "31 yrs · Malaysian", occ: "Marketing Manager",  lifestyle: "1 cat · Non-smoker",   delay: "0.12s" },
+              ].map(t => (
+                <div key={t.rank} style={{
+                  background: "#fff", borderRadius: 10,
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  padding: "8px 10px",
+                  animation: `kk-demo-card-in 0.4s ease-out ${t.delay} both`,
+                }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div style={{
+                      width: 18, height: 18, borderRadius: "50%",
+                      background: "#1C1C1E", color: "#fff",
+                      fontSize: 9, fontWeight: 700, flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>{t.rank}</div>
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E", lineHeight: 1.2 }}>{t.name}</p>
+                      <p style={{ fontSize: 9, color: "#6C6C70" }}>{t.meta}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 10px" }}>
+                    <div>
+                      <p style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#AEAEB2", marginBottom: 1 }}>Occupation</p>
+                      <p style={{ fontSize: 9.5, color: "#1C1C1E" }}>{t.occ}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#AEAEB2", marginBottom: 1 }}>Lifestyle</p>
+                      <p style={{ fontSize: 9.5, color: "#1C1C1E" }}>{t.lifestyle}</p>
+                    </div>
                   </div>
                 </div>
-                <p style={{ fontSize: 10, color: "#1C1C1E" }}>Budget <strong>RM 2,800/mo</strong></p>
-                <p style={{ fontSize: 9, color: "#AEAEB2", marginTop: 2 }}>Verified income · No pets</p>
-              </div>
-              {/* Tenant 2 */}
-              <div style={{
-                flex: 1, background: "#fff", borderRadius: 10,
-                border: "1px solid rgba(0,0,0,0.08)", padding: "10px 12px",
-                animation: "kk-demo-card-in 0.4s ease-out 0.12s both",
-              }}>
-                <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: "50%", background: "#1C1C1E",
-                    flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 9, fontWeight: 700, color: "#fff",
-                  }}>2</div>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%", background: "#E5E5EA",
-                    flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 700, color: "#6C6C70",
-                  }}>L</div>
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Lee Chong Wei</p>
-                    <p style={{ fontSize: 9, color: "#6C6C70" }}>Marketing Manager</p>
-                  </div>
-                </div>
-                <p style={{ fontSize: 10, color: "#1C1C1E" }}>Budget <strong>RM 2,600/mo</strong></p>
-                <p style={{ fontSize: 9, color: "#AEAEB2", marginTop: 2 }}>Verified income · 1 pet (cat)</p>
-              </div>
+              ))}
             </div>
           </div>
         ) : showAgent ? (
@@ -654,9 +644,9 @@ const M3: Phase[] = [
 
 const M3_CUR: Record<string, XY> = {
   idle:              { x: 165, y: 153 },
-  "to-notify-o":     { x: 165, y: 192 },
-  "hover-notify-o":  { x: 165, y: 192 },
-  "click-notify-o":  { x: 165, y: 192 },
+  "to-notify-o":     { x: 165, y: 203 },
+  "hover-notify-o":  { x: 165, y: 203 },
+  "click-notify-o":  { x: 165, y: 203 },
   "owner-reply":     { x: 260, y: 170 },
   "owner-yes":       { x: 165, y: 191 },
   renewing:          { x: 411, y: 155 },
@@ -777,10 +767,10 @@ function Scene3({ active }: { active: boolean }) {
                   {!ownerYes ? (
                     <div className="mb-1.5">
                       <ActionRow
-                        icon={<div style={{ width: 13, height: 13, borderRadius: "50%", border: "1.5px solid #007AFF" }} />}
+                        icon={<div style={{ width: 13, height: 13, borderRadius: "50%", border: "1.5px solid #34C759" }} />}
                         label="Notify owner"
-                        color="#0066CC"
-                        bgColor="rgba(0,122,255,0.08)"
+                        color="#1F8B4C"
+                        bgColor="rgba(52,199,89,0.09)"
                         hovered={notifyOHov}
                         clicked={notifyOClk}
                       />

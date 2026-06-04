@@ -43,8 +43,6 @@ const POINTS: Point[] = [
       <>
         Sending WhatsApp texts to owners.{" "}
         <span style={{ color: "#DC2626" }}>No brand, no tracking.</span>
-        {" "}
-        <span style={{ color: "var(--kk-ink-mute)" }}>Converting far fewer leads than you should.</span>
       </>
     ),
     quote: "I'd send 10 WhatsApp messages and get 1 reply. Once I started using a branded tenant pack link, owners responded faster and took me more seriously. Conversion went up straight away.",
@@ -81,6 +79,7 @@ function Card({ pt, index }: { pt: Point; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.72, delay: index * 0.13, ease: [0.22, 1, 0.36, 1] }}
+      style={{ height: "100%" }}
     >
       <motion.div
         animate={{ y: [0, -11, 0] }}
@@ -91,7 +90,7 @@ function Card({ pt, index }: { pt: Point; index: number }) {
           delay: index * 0.95,
           repeatDelay: 0,
         }}
-        style={{ perspective: "1000px" }}
+        style={{ perspective: "1000px", height: "100%" }}
       >
         <motion.div
           onMouseMove={handleMouseMove}
@@ -114,7 +113,7 @@ function Card({ pt, index }: { pt: Point; index: number }) {
               boxShadow:
                 "0 24px 64px -16px rgba(0,0,0,0.13), 0 4px 18px -4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)",
               cursor: "default",
-              minHeight: 400,
+              minHeight: 420,
             }}
           >
             <p
@@ -184,7 +183,7 @@ function Card({ pt, index }: { pt: Point; index: number }) {
 
 export function PainPointCards() {
   return (
-    <div className="max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-7 lg:gap-8">
+    <div className="max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-7 lg:gap-8 items-stretch">
       {POINTS.map((pt, i) => (
         <Card key={pt.num} pt={pt} index={i} />
       ))}
