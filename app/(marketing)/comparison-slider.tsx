@@ -178,29 +178,30 @@ const KANBAN = [
 function KakiSewaPanel() {
   return (
     <div style={{
-      background: "#F2F2F7", userSelect: "none",
-      fontFamily: "system-ui, sans-serif",
+      background: "#FBFBFD", userSelect: "none",
+      fontFamily: "system-ui, -apple-system, sans-serif",
       height: 480, display: "flex", flexDirection: "column",
     }}>
-      {/* Nav bar — matches actual dark topnav */}
+      {/* Top nav — white bg, dark ink, matches actual platform */}
       <div style={{
-        background: "#000", padding: "0 14px", flexShrink: 0,
-        display: "flex", alignItems: "center", gap: 10, height: 42,
+        background: "#fff",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        padding: "0 14px", flexShrink: 0,
+        display: "flex", alignItems: "center", gap: 8, height: 44,
       }}>
-        {/* Logo: serif k + wordmark + Japanese */}
-        <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           <span style={{
             fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: 22, fontWeight: 400, color: "#fff", lineHeight: 1,
-            letterSpacing: "-0.02em",
+            fontSize: 20, color: "#1D1D1F", lineHeight: 1, letterSpacing: "-0.02em",
           }}>k</span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 1, lineHeight: 1 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <span style={{
               fontFamily: "Georgia, 'Times New Roman', serif",
-              fontSize: 13, fontWeight: 400, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1,
+              fontSize: 12, color: "#1D1D1F", letterSpacing: "-0.02em", lineHeight: 1,
             }}>kakisewa</span>
             <span style={{
-              fontSize: 7.5, color: "rgba(255,255,255,0.4)", letterSpacing: "0.18em",
+              fontSize: 6.5, color: "#1D1D1F", opacity: 0.4, letterSpacing: "0.22em",
               fontFamily: "'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
               display: "flex", gap: 1,
             }}>
@@ -208,111 +209,134 @@ function KakiSewaPanel() {
             </span>
           </div>
         </div>
-        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+        <div style={{ width: 1, height: 14, background: "rgba(0,0,0,0.1)", flexShrink: 0 }} />
         {[
           { label: "Home", active: false },
           { label: "Existing Contracts", active: true },
           { label: "New Owners", active: false },
         ].map(l => (
           <span key={l.label} style={{
-            fontSize: 11,
-            color: l.active ? "#fff" : "rgba(255,255,255,0.45)",
+            fontSize: 10.5,
+            color: l.active ? "#1D1D1F" : "#86868B",
             fontWeight: l.active ? 600 : 400,
-            borderBottom: l.active ? "1.5px solid #fff" : "none",
-            paddingBottom: l.active ? 2 : 0,
+            background: l.active ? "rgba(0,0,0,0.06)" : "transparent",
+            borderRadius: 6,
+            padding: "3px 6px",
+            whiteSpace: "nowrap",
           }}>{l.label}</span>
         ))}
         <div style={{ flex: 1 }} />
+        {/* GOD TIER badge */}
+        <span style={{
+          fontSize: 8, fontWeight: 800, padding: "2px 7px", borderRadius: 20,
+          background: "linear-gradient(135deg, #b8962e, #e8c84a, #9a7a22)",
+          color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0,
+        }}>GOD TIER</span>
         <div style={{
-          width: 26, height: 26, borderRadius: "50%",
-          background: "#2c2c2e", border: "1px solid rgba(255,255,255,0.15)",
+          width: 24, height: 24, borderRadius: "50%", background: "#e8e8e8",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 10, fontWeight: 700, color: "#fff",
-        }}>A</div>
+          fontSize: 9, fontWeight: 700, color: "#1D1D1F", flexShrink: 0,
+        }}>HH</div>
       </div>
 
-      <div style={{ flex: 1, padding: 14, overflowY: "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Greeting bar */}
+      <div style={{
+        background: "#FBFBFD", borderBottom: "1px solid rgba(0,0,0,0.06)",
+        padding: "5px 14px", flexShrink: 0,
+        display: "flex", alignItems: "center", gap: 8,
+        fontSize: 9.5, color: "#6E6E73",
+      }}>
+        <span style={{ color: "#86868B" }}>☆</span>
+        <span style={{ color: "#1D1D1F", fontWeight: 600 }}>35 contracts</span>
+        <span style={{ color: "#34C759", fontSize: 11 }}>✓</span>
+        <span style={{ color: "rgba(0,0,0,0.15)" }}>|</span>
+        <span style={{ fontStyle: "italic" }}>Never miss a renewal again.</span>
+      </div>
+
+      <div style={{ flex: 1, padding: "12px 14px 10px", overflowY: "hidden", display: "flex", flexDirection: "column", gap: 9 }}>
         {/* Page title */}
         <div>
-          <p style={{ fontSize: 18, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Georgia, serif" }}>
+          <p style={{
+            fontSize: 22, fontWeight: 700, color: "#1D1D1F",
+            letterSpacing: "-0.03em", lineHeight: 1,
+            fontFamily: "Georgia, 'Times New Roman', serif",
+          }}>
             Existing Contracts
           </p>
-          <p style={{ fontSize: 11, color: "#AEAEB2", marginTop: 2 }}>Your renewal commission is passive income.</p>
-          <div style={{ marginTop: 8, borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 6 }}>
+          <p style={{ fontSize: 10, color: "#86868B", marginTop: 3 }}>
+            Your renewal commission is passive income. Never miss an expiry again.
+          </p>
+          <div style={{ marginTop: 8, borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 0, display: "flex", alignItems: "flex-end" }}>
             <span style={{
-              fontSize: 12, fontWeight: 600, color: "#1C1C1E",
-              borderBottom: "2px solid #1C1C1E", paddingBottom: 6,
+              fontSize: 11, fontWeight: 600, color: "#1D1D1F",
+              borderBottom: "2px solid #1D1D1F", paddingBottom: 6, display: "inline-block",
             }}>
-              Existing contracts&nbsp;&nbsp;35
+              Existing contracts &nbsp;
+              <span style={{ background: "#1D1D1F", color: "#fff", borderRadius: "50%", fontSize: 9, padding: "1px 5px", fontWeight: 700 }}>35</span>
             </span>
           </div>
         </div>
 
         {/* Chart box */}
         <div style={{
-          background: "#fff", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)",
+          background: "#fff", borderRadius: 12,
+          border: "1px solid rgba(0,0,0,0.08)",
           padding: "10px 12px",
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <div>
-              <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#AEAEB2" }}>
-                RENEWAL INCOME · NEXT 12 MONTHS
-              </p>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.03em", marginTop: 2 }}>RM 14,800</p>
-              <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 1 }}>35 contracts · 50% commission per renewal</p>
-            </div>
-            <span style={{ fontSize: 10, color: "#AEAEB2" }}>Next 12 months</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 60, marginTop: 6 }}>
+          <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#86868B" }}>
+            RENEWAL INCOME · NEXT 12 MONTHS
+          </p>
+          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>RM 14,800</p>
+          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>35 contracts · 50% commission per renewal</p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 44, marginTop: 8 }}>
             {CHART_DATA.map((v, i) => (
-              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <div key={i} style={{ flex: 1 }}>
                 <div style={{
                   width: "100%", borderRadius: "2px 2px 0 0",
-                  background: v === CHART_MAX ? "#0f9d58" : "#34C759",
-                  height: `${Math.round((v / CHART_MAX) * 52)}px`,
-                  minHeight: 4,
+                  background: v === CHART_MAX ? "#1D9244" : "#34C759",
+                  height: `${Math.round((v / CHART_MAX) * 40)}px`,
+                  minHeight: 3,
                 }} />
               </div>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 3, marginTop: 3 }}>
+          <div style={{ display: "flex", gap: 2, marginTop: 3 }}>
             {CHART_MONTHS.map(m => (
-              <div key={m} style={{ flex: 1, textAlign: "center", fontSize: 7, color: "#AEAEB2", fontWeight: 500 }}>{m}</div>
+              <div key={m} style={{ flex: 1, textAlign: "center", fontSize: 6.5, color: "#AEAEB2" }}>{m}</div>
             ))}
           </div>
         </div>
 
         {/* Kanban */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, flex: 1 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, flex: 1 }}>
           {KANBAN.map(col => (
             <div key={col.id} style={{
               background: "#fff", borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.08)",
               borderTop: `2px solid ${col.accent}`,
-              border: `1px solid rgba(0,0,0,0.07)`,
-              borderTopColor: col.accent,
               overflow: "hidden",
             }}>
-              <div style={{ padding: "7px 10px 5px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              <div style={{ padding: "6px 8px 5px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
                 <span style={{
-                  fontSize: 9, fontWeight: 700, textTransform: "uppercase",
-                  letterSpacing: "0.06em", color: col.accent,
+                  fontSize: 8.5, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.07em", color: col.accent,
                 }}>
-                  {col.icon} {col.title}&nbsp;&nbsp;{col.cards.length}
+                  {col.title} {col.cards.length}
                 </span>
               </div>
-              <div style={{ padding: "6px 8px", display: "flex", flexDirection: "column", gap: 5 }}>
+              <div style={{ padding: "5px 7px", display: "flex", flexDirection: "column", gap: 4 }}>
                 {col.cards.map(card => (
                   <div key={card.name} style={{
-                    background: "#fff", borderRadius: 8,
-                    border: "1px solid rgba(0,0,0,0.07)",
-                    padding: "8px 10px",
+                    background: "#FBFBFD", borderRadius: 7,
+                    border: "1px solid rgba(0,0,0,0.06)",
+                    padding: "6px 8px",
                   }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>{card.name}</p>
-                    <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 1, lineHeight: 1.2 }}>{card.prop}</p>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: "#1D1D1F", lineHeight: 1.2 }}>{card.name}</p>
+                    <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 1 }}>{card.prop}</p>
                     <div style={{
-                      marginTop: 5, display: "inline-flex", padding: "2px 7px",
-                      borderRadius: 20, fontSize: 9, fontWeight: 600,
-                      background: `${card.badgeColor}1a`, color: card.badgeColor,
+                      marginTop: 4, display: "inline-flex", padding: "1px 6px",
+                      borderRadius: 20, fontSize: 8, fontWeight: 600,
+                      background: `${card.badgeColor}18`, color: card.badgeColor,
                     }}>
                       {card.badge}
                     </div>
