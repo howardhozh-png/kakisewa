@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
-import { Star, Pencil, Trash2, Share2, X, Check, Loader2, Search } from "lucide-react";
+import { useState, useTransition, useMemo, useEffect } from "react";
+import { Star, Trash2, Share2, X, Check, Loader2, Search } from "lucide-react";
 import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_ICONS } from "@/lib/types";
 import { savePropertySupport, toggleSupportStar, removeSupportContact } from "@/lib/actions";
 import { resolveTemplate, parseTemplateOverrides } from "@/lib/whatsapp-templates";
@@ -62,7 +62,8 @@ function ContactCard({
 
   return (
     <div
-      className="kk-card-hover p-4 flex items-start gap-3 group relative"
+      className="kk-card-hover p-4 flex items-start gap-3 group relative cursor-pointer"
+      onClick={() => onEdit(contact)}
       style={{
         background: "var(--kk-surface)",
         border: preferred ? "2px solid rgba(217,119,6,0.40)" : "1px solid var(--kk-line)",
@@ -86,6 +87,7 @@ function ContactCard({
       <div
         className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-150"
         style={{ zIndex: 20 }}
+        onClick={(e) => e.stopPropagation()}
       >
         <Tip label={contact.starred ? "Unstar" : "Star"}>
           <button
@@ -106,15 +108,6 @@ function ContactCard({
             style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}
           >
             <Share2 className="w-3.5 h-3.5" />
-          </button>
-        </Tip>
-        <Tip label="Edit">
-          <button
-            onClick={() => onEdit(contact)}
-            className="kk-icon-btn w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}
-          >
-            <Pencil className="w-3.5 h-3.5" />
           </button>
         </Tip>
         <Tip label="Delete">
@@ -231,6 +224,12 @@ function ContactForm({
     });
   }
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4"
@@ -330,6 +329,11 @@ function DeleteConfirm({ contact, onCancel, onConfirmed }: {
   onConfirmed: () => void;
 }) {
   const [pending, startTransition] = useTransition();
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onCancel(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
 
   function confirm() {
     startTransition(async () => {
