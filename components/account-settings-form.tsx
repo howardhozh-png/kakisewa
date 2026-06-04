@@ -503,23 +503,34 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const [renNumber, setRenNumber] = useState(agent.ren_number ?? "");
   const [pending, startTransition] = useTransition();
 
-  // Change password state
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  // Passcode state
+  const [newPasscode, setNewPasscode] = useState("");
+  const [confirmPasscode, setConfirmPasscode] = useState("");
   const [pwPending, setPwPending] = useState(false);
+  const [authProvider, setAuthProvider] = useState<string | null>(null);
+
+  useEffect(() => {
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      createClient().auth.getUser().then(({ data }) => {
+        setAuthProvider(data.user?.app_metadata?.provider ?? null);
+      });
+    });
+  }, []);
+
+  const isGoogleUser = authProvider === "google";
 
   async function handleChangePassword() {
-    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters."); return; }
-    if (newPassword !== confirmPassword) { toast.error("Passwords don't match."); return; }
+    if (!/^\d{8}$/.test(newPasscode)) { toast.error("Passcode must be exactly 8 digits."); return; }
+    if (newPasscode !== confirmPasscode) { toast.error("Passcodes don't match."); return; }
     setPwPending(true);
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await supabase.auth.updateUser({ password: newPasscode });
     setPwPending(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Password updated");
-    setNewPassword("");
-    setConfirmPassword("");
+    toast.success("Passcode updated");
+    setNewPasscode("");
+    setConfirmPasscode("");
   }
 
   const dirty =
@@ -673,45 +684,53 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
         </button>
       </section>
 
-      {/* ── Change Password ── */}
+      {/* ── Passcode ── */}
       <section className="kk-section p-6">
-        <h2 className="text-[15px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Change password</h2>
-        <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>Set a new password for your account.</p>
+        <h2 className="text-[15px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Sign-in passcode</h2>
+        <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
+          {isGoogleUser
+            ? "Set an 8-digit passcode to also sign in with email and passcode."
+            : "Change your 8-digit numeric passcode."}
+        </p>
         <div className="space-y-3">
           <div>
-            <p className="kk-overline mb-1.5">New password</p>
+            <p className="kk-overline mb-1.5">New passcode</p>
             <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="Min. 8 characters"
-              style={{ ...INPUT_STYLE }}
+              type="tel"
+              maxLength={8}
+              value={newPasscode}
+              onChange={e => setNewPasscode(e.target.value.replace(/\D/g, ""))}
+              placeholder="8 digits"
+              className="text-center tracking-widest"
+              style={{ ...INPUT_STYLE, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
             />
           </div>
           <div>
-            <p className="kk-overline mb-1.5">Confirm new password</p>
+            <p className="kk-overline mb-1.5">Confirm passcode</p>
             <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder=""
-              style={{ ...INPUT_STYLE }}
+              type="tel"
+              maxLength={8}
+              value={confirmPasscode}
+              onChange={e => setConfirmPasscode(e.target.value.replace(/\D/g, ""))}
+              placeholder="8 digits"
+              className="text-center tracking-widest"
+              style={{ ...INPUT_STYLE, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
             />
           </div>
         </div>
         <button
           onClick={handleChangePassword}
-          disabled={pwPending || !newPassword || !confirmPassword}
+          disabled={pwPending || !newPasscode || !confirmPasscode}
           className="kk-pill mt-5 flex items-center gap-2"
           style={{
-            background: newPassword && confirmPassword ? "var(--kk-ink)" : "var(--kk-surface-2)",
-            color: newPassword && confirmPassword ? "#fff" : "var(--kk-ink-faint)",
-            cursor: pwPending || !newPassword || !confirmPassword ? "not-allowed" : "pointer",
+            background: newPasscode && confirmPasscode ? "var(--kk-ink)" : "var(--kk-surface-2)",
+            color: newPasscode && confirmPasscode ? "#fff" : "var(--kk-ink-faint)",
+            cursor: pwPending || !newPasscode || !confirmPasscode ? "not-allowed" : "pointer",
             opacity: pwPending ? 0.7 : 1,
           }}
         >
           {pwPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          {pwPending ? "Updating…" : "Update password"}
+          {pwPending ? "Updating…" : isGoogleUser ? "Set passcode" : "Update passcode"}
         </button>
       </section>
 

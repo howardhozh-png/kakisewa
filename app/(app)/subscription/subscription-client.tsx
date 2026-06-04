@@ -447,33 +447,41 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
         </div>
 
         {/* Toggle */}
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <button
-            onClick={() => setInterval("monthly")}
-            className="px-5 py-2 rounded-full text-[13px] font-semibold transition-all"
-            style={{
-              background: interval === "monthly" ? "var(--kk-ink)" : "var(--kk-surface-2)",
-              color: interval === "monthly" ? "#fff" : "var(--kk-ink-mute)",
-              border: "1px solid var(--kk-line-strong)",
-            }}
+        <div className="flex justify-center mb-10">
+          <div
+            className="inline-flex rounded-full p-1"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}
           >
-            Monthly
-          </button>
-          <button
-            onClick={() => setInterval("annual")}
-            className="px-5 py-2 rounded-full text-[13px] font-semibold transition-all flex items-center gap-2"
-            style={{
-              background: interval === "annual" ? "var(--kk-ink)" : "var(--kk-surface-2)",
-              color: interval === "annual" ? "#fff" : "var(--kk-ink-mute)",
-              border: "1px solid var(--kk-line-strong)",
-            }}
-          >
-            Annual
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
-              style={{ background: interval === "annual" ? "#16a34a" : "var(--kk-line-strong)", color: "#fff" }}>
-              −17%
-            </span>
-          </button>
+            <button
+              onClick={() => setInterval("monthly")}
+              className="px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all"
+              style={{
+                background: interval === "monthly" ? "var(--kk-ink)" : "transparent",
+                color: interval === "monthly" ? "#fff" : "var(--kk-ink-mute)",
+              }}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setInterval("annual")}
+              className="px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all flex items-center gap-2"
+              style={{
+                background: interval === "annual" ? "var(--kk-ink)" : "transparent",
+                color: interval === "annual" ? "#fff" : "var(--kk-ink-mute)",
+              }}
+            >
+              Annual
+              <span
+                className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
+                style={{
+                  background: interval === "annual" ? "#16a34a" : "var(--kk-line)",
+                  color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)",
+                }}
+              >
+                −17%
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Cards */}
