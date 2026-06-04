@@ -703,6 +703,24 @@ export async function countLifecycleTenancies(): Promise<number> {
   return count ?? 0;
 }
 
+export async function countTenantProfiles(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("tenant_profiles")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function countPropertySupports(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("property_supports")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getHomeDashboardStats(): Promise<{
   totalOwners: number;
   uncontacted: number;

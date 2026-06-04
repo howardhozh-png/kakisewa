@@ -8,14 +8,16 @@ import { TrialGate } from "@/components/trial-gate";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [agent, leadCount, contractCount] = await Promise.all([
+  const [agent, leadCount, contractCount, tenantCount, supportCount] = await Promise.all([
     getAgentProfile(),
     countOwnerLeads().catch(() => null),
     countLifecycleTenancies().catch(() => null),
+    countTenantProfiles().catch(() => null),
+    countPropertySupports().catch(() => null),
   ]);
   // Fire streak update without blocking the render — only writes once per day
   recordLoginStreak().catch(() => {});
@@ -50,6 +52,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         isNewAgent={isNewAgent}
         hasLeads={(leadCount ?? 0) > 0}
         hasContracts={(contractCount ?? 0) > 0}
+        hasTenants={(tenantCount ?? 0) > 0}
+        hasSupports={(supportCount ?? 0) > 0}
       />
       <main className="flex-1">{children}</main>
       <OnboardingDemoModal />

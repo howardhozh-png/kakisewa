@@ -1286,18 +1286,29 @@ function PropertyPopover({
   stats: PropertyStats;
 }) {
   const [open, setOpen] = useState(false);
+  const [dropRect, setDropRect] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onMouse = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node) &&
+          btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onMouse);
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onMouse); document.removeEventListener("keydown", onKey); };
   }, [open]);
+
+  function handleOpen() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropRect({ top: r.bottom + 6, left: r.left });
+    }
+    setOpen((v) => !v);
+  }
 
   const rows = Object.entries(stats).sort((a, b) => {
     if (b[1].unsent !== a[1].unsent) return b[1].unsent - a[1].unsent;
@@ -1314,10 +1325,11 @@ function PropertyPopover({
   function pick(v: string) { onChange(v); setOpen(false); }
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div style={{ position: "relative", flexShrink: 0 }}>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleOpen}
         className="flex items-center gap-2 pl-3 pr-2.5 py-1.5 rounded-full text-[13px] font-medium"
         style={{
           background: value !== "all" ? "var(--kk-ink)" : "var(--kk-surface-2)",
@@ -1330,18 +1342,19 @@ function PropertyPopover({
         <ChevronDown className="w-3.5 h-3.5 shrink-0" style={{ opacity: 0.6 }} />
       </button>
 
-      {open && (
+      {open && dropRect && (
         <div
+          ref={ref}
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            left: 0,
-            zIndex: 200,
+            position: "fixed",
+            top: dropRect.top,
+            left: Math.min(dropRect.left, window.innerWidth - 340),
+            zIndex: 9999,
             background: "var(--kk-surface)",
             border: "1px solid var(--kk-line)",
             borderRadius: 12,
             boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)",
-            minWidth: 520,
+            width: Math.min(520, window.innerWidth - 24),
             maxHeight: 420,
             overflowY: "auto",
           }}
