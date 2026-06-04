@@ -1405,7 +1405,9 @@ export async function setOwnerRanking(
   packId: string,
   rankings: Array<{ tenant_id: string; rank: number; liked: number; owner_note?: string | null }>
 ): Promise<void> {
-  const supabase = await createClient();
+  // Must use service client — this is called from the public share-pack page which has no auth session.
+  // The anon client is blocked by RLS on match_pack_tenants, causing silent save failures.
+  const supabase = createServiceClient();
   await Promise.all(rankings.map(r =>
     supabase
       .from("match_pack_tenants")

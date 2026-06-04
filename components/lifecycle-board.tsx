@@ -658,7 +658,7 @@ function HeadsupOwnerAction({ t }: { t: Tenancy }) {
       data-card-action
       onClick={handleClick}
       disabled={pending}
-      className="kk-card-cta kk-card-cta-soft-theme"
+      className="kk-card-cta kk-card-cta-soft-green"
     >
       <span className="flex items-start gap-1.5 min-w-0 flex-1">
         {pending

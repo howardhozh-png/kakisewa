@@ -69,12 +69,12 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
 
-  // Auto-refresh every 15s while any lead has pending intake OR active listed deals (catches owner pack rankings)
+  // Auto-refresh every 5s while any lead has pending intake OR active listed deals (catches owner pack rankings)
   useEffect(() => {
     const hasPending = local.some((l) => l.intake_sent_at && !l.intake_completed_at);
     const hasActive = local.some((l) => ["listed", "wants_rent", "replied"].includes(l.stage));
     if (!hasPending && !hasActive) return;
-    const id = setInterval(() => router.refresh(), 15_000);
+    const id = setInterval(() => router.refresh(), 5_000);
     return () => clearInterval(id);
   }, [local, router]);
 
