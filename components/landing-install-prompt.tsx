@@ -166,17 +166,8 @@ export function LandingInstallPrompt() {
           /* ── Landing view ── */
           <>
             <div className="flex items-center gap-4 mb-5">
-              <div className="shrink-0 rounded-2xl flex items-center justify-center" style={{ width: 56, height: 56, background: "#fff" }}>
-                <svg viewBox="0 0 24 24" width={36} height={36} fill="none">
-                  <path
-                    d="M6 3 L6 21 M6 12 L17 5 M6 12 L17 21"
-                    stroke="#000000"
-                    strokeWidth="2.8"
-                    strokeLinecap="butt"
-                    strokeLinejoin="miter"
-                  />
-                </svg>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/pwa-icon/56" alt="kakisewa" width={56} height={56} className="shrink-0 rounded-2xl" />
               <div>
                 <p className="text-[18px] font-bold leading-tight" style={{ color: "#fff" }}>
                   For a better experience

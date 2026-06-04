@@ -6,13 +6,6 @@ import { NewListingButton } from "@/components/new-listing-button";
 export function OutreachEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      <div
-        className="w-16 h-16 rounded-3xl flex items-center justify-center mb-6 text-3xl"
-        style={{ background: "var(--kk-surface-2)" }}
-      >
-        📋
-      </div>
-
       <h2 className="serif kk-h2 mb-3" style={{ color: "var(--kk-ink)" }}>
         Your pipeline starts here
       </h2>

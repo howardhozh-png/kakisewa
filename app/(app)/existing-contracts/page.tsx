@@ -90,12 +90,6 @@ export default async function TenanciesPage({ searchParams }: Props) {
           <>
             {/* Empty state CTA */}
             <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
-              <div
-                className="w-16 h-16 rounded-3xl flex items-center justify-center mb-6 text-3xl"
-                style={{ background: "var(--kk-surface-2)" }}
-              >
-                📁
-              </div>
               <h2 className="serif kk-h2 mb-3" style={{ color: "var(--kk-ink)" }}>
                 Add once. Earn forever.
               </h2>
