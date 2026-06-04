@@ -22,17 +22,20 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "kakisewa",
-  description: "kakisewa, #1 property agent platform",
+  title: {
+    default: "kakisewa - your property notebook",
+    template: "%s — kakisewa",
+  },
+  description: "Make more money from property with kakisewa. Track every contract renewal, close every owner lead, send polished tenant packages. All in one place.",
   openGraph: {
-    title: "kakisewa",
-    description: "kakisewa, #1 property agent platform",
+    title: "kakisewa - your property notebook",
+    description: "Make more money from property with kakisewa. Track every contract renewal, close every owner lead, send polished tenant packages. All in one place.",
     siteName: "kakisewa",
   },
   twitter: {
     card: "summary",
-    title: "kakisewa",
-    description: "kakisewa, #1 property agent platform",
+    title: "kakisewa - your property notebook",
+    description: "Make more money from property with kakisewa. Track every contract renewal, close every owner lead, send polished tenant packages. All in one place.",
   },
   icons: {
     apple: [{ url: "/pwa-icon/180?v=14", sizes: "180x180", type: "image/png" }],

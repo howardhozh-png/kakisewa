@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "kakisewa",
     short_name: "kakisewa",
-    description: "Tenancy CRM for Malaysian real estate agents",
+    description: "Your property notebook. Track renewals, manage leads, close more deals.",
     start_url: "/home",
     display: "standalone",
     background_color: "#FFFFFF",
