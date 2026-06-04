@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Banknote, ArrowRight, CheckCircle, Check } from "lucide-react";
 
 // ─── Excel panel data ──────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ function ExcelPanel() {
     <div style={{
       background: "#fff", userSelect: "none",
       fontFamily: "system-ui, sans-serif",
-      height: 480, display: "flex", flexDirection: "column",
+      height: 510, display: "flex", flexDirection: "column",
     }}>
       {/* Google Sheets-style green header */}
       <div style={{
@@ -183,7 +183,7 @@ function KakiSewaPanel() {
     <div style={{
       background: "#FBFBFD", userSelect: "none",
       fontFamily: "system-ui, -apple-system, sans-serif",
-      height: 480, display: "flex", flexDirection: "column",
+      height: 510, display: "flex", flexDirection: "column",
     }}>
       {/* Top nav — white bg, dark ink, matches actual platform */}
       <div style={{
@@ -313,20 +313,22 @@ function KakiSewaPanel() {
         {/* Kanban */}
         <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
           {/* "Don't forget your money!" tooltip above EXPIRING */}
-          <div style={{ position: "absolute", top: -26, left: "1%", zIndex: 10, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", top: -28, left: "2%", pointerEvents: "none" }}>
             <div style={{
-              background: "#1D1D1F", color: "#fff", borderRadius: 20,
-              padding: "4px 10px", fontSize: 8.5, fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+              background: "#1D1D1F", color: "#fff", borderRadius: 22,
+              padding: "6px 14px", fontSize: 8.5, fontWeight: 700,
+              display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             }}>
-              <span>💸</span> Don&apos;t forget your money!
+              <Banknote style={{ width: 13, height: 13, color: "#fff" }} />
+              Don&apos;t forget your money!
             </div>
             <div style={{
               width: 0, height: 0,
-              borderLeft: "5px solid transparent",
-              borderRight: "5px solid transparent",
-              borderTop: "5px solid #1D1D1F",
-              marginLeft: 18,
+              borderLeft: "7px solid transparent",
+              borderRight: "7px solid transparent",
+              borderTop: "7px solid #1D1D1F",
+              marginLeft: 20,
             }} />
           </div>
 
@@ -365,6 +367,38 @@ function KakiSewaPanel() {
                         }}>{card.badge}</span>
                       </div>
                       <p style={{ fontSize: 8.5, color: "#6E6E73", marginTop: 2 }}>{card.prop}</p>
+                      {/* Action button per stage */}
+                      {col.id === "expiring" && (
+                        <div style={{
+                          marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
+                          background: "rgba(0,0,0,0.04)", borderRadius: 6, padding: "4px 7px",
+                          fontSize: 8, fontWeight: 600, color: "#1D1D1F",
+                        }}>
+                          <span>What&apos;s next?</span>
+                          <ArrowRight style={{ width: 9, height: 9 }} />
+                        </div>
+                      )}
+                      {col.id === "renewing" && (
+                        <div style={{
+                          marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
+                          background: "rgba(52,199,89,0.10)", borderRadius: 6, padding: "4px 7px",
+                          fontSize: 8, fontWeight: 600, color: "#34C759",
+                        }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                            <CheckCircle style={{ width: 9, height: 9 }} /> Moved in
+                          </span>
+                          <ArrowRight style={{ width: 9, height: 9 }} />
+                        </div>
+                      )}
+                      {col.id === "active" && (
+                        <div style={{
+                          marginTop: 5, display: "flex", alignItems: "center", gap: 3,
+                          fontSize: 8, color: "#86868B",
+                        }}>
+                          <Check style={{ width: 9, height: 9, color: "#34C759" }} />
+                          <span>{card.badge}</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -424,6 +458,20 @@ export function ComparisonSlider() {
         <p style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginTop: 8 }}>Drag the handle to compare</p>
       </div>
 
+      {/* Labels above the slider */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, padding: "0 2px" }}>
+        <span style={{
+          background: "rgba(0,0,0,0.08)", color: "#ef4444",
+          fontSize: 10, fontWeight: 700, padding: "4px 12px",
+          borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.08em",
+        }}>✗ Today</span>
+        <span style={{
+          background: "rgba(52,199,89,0.12)", color: "#34C759",
+          fontSize: 10, fontWeight: 700, padding: "4px 12px",
+          borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.08em",
+        }}>✓ With kakisewa</span>
+      </div>
+
       {/* Slider container */}
       <div
         ref={containerRef}
@@ -434,22 +482,21 @@ export function ComparisonSlider() {
         style={{
           position: "relative",
           overflow: "hidden",
-          height: 480,
+          height: 510,
           borderRadius: "1rem",
           border: "1px solid var(--kk-line)",
           cursor: "ew-resize",
           userSelect: "none",
         }}
       >
-        {/* Bottom layer — KakiSewa (always fully visible behind) */}
-        <div style={{ position: "absolute", inset: 0 }}>
+        {/* Bottom layer — KakiSewa */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
           <KakiSewaPanel />
         </div>
 
         {/* Top layer — Excel (Today), clipped to show left portion */}
         <div style={{
-          position: "absolute",
-          inset: 0,
+          position: "absolute", inset: 0, zIndex: 3,
           clipPath: `inset(0 ${100 - position}% 0 0)`,
         }}>
           <ExcelPanel />
@@ -457,69 +504,25 @@ export function ComparisonSlider() {
 
         {/* Divider line */}
         <div style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: `${position}%`,
-          width: 2,
+          position: "absolute", top: 0, bottom: 0,
+          left: `${position}%`, width: 2,
           background: "rgba(255,255,255,0.85)",
           boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
-          zIndex: 20,
-          pointerEvents: "none",
-          transform: "translateX(-1px)",
+          zIndex: 20, pointerEvents: "none", transform: "translateX(-1px)",
         }} />
 
         {/* Drag handle */}
-        <button
-          style={{
-            position: "absolute",
-            left: `${position}%`,
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 21,
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            background: "#fff",
-            border: "1.5px solid rgba(0,0,0,0.12)",
-            cursor: "ew-resize",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "none",
-          }}
-        >
+        <button style={{
+          position: "absolute", left: `${position}%`, top: "50%",
+          transform: "translate(-50%, -50%)", zIndex: 21,
+          width: 36, height: 36, borderRadius: "50%",
+          background: "#fff", border: "1.5px solid rgba(0,0,0,0.12)",
+          cursor: "ew-resize", boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          pointerEvents: "none",
+        }}>
           <GripVertical style={{ width: 15, height: 15, color: "#888" }} />
         </button>
-
-        {/* "✗ Today" label */}
-        <div style={{ position: "absolute", bottom: 12, left: 14, zIndex: 15, pointerEvents: "none" }}>
-          <span style={{
-            background: "rgba(0,0,0,0.55)",
-            color: "#ef4444",
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "3px 8px",
-            borderRadius: 20,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}>✗ Today</span>
-        </div>
-
-        {/* "✓ With kakisewa" label */}
-        <div style={{ position: "absolute", bottom: 12, right: 14, zIndex: 15, pointerEvents: "none" }}>
-          <span style={{
-            background: "rgba(0,0,0,0.55)",
-            color: "#34C759",
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "3px 8px",
-            borderRadius: 20,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}>✓ With kakisewa</span>
-        </div>
       </div>
     </div>
   );
