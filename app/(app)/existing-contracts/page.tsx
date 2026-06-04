@@ -87,9 +87,32 @@ export default async function TenanciesPage({ searchParams }: Props) {
           created_at: new Date().toISOString(),
         };
         return (
-          <div style={{ opacity: 0.5, pointerEvents: "none" }}>
-            <LifecycleBoard tenancies={[demoTenancy]} openTenancyId={undefined} highlightId={undefined} />
-          </div>
+          <>
+            {/* Empty state CTA */}
+            <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
+              <div
+                className="w-16 h-16 rounded-3xl flex items-center justify-center mb-6 text-3xl"
+                style={{ background: "var(--kk-surface-2)" }}
+              >
+                📁
+              </div>
+              <h2 className="serif kk-h2 mb-3" style={{ color: "var(--kk-ink)" }}>
+                Add once. Earn forever.
+              </h2>
+              <p className="kk-body-sm mb-8 max-w-sm leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                Enter your active tenancies and kakisewa tracks every renewal automatically. Get alerted 60 days before expiry and close the commission before another agent does. You never have to remember again.
+              </p>
+              <AddTenancyDialog properties={properties} />
+            </div>
+
+            {/* Preview of what it looks like */}
+            <p className="text-center text-[12px] mb-4" style={{ color: "var(--kk-ink-faint)" }}>
+              Here is a preview of what your board will look like
+            </p>
+            <div style={{ opacity: 0.35, pointerEvents: "none" }}>
+              <LifecycleBoard tenancies={[demoTenancy]} openTenancyId={undefined} highlightId={undefined} />
+            </div>
+          </>
         );
       })() : (
         <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={highlight} />

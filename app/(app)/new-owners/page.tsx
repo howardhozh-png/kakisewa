@@ -5,6 +5,7 @@ import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { NewListingButton } from "@/components/new-listing-button";
 import { LeadsSubNav } from "@/components/leads-sub-nav";
 import { OutreachTable } from "@/components/outreach-table";
+import { OutreachEmptyState } from "@/components/outreach-empty-state";
 import { PageHelpButton } from "@/components/page-help-button";
 import type { OwnerLead } from "@/lib/types";
 
@@ -98,7 +99,7 @@ export default async function LeadsPage({ searchParams }: Props) {
       </Suspense>
 
       {activeTab === "outreach" ? (
-        <OutreachTable leads={ownerLeads} />
+        ownerLeads.length === 0 ? <OutreachEmptyState /> : <OutreachTable leads={ownerLeads} />
       ) : pipelineLeads.length === 0 ? (
         <div style={{ opacity: 0.5, pointerEvents: "none" }}>
           <OwnerPipelineBoard

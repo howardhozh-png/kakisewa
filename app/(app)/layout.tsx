@@ -8,10 +8,15 @@ import { TrialGate } from "@/components/trial-gate";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies } from "@/lib/db";
+import { OnboardingNudge } from "@/components/onboarding-nudge";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const agent = await getAgentProfile();
+  const [agent, leadCount, contractCount] = await Promise.all([
+    getAgentProfile(),
+    countOwnerLeads().catch(() => null),
+    countLifecycleTenancies().catch(() => null),
+  ]);
   // Fire streak update without blocking the render — only writes once per day
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
@@ -29,6 +34,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
   const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
+  const trialStartedAt = agent.trial_started_at ? new Date(agent.trial_started_at) : null;
+  const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 999;
+  const isNewAgent = daysSinceSignup <= 30;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -38,6 +46,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} />
       </div>
       <GreetingBar name={agent.name} streak={streak} checkedInToday={checkedInToday} />
+      <OnboardingNudge
+        isNewAgent={isNewAgent}
+        hasLeads={(leadCount ?? 0) > 0}
+        hasContracts={(contractCount ?? 0) > 0}
+      />
       <main className="flex-1">{children}</main>
       <OnboardingDemoModal />
       <Toaster richColors position="top-right" closeButton />

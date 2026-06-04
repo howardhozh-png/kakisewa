@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { updateTenantProfileAction, removeTenantProfile } from "@/lib/actions";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
+import { AddTenantButton } from "@/components/add-tenant-button";
 import { DateRangeFilter } from "@/components/date-range-filter";
 
 export interface PropertyTenant {
@@ -336,14 +337,15 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
       {totalVisible === 0 ? (
         <div className="kk-section flex flex-col items-center justify-center gap-4 py-16 px-6">
           {profiles.length === 0 && propertyTenants.length === 0 ? (
-            <div className="text-center max-w-md">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "var(--kk-surface-2)" }}>
-                <User className="w-6 h-6" style={{ color: "var(--kk-ink-mute)" }} />
+            <div className="text-center max-w-sm">
+              <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl" style={{ background: "var(--kk-surface-2)" }}>
+                👥
               </div>
-              <p className="kk-h3 mb-2" style={{ color: "var(--kk-ink)" }}>No tenant profiles yet</p>
-              <p className="kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-                Click <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>New tenant intake</span> above to send the intake form via WhatsApp.
+              <p className="serif kk-h2 mb-3" style={{ color: "var(--kk-ink)" }}>Add your first tenant</p>
+              <p className="kk-body-sm mb-6 leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                Send a tenant an intake form via WhatsApp and their profile is created automatically. Or add them manually right now.
               </p>
+              <AddTenantButton />
             </div>
           ) : (
             <p className="kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>No profiles match your search.</p>
