@@ -11,22 +11,22 @@ export default function Icon() {
           width: 32,
           height: 32,
           background: "#FFFFFF",
+          borderRadius: 7,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <div
-          style={{
-            fontSize: 26,
-            fontWeight: 800,
-            color: "#000000",
-            lineHeight: 1,
-            letterSpacing: "-0.04em",
-          }}
-        >
-          k
-        </div>
+        <svg viewBox="0 0 24 24" width={26} height={26} fill="none">
+          <path d="M6 3 L6 21" stroke="#000000" strokeWidth="3" strokeLinecap="butt" />
+          <path
+            d="M17 5 C 20,4 1,6 6,12 C 11,18 5,20 17,21"
+            stroke="#000000"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </div>
     ),
     { width: 32, height: 32 }
