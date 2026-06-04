@@ -194,7 +194,7 @@ function StreakCelebration({ streak, phrase, onClose }: { streak: number; phrase
   );
 }
 
-export function GreetingBar({ name, streak }: { name?: string | null; streak?: number }) {
+export function GreetingBar({ name, streak, checkedInToday }: { name?: string | null; streak?: number; checkedInToday?: boolean }) {
   const [now, setNow] = useState<Date | null>(null);
   const [fortune, setFortune] = useState<FortuneState>({ date: todayKey(), seen: [], current: null });
   const [quoteVisible, setQuoteVisible] = useState(true);
@@ -202,11 +202,12 @@ export function GreetingBar({ name, streak }: { name?: string | null; streak?: n
   const cookieBtnRef = useRef<HTMLButtonElement>(null);
   const [localStreak, setLocalStreak] = useState(streak ?? 0);
   const [celebrating, setCelebrating] = useState(false);
-  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkedIn, setCheckedIn] = useState(checkedInToday ?? false);
   const [streakPhrase, setStreakPhrase] = useState("");
 
   useEffect(() => {
-    setCheckedIn(hasCheckedInToday());
+    // Client localStorage may reflect a more recent state (same-day re-login)
+    if (hasCheckedInToday()) setCheckedIn(true);
   }, []);
 
   const handleBump = useCallback(() => {
@@ -304,9 +305,9 @@ export function GreetingBar({ name, streak }: { name?: string | null; streak?: n
                 {quote ? quote.charAt(0).toUpperCase() + quote.slice(1) : ""}
               </p>
 
-              {/* Second cookie — only shown after first, hidden when exhausted; hidden on mobile */}
-              {!exhausted && (
-                <div className="relative shrink-0 hidden lg:block">
+              {/* Second cookie or spent indicator — always visible so cookie never disappears */}
+              <div className="relative shrink-0">
+                {!exhausted ? (
                   <button
                     ref={cookieBtnRef}
                     onClick={openFortune}
@@ -314,42 +315,47 @@ export function GreetingBar({ name, streak }: { name?: string | null; streak?: n
                     onMouseLeave={() => setTooltipVisible(false)}
                     className="text-[18px] transition-opacity hover:opacity-70 px-1"
                     style={{ opacity: 0.5 }}
+                    title="One more fortune cookie available"
                   >
                     🥠
                   </button>
+                ) : (
+                  <span className="text-[18px] px-1 select-none" style={{ opacity: 0.2 }} title="All fortune cookies opened for today">
+                    🥠
+                  </span>
+                )}
 
-                  {/* Hover tooltip */}
-                  {tooltipVisible && (
-                    <div
-                      className="absolute z-50 text-[12px] rounded-xl px-3 py-2 whitespace-nowrap pointer-events-none"
+                {/* Hover tooltip */}
+                {tooltipVisible && (
+                  <div
+                    className="absolute z-50 text-[12px] rounded-xl px-3 py-2 whitespace-nowrap pointer-events-none"
+                    style={{
+                      bottom: "calc(100% + 8px)",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: "var(--kk-ink)",
+                      color: "#fff",
+                      boxShadow: "0 4px 14px rgba(0,0,0,0.18)",
+                    }}
+                  >
+                    Need additional motivation? You can get one additional fortune cookie :)
+                    {/* Arrow */}
+                    <span
                       style={{
-                        bottom: "calc(100% + 8px)",
+                        position: "absolute",
+                        top: "100%",
                         left: "50%",
                         transform: "translateX(-50%)",
-                        background: "var(--kk-ink)",
-                        color: "#fff",
-                        boxShadow: "0 4px 14px rgba(0,0,0,0.18)",
+                        width: 0,
+                        height: 0,
+                        borderLeft: "6px solid transparent",
+                        borderRight: "6px solid transparent",
+                        borderTop: `6px solid var(--kk-ink)`,
                       }}
-                    >
-                      Need additional motivation? You can get one additional fortune cookie :)
-                      {/* Arrow */}
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: "100%",
-                          left: "50%",
-                          transform: "translateX(-50%)",
-                          width: 0,
-                          height: 0,
-                          borderLeft: "6px solid transparent",
-                          borderRight: "6px solid transparent",
-                          borderTop: `6px solid var(--kk-ink)`,
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+                    />
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

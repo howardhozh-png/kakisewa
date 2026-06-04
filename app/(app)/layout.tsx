@@ -15,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Fire streak update without blocking the render — only writes once per day
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
+  const checkedInToday = agent.last_login_date === new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const hdrs = await headers();
   const isAdmin = hdrs.get("x-is-admin") === "true";
@@ -36,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} />}
         <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} />
       </div>
-      <GreetingBar name={agent.name} streak={streak} />
+      <GreetingBar name={agent.name} streak={streak} checkedInToday={checkedInToday} />
       <main className="flex-1">{children}</main>
       <OnboardingDemoModal />
       <Toaster richColors position="top-right" closeButton />

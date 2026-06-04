@@ -145,26 +145,24 @@ export function SharePackViewer({ packId, initialTenants }: Props) {
         style={{ background: "#1C1C1E", color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.20)" }}
       >
         <p className="text-[13px] flex-1 leading-snug">
-          {dirty
-            ? "Tap Save to send your ranking"
-            : savedAt
-            ? "Saved — your agent has been notified."
-            : "Drag cards to set your preferred order"}
+          {savedAt && !dirty
+            ? "Submitted — your agent has been notified."
+            : "Drag to reorder, then submit your ranking"}
         </p>
         <button
           onClick={save}
-          disabled={!dirty || pending}
+          disabled={pending}
           className="shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold"
           style={{
-            background: dirty ? "#fff" : "rgba(255,255,255,0.15)",
-            color: dirty ? "#1C1C1E" : "rgba(255,255,255,0.5)",
+            background: "#fff",
+            color: "#1C1C1E",
           }}
         >
           {pending
             ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" />
             : savedAt && !dirty
-            ? <><Check className="w-3.5 h-3.5 inline mr-1" />Saved</>
-            : "Save my ranking"}
+            ? <><Check className="w-3.5 h-3.5 inline mr-1" />Submitted</>
+            : "Submit tenant ranking"}
         </button>
       </div>
     </div>
