@@ -14,6 +14,7 @@ function invalidateCache() {
   revalidateTag("kk-supports");
 }
 import { format } from "date-fns";
+import { checkRenewalCardCap } from "./plan-caps";
 import {
   createProperty,
   getProperties,
@@ -103,12 +104,12 @@ export async function removeProperty(id: string) {
 
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-export async function addTenancy(formData: FormData) {
+export async function addTenancy(formData: FormData): Promise<{ ok: boolean; reason?: string; upgrade_to?: string }> {
   // Resolve property — use existing or create new
   let propertyId = (formData.get("property_id") as string) || "";
   if (!propertyId) {
     const propName = ((formData.get("property_name") as string) || "").trim();
-    if (!propName) return;
+    if (!propName) return { ok: false };
     const newProp = await createProperty({
       name: propName,
       address: "",
@@ -129,6 +130,9 @@ export async function addTenancy(formData: FormData) {
     const end = new Date(y, m - 1 + durationMonths, d);
     contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
   }
+
+  const cap = await checkRenewalCardCap();
+  if (!cap.allowed) return { ok: false, reason: cap.reason, upgrade_to: cap.upgrade_to };
 
   const newTenancy = await createTenancy({
     property_id: propertyId,
@@ -178,6 +182,7 @@ export async function addTenancy(formData: FormData) {
   revalidatePath("/existing-contracts");
   revalidatePath("/tenants");
   revalidatePath("/");
+  return { ok: true };
 }
 
 export async function removeTenancy(id: string) {
@@ -779,7 +784,7 @@ export async function convertLeadToTenancy(
     contract_start: string;
     contract_duration_months: number;
   }
-): Promise<{ ok: boolean; message: string }> {
+): Promise<{ ok: boolean; message: string; upgrade_to?: string }> {
   try {
     const lead = await getOwnerLead(ownerLeadId);
     if (!lead) return { ok: false, message: "Owner lead not found." };
@@ -804,6 +809,9 @@ export async function convertLeadToTenancy(
     const [y, m, d] = isoStart.split("-").map(Number);
     const end = new Date(y, m - 1 + data.contract_duration_months, d);
     const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+
+    const cap = await checkRenewalCardCap();
+    if (!cap.allowed) return { ok: false, message: cap.reason, upgrade_to: cap.upgrade_to };
 
     const signedTenancy = await createTenancy({
       property_id: property.id,
