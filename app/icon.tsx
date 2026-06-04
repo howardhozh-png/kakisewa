@@ -18,9 +18,8 @@ export default function Icon() {
         }}
       >
         <svg viewBox="0 0 24 24" width={26} height={26} fill="none">
-          <path d="M6 3 L6 21" stroke="#000000" strokeWidth="3" strokeLinecap="butt" />
           <path
-            d="M17 5 C 20,4 1,6 6,12 C 11,18 5,20 17,21"
+            d="M 6 3 L 6 21 M 16 13 C 17 9 2 13 5 14 C 29 23 5 20 5 21"
             stroke="#000000"
             strokeWidth="3"
             strokeLinecap="round"

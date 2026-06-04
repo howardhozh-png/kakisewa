@@ -45,21 +45,8 @@ function LogoMark({ size = 28, className }: { size?: number; className?: string 
       fill="none"
       className={className}
     >
-      {/* Vertical stem */}
       <path
-        d="M6 3 L6 21"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="butt"
-      />
-      {/*
-        S-curve arms: single continuous bezier from upper-right tip (17,5)
-        through stem midpoint (6,12) to lower-right tip (17,21).
-        Upper half bows RIGHT (top arc of s), lower half bows LEFT (bottom arc of s).
-        G1-smooth at (6,12): both halves share tangent direction (5,6).
-      */}
-      <path
-        d="M17 5 C 20,4 1,6 6,12 C 11,18 5,20 17,21"
+        d="M 6 3 L 6 21 M 16 13 C 17 9 2 13 5 14 C 29 23 5 20 5 21"
         stroke="currentColor"
         strokeWidth="2.8"
         strokeLinecap="round"
