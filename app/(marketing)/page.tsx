@@ -57,8 +57,29 @@ export default function LandingPage() {
         <ComparisonSlider />
       </section>
 
+      {/* ── PropertyGuru callout ──────────────────────────────────────────── */}
+      <section className="px-6 lg:px-12 py-14" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+        <div className="max-w-[760px] mx-auto text-center">
+          <p className="uppercase font-semibold mb-4" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}>
+            Think about it
+          </p>
+          <p className="serif" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink)" }}>
+            You pay{" "}
+            <span style={{ color: "#DC2626" }}>RM 1,000–2,000/month</span>
+            {" "}to PropertyGuru to find tenants.
+          </p>
+          <p className="serif mt-3" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink)" }}>
+            Pay{" "}
+            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM 165/month</span>
+            {" "}to kakisewa so you{" "}
+            <span style={{ borderBottom: "2px solid var(--kk-green)" }}>never lose a tenancy</span>
+            {" "}— forever.
+          </p>
+        </div>
+      </section>
+
       {/* ── How It Works ──────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-24" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[1100px] mx-auto">
           <h2
             className="serif mb-16"
@@ -88,6 +109,42 @@ export default function LandingPage() {
         >
           Start free trial <ArrowRight className="w-4 h-4" />
         </Link>
+      </section>
+
+      {/* ── Beta notice ───────────────────────────────────────────────────── */}
+      <section className="px-6 lg:px-12 py-16" style={{ background: "var(--kk-ink)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="max-w-[760px] mx-auto">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full font-bold text-[11px] tracking-widest uppercase" style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", letterSpacing: "0.12em" }}>
+              Beta
+            </span>
+            <span style={{ fontSize: "var(--kk-xs)", color: "rgba(255,255,255,0.4)", letterSpacing: "0.06em", textTransform: "uppercase" }}>Early access</span>
+          </div>
+          <h2 className="serif text-white mb-4" style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)", lineHeight: 1.15, letterSpacing: "-0.022em" }}>
+            We&apos;re just getting started.
+          </h2>
+          <p style={{ fontSize: "var(--kk-body)", color: "rgba(255,255,255,0.55)", maxWidth: "50ch", lineHeight: 1.7, marginBottom: 20 }}>
+            kakisewa is in beta. Early adopters lock in pricing before rates increase — and shape what we build next.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[580px]">
+            {[
+              "Automated renewal messaging",
+              "Owner WhatsApp integration",
+              "Team and agency accounts",
+              "Tenant screening and ranking AI",
+              "Income forecasting dashboard",
+              "Property management requests",
+            ].map(feat => (
+              <div key={feat} className="flex items-center gap-2.5" style={{ fontSize: "var(--kk-sm)", color: "rgba(255,255,255,0.55)" }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0, display: "inline-block" }} />
+                {feat}
+              </div>
+            ))}
+          </div>
+          <p className="mt-6" style={{ fontSize: "var(--kk-xs)", color: "rgba(255,255,255,0.3)" }}>
+            Features are being rolled out progressively. Beta subscribers get access first.
+          </p>
+        </div>
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}

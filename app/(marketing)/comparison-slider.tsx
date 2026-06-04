@@ -73,7 +73,7 @@ function ExcelPanel() {
       </div>
 
       {/* Spreadsheet grid */}
-      <div style={{ flex: 1, overflowX: "auto", overflowY: "hidden" }}>
+      <div style={{ flex: 1, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
           <thead>
             <tr style={{ background: "#f2f2f2" }}>
@@ -420,7 +420,7 @@ function KakiSewaPanel() {
 // ─── ClipPath drag slider ──────────────────────────────────────────────────────
 
 export function ComparisonSlider() {
-  const [position, setPosition] = useState(50);
+  const [position, setPosition] = useState(30);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const startX = useRef(0);
@@ -493,6 +493,7 @@ export function ComparisonSlider() {
           border: "1px solid var(--kk-line)",
           cursor: "ew-resize",
           userSelect: "none",
+          touchAction: "none",
         }}
       >
         {/* Bottom layer — KakiSewa */}

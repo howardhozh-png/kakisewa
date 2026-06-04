@@ -59,6 +59,7 @@ const PLANS = [
       "Close more owners",
     ],
     recommended: "New agents who need support in tracking owner responses and converting more new owners.",
+    archetype: "New hustler · <RM6k/month",
     popular: false,
   },
   {
@@ -75,6 +76,7 @@ const PLANS = [
       "Contract renewal reminder and messaging",
     ],
     recommended: "Experienced agent who needs to capture all contract renewal income by tracking existing contracts.",
+    archetype: "Steady operator · RM7-12k/month",
     popular: true,
   },
   {
@@ -91,6 +93,7 @@ const PLANS = [
       "Analytics and newsletter",
     ],
     recommended: "Elite agent who wants everything in one place, including goal planning and performance tracking.",
+    archetype: "High earner · >RM12k/month",
     popular: false,
   },
 ];
@@ -244,6 +247,7 @@ function PricingCard({
           <div>
             <div style={{ height: 1, background: s.faint, opacity: 0.2, marginBottom: 10 }} />
             <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: s.faint }}>Best for</p>
+            <p className="text-[12px] font-bold mb-1" style={{ color: s.ink }}>{plan.archetype}</p>
             <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
           </div>
 
