@@ -247,10 +247,10 @@ function KakiSewaPanel() {
         fontSize: 9.5, color: "#6E6E73",
       }}>
         <span style={{ color: "#86868B" }}>☆</span>
-        <span style={{ color: "#1D1D1F", fontWeight: 600 }}>35 contracts</span>
+        <span style={{ color: "#1D1D1F", fontWeight: 600 }}>5d show up</span>
         <span style={{ color: "#34C759", fontSize: 11 }}>✓</span>
         <span style={{ color: "rgba(0,0,0,0.15)" }}>|</span>
-        <span style={{ fontStyle: "italic" }}>Never miss a renewal again.</span>
+        <span style={{ fontStyle: "italic" }}>Do not let the busy days steal the moments that matter most.</span>
       </div>
 
       <div style={{ flex: 1, padding: "12px 14px 10px", overflowY: "hidden", display: "flex", flexDirection: "column", gap: 9 }}>
@@ -312,8 +312,9 @@ function KakiSewaPanel() {
           {KANBAN.map(col => (
             <div key={col.id} style={{
               background: "#fff", borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.08)",
-              borderTop: `2px solid ${col.accent}`,
+              border: col.id === "active"
+                ? "1px solid rgba(0,0,0,0.1)"
+                : `1px solid ${col.accent}`,
               overflow: "hidden",
             }}>
               <div style={{ padding: "6px 8px 5px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
@@ -327,8 +328,8 @@ function KakiSewaPanel() {
               <div style={{ padding: "5px 7px", display: "flex", flexDirection: "column", gap: 4 }}>
                 {col.cards.map(card => (
                   <div key={card.name} style={{
-                    background: "#FBFBFD", borderRadius: 7,
-                    border: "1px solid rgba(0,0,0,0.06)",
+                    background: "#fff", borderRadius: 7,
+                    border: "1px solid rgba(0,0,0,0.07)",
                     padding: "6px 8px",
                   }}>
                     <p style={{ fontSize: 10, fontWeight: 600, color: "#1D1D1F", lineHeight: 1.2 }}>{card.name}</p>
@@ -424,7 +425,7 @@ export function ComparisonSlider() {
         <div style={{
           position: "absolute",
           inset: 0,
-          clipPath: `inset(0 ${position}% 0 0)`,
+          clipPath: `inset(0 ${100 - position}% 0 0)`,
         }}>
           <ExcelPanel />
         </div>
