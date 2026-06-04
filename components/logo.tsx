@@ -35,23 +35,12 @@ export function Logo({ variant = "mark", size = 28, className }: LogoProps) {
 
 function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
+    <span
+      className={cn("serif leading-none select-none", className)}
+      style={{ fontSize: size * 1.1, lineHeight: 1, display: "inline-block" }}
       aria-label="kakisewa"
-      fill="none"
-      className={className}
     >
-      <path
-        d="M 6 -1 L 6 24 M 18 13 C 11 10 4 9 1 14 C 28 18 33 31 -4 21"
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+      k
+    </span>
   );
 }

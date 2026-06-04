@@ -1,9 +1,12 @@
 import { ImageResponse } from "next/og";
+import { loadDmSerifFont } from "@/lib/load-dm-serif";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-export default function Icon() {
+export default async function Icon() {
+  const fontData = await loadDmSerifFont();
+
   return new ImageResponse(
     (
       <div
@@ -11,23 +14,29 @@ export default function Icon() {
           width: 32,
           height: 32,
           background: "#FFFFFF",
-          borderRadius: 7,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <svg viewBox="0 0 24 24" width={26} height={26} fill="none">
-          <path
-            d="M 6 -1 L 6 24 M 18 13 C 11 10 4 9 1 14 C 28 18 33 31 -4 21"
-            stroke="#000000"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <div
+          style={{
+            fontFamily: "DM Serif Display",
+            fontSize: 28,
+            fontWeight: 400,
+            color: "#000000",
+            lineHeight: 1,
+            paddingBottom: 2,
+          }}
+        >
+          k
+        </div>
       </div>
     ),
-    { width: 32, height: 32 }
+    {
+      width: 32,
+      height: 32,
+      fonts: [{ name: "DM Serif Display", data: fontData, style: "normal", weight: 400 }],
+    }
   );
 }
