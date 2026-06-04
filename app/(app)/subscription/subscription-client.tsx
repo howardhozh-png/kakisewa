@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, animate } from "framer-motion";
 import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -134,24 +134,9 @@ function PricingCard({
   const s = TIER_STYLES[plan.name];
   const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
 
-  const xM = useMotionValue(0);
-  const yM = useMotionValue(0);
-  const rotateX = useTransform(yM, [-0.5, 0.5], [6, -6]);
-  const rotateY = useTransform(xM, [-0.5, 0.5], [-6, 6]);
-
-  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const r = e.currentTarget.getBoundingClientRect();
-    xM.set((e.clientX - r.left) / r.width - 0.5);
-    yM.set((e.clientY - r.top) / r.height - 0.5);
-  }
-  function onMouseLeave() { xM.set(0); yM.set(0); }
-
   return (
     <motion.div
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      style={{ rotateX, rotateY, transformPerspective: 900 }}
-      whileHover={{ y: -4, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+      whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 22 } }}
       className="flex flex-col h-full rounded-2xl overflow-hidden"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
