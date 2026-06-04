@@ -30,7 +30,7 @@ function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const refSlug = searchParams.get("ref") ?? null
-  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", agency: "", ren_number: "", password: "", confirm: "" })
+  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", agency: "", ren_number: "", passcode: "", confirmPasscode: "" })
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [renStatus, setRenStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle")
@@ -43,7 +43,9 @@ function SignUpForm() {
 
   function set(field: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = field === "phone" ? e.target.value.replace(/[^\d+\s-]/g, "") : e.target.value;
+      let v = e.target.value
+      if (field === "phone") v = v.replace(/[^\d+\s-]/g, "")
+      if (field === "passcode" || field === "confirmPasscode") v = v.replace(/\D/g, "")
       setForm(f => ({ ...f, [field]: v }));
     };
   }
@@ -83,7 +85,8 @@ function SignUpForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (form.password !== form.confirm) { setError("Passwords do not match."); return }
+    if (!/^\d{8}$/.test(form.passcode)) { setError("Passcode must be exactly 8 digits."); return }
+    if (form.passcode !== form.confirmPasscode) { setError("Passcodes do not match."); return }
     if (!form.agency.trim()) { setError("Agency/Company is required."); return }
     if (!isAdmin && !form.ren_number.trim()) { setError("REN number is required."); return }
     if (!isAdmin && renStatus === "invalid") { setError("Please enter a valid REN number."); return }
@@ -92,7 +95,7 @@ function SignUpForm() {
     const supabase = createClient()
     const { error: err } = await supabase.auth.signUp({
       email: form.email,
-      password: form.password,
+      password: form.passcode,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { full_name: `${form.first_name.trim()} ${form.last_name.trim()}`.trim(), phone: form.phone, agency: form.agency || null, ren_number: form.ren_number || null, is_admin: isAdmin, referral_slug: refSlug },
@@ -265,12 +268,20 @@ function SignUpForm() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Password <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="password" required value={form.password} onChange={set("password")} placeholder="••••••••" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Passcode <span style={{ color: "#DC2626" }}>*</span></label>
+                <input type="password" inputMode="numeric" pattern="[0-9]*" required maxLength={8}
+                  value={form.passcode} onChange={set("passcode")} placeholder="8 digits"
+                  className={`${inputCls} text-center tracking-widest`}
+                  style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em" }}
+                  onFocus={onFocus} onBlur={onBlur} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Confirm <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="password" required value={form.confirm} onChange={set("confirm")} placeholder="••••••••" className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <input type="password" inputMode="numeric" pattern="[0-9]*" required maxLength={8}
+                  value={form.confirmPasscode} onChange={set("confirmPasscode")} placeholder="8 digits"
+                  className={`${inputCls} text-center tracking-widest`}
+                  style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em" }}
+                  onFocus={onFocus} onBlur={onBlur} />
               </div>
             </div>
 

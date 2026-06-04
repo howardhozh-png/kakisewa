@@ -48,13 +48,13 @@ export default function ForgotPasswordPage() {
             <div className="text-center py-2">
               <p className="font-semibold mb-2" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>Check your email</p>
               <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.6 }}>
-                We sent a password reset link to <strong>{email}</strong>. Check your inbox and click the link to set a new password.
+                We sent a passcode reset link to <strong>{email}</strong>. Check your inbox and click the link to set a new passcode.
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
-                <p className="font-semibold mb-1" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>Reset your password</p>
+                <p className="font-semibold mb-1" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>Reset your passcode</p>
                 <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>Enter your email and we&apos;ll send you a reset link.</p>
               </div>
 

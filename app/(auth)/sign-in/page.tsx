@@ -25,7 +25,7 @@ function SignInForm() {
   const searchParams = useSearchParams()
   const timedOut = searchParams.get("reason") === "timeout"
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [passcode, setPasscode] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -35,7 +35,7 @@ function SignInForm() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password: passcode })
 
     if (err) {
       setError(err.message)
@@ -136,25 +136,29 @@ function SignInForm() {
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
-                  Password
+                  Passcode
                 </label>
                 <Link href="/forgot-password" tabIndex={-1} style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                  Forgot password?
+                  Forgot passcode?
                 </Link>
               </div>
               <input
                 type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 required
                 autoComplete="current-password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder=""
-                className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
+                maxLength={8}
+                value={passcode}
+                onChange={e => setPasscode(e.target.value.replace(/\D/g, ""))}
+                placeholder="••••••••"
+                className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all text-center tracking-widest"
                 style={{
-                  fontSize: "var(--kk-body)",
+                  fontSize: "1.25rem",
                   border: "1px solid var(--kk-line-strong)",
                   background: "var(--kk-bg)",
                   color: "var(--kk-ink)",
+                  letterSpacing: "0.4em",
                 }}
                 onFocus={e => {
                   e.currentTarget.style.borderColor = "var(--kk-green)";
