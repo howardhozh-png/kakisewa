@@ -1,11 +1,13 @@
 import { ImageResponse } from "next/og";
-import { loadDmSerifFontSync } from "@/lib/load-dm-serif";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
 export default function Icon() {
-  const fontData = loadDmSerifFontSync();
+  const buf = readFileSync(join(process.cwd(), "public/fonts/dm-serif-display.ttf"));
+  const fontData = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
 
   return new ImageResponse(
     (
