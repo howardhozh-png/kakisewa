@@ -149,8 +149,8 @@ const KANBAN = [
     iconColor: "#F4511E",
     subtitle: "Expires soon. Use 'What's next?' to choose the outcome.",
     cards: [
-      { name: "Aiman Hafiz", prop: "The Park · A5905", sub: "exp 15 Jul 2026", badge: "41d", badgeColor: "#F4511E", photo: "https://picsum.photos/seed/unit-park/56/56" },
-      { name: "Nur Farhana", prop: "Sri Damansara",    sub: "exp 28 Jun 2026", badge: "22d", badgeColor: "#F4511E", photo: "https://picsum.photos/seed/unit-sri/56/56" },
+      { name: "Aiman Hafiz", prop: "The Park · A5905", sub: "exp 15 Jul 2026", badge: "41d", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Nur Farhana", prop: "Sri Damansara",    sub: "exp 28 Jun 2026", badge: "22d", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
     ],
   },
   {
@@ -160,8 +160,8 @@ const KANBAN = [
     iconColor: "#34C759",
     subtitle: "Both confirmed. Collect commission and set the new end date.",
     cards: [
-      { name: "Rajesh Kumar", prop: "Bangsar South",       sub: "Unit 8-2A",  badge: "Commission due", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-bgsr/56/56" },
-      { name: "Lee Wei",      prop: "Mutiara Damansara",   sub: "Unit 12-B",  badge: "Commission due", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-mtd/56/56" },
+      { name: "Rajesh Kumar", prop: "Bangsar South",       sub: "Unit 8-2A",  badge: "Commission due", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Lee Wei",      prop: "Mutiara Damansara",   sub: "Unit 12-B",  badge: "Commission due", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1585128792020-803d29415281?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
     ],
   },
   {
@@ -171,9 +171,9 @@ const KANBAN = [
     iconColor: "#AEAEB2",
     subtitle: "Tenancy in good standing. Nothing due yet.",
     cards: [
-      { name: "Ahmad S.",  prop: "Puchong Perdana", sub: "exp Mar 2027", badge: "198d remain", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-pch/56/56" },
-      { name: "Priya N.",  prop: "Subang Mewah",    sub: "exp Feb 2027", badge: "156d remain", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-sbg/56/56" },
-      { name: "Hasrul",    prop: "Kepong C-12",     sub: "exp Sep 2026", badge: "89d remain",  badgeColor: "#F4511E", photo: "https://picsum.photos/seed/unit-kpg/56/56" },
+      { name: "Ahmad S.",  prop: "Puchong Perdana", sub: "exp Mar 2027", badge: "198d remain", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1665249934445-1de680641f50?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Priya N.",  prop: "Subang Mewah",    sub: "exp Feb 2027", badge: "156d remain", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Hasrul",    prop: "Kepong C-12",     sub: "exp Sep 2026", badge: "89d remain",  badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
     ],
   },
 ];

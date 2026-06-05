@@ -554,7 +554,7 @@ function Scene2({ active }: { active: boolean }) {
                   <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#F2F2F7", border: "1px solid rgba(0,0,0,0.06)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://picsum.photos/seed/unit-mutiara/44/44" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=120&fit=crop&crop=center&auto=format&q=80" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>Residensi Mutiara</p>
@@ -743,7 +743,7 @@ function Scene3({ active }: { active: boolean }) {
                   <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#F2F2F7", border: "1px solid rgba(0,0,0,0.06)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://picsum.photos/seed/unit-thepark/44/44" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src="https://images.unsplash.com/photo-1585128792020-803d29415281?w=120&h=120&fit=crop&crop=center&auto=format&q=80" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="flex items-start justify-between mb-0.5">
