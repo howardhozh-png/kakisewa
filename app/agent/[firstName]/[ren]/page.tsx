@@ -262,6 +262,13 @@ export default async function AgentProfilePage({ params }: Props) {
                 </div>
               ))}
             </div>
+            {/* kakisewa watermark — inside card so screenshots can't crop it out */}
+            <div className="mt-5 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+              <div style={{ color: "#AEAEB2" }}>
+                <Logo variant="wordmark" size={14} />
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#AEAEB2" }}>Verified agent</span>
+            </div>
           </div>
         </div>
 

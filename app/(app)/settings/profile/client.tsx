@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useId } from "react";
-import { Plus, Trash2, MessageCircle, Building2, Award } from "lucide-react";
+import { Plus, Trash2, MessageCircle, Building2, Award, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { Logo } from "@/components/logo";
 import type { ProfileStrengthItem, ProfileVerbatimItem } from "@/lib/types";
 
 const STRENGTH_POOL = [
@@ -16,7 +17,18 @@ const STRENGTH_POOL = [
   "Strong negotiator",
 ];
 
-function seededShuffle(arr: string[], seed: string): string[] {
+const VERBATIM_POOL: ProfileVerbatimItem[] = [
+  { quote: "Responsive at all times. Found me a tenant within 2 weeks and handled everything from start to finish.", ownerName: "Farah Nadia", ownerRole: "Property owner · PJ" },
+  { quote: "My previous agent disappeared after signing. This one follows up and makes sure rent comes in on time.", ownerName: "Tan Wei Ming", ownerRole: "Landlord · Subang Jaya" },
+  { quote: "Contract renewal was handled without me lifting a finger. No gaps, no stress.", ownerName: "Azlan Hassan", ownerRole: "Property owner · Bangsar" },
+  { quote: "Very transparent about the process. Always kept me updated without me having to chase.", ownerName: "Norsyafinaz A.", ownerRole: "Property owner · Ampang" },
+  { quote: "Referred 3 of my friends after my first experience. Professional and reliable throughout.", ownerName: "Priya S.", ownerRole: "Owner · Mont Kiara" },
+  { quote: "Knew exactly what rent to set. Got above my asking price on the very first viewing.", ownerName: "Lisa Koh", ownerRole: "Landlord · Damansara" },
+  { quote: "Handles all tenant issues directly so I never have to get involved. Exactly what I needed.", ownerName: "Raj Krishnan", ownerRole: "Owner · Cheras" },
+  { quote: "Found a replacement tenant within days of the previous one leaving. Zero vacancy.", ownerName: "David Lim", ownerRole: "Landlord · KLCC" },
+];
+
+function seededShuffle<T>(arr: T[], seed: string): T[] {
   const s = seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
   const copy = [...arr];
   let r = Math.abs(s);
@@ -113,13 +125,14 @@ export function ProfileSettingsClient({
   agentId, agentName, agentRen, agentAgency, agentPhoto, agentPhone,
   subscriptionPlan, stats,
 }: Props) {
-  const pool = seededShuffle(STRENGTH_POOL, agentId);
+  const pool = seededShuffle<string>(STRENGTH_POOL, agentId);
 
   const defaultStrengths: ProfileStrengthItem[] = initialStrengths ?? pool.slice(0, 3).map(label => ({ label, rating: 4 }));
-  const defaultVerbatim: ProfileVerbatimItem[] = initialVerbatim ?? [];
+  const defaultVerbatim: ProfileVerbatimItem[]   = initialVerbatim  ?? seededShuffle<ProfileVerbatimItem>(VERBATIM_POOL, agentId).slice(0, 2);
 
   const [strengths, setStrengths] = useState<ProfileStrengthItem[]>(defaultStrengths);
   const [verbatim, setVerbatim]   = useState<ProfileVerbatimItem[]>(defaultVerbatim);
+  const [customInput, setCustomInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   const isElite    = subscriptionPlan === "elite";
@@ -133,6 +146,10 @@ export function ProfileSettingsClient({
 
   const waUrl = agentPhone ? `https://wa.me/${normalisePhone(agentPhone)}` : null;
 
+  const profilePath = agentRen
+    ? `/agent/${encodeURIComponent((agentName ?? "agent").trim().split(/\s+/)[0].toLowerCase())}/${encodeURIComponent(agentRen)}`
+    : null;
+
   function toggleStrength(label: string) {
     const existing = strengths.find(s => s.label === label);
     if (existing) {
@@ -141,6 +158,15 @@ export function ProfileSettingsClient({
       if (strengths.length >= 3) { toast.error("Maximum 3 strengths allowed"); return; }
       setStrengths([...strengths, { label, rating: 4 }]);
     }
+  }
+
+  function addCustomStrength() {
+    const label = customInput.trim().slice(0, 40);
+    if (!label) return;
+    if (strengths.length >= 3) { toast.error("Maximum 3 strengths allowed"); return; }
+    if (strengths.some(s => s.label.toLowerCase() === label.toLowerCase())) { toast.error("Already in your list"); return; }
+    setStrengths([...strengths, { label, rating: 4 }]);
+    setCustomInput("");
   }
 
   function updateRating(label: string, rating: number) {
@@ -180,6 +206,21 @@ export function ProfileSettingsClient({
   return (
     <div className="space-y-4">
       <style>{`@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}`}</style>
+
+      {/* Preview button */}
+      {profilePath ? (
+        <a href={profilePath} target="_blank" rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[14px] font-bold transition-opacity hover:opacity-90"
+          style={{ background: "#007AFF", color: "#fff" }}>
+          <ExternalLink className="w-4 h-4" />
+          Preview public profile
+        </a>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px]"
+          style={{ background: "#F2F2F7", color: "#8E8E93" }}>
+          Add your REN number in Account settings to get a public profile link.
+        </div>
+      )}
 
       {/* Profile card preview — readonly, matches public profile design */}
       <div className="rounded-3xl" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
@@ -236,6 +277,13 @@ export function ProfileSettingsClient({
               </div>
             ))}
           </div>
+          {/* kakisewa watermark — inside the card, cannot be cropped */}
+          <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div style={{ color: "#AEAEB2" }}>
+              <Logo variant="wordmark" size={13} />
+            </div>
+            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#AEAEB2" }}>Verified agent</span>
+          </div>
         </div>
       </div>
 
@@ -243,9 +291,9 @@ export function ProfileSettingsClient({
       <div className="rounded-3xl" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
         <div className="px-5 py-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#AEAEB2" }}>Strengths</p>
-          <p className="text-[12px] mb-4" style={{ color: "#8E8E93" }}>Pick up to 3 and rate yourself.</p>
+          <p className="text-[12px] mb-4" style={{ color: "#8E8E93" }}>Pick up to 3 from the list or add your own.</p>
 
-          <div className="flex flex-wrap gap-2 mb-5">
+          <div className="flex flex-wrap gap-2 mb-3">
             {pool.map((label) => {
               const selected = strengths.some(s => s.label === label);
               return (
@@ -262,6 +310,26 @@ export function ProfileSettingsClient({
               );
             })}
           </div>
+
+          {/* Custom strength input */}
+          {strengths.length < 3 && (
+            <div className="flex gap-2 mb-5">
+              <input
+                value={customInput}
+                onChange={e => setCustomInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomStrength(); } }}
+                maxLength={40}
+                placeholder="Add your own strength..."
+                className="flex-1 text-[13px] rounded-full px-3.5 py-1.5 outline-none"
+                style={{ background: "#F2F2F7", border: "1px solid rgba(0,0,0,0.08)", color: "#1C1C1E" }}
+              />
+              <button onClick={addCustomStrength}
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors"
+                style={{ background: customInput.trim() ? "#1C1C1E" : "#E5E7EB", color: customInput.trim() ? "#fff" : "#AEAEB2" }}>
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {strengths.length > 0 && (
             <div className="space-y-4">
@@ -287,7 +355,7 @@ export function ProfileSettingsClient({
         <div className="px-5 py-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#AEAEB2" }}>Verbatim</p>
           <p className="text-[12px] mb-4" style={{ color: "#8E8E93" }}>
-            Add up to 3 quotes from property owners. Max 200 characters each.
+            Replace with real quotes from owners you&apos;ve worked with. Max 200 characters each.
           </p>
 
           <div className="space-y-4">
