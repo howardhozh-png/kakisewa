@@ -550,9 +550,18 @@ function Scene2({ active }: { active: boolean }) {
                   padding: "8px 10px",
                   animation: "kk-demo-card-in 0.45s ease-out forwards",
                 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "#1C1C1E" }}>Ahmad Rashid</p>
-                  <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 2 }}>Residensi Mutiara · Block A</p>
-                  <p style={{ fontSize: 10, fontWeight: 600, color: "#1F8B4C", marginTop: 3 }}>RM 2,500/mo · 3 beds</p>
+                  {/* Card header — photo + property info */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#F2F2F7", border: "1px solid rgba(0,0,0,0.06)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="https://picsum.photos/seed/unit-mutiara/44/44" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>Residensi Mutiara</p>
+                      <p style={{ fontSize: 10, color: "#6C6C70", marginTop: 2 }}>Block A · RM 2,500/mo</p>
+                      <p style={{ fontSize: 10, color: "#1C1C1E", fontWeight: 500, marginTop: 1 }}>Ahmad Rashid</p>
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between px-2 py-1.5 rounded-full mt-2" style={{
                     background: packHov ? "rgba(0,122,255,0.14)" : "rgba(0,122,255,0.08)",
                     border: packHov ? "1px solid rgba(0,122,255,0.28)" : "1px solid transparent",
@@ -730,20 +739,26 @@ function Scene3({ active }: { active: boolean }) {
                   background: "#fff",
                   transition: "border 0.4s, box-shadow 0.4s",
                 }}>
-                  {/* Name + expiry */}
-                  <div className="flex items-start justify-between mb-1">
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#1C1C1E" }}>Fikri Ibrahim</span>
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, color: "#F4511E",
-                      background: "rgba(244,81,30,0.10)", borderRadius: 6,
-                      padding: "2px 6px", flexShrink: 0, marginLeft: 6,
-                      animation: cardPulse ? "kk-pulse-subtle 1.1s ease-in-out infinite" : "none",
-                    }}>60d</span>
+                  {/* Photo + name + expiry */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#F2F2F7", border: "1px solid rgba(0,0,0,0.06)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="https://picsum.photos/seed/unit-thepark/44/44" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="flex items-start justify-between mb-0.5">
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#1C1C1E" }}>Fikri Ibrahim</span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, color: "#F4511E",
+                          background: "rgba(244,81,30,0.10)", borderRadius: 6,
+                          padding: "2px 6px", flexShrink: 0, marginLeft: 6,
+                          animation: cardPulse ? "kk-pulse-subtle 1.1s ease-in-out infinite" : "none",
+                        }}>60d</span>
+                      </div>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: "#1C1C1E" }}>The Park · Unit A5905</p>
+                      <p style={{ fontSize: 9, color: "#6C6C70" }}>exp Jul 30, 2026</p>
+                    </div>
                   </div>
-
-                  <p style={{ fontSize: 10, color: "#6C6C70", marginBottom: 8 }}>
-                    The Park · Unit A5905 · exp Jul 30, 2026
-                  </p>
 
                   {/* Reply chips (appear after owner confirms) */}
                   {ownerYes && (

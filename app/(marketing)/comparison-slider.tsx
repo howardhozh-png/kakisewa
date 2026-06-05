@@ -149,8 +149,8 @@ const KANBAN = [
     iconColor: "#F4511E",
     subtitle: "Expires soon. Use 'What's next?' to choose the outcome.",
     cards: [
-      { name: "Aiman Hafiz", prop: "The Park · A5905 · exp 15 Jul 2026", badge: "41d", badgeColor: "#F4511E" },
-      { name: "Nur Farhana", prop: "Sri Damansara · exp 28 Jun 2026",     badge: "22d", badgeColor: "#F4511E" },
+      { name: "Aiman Hafiz", prop: "The Park · A5905", sub: "exp 15 Jul 2026", badge: "41d", badgeColor: "#F4511E", photo: "https://picsum.photos/seed/unit-park/56/56" },
+      { name: "Nur Farhana", prop: "Sri Damansara",    sub: "exp 28 Jun 2026", badge: "22d", badgeColor: "#F4511E", photo: "https://picsum.photos/seed/unit-sri/56/56" },
     ],
   },
   {
@@ -160,8 +160,8 @@ const KANBAN = [
     iconColor: "#34C759",
     subtitle: "Both confirmed. Collect commission and set the new end date.",
     cards: [
-      { name: "Rajesh Kumar", prop: "Bangsar South · Unit 8-2A",     badge: "Commission due", badgeColor: "#34C759" },
-      { name: "Lee Wei",      prop: "Mutiara Damansara · Unit 12-B",  badge: "Commission due", badgeColor: "#34C759" },
+      { name: "Rajesh Kumar", prop: "Bangsar South",       sub: "Unit 8-2A",  badge: "Commission due", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-bgsr/56/56" },
+      { name: "Lee Wei",      prop: "Mutiara Damansara",   sub: "Unit 12-B",  badge: "Commission due", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-mtd/56/56" },
     ],
   },
   {
@@ -171,9 +171,9 @@ const KANBAN = [
     iconColor: "#AEAEB2",
     subtitle: "Tenancy in good standing. Nothing due yet.",
     cards: [
-      { name: "Ahmad S.",  prop: "Puchong Perdana · exp Mar 2027", badge: "198d remain", badgeColor: "#34C759" },
-      { name: "Priya N.",  prop: "Subang Mewah · exp Feb 2027",    badge: "156d remain", badgeColor: "#34C759" },
-      { name: "Hasrul",    prop: "Kepong C-12 · exp Sep 2026",     badge: "89d remain",  badgeColor: "#F4511E" },
+      { name: "Ahmad S.",  prop: "Puchong Perdana", sub: "exp Mar 2027", badge: "198d remain", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-pch/56/56" },
+      { name: "Priya N.",  prop: "Subang Mewah",    sub: "exp Feb 2027", badge: "156d remain", badgeColor: "#34C759", photo: "https://picsum.photos/seed/unit-sbg/56/56" },
+      { name: "Hasrul",    prop: "Kepong C-12",     sub: "exp Sep 2026", badge: "89d remain",  badgeColor: "#F4511E", photo: "https://picsum.photos/seed/unit-kpg/56/56" },
     ],
   },
 ];
@@ -363,16 +363,31 @@ function KakiSewaPanel() {
                     <div key={card.name} style={{
                       background: "#fff", borderRadius: 7,
                       border: "1px solid rgba(0,0,0,0.07)",
-                      padding: "6px 8px",
+                      padding: "6px 7px",
                     }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <p style={{ fontSize: 10, fontWeight: 600, color: "#1D1D1F", lineHeight: 1 }}>{card.name}</p>
-                        <span style={{
-                          fontSize: 8, fontWeight: 600, color: card.badgeColor,
-                          background: `${card.badgeColor}18`, borderRadius: 20, padding: "1px 5px",
-                        }}>{card.badge}</span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {/* Unit photo */}
+                        <div style={{
+                          width: 38, height: 38, borderRadius: 6, flexShrink: 0,
+                          overflow: "hidden", background: "#F2F2F7",
+                          border: "1px solid rgba(0,0,0,0.06)",
+                        }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={card.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                        {/* Info */}
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                            <p style={{ fontSize: 9.5, fontWeight: 600, color: "#1D1D1F", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.name}</p>
+                            <span style={{
+                              fontSize: 7.5, fontWeight: 600, color: card.badgeColor, flexShrink: 0,
+                              background: `${card.badgeColor}18`, borderRadius: 20, padding: "1px 5px",
+                            }}>{card.badge}</span>
+                          </div>
+                          <p style={{ fontSize: 8, color: "#1D1D1F", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.prop}</p>
+                          <p style={{ fontSize: 7.5, color: "#6E6E73" }}>{card.sub}</p>
+                        </div>
                       </div>
-                      <p style={{ fontSize: 8.5, color: "#6E6E73", marginTop: 2 }}>{card.prop}</p>
                       {/* Action button per stage */}
                       {col.id === "expiring" && (
                         <div style={{
