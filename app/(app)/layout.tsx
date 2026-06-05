@@ -40,8 +40,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
   const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 14;
   const trialStartedAt = trialStart ?? null;
-  const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 999;
-  const isNewAgent = daysSinceSignup <= 30;
+  const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 0;
+  const isNewAgent = status === "trial" || daysSinceSignup <= 14;
 
   return (
     <div className="flex flex-col min-h-screen">

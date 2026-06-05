@@ -189,7 +189,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     <>
       <div className="kk-section p-5 mb-5">
         <div className="mb-4">
-          <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>See your renewal income for each month over the next 1-3 years to plan your income</p>
+          <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>See your renewal income for each month, up to 24 months ahead</p>
         </div>
         <TenanciesTimeline
           plan={plan}

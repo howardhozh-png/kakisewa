@@ -17,8 +17,8 @@ import { toast } from "sonner";
 const NAV = [
   { href: "/home",               label: "Home",               matchPaths: ["/home"],                                                      tourId: "tour-nav-home",        minPlan: null },
   { href: "/new-owners",         label: "New Owners",         matchPaths: ["/new-owners", "/leads"],                                      tourId: "tour-nav-new-owners",  minPlan: null },
-  { href: "/existing-contracts", label: "Existing Contracts", matchPaths: ["/existing-contracts", "/tenancies"],                          tourId: "tour-nav-contracts",   minPlan: "platinum" as const },
-  { href: "/directory",          label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"],tourId: "tour-nav-directory",   minPlan: "elite" as const },
+  { href: "/existing-contracts", label: "Existing Contracts", matchPaths: ["/existing-contracts", "/tenancies"],                          tourId: "tour-nav-contracts",   minPlan: null },
+  { href: "/directory",          label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"],tourId: "tour-nav-directory",   minPlan: "platinum" as const },
   { href: "/performance",        label: "Performance",        matchPaths: ["/performance"],                                               tourId: "tour-nav-performance", minPlan: "elite" as const },
 ];
 
@@ -285,6 +285,30 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
             Full settings
           </Link>
         </div>
+
+        {(agent.subscription_plan === "platinum" || agent.subscription_plan === "elite") && (
+          <div style={{ borderTop: "1px solid var(--kk-line)", paddingTop: 12 }}>
+            <p className="kk-overline mb-1.5">Public agent profile</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 min-w-0 text-[11px] px-2 py-1.5 rounded-lg truncate"
+                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", fontFamily: "monospace" }}>
+                {typeof window !== "undefined" ? window.location.origin : ""}/agent/{String(agent.id)}
+              </code>
+              <a
+                href={`/agent/${String(agent.id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 text-[12px] font-semibold px-2.5 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                style={{ background: "var(--kk-ink)", color: "#fff" }}
+              >
+                View
+              </a>
+            </div>
+            <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
+              {agent.subscription_plan === "elite" ? "Public and searchable" : "Private — share the link directly"}
+            </p>
+          </div>
+        )}
       </div>
     </>
   );

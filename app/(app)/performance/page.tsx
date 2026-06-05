@@ -7,6 +7,7 @@ import { TodayFocus } from "@/components/today-focus";
 import { DealMilestone } from "@/components/deal-milestone";
 import { GoalProvider } from "@/components/goal-context";
 import { PageHelpButton } from "@/components/page-help-button";
+import { EliteAnalyticsPanel } from "@/components/elite-analytics-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,8 @@ export default async function PerformancePage({ searchParams }: Props) {
           year={year}
         />
       </GoalProvider>
+
+      {planAllows(plan, "elite") && <EliteAnalyticsPanel />}
 
     </div>
   );

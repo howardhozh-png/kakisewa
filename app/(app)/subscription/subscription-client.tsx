@@ -133,11 +133,15 @@ function PricingCard({
   plan,
   interval,
   isCurrentPlan,
+  isSelected,
+  onCardClick,
   onSelect,
 }: {
   plan: typeof PLANS[number];
   interval: "monthly" | "annual";
   isCurrentPlan: boolean;
+  isSelected: boolean;
+  onCardClick: () => void;
   onSelect: () => void;
 }) {
   const s = TIER_STYLES[plan.name];
@@ -146,25 +150,26 @@ function PricingCard({
   return (
     <motion.div
       whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 22 } }}
-      className="flex flex-col h-full rounded-2xl overflow-hidden"
+      className="flex flex-col h-full rounded-2xl overflow-hidden cursor-pointer"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: PLANS.indexOf(plan) * 0.08 }}
+      onClick={onCardClick}
     >
       <div
         className="flex flex-col h-full"
         style={{
           background: s.bg,
-          border: `2px solid ${isCurrentPlan ? "var(--kk-green)" : s.border}`,
+          border: `2px solid ${isCurrentPlan ? "var(--kk-green)" : isSelected ? "rgba(255,255,255,0.6)" : s.border}`,
           borderRadius: 16,
           boxShadow: isCurrentPlan
             ? `5px 5px 0 0 rgba(22,163,74,0.4)`
-            : s.shadow,
+            : isSelected ? `0 0 0 3px rgba(255,255,255,0.2), ${s.shadowHover}` : s.shadow,
           position: "relative",
-          transition: "box-shadow 0.2s",
+          transition: "box-shadow 0.2s, border-color 0.2s",
         }}
         onMouseEnter={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "8px 8px 0 0 rgba(22,163,74,0.45)" : s.shadowHover)}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "5px 5px 0 0 rgba(22,163,74,0.4)" : s.shadow)}
+        onMouseLeave={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "5px 5px 0 0 rgba(22,163,74,0.4)" : isSelected ? `0 0 0 3px rgba(255,255,255,0.2), ${s.shadowHover}` : s.shadow)}
       >
         {/* Shine overlay */}
         <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: s.shine }} />
@@ -360,11 +365,15 @@ interface Props {
 
 export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan ?? "platinum");
   const [pending, setPending] = useState<{ plan: typeof PLANS[number]; interval: "monthly" | "annual" } | null>(null);
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  const selectedPlan = PLANS.find(p => p.planId === selectedPlanId) ?? PLANS[1];
+  const headerPrice = interval === "annual" ? selectedPlan.annualMonthly : selectedPlan.monthly;
 
   useEffect(() => {
     if (searchParams.get("success") === "1") {
@@ -426,14 +435,11 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
             Choose your plan
           </h1>
-          <p className="kk-body max-w-md mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
+          <p className="kk-body max-w-lg mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
             You spend{" "}
             <span style={{ color: "#DC2626", fontWeight: 600 }}>RM 800-1,000/month</span>
-            {" "}on PropertyGuru to find tenants.
-          </p>
-          <p className="kk-body max-w-md mx-auto mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-            Pay{" "}
-            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM 119/month</span>
+            {" "}on PropertyGuru. Pay{" "}
+            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM <AnimatedPrice value={headerPrice} ink="var(--kk-green)" />/month</span>
             {" "}to kakisewa so you never lose them.
           </p>
 
@@ -494,6 +500,8 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               plan={plan}
               interval={interval}
               isCurrentPlan={currentPlan === plan.planId}
+              isSelected={selectedPlanId === plan.planId}
+              onCardClick={() => setSelectedPlanId(plan.planId)}
               onSelect={() => setPending({ plan, interval })}
             />
           ))}
@@ -504,7 +512,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <table className="w-full text-left border-collapse" style={{ fontSize: "var(--kk-sm)" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid var(--kk-line-strong)" }}>
-                <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "36%" }} />
+                <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "25%" }} />
                 {PLANS.map(p => (
                   <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)" }}>
                     <div>{p.name}</div>
