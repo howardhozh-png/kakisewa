@@ -95,14 +95,11 @@ export async function middleware(request: NextRequest) {
   // Inject session context into request headers so server components read them via next/headers
   const requestHeaders = new Headers(request.headers)
   if (user) {
-    // TEMP: admin disabled for silver plan testing — restore both lines below to re-enable admin
-    // const agentId = user.email === ADMIN_EMAIL ? ADMIN_AGENT_ID : user.id
-    // requestHeaders.set("x-is-admin", user.email === ADMIN_EMAIL ? "true" : "false")
-    const agentId = user.id
+    const agentId = user.email === ADMIN_EMAIL ? ADMIN_AGENT_ID : user.id
     const meta = (user.user_metadata ?? {}) as Record<string, string>
     requestHeaders.set("x-agent-id", agentId)
     requestHeaders.set("x-user-id", user.id)
-    requestHeaders.set("x-is-admin", "false")
+    requestHeaders.set("x-is-admin", user.email === ADMIN_EMAIL ? "true" : "false")
     requestHeaders.set("x-agent-name", meta.full_name ?? meta.name ?? "")
     requestHeaders.set("x-agent-email", user.email ?? "")
     requestHeaders.set("x-agent-phone", meta.phone ?? "")
