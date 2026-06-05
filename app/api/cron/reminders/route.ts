@@ -4,7 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 export const dynamic = "force-dynamic";
 
 // Days before expiry/availability to queue a reminder
-const REMINDER_WINDOWS = [60, 30];
+const REMINDER_WINDOWS = [60, 30, 7];
 
 // Template keys logged to whatsapp_log so we don't double-send
 function reminderKey(days: number, type: "renewal" | "availability"): string {
@@ -176,7 +176,7 @@ function buildRenewalReminderMessage(p: {
   daysBefore: number; agentLabel: string; agentAgency?: string;
 }): string {
   const agentLine = p.agentLabel ? `I'm ${p.agentLabel}${p.agentAgency ? ` from ${p.agentAgency}` : ""}. ` : "";
-  const when = p.daysBefore === 60 ? "in 2 months" : "in 1 month";
+  const when = p.daysBefore === 60 ? "in 2 months" : p.daysBefore === 30 ? "in 1 month" : "in 7 days";
   return `Hi ${p.tenantName}! ${agentLine}Your tenancy at *${p.propertyName}* expires ${when} (${p.contractEnd}). Are you planning to renew? Please reply YES to continue or NO if you're moving out. Thank you!`;
 }
 
@@ -185,7 +185,7 @@ function buildAvailabilityReminderMessage(p: {
   daysBefore: number; agentLabel: string; agentAgency?: string;
 }): string {
   const agentLine = p.agentLabel ? `I'm ${p.agentLabel}${p.agentAgency ? ` from ${p.agentAgency}` : ""}. ` : "";
-  const when = p.daysBefore === 60 ? "in 2 months" : "in 1 month";
+  const when = p.daysBefore === 60 ? "in 2 months" : p.daysBefore === 30 ? "in 1 month" : "in 7 days";
   const rentLine = p.expectedRent > 0 ? ` at RM ${p.expectedRent.toLocaleString()}/month` : "";
   return `Hi ${p.ownerName}! ${agentLine}Your unit *${p.propertyName}* becomes available ${when} (${p.availableFrom})${rentLine}. I'm actively looking for good tenants — shall I start the search? Please reply YES and I'll get started right away!`;
 }

@@ -1681,6 +1681,7 @@ export async function completeOwnerIntake(
     expected_rent?: number;
     available_from?: string;
     tenant_preferences?: string;
+    photoUrls?: string[];
   }
 ): Promise<void> {
   const updates: Record<string, unknown> = {
@@ -1692,6 +1693,7 @@ export async function completeOwnerIntake(
   if (data.expected_rent !== undefined && data.expected_rent != null) updates.expected_rent = data.expected_rent;
   if (data.available_from !== undefined && data.available_from != null) updates.available_from = data.available_from;
   if (data.tenant_preferences !== undefined && data.tenant_preferences != null) updates.tenant_preferences = data.tenant_preferences;
+  if (data.photoUrls && data.photoUrls.length > 0) updates.photo_urls = data.photoUrls;
 
   const supabase = createServiceClient();
   // Get current stage to conditionally advance

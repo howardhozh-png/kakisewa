@@ -98,8 +98,9 @@ export function defaultLifecycleStage(t: Tenancy, today: Date): LifecycleStage |
   const days = daysUntil(t.contract_end, today);
   // Closed tenancies fall off the board entirely after 90 days expired
   if (days < -90) return null;
-  // Agent-set stage always takes precedence, regardless of days remaining
-  if (t.lifecycle_stage) return t.lifecycle_stage;
+  // Agent-set stage takes precedence unless it's "active" with <=60 days left,
+  // in which case the days-based logic below should auto-move the card to Expiring.
+  if (t.lifecycle_stage && !(t.lifecycle_stage === "active" && days <= 60)) return t.lifecycle_stage;
   // Default for far-future contracts with no explicit stage
   if (days > 60) return "active";
 

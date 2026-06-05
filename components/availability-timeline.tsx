@@ -63,7 +63,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-2">
+      <div className="flex items-start justify-between mb-3 gap-2">
         <div>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--kk-ink-faint)", marginBottom: 2 }}>
             Property availability · {windowMonths} month{windowMonths === 1 ? "" : "s"}
@@ -76,24 +76,24 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
             <Hint text="You earn 1 full month's rent per successful placement." side="right" />
           </p>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 shrink-0">
           <input
             type="month"
             value={startMonth}
             onChange={(e) => setStartMonth(e.target.value)}
             className="tabular-nums outline-none"
-            style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
+            style={{ fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
           />
           <select
             value={windowMonths}
             onChange={(e) => setWindowMonths(Number(e.target.value))}
-            className="font-semibold tabular-nums outline-none"
-            style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
+            className="tabular-nums outline-none"
+            style={{ fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
           >
-            <option value={3}>3 months</option>
-            <option value={6}>6 months</option>
-            <option value={12}>12 months</option>
-            <option value={24}>24 months</option>
+            <option value={3}>3m</option>
+            <option value={6}>6m</option>
+            <option value={12}>12m</option>
+            <option value={24}>24m</option>
           </select>
         </div>
       </div>

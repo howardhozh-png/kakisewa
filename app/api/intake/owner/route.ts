@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOwnerLeadByIntakeToken, completeOwnerIntake, updateOwnerLead } from "@/lib/db";
+import { getOwnerLeadByIntakeToken, completeOwnerIntake } from "@/lib/db";
 import { classifyOwnerIntake } from "@/lib/ai-classify";
 
 export async function POST(request: NextRequest) {
@@ -23,11 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const classified = await classifyOwnerIntake(answers);
-    await completeOwnerIntake(token, classified);
-
-    if (photoUrls && photoUrls.length > 0) {
-      await updateOwnerLead(lead.id, { photo_urls: photoUrls });
-    }
+    await completeOwnerIntake(token, { ...classified, photoUrls: photoUrls ?? [] });
 
     return NextResponse.json({ ok: true, message: "Submitted successfully" });
   } catch (err) {

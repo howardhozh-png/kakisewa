@@ -34,7 +34,10 @@ export function FilterSelect({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-    function onScroll() { setOpen(false); }
+    function onScroll(e: Event) {
+      if (dropRef.current && dropRef.current.contains(e.target as Node)) return;
+      setOpen(false);
+    }
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKeyDown);
     window.addEventListener("scroll", onScroll, { capture: true, passive: true });
