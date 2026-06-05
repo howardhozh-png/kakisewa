@@ -171,7 +171,7 @@ export interface AgentProfile {
   trial_started_at?: string | null;
   trial_ends_at?: string | null;
   subscription_status?: SubscriptionStatus | null;
-  subscription_plan?: "silver" | "platinum" | "elite" | null;
+  subscription_plan?: "silver" | "gold" | "platinum" | "elite" | null;
   trial_downgrade_archived_count?: number | null;
   profile_strengths?: ProfileStrengthItem[] | null;
   profile_verbatim?: ProfileVerbatimItem[] | null;

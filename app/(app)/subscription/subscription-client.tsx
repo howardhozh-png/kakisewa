@@ -20,6 +20,17 @@ const TIER_STYLES = {
     btnBg: "#1a1a1a", btnInk: "#fff",
     accent: "#16a34a",
   },
+  Gold: {
+    bg: "linear-gradient(145deg, #92400e 0%, #b45309 30%, #d97706 55%, #ca8a04 75%, #a16207 100%)",
+    shine: "linear-gradient(135deg, rgba(255,245,120,0.35) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(202,138,4,0.4)",
+    shadow: "5px 5px 0 0 rgba(100,60,0,0.3)",
+    shadowHover: "8px 8px 0 0 rgba(100,60,0,0.4)",
+    ink: "#fff8e1", mute: "rgba(255,240,180,0.85)", faint: "rgba(255,220,120,0.6)",
+    roiGreen: "#fde68a",
+    btnBg: "rgba(255,255,255,0.95)", btnInk: "#92400e",
+    accent: "#fde68a",
+  },
   Platinum: {
     bg: "linear-gradient(145deg, #0b1f4a 0%, #1a3464 35%, #152a56 65%, #0a1a3c 100%)",
     shine: "linear-gradient(135deg, rgba(100,160,255,0.18) 0%, rgba(255,255,255,0) 55%)",
@@ -47,59 +58,67 @@ const TIER_STYLES = {
 const PLANS = [
   {
     name: "Silver" as const, planId: "silver" as const,
-    monthly: 79, annualMonthly: 59, annualTotal: 708, annualSavings: 240,
-    monthlyAnnualTotal: 948,
-    savingsLabel: "3 months free",
+    monthly: 69, annualMonthly: 58, annualTotal: 690, annualSavings: 138,
+    monthlyAnnualTotal: 828,
     headline: "Get your pipeline moving.",
-    tagline: "Track owner responses and close more leads with a branded profile and tenant pack.",
+    tagline: "Track owner responses, close more leads, and manage up to 20 active contracts.",
     features: [
       "Owner pipeline (unlimited)",
-      "5 renewal tracking cards",
-      "12-month forward timeline",
-      "Vacancy planner",
+      "20 contract tracking cards",
+      "24-month timeline + history",
       "Contract document storage",
     ],
-    recommended: "New agents who need support in tracking owner responses and converting more new owners.",
-    archetype: "New hustler · <RM6k/month",
+    recommended: "New agents building their portfolio and learning the renewal cycle.",
+    archetype: "New agent · <RM4k/month",
+    popular: false,
+  },
+  {
+    name: "Gold" as const, planId: "gold" as const,
+    monthly: 119, annualMonthly: 99, annualTotal: 1190, annualSavings: 238,
+    monthlyAnnualTotal: 1428,
+    headline: "Scale your portfolio.",
+    tagline: "More contracts tracked, more renewals captured. Up to 80 active contracts.",
+    features: [
+      "Everything in Silver, plus:",
+      "80 contract tracking cards",
+      "Commission history",
+    ],
+    recommended: "Growing agents who need to track more contracts than Silver allows.",
+    archetype: "Growing agent · RM4-8k/month",
     popular: false,
   },
   {
     name: "Platinum" as const, planId: "platinum" as const,
-    monthly: 159, annualMonthly: 119, annualTotal: 1428, annualSavings: 480,
-    monthlyAnnualTotal: 1908,
-    savingsLabel: "3 months free",
+    monthly: 179, annualMonthly: 149, annualTotal: 1790, annualSavings: 358,
+    monthlyAnnualTotal: 2148,
     headline: "Never miss a renewal.",
-    tagline: "One missed renewal at RM 2,000 pays for years of kakisewa. Capture every one.",
+    tagline: "Up to 200 contracts, directory access, and a private agent profile to close more owners.",
     features: [
-      "Everything in Silver, plus:",
-      "Unlimited renewal cards",
-      "24-month timeline + history",
-      "WA reminders — 60, 30, 7 days",
-      "24-month commission history",
+      "Everything in Gold, plus:",
+      "200 contract tracking cards",
       "Directory",
       "Private agent profile",
     ],
-    recommended: "Experienced agent who needs to capture all contract renewal income by tracking existing contracts.",
-    archetype: "Steady operator · RM7-12k/month",
+    recommended: "Established agents who want directory visibility and a shareable profile page.",
+    archetype: "Established agent · RM8-15k/month",
     popular: true,
   },
   {
     name: "Elite" as const, planId: "elite" as const,
-    monthly: 299, annualMonthly: 229, annualTotal: 2748, annualSavings: 840,
+    monthly: 299, annualMonthly: 249, annualTotal: 2990, annualSavings: 598,
     monthlyAnnualTotal: 3588,
-    savingsLabel: "3 months free",
     headline: "Your complete ops hub.",
-    tagline: "Goal planning, performance tracking, and property services — everything in one place.",
+    tagline: "Unlimited contracts, public profile, performance analytics — everything in one place.",
     features: [
       "Everything in Platinum, plus:",
-      "WA reminder same-day trigger",
-      "Commission forecast",
-      "Benchmarking",
-      "Portfolio score",
+      "Unlimited contract tracking",
       "Public + searchable agent profile",
+      "Performance dashboard",
+      "Commission forecast + benchmarking",
+      "Portfolio score",
     ],
-    recommended: "Elite agent who wants everything in one place, including goal planning and performance tracking.",
-    archetype: "High earner · >RM12k/month",
+    recommended: "Elite agents who want full analytics, a public profile, and unlimited scale.",
+    archetype: "Elite agent · >RM15k/month",
     popular: false,
   },
 ];
@@ -130,12 +149,7 @@ function AnimatedPrice({ value, ink }: { value: number; ink: string }) {
 // ── 3D card ────────────────────────────────────────────────────────────────────
 
 function PricingCard({
-  plan,
-  interval,
-  isCurrentPlan,
-  isSelected,
-  onCardClick,
-  onSelect,
+  plan, interval, isCurrentPlan, isSelected, onCardClick, onSelect,
 }: {
   plan: typeof PLANS[number];
   interval: "monthly" | "annual";
@@ -146,14 +160,15 @@ function PricingCard({
 }) {
   const s = TIER_STYLES[plan.name];
   const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
+  const isFirst = plan.planId === "silver";
 
   return (
     <motion.div
-      whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+      whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 22 } }}
       className="flex flex-col h-full rounded-2xl overflow-hidden cursor-pointer"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: PLANS.indexOf(plan) * 0.08 }}
+      transition={{ duration: 0.4, delay: PLANS.indexOf(plan) * 0.07 }}
       onClick={onCardClick}
     >
       <div
@@ -163,7 +178,7 @@ function PricingCard({
           border: `2px solid ${isCurrentPlan ? "var(--kk-green)" : isSelected ? "rgba(255,255,255,0.6)" : s.border}`,
           borderRadius: 16,
           boxShadow: isCurrentPlan
-            ? `5px 5px 0 0 rgba(22,163,74,0.4)`
+            ? "5px 5px 0 0 rgba(22,163,74,0.4)"
             : isSelected ? `0 0 0 3px rgba(255,255,255,0.2), ${s.shadowHover}` : s.shadow,
           position: "relative",
           transition: "box-shadow 0.2s, border-color 0.2s",
@@ -171,106 +186,91 @@ function PricingCard({
         onMouseEnter={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "8px 8px 0 0 rgba(22,163,74,0.45)" : s.shadowHover)}
         onMouseLeave={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "5px 5px 0 0 rgba(22,163,74,0.4)" : isSelected ? `0 0 0 3px rgba(255,255,255,0.2), ${s.shadowHover}` : s.shadow)}
       >
-        {/* Shine overlay */}
         <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: s.shine }} />
 
-        {/* Badge */}
         {(plan.popular || isCurrentPlan) && (
           <div className="absolute top-4 right-4 z-10">
-            <span
-              className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide"
-              style={{
-                background: isCurrentPlan ? "#16a34a" : "#eab308",
-                color: "#fff",
-              }}
-            >
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide"
+              style={{ background: isCurrentPlan ? "#16a34a" : "#eab308", color: "#fff" }}>
               {isCurrentPlan ? "Active plan" : "Most popular"}
             </span>
           </div>
         )}
 
-        <div className="p-6 flex flex-col gap-5 flex-1 relative z-10">
-          {/* Header */}
-          <div style={{ minHeight: 110 }}>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2.5" style={{ color: s.faint }}>
+        <div className="p-5 flex flex-col gap-4 flex-1 relative z-10">
+          <div style={{ minHeight: 96 }}>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: s.faint }}>
               {plan.name}
             </p>
-            <p className="text-[22px] font-bold leading-[1.2]" style={{ color: s.ink }}>
+            <p className="text-[20px] font-bold leading-[1.2]" style={{ color: s.ink }}>
               {plan.headline}
             </p>
-            <p className="text-[12px] mt-2 leading-relaxed" style={{ color: s.mute }}>
+            <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: s.mute }}>
               {plan.tagline}
             </p>
           </div>
 
-          {/* Price */}
           <div>
             <div className="flex items-end gap-1.5">
-              <span className="text-[13px] font-medium pb-1.5" style={{ color: s.mute }}>RM</span>
-              <span className="text-[38px] font-black leading-none" style={{ letterSpacing: "-0.04em" }}>
+              <span className="text-[12px] font-medium pb-1" style={{ color: s.mute }}>RM</span>
+              <span className="text-[34px] font-black leading-none" style={{ letterSpacing: "-0.04em" }}>
                 <AnimatedPrice value={price} ink={s.ink} />
               </span>
-              <span className="text-[13px] pb-1.5" style={{ color: s.mute }}>/mo</span>
+              <span className="text-[12px] pb-1" style={{ color: s.mute }}>/mo</span>
             </div>
             {interval === "annual" ? (
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: s.accent, color: plan.name === "Silver" ? "#fff" : plan.name === "Platinum" ? "#0b1f4a" : "#5c3015" }}>
-                  {plan.savingsLabel}
+              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{ background: s.accent, color: plan.name === "Silver" ? "#fff" : plan.name === "Gold" ? "#92400e" : plan.name === "Platinum" ? "#0b1f4a" : "#5c3015" }}>
+                  2 months free
                 </span>
-                <span className="text-[11px]" style={{ color: s.faint }}>
-                  RM {plan.annualTotal.toLocaleString()}/year · save RM {plan.annualSavings}
+                <span className="text-[10px]" style={{ color: s.faint }}>
+                  RM {plan.annualTotal.toLocaleString()}/year
                 </span>
               </div>
             ) : (
-              <p className="mt-2 text-[11px]" style={{ color: s.faint }}>
-                Switch to annual and save RM {plan.annualSavings}/year
+              <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
+                Annual saves RM {plan.annualSavings}/year
               </p>
             )}
           </div>
 
-          {/* Divider */}
           <div style={{ height: 1, background: s.faint, opacity: 0.25 }} />
 
-          {/* Features */}
           <ul className="space-y-2 flex-1">
             {plan.features.map((f, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                {i === 0 && (plan.planId === "platinum" || plan.planId === "elite") ? (
+              <li key={i} className="flex items-start gap-2">
+                {i === 0 && !isFirst ? (
                   <span className="text-[12px] leading-snug mt-0.5 w-3 shrink-0" />
                 ) : (
-                  <Check className="shrink-0 mt-0.5" size={13} style={{ color: s.accent }} strokeWidth={3} />
+                  <Check className="shrink-0 mt-0.5" size={12} style={{ color: s.accent }} strokeWidth={3} />
                 )}
-                <span
-                  className="text-[13px] leading-snug"
+                <span className="text-[12px] leading-snug"
                   style={{
-                    color: i === 0 && (plan.planId === "platinum" || plan.planId === "elite") ? s.faint : s.ink,
-                    fontStyle: i === 0 && (plan.planId === "platinum" || plan.planId === "elite") ? "italic" : "normal",
-                    fontWeight: i > 0 && (plan.planId === "platinum" || plan.planId === "elite") ? 600 : 400,
-                  }}
-                >
+                    color: i === 0 && !isFirst ? s.faint : s.ink,
+                    fontStyle: i === 0 && !isFirst ? "italic" : "normal",
+                    fontWeight: i > 0 && !isFirst ? 600 : 400,
+                  }}>
                   {f}
                 </span>
               </li>
             ))}
           </ul>
 
-          {/* Best for */}
           <div>
-            <div style={{ height: 1, background: s.faint, opacity: 0.2, marginBottom: 10 }} />
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: s.faint }}>Best for</p>
-            <p className="text-[12px] font-bold mb-1" style={{ color: s.ink }}>{plan.archetype}</p>
-            <p className="text-[11px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
+            <div style={{ height: 1, background: s.faint, opacity: 0.2, marginBottom: 8 }} />
+            <p className="text-[9px] font-black uppercase tracking-widest mb-0.5" style={{ color: s.faint }}>Best for</p>
+            <p className="text-[11px] font-bold mb-0.5" style={{ color: s.ink }}>{plan.archetype}</p>
+            <p className="text-[10px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
           </div>
 
-          {/* CTA */}
           <button
             onClick={onSelect}
-            className="w-full py-3.5 rounded-xl font-bold text-[14px] transition-all active:scale-95"
+            className="w-full py-3 rounded-xl font-bold text-[13px] transition-all active:scale-95"
             style={{
-              background: s.btnBg,
-              color: s.btnInk,
+              background: s.btnBg, color: s.btnInk,
               border: "none",
-              boxShadow: `3px 3px 0 0 rgba(0,0,0,0.15)`,
+              boxShadow: "3px 3px 0 0 rgba(0,0,0,0.15)",
               letterSpacing: "-0.01em",
             }}
             onMouseEnter={e => (e.currentTarget.style.transform = "translate(-1px,-1px)")}
@@ -326,7 +326,7 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
           {interval === "annual" ? (
             <div className="space-y-1 mt-3">
               <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {plan.annualTotal.toLocaleString()} billed annually</p>
-              <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Save RM {plan.annualSavings}/year · {plan.savingsLabel}</p>
+              <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Save RM {plan.annualSavings}/year · 2 months free</p>
             </div>
           ) : (
             <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {plan.monthlyAnnualTotal.toLocaleString()} billed monthly over 12 months</p>
@@ -372,7 +372,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const selectedPlan = PLANS.find(p => p.planId === selectedPlanId) ?? PLANS[1];
+  const selectedPlan = PLANS.find(p => p.planId === selectedPlanId) ?? PLANS[2];
   const headerPrice = interval === "annual" ? selectedPlan.annualMonthly : selectedPlan.monthly;
 
   useEffect(() => {
@@ -428,7 +428,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
         />
       )}
 
-      <div className="mx-auto max-w-[1100px] px-6 lg:px-10 py-10 lg:py-16">
+      <div className="mx-auto max-w-[1200px] px-6 lg:px-10 py-10 lg:py-16">
 
         {/* Header */}
         <div className="text-center mb-10">
@@ -459,44 +459,31 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
 
         {/* Toggle */}
         <div className="flex justify-center mb-10">
-          <div
-            className="inline-flex rounded-full p-1"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}
-          >
+          <div className="inline-flex rounded-full p-1"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}>
             <button
               onClick={() => setInterval("monthly")}
               className="px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all"
-              style={{
-                background: interval === "monthly" ? "var(--kk-ink)" : "transparent",
-                color: interval === "monthly" ? "#fff" : "var(--kk-ink-mute)",
-              }}
+              style={{ background: interval === "monthly" ? "var(--kk-ink)" : "transparent", color: interval === "monthly" ? "#fff" : "var(--kk-ink-mute)" }}
             >
               Monthly
             </button>
             <button
               onClick={() => setInterval("annual")}
               className="px-5 py-1.5 rounded-full text-[13px] font-semibold transition-all flex items-center gap-2"
-              style={{
-                background: interval === "annual" ? "var(--kk-ink)" : "transparent",
-                color: interval === "annual" ? "#fff" : "var(--kk-ink-mute)",
-              }}
+              style={{ background: interval === "annual" ? "var(--kk-ink)" : "transparent", color: interval === "annual" ? "#fff" : "var(--kk-ink-mute)" }}
             >
               Annual
-              <span
-                className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
-                style={{
-                  background: interval === "annual" ? "#16a34a" : "var(--kk-line)",
-                  color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)",
-                }}
-              >
-                −25%
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
+                style={{ background: interval === "annual" ? "#16a34a" : "var(--kk-line)", color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)" }}>
+                2mo free
               </span>
             </button>
           </div>
         </div>
 
         {/* Cards */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-12" style={{ perspective: 1200 }}>
+        <div className="grid lg:grid-cols-4 gap-5 mb-12" style={{ perspective: 1200 }}>
           {PLANS.map(plan => (
             <PricingCard
               key={plan.name}
@@ -515,9 +502,9 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <table className="w-full text-left border-collapse" style={{ fontSize: "var(--kk-sm)" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid var(--kk-line-strong)" }}>
-                <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "25%" }} />
+                <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "24%" }} />
                 {PLANS.map(p => (
-                  <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)", width: "25%" }}>
+                  <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)", width: "19%" }}>
                     <div>{p.name}</div>
                     <div className="text-[11px] font-normal mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
                       RM {p.monthly}/mo
@@ -528,29 +515,23 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             </thead>
             <tbody>
               {[
-                ["Owner pipeline",        "Unlimited",    "Unlimited",        "Unlimited"],
-                ["Renewal tracking",      "5 cards",      "Unlimited",        "Unlimited"],
-                ["Renewal timeline",      "12 mo fwd",    "24 mo + history",  "24 mo + history"],
-                ["Vacancy planner",       "Flexible",     "Flexible",         "Flexible"],
-                ["WA reminders",          "—",            "60/30/7 days",     "60/30/7d + same day"],
-                ["Commission history",    "—",            "24 months",        "24 months"],
-                ["Directory",             "—",            "Yes",              "Yes"],
-                ["Contract documents",    "Yes",          "Yes",              "Yes"],
-                ["Agent profile",         "—",            "Private",          "Public + searchable"],
-                ["Commission forecast",   "—",            "—",                "Yes"],
-                ["Benchmarking",          "—",            "—",                "Yes"],
-                ["Portfolio score",       "—",            "—",                "Yes"],
-              ].map(([feature, silver, platinum, elite], i) => (
-                <tr
-                  key={feature}
-                  style={{
-                    borderBottom: "1px solid var(--kk-line)",
-                    background: i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
-                  }}
-                >
+                ["Owner pipeline",        "Unlimited",   "Unlimited",   "Unlimited",         "Unlimited"],
+                ["Existing contracts",    "20 cards",    "80 cards",    "200 cards",         "Unlimited"],
+                ["Renewal timeline",      "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist"],
+                ["Directory",             "—",           "—",           "Yes",               "Yes"],
+                ["Contract documents",    "Yes",         "Yes",         "Yes",               "Yes"],
+                ["Commission history",    "—",           "Yes",         "Yes",               "Yes"],
+                ["Agent profile",         "—",           "—",           "Private",           "Public + searchable"],
+                ["Performance dashboard", "—",           "—",           "—",                 "Yes"],
+                ["Commission forecast",   "—",           "—",           "—",                 "Yes"],
+                ["Benchmarking",          "—",           "—",           "—",                 "Yes"],
+                ["Portfolio score",       "—",           "—",           "—",                 "Yes"],
+              ].map(([feature, silver, gold, platinum, elite], i) => (
+                <tr key={feature} style={{ borderBottom: "1px solid var(--kk-line)", background: i % 2 === 0 ? "transparent" : "var(--kk-surface-2)" }}>
                   <td className="py-2.5 pr-6 font-medium" style={{ color: "var(--kk-ink-mute)" }}>{feature}</td>
-                  {[silver, platinum, elite].map((val, j) => (
-                    <td key={j} className="py-2.5 px-3 text-center" style={{ color: val === "—" ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: val !== "—" ? 500 : 400 }}>
+                  {[silver, gold, platinum, elite].map((val, j) => (
+                    <td key={j} className="py-2.5 px-3 text-center"
+                      style={{ color: val === "—" ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: val !== "—" ? 500 : 400 }}>
                       {val}
                     </td>
                   ))}

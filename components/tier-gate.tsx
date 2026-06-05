@@ -2,7 +2,7 @@ import { getAgentProfile } from "@/lib/db";
 import { headers } from "next/headers";
 import Link from "next/link";
 
-const PLAN_RANK: Record<string, number> = { silver: 1, platinum: 2, elite: 3 };
+const PLAN_RANK: Record<string, number> = { silver: 1, gold: 2, platinum: 3, elite: 4 };
 
 const TIER_CONFIG = {
   platinum: {

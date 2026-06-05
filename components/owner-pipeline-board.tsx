@@ -405,14 +405,13 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         propertyName={commissionLead?.lead.property_name ?? null}
         commissionRm={commissionLead?.lead.commission_override_rm ?? (commissionLead?.lead.expected_rent ?? 0) * (commissionLead?.lead.is_renewal ? 0.5 : 1)}
         onConfirm={async () => {
-          if (!commissionLead) return;
+          if (!commissionLead) return { ok: false };
           const res = await markCommissionCollected(commissionLead.tenancyId);
           if (res.ok) {
             toast.success("Commission marked as collected!");
             router.refresh();
-          } else {
-            toast.error(res.message ?? "Something went wrong.");
           }
+          return res;
         }}
       />
 

@@ -1493,9 +1493,24 @@ export async function generateLhdn(
 
 export async function markCommissionCollected(
   tenancyId: string
-): Promise<{ ok: boolean; message?: string }> {
+): Promise<{ ok: boolean; message?: string; cap_reached?: { current_plan: string; upgrade_to: string; current_cap: number; upgrade_cap: number | null } }> {
   "use server";
   try {
+    // Check contract cap before moving to active
+    const capCheck = await checkRenewalCardCap();
+    if (!capCheck.allowed) {
+      return {
+        ok: false,
+        message: "cap_reached",
+        cap_reached: {
+          current_plan: capCheck.current_plan,
+          upgrade_to: capCheck.upgrade_to,
+          current_cap: capCheck.current_cap,
+          upgrade_cap: capCheck.upgrade_cap ?? null,
+        },
+      };
+    }
+
     const tenancy = await getTenancy(tenancyId);
     if (tenancy?.owner_lead_id) {
       const lead = await getOwnerLead(tenancy.owner_lead_id);

@@ -6,6 +6,8 @@ import type Stripe from "stripe";
 const PLAN_FROM_PRICE: Record<string, string> = {
   [process.env.STRIPE_PRICE_SILVER_MONTHLY!]:   "silver",
   [process.env.STRIPE_PRICE_SILVER_ANNUAL!]:    "silver",
+  [process.env.STRIPE_PRICE_GOLD_MONTHLY!]:     "gold",
+  [process.env.STRIPE_PRICE_GOLD_ANNUAL!]:      "gold",
   [process.env.STRIPE_PRICE_PLATINUM_MONTHLY!]: "platinum",
   [process.env.STRIPE_PRICE_PLATINUM_ANNUAL!]:  "platinum",
   [process.env.STRIPE_PRICE_ELITE_MONTHLY!]:    "elite",

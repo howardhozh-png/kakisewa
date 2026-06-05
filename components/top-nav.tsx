@@ -23,7 +23,7 @@ const NAV = [
   { href: "/performance",        label: "Performance",        matchPaths: ["/performance"],                                               tourId: "tour-nav-performance", minPlan: "elite" as const },
 ];
 
-const PLAN_RANK: Record<string, number> = { silver: 1, platinum: 2, elite: 3 };
+const PLAN_RANK: Record<string, number> = { silver: 1, gold: 2, platinum: 3, elite: 4 };
 
 function navHasAccess(
   minPlan: "platinum" | "elite" | null,
@@ -639,6 +639,14 @@ const TIER_BADGE = {
     shadow: "0 2px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.6)",
     label: "Silver",
   },
+  gold: {
+    bg: "linear-gradient(135deg, #a16207 0%, #eab308 40%, #ca8a04 65%, #a16207 100%)",
+    shine: "linear-gradient(135deg, rgba(255,250,100,0.45) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(202,138,4,0.9)",
+    ink: "#fff8e1",
+    shadow: "0 2px 10px rgba(100,70,0,0.4), inset 0 1px 0 rgba(255,240,100,0.3)",
+    label: "Gold",
+  },
   platinum: {
     bg: "linear-gradient(135deg, #0b1f4a 0%, #2040a0 40%, #152a56 70%, #0a1a3c 100%)",
     shine: "linear-gradient(135deg, rgba(120,170,255,0.35) 0%, rgba(255,255,255,0) 55%)",
@@ -657,7 +665,7 @@ const TIER_BADGE = {
   },
 } as const;
 
-function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean }) {
+function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "gold" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean }) {
   const key: keyof typeof TIER_BADGE | "trial" | null =
     isAdmin ? "god" : (plan ?? (isOnTrial ? "trial" : null));
 

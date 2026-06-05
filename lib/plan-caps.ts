@@ -1,8 +1,18 @@
 import { createClient } from "./supabase/server";
 
+export type PlanId = "silver" | "gold" | "platinum" | "elite";
+
 export type CapCheckResult =
   | { allowed: true }
-  | { allowed: false; reason: "plan_cap_reached"; upgrade_to: "platinum"; nearest_expiry_days: number | null };
+  | {
+      allowed: false;
+      reason: "plan_cap_reached";
+      current_plan: PlanId;
+      upgrade_to: PlanId;
+      current_cap: number;
+      upgrade_cap: number | null; // null = unlimited
+      nearest_expiry_days: number | null;
+    };
 
 export type ProfileRow = { subscription_plan?: string | null; subscription_status?: string | null };
 
@@ -13,23 +23,32 @@ export function effectivePlan(p: ProfileRow | null): string {
   return "silver";
 }
 
-const PLAN_RANK: Record<string, number> = { silver: 1, platinum: 2, elite: 3, elite_trial: 3 };
+export const PLAN_RANK: Record<string, number> = {
+  silver: 1, gold: 2, platinum: 3, elite: 4, elite_trial: 4,
+};
 
-export function planAllows(plan: string, min: "platinum" | "elite"): boolean {
+export function planAllows(plan: string, min: "gold" | "platinum" | "elite"): boolean {
   return (PLAN_RANK[plan] ?? 1) >= PLAN_RANK[min];
 }
 
-const RENEWAL_CARD_CAP: Record<string, number> = {
+export const TENANCY_CAP: Record<string, number> = {
   elite_trial: Infinity,
-  silver:       5,
-  platinum:     Infinity,
+  silver:       20,
+  gold:         80,
+  platinum:     200,
   elite:        Infinity,
 };
 
-export async function checkRenewalCardCap(): Promise<CapCheckResult> {
+const NEXT_TIER: Record<string, { id: PlanId; cap: number | null }> = {
+  silver:   { id: "gold",     cap: 80 },
+  gold:     { id: "platinum", cap: 200 },
+  platinum: { id: "elite",    cap: null },
+};
+
+export async function checkTenancyCap(): Promise<CapCheckResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { allowed: true }; // unauthenticated — let the action fail naturally
+  if (!user) return { allowed: true };
 
   const { data: profile } = await supabase
     .from("agent_profiles")
@@ -38,29 +57,24 @@ export async function checkRenewalCardCap(): Promise<CapCheckResult> {
     .maybeSingle();
 
   const plan = effectivePlan(profile as ProfileRow | null);
-  const cap = RENEWAL_CARD_CAP[plan] ?? Infinity;
+  const cap = TENANCY_CAP[plan] ?? Infinity;
 
   if (!isFinite(cap)) return { allowed: true };
 
-  // Active renewal cards: has a contract date, not yet resolved, not archived
   const { count } = await supabase
     .from("tenancies")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .not("contract_end", "is", null)
-    .eq("outcome", "pending")
-    .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed");
+    .neq("lifecycle_stage", "closed");
 
   if ((count ?? 0) < cap) return { allowed: true };
 
-  // Blocked — find how many days until the nearest expiring contract
   const { data: soonest } = await supabase
     .from("tenancies")
     .select("contract_end")
     .eq("user_id", user.id)
+    .neq("lifecycle_stage", "closed")
     .not("contract_end", "is", null)
-    .eq("outcome", "pending")
-    .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed")
     .order("contract_end", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -71,5 +85,20 @@ export async function checkRenewalCardCap(): Promise<CapCheckResult> {
     ? Math.max(0, Math.ceil((new Date(soonest.contract_end as string).getTime() - today.getTime()) / 86400000))
     : null;
 
-  return { allowed: false, reason: "plan_cap_reached", upgrade_to: "platinum", nearest_expiry_days: nearestExpiryDays };
+  const planId = (["silver","gold","platinum","elite"].includes(plan) ? plan : "silver") as PlanId;
+  const next = NEXT_TIER[planId] ?? { id: "elite" as PlanId, cap: null };
+
+  return {
+    allowed: false,
+    reason: "plan_cap_reached",
+    current_plan: planId,
+    upgrade_to: next.id,
+    current_cap: cap,
+    upgrade_cap: next.cap,
+    nearest_expiry_days: nearestExpiryDays,
+  };
 }
+
+// backward compat alias
+export const checkRenewalCardCap = checkTenancyCap;
+export const RENEWAL_CARD_CAP = TENANCY_CAP;
