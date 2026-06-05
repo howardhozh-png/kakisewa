@@ -153,9 +153,6 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
                       <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>
                         {p.name}
                       </p>
-                      <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
-                        {p.owner_name} · {p.owner_phone}
-                      </p>
                     </button>
                   ))}
                   {propertyName.trim() && !hasExactMatch && (

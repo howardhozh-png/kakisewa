@@ -255,8 +255,8 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           placeholder="Min rent (RM)"
           value={minRent}
           onChange={(e) => setMinRent(e.target.value)}
-          className="text-[13px] px-4 py-1.5 rounded-full font-medium"
-          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 148, flexShrink: 0 }}
+          className="text-[13px] px-3 py-2.5 rounded-full font-medium min-h-[40px]"
+          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 140, flexShrink: 0, fontSize: 13 }}
         />
         <button
           onClick={() => setOwnerRespondedFilter((v) => !v)}

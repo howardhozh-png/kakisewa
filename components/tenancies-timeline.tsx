@@ -68,51 +68,33 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
+      <div className="flex items-start justify-between mb-3 gap-2">
         <div>
-          <p className="kk-overline mb-2">
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--kk-ink-faint)", marginBottom: 2 }}>
             Renewal income · {displayMonths} month{displayMonths === 1 ? "" : "s"}
           </p>
-          <p className="kk-metric-lg" style={{ color: "var(--kk-theme-dark)" }}>
+          <p style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--kk-theme-dark)", fontVariantNumeric: "tabular-nums" }}>
             RM {Math.round(total.potential).toLocaleString()}
           </p>
-          <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: "var(--kk-ink-faint)" }}>
+          <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
             {total.count} contract{total.count === 1 ? "" : "s"} · {renewalCommissionPct}% commission per renewal
             <Hint text="You earn half a month's rent per renewal closed." side="right" />
           </p>
         </div>
         {!isSilver && (
-          <div className="shrink-0 flex items-center gap-2 flex-wrap">
+          <div className="shrink-0 flex items-center gap-1.5">
             <input
               type="month"
               value={startMonth}
               onChange={(e) => setStartMonth(e.target.value)}
               className="tabular-nums outline-none"
-              style={{
-                background: "var(--kk-surface)",
-                border: "1.5px solid var(--kk-line-strong)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                borderRadius: 8,
-                padding: "8px 12px",
-                color: "var(--kk-ink)",
-                fontSize: 13,
-                minHeight: 40,
-              }}
+              style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
             />
             <select
               value={windowMonths}
               onChange={(e) => setWindowMonths(Number(e.target.value))}
               className="font-semibold tabular-nums outline-none"
-              style={{
-                background: "var(--kk-surface)",
-                border: "1.5px solid var(--kk-line-strong)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                borderRadius: 8,
-                padding: "8px 10px",
-                color: "var(--kk-ink)",
-                fontSize: 13,
-                minHeight: 40,
-              }}
+              style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
             >
               <option value={3}>3 months</option>
               <option value={6}>6 months</option>
@@ -137,7 +119,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
               onClick={() => onMonthClick?.(m.key)}
               style={{ cursor: onMonthClick ? "pointer" : "default" }}
             >
-              <div className="relative h-20 flex items-end pt-1.5">
+              <div className="relative flex items-end" style={{ height: 60, paddingTop: 6 }}>
                 <div
                   className="w-full rounded-t-md transition-all duration-500"
                   style={{
@@ -150,17 +132,17 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
                   }}
                 />
               </div>
-              <div className="text-center" style={{ height: 64 }}>
-                <p className="text-[13px] font-semibold tabular-nums leading-none" style={{ color: b.count > 0 ? "var(--kk-ink)" : "var(--kk-ink-faint)" }}>
+              <div className="text-center" style={{ height: 44 }}>
+                <p className="text-[11px] font-semibold tabular-nums leading-none" style={{ color: b.count > 0 ? "var(--kk-ink)" : "var(--kk-ink-faint)" }}>
                   {b.count}
                 </p>
-                <p className="text-[11px] mt-1 leading-none whitespace-nowrap" style={{ color: "var(--kk-ink-faint)" }}>
+                <p className="text-[10px] mt-1 leading-none whitespace-nowrap" style={{ color: "var(--kk-ink-faint)" }}>
                   {m.label} &apos;{String(m.year).slice(2)}
                 </p>
-                <p className="text-[10px] mt-0.5 leading-none font-medium" style={{ color: "var(--kk-theme-dark)", visibility: isCurrent ? "visible" : "hidden" }}>
+                <p className="text-[9px] mt-0.5 leading-none font-medium" style={{ color: "var(--kk-theme-dark)", visibility: isCurrent ? "visible" : "hidden" }}>
                   ·now
                 </p>
-                <p className="text-[11px] mt-0.5 tabular-nums leading-none" style={{ color: "var(--kk-ink-mute)", visibility: b.potential > 0 ? "visible" : "hidden" }}>
+                <p className="text-[10px] mt-0.5 tabular-nums leading-none" style={{ color: "var(--kk-ink-mute)", visibility: b.potential > 0 ? "visible" : "hidden" }}>
                   RM {b.potential > 0 ? (b.potential / 1000).toFixed(b.potential >= 10000 ? 0 : 1) + "k" : "—"}
                 </p>
               </div>

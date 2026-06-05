@@ -663,10 +663,26 @@ html, body {
     /* Slightly narrower on mobile so next column peeks into view */
     width: 300px;
     scroll-snap-align: start;
+    position: relative;
+  }
+  .kk-board-col::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.045));
+    pointer-events: none;
+    border-radius: 0 0 18px 18px;
+    z-index: 2;
   }
   .kk-board-col-body {
     max-height: 480px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.18) transparent;
   }
 
   /* Larger tap targets for pill/ghost buttons inside boards */

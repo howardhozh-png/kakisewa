@@ -5,7 +5,7 @@ import Link from "next/link";
 import { OwnerLead } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
-import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search, User } from "lucide-react";
+import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search, User, Building2 } from "lucide-react";
 import { updateOwnerLeadDetails } from "@/lib/actions";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
@@ -166,32 +166,46 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
               const tenantInfo = l.stage === "matched" ? tenantsByLeadId[l.id] : undefined;
               const isRented = l.stage === "matched";
               return (
-                <button
-                  key={l.id}
-                  onClick={() => setOpenLead(l)}
-                  className="kk-card kk-card-hover p-4 text-left w-full"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                <button key={l.id} onClick={() => setOpenLead(l)} className="kk-card kk-card-hover p-3 text-left w-full">
+                  <div className="flex gap-2.5">
+                    {/* Photo placeholder — same style as lifecycle board */}
+                    <div className="w-[52px] h-[52px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+                      style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+                      <Building2 className="w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-semibold leading-tight" style={{ color: "var(--kk-ink)" }}>{l.property_name ?? "—"}</p>
-                      {l.unit && <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Unit {l.unit}</p>}
+                      {/* Row 1: property name + status */}
+                      <div className="flex items-start justify-between gap-1.5">
+                        <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{l.property_name ?? "—"}</p>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                          style={isRented ? { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" } : { background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)" }}>
+                          {isRented ? "Rented" : "Listed"}
+                        </span>
+                      </div>
+                      {/* Row 2: unit · rent */}
+                      <p className="text-[11px] mt-0.5 leading-tight">
+                        {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{l.expected_rent != null ? " · " : ""}</span>}
+                        {l.expected_rent != null && <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
+                        {!l.unit && !l.expected_rent && <span style={{ color: "var(--kk-ink-faint)" }}>—</span>}
+                      </p>
+                      {/* Row 3: owner */}
+                      {l.owner_name && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+                          <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</p>
+                        </div>
+                      )}
+                      {/* Row 4: beds · baths · tenant */}
+                      {(l.bedrooms != null || l.bathrooms != null || tenantInfo) && (
+                        <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>
+                          {[
+                            l.bedrooms != null ? `${l.bedrooms}bd` : null,
+                            l.bathrooms != null ? `${l.bathrooms}ba` : null,
+                            tenantInfo ? `Tenant: ${tenantInfo.tenant_name}` : null,
+                          ].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-                      style={isRented ? { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" } : { background: "rgba(0,113,227,0.12)", color: "var(--kk-blue)" }}>
-                      {isRented ? "Rented" : "Listed"}
-                    </span>
-                  </div>
-                  {l.owner_name && (
-                    <div className="flex items-center gap-1.5 py-2 mb-2" style={{ borderTop: "1px solid var(--kk-line)", borderBottom: "1px solid var(--kk-line)" }}>
-                      <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
-                      <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</span>
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                    {l.expected_rent != null && <span className="text-[12px] font-semibold tabular-nums" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
-                    {l.bedrooms != null && <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{l.bedrooms} bed</span>}
-                    {l.bathrooms != null && <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{l.bathrooms} bath</span>}
-                    {tenantInfo && <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>Tenant: {tenantInfo.tenant_name}</span>}
                   </div>
                 </button>
               );
@@ -201,24 +215,29 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
               const stageLabel = LIFECYCLE_LABELS[stage] ?? stage;
               const isEnding = stage === "ending" || stage === "replacing";
               return (
-                <Link
-                  key={t.tenancy_id}
-                  href={`/existing-contracts?open=${t.tenancy_id}`}
-                  className="kk-card kk-card-hover p-4 block"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-semibold leading-tight" style={{ color: "var(--kk-ink)" }}>{t.property_name ?? "—"}</p>
-                      {t.unit && <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Unit {t.unit}</p>}
+                <Link key={t.tenancy_id} href={`/existing-contracts?open=${t.tenancy_id}`} className="kk-card kk-card-hover p-3 block">
+                  <div className="flex gap-2.5">
+                    <div className="w-[52px] h-[52px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+                      style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+                      <Building2 className="w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
                     </div>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-                      style={isEnding ? { background: "rgba(239,68,68,0.12)", color: "#B91C1C" } : { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}>
-                      {stageLabel}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 pt-2" style={{ borderTop: "1px solid var(--kk-line)" }}>
-                    {t.amount != null && <span className="text-[12px] font-semibold tabular-nums" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>}
-                    <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>Tenant: {t.tenant_name}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{t.property_name ?? "—"}</p>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                          style={isEnding ? { background: "rgba(239,68,68,0.10)", color: "#B91C1C" } : { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}>
+                          {stageLabel}
+                        </span>
+                      </div>
+                      <p className="text-[11px] mt-0.5 leading-tight">
+                        {t.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {t.unit}{t.amount != null ? " · " : ""}</span>}
+                        {t.amount != null && <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>}
+                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+                        <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_name}</p>
+                      </div>
+                    </div>
                   </div>
                 </Link>
               );
