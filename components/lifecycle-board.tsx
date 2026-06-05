@@ -9,6 +9,7 @@ import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
 import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2 } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
+import { FeatureLockedState } from "@/components/feature-locked-state";
 import { RenewalCommissionDialog } from "@/components/renewal-commission-dialog";
 import { TenantLeavingDialog } from "@/components/tenant-leaving-dialog";
 import { OwnerLeavingDialog } from "@/components/owner-leaving-dialog";
@@ -36,9 +37,10 @@ interface Props {
   tenancies: Tenancy[];
   openTenancyId?: string;
   highlightId?: string;
+  plan?: string;
 }
 
-export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props) {
+export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "platinum" }: Props) {
   const today = useMemo(() => new Date(), []);
   const router = useRouter();
   const [openTenancy, setOpenTenancy] = useState<Tenancy | null>(null);
@@ -190,6 +192,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props)
           <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>See your renewal income for each month over the next 1-3 years to plan your income</p>
         </div>
         <TenanciesTimeline
+          plan={plan}
           tenancies={local.filter((t) => {
             if (propertyFilter !== "all" && normalizePropName(t.property_name ?? "") !== propertyFilter) return false;
             const s = defaultLifecycleStage(t, today);
@@ -199,6 +202,17 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props)
           onMonthClick={(key) => setMonthFilter((prev) => prev === key ? "" : key)}
         />
       </div>
+
+      {plan === "silver" && (
+        <div className="kk-section mb-5">
+          <FeatureLockedState
+            compact
+            title="Automate your renewal reminders"
+            body="kakisewa sends tenants a WhatsApp reminder at 60, 30, and 7 days before expiry — using your name and REN number. Available on Platinum and above."
+            ctaLabel="Upgrade to Platinum — RM 159/mo"
+          />
+        </div>
+      )}
 
       <div ref={boardRef} style={{ scrollMarginTop: 80 }} />
       <DndContext
@@ -234,6 +248,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId }: Props)
                     t={t}
                     col={col}
                     today={today}
+                    plan={plan}
                     isDragging={draggingId === t.id}
                     onOpen={() => setOpenTenancy(t)}
                     onShowCommission={() => setCommissionTenancy(t)}
@@ -416,8 +431,8 @@ function EmptyDrop({ col }: { col: ColMeta }) {
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
-function Card({ t, col, today, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onMoveToStage }: {
-  t: Tenancy; col: ColMeta; today: Date; isDragging: boolean;
+function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onMoveToStage }: {
+  t: Tenancy; col: ColMeta; today: Date; plan: string; isDragging: boolean;
   onOpen: () => void;
   onShowCommission: () => void;
   onShowTenantLeaving: () => void;
@@ -473,8 +488,8 @@ function Card({ t, col, today, isDragging, onOpen, onShowCommission, onShowTenan
         {t.contract_end && <span style={{ color: "var(--kk-ink-faint)" }}> &middot; exp {expiryDateStr}</span>}
       </p>
 
-      {/* Rent reminder — shown on any card based on contract dates */}
-      <RentReminderAction t={t} today={today} />
+      {/* Rent reminder — platinum/elite only */}
+      {plan !== "silver" && <RentReminderAction t={t} today={today} />}
 
       {/* Column-specific action (Renewing / Active) */}
       {col.stage !== "headsup" && (
@@ -484,7 +499,7 @@ function Card({ t, col, today, isDragging, onOpen, onShowCommission, onShowTenan
       {/* Expiring: notify owner + dropdown */}
       {col.stage === "headsup" && (
         <>
-          <HeadsupOwnerAction t={t} />
+          {plan !== "silver" && <HeadsupOwnerAction t={t} />}
           <WhatsNext
             t={t}
             onMoveToStage={onMoveToStage}

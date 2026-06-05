@@ -4,13 +4,19 @@ export type CapCheckResult =
   | { allowed: true }
   | { allowed: false; reason: "plan_cap_reached"; upgrade_to: "platinum"; nearest_expiry_days: number | null };
 
-type ProfileRow = { subscription_plan: string | null; subscription_status: string | null };
+export type ProfileRow = { subscription_plan?: string | null; subscription_status?: string | null };
 
-function effectivePlan(p: ProfileRow | null): string {
+export function effectivePlan(p: ProfileRow | null): string {
   if (!p) return "silver";
   if (p.subscription_status === "trial") return "elite_trial";
   if (p.subscription_status === "active") return p.subscription_plan ?? "silver";
-  return "silver"; // expired / cancelled / null → most restricted
+  return "silver";
+}
+
+const PLAN_RANK: Record<string, number> = { silver: 1, platinum: 2, elite: 3, elite_trial: 3 };
+
+export function planAllows(plan: string, min: "platinum" | "elite"): boolean {
+  return (PLAN_RANK[plan] ?? 1) >= PLAN_RANK[min];
 }
 
 const RENEWAL_CARD_CAP: Record<string, number> = {

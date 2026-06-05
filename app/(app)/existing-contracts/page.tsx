@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { getLifecycleTenancies, getTenancies, getProperties, countOwnerLeads } from "@/lib/db";
-import { checkTierGate } from "@/components/tier-gate";
+import { getLifecycleTenancies, getTenancies, getProperties, countOwnerLeads, getAgentProfile } from "@/lib/db";
+import { effectivePlan } from "@/lib/plan-caps";
 import { format } from "date-fns";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
@@ -16,17 +16,16 @@ interface Props {
 }
 
 export default async function TenanciesPage({ searchParams }: Props) {
-  const gate = await checkTierGate("platinum");
-  if (gate) return gate;
-
   const { open, highlight } = await searchParams;
   const today = new Date();
-  const [lifecycle, allTenancies, properties, makeCount] = await Promise.all([
+  const [lifecycle, allTenancies, properties, makeCount, agentProfile] = await Promise.all([
     getLifecycleTenancies(),
     getTenancies(),
     getProperties(),
     countOwnerLeads(),
+    getAgentProfile().catch(() => null),
   ]);
+  const plan = effectivePlan(agentProfile);
 
   // Stats for the hero
   const expiringIn30 = lifecycle.filter((t) => {
@@ -104,12 +103,12 @@ export default async function TenanciesPage({ searchParams }: Props) {
               Here is a preview of what your board will look like
             </p>
             <div style={{ opacity: 0.35, pointerEvents: "none" }}>
-              <LifecycleBoard tenancies={[demoTenancy]} openTenancyId={undefined} highlightId={undefined} />
+              <LifecycleBoard tenancies={[demoTenancy]} openTenancyId={undefined} highlightId={undefined} plan={plan} />
             </div>
           </>
         );
       })() : (
-        <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={highlight} />
+        <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={highlight} plan={plan} />
       )}
     </div>
   );

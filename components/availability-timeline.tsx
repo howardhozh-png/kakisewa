@@ -13,15 +13,23 @@ interface Props {
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+function todayMonthValue() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick, selectedMonth }: Props) {
   const today = useMemo(() => new Date(), []);
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const [windowMonths, setWindowMonths] = useState(12);
-  const [monthsDisplay, setMonthsDisplay] = useState("12");
+  const [startMonth, setStartMonth] = useState(todayMonthValue);
 
   const months = useMemo(() => {
+    const [sy, sm] = startMonth.split("-").map(Number);
+    const base = new Date(sy, sm - 1, 1);
     const out: { key: string; label: string; year: number }[] = [];
     for (let i = 0; i < windowMonths; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
       out.push({
         key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
         label: MONTH_SHORT[d.getMonth()],
@@ -29,7 +37,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
       });
     }
     return out;
-  }, [today, windowMonths]);
+  }, [startMonth, windowMonths]);
 
   const buckets = useMemo(() => {
     const map = new Map<string, { count: number; potential: number; items: OwnerLead[] }>();
@@ -58,7 +66,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
       <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
         <div>
           <p className="kk-overline mb-2">
-            Property availability · next {windowMonths} month{windowMonths === 1 ? "" : "s"}
+            Property availability · {windowMonths} month{windowMonths === 1 ? "" : "s"}
           </p>
           <p className="kk-metric-lg" style={{ color: "var(--kk-theme-dark)" }}>
             RM {Math.round(total.potential).toLocaleString()}
@@ -68,31 +76,39 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
             <Hint text="You earn 1 full month's rent per successful placement." side="right" />
           </p>
         </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Next</span>
+        <div className="shrink-0 flex items-center gap-2 flex-wrap">
           <input
-            type="text"
-            inputMode="numeric"
-            value={monthsDisplay}
-            onChange={(e) => {
-              const raw = e.target.value.replace(/\D/g, "");
-              setMonthsDisplay(raw);
-              const v = parseInt(raw, 10);
-              if (!isNaN(v)) setWindowMonths(Math.min(24, Math.max(0, v)));
-            }}
-            onBlur={() => setMonthsDisplay(String(windowMonths))}
-            className="text-[13px] font-semibold text-center tabular-nums outline-none"
+            type="month"
+            value={startMonth}
+            onChange={(e) => setStartMonth(e.target.value)}
+            className="text-[13px] tabular-nums outline-none"
             style={{
-              width: "52px",
               background: "var(--kk-surface)",
               border: "1.5px solid var(--kk-line-strong)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
               borderRadius: 8,
-              padding: "3px 6px",
+              padding: "3px 8px",
               color: "var(--kk-ink)",
             }}
           />
-          <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>month{windowMonths === 1 ? "" : "s"}</span>
+          <select
+            value={windowMonths}
+            onChange={(e) => setWindowMonths(Number(e.target.value))}
+            className="text-[13px] font-semibold tabular-nums outline-none"
+            style={{
+              background: "var(--kk-surface)",
+              border: "1.5px solid var(--kk-line-strong)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              borderRadius: 8,
+              padding: "3px 8px",
+              color: "var(--kk-ink)",
+            }}
+          >
+            <option value={3}>3 months</option>
+            <option value={6}>6 months</option>
+            <option value={12}>12 months</option>
+            <option value={24}>24 months</option>
+          </select>
         </div>
       </div>
 
@@ -102,7 +118,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
           {months.map((m) => {
             const b = buckets.get(m.key)!;
             const heightPct = (b.count / maxCount) * 100;
-            const isCurrent = m.key === months[0].key;
+            const isCurrent = m.key === todayKey;
             return (
               <div
                 key={m.key}

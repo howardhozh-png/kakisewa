@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports, getAgentProfile } from "@/lib/db";
-import { checkTierGate } from "@/components/tier-gate";
+import { effectivePlan, planAllows } from "@/lib/plan-caps";
+import { FeatureLockedState } from "@/components/feature-locked-state";
+import { headers } from "next/headers";
 import { PageHelpButton } from "@/components/page-help-button";
 import { NetworkSubNav } from "@/components/network-sub-nav";
 import { MatchesView } from "@/components/matches-view";
@@ -29,14 +31,26 @@ const VIEW_DESCS: Record<string, string> = {
 };
 
 export default async function NetworkPage({ searchParams }: Props) {
-  const gate = await checkTierGate("elite");
-  if (gate) return gate;
+  const isAdmin = (await headers()).get("x-is-admin") === "true";
+  const agent = await getAgentProfile().catch(() => null);
+  const plan = effectivePlan(agent);
+
+  if (!isAdmin && !planAllows(plan, "platinum")) {
+    return (
+      <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
+        <FeatureLockedState
+          title="Unlock the directory"
+          body="Access our curated directory of property lawyers, contractors, JPPH contacts, and service providers. Available on Platinum and above."
+          ctaLabel="Upgrade to Platinum — RM 159/mo"
+        />
+      </div>
+    );
+  }
 
   const { view: rawView } = await searchParams;
   const view = rawView === "properties" ? "properties" : rawView === "tenants" ? "tenants" : "contacts";
 
-  const [agent, listed, tenantProfiles, activeTenants, supports] = await Promise.all([
-    getAgentProfile().catch(() => null),
+  const [listed, tenantProfiles, activeTenants, supports] = await Promise.all([
     getListedOwnerLeads().catch(() => [] as Awaited<ReturnType<typeof getListedOwnerLeads>>),
     getAllTenantProfiles().catch(() => [] as Awaited<ReturnType<typeof getAllTenantProfiles>>),
     getAllActiveTenants().catch(() => [] as Awaited<ReturnType<typeof getAllActiveTenants>>),

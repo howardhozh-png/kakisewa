@@ -1,5 +1,7 @@
 import { getMonthlyCommissionTimeline, getAgentProfile, getLifetimeCommissionStats } from "@/lib/db";
-import { checkTierGate } from "@/components/tier-gate";
+import { effectivePlan, planAllows } from "@/lib/plan-caps";
+import { FeatureLockedState } from "@/components/feature-locked-state";
+import { headers } from "next/headers";
 import { PerformanceOverview } from "@/components/performance-overview";
 import { TodayFocus } from "@/components/today-focus";
 import { DealMilestone } from "@/components/deal-milestone";
@@ -11,14 +13,26 @@ export const dynamic = "force-dynamic";
 interface Props { searchParams: Promise<{ year?: string }> }
 
 export default async function PerformancePage({ searchParams }: Props) {
-  const gate = await checkTierGate("elite");
-  if (gate) return gate;
+  const isAdmin = (await headers()).get("x-is-admin") === "true";
+  const agent = await getAgentProfile();
+  const plan = effectivePlan(agent);
+
+  if (!isAdmin && !planAllows(plan, "platinum")) {
+    return (
+      <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
+        <FeatureLockedState
+          title="Track your renewal income"
+          body="See your commission earned per renewal and 24 months of renewal income history. Available on Platinum and above."
+          ctaLabel="Upgrade to Platinum — RM 159/mo"
+        />
+      </div>
+    );
+  }
 
   const { year: yearStr } = await searchParams;
   const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
-  const [timeline, agent, lifetime] = await Promise.all([
+  const [timeline, lifetime] = await Promise.all([
     getMonthlyCommissionTimeline(year),
-    getAgentProfile(),
     getLifetimeCommissionStats(),
   ]);
 
