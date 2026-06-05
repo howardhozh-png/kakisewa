@@ -195,7 +195,24 @@ export default async function SamplePackPage({
           )}
         </div>
 
-        <p className="text-center text-[11px] mt-6 mb-2" style={{ color: "#C7C7CC" }}>
+        {/* Trusted badge */}
+        <div className="mt-5 rounded-2xl px-5 py-4 flex items-center gap-4"
+          style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.06)" }}>
+          <div className="flex -space-x-2 shrink-0">
+            {["#1C1C1E","#3A3A3C","#48484A","#636366"].map((bg,i) => (
+              <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold"
+                style={{ background: bg, color: "#fff", zIndex: 4 - i }}>
+                {["HC","LM","RN","KS"][i]}
+              </div>
+            ))}
+          </div>
+          <div>
+            <p className="text-[13px] font-bold" style={{ color: "#1C1C1E" }}>Trusted by 80,000+ agents</p>
+            <p className="text-[11px]" style={{ color: "#8E8E93" }}>Malaysia&apos;s #1 property management platform</p>
+          </div>
+        </div>
+
+        <p className="text-center text-[11px] mt-5 mb-2" style={{ color: "#C7C7CC" }}>
           Powered by kakisewa
         </p>
       </main>

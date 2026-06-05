@@ -201,6 +201,20 @@ export function IntakeChat({
               <CheckCircle className="w-7 h-7 text-white" />
             </div>
             <AgentBubble text={thankYouMessage} />
+            {/* Trusted badge */}
+            <div className="mt-2 flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.06)", maxWidth: 320 }}>
+              <div className="flex -space-x-2 shrink-0">
+                {["#1C1C1E","#3A3A3C","#48484A","#636366"].map((bg,i) => (
+                  <div key={i} className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold"
+                    style={{ background: bg, color: "#fff", zIndex: 4 - i }}>
+                    {["HC","LM","RN","KS"][i]}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[12px] font-semibold" style={{ color: "#1C1C1E" }}>
+                Trusted by 80,000+ agents on kakisewa
+              </p>
+            </div>
           </div>
         )}
         {status === "error" && <AgentBubble text={`⚠️ ${errorMsg}`} />}
