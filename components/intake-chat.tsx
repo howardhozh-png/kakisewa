@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { CalendarDays, Send, CheckCircle, Camera, X as XIcon, Lock } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 import { Logo } from "@/components/logo";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
@@ -420,71 +422,71 @@ function PhotoUploadCard({
 
 // ─── Date picker ──────────────────────────────────────────────────────────────
 
+const CAL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
 function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
-  const [value, setValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const today = new Date();
+  const [selected, setSelected] = useState<Date | undefined>(undefined);
+  const [month, setMonth] = useState(today.getMonth());
+  const [year, setYear]   = useState(today.getFullYear());
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setTimeout(() => {
-      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 350);
   }, []);
 
-  const displayDate = value
-    ? (() => {
-        try {
-          const [y, m, d] = value.split("-").map(Number);
-          return `${d} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${y}`;
-        } catch { return value; }
-      })()
-    : "";
+  const displayMonth = new Date(year, month, 1);
+  const yearRange = Array.from({ length: 6 }, (_, i) => today.getFullYear() + i);
+  const displayDate = selected ? format(selected, "d MMM yyyy") : "";
 
   return (
-    <div className="mt-3 mx-auto w-full max-w-[300px] rounded-2xl overflow-hidden"
-      style={{ background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}>
-      <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-        <CalendarDays className="w-5 h-5" style={{ color: "#48484A" }} />
-        <span className="text-[14px] font-semibold" style={{ color: "#1C1C1E" }}>Select move-in date</span>
-      </div>
-      <div className="px-4 pb-3">
-        {/* Tap target — native date input is a transparent overlay so iOS opens picker directly */}
-        <div
-          className="relative flex items-center justify-between w-full px-4 py-3 rounded-xl"
-          style={{ background: "#F2F2F7", border: value ? "1.5px solid #1C1C1E" : "1.5px solid #C7C7CC" }}
+    <div
+      ref={cardRef}
+      className="mt-3 mx-auto w-full max-w-[320px] rounded-2xl overflow-hidden"
+      style={{ background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}
+    >
+      {/* Month / Year dropdowns */}
+      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+        <select
+          value={month}
+          onChange={e => setMonth(Number(e.target.value))}
+          className="flex-1 text-[13px] font-medium px-3 py-1.5 rounded-full appearance-none cursor-pointer"
+          style={{ background: "#F5F5F7", border: "1px solid rgba(0,0,0,0.08)", color: "#1D1D1F", outline: "none" }}
         >
-          <span className="text-[15px] pointer-events-none" style={{ color: value ? "#1C1C1E" : "#AEAEB2" }}>
-            {displayDate || "Tap to choose date"}
-          </span>
-          <CalendarDays className="w-4 h-4 pointer-events-none" style={{ color: "#8E8E93" }} />
-          {/* Transparent native input covers the entire tap target */}
-          <input
-            ref={inputRef}
-            id="intake-date"
-            type="date"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0,
-              cursor: "pointer",
-              width: "100%",
-              height: "100%",
-              border: "none",
-              padding: 0,
-              margin: 0,
-            }}
-          />
-        </div>
+          {CAL_MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+        </select>
+        <select
+          value={year}
+          onChange={e => setYear(Number(e.target.value))}
+          className="text-[13px] font-medium px-3 py-1.5 rounded-full appearance-none cursor-pointer"
+          style={{ background: "#F5F5F7", border: "1px solid rgba(0,0,0,0.08)", color: "#1D1D1F", outline: "none" }}
+        >
+          {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
       </div>
+
+      {/* Calendar */}
+      <div className="px-3 pb-2">
+        <Calendar
+          mode="single"
+          selected={selected}
+          onSelect={setSelected}
+          month={displayMonth}
+          onMonthChange={d => { setMonth(d.getMonth()); setYear(d.getFullYear()); }}
+        />
+      </div>
+
+      {/* Confirm button */}
       <button
         type="button"
-        disabled={!value}
-        onClick={() => value && onConfirm(value)}
+        disabled={!selected}
+        onClick={() => selected && onConfirm(format(selected, "yyyy-MM-dd"))}
         className="w-full py-3.5 text-[14px] font-semibold"
-        style={{ background: value ? "#1C1C1E" : "#AEAEB2", color: "#fff" }}
+        style={{ background: selected ? "#1C1C1E" : "#AEAEB2", color: "#fff" }}
       >
-        {value ? `Confirm: ${displayDate}` : "Pick a date above"}
+        {selected ? `Confirm: ${displayDate}` : "Pick a date above"}
       </button>
     </div>
   );

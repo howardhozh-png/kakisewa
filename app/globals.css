@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "react-day-picker/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -703,4 +704,34 @@ html, body {
   right: -10px !important;
   top: -10px !important;
   transform: none !important;
+}
+
+/* ─── react-day-picker theme ────────────────────────────────────────────── */
+.rdp-root {
+  --rdp-accent-color: var(--kk-ink);
+  --rdp-accent-background-color: var(--kk-surface-2);
+  --rdp-today-color: var(--kk-ink);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border: 2px solid transparent;
+  --rdp-nav_button-height: 28px;
+  --rdp-nav_button-width: 28px;
+  --rdp-nav-height: 32px;
+  --rdp-range_start-color: #fff;
+  --rdp-range_end-color: #fff;
+  --rdp-range_middle-color: var(--kk-ink);
+  --rdp-selected-border: 2px solid var(--kk-ink);
+  font-size: 13px;
+}
+.rdp-day_button:hover:not(:disabled) {
+  background: var(--kk-surface-2) !important;
+}
+.rdp-selected .rdp-day_button {
+  background: var(--kk-ink) !important;
+  color: #fff !important;
+}
+.rdp-chevron {
+  fill: var(--kk-ink-mute);
 }
