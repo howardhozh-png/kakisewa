@@ -2,6 +2,13 @@
 
 import { ArrowRight, Lock } from "lucide-react";
 
+const PLANS = [
+  { name: "Silver",   price: 69,  desc: "Start building your pipeline and renewal tracking." },
+  { name: "Gold",     price: 119, desc: "Scale your portfolio with full renewal history." },
+  { name: "Platinum", price: 179, desc: "Never miss a renewal. 200 active contracts.", featured: true },
+  { name: "Elite",    price: 299, desc: "Your all-in-one hub. Unlimited + public profile." },
+];
+
 export function TrialGate() {
   return (
     <div
@@ -23,31 +30,28 @@ export function TrialGate() {
           Your free trial has ended.
         </h2>
         <p className="mb-6" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.65 }}>
-          Your data is safe and waiting for you. Subscribe to pick up exactly where you left off — every contact, contract, and commission record intact.
+          Your data is safe and waiting for you. Subscribe to pick up exactly where you left off.
         </p>
 
-        <div className="flex flex-col gap-3 mb-6">
-          <div className="px-5 py-4 rounded-2xl text-left" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Silver</p>
-              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 198 / month</p>
+        <div className="flex flex-col gap-2 mb-6">
+          {PLANS.map((plan) => (
+            <div
+              key={plan.name}
+              className="px-5 py-3.5 rounded-2xl text-left"
+              style={{
+                background: plan.featured ? "var(--kk-green-soft)" : "var(--kk-surface-2)",
+                border: plan.featured ? "1.5px solid rgba(52,199,89,0.35)" : "1px solid var(--kk-line)",
+              }}
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>{plan.name}</p>
+                <p className="font-bold text-sm tabular-nums" style={{ color: plan.featured ? "#1F8B4C" : "var(--kk-ink)" }}>
+                  RM {plan.price}/mo
+                </p>
+              </div>
+              <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>{plan.desc}</p>
             </div>
-            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>For agents starting to systematise their portfolio</p>
-          </div>
-          <div className="px-5 py-4 rounded-2xl text-left" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Platinum</p>
-              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 398 / month</p>
-            </div>
-            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>For full-time agents managing a growing book</p>
-          </div>
-          <div className="px-5 py-4 rounded-2xl text-left" style={{ background: "var(--kk-surface-2)", border: "2px solid var(--kk-green)" }}>
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm" style={{ color: "var(--kk-ink)" }}>Elite</p>
-              <p className="font-bold text-sm" style={{ color: "var(--kk-ink)" }}>RM 498 / month</p>
-            </div>
-            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>For top performers who want every edge</p>
-          </div>
+          ))}
         </div>
 
         <a

@@ -20,7 +20,7 @@ const todayISO = () => new Date().toISOString().split("T")[0];
 export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [capBlock, setCapBlock] = useState<{ nearestExpiryDays: number | null } | null>(null);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; nearestExpiryDays: number | null } | null>(null);
 
   // Property autocomplete
   const [propertyName, setPropertyName] = useState("");
@@ -69,7 +69,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
       const res = await addTenancy(fd);
       if (!res.ok && res.reason === "plan_cap_reached") {
         setOpen(false);
-        setCapBlock({ nearestExpiryDays: res.nearest_expiry_days ?? null });
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 20, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null, nearestExpiryDays: res.nearest_expiry_days ?? null });
       } else {
         reset();
         setOpen(false);
@@ -82,6 +82,11 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
     <>
     <PlanCapDialog
       open={!!capBlock}
+      currentPlan={capBlock?.currentPlan ?? "silver"}
+      currentCount={capBlock?.currentCount ?? 0}
+      currentCap={capBlock?.currentCap ?? 20}
+      upgradeToId={capBlock?.upgradeToId ?? "gold"}
+      upgradeCap={capBlock?.upgradeCap ?? null}
       nearestExpiryDays={capBlock?.nearestExpiryDays ?? null}
       onClose={() => setCapBlock(null)}
     />

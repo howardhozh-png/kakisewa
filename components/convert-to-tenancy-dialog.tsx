@@ -23,7 +23,7 @@ interface Props {
 export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }: Props) {
   const [pending, startTransition] = useTransition();
   const [amount, setAmount] = useState(lead?.expected_rent != null ? String(lead.expected_rent) : "");
-  const [capBlock, setCapBlock] = useState<{ nearestExpiryDays: number | null } | null>(null);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; nearestExpiryDays: number | null } | null>(null);
 
   useEffect(() => {
     setAmount(lead?.expected_rent != null ? String(lead.expected_rent) : "");
@@ -50,7 +50,7 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
         onConverted();
       } else if (res.message === "plan_cap_reached") {
         onOpenChange(false);
-        setCapBlock({ nearestExpiryDays: res.nearest_expiry_days ?? null });
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 20, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null, nearestExpiryDays: res.nearest_expiry_days ?? null });
       } else {
         toast.error(res.message);
       }
@@ -67,6 +67,11 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
     <>
     <PlanCapDialog
       open={!!capBlock}
+      currentPlan={capBlock?.currentPlan ?? "silver"}
+      currentCount={capBlock?.currentCount ?? 0}
+      currentCap={capBlock?.currentCap ?? 20}
+      upgradeToId={capBlock?.upgradeToId ?? "gold"}
+      upgradeCap={capBlock?.upgradeCap ?? null}
       nearestExpiryDays={capBlock?.nearestExpiryDays ?? null}
       onClose={() => setCapBlock(null)}
     />

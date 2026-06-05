@@ -4,13 +4,33 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Link from "next/link";
 import { ArrowRight, Lock } from "lucide-react";
 
+const TIER_NAMES: Record<string, string> = {
+  silver: "Silver", gold: "Gold", platinum: "Platinum", elite: "Elite",
+};
+
+const TIER_PRICES: Record<string, number> = {
+  gold: 119, platinum: 179, elite: 299,
+};
+
 interface Props {
   open: boolean;
+  currentPlan: string;
+  currentCount: number;
+  currentCap: number;
+  upgradeToId: string;
+  upgradeCap: number | null;
   nearestExpiryDays: number | null;
   onClose: () => void;
 }
 
-export function PlanCapDialog({ open, nearestExpiryDays, onClose }: Props) {
+export function PlanCapDialog({
+  open, currentPlan, currentCount, currentCap, upgradeToId, upgradeCap, nearestExpiryDays, onClose,
+}: Props) {
+  const planName   = TIER_NAMES[currentPlan] ?? currentPlan;
+  const upgradeName = TIER_NAMES[upgradeToId] ?? upgradeToId;
+  const upgradePrice = TIER_PRICES[upgradeToId];
+  const upgradeCapLabel = upgradeCap !== null ? `up to ${upgradeCap} contracts` : "unlimited contracts";
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6">
@@ -34,7 +54,7 @@ export function PlanCapDialog({ open, nearestExpiryDays, onClose }: Props) {
             className="text-[13px] leading-relaxed"
             style={{ color: "var(--kk-ink-mute)", maxWidth: "30ch" }}
           >
-            Silver includes 5 renewal tracking cards. You have 5/5 active contracts tracked.
+            {planName} includes {currentCap} renewal tracking cards. You have {currentCount}/{currentCap} active contracts tracked.
             {nearestExpiryDays !== null && (
               <>
                 {" "}Your next renewal is due in{" "}
@@ -44,6 +64,7 @@ export function PlanCapDialog({ open, nearestExpiryDays, onClose }: Props) {
                 Missing the 60-day conversation window risks losing the commission.
               </>
             )}
+            {" "}Upgrade to {upgradeName} for {upgradeCapLabel}.
           </p>
 
           <div className="w-full flex flex-col gap-2 mt-1">
@@ -53,7 +74,7 @@ export function PlanCapDialog({ open, nearestExpiryDays, onClose }: Props) {
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full font-semibold text-[13px] transition-opacity hover:opacity-90"
               style={{ background: "var(--kk-ink)", color: "#fff" }}
             >
-              Upgrade to Platinum — RM 159/mo <ArrowRight className="w-3.5 h-3.5" />
+              Upgrade to {upgradeName}{upgradePrice ? ` — RM ${upgradePrice}/mo` : ""} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <button
               onClick={onClose}

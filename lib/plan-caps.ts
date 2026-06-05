@@ -8,6 +8,7 @@ export type CapCheckResult =
       allowed: false;
       reason: "plan_cap_reached";
       current_plan: PlanId;
+      current_count: number;
       upgrade_to: PlanId;
       current_cap: number;
       upgrade_cap: number | null; // null = unlimited
@@ -92,6 +93,7 @@ export async function checkTenancyCap(): Promise<CapCheckResult> {
     allowed: false,
     reason: "plan_cap_reached",
     current_plan: planId,
+    current_count: count ?? 0,
     upgrade_to: next.id,
     current_cap: cap,
     upgrade_cap: next.cap,

@@ -41,7 +41,7 @@ export default async function NetworkPage({ searchParams }: Props) {
         <FeatureLockedState
           title="Unlock the directory"
           body="Access our curated directory of property lawyers, contractors, JPPH contacts, and service providers. Available on Platinum and above."
-          ctaLabel="Upgrade to Platinum — RM 159/mo"
+          ctaLabel="Upgrade to Platinum — RM 179/mo"
         />
       </div>
     );
