@@ -460,7 +460,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <table className="w-full text-left border-collapse" style={{ fontSize: "var(--kk-sm)" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid var(--kk-line-strong)" }}>
-                <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "24%" }} />
+                <th className="py-3 pl-5 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "24%" }} />
                 {PLANS.map(p => (
                   <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)", width: "19%" }}>
                     <div>{p.name}</div>
@@ -489,7 +489,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                   borderBottom: "1px solid var(--kk-line)",
                   background: highlight ? "rgba(52,199,89,0.08)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
                 }}>
-                  <td className="py-2.5 pr-6" style={{
+                  <td className="py-2.5 pl-5 pr-6" style={{
                     color: highlight ? "#1F8B4C" : "var(--kk-ink-mute)",
                     fontWeight: highlight ? 600 : 500,
                   }}>

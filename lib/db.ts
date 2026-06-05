@@ -288,28 +288,67 @@ async function sendWelcomeEmail(email: string, firstName: string): Promise<void>
     body: JSON.stringify({
       from: "kakisewa <noreply@kakisewa.com>",
       to: [email],
-      subject: "Welcome to kakisewa — your 14-day trial has started",
-      html: `
-<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-  <p style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 24px">kakisewa</p>
-  <h1 style="font-size:18px;font-weight:600;margin:0 0 8px">Welcome, ${firstName}!</h1>
-  <p style="font-size:14px;color:#6C6C70;margin:0 0 16px">
-    Your 14-day free trial has started. Here's what you can do right now:
-  </p>
-  <ul style="font-size:14px;color:#6C6C70;margin:0 0 24px;padding-left:20px;line-height:1.8">
-    <li>Add your first property and track its tenancy</li>
-    <li>Set your commission percentage and monthly goal</li>
-    <li>Send a tenant pack to a prospective landlord</li>
-  </ul>
-  <a href="https://www.kakisewa.com/home"
-    style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
-           padding:12px 24px;border-radius:10px;text-decoration:none">
-    Go to dashboard
-  </a>
-  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">
-    Questions? Just reply to this email — we read everything.
-  </p>
-</div>`,
+      bcc: ["howardhozh@gmail.com"],
+      subject: "You're in — 14-day trial started",
+      html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F2F2F7;">
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;max-width:520px;margin:0 auto;padding:32px 16px;">
+  <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 2px 24px rgba(0,0,0,0.09);">
+
+    <!-- Header -->
+    <div style="background:#0A0A0F;padding:26px 32px 22px;">
+      <span style="font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.03em;">kaki<span style="color:#34C759">sewa</span></span>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:28px 32px 32px;">
+      <h1 style="font-size:24px;font-weight:700;color:#1C1C1E;letter-spacing:-0.02em;margin:0 0 10px;">Hey ${firstName}, you're in.</h1>
+      <p style="font-size:14px;color:#48484A;line-height:1.65;margin:0 0 24px;">
+        Your 14-day free trial is live. KakiSewa is built for Malaysian rental agents — track tenancies, send tenant packs, and never miss a renewal.
+      </p>
+
+      <!-- Steps -->
+      <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">
+        <p style="font-size:10px;font-weight:700;color:#8E8E93;letter-spacing:0.07em;text-transform:uppercase;margin:0 0 14px;">Get started in 3 steps</p>
+        <div style="font-size:13px;color:#1C1C1E;line-height:1;">
+          <div style="margin-bottom:10px;display:flex;align-items:baseline;gap:10px;">
+            <span style="font-family:'Courier New',monospace;background:#E5E5EA;padding:2px 7px;border-radius:5px;font-size:10px;color:#8E8E93;flex-shrink:0;">01</span>
+            <span>Add a property and set your commission rate</span>
+          </div>
+          <div style="margin-bottom:10px;display:flex;align-items:baseline;gap:10px;">
+            <span style="font-family:'Courier New',monospace;background:#E5E5EA;padding:2px 7px;border-radius:5px;font-size:10px;color:#8E8E93;flex-shrink:0;">02</span>
+            <span>Create your first tenancy card</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <span style="font-family:'Courier New',monospace;background:#E5E5EA;padding:2px 7px;border-radius:5px;font-size:10px;color:#8E8E93;flex-shrink:0;">03</span>
+            <span>Send a tenant pack to a landlord</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <a href="https://www.kakisewa.com/home"
+        style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
+               padding:13px 28px;border-radius:12px;text-decoration:none;letter-spacing:-0.01em;">
+        Open dashboard →
+      </a>
+
+      <!-- Trial badge -->
+      <div style="margin-top:20px;padding:11px 16px;border-radius:10px;border:1px solid #E5E5EA;display:inline-block;">
+        <span style="font-family:'Courier New',monospace;font-size:11px;color:#34C759;font-weight:700;">TRIAL ACTIVE</span>
+        <span style="font-size:12px;color:#8E8E93;margin-left:8px;">14 days free · No card needed yet</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#F9F9FB;padding:14px 32px;border-top:1px solid #F2F2F7;">
+      <p style="font-size:11px;color:#AEAEB2;margin:0;">Questions? Just reply — we read everything.</p>
+    </div>
+
+  </div>
+</div>
+</body></html>`,
     }),
   });
 }
