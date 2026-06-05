@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
-import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock } from "lucide-react";
+import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
 import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
@@ -495,51 +495,87 @@ function EmptyDrop({ col }: { col: ColMeta }) {
 
 // Pure visual snapshot used by DragOverlay — no hooks, no buttons
 function CardPreview({ l }: { l: OwnerLead }) {
+  const photo = l.photo_urls?.[0];
+  const propName = l.property_name ?? l.address ?? "";
   return (
     <div
-      className="kk-card p-4 flex flex-col gap-3"
-      style={{ width: 300, opacity: 0.96, transform: "rotate(2deg)", boxShadow: "0 16px 40px rgba(0,0,0,0.22)", cursor: "grabbing" }}
+      className="kk-card p-3 flex flex-col gap-2"
+      style={{ width: 280, opacity: 0.96, transform: "rotate(2deg)", boxShadow: "0 16px 40px rgba(0,0,0,0.22)", cursor: "grabbing" }}
     >
-      <p className="kk-card-title break-words" style={{ color: "var(--kk-ink)" }}>{l.owner_name}</p>
-      {(l.property_name || l.address) && (
-        <p className="kk-card-sub break-words" style={{ color: "var(--kk-ink-mute)" }}>
-          {l.property_name ?? l.address}{l.unit ? ` · Unit ${l.unit}` : ""}
-        </p>
-      )}
-      {(l.expected_rent != null || l.bedrooms != null || l.bathrooms != null) && (
-        <div className="flex flex-wrap gap-1.5 text-[11px]">
-          {l.expected_rent != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
-          {l.bedrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bedrooms} bed</span>}
-          {l.bathrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bathrooms} bath</span>}
+      <div className="flex gap-2.5">
+        <div
+          className="w-[64px] h-[64px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
+        >
+          {photo
+            ? <img src={photo} alt="" className="w-full h-full object-cover" />
+            : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />
+          }
         </div>
-      )}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
+            {propName || "—"}
+          </p>
+          <p className="text-[11px] leading-tight">
+            {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{l.expected_rent != null ? " · " : ""}</span>}
+            {l.expected_rent != null && (
+              <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>
+            )}
+            {!l.unit && !l.expected_rent && <span style={{ color: "var(--kk-ink-faint)" }}>—</span>}
+          </p>
+          <div className="flex items-center gap-1 min-w-0">
+            <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+  const photo = l.photo_urls?.[0];
+  const propName = l.property_name ?? l.address ?? "";
   return (
     <>
-      <p className="kk-card-title break-words" style={{ color: "var(--kk-ink)" }}>{l.owner_name}</p>
-
-      {(l.property_name || l.address) && (
-        <p className="kk-card-sub break-words" style={{ color: "var(--kk-ink-mute)" }}>
-          {l.property_name ?? l.address}{l.unit ? ` · Unit ${l.unit}` : ""}
-        </p>
-      )}
-
-      {(l.expected_rent != null || l.bedrooms != null || l.bathrooms != null) && (
-        <div className="flex flex-wrap gap-1.5 text-[11px]">
-          {l.expected_rent != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
-          {l.bedrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bedrooms} bed</span>}
-          {l.bathrooms != null && <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>{l.bathrooms} bath</span>}
-          {hasOwnerRanking && (
-            <span className="px-2 py-0.5 rounded-full font-semibold flex items-center gap-1" style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C", border: "1px solid rgba(52,199,89,0.25)" }}>
-              <CheckCircle2 className="w-2.5 h-2.5" /> Owner responded
-            </span>
-          )}
+      {/* Compact horizontal: photo + info */}
+      <div className="flex gap-2.5">
+        <div
+          className="w-[64px] h-[64px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
+        >
+          {photo
+            ? <img src={photo} alt="" className="w-full h-full object-cover" loading="lazy" />
+            : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />
+          }
         </div>
-      )}
+
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
+            {propName || "—"}
+          </p>
+
+          <p className="text-[11px] leading-tight">
+            {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{l.expected_rent != null ? " · " : ""}</span>}
+            {l.expected_rent != null && (
+              <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>
+            )}
+            {!l.unit && !l.expected_rent && (
+              <span style={{ color: "var(--kk-ink-faint)" }}>—</span>
+            )}
+          </p>
+
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1 min-w-0">
+              <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+              <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</p>
+            </div>
+            {hasOwnerRanking && (
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#1F8B4C" }} />
+            )}
+          </div>
+        </div>
+      </div>
 
       <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} />
     </>
@@ -561,7 +597,7 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
       {...attributes}
       {...listeners}
       style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-4 flex flex-col gap-3 cursor-grab active:cursor-grabbing touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest("[data-card-action]")) return;

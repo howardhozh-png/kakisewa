@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Poin
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -514,9 +514,9 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
   }
 
   const days = t.contract_end ? daysUntil(t.contract_end, today) : 0;
-  const expiryDateStr = t.contract_end ? formatDate(t.contract_end) : "—";
   const propBase = t.property_name?.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim() ?? "";
   const unitLabel = (t.property_name?.match(/Unit\s+[A-Za-z0-9-]+/i) ?? [])[0] ?? (t.property?.unit ? `Unit ${t.property.unit}` : "");
+  const photo = t.property?.photo_urls?.[0];
 
   const daysBg    = days < 0 ? "var(--kk-surface-2)" : days <= 30 ? "var(--kk-red-soft)"   : "var(--kk-amber-soft)";
   const daysColor = days < 0 ? "var(--kk-ink-mute)"  : days <= 30 ? "#C62828"              : "#B45309";
@@ -529,41 +529,54 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       {...attributes}
       {...listeners}
       style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-4 flex flex-col gap-2.5 cursor-grab active:cursor-grabbing touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action], [data-chip]")) return;
         onOpen();
       }}
     >
-      {/* Row 1: name + days badge */}
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[14px] font-semibold leading-snug break-words min-w-0" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
-          {t.property?.owner_name ?? "—"}
-        </p>
-        <span
-          className="text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full shrink-0 mt-0.5"
-          style={{ background: daysBg, color: daysColor }}
+      {/* Compact horizontal: photo + info */}
+      <div className="flex gap-2.5">
+        <div
+          className="w-[64px] h-[64px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
         >
-          {daysLabel}
-        </span>
+          {photo
+            ? <img src={photo} alt="" className="w-full h-full object-cover" loading="lazy" />
+            : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />
+          }
+        </div>
+
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <div className="flex items-start justify-between gap-1.5">
+            <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
+              {propBase || "—"}
+            </p>
+            <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full shrink-0"
+              style={{ background: daysBg, color: daysColor }}>
+              {daysLabel}
+            </span>
+          </div>
+
+          <p className="text-[11px] leading-tight">
+            {unitLabel && <span style={{ color: "var(--kk-ink-soft)" }}>{unitLabel} · </span>}
+            <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>
+          </p>
+
+          <div className="flex items-center gap-1">
+            <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>
+              {t.property?.owner_name ?? "—"}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Row 2: property · unit · expiry in one compact line */}
-      <p className="text-[11px] leading-snug" style={{ color: "var(--kk-ink-mute)" }}>
-        {propBase}
-        {unitLabel && <> &middot; <span style={{ color: "var(--kk-ink)" }}>{unitLabel}</span></>}
-        {t.contract_end && <span style={{ color: "var(--kk-ink-faint)" }}> &middot; exp {expiryDateStr}</span>}
-      </p>
-
-      {/* Rent reminder — platinum/elite only */}
+      {/* Actions */}
       {plan !== "silver" && <RentReminderAction t={t} today={today} />}
-
-      {/* Column-specific action (Renewing / Active) */}
       {col.stage !== "headsup" && (
         <ColumnAction t={t} stage={col.stage} today={today} onShowCommission={onShowCommission} />
       )}
-
-      {/* Expiring: notify owner + dropdown */}
       {col.stage === "headsup" && (
         <>
           {plan !== "silver" && <HeadsupOwnerAction t={t} />}
@@ -924,34 +937,34 @@ function normalizePropName(n: string): string {
 
 function CardPreview({ t, today }: { t: Tenancy; today: Date }) {
   const days = t.contract_end ? daysUntil(t.contract_end, today) : 0;
-  const expiryDateStr = t.contract_end ? formatDate(t.contract_end) : "—";
-  const unitLabel = (t.property_name?.match(/Unit\s+[A-Za-z0-9-]+/i) ?? [])[0] ?? "";
+  const propBase = t.property_name?.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim() ?? "";
+  const unitLabel = (t.property_name?.match(/Unit\s+[A-Za-z0-9-]+/i) ?? [])[0] ?? (t.property?.unit ? `Unit ${t.property.unit}` : "");
+  const photo = t.property?.photo_urls?.[0];
+  const daysBg    = days < 0 ? "var(--kk-surface-2)" : days <= 30 ? "var(--kk-red-soft)"   : "var(--kk-amber-soft)";
+  const daysColor = days < 0 ? "var(--kk-ink-mute)"  : days <= 30 ? "#C62828"              : "#B45309";
+  const daysLabel = days < 0 ? `${Math.abs(days)}d over` : days === 0 ? "Today" : `${days}d`;
   return (
     <div
-      className="kk-card p-4 flex flex-col gap-3"
-      style={{ width: 300, opacity: 0.96, transform: "rotate(2deg)", boxShadow: "0 16px 40px rgba(0,0,0,0.22)", cursor: "grabbing" }}
+      className="kk-card p-3 flex gap-2.5"
+      style={{ width: 280, opacity: 0.96, transform: "rotate(2deg)", boxShadow: "0 16px 40px rgba(0,0,0,0.22)", cursor: "grabbing" }}
     >
-      <div className="min-w-0">
-        <p className="kk-card-title" style={{ color: "var(--kk-ink)" }}>
-          {t.property?.owner_name ?? "—"}
-        </p>
-        <p className="kk-card-sub mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-          {normalizePropName(t.property_name ?? "")}
-          {unitLabel ? <> &middot; <span style={{ color: "var(--kk-ink)" }}>{unitLabel}</span></> : null}
-        </p>
+      <div className="w-[64px] h-[64px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+        style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+        {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />}
       </div>
-      <div className="flex items-center justify-between text-[12px]">
-        <span style={{ color: "var(--kk-ink-mute)" }}>Expires {expiryDateStr}</span>
-        <span
-          className="font-semibold tabular-nums px-2 py-0.5 rounded-full"
-          style={{
-            background: days < 0 ? "var(--kk-surface-2)" : days <= 30 ? "var(--kk-red-soft)" : "var(--kk-amber-soft)",
-            color:      days < 0 ? "var(--kk-ink-mute)" : days <= 30 ? "#C62828" : "#B45309",
-            fontSize: "11px",
-          }}
-        >
-          {days < 0 ? `Expired ${Math.abs(days)}d` : days === 0 ? "Today" : `${days}d left`}
-        </span>
+      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+        <div className="flex items-start justify-between gap-1.5">
+          <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{propBase || "—"}</p>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: daysBg, color: daysColor }}>{daysLabel}</span>
+        </div>
+        <p className="text-[11px]">
+          {unitLabel && <span style={{ color: "var(--kk-ink-soft)" }}>{unitLabel} · </span>}
+          <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>
+        </p>
+        <div className="flex items-center gap-1">
+          <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+          <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{t.property?.owner_name ?? "—"}</p>
+        </div>
       </div>
     </div>
   );
