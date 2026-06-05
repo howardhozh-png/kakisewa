@@ -21,12 +21,12 @@ const TIER_STYLES = {
     accent: "#16a34a",
   },
   Gold: {
-    bg: "linear-gradient(145deg, #92400e 0%, #b45309 30%, #d97706 55%, #ca8a04 75%, #a16207 100%)",
-    shine: "linear-gradient(135deg, rgba(255,245,120,0.35) 0%, rgba(255,255,255,0) 55%)",
-    border: "rgba(202,138,4,0.4)",
+    bg: "linear-gradient(145deg, #92400e 0%, #b45309 15%, #d97706 35%, #eab308 55%, #fcd34d 68%, #ca8a04 85%, #92400e 100%)",
+    shine: "linear-gradient(135deg, rgba(255,255,180,0.55) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(234,179,8,0.5)",
     shadow: "5px 5px 0 0 rgba(100,60,0,0.3)",
     shadowHover: "8px 8px 0 0 rgba(100,60,0,0.4)",
-    ink: "#fff8e1", mute: "rgba(255,240,180,0.85)", faint: "rgba(255,220,120,0.6)",
+    ink: "#fff8e1", mute: "rgba(255,248,220,0.85)", faint: "rgba(255,235,150,0.65)",
     roiGreen: "#fde68a",
     btnBg: "rgba(255,255,255,0.95)", btnInk: "#92400e",
     accent: "#fde68a",
@@ -58,9 +58,9 @@ const TIER_STYLES = {
 const PLANS = [
   {
     name: "Silver" as const, planId: "silver" as const,
-    monthly: 69, annualMonthly: 58, annualTotal: 690, annualSavings: 138,
+    monthly: 69, annualMonthly: 57, annualTotal: 690, annualSavings: 138,
     monthlyAnnualTotal: 828,
-    headline: "Get your pipeline moving.",
+    headline: "Move your pipeline.",
     tagline: "Track owner responses, close more leads, and manage up to 20 active contracts.",
     features: [
       "Owner pipeline (unlimited)",
@@ -107,7 +107,7 @@ const PLANS = [
     name: "Elite" as const, planId: "elite" as const,
     monthly: 299, annualMonthly: 249, annualTotal: 2990, annualSavings: 598,
     monthlyAnnualTotal: 3588,
-    headline: "Your complete ops hub.",
+    headline: "Your all-in-one hub.",
     tagline: "Unlimited contracts, public profile, performance analytics — everything in one place.",
     features: [
       "Everything in Platinum, plus:",
@@ -329,7 +329,7 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
               <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Save RM {plan.annualSavings}/year · 2 months free</p>
             </div>
           ) : (
-            <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {plan.monthlyAnnualTotal.toLocaleString()} billed monthly over 12 months</p>
+            <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {plan.monthly}/month · cancel anytime</p>
           )}
         </div>
         <div className="px-6 pt-4 pb-5 space-y-4">
@@ -514,21 +514,30 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               </tr>
             </thead>
             <tbody>
-              {[
-                ["Owner pipeline",        "Unlimited",   "Unlimited",   "Unlimited",         "Unlimited"],
-                ["Existing contracts",    "20 cards",    "80 cards",    "200 cards",         "Unlimited"],
-                ["Renewal timeline",      "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist"],
-                ["Directory",             "—",           "—",           "Yes",               "Yes"],
-                ["Contract documents",    "Yes",         "Yes",         "Yes",               "Yes"],
-                ["Commission history",    "—",           "Yes",         "Yes",               "Yes"],
-                ["Agent profile",         "—",           "—",           "Private",           "Public + searchable"],
-                ["Performance dashboard", "—",           "—",           "—",                 "Yes"],
-                ["Commission forecast",   "—",           "—",           "—",                 "Yes"],
-                ["Benchmarking",          "—",           "—",           "—",                 "Yes"],
-                ["Portfolio score",       "—",           "—",           "—",                 "Yes"],
-              ].map(([feature, silver, gold, platinum, elite], i) => (
-                <tr key={feature} style={{ borderBottom: "1px solid var(--kk-line)", background: i % 2 === 0 ? "transparent" : "var(--kk-surface-2)" }}>
-                  <td className="py-2.5 pr-6 font-medium" style={{ color: "var(--kk-ink-mute)" }}>{feature}</td>
+              {([
+                ["Tenants",              "20 cards",    "80 cards",    "200 cards",         "Unlimited",          true],
+                ["Owner pipeline",       "Unlimited",   "Unlimited",   "Unlimited",         "Unlimited",          false],
+                ["Renewal timeline",     "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist",       false],
+                ["Commission history",   "—",           "Yes",         "Yes",               "Yes",                true],
+                ["Directory",            "—",           "—",           "Yes",               "Yes",                true],
+                ["Contract documents",   "Yes",         "Yes",         "Yes",               "Yes",                false],
+                ["Agent profile",        "—",           "—",           "Private",           "Public + searchable",true],
+                ["Performance dashboard","—",           "—",           "—",                 "Yes",                false],
+                ["Commission forecast",  "—",           "—",           "—",                 "Yes",                false],
+                ["Benchmarking",         "—",           "—",           "—",                 "Yes",                false],
+                ["Portfolio score",      "—",           "—",           "—",                 "Yes",                false],
+              ] as [string,string,string,string,string,boolean][]).map(([feature, silver, gold, platinum, elite, highlight], i) => (
+                <tr key={feature} style={{
+                  borderBottom: "1px solid var(--kk-line)",
+                  background: highlight ? "rgba(234,179,8,0.07)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
+                }}>
+                  <td className="py-2.5 pr-6" style={{
+                    color: highlight ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                    fontWeight: highlight ? 600 : 500,
+                  }}>
+                    {highlight && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-2 align-middle" />}
+                    {feature}
+                  </td>
                   {[silver, gold, platinum, elite].map((val, j) => (
                     <td key={j} className="py-2.5 px-3 text-center"
                       style={{ color: val === "—" ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: val !== "—" ? 500 : 400 }}>

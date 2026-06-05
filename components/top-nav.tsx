@@ -640,11 +640,11 @@ const TIER_BADGE = {
     label: "Silver",
   },
   gold: {
-    bg: "linear-gradient(135deg, #a16207 0%, #eab308 40%, #ca8a04 65%, #a16207 100%)",
-    shine: "linear-gradient(135deg, rgba(255,250,100,0.45) 0%, rgba(255,255,255,0) 55%)",
-    border: "rgba(202,138,4,0.9)",
+    bg: "linear-gradient(135deg, #92400e 0%, #d97706 25%, #eab308 50%, #fcd34d 68%, #ca8a04 100%)",
+    shine: "linear-gradient(135deg, rgba(255,255,180,0.55) 0%, rgba(255,255,255,0) 55%)",
+    border: "rgba(234,179,8,0.9)",
     ink: "#fff8e1",
-    shadow: "0 2px 10px rgba(100,70,0,0.4), inset 0 1px 0 rgba(255,240,100,0.3)",
+    shadow: "0 2px 10px rgba(100,70,0,0.4), inset 0 1px 0 rgba(255,248,150,0.4)",
     label: "Gold",
   },
   platinum: {
