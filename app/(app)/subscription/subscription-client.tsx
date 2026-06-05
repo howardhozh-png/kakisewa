@@ -427,13 +427,13 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             Choose your plan
           </h1>
           <p className="kk-body max-w-md mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
-            You pay{" "}
-            <span style={{ color: "#DC2626", fontWeight: 600 }}>RM 360/month</span>
-            {" "}to PropertyGuru to find tenants.
+            You spend{" "}
+            <span style={{ color: "#DC2626", fontWeight: 600 }}>RM 800-1,000/month</span>
+            {" "}on PropertyGuru to find tenants.
           </p>
           <p className="kk-body max-w-md mx-auto mt-1" style={{ color: "var(--kk-ink-mute)" }}>
             Pay{" "}
-            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM 159/month</span>
+            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM 119/month</span>
             {" "}to kakisewa so you never lose them.
           </p>
 
