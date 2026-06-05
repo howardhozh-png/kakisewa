@@ -287,37 +287,6 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
           </Link>
         </div>
 
-        {(agent.subscription_plan === "platinum" || agent.subscription_plan === "elite") && (() => {
-          const firstName = (agent.name ?? "agent").trim().split(/\s+/)[0].toLowerCase();
-          const profilePath = agent.ren_number
-            ? `/agent/${encodeURIComponent(firstName)}/${encodeURIComponent(agent.ren_number)}`
-            : `/agent/${String(agent.id)}`;
-          const profileUrl = (typeof window !== "undefined" ? window.location.origin : "kakisewa.com") + profilePath;
-          return (
-            <div style={{ borderTop: "1px solid var(--kk-line)", paddingTop: 12 }}>
-              <p className="kk-overline mb-2">Your agent profile</p>
-              <a
-                href={profilePath}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl transition-opacity hover:opacity-80 mb-2"
-                style={{ background: agent.subscription_plan === "elite" ? "linear-gradient(135deg, #6b3d1e, #c98840)" : "linear-gradient(135deg, #0b1f4a, #2040a0)", color: "#fff", textDecoration: "none" }}
-              >
-                <User className="w-4 h-4 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold">View public profile</p>
-                  <p className="text-[10px] opacity-70 truncate">{profileUrl}</p>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 opacity-70">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-              </a>
-              <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-                {agent.subscription_plan === "elite" ? "Public and searchable by prospective owners" : "Private — share the link directly with owners"}
-              </p>
-            </div>
-          );
-        })()}
       </div>
     </>
   );
@@ -853,7 +822,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
   const MENU_ITEMS = [
     { icon: Compass,     label: "Getting started",  action: () => { setMenuOpen(false); setMobileMenuOpen(false); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); } },
     { divider: true },
-    ...(profilePath ? [{ icon: User, label: "My agent profile", highlight: true, action: () => { setMenuOpen(false); setMobileMenuOpen(false); window.open(profilePath, "_blank"); } }] : []),
+    ...(profilePath ? [{ icon: User, label: "Edit agent profile", highlight: true, action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/settings/profile"); } }] : []),
     { icon: User,        label: "Account settings", action: () => openModal("account") },
     { icon: CreditCard,  label: "Subscription",     action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/subscription"); } },
     { icon: HelpCircle,  label: "Help & support",   action: () => openModal("support") },

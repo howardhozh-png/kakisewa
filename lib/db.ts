@@ -947,6 +947,20 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   return base;
 });
 
+export async function saveProfileContent(data: {
+  profile_strengths?: import("./types").ProfileStrengthItem[] | null;
+  profile_verbatim?: import("./types").ProfileVerbatimItem[] | null;
+}): Promise<void> {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
+  if (!user) return;
+  const updates: Record<string, unknown> = {};
+  if (data.profile_strengths !== undefined) updates.profile_strengths = data.profile_strengths;
+  if (data.profile_verbatim  !== undefined) updates.profile_verbatim  = data.profile_verbatim;
+  await supabase.from("agent_profiles").update(updates).eq("id", user.id);
+}
+
 export async function saveWhatsAppTemplates(overrides: import("./whatsapp-templates").TemplateOverrides): Promise<void> {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();

@@ -173,6 +173,19 @@ export interface AgentProfile {
   subscription_status?: SubscriptionStatus | null;
   subscription_plan?: "silver" | "platinum" | "elite" | null;
   trial_downgrade_archived_count?: number | null;
+  profile_strengths?: ProfileStrengthItem[] | null;
+  profile_verbatim?: ProfileVerbatimItem[] | null;
+}
+
+export interface ProfileStrengthItem {
+  label: string;
+  rating: number; // 0.5 increments, 0.5–5.0
+}
+
+export interface ProfileVerbatimItem {
+  quote: string;
+  ownerName: string;
+  ownerRole: string;
 }
 
 export interface PerformanceSummary {
