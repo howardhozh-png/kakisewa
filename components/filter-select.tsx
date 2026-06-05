@@ -17,29 +17,47 @@ export function FilterSelect({
   minWidth?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === value) ?? options[0];
 
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (
+        btnRef.current && !btnRef.current.contains(t) &&
+        !(dropRef.current && dropRef.current.contains(t))
+      ) setOpen(false);
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
+    function onScroll() { setOpen(false); }
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
     return () => {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
     };
   }, []);
 
+  function handleToggle() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, left: r.left });
+    }
+    setOpen((o) => !o);
+  }
+
   return (
-    <div ref={ref} style={{ position: "relative", minWidth, flexShrink: 0 }}>
+    <div style={{ position: "relative", minWidth, flexShrink: 0 }}>
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={btnRef}
+        onClick={handleToggle}
         className="flex items-center justify-between gap-2 text-[13px] px-3 py-2.5 rounded-full w-full min-h-[40px]"
         style={{
           background: open ? "var(--kk-ink)" : "var(--kk-surface-2)",
@@ -60,9 +78,12 @@ export function FilterSelect({
 
       {open && (
         <div
-          className="absolute left-0 mt-1 rounded-2xl py-1"
+          ref={dropRef}
+          className="rounded-2xl py-1"
           style={{
-            top: "100%",
+            position: "fixed",
+            top: pos.top,
+            left: pos.left,
             zIndex: 9999,
             background: "var(--kk-ink)",
             border: "1px solid rgba(255,255,255,0.08)",

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { OwnerLead } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
-import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search } from "lucide-react";
+import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search, User } from "lucide-react";
 import { updateOwnerLeadDetails } from "@/lib/actions";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
@@ -113,8 +113,8 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
   return (
     <>
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="relative">
+      <div className="flex items-center gap-3 mb-5 overflow-x-auto pb-0.5 lg:flex-wrap" style={{ scrollbarWidth: "none" }}>
+        <div className="relative shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
           <input
             type="text"
@@ -122,7 +122,7 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search property, owner, tenant…"
             className="pl-9 pr-3 py-1.5 rounded-full text-[13px] outline-none"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", width: 240 }}
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", width: 220 }}
           />
         </div>
         <FilterSelect value={propertyFilter} onChange={setPropertyFilter} options={[{ value: "", label: "All properties" }, ...propertyOptions.map((p) => ({ value: p, label: p }))]} minWidth={200} />
@@ -159,135 +159,193 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
           <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No properties match your filters.</p>
         </div>
       ) : (
-        <div className="kk-section overflow-hidden kk-scroll-fade">
-          <div className="overflow-x-auto">
-          <table className="w-full border-collapse" style={{ minWidth: 680 }}>
-            <colgroup>
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "6%" }} />
-              <col style={{ width: "6%" }} />
-              <col style={{ width: "17%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "2%" }} />
-            </colgroup>
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
-                {["Property", "Unit", "Status", "Rent (RM)", "Beds", "Baths", "Owner", "Tenant", ""].map((h) => (
-                  <th key={h} className={TH} style={{ color: "var(--kk-ink-faint)" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((l) => {
-                const tenantInfo = l.stage === "matched" ? tenantsByLeadId[l.id] : undefined;
-                const isRented = l.stage === "matched";
-                return (
-                  <tr
-                    key={l.id}
-                    onClick={() => setOpenLead(l)}
-                    className="cursor-pointer group transition-colors"
-                    style={{ borderBottom: "1px solid var(--kk-line)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--kk-surface-2)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-                  >
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{l.property_name ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{l.unit ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                        style={isRented
-                          ? { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }
-                          : { background: "rgba(0,113,227,0.12)", color: "var(--kk-blue)" }
-                        }
-                      >
-                        {isRented ? "Rented" : "Listed"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)" }}>
-                        {l.expected_rent != null ? l.expected_rent.toLocaleString() : "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bedrooms ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bathrooms ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {tenantInfo
-                        ? <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{tenantInfo.tenant_name}</span>
-                        : <span className="text-[13px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
-                      }
-                    </td>
-                    <td className="px-4 py-3">
-                      <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
-                    </td>
-                  </tr>
-                );
-              })}
-              {visibleManaged.map((t) => {
-                const stage = t.lifecycle_stage ?? "active";
-                const stageLabel = LIFECYCLE_LABELS[stage] ?? stage;
-                const isEnding = stage === "ending" || stage === "replacing";
-                return (
-                  <tr
-                    key={t.tenancy_id}
-                    className="group transition-colors"
-                    style={{ borderBottom: "1px solid var(--kk-line)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--kk-surface-2)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-                  >
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{t.property_name ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{t.unit ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                        style={isEnding
-                          ? { background: "rgba(239,68,68,0.12)", color: "#B91C1C" }
-                          : { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }
-                        }
-                      >
-                        {stageLabel}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)" }}>
-                        {t.amount != null ? t.amount.toLocaleString() : "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3"><span style={{ color: "var(--kk-ink-faint)" }}>—</span></td>
-                    <td className="px-4 py-3"><span style={{ color: "var(--kk-ink-faint)" }}>—</span></td>
-                    <td className="px-4 py-3"><span style={{ color: "var(--kk-ink-faint)" }}>—</span></td>
-                    <td className="px-4 py-3">
-                      <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_name}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/existing-contracts?open=${t.tenancy_id}`} onClick={(e) => e.stopPropagation()}>
-                        <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <>
+          {/* Mobile card layout */}
+          <div className="lg:hidden flex flex-col gap-3">
+            {filtered.map((l) => {
+              const tenantInfo = l.stage === "matched" ? tenantsByLeadId[l.id] : undefined;
+              const isRented = l.stage === "matched";
+              return (
+                <button
+                  key={l.id}
+                  onClick={() => setOpenLead(l)}
+                  className="kk-card kk-card-hover p-4 text-left w-full"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-semibold leading-tight" style={{ color: "var(--kk-ink)" }}>{l.property_name ?? "—"}</p>
+                      {l.unit && <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Unit {l.unit}</p>}
+                    </div>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                      style={isRented ? { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" } : { background: "rgba(0,113,227,0.12)", color: "var(--kk-blue)" }}>
+                      {isRented ? "Rented" : "Listed"}
+                    </span>
+                  </div>
+                  {l.owner_name && (
+                    <div className="flex items-center gap-1.5 py-2 mb-2" style={{ borderTop: "1px solid var(--kk-line)", borderBottom: "1px solid var(--kk-line)" }}>
+                      <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+                      <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                    {l.expected_rent != null && <span className="text-[12px] font-semibold tabular-nums" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>}
+                    {l.bedrooms != null && <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{l.bedrooms} bed</span>}
+                    {l.bathrooms != null && <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{l.bathrooms} bath</span>}
+                    {tenantInfo && <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>Tenant: {tenantInfo.tenant_name}</span>}
+                  </div>
+                </button>
+              );
+            })}
+            {visibleManaged.map((t) => {
+              const stage = t.lifecycle_stage ?? "active";
+              const stageLabel = LIFECYCLE_LABELS[stage] ?? stage;
+              const isEnding = stage === "ending" || stage === "replacing";
+              return (
+                <Link
+                  key={t.tenancy_id}
+                  href={`/existing-contracts?open=${t.tenancy_id}`}
+                  className="kk-card kk-card-hover p-4 block"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-semibold leading-tight" style={{ color: "var(--kk-ink)" }}>{t.property_name ?? "—"}</p>
+                      {t.unit && <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Unit {t.unit}</p>}
+                    </div>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                      style={isEnding ? { background: "rgba(239,68,68,0.12)", color: "#B91C1C" } : { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}>
+                      {stageLabel}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 pt-2" style={{ borderTop: "1px solid var(--kk-line)" }}>
+                    {t.amount != null && <span className="text-[12px] font-semibold tabular-nums" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>}
+                    <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>Tenant: {t.tenant_name}</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden lg:block kk-section overflow-hidden kk-scroll-fade">
+            <div className="overflow-x-auto">
+            <table className="w-full border-collapse" style={{ minWidth: 680 }}>
+              <colgroup>
+                <col style={{ width: "22%" }} />
+                <col style={{ width: "9%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "6%" }} />
+                <col style={{ width: "6%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "2%" }} />
+              </colgroup>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
+                  {["Property", "Unit", "Status", "Owner", "Rent (RM)", "Beds", "Baths", "Tenant", ""].map((h) => (
+                    <th key={h} className={TH} style={{ color: "var(--kk-ink-faint)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((l) => {
+                  const tenantInfo = l.stage === "matched" ? tenantsByLeadId[l.id] : undefined;
+                  const isRented = l.stage === "matched";
+                  return (
+                    <tr
+                      key={l.id}
+                      onClick={() => setOpenLead(l)}
+                      className="cursor-pointer group transition-colors"
+                      style={{ borderBottom: "1px solid var(--kk-line)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--kk-surface-2)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                    >
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{l.property_name ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{l.unit ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={isRented ? { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" } : { background: "rgba(0,113,227,0.12)", color: "var(--kk-blue)" }}>
+                          {isRented ? "Rented" : "Listed"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)" }}>
+                          {l.expected_rent != null ? l.expected_rent.toLocaleString() : "—"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bedrooms ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bathrooms ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {tenantInfo
+                          ? <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{tenantInfo.tenant_name}</span>
+                          : <span className="text-[13px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3">
+                        <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
+                      </td>
+                    </tr>
+                  );
+                })}
+                {visibleManaged.map((t) => {
+                  const stage = t.lifecycle_stage ?? "active";
+                  const stageLabel = LIFECYCLE_LABELS[stage] ?? stage;
+                  const isEnding = stage === "ending" || stage === "replacing";
+                  return (
+                    <tr
+                      key={t.tenancy_id}
+                      className="group transition-colors"
+                      style={{ borderBottom: "1px solid var(--kk-line)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--kk-surface-2)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                    >
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{t.property_name ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{t.unit ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={isEnding ? { background: "rgba(239,68,68,0.12)", color: "#B91C1C" } : { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}>
+                          {stageLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3"><span style={{ color: "var(--kk-ink-faint)" }}>—</span></td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)" }}>
+                          {t.amount != null ? t.amount.toLocaleString() : "—"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3"><span style={{ color: "var(--kk-ink-faint)" }}>—</span></td>
+                      <td className="px-4 py-3"><span style={{ color: "var(--kk-ink-faint)" }}>—</span></td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_name}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link href={`/existing-contracts?open=${t.tenancy_id}`} onClick={(e) => e.stopPropagation()}>
+                          <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            </div>
+          </div>
+        </>
       )}
 
       <PropertyDetailDialog

@@ -33,8 +33,14 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
 
   const suggestions = useMemo(() => {
     const q = propertyName.trim().toLowerCase();
-    if (!q) return properties.slice(0, 8);
-    return properties.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 8);
+    const seen = new Set<string>();
+    const base = q ? properties.filter((p) => p.name.toLowerCase().includes(q)) : properties;
+    return base.filter((p) => {
+      const key = p.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 8);
   }, [propertyName, properties]);
 
   const hasExactMatch = properties.some(
@@ -44,7 +50,6 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   function selectExisting(p: Property) {
     setPropertyId(p.id);
     setPropertyName(p.name);
-    setUnit(p.unit || "");
     setOwnerName(p.owner_name);
     setOwnerPhone(p.owner_phone);
     setShowSugg(false);
@@ -146,7 +151,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
                       className="w-full text-left px-4 py-2.5 transition-opacity hover:opacity-70"
                     >
                       <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>
-                        {p.name}{p.unit ? ` · Unit ${p.unit}` : ""}
+                        {p.name}
                       </p>
                       <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
                         {p.owner_name} · {p.owner_phone}

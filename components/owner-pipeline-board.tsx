@@ -233,7 +233,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       </div>
 
       {/* Filter row */}
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-0.5 lg:flex-wrap" style={{ scrollbarWidth: "none" }}>
         <FilterSelect
           value={propertyFilter}
           onChange={setPropertyFilter}
@@ -256,11 +256,11 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           value={minRent}
           onChange={(e) => setMinRent(e.target.value)}
           className="text-[13px] px-4 py-1.5 rounded-full font-medium"
-          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 148 }}
+          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 148, flexShrink: 0 }}
         />
         <button
           onClick={() => setOwnerRespondedFilter((v) => !v)}
-          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
+          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5 shrink-0"
           style={{
             background: ownerRespondedFilter ? "rgba(52,199,89,0.12)" : "rgba(0,0,0,0.06)",
             border: ownerRespondedFilter ? "1px solid rgba(52,199,89,0.40)" : "1px solid var(--kk-line)",
@@ -280,7 +280,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         )}
         <button
           onClick={() => setShowTerminal((v) => !v)}
-          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
+          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5 shrink-0"
           style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
           title="Show or hide uninterested leads (Own stay, Archived)"
         >
@@ -289,7 +289,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
             {byStage.own_stay.length + byStage.archived.length}
           </span>
         </button>
-        <span className="ml-auto text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+        <span className="ml-auto shrink-0 text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
           {filtered.length} of {local.length} leads
         </span>
       </div>
