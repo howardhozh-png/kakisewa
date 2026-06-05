@@ -5,6 +5,7 @@ import { AccentProvider } from "@/components/accent-provider";
 import { OnboardingDemoModal } from "@/components/onboarding-demo-modal";
 import { TrialBanner } from "@/components/trial-banner";
 import { TrialGate } from "@/components/trial-gate";
+import { TrialDowngradeNotice } from "@/components/trial-downgrade-notice";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
@@ -37,7 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     status === "expired" ||
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
-  const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
+  const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 14;
   const trialStartedAt = trialStart ?? null;
   const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 999;
   const isNewAgent = daysSinceSignup <= 30;
@@ -59,6 +60,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       />
       <main className="flex-1">{children}</main>
       <OnboardingDemoModal />
+      <TrialDowngradeNotice archivedCount={agent.trial_downgrade_archived_count ?? null} />
       <ProfileSetupModal
         needsSetup={!isAdmin && (!agent.phone || !agent.ren_number)}
         agentName={agent.name}

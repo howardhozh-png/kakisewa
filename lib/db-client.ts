@@ -842,4 +842,8 @@ addIfMissing("agent_profile", "whatsapp_templates", "TEXT");
 // v18 — agent-editable renewal reminder copy (Platinum/Elite)
 addIfMissing("agent_profile", "reminder_template", "TEXT");
 
+// v19 — trial downgrade: one-time notice flag + tenant pack pausing
+addIfMissing("agent_profile", "trial_downgrade_archived_count", "INTEGER");
+addIfMissing("match_packs", "is_paused", "INTEGER NOT NULL DEFAULT 0");
+
 export default db;

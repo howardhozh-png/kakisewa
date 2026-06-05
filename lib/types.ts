@@ -172,6 +172,7 @@ export interface AgentProfile {
   trial_ends_at?: string | null;
   subscription_status?: SubscriptionStatus | null;
   subscription_plan?: "silver" | "platinum" | "elite" | null;
+  trial_downgrade_archived_count?: number | null;
 }
 
 export interface PerformanceSummary {

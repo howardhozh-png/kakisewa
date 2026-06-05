@@ -1616,3 +1616,15 @@ export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+export async function clearTrialDowngradeNotice(): Promise<void> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from("agent_profiles")
+    .update({ trial_downgrade_archived_count: null })
+    .eq("id", user.id);
+  revalidatePath("/", "layout");
+}
