@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
@@ -118,7 +118,10 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     return () => clearTimeout(timer);
   }, [highlightId]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+  );
 
   const propertyOptions = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -220,17 +223,6 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
         />
       </div>
 
-      {plan === "silver" && (
-        <div className="kk-section mb-5">
-          <FeatureLockedState
-            compact
-            title="Automate your renewal reminders"
-            body="kakisewa sends tenants a WhatsApp reminder at 60, 30, and 7 days before expiry — using your name and REN number. Available on Platinum and above."
-            ctaLabel="Upgrade to Platinum — RM 159/mo"
-          />
-        </div>
-      )}
-
       <div ref={boardRef} style={{ scrollMarginTop: 80 }} />
       <DndContext
         id="kakisewa-lifecycle"
@@ -243,7 +235,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
         onDragEnd={handleDragEnd}
         onDragCancel={() => { setDraggingId(null); setDraggingTenancy(null); }}
       >
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="flex items-center gap-3 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           <FilterSelect
             value={propertyFilter}
             onChange={setPropertyFilter}

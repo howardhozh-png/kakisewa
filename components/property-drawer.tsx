@@ -114,7 +114,10 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
 
           {/* Photo vault */}
           <div>
-            <p className="kk-overline mb-4">Photo vault · {photos.length}/4</p>
+            <div className="flex items-baseline gap-2 mb-4">
+              <p className="kk-overline">Photo vault · {photos.length}/4</p>
+              <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>First photo shown on kanban card</p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {photos.map((url) => (
                 <div key={url} className="relative group rounded-xl overflow-hidden aspect-video" style={{ border: "1px solid var(--kk-line)" }}>
