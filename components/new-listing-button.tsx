@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Loader2, ChevronDown, MessageCircle, PenLine, Camera, X, FileText } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { toast } from "sonner";
+import type { Property } from "@/lib/types";
 
 interface FormData {
   property_name: string;
@@ -32,7 +33,7 @@ const EMPTY_FORM: FormData = {
 interface WaForm { owner_name: string; owner_phone: string; property_name: string; listing_purpose: "rent" | "sell" | null; }
 const EMPTY_WA: WaForm = { owner_name: "", owner_phone: "", property_name: "", listing_purpose: null };
 
-export function NewListingButton() {
+export function NewListingButton({ properties = [] }: { properties?: Property[] }) {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -46,6 +47,26 @@ export function NewListingButton() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const agreementInputRef = useRef<HTMLInputElement>(null);
+
+  // Property autocomplete
+  const [showSugg, setShowSugg] = useState(false);
+  const suggestions = useMemo(() => {
+    const q = form.property_name.trim().toLowerCase();
+    const seen = new Set<string>();
+    const base = q ? properties.filter((p) => p.name.toLowerCase().includes(q)) : properties;
+    return base.filter((p) => {
+      const key = p.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 8);
+  }, [form.property_name, properties]);
+  const hasExactMatch = properties.some((p) => p.name.toLowerCase() === form.property_name.trim().toLowerCase());
+
+  function selectExistingProperty(p: Property) {
+    setForm((f) => ({ ...f, property_name: p.name, owner_name: p.owner_name, owner_phone: p.owner_phone }));
+    setShowSugg(false);
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -63,6 +84,7 @@ export function NewListingButton() {
     setForm(EMPTY_FORM);
     setPhotoFiles([]);
     setAgreementFile(null);
+    setShowSugg(false);
     setDialogOpen(true);
   }
 
@@ -319,18 +341,54 @@ export function NewListingButton() {
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.1em" }}>Property</p>
                 <div className="space-y-3">
-                  <div>
+                  <div
+                    className="relative"
+                    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setShowSugg(false); }}
+                  >
                     <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--kk-ink-soft)" }}>
                       Property name <span style={{ color: "var(--kk-red)" }}>*</span>
                     </label>
                     <input
                       type="text"
                       value={form.property_name}
-                      onChange={(e) => setForm((f) => ({ ...f, property_name: e.target.value }))}
+                      onChange={(e) => { setForm((f) => ({ ...f, property_name: e.target.value })); setShowSugg(true); }}
+                      onFocus={() => setShowSugg(true)}
                       placeholder="e.g. Residensi Mutiara"
+                      autoComplete="off"
                       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                     />
+                    {form.property_name.trim() && (
+                      <p className="text-[11px] mt-1" style={{ color: properties.some(p => p.name.toLowerCase() === form.property_name.trim().toLowerCase()) ? "var(--kk-green)" : "var(--kk-blue)" }}>
+                        {properties.some(p => p.name.toLowerCase() === form.property_name.trim().toLowerCase()) ? "Existing property" : "New property will be created"}
+                      </p>
+                    )}
+                    {showSugg && (suggestions.length > 0 || (form.property_name.trim() && !hasExactMatch)) && (
+                      <div
+                        className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden"
+                        style={{ zIndex: 9999, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: 240, overflowY: "auto" }}
+                      >
+                        {suggestions.map((p) => (
+                          <button
+                            key={p.id} type="button" tabIndex={0}
+                            onMouseDown={(e) => { e.preventDefault(); selectExistingProperty(p); }}
+                            className="w-full text-left px-4 py-2.5 transition-opacity hover:opacity-70"
+                          >
+                            <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{p.name}</p>
+                          </button>
+                        ))}
+                        {form.property_name.trim() && !hasExactMatch && (
+                          <button
+                            type="button" tabIndex={0}
+                            onMouseDown={(e) => { e.preventDefault(); setShowSugg(false); }}
+                            className="w-full text-left px-4 py-2.5 text-[13px]"
+                            style={{ color: "var(--kk-blue)", borderTop: suggestions.length ? "1px solid var(--kk-line)" : "none" }}
+                          >
+                            + Create &ldquo;{form.property_name.trim()}&rdquo; as new property
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--kk-ink-soft)" }}>Unit number</label>

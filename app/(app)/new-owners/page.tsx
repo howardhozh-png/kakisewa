@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
+import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getProperties } from "@/lib/db";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { NewListingButton } from "@/components/new-listing-button";
@@ -35,7 +35,7 @@ export default async function LeadsPage({ searchParams }: Props) {
   const { tab, open, highlight } = await searchParams;
   const activeTab = tab === "pipeline" ? "pipeline" : "outreach";
 
-  const ownerLeads = await getOwnerLeads();
+  const [ownerLeads, properties] = await Promise.all([getOwnerLeads(), getProperties()]);
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const [tenantsByLeadId, rankedLeadIds] = await Promise.all([
     getTenantsForOwnerLeads(matchedLeadIds),
@@ -85,7 +85,7 @@ export default async function LeadsPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <NewListingButton />
+          <NewListingButton properties={properties} />
           <UploadOwnerCsvDialog />
         </div>
       </header>

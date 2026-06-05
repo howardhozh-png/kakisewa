@@ -89,7 +89,7 @@ export function FilterSelect({
             border: "1px solid rgba(255,255,255,0.08)",
             boxShadow: "0 12px 32px rgba(0,0,0,0.22)",
             minWidth: "max-content",
-            maxHeight: "min(320px, 60vh)",
+            maxHeight: "min(480px, 72vh)",
             overflowY: "auto",
             WebkitOverflowScrolling: "touch",
           }}

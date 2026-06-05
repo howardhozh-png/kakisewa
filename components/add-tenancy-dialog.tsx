@@ -163,7 +163,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
           </button>
         }
       />
-      <DialogContent className="bg-card border-border max-w-md">
+      <DialogContent className="bg-card border-border max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[18px] font-semibold tracking-tight">Add new tenancy</DialogTitle>
         </DialogHeader>
