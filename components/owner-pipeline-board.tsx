@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
-import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home } from "lucide-react";
+import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
 import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
@@ -563,9 +563,19 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l:
               <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
               <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{l.owner_name}</p>
             </div>
-            {hasOwnerRanking && (
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#1F8B4C" }} />
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              {l.available_from && (
+                <div className="flex items-center gap-0.5">
+                  <Calendar className="w-2.5 h-2.5" style={{ color: "var(--kk-ink-faint)" }} />
+                  <span className="text-[10px] tabular-nums" style={{ color: "var(--kk-ink-faint)" }}>
+                    {formatAvailDate(l.available_from)}
+                  </span>
+                </div>
+              )}
+              {hasOwnerRanking && (
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#1F8B4C" }} />
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, MessageCircle, AlertCircle, UserX, X, ExternalLink } from "lucide-react";
+import { Bell, MessageCircle, AlertCircle, UserX, X, ClipboardCheck, RefreshCw } from "lucide-react";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
 const LS_KEY = "kk_notif_read_at";
@@ -38,6 +38,8 @@ const ICONS: Record<NotificationItem["type"], React.ComponentType<{ className?: 
   action_needed:  AlertCircle,
   tenant_leaving: UserX,
   owner_leaving:  UserX,
+  owner_intake:   ClipboardCheck,
+  owner_renewal:  RefreshCw,
 };
 
 const TYPE_COLOR: Record<NotificationItem["type"], string> = {
@@ -45,6 +47,8 @@ const TYPE_COLOR: Record<NotificationItem["type"], string> = {
   action_needed:  "#f59e0b",
   tenant_leaving: "#DC2626",
   owner_leaving:  "#DC2626",
+  owner_intake:   "#0A84FF",
+  owner_renewal:  "#30D158",
 };
 
 function timeAgo(iso: string): string {
@@ -114,9 +118,7 @@ export function NotificationBell() {
 
   function handleItemClick(item: NotificationItem) {
     setOpen(false);
-    if (item.waUrl) {
-      window.open(item.waUrl, "_blank", "noopener,noreferrer");
-    } else if (item.href) {
+    if (item.href) {
       window.location.href = item.href;
     }
   }
@@ -128,9 +130,9 @@ export function NotificationBell() {
         onClick={handleOpen}
         className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
         style={{
-          background: open ? "var(--kk-accent)" : "var(--kk-surface-2)",
+          background: open ? "var(--kk-accent)" : "color-mix(in srgb, var(--kk-topnav-ink) 10%, transparent)",
           border: "1px solid",
-          borderColor: open ? "transparent" : "var(--kk-line)",
+          borderColor: open ? "transparent" : "color-mix(in srgb, var(--kk-topnav-ink) 22%, transparent)",
           color: open ? "#fff" : "var(--kk-topnav-ink)",
         }}
         aria-label="Notifications"
@@ -188,7 +190,6 @@ export function NotificationBell() {
                 {items.map((item) => {
                   const Icon = ICONS[item.type];
                   const color = TYPE_COLOR[item.type];
-                  const isWa = item.type === "wa_reminder";
                   return (
                     <button
                       key={item.id}
@@ -211,9 +212,6 @@ export function NotificationBell() {
                           {timeAgo(item.createdAt)}
                         </p>
                       </div>
-                      {isWa && (
-                        <ExternalLink className="w-3.5 h-3.5 shrink-0 mt-1" style={{ color: "#25D366" }} />
-                      )}
                     </button>
                   );
                 })}
@@ -221,14 +219,6 @@ export function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
-          {items.length > 0 && (
-            <div className="px-4 py-2.5" style={{ borderTop: "1px solid var(--kk-line)" }}>
-              <p className="text-[11px] text-center" style={{ color: "var(--kk-ink-faint)" }}>
-                WA reminders → tap to open WhatsApp and send
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>

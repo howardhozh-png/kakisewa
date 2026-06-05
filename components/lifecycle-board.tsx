@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Poin
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -554,11 +554,21 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
             <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>
           </p>
 
-          <div className="flex items-center gap-1">
-            <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
-            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>
-              {t.property?.owner_name ?? "—"}
-            </p>
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1 min-w-0">
+              <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+              <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>
+                {t.property?.owner_name ?? "—"}
+              </p>
+            </div>
+            {t.contract_end && (
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Calendar className="w-2.5 h-2.5" style={{ color: "var(--kk-ink-faint)" }} />
+                <span className="text-[10px] tabular-nums" style={{ color: "var(--kk-ink-faint)" }}>
+                  {formatContractDate(t.contract_end)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -924,6 +934,12 @@ function formatMonthKey(key: string): string {
 
 function normalizePropName(n: string): string {
   return n.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim();
+}
+
+function formatContractDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[m - 1]} '${String(y).slice(2)}`;
 }
 
 function CardPreview({ t, today }: { t: Tenancy; today: Date }) {

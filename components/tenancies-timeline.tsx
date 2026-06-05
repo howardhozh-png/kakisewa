@@ -111,7 +111,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
               onClick={() => onMonthClick?.(m.key)}
               style={{ cursor: onMonthClick ? "pointer" : "default" }}
             >
-              <div className="relative flex items-end" style={{ height: 60, paddingTop: 6 }}>
+              <div className="relative flex items-end" style={{ height: 90, paddingTop: 6 }}>
                 <div
                   className="w-full rounded-t-md transition-all duration-500"
                   style={{
@@ -124,7 +124,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
                   }}
                 />
               </div>
-              <div className="text-center" style={{ height: 44 }}>
+              <div className="text-center" style={{ height: 56 }}>
                 <p className="text-[11px] font-semibold tabular-nums leading-none" style={{ color: b.count > 0 ? "var(--kk-ink)" : "var(--kk-ink-faint)" }}>
                   {b.count}
                 </p>
