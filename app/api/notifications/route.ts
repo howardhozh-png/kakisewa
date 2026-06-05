@@ -38,17 +38,18 @@ export async function GET() {
   for (const r of waRows ?? []) {
     const row = r as { id: string; template: string; recipient_name: string | null; recipient_phone: string; body: string | null; sent_at: string };
     const isRenewal = row.template.includes("renewal");
-    const days = row.template.includes("60d") ? 60 : 30;
+    const days = row.template.includes("60d") ? 60 : row.template.includes("7d") ? 7 : 30;
+    const whenLabel = days === 60 ? "2 months" : days === 30 ? "1 month" : "7 days";
     items.push({
       id: `wa_${row.id}`,
       type: "wa_reminder",
       title: isRenewal
-        ? `Renewal reminder ready — ${days === 60 ? "2 months" : "1 month"} out`
-        : `Availability reminder ready — ${days === 60 ? "2 months" : "1 month"} out`,
+        ? `Renewal reminder ready — ${whenLabel} out`
+        : `Availability reminder ready — ${whenLabel} out`,
       body: row.recipient_name ? `For ${row.recipient_name}` : `To ${row.recipient_phone}`,
       waUrl: row.body ?? undefined,
       createdAt: row.sent_at,
-      priority: days === 30 ? "high" : "normal",
+      priority: days <= 30 ? "high" : "normal",
     });
   }
 
