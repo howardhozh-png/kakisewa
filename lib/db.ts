@@ -279,7 +279,7 @@ const _cachedAllActiveTenants = unstable_cache(
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
 
-async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
+export async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
   await fetch("https://api.resend.com/emails", {
