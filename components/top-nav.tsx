@@ -13,6 +13,7 @@ import { AgentProfile } from "@/lib/types";
 import { saveProfileDetails } from "@/lib/actions";
 import { PhotoCropModal } from "@/components/photo-crop-modal";
 import { toast } from "sonner";
+import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
   { href: "/home",               label: "Home",               matchPaths: ["/home"],                                                      tourId: "tour-nav-home",        minPlan: null },
@@ -914,6 +915,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
           {/* Right cluster — desktop only */}
           <div className="kk-topnav-desktop ml-auto items-center gap-3">
+            <NotificationBell />
             <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} />
 
             <button
@@ -972,8 +974,11 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
           </div>
 
           {/* Hamburger — mobile only */}
+          <div className="kk-topnav-hamburger ml-auto items-center gap-1">
+            <NotificationBell />
+          </div>
           <button
-            className="kk-topnav-hamburger ml-auto items-center justify-center w-11 h-11 rounded-full"
+            className="kk-topnav-hamburger items-center justify-center w-11 h-11 rounded-full"
             onClick={() => setMobileMenuOpen((o) => !o)}
             style={{ color: "var(--kk-topnav-ink)" }}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}

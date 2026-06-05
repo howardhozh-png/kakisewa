@@ -57,3 +57,15 @@ self.addEventListener('fetch', (event) => {
 
   // Everything else: network only
 });
+
+// Badge API: receive count from the page and set it on the app icon
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SET_BADGE' && 'setAppBadge' in self) {
+    const count = event.data.count ?? 0;
+    if (count > 0) {
+      self.setAppBadge(count).catch(() => {});
+    } else {
+      self.clearAppBadge?.().catch(() => {});
+    }
+  }
+});
