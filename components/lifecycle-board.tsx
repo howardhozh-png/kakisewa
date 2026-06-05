@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Poin
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -54,9 +54,16 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [tenantLeavingTenancy, setTenantLeavingTenancy] = useState<Tenancy | null>(null);
   const [ownerLeavingTenancy, setOwnerLeavingTenancy] = useState<Tenancy | null>(null);
   const [pendingMove, setPendingMove] = useState<{ t: Tenancy; target: LifecycleStage } | null>(null);
+  const [silverCapBlocked, setSilverCapBlocked] = useState(false);
 
   const [local, setLocal] = useState<Tenancy[]>(tenancies);
   useEffect(() => { setLocal(tenancies); }, [tenancies]);
+
+  const SILVER_CAP = 5;
+  const activeCardCount = useMemo(
+    () => local.filter((t) => t.lifecycle_stage !== "closed" && defaultLifecycleStage(t, today) !== null).length,
+    [local, today]
+  );
 
   // Poll every 20s so renewal form responses appear without a manual refresh
   useEffect(() => {
@@ -147,6 +154,14 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     return out;
   }, [local, today, propertyFilter, monthFilter]);
 
+  function checkSilverCap(targetStage: LifecycleStage): boolean {
+    // For silver: block any move into an active stage when already at/over cap
+    if (plan !== "silver") return false;
+    const activeStages: LifecycleStage[] = ["active", "headsup", "renewing", "pinged", "stalled", "pending_payment"];
+    if (!activeStages.includes(targetStage)) return false;
+    return activeCardCount >= SILVER_CAP;
+  }
+
   function handleDragEnd(e: DragEndEvent) {
     setDraggingId(null);
     setDraggingTenancy(null);
@@ -157,6 +172,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     if (!t) return;
     const from = defaultLifecycleStage(t, today);
     if (!from || from === target) return;
+    if (checkSilverCap(target)) { setSilverCapBlocked(true); return; }
     setPendingMove({ t, target });
   }
 
@@ -175,6 +191,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   }
 
   async function handleMoveToStage(id: string, target: LifecycleStage) {
+    if (checkSilverCap(target)) { setSilverCapBlocked(true); return; }
     setLocal((prev) => prev.map((x) => (x.id === id ? optimisticApply(x, target) : x)));
     const res = await setLifecycleStage(id, target);
     if (res.ok) {
@@ -316,6 +333,44 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
           open={!!ownerLeavingTenancy}
           onClose={() => { setOwnerLeavingTenancy(null); router.refresh(); }}
         />
+      )}
+
+      {/* Silver 5-card cap dialog */}
+      {silverCapBlocked && (
+        <Dialog open onOpenChange={(v) => { if (!v) setSilverCapBlocked(false); }}>
+          <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
+                  <ShieldAlert className="w-5 h-5" style={{ color: "#DC2626" }} />
+                </div>
+                <div>
+                  <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Renewal card limit reached</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Silver plan · {activeCardCount}/{SILVER_CAP} cards</p>
+                </div>
+              </div>
+              <p className="text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                Silver allows up to {SILVER_CAP} active renewal cards. You&apos;re at your limit. Upgrade to Platinum or Elite for unlimited cards.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSilverCapBlocked(false)}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold"
+                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+                >
+                  Got it
+                </button>
+                <a
+                  href="/subscription"
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-center"
+                  style={{ background: "var(--kk-ink)", color: "#fff" }}
+                >
+                  Upgrade plan →
+                </a>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Drag-to-column confirmation */}

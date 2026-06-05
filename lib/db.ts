@@ -1305,6 +1305,148 @@ export async function getLifetimeCommissionStats(): Promise<{
   };
 }
 
+export async function getEliteAnalyticsData(): Promise<{
+  yoy: {
+    currentYear: number;
+    lastYear: number;
+    monthsCurrent: Array<{ label: string; amount: number }>;
+    monthsLast: Array<{ label: string; amount: number }>;
+    totalCurrent: number;
+    totalLast: number;
+  };
+  renewalRecovery: {
+    recovered: number;
+    total: number;
+    missed: number;
+    recoveredCount: number;
+    missedCount: number;
+  };
+  leadConversion: Array<{
+    month: string;
+    label: string;
+    total: number;
+    matched: number;
+    rate: number;
+  }>;
+  outreach: {
+    ownerTotal: number;
+    ownerContacted: number;
+    ownerClickRate: number;
+    tenantIntakeSent: number;
+    tenantIntake30d: number;
+  };
+}> {
+  const supabase = await createClient();
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const lastYear = currentYear - 1;
+
+  // ── 1. YoY commission ────────────────────────────────────────────────────
+  const [currRows, lastRows] = await Promise.all([
+    supabase.from("commission_events").select("earned_on, amount")
+      .gte("earned_on", `${currentYear}-01-01`).lte("earned_on", `${currentYear}-12-31`),
+    supabase.from("commission_events").select("earned_on, amount")
+      .gte("earned_on", `${lastYear}-01-01`).lte("earned_on", `${lastYear}-12-31`),
+  ]);
+  const byMonthCurr = new Map<number, number>();
+  let totalCurrent = 0;
+  for (const r of currRows.data ?? []) {
+    const row = r as { earned_on: string; amount: number };
+    const m = parseInt(row.earned_on.slice(5, 7)) - 1;
+    byMonthCurr.set(m, (byMonthCurr.get(m) ?? 0) + row.amount);
+    totalCurrent += row.amount;
+  }
+  const byMonthLast = new Map<number, number>();
+  let totalLast = 0;
+  for (const r of lastRows.data ?? []) {
+    const row = r as { earned_on: string; amount: number };
+    const m = parseInt(row.earned_on.slice(5, 7)) - 1;
+    byMonthLast.set(m, (byMonthLast.get(m) ?? 0) + row.amount);
+    totalLast += row.amount;
+  }
+  const monthsCurrent = MONTHS.map((label, i) => ({ label, amount: byMonthCurr.get(i) ?? 0 }));
+  const monthsLast    = MONTHS.map((label, i) => ({ label, amount: byMonthLast.get(i) ?? 0 }));
+
+  // ── 2. Renewal income recovery ──────────────────────────────────────────
+  const yearStart = `${currentYear}-01-01`;
+  const today = now.toISOString().slice(0, 10);
+  const [expiredTenancies, renewalEvents] = await Promise.all([
+    supabase.from("tenancies").select("id, amount")
+      .not("contract_end", "is", null)
+      .gte("contract_end", yearStart)
+      .lte("contract_end", today),
+    supabase.from("commission_events").select("amount, tenancy_id")
+      .eq("type", "renewal")
+      .gte("earned_on", yearStart)
+      .lte("earned_on", `${currentYear}-12-31`),
+  ]);
+  const renewedIds = new Set(
+    ((renewalEvents.data ?? []) as { tenancy_id: string | null }[])
+      .map(r => r.tenancy_id).filter(Boolean)
+  );
+  const recovered = ((renewalEvents.data ?? []) as { amount: number }[])
+    .reduce((s, r) => s + r.amount, 0);
+  let totalPotential = 0, missedCount = 0, recoveredCount = 0;
+  for (const r of ((expiredTenancies.data ?? []) as { id: string; amount: number }[])) {
+    const pot = r.amount * 0.5;
+    totalPotential += pot;
+    if (renewedIds.has(r.id)) recoveredCount++;
+    else missedCount++;
+  }
+  const missed = Math.max(0, totalPotential - recovered);
+
+  // ── 3. Lead conversion by available_from month ─────────────────────────
+  const { data: allLeads } = await supabase
+    .from("owner_leads")
+    .select("stage, available_from")
+    .not("available_from", "is", null);
+  const convMap = new Map<string, { label: string; total: number; matched: number }>();
+  for (const r of ((allLeads ?? []) as { stage: string; available_from: string }[])) {
+    const af = r.available_from;
+    if (!af) continue;
+    const key = af.slice(0, 7);
+    const [y, m] = key.split("-");
+    const label = `${MONTHS[parseInt(m) - 1]} ${y}`;
+    const cur = convMap.get(key) ?? { label, total: 0, matched: 0 };
+    cur.total++;
+    if (r.stage === "matched") cur.matched++;
+    convMap.set(key, cur);
+  }
+  const leadConversion = [...convMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([month, v]) => ({ month, label: v.label, total: v.total, matched: v.matched, rate: v.total > 0 ? Math.round((v.matched / v.total) * 100) : 0 }));
+
+  // ── 4. Outreach click rate ──────────────────────────────────────────────
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
+  const [allLeadsCount, contactedCount, tenantIntakeAll, tenantIntake30d] = await Promise.all([
+    supabase.from("owner_leads").select("*", { count: "exact", head: true }),
+    supabase.from("owner_leads").select("*", { count: "exact", head: true })
+      .not("outreach_count", "is", null).gt("outreach_count", 0),
+    supabase.from("whatsapp_log").select("*", { count: "exact", head: true })
+      .eq("template", "tenant_intake"),
+    supabase.from("whatsapp_log").select("*", { count: "exact", head: true })
+      .eq("template", "tenant_intake").gte("sent_at", thirtyDaysAgo),
+  ]);
+  const ownerTotal    = allLeadsCount.count ?? 0;
+  const ownerContacted = contactedCount.count ?? 0;
+  const ownerClickRate = ownerTotal > 0 ? Math.round((ownerContacted / ownerTotal) * 100) : 0;
+
+  return {
+    yoy: { currentYear, lastYear, monthsCurrent, monthsLast, totalCurrent, totalLast },
+    renewalRecovery: { recovered, total: totalPotential, missed, recoveredCount, missedCount },
+    leadConversion,
+    outreach: {
+      ownerTotal,
+      ownerContacted,
+      ownerClickRate,
+      tenantIntakeSent: tenantIntakeAll.count ?? 0,
+      tenantIntake30d:  tenantIntake30d.count ?? 0,
+    },
+  };
+}
+
 export async function getListedOwnerLeads(): Promise<OwnerLead[]> {
   const userId = await getCurrentUserId();
   if (!userId) {

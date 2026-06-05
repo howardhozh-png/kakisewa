@@ -63,6 +63,8 @@ export default async function PerformancePage({ searchParams }: Props) {
         </div>
       </header>
 
+      {planAllows(plan, "elite") && <EliteAnalyticsPanel />}
+
       <GoalProvider initial={timeline.monthlyGoal ?? 0}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 items-stretch">
           <DealMilestone
@@ -88,8 +90,6 @@ export default async function PerformancePage({ searchParams }: Props) {
           year={year}
         />
       </GoalProvider>
-
-      {planAllows(plan, "elite") && <EliteAnalyticsPanel />}
 
     </div>
   );

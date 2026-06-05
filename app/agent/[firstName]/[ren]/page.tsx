@@ -1,5 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageCircle, Building2, Award, Shield } from "lucide-react";
@@ -7,15 +7,16 @@ import { MessageCircle, Building2, Award, Shield } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 interface Props {
-  params: Promise<{ id: string }>;
+  params: Promise<{ firstName: string; ren: string }>;
 }
 
-async function getPublicAgentProfile(id: string) {
+async function getPublicAgentByRen(ren: string) {
   const supabase = createServiceClient();
+  const decoded = decodeURIComponent(ren);
   const { data } = await supabase
     .from("agent_profiles")
     .select("id, name, agency, photo_url, ren_number, phone, subscription_plan, subscription_status")
-    .eq("id", id)
+    .ilike("ren_number", decoded)
     .maybeSingle();
   return data as {
     id: string;
@@ -32,20 +33,9 @@ async function getPublicAgentProfile(id: string) {
 async function getAgentStats(userId: string) {
   const supabase = createServiceClient();
   const [dealsRes, tenantsRes, listingsRes] = await Promise.all([
-    supabase
-      .from("commission_events")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId),
-    supabase
-      .from("tenancies")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .neq("lifecycle_stage", "closed"),
-    supabase
-      .from("owner_leads")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("stage", ["listed", "matched"]),
+    supabase.from("commission_events").select("*", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).neq("lifecycle_stage", "closed"),
+    supabase.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).in("stage", ["listed", "matched"]),
   ]);
   return {
     dealCount: dealsRes.count ?? 0,
@@ -55,8 +45,8 @@ async function getAgentStats(userId: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const agent = await getPublicAgentProfile(id);
+  const { ren } = await params;
+  const agent = await getPublicAgentByRen(ren);
   if (!agent) return { title: "Agent not found" };
   const name = agent.name ?? "kakisewa Agent";
   const agency = agent.agency ?? "";
@@ -83,16 +73,10 @@ function normalisePhone(phone: string): string {
 }
 
 export default async function AgentProfilePage({ params }: Props) {
-  const { id } = await params;
-  const agent = await getPublicAgentProfile(id);
+  const { ren } = await params;
+  const agent = await getPublicAgentByRen(ren);
 
   if (!agent) notFound();
-
-  // Redirect to the prettier firstName/renNumber URL if possible
-  if (agent.ren_number) {
-    const firstName = (agent.name ?? "agent").trim().split(/\s+/)[0].toLowerCase();
-    redirect(`/agent/${encodeURIComponent(firstName)}/${encodeURIComponent(agent.ren_number)}`);
-  }
 
   const isActive = agent.subscription_status === "active" || agent.subscription_status === "trial";
   const plan = agent.subscription_plan;
@@ -112,14 +96,13 @@ export default async function AgentProfilePage({ params }: Props) {
     );
   }
 
-  const stats = await getAgentStats(id);
+  const stats = await getAgentStats(agent.id);
   const waUrl = agent.phone
     ? `https://wa.me/${normalisePhone(agent.phone)}?text=${encodeURIComponent(`Hi ${agent.name ?? "there"}, I found your profile on kakisewa and would like to inquire about a property.`)}`
     : null;
 
   return (
     <div className="min-h-screen" style={{ background: "var(--kk-surface)" }}>
-      {/* Header bar */}
       <header className="border-b px-4 py-3 flex items-center justify-between" style={{ borderColor: "var(--kk-line)", background: "var(--kk-topnav-bg)" }}>
         <Link href="/" className="text-[14px] font-bold" style={{ color: "var(--kk-topnav-ink)" }}>
           kakisewa
@@ -132,9 +115,7 @@ export default async function AgentProfilePage({ params }: Props) {
       </header>
 
       <main className="mx-auto max-w-lg px-4 py-10">
-        {/* Card */}
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)", boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
-          {/* Banner */}
           <div style={{
             height: 100,
             background: isElite
@@ -142,7 +123,6 @@ export default async function AgentProfilePage({ params }: Props) {
               : "linear-gradient(145deg, #0b1f4a 0%, #1a3464 50%, #0a1a3c 100%)",
           }} />
 
-          {/* Avatar + name */}
           <div className="px-6 pb-6" style={{ background: "var(--kk-surface)" }}>
             <div className="flex items-end justify-between -mt-10 mb-4">
               {agent.photo_url ? (
@@ -158,8 +138,6 @@ export default async function AgentProfilePage({ params }: Props) {
                   {initials(agent.name)}
                 </div>
               )}
-
-              {/* Tier badge */}
               <div className="mb-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest"
                 style={{
                   background: isElite
@@ -187,7 +165,6 @@ export default async function AgentProfilePage({ params }: Props) {
               </p>
             )}
 
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-3 mt-5">
               {[
                 { label: "Deals closed", value: stats.dealCount },
@@ -203,7 +180,6 @@ export default async function AgentProfilePage({ params }: Props) {
               ))}
             </div>
 
-            {/* CTA */}
             {waUrl ? (
               <a
                 href={waUrl}
@@ -223,7 +199,6 @@ export default async function AgentProfilePage({ params }: Props) {
           </div>
         </div>
 
-        {/* Powered by */}
         <p className="text-center mt-6 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
           Powered by{" "}
           <Link href="/" className="font-semibold" style={{ color: "var(--kk-ink-mute)" }}>

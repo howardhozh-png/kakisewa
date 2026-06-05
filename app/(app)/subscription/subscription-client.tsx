@@ -435,10 +435,13 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
             Choose your plan
           </h1>
-          <p className="kk-body max-w-lg mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
+          <p className="kk-body max-w-md mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
             You spend{" "}
             <span style={{ color: "#DC2626", fontWeight: 600 }}>RM 800-1,000/month</span>
-            {" "}on PropertyGuru. Pay{" "}
+            {" "}on PropertyGuru to find tenants.
+          </p>
+          <p className="kk-body max-w-md mx-auto mt-1" style={{ color: "var(--kk-ink-mute)" }}>
+            Pay{" "}
             <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM <AnimatedPrice value={headerPrice} ink="var(--kk-green)" />/month</span>
             {" "}to kakisewa so you never lose them.
           </p>
@@ -514,7 +517,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               <tr style={{ borderBottom: "2px solid var(--kk-line-strong)" }}>
                 <th className="py-3 pr-6 font-semibold" style={{ color: "var(--kk-ink-mute)", width: "25%" }} />
                 {PLANS.map(p => (
-                  <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)" }}>
+                  <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)", width: "25%" }}>
                     <div>{p.name}</div>
                     <div className="text-[11px] font-normal mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
                       RM {p.monthly}/mo
