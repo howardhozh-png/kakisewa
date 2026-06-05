@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/trial-downgrade",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
