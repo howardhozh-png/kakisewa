@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, MessageCircle, AlertCircle, UserX, X, ClipboardCheck, RefreshCw } from "lucide-react";
+import { Bell, MessageCircle, AlertCircle, UserX, X, ClipboardCheck, RefreshCw, Star } from "lucide-react";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
 const LS_KEY = "kk_notif_read_at";
@@ -34,21 +34,23 @@ function setBadge(count: number) {
 }
 
 const ICONS: Record<NotificationItem["type"], React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
-  wa_reminder:    MessageCircle,
-  action_needed:  AlertCircle,
-  tenant_leaving: UserX,
-  owner_leaving:  UserX,
-  owner_intake:   ClipboardCheck,
-  owner_renewal:  RefreshCw,
+  wa_reminder:       MessageCircle,
+  action_needed:     AlertCircle,
+  tenant_leaving:    UserX,
+  owner_leaving:     UserX,
+  owner_intake:      ClipboardCheck,
+  owner_renewal:     RefreshCw,
+  owner_pack_ranked: Star,
 };
 
 const TYPE_COLOR: Record<NotificationItem["type"], string> = {
-  wa_reminder:    "#25D366",
-  action_needed:  "#f59e0b",
-  tenant_leaving: "#DC2626",
-  owner_leaving:  "#DC2626",
-  owner_intake:   "#0A84FF",
-  owner_renewal:  "#30D158",
+  wa_reminder:       "#25D366",
+  action_needed:     "#f59e0b",
+  tenant_leaving:    "#DC2626",
+  owner_leaving:     "#DC2626",
+  owner_intake:      "#0A84FF",
+  owner_renewal:     "#30D158",
+  owner_pack_ranked: "#FF9F0A",
 };
 
 function timeAgo(iso: string): string {

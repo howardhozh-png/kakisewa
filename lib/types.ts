@@ -247,6 +247,7 @@ export interface MatchPack {
   property_rent?: number | null;
   property_beds?: number | null;
   property_baths?: number | null;
+  owner_ranked_at?: string | null;
   created_at: string;
 }
 

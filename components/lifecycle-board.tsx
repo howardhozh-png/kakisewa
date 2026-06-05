@@ -89,31 +89,16 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     const timer = setTimeout(() => {
       const el = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
       if (!el) return;
-
-      // Phase 1: scroll page to board
-      if (boardRef.current) {
-        boardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      // Phase 2: after page scroll settles, scroll column
+      // scrollIntoView with block:"center" scrolls both the column body and the page
+      // so the card lands in the middle of the viewport
+      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
       setTimeout(() => {
         const el2 = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
         if (!el2) return;
-        const colBody = el2.closest<HTMLElement>(".kk-board-col-body");
-        if (colBody) {
-          const cardTop = el2.getBoundingClientRect().top - colBody.getBoundingClientRect().top + colBody.scrollTop;
-          colBody.scrollTo({ top: cardTop - colBody.clientHeight / 2 + el2.clientHeight / 2, behavior: "smooth" });
-        }
-
-        // Phase 3: flash after column scroll settles
-        setTimeout(() => {
-          const el3 = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
-          if (!el3) return;
-          el3.style.removeProperty("box-shadow");
-          el3.classList.add("kk-flash-green");
-          setTimeout(() => el3.classList.remove("kk-flash-green"), 2100);
-        }, 500);
-      }, 700);
+        el2.style.removeProperty("box-shadow");
+        el2.classList.add("kk-flash-green");
+        setTimeout(() => el2.classList.remove("kk-flash-green"), 2100);
+      }, 800);
     }, 300);
     return () => clearTimeout(timer);
   }, [highlightId]);

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export interface NotificationItem {
   id: string;
-  type: "wa_reminder" | "action_needed" | "tenant_leaving" | "owner_leaving" | "owner_intake" | "owner_renewal";
+  type: "wa_reminder" | "action_needed" | "tenant_leaving" | "owner_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked";
   title: string;
   body: string;
   href?: string;
@@ -101,6 +101,28 @@ export async function GET() {
       href: `/existing-contracts?highlight=${row.id}`,
       createdAt: row.owner_renewal_completed_at,
       priority: row.replied_owner === "yes" ? "normal" : "high",
+    });
+  }
+
+  // ── Owner saved ranking in tenant pack (last 24h) ────────────────────────────
+  const { data: rankedPacks } = await supabase
+    .from("match_packs")
+    .select("id, owner_lead_id, property_label, owner_ranked_at")
+    .not("owner_ranked_at", "is", null)
+    .gte("owner_ranked_at", since24h)
+    .order("owner_ranked_at", { ascending: false })
+    .limit(5);
+
+  for (const r of rankedPacks ?? []) {
+    const row = r as { id: string; owner_lead_id: string; property_label: string | null; owner_ranked_at: string };
+    items.push({
+      id: `packranked_${row.id}`,
+      type: "owner_pack_ranked",
+      title: "Owner ranked tenants in pack",
+      body: row.property_label ?? "Tenant pack",
+      href: `/new-owners?tab=pipeline&highlight=${row.owner_lead_id}`,
+      createdAt: row.owner_ranked_at,
+      priority: "normal",
     });
   }
 
