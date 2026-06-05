@@ -634,7 +634,8 @@ html, body {
   .kk-topnav-hamburger { display: flex; padding-top: env(safe-area-inset-top); }
 
   /* Prevent iOS Safari from auto-zooming when tapping any input (iOS zooms inputs < 16px) */
-  input, select, textarea { font-size: 16px; }
+  /* !important beats inline style={{ fontSize: 13 }} on timeline controls */
+  input, select, textarea { font-size: 16px !important; }
 
   /* Kanban boards: remove sticky viewport-height behaviour — let them scroll
      naturally on the page with horizontal swipe for columns */
@@ -647,12 +648,25 @@ html, body {
     min-height: 50vh;
     overflow-x: auto;
     overflow-y: visible;
-    padding-top: 4px;
+    /* Match desktop's padding-top so the balloon above Expiring column doesn't clip */
+    padding-top: 60px;
+    /* Reveal hint of next column so user knows it's scrollable */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .kk-board-col {
+    /* Slightly narrower on mobile so next column peeks into view */
+    width: 300px;
+    scroll-snap-align: start;
   }
   .kk-board-col-body {
     max-height: 480px;
     overflow-y: auto;
   }
+
+  /* Larger tap targets for pill/ghost buttons inside boards */
+  .kk-pill { min-height: 40px; }
+  .kk-card-cta { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
 
   /* Scroll-fade: right-edge gradient hint on scrollable table sections.
      Add .kk-scroll-fade to a relative-positioned container to activate. */

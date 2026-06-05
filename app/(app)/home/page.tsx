@@ -56,7 +56,7 @@ export default async function HomePage() {
         <p className="text-[12px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--kk-ink-faint)" }}>
           Getting started
         </p>
-        <h1 className="serif text-[38px] lg:text-[46px] leading-tight tracking-tight mb-4" style={{ color: "var(--kk-ink)" }}>
+        <h1 className="serif text-[26px] md:text-[38px] lg:text-[46px] leading-tight tracking-tight mb-4" style={{ color: "var(--kk-ink)" }}>
           {firstName ? `Welcome, ${firstName}.` : "Welcome to kakisewa."}
         </h1>
         <p className="text-[16px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
@@ -81,7 +81,7 @@ export default async function HomePage() {
               <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-step-panel-ink)", opacity: 0.7 }}>
                 Step
               </span>
-              <span className="text-[32px] font-bold leading-none tabular-nums" style={{ color: "var(--kk-step-panel-ink)" }}>
+              <span className="text-[26px] font-bold leading-none tabular-nums" style={{ color: "var(--kk-step-panel-ink)" }}>
                 {step.number}
               </span>
             </div>

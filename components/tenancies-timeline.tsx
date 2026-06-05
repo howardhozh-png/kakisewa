@@ -87,27 +87,31 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
               type="month"
               value={startMonth}
               onChange={(e) => setStartMonth(e.target.value)}
-              className="text-[13px] tabular-nums outline-none"
+              className="tabular-nums outline-none"
               style={{
                 background: "var(--kk-surface)",
                 border: "1.5px solid var(--kk-line-strong)",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                 borderRadius: 8,
-                padding: "3px 8px",
+                padding: "8px 12px",
                 color: "var(--kk-ink)",
+                fontSize: 13,
+                minHeight: 40,
               }}
             />
             <select
               value={windowMonths}
               onChange={(e) => setWindowMonths(Number(e.target.value))}
-              className="text-[13px] font-semibold tabular-nums outline-none"
+              className="font-semibold tabular-nums outline-none"
               style={{
                 background: "var(--kk-surface)",
                 border: "1.5px solid var(--kk-line-strong)",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                 borderRadius: 8,
-                padding: "3px 8px",
+                padding: "8px 10px",
                 color: "var(--kk-ink)",
+                fontSize: 13,
+                minHeight: 40,
               }}
             >
               <option value={3}>3 months</option>

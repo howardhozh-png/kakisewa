@@ -40,7 +40,7 @@ export function FilterSelect({
     <div ref={ref} style={{ position: "relative", minWidth, flexShrink: 0 }}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between gap-2 text-[13px] px-3 py-1.5 rounded-full w-full"
+        className="flex items-center justify-between gap-2 text-[13px] px-3 py-2.5 rounded-full w-full min-h-[40px]"
         style={{
           background: open ? "var(--kk-ink)" : "var(--kk-surface-2)",
           border: open ? "none" : "1px solid var(--kk-line)",
@@ -74,7 +74,7 @@ export function FilterSelect({
             <button
               key={o.value}
               onClick={() => { onChange(o.value); setOpen(false); }}
-              className="flex items-center justify-between gap-3 w-full px-4 py-2 text-[13px] text-left transition-colors"
+              className="flex items-center justify-between gap-3 w-full px-4 py-3 text-[13px] text-left transition-colors min-h-[44px]"
               style={{
                 color: o.value === value ? "#fff" : "rgba(255,255,255,0.65)",
                 fontWeight: o.value === value ? 600 : 400,

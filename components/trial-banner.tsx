@@ -40,9 +40,9 @@ export function TrialBanner({ daysLeft }: { daysLeft: number }) {
       <button
         onClick={dismiss}
         aria-label="Dismiss"
-        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full opacity-70 hover:opacity-100 transition-opacity"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-4 h-4" />
       </button>
     </div>
   );
