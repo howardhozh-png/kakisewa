@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, animate } from "framer-motion";
-import { Loader2, Check } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // ── Plan data ─────────────────────────────────────────────────────────────────
@@ -61,15 +61,8 @@ const PLANS = [
     monthly: 69, annualMonthly: 57, annualTotal: 690, annualSavings: 138,
     monthlyAnnualTotal: 828,
     headline: "Move your pipeline.",
-    tagline: "Track owner responses, close more leads, and manage up to 20 active contracts.",
-    features: [
-      "Owner pipeline (unlimited)",
-      "20 contract tracking cards",
-      "24-month timeline + history",
-      "Contract document storage",
-    ],
-    recommended: "New agents building their portfolio and learning the renewal cycle.",
     archetype: "New agent · <RM4k/month",
+    quote: "I want to start building my portfolio and learn renewal cycle",
     popular: false,
   },
   {
@@ -77,30 +70,17 @@ const PLANS = [
     monthly: 119, annualMonthly: 99, annualTotal: 1190, annualSavings: 238,
     monthlyAnnualTotal: 1428,
     headline: "Scale your portfolio.",
-    tagline: "More contracts tracked, more renewals captured. Up to 80 active contracts.",
-    features: [
-      "Everything in Silver, plus:",
-      "80 contract tracking cards",
-      "Commission history",
-    ],
-    recommended: "Growing agents who need to track more contracts than Silver allows.",
     archetype: "Growing agent · RM4-8k/month",
+    quote: "I have enough existing contracts and I don't want to miss them",
     popular: false,
   },
   {
     name: "Platinum" as const, planId: "platinum" as const,
-    monthly: 179, annualMonthly: 149, annualTotal: 1790, annualSavings: 358,
+    monthly: 179, annualMonthly: 149, annualTotal: 1490, annualSavings: 658,
     monthlyAnnualTotal: 2148,
     headline: "Never miss a renewal.",
-    tagline: "Up to 200 contracts, directory access, and a private agent profile to close more owners.",
-    features: [
-      "Everything in Gold, plus:",
-      "200 contract tracking cards",
-      "Directory",
-      "Private agent profile",
-    ],
-    recommended: "Established agents who want directory visibility and a shareable profile page.",
     archetype: "Established agent · RM8-15k/month",
+    quote: "Renewal contract is a big portion of my passive income and I must capture them",
     popular: true,
   },
   {
@@ -108,17 +88,8 @@ const PLANS = [
     monthly: 299, annualMonthly: 249, annualTotal: 2990, annualSavings: 598,
     monthlyAnnualTotal: 3588,
     headline: "Your all-in-one hub.",
-    tagline: "Unlimited contracts, public profile, performance analytics — everything in one place.",
-    features: [
-      "Everything in Platinum, plus:",
-      "Unlimited contract tracking",
-      "Public + searchable agent profile",
-      "Performance dashboard",
-      "Commission forecast + benchmarking",
-      "Portfolio score",
-    ],
-    recommended: "Elite agents who want full analytics, a public profile, and unlimited scale.",
     archetype: "Elite agent · >RM15k/month",
+    quote: "I am successful, and I want to build my own personal brand",
     popular: false,
   },
 ];
@@ -160,7 +131,6 @@ function PricingCard({
 }) {
   const s = TIER_STYLES[plan.name];
   const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
-  const isFirst = plan.planId === "silver";
 
   return (
     <motion.div
@@ -197,17 +167,18 @@ function PricingCard({
           </div>
         )}
 
-        <div className="p-5 flex flex-col gap-4 flex-1 relative z-10">
-          <div style={{ minHeight: 96 }}>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: s.faint }}>
-              {plan.name}
-            </p>
-            <p className="text-[20px] font-bold leading-[1.2]" style={{ color: s.ink }}>
-              {plan.headline}
-            </p>
-            <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: s.mute }}>
-              {plan.tagline}
-            </p>
+        <div className="p-5 flex flex-col gap-3 flex-1 relative z-10">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: s.faint }}>
+            {plan.name}
+          </p>
+
+          <p className="text-[20px] font-bold leading-[1.2]" style={{ color: s.ink }}>
+            {plan.headline}
+          </p>
+
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest mb-0.5" style={{ color: s.faint }}>Best for</p>
+            <p className="text-[11px] font-bold" style={{ color: s.ink }}>{plan.archetype}</p>
           </div>
 
           <div>
@@ -225,7 +196,7 @@ function PricingCard({
                   2 months free
                 </span>
                 <span className="text-[10px]" style={{ color: s.faint }}>
-                  RM {plan.annualTotal.toLocaleString()}/year
+                  from RM {plan.annualTotal.toLocaleString()}/year
                 </span>
               </div>
             ) : (
@@ -235,33 +206,12 @@ function PricingCard({
             )}
           </div>
 
-          <div style={{ height: 1, background: s.faint, opacity: 0.25 }} />
+          <div style={{ height: 1, background: s.faint, opacity: 0.25, marginTop: 4 }} />
 
-          <ul className="space-y-2 flex-1">
-            {plan.features.map((f, i) => (
-              <li key={i} className="flex items-start gap-2">
-                {i === 0 && !isFirst ? (
-                  <span className="text-[12px] leading-snug mt-0.5 w-3 shrink-0" />
-                ) : (
-                  <Check className="shrink-0 mt-0.5" size={12} style={{ color: s.accent }} strokeWidth={3} />
-                )}
-                <span className="text-[12px] leading-snug"
-                  style={{
-                    color: i === 0 && !isFirst ? s.faint : s.ink,
-                    fontStyle: i === 0 && !isFirst ? "italic" : "normal",
-                    fontWeight: i > 0 && !isFirst ? 600 : 400,
-                  }}>
-                  {f}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <div>
-            <div style={{ height: 1, background: s.faint, opacity: 0.2, marginBottom: 8 }} />
-            <p className="text-[9px] font-black uppercase tracking-widest mb-0.5" style={{ color: s.faint }}>Best for</p>
-            <p className="text-[11px] font-bold mb-0.5" style={{ color: s.ink }}>{plan.archetype}</p>
-            <p className="text-[10px] leading-relaxed" style={{ color: s.mute }}>{plan.recommended}</p>
+          <div className="flex-1 flex items-end pb-1">
+            <p className="text-[11px] leading-relaxed italic" style={{ color: s.mute }}>
+              &ldquo;{plan.quote}&rdquo;
+            </p>
           </div>
 
           <button
@@ -515,27 +465,26 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             </thead>
             <tbody>
               {([
-                ["Tenants",              "20 cards",    "80 cards",    "200 cards",         "Unlimited",          true],
-                ["Owner pipeline",       "Unlimited",   "Unlimited",   "Unlimited",         "Unlimited",          false],
-                ["Renewal timeline",     "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist",       false],
-                ["Commission history",   "—",           "Yes",         "Yes",               "Yes",                true],
-                ["Directory",            "—",           "—",           "Yes",               "Yes",                true],
-                ["Contract documents",   "Yes",         "Yes",         "Yes",               "Yes",                false],
-                ["Agent profile",        "—",           "—",           "Private",           "Public + searchable",true],
-                ["Performance dashboard","—",           "—",           "—",                 "Yes",                false],
-                ["Commission forecast",  "—",           "—",           "—",                 "Yes",                false],
-                ["Benchmarking",         "—",           "—",           "—",                 "Yes",                false],
-                ["Portfolio score",      "—",           "—",           "—",                 "Yes",                false],
+                ["Existing contracts",        "20 cards",    "80 cards",    "200 cards",         "Unlimited",          true],
+                ["Active Leads",              "Unlimited",   "Unlimited",   "Unlimited",         "Unlimited",          false],
+                ["Renewal timeline",          "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist",       false],
+                ["Commission history",        "—",           "Yes",         "Yes",               "Yes",                true],
+                ["Property services contact", "—",           "—",           "Yes",               "Yes",                true],
+                ["Contract documents",        "Yes",         "Yes",         "Yes",               "Yes",                false],
+                ["Agent profile",             "—",           "—",           "Private",           "Public + searchable",true],
+                ["Performance dashboard",     "—",           "—",           "—",                 "Yes",                false],
+                ["Commission forecast",       "—",           "—",           "—",                 "Yes",                false],
+                ["Benchmarking",              "—",           "—",           "—",                 "Yes",                false],
+                ["Portfolio score",           "—",           "—",           "—",                 "Yes",                false],
               ] as [string,string,string,string,string,boolean][]).map(([feature, silver, gold, platinum, elite, highlight], i) => (
                 <tr key={feature} style={{
                   borderBottom: "1px solid var(--kk-line)",
-                  background: highlight ? "rgba(234,179,8,0.07)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
+                  background: highlight ? "rgba(52,199,89,0.08)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
                 }}>
                   <td className="py-2.5 pr-6" style={{
-                    color: highlight ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                    color: highlight ? "#1F8B4C" : "var(--kk-ink-mute)",
                     fontWeight: highlight ? 600 : 500,
                   }}>
-                    {highlight && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-2 align-middle" />}
                     {feature}
                   </td>
                   {[silver, gold, platinum, elite].map((val, j) => (
