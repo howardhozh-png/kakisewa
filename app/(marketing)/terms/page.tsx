@@ -86,16 +86,20 @@ export default function TermsPage() {
             </p>
             <ul>
               <li>
-                <strong>Silver</strong> — RM 198/month (or RM 165/month billed annually at RM 1,980/year).
-                Includes contract tracking, owner lead management, bulk upload, owner reply tracking, and branded tenant packs.
+                <strong>Silver</strong> — RM 69/month (or RM 57/month billed annually at RM 570/year).
+                Includes active lead pipeline, owner outreach, bulk upload, owner reply tracking, and branded tenant packs. Up to 20 active contracts tracked.
               </li>
               <li>
-                <strong>Platinum</strong> — RM 398/month (or RM 332/month billed annually at RM 3,980/year).
-                Everything in Silver, plus existing contract import, renewal commission tracking, and automated renewal reminders.
+                <strong>Gold</strong> — RM 119/month (or RM 99/month billed annually at RM 990/year).
+                Everything in Silver, plus commission history and up to 80 active contracts tracked.
               </li>
               <li>
-                <strong>Elite</strong> — RM 498/month (or RM 415/month billed annually at RM 4,980/year).
-                Everything in Platinum, plus property support management, performance dashboard, and advanced analytics.
+                <strong>Platinum</strong> — RM 179/month (or RM 149/month billed annually at RM 1,490/year).
+                Everything in Gold, plus property services contact directory, renewal commission tracking, agent profile page. Up to 200 active contracts tracked.
+              </li>
+              <li>
+                <strong>Elite</strong> — RM 299/month (or RM 249/month billed annually at RM 2,490/year).
+                Everything in Platinum, plus public agent profile with search, performance dashboard, and advanced analytics. Unlimited contracts.
               </li>
             </ul>
             <p>
