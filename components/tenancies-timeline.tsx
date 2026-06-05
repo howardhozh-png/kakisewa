@@ -9,7 +9,6 @@ interface Props {
   renewalCommissionPct?: number;
   onMonthClick?: (key: string) => void;
   selectedMonth?: string;
-  plan?: string;
 }
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -19,20 +18,17 @@ function todayMonthValue() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMonthClick, selectedMonth, plan = "platinum" }: Props) {
+export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMonthClick, selectedMonth }: Props) {
   const today = useMemo(() => new Date(), []);
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-  const isSilver = plan === "silver";
-
   const [windowMonths, setWindowMonths] = useState(12);
   const [startMonth, setStartMonth] = useState(todayMonthValue);
 
   const months = useMemo(() => {
-    const [sy, sm] = (isSilver ? todayMonthValue() : startMonth).split("-").map(Number);
+    const [sy, sm] = startMonth.split("-").map(Number);
     const base = new Date(sy, sm - 1, 1);
-    const count = isSilver ? 12 : windowMonths;
     const out: { key: string; label: string; year: number; date: Date }[] = [];
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < windowMonths; i++) {
       const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
       out.push({
         key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
@@ -42,7 +38,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
       });
     }
     return out;
-  }, [isSilver, startMonth, windowMonths]);
+  }, [startMonth, windowMonths]);
 
   const buckets = useMemo(() => {
     const map = new Map<string, { count: number; potential: number }>();
@@ -64,14 +60,12 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
     { count: 0, potential: 0 }
   );
 
-  const displayMonths = isSilver ? 12 : windowMonths;
-
   return (
     <div>
-      <div className="flex items-start justify-between mb-3 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-2">
         <div>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--kk-ink-faint)", marginBottom: 2 }}>
-            Renewal income · {displayMonths} month{displayMonths === 1 ? "" : "s"}
+            Renewal income · {windowMonths} month{windowMonths === 1 ? "" : "s"}
           </p>
           <p style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--kk-theme-dark)", fontVariantNumeric: "tabular-nums" }}>
             RM {Math.round(total.potential).toLocaleString()}
@@ -81,28 +75,26 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
             <Hint text="You earn half a month's rent per renewal closed." side="right" />
           </p>
         </div>
-        {!isSilver && (
-          <div className="shrink-0 flex items-center gap-1.5">
-            <input
-              type="month"
-              value={startMonth}
-              onChange={(e) => setStartMonth(e.target.value)}
-              className="tabular-nums outline-none"
-              style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
-            />
-            <select
-              value={windowMonths}
-              onChange={(e) => setWindowMonths(Number(e.target.value))}
-              className="font-semibold tabular-nums outline-none"
-              style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
-            >
-              <option value={3}>3 months</option>
-              <option value={6}>6 months</option>
-              <option value={12}>12 months</option>
-              <option value={24}>24 months</option>
-            </select>
-          </div>
-        )}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="month"
+            value={startMonth}
+            onChange={(e) => setStartMonth(e.target.value)}
+            className="tabular-nums outline-none"
+            style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
+          />
+          <select
+            value={windowMonths}
+            onChange={(e) => setWindowMonths(Number(e.target.value))}
+            className="font-semibold tabular-nums outline-none"
+            style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
+          >
+            <option value={3}>3 months</option>
+            <option value={6}>6 months</option>
+            <option value={12}>12 months</option>
+            <option value={24}>24 months</option>
+          </select>
+        </div>
       </div>
 
       <div className="overflow-x-auto -mx-1 px-1">

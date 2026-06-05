@@ -61,7 +61,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   // Filter state
   const [propertyFilter, setPropertyFilter] = useState<string>("");
   const [purposeFilter, setPurposeFilter] = useState<"" | "rent" | "sell">("");
-  const [minRent, setMinRent] = useState<string>("");
   const [monthFilter, setMonthFilter] = useState<string>("");
   const [ownerRespondedFilter, setOwnerRespondedFilter] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
@@ -143,13 +142,12 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     return local.filter((l) => {
       if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
       if (purposeFilter && l.listing_purpose !== purposeFilter) return false;
-      if (minRent && (l.expected_rent ?? 0) < parseFloat(minRent)) return false;
       if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
       if (monthFilter && !["listed", "wants_rent", "replied"].includes(l.stage)) return false;
       if (ownerRespondedFilter && ["listed", "wants_rent", "replied"].includes(l.stage) && !rankedLeadIds.has(l.id)) return false;
       return true;
     });
-  }, [local, propertyFilter, purposeFilter, minRent, monthFilter, ownerRespondedFilter, rankedLeadIds]);
+  }, [local, propertyFilter, purposeFilter, monthFilter, ownerRespondedFilter, rankedLeadIds]);
 
   const byStage = useMemo(() => {
     const out: Record<Stage, OwnerLead[]> = {
@@ -250,14 +248,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           ]}
           minWidth={140}
         />
-        <input
-          type="number"
-          placeholder="Min rent (RM)"
-          value={minRent}
-          onChange={(e) => setMinRent(e.target.value)}
-          className="text-[13px] px-3 py-2.5 rounded-full font-medium min-h-[40px]"
-          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", width: 140, flexShrink: 0, fontSize: 13 }}
-        />
         <button
           onClick={() => setOwnerRespondedFilter((v) => !v)}
           className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5 shrink-0"
@@ -269,9 +259,9 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         >
           <CheckCircle2 className="w-3 h-3" /> Owner responded
         </button>
-        {(propertyFilter || purposeFilter || minRent || ownerRespondedFilter) && (
+        {(propertyFilter || purposeFilter || ownerRespondedFilter) && (
           <button
-            onClick={() => { setPropertyFilter(""); setPurposeFilter(""); setMinRent(""); setOwnerRespondedFilter(false); }}
+            onClick={() => { setPropertyFilter(""); setPurposeFilter(""); setOwnerRespondedFilter(false); }}
             className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5"
             style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
           >

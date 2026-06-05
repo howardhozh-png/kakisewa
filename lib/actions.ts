@@ -104,9 +104,16 @@ export async function removeProperty(id: string) {
 
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-export async function addTenancy(formData: FormData): Promise<{ ok: boolean; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
+export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
   // Resolve property — use existing or create new
   let propertyId = (formData.get("property_id") as string) || "";
+  const photoUrls: string[] = [];
+  for (let i = 0; i < 4; i++) {
+    const u = (formData.get(`photo_url_${i}`) as string) || "";
+    if (u) photoUrls.push(u);
+  }
+  const agreementUrl = (formData.get("agreement_url") as string) || null;
+
   if (!propertyId) {
     const propName = ((formData.get("property_name") as string) || "").trim();
     if (!propName) return { ok: false };
@@ -116,9 +123,11 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; rea
       unit: ((formData.get("property_unit") as string) || undefined),
       owner_name: (formData.get("owner_name") as string) || "",
       owner_phone: (formData.get("owner_phone") as string) || "",
-      photo_urls: [],
+      photo_urls: photoUrls,
     });
     propertyId = newProp.id;
+  } else if (photoUrls.length > 0) {
+    await (await import("@/lib/db")).updatePropertyPhotos(propertyId, photoUrls);
   }
 
   const contractStart = parseFlexDate((formData.get("contract_start") as string) || "");
@@ -138,7 +147,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; rea
     property_id: propertyId,
     tenant_name: formData.get("tenant_name") as string,
     tenant_phone: formData.get("tenant_phone") as string,
-    due_day: parseInt(formData.get("due_day") as string, 10),
+    due_day: parseInt(formData.get("due_day") as string, 10) || 1,
     amount: parseFloat(formData.get("amount") as string),
     current_month_paid: false,
     current_month_receipt_url: null,
@@ -178,11 +187,15 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; rea
     }
   }
 
+  if (agreementUrl) {
+    await (await import("@/lib/db")).updateTenancy(newTenancy.id, { agreement_url: agreementUrl });
+  }
+
   invalidateCache();
   revalidatePath("/existing-contracts");
   revalidatePath("/tenants");
   revalidatePath("/");
-  return { ok: true };
+  return { ok: true, id: newTenancy.id };
 }
 
 export async function removeTenancy(id: string) {
@@ -1313,9 +1326,10 @@ export async function addOwnerLeadAction(data: {
   property_name: string | null;
   unit: string | null;
   expected_rent: number | null;
-  bedrooms: number | null;
-  bathrooms: number | null;
-  notes: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  notes?: string | null;
+  available_from?: string | null;
   listing_purpose?: "rent" | "sell" | null;
 }): Promise<{ ok: boolean; id?: string; message?: string }> {
   const { createOwnerLead } = await import("@/lib/db");
@@ -1327,16 +1341,16 @@ export async function addOwnerLeadAction(data: {
       unit: data.unit,
       address: null,
       expected_rent: data.expected_rent,
-      bedrooms: data.bedrooms,
-      bathrooms: data.bathrooms,
-      notes: data.notes,
+      bedrooms: data.bedrooms ?? null,
+      bathrooms: data.bathrooms ?? null,
+      notes: data.notes ?? null,
       source: "manual",
       import_batch_id: null,
       stage: "imported",
       intake_token: null,
       intake_sent_at: null,
       intake_completed_at: null,
-      available_from: null,
+      available_from: data.available_from ?? null,
       tenant_preferences: null,
       listing_purpose: data.listing_purpose ?? null,
     });

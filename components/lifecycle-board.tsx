@@ -212,7 +212,6 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
           <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>See your renewal income for each month, up to 24 months ahead</p>
         </div>
         <TenanciesTimeline
-          plan={plan}
           tenancies={local.filter((t) => {
             if (propertyFilter !== "all" && normalizePropName(t.property_name ?? "") !== propertyFilter) return false;
             const s = defaultLifecycleStage(t, today);
