@@ -9,7 +9,7 @@ import type { ProfileStrengthItem, ProfileVerbatimItem } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 interface Props {
-  params: Promise<{ firstName: string; ren: string }>;
+  params: Promise<{ id: string; ren: string }>;
 }
 
 interface AgentRow {
