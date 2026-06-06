@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Snowflake } from "lucide-react";
 
 const PLANS = [
   { name: "Silver",   price: 69,  desc: "Start building your pipeline and renewal tracking." },
@@ -9,7 +9,7 @@ const PLANS = [
   { name: "Elite",    price: 299, desc: "Your all-in-one hub. Unlimited + public profile." },
 ];
 
-export function TrialGate() {
+export function BetaFrozenGate() {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center p-6"
@@ -21,16 +21,16 @@ export function TrialGate() {
       >
         <div
           className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{ background: "rgba(220,38,38,0.10)" }}
+          style={{ background: "rgba(59,130,246,0.10)" }}
         >
-          <Lock className="w-5 h-5" style={{ color: "#DC2626" }} />
+          <Snowflake className="w-5 h-5" style={{ color: "#3b82f6" }} />
         </div>
 
         <h2 className="serif mb-2" style={{ fontSize: "1.6rem", lineHeight: 1.15, letterSpacing: "-0.022em", color: "var(--kk-ink)" }}>
-          Your trial period has ended.
+          Your beta period has ended.
         </h2>
         <p className="mb-6" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.65 }}>
-          Your data is safe and waiting for you. Subscribe to pick up exactly where you left off.
+          We&apos;re reviewing your feedback and making improvements. Your data is safe. Subscribe now to keep your access.
         </p>
 
         <div className="flex flex-col gap-2 mb-6">
@@ -59,7 +59,7 @@ export function TrialGate() {
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-opacity hover:opacity-85 w-full justify-center"
           style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
         >
-          Choose a plan <ArrowRight className="w-4 h-4" />
+          Subscribe to continue <ArrowRight className="w-4 h-4" />
         </a>
 
         <p className="mt-4" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>

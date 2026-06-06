@@ -17,6 +17,8 @@ interface Link {
 
 interface Funnel {
   total: number;
+  beta: number;
+  beta_frozen: number;
   trial: number;
   expired: number;
   active: number;
@@ -63,9 +65,11 @@ const CATEGORY_STYLE: Record<string, { bg: string; color: string; label: string 
 };
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  trial:   { bg: "rgba(16,185,129,0.10)",  color: "#065F46", label: "Trial" },
-  expired: { bg: "rgba(220,38,38,0.10)",   color: "#DC2626", label: "Expired" },
-  active:  { bg: "rgba(0,113,227,0.10)",   color: "#0071E3", label: "Paid" },
+  beta:        { bg: "rgba(139,92,246,0.10)",  color: "#6d28d9", label: "Beta" },
+  beta_frozen: { bg: "rgba(59,130,246,0.10)",  color: "#1d4ed8", label: "Frozen" },
+  trial:       { bg: "rgba(16,185,129,0.10)",  color: "#065F46", label: "Trial" },
+  expired:     { bg: "rgba(220,38,38,0.10)",   color: "#DC2626", label: "Expired" },
+  active:      { bg: "rgba(0,113,227,0.10)",   color: "#0071E3", label: "Paid" },
 };
 
 const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
@@ -139,11 +143,13 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
 
   const maxTotal = funnel.total || 1;
   const funnelStages = [
-    { label: "Total accounts",    value: funnel.total,   color: "var(--kk-ink)" },
-    { label: "Active trial",      value: funnel.trial,   color: "var(--kk-green)" },
-    { label: "Expired trial",     value: funnel.expired, color: "#DC2626" },
-    { label: "Paid subscribers",  value: funnel.active,  color: "#0071E3" },
-    { label: "Legacy (no trial)", value: funnel.unset,   color: "var(--kk-ink-faint)" },
+    { label: "Total accounts",    value: funnel.total,        color: "var(--kk-ink)" },
+    { label: "Active beta",       value: funnel.beta,         color: "#8b5cf6" },
+    { label: "Beta frozen",       value: funnel.beta_frozen,  color: "#3b82f6" },
+    { label: "Active trial",      value: funnel.trial,        color: "var(--kk-green)" },
+    { label: "Expired",           value: funnel.expired,      color: "#DC2626" },
+    { label: "Paid subscribers",  value: funnel.active,       color: "#0071E3" },
+    { label: "Legacy (no status)",value: funnel.unset,        color: "var(--kk-ink-faint)" },
   ];
 
   async function toggleResolved(id: string, current: boolean) {

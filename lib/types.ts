@@ -126,7 +126,7 @@ export interface OwnerLead {
   created_at: string;
 }
 
-export type SubscriptionStatus = "trial" | "active" | "expired" | "cancelled";
+export type SubscriptionStatus = "beta" | "beta_frozen" | "trial" | "active" | "expired" | "cancelled";
 
 export interface AgentProfile {
   id: number;

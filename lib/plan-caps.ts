@@ -19,6 +19,7 @@ export type ProfileRow = { subscription_plan?: string | null; subscription_statu
 
 export function effectivePlan(p: ProfileRow | null): string {
   if (!p) return "silver";
+  if (p.subscription_status === "beta") return "elite_trial";
   if (p.subscription_status === "trial") return "elite_trial";
   if (p.subscription_status === "active") return p.subscription_plan ?? "silver";
   return "silver";

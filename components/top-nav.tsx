@@ -32,7 +32,7 @@ function navHasAccess(
   isAdmin: boolean,
 ): boolean {
   if (isAdmin || !minPlan) return true;
-  if (status === "trial") return true; // Full access during trial
+  if (status === "beta" || status === "trial") return true;
   if (!plan) return false;
   return (PLAN_RANK[plan] ?? 0) >= PLAN_RANK[minPlan];
 }
@@ -665,7 +665,7 @@ const TIER_BADGE = {
   },
 } as const;
 
-function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "gold" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean }) {
+function TierBadge({ plan, isOnTrial, isAdmin, isBeta }: { plan?: "silver" | "gold" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean; isBeta?: boolean }) {
   const key: keyof typeof TIER_BADGE | "trial" | null =
     isAdmin ? "god" : (plan ?? (isOnTrial ? "trial" : null));
 
@@ -682,7 +682,7 @@ function TierBadge({ plan, isOnTrial, isAdmin }: { plan?: "silver" | "gold" | "p
         }}
       >
         <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }} />
-        <span className="text-[11px] font-bold tracking-widest uppercase relative" style={{ color: "#78350f", letterSpacing: "0.12em" }}>Trial</span>
+        <span className="text-[11px] font-bold tracking-widest uppercase relative" style={{ color: "#78350f", letterSpacing: "0.12em" }}>{isBeta ? "Beta" : "Trial"}</span>
       </div>
     );
   }
@@ -762,20 +762,20 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
     };
   }, []);
 
-  // After the first-time onboarding demo closes, redirect to billing — trial users only
+  // After the first-time onboarding demo closes, redirect to billing — beta/trial users only
   useEffect(() => {
     function onDemoFirstClose() {
-      if (agent.subscription_status !== "trial") return;
+      if (agent.subscription_status !== "beta" && agent.subscription_status !== "trial") return;
       setTimeout(() => router.push("/subscription"), 400);
     }
     document.addEventListener("kk:demo-first-close", onDemoFirstClose);
     return () => document.removeEventListener("kk:demo-first-close", onDemoFirstClose);
   }, [router, agent.subscription_status]);
 
-  // On every login during a trial, nudge to subscription once per session
+  // On every login during beta/trial, nudge to subscription once per session
   useEffect(() => {
     if (isAdmin) return;
-    if (agent.subscription_status !== "trial") return;
+    if (agent.subscription_status !== "beta" && agent.subscription_status !== "trial") return;
     const SESSION_KEY = "kk_sub_shown";
     if (sessionStorage.getItem(SESSION_KEY)) return;
     sessionStorage.setItem(SESSION_KEY, "1");
@@ -856,7 +856,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
           {/* Tier badge — mobile only, sits right after brand */}
           <div className="md:hidden">
-            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} />
+            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} isBeta={agent.subscription_status === "beta"} />
           </div>
 
           {/* Nav — desktop only */}
@@ -893,7 +893,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
           {/* Right cluster — desktop only */}
           <div className="kk-topnav-desktop ml-auto items-center gap-3">
             <NotificationBell />
-            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} />
+            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} isBeta={agent.subscription_status === "beta"} />
 
             <button
               ref={btnRef}

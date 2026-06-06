@@ -5,6 +5,7 @@ import { AccentProvider } from "@/components/accent-provider";
 import { OnboardingDemoModal } from "@/components/onboarding-demo-modal";
 import { TrialBanner } from "@/components/trial-banner";
 import { TrialGate } from "@/components/trial-gate";
+import { BetaFrozenGate } from "@/components/beta-frozen-gate";
 import { TrialDowngradeNotice } from "@/components/trial-downgrade-notice";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
@@ -33,21 +34,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const trialEndsAt = agent.trial_ends_at ? new Date(agent.trial_ends_at) : null;
   const now = new Date();
   const trialDaysLeft = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000) : null;
-  // TrialGate (blocking overlay) never shows for admins; banner + countdown show for all users on trial
+  const isBetaFrozen = !isAdmin && status === "beta_frozen";
+  // TrialGate shows for expired accounts; BetaFrozenGate shows for frozen beta accounts
   const isTrialExpired = !isAdmin && (
     status === "expired" ||
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
-  const showTrialBanner = !isTrialExpired && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 14;
+  const showTrialBanner = !isTrialExpired && !isBetaFrozen && (status === "beta" || status === "trial") && trialDaysLeft !== null && trialDaysLeft <= 7;
   const trialStartedAt = trialStart ?? null;
   const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 0;
-  const isNewAgent = status === "trial" || daysSinceSignup <= 14;
+  const isNewAgent = status === "beta" || status === "trial" || daysSinceSignup <= 14;
 
   return (
     <div className="flex flex-col min-h-screen">
       <AccentProvider color={agent.accent_color} />
       <div className="sticky top-0 z-50">
-        {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} />}
+        {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={status === "beta"} />}
         <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} />
       </div>
       <GreetingBar name={agent.name} streak={streak} checkedInToday={checkedInToday} />
@@ -66,6 +68,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         agentName={agent.name}
       />
       <Toaster richColors position="top-right" closeButton />
+      {isBetaFrozen && <BetaFrozenGate />}
       {isTrialExpired && <TrialGate />}
       <FeedbackButton />
       <SessionGuard />

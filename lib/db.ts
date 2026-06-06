@@ -873,8 +873,9 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   if (!row) {
     // First login — seed profile from user_metadata and start trial
     const meta = user.user_metadata ?? {};
+    const { BETA_DURATION_DAYS } = await import("./beta-config");
     const trialStart = new Date().toISOString();
-    const trialEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+    const trialEnd = new Date(Date.now() + BETA_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const renRaw = (meta.ren_number as string | null) ?? null;
     const renNumber = renRaw ? renRaw.toUpperCase().replace(/^REN\s*/i, "REN").trim() : null;
     await supabase.from("agent_profiles").upsert({
@@ -885,7 +886,7 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       ren_number: renNumber,
       trial_started_at: trialStart,
       trial_ends_at: trialEnd,
-      subscription_status: "trial",
+      subscription_status: "beta",
       referral_slug: (meta.referral_slug as string | null) ?? null,
     });
     // Send welcome email non-blocking

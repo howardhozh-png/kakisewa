@@ -3,8 +3,6 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
-const SILVER_CARD_CAP = 5;
-
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -12,63 +10,40 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createServiceClient();
+  const now = new Date().toISOString();
 
-  // Find all agents whose trial has expired but haven't been downgraded yet
-  const { data: expired } = await supabase
+  // Beta users whose beta period has ended → freeze their account
+  const { data: expiredBeta } = await supabase
+    .from("agent_profiles")
+    .select("id")
+    .eq("subscription_status", "beta")
+    .lt("trial_ends_at", now);
+
+  // Legacy trial users whose trial has ended → expire their account
+  const { data: expiredTrial } = await supabase
     .from("agent_profiles")
     .select("id")
     .eq("subscription_status", "trial")
-    .lt("trial_ends_at", new Date().toISOString());
+    .lt("trial_ends_at", now);
 
-  if (!expired || expired.length === 0) {
-    return NextResponse.json({ downgraded: 0 });
-  }
+  let frozen = 0;
+  let expired = 0;
 
-  let downgraded = 0;
-
-  for (const agent of expired) {
-    const userId = agent.id as string;
-
-    // 1. Fetch active renewal cards ordered oldest first
-    const { data: cards } = await supabase
-      .from("tenancies")
-      .select("id")
-      .eq("user_id", userId)
-      .not("contract_end", "is", null)
-      .eq("outcome", "pending")
-      .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed")
-      .order("created_at", { ascending: true });
-
-    const cardIds = (cards ?? []).map((c: { id: string }) => c.id);
-    const toKeep = cardIds.slice(0, SILVER_CARD_CAP);
-    const toArchive = cardIds.slice(SILVER_CARD_CAP);
-
-    // 2. Archive overflow cards
-    if (toArchive.length > 0) {
-      await supabase
-        .from("tenancies")
-        .update({ lifecycle_stage: "closed" })
-        .in("id", toArchive);
-    }
-
-    // 3. Pause all tenant pack links for this agent
-    await supabase
-      .from("match_packs")
-      .update({ is_paused: true })
-      .eq("agent_id", userId);
-
-    // 4. Downgrade plan + set notice flag
+  for (const agent of expiredBeta ?? []) {
     await supabase
       .from("agent_profiles")
-      .update({
-        subscription_status: "active",
-        subscription_plan: "silver",
-        trial_downgrade_archived_count: toArchive.length,
-      })
-      .eq("id", userId);
-
-    downgraded++;
+      .update({ subscription_status: "beta_frozen" })
+      .eq("id", agent.id);
+    frozen++;
   }
 
-  return NextResponse.json({ downgraded });
+  for (const agent of expiredTrial ?? []) {
+    await supabase
+      .from("agent_profiles")
+      .update({ subscription_status: "expired" })
+      .eq("id", agent.id);
+    expired++;
+  }
+
+  return NextResponse.json({ frozen, expired });
 }

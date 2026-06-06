@@ -18,6 +18,14 @@ export default async function AdminPage() {
   const nowTs = new Date();
   const funnel = {
     total: (profiles ?? []).length,
+    beta: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
+      p.subscription_status === "beta" &&
+      p.trial_ends_at &&
+      new Date(p.trial_ends_at) > nowTs
+    ).length,
+    beta_frozen: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
+      p.subscription_status === "beta_frozen"
+    ).length,
     trial: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "trial" &&
       p.trial_ends_at &&

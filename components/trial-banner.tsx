@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 
-export function TrialBanner({ daysLeft }: { daysLeft: number }) {
+export function TrialBanner({ daysLeft, isBeta }: { daysLeft: number; isBeta?: boolean }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -22,6 +22,7 @@ export function TrialBanner({ daysLeft }: { daysLeft: number }) {
   if (!visible) return null;
 
   const label = daysLeft === 1 ? "1 day" : `${daysLeft} days`;
+  const periodLabel = isBeta ? "beta access" : "trial";
 
   return (
     <div
@@ -29,7 +30,7 @@ export function TrialBanner({ daysLeft }: { daysLeft: number }) {
       style={{ background: "#DC2626", color: "#fff", fontSize: "var(--kk-sm)", lineHeight: 1.4 }}
     >
       <span>
-        Your Elite trial ends in <strong>{label}</strong>. Choose your plan to keep your data.{" "}
+        Your {periodLabel} ends in <strong>{label}</strong>. Choose your plan to keep your data.{" "}
         <Link
           href="/subscription"
           className="underline font-semibold opacity-90 hover:opacity-100 transition-opacity"

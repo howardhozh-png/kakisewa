@@ -4,7 +4,6 @@ import { createServiceClient } from "@/lib/supabase/service";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  // Vercel Cron passes this header; skip auth check in dev
   const authHeader = req.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,29 +20,37 @@ export async function GET(req: NextRequest) {
 
   const w1 = dayWindow(1);
   const w3 = dayWindow(3);
-
-  // Find agents expiring tomorrow (1-day) or in 3 days (3-day warning)
-  const { data: expiring1 } = await supabase
-    .from("agent_profiles").select("id, name")
-    .eq("subscription_status", "trial")
-    .gte("trial_ends_at", w1.start).lte("trial_ends_at", w1.end);
-
-  const { data: expiring3 } = await supabase
-    .from("agent_profiles").select("id, name")
-    .eq("subscription_status", "trial")
-    .gte("trial_ends_at", w3.start).lte("trial_ends_at", w3.end);
+  const w7 = dayWindow(7);
 
   type AgentRow = { id: string; name: string | null };
-  const expiring = [
-    ...(expiring1 ?? []).map((a: AgentRow) => ({ ...a, days: 1 })),
-    ...(expiring3 ?? []).map((a: AgentRow) => ({ ...a, days: 3 })),
-  ];
 
-  if (!expiring || expiring.length === 0) {
+  async function fetchExpiring(days: number, window: { start: string; end: string }) {
+    const [{ data: beta }, { data: trial }] = await Promise.all([
+      supabase.from("agent_profiles").select("id, name")
+        .eq("subscription_status", "beta")
+        .gte("trial_ends_at", window.start).lte("trial_ends_at", window.end),
+      supabase.from("agent_profiles").select("id, name")
+        .eq("subscription_status", "trial")
+        .gte("trial_ends_at", window.start).lte("trial_ends_at", window.end),
+    ]);
+    return [
+      ...(beta ?? []).map((a: AgentRow) => ({ ...a, days, isBeta: true })),
+      ...(trial ?? []).map((a: AgentRow) => ({ ...a, days, isBeta: false })),
+    ];
+  }
+
+  const [ex1, ex3, ex7] = await Promise.all([
+    fetchExpiring(1, w1),
+    fetchExpiring(3, w3),
+    fetchExpiring(7, w7),
+  ]);
+
+  const expiring = [...ex1, ...ex3, ...ex7];
+
+  if (expiring.length === 0) {
     return NextResponse.json({ sent: 0 });
   }
 
-  // Fetch emails from auth.users via admin API
   const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
   const emailById = Object.fromEntries((users ?? []).map((u: { id: string; email?: string }) => [u.id, u.email]));
 
@@ -56,12 +63,26 @@ export async function GET(req: NextRequest) {
     if (!email) continue;
 
     const firstName = (agent.name ?? "").split(" ")[0] || "there";
-    const days = (agent as { days: number }).days;
-    const subject = days === 1 ? "Your free trial ends tomorrow" : "Your free trial ends in 3 days";
-    const headline = days === 1 ? `Hi ${firstName}, your trial ends tomorrow` : `Hi ${firstName}, 3 days left on your trial`;
-    const body = days === 1
-      ? "Your 14-day free trial ends tomorrow. Upgrade now to keep tracking your contracts, commissions, and tenants without interruption."
-      : "You have 3 days left on your kakisewa trial. Upgrade to keep everything running — contracts, renewals, tenant packs, and commissions.";
+    const { days, isBeta } = agent as { days: number; isBeta: boolean };
+    const periodLabel = isBeta ? "beta period" : "trial";
+
+    const subject =
+      days === 1 ? `Your ${periodLabel} ends tomorrow` :
+      days === 3 ? `Your ${periodLabel} ends in 3 days` :
+                   `Your ${periodLabel} ends in 7 days`;
+
+    const headline =
+      days === 1 ? `Hi ${firstName}, your ${periodLabel} ends tomorrow` :
+      days === 3 ? `Hi ${firstName}, 3 days left on your ${periodLabel}` :
+                   `Hi ${firstName}, 7 days left on your ${periodLabel}`;
+
+    const body =
+      days === 1
+        ? `Your ${isBeta ? "beta" : "90-day"} access ends tomorrow. Subscribe now to keep tracking your contracts, commissions, and tenants without interruption.`
+        : days === 3
+        ? `You have 3 days left on your kakisewa ${periodLabel}. Subscribe to keep everything running — contracts, renewals, tenant packs, and commissions.`
+        : `You have 7 days left on your kakisewa ${periodLabel}. Lock in your plan now to keep everything running seamlessly.`;
+
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
@@ -79,7 +100,7 @@ export async function GET(req: NextRequest) {
            padding:12px 24px;border-radius:10px;text-decoration:none">
     View plans
   </a>
-  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">Silver starts at RM 39/month. Cancel anytime.</p>
+  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">Silver starts at RM 69/month. Cancel anytime.</p>
 </div>`,
       }),
     });

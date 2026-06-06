@@ -344,7 +344,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isOnTrial = status === "trial" && trialDaysLeft !== null && trialDaysLeft > 0;
+  const isOnTrial = (status === "beta" || status === "trial") && trialDaysLeft !== null && trialDaysLeft > 0;
 
   async function handleConfirm() {
     if (!pending) return;
@@ -409,7 +409,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
                 style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-                Trial · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
+                {status === "beta" ? "Beta" : "Trial"} · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
               </span>
             </div>
           )}
