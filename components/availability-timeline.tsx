@@ -81,7 +81,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
             type="month"
             value={startMonth}
             onChange={(e) => setStartMonth(e.target.value)}
-            className="tabular-nums outline-none"
+            className="tabular-nums outline-none max-w-[110px] sm:max-w-none"
             style={{ fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
           />
           <select
