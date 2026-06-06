@@ -51,19 +51,6 @@ db.exec(`
     beta_end TEXT NOT NULL DEFAULT '2026-08-04T00:00:00Z'
   );
 
-  CREATE TABLE IF NOT EXISTS rent_payments (
-    id          TEXT PRIMARY KEY,
-    tenancy_id  TEXT NOT NULL REFERENCES tenancies(id) ON DELETE CASCADE,
-    month       TEXT NOT NULL,            -- 'YYYY-MM'
-    amount      REAL NOT NULL,
-    paid_at     TEXT,                     -- ISO timestamp; null = unpaid
-    receipt_url TEXT,
-    status      TEXT NOT NULL DEFAULT 'pending'
-                  CHECK(status IN ('pending','paid','verified')),
-    UNIQUE(tenancy_id, month)
-  );
-  CREATE INDEX IF NOT EXISTS idx_rent_payments_month ON rent_payments(month);
-
   -- Every outbound WhatsApp send is logged here, regardless of channel
   -- (wa.me deeplink, BSP API, etc). Lets us migrate to WhatsApp Business API
   -- later without changing call sites.
@@ -212,7 +199,6 @@ addIfMissing("tenancies",         "owner_lead_id",          "TEXT");
 addIfMissing("tenancies",         "report_token",           "TEXT");
 addIfMissing("account",           "agent_id",               "TEXT NOT NULL DEFAULT 'dev_agent_howard'");
 addIfMissing("account",           "subscription_status",    "TEXT NOT NULL DEFAULT 'active'");
-addIfMissing("rent_payments",     "agent_id",               "TEXT NOT NULL DEFAULT 'dev_agent_howard'");
 addIfMissing("whatsapp_log",      "agent_id",               "TEXT NOT NULL DEFAULT 'dev_agent_howard'");
 addIfMissing("agent_profile",     "agent_id",               "TEXT NOT NULL DEFAULT 'dev_agent_howard'");
 addIfMissing("owner_leads",       "agent_id",               "TEXT NOT NULL DEFAULT 'dev_agent_howard'");
@@ -470,52 +456,6 @@ if (tpCount === 0) {
     `UPDATE tenancies SET tenant_phone = ?
      WHERE id NOT IN ('ten_1','ten_2','ten_3','ten_4') AND tenant_phone NOT IN (?, ?)`
   ).run(phoneA, phoneA, phoneB);
-}
-
-// Seed rent_payments history — runs once when table is empty.
-// Generates 3 months of realistic payment records per tenancy so the
-// dashboard donut + backlog widgets have data to render.
-const payCount = (db.prepare("SELECT COUNT(*) as c FROM rent_payments").get() as { c: number }).c;
-if (payCount === 0) {
-  type SeedTen = { id: string; amount: number };
-  const tens = db.prepare("SELECT id, amount FROM tenancies").all() as SeedTen[];
-  if (tens.length > 0) {
-    const now = new Date();
-    const months = [-2, -1, 0].map((delta) => {
-      const d = new Date(now.getFullYear(), now.getMonth() + delta, 1);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    });
-    const insert = db.prepare(
-      `INSERT INTO rent_payments (id, tenancy_id, month, amount, paid_at, status)
-       VALUES (?,?,?,?,?,?)`
-    );
-    db.transaction(() => {
-      tens.forEach((t, idx) => {
-        // Two months ago: everyone paid
-        insert.run(`pay_${t.id}_${months[0]}`, t.id, months[0], t.amount,
-          new Date(now.getFullYear(), now.getMonth() - 2, 5).toISOString(), "verified");
-        // Last month: most paid, one pending (skip 1 in 4)
-        if (idx % 4 !== 0) {
-          insert.run(`pay_${t.id}_${months[1]}`, t.id, months[1], t.amount,
-            new Date(now.getFullYear(), now.getMonth() - 1, 6).toISOString(), "verified");
-        } else {
-          insert.run(`pay_${t.id}_${months[1]}`, t.id, months[1], t.amount,
-            null, "pending");
-        }
-        // Current month: matches the tenancy.current_month_paid flag
-        const cur = db.prepare("SELECT current_month_paid, current_month_receipt_url, status FROM tenancies WHERE id=?").get(t.id) as
-          { current_month_paid: number; current_month_receipt_url: string | null; status: string } | undefined;
-        if (cur) {
-          insert.run(
-            `pay_${t.id}_${months[2]}`, t.id, months[2], t.amount,
-            cur.current_month_paid ? new Date().toISOString() : null,
-            cur.current_month_paid ? "verified" :
-              cur.status === "Paid - Pending Verification" ? "paid" : "pending"
-          );
-        }
-      });
-    })();
-  }
 }
 
 // Seed diverse owner leads across all stages (demo scenarios, idempotent)

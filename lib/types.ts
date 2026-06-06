@@ -6,28 +6,6 @@ export type TenancyStatus =
 
 export type LhdnStatus = "none" | "generated" | "submitted";
 
-export type PaymentStatus = "pending" | "paid" | "verified";
-
-export interface RentPayment {
-  id: string;
-  tenancy_id: string;
-  month: string;            // 'YYYY-MM'
-  amount: number;
-  paid_at: string | null;
-  receipt_url: string | null;
-  status: PaymentStatus;
-}
-
-export interface MonthlyCollection {
-  month: string;            // 'YYYY-MM'
-  label: string;            // 'May'
-  total: number;
-  collected: number;
-  outstanding: number;
-  pct: number;
-  paymentCount: number;
-  paidCount: number;
-}
 
 export type Tier = "starter" | "pro" | "elite";
 

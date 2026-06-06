@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "./supabase/server";
 import { createServiceClient } from "./supabase/service";
 import { headers } from "next/headers";
-import type { Property, Tenancy, TenancyStatus, LhdnStatus, Tier, MonthlyCollection, PropertySupport, SupportType } from "./types";
+import type { Property, Tenancy, TenancyStatus, LhdnStatus, Tier, PropertySupport, SupportType } from "./types";
 import type { WhatsAppLogEntry, WhatsAppTemplate } from "./types";
 import type { OwnerLead, AgentProfile, TenantProfile, MatchPack, PackTenant } from "./types";
 
@@ -568,78 +568,6 @@ export async function getStats() {
     totalRent, collectedRent,
     collectionPct: totalRent > 0 ? Math.round((collectedRent / totalRent) * 100) : 0,
   };
-}
-
-// ─── Rent payment history ─────────────────────────────────────────────────────
-
-const MONTH_LABEL = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-export async function getRecentMonthlyCollections(monthsBack = 3): Promise<MonthlyCollection[]> {
-  const now = new Date();
-  const months: string[] = [];
-  for (let i = monthsBack - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-  }
-
-  const supabase = await createClient();
-  const { data: rows, error } = await supabase
-    .from("rent_payments")
-    .select("month, amount, status")
-    .in("month", months);
-  if (error) throw error;
-
-  const byMonth = new Map<string, { total: number; collected: number; paymentCount: number; paidCount: number }>();
-  for (const r of rows ?? []) {
-    const m = (r as Record<string, unknown>).month as string;
-    const amount = (r as Record<string, unknown>).amount as number;
-    const status = (r as Record<string, unknown>).status as string;
-    const cur = byMonth.get(m) ?? { total: 0, collected: 0, paymentCount: 0, paidCount: 0 };
-    cur.total += amount;
-    cur.paymentCount += 1;
-    if (status === "verified") { cur.collected += amount; cur.paidCount += 1; }
-    byMonth.set(m, cur);
-  }
-
-  return months.map((m) => {
-    const r = byMonth.get(m);
-    const total = r?.total ?? 0;
-    const collected = r?.collected ?? 0;
-    const [, mm] = m.split("-");
-    return {
-      month: m,
-      label: MONTH_LABEL[parseInt(mm, 10) - 1] ?? m,
-      total,
-      collected,
-      outstanding: Math.max(0, total - collected),
-      pct: total > 0 ? Math.round((collected / total) * 100) : 0,
-      paymentCount: r?.paymentCount ?? 0,
-      paidCount: r?.paidCount ?? 0,
-    };
-  });
-}
-
-export async function getPaymentsByTenancy(monthsBack = 3): Promise<Record<string, import("./types").RentPayment[]>> {
-  const now = new Date();
-  const months: string[] = [];
-  for (let i = monthsBack - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-  }
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("rent_payments")
-    .select("id, tenancy_id, month, amount, paid_at, receipt_url, status")
-    .in("month", months)
-    .order("month", { ascending: false });
-  if (error) throw error;
-
-  const out: Record<string, import("./types").RentPayment[]> = {};
-  for (const r of data ?? []) {
-    const row = r as import("./types").RentPayment & { tenancy_id: string };
-    (out[row.tenancy_id] ??= []).push(row);
-  }
-  return out;
 }
 
 // ─── WhatsApp message log ────────────────────────────────────────────────────
