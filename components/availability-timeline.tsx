@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { Hint } from "@/components/hint";
+import { MonthPickerPill } from "@/components/month-picker-pill";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OwnerLead } from "@/lib/types";
 
 interface Props {
@@ -78,31 +80,18 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
           </p>
         </div>
         <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">
-          {(() => {
-            const [sy, sm] = startMonth.split("-").map(Number);
-            const curYear = new Date().getFullYear();
-            const years = Array.from({ length: 5 }, (_, i) => curYear - 1 + i);
-            const selStyle: React.CSSProperties = { fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500, minWidth: 0 };
-            return (<>
-              <select value={sm} onChange={(e) => setStartMonth(`${sy}-${String(e.target.value).padStart(2,"0")}`)} className="tabular-nums outline-none" style={{ ...selStyle, width: 50 }}>
-                {MONTH_SHORT.map((name, i) => <option key={i} value={i + 1}>{name}</option>)}
-              </select>
-              <select value={sy} onChange={(e) => setStartMonth(`${e.target.value}-${String(sm).padStart(2,"0")}`)} className="tabular-nums outline-none" style={{ ...selStyle, width: 58 }}>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </>);
-          })()}
-          <select
-            value={windowMonths}
-            onChange={(e) => setWindowMonths(Number(e.target.value))}
-            className="tabular-nums outline-none"
-            style={{ fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500, width: 52, minWidth: 0 }}
-          >
-            <option value={3}>3m</option>
-            <option value={6}>6m</option>
-            <option value={12}>12m</option>
-            <option value={24}>24m</option>
-          </select>
+          <MonthPickerPill value={startMonth} onChange={setStartMonth} />
+          <Select value={String(windowMonths)} onValueChange={(v) => { if (v) setWindowMonths(Number(v)); }}>
+            <SelectTrigger className="text-[10px] font-medium gap-1 [&_svg]:size-3" style={{ height: "auto", padding: "2px 8px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}>
+              <SelectValue>{windowMonths}m</SelectValue>
+            </SelectTrigger>
+            <SelectContent align="end" className="min-w-[72px] text-[11px]">
+              <SelectItem value="3" className="py-1.5 text-[11px]">3m</SelectItem>
+              <SelectItem value="6" className="py-1.5 text-[11px]">6m</SelectItem>
+              <SelectItem value="12" className="py-1.5 text-[11px]">12m</SelectItem>
+              <SelectItem value="24" className="py-1.5 text-[11px]">24m</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
