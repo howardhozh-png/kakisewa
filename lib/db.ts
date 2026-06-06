@@ -286,7 +286,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: "kakisewa <noreply@kakisewa.com>",
+      from: "kakisewa <support@kakisewa.com>",
       to: [email],
       bcc: ["howardhozh@gmail.com"],
       subject: "You're in — 14-day trial started",
