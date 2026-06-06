@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import * as Popover from "@radix-ui/react-popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -26,8 +26,8 @@ export function MonthPickerPill({ value, onChange }: Props) {
   }
 
   return (
-    <Popover.Root open={open} onOpenChange={handleOpenChange}>
-      <Popover.Trigger asChild>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
         <button
           style={{
             fontSize: 10, padding: "2px 8px", borderRadius: 12,
@@ -38,17 +38,13 @@ export function MonthPickerPill({ value, onChange }: Props) {
         >
           {MONTHS[vm - 1]} {vy}
         </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          align="end"
-          sideOffset={6}
-          style={{
-            background: "var(--kk-surface)", border: "1px solid var(--kk-line)",
-            borderRadius: 14, padding: 12, boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-            zIndex: 50, width: 180,
-          }}
-        >
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        className="p-3 w-[180px]"
+        style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 14, boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}
+      >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <button onClick={() => setNavYear(y => y - 1)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 8px", borderRadius: 6, color: "var(--kk-ink)", fontSize: 16, lineHeight: 1 }}>‹</button>
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)" }}>{navYear}</span>
@@ -74,8 +70,7 @@ export function MonthPickerPill({ value, onChange }: Props) {
               );
             })}
           </div>
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+        </PopoverContent>
+    </Popover>
   );
 }

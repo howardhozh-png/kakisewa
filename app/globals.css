@@ -712,19 +712,17 @@ html, body {
   .kk-topnav-hamburger { display: none; }
 }
 
-/* Sonner toast — compact width, left-aligned text, × at top-right outside box */
-[data-sonner-toaster] {
-  --width: 320px !important;
+/* Sonner toast — compact width, × repositioned to top-right outside box */
+/* Double attribute selector beats Sonner's single-attribute rules without !important */
+[data-sonner-toast][data-sonner-toast] {
+  width: 320px;
+  min-width: unset;
 }
-[data-sonner-toast] {
-  width: 320px !important;
-  min-width: unset !important;
-}
-[data-sonner-toast] [data-close-button] {
-  left: auto !important;
-  right: -10px !important;
-  top: -10px !important;
-  transform: none !important;
+[data-sonner-toast][data-sonner-toast] [data-close-button] {
+  left: auto;
+  right: -10px;
+  top: -10px;
+  transform: none;
 }
 
 /* ─── react-day-picker theme ────────────────────────────────────────────── */

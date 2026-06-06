@@ -4,6 +4,7 @@ import { useState, useTransition, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Loader2, ChevronDown, MessageCircle, PenLine, Camera, X, FileText } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
+import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { toast } from "sonner";
 import type { Property } from "@/lib/types";
@@ -454,10 +455,9 @@ export function NewListingButton({ properties = [] }: { properties?: Property[] 
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--kk-ink-soft)" }}>Available from</label>
-                      <input
-                        type="date"
+                      <DateInput
                         value={form.available_from}
-                        onChange={(e) => setForm((f) => ({ ...f, available_from: e.target.value }))}
+                        onChange={(iso) => setForm((f) => ({ ...f, available_from: iso }))}
                         className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                         style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                       />
