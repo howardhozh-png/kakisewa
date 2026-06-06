@@ -1,0 +1,86 @@
+# kakisewa Development Guidelines
+
+## Stack
+- **Next.js 16.2.4** with Turbopack — read `node_modules/next/dist/docs/` before touching routing, middleware, or async APIs. Heed deprecation notices.
+- **Tailwind CSS v4** with Lightning CSS — CSS pipeline strips compound/descendant selectors inside `@media` blocks (e.g. `.kk-chart-ctrl select` won't survive). Use inline styles for critical sizing.
+- **shadcn/ui** built on `@base-ui/react` (not Radix UI). Check `components/ui/` before building anything UI-related.
+- **Supabase** (project: `binqdtfvyhipgwpiarkb`) for auth + data. Always use Supabase MCP for schema work.
+- **Vercel** for deployment via `git push` hook.
+
+---
+
+## Workflow: Explore → Plan → Execute (mandatory for every task)
+
+1. **Explore** — use an Explore subagent to read the codebase and understand the full implication of the request. Check `MEMORY.md` for prior session context.
+2. **Plan** — write out what you will change and why. Show the user before touching any file.
+3. **Execute** — only after user confirms the plan.
+
+Never skip to Execute without completing Explore and Plan first.
+
+---
+
+## Design — shadcn only
+
+- **Never build a custom UI component** that already exists in `components/ui/`. Check there first.
+- Use CSS variables: `var(--kk-ink)`, `var(--kk-surface)`, `var(--kk-theme-dark)`, etc. Never hardcode colours.
+- Spacing, typography, and borders must use the existing design tokens defined in `app/globals.css`.
+- For icons use `lucide-react` (already installed).
+- shadcn component props are typed — always check the component's actual type definition before guessing prop names.
+
+---
+
+## CSS Gotchas (hard-won)
+
+| Problem | Why | Fix |
+|---|---|---|
+| Compound selectors stripped | Lightning CSS drops `.parent child` rules inside `@media` | Use inline `style={}` for sizing critical to responsive behaviour |
+| `!important` stripped | Tailwind v4 compiles away `!important` from source | Use inline style; it always wins over stylesheet classes |
+| `data-[attr=val]:h-X` ignores `!h-auto` | tailwind-merge can't resolve data-attribute conflicts | Add `height: 'auto'` to `style={}` directly |
+| `input[type="month"]` huge on iOS | Safari renders it as a native date picker widget | Replace with Radix Popover + month grid or shadcn Select |
+| Global `input { font-size: 16px }` on mobile | Prevents iOS zoom — intentional — but overrides inline fontSize | Use inline `style={{ fontSize: 16 }}` + `transform: scale()` or avoid native inputs |
+
+---
+
+## Mobile-first + Playwright (mandatory before every ship)
+
+Every visible change must be verified in Playwright **before** reporting done:
+
+1. Resize to **390×844** (iPhone 14 mobile)
+2. Take a screenshot and confirm the feature renders correctly
+3. Resize to **1280×800** (desktop) and confirm no regression
+4. Check interactive states (open/close, select, click) where relevant
+
+```js
+// Standard Playwright check sequence
+await page.setViewportSize({ width: 390, height: 844 });
+await page.screenshot({ path: 'mobile-check.png' });
+await page.setViewportSize({ width: 1280, height: 800 });
+await page.screenshot({ path: 'desktop-check.png' });
+```
+
+---
+
+## Deployment
+
+- **Always deploy to localhost first.** Run `npm run dev` and verify with Playwright.
+- **Never push to production** unless the user explicitly says "deploy to production" or "push to prod".
+- After every localhost verification, tell the user "ready to deploy — say 'deploy to production' when you've checked".
+- Dev server cache issue: if UI changes don't appear, run `lsof -ti :3000 | xargs kill -9 && rm -rf .next && npm run dev`.
+
+---
+
+## Database — Supabase MCP
+
+- Before creating any new table, use Supabase MCP to list existing tables and check for overlap.
+- Every new table must have: `id uuid default gen_random_uuid() primary key`, `created_at timestamptz default now()`, `user_id uuid references auth.users`.
+- Enable Row Level Security on every user-facing table.
+- After schema changes, check that all existing queries in `lib/` and `app/` still work.
+- Never drop a table without first confirming it has zero references in the codebase.
+
+---
+
+## Context & Memory
+
+- At the start of every session, check `MEMORY.md` (auto-loaded) for prior decisions, feedback, and project state.
+- Use the Explore subagent for broad codebase research — it doesn't bloat the main context window.
+- `/clear` between unrelated tasks. Long sessions with accumulated corrections degrade quality — start fresh with a better prompt.
