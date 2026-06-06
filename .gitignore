@@ -49,3 +49,6 @@ playwright.config.ts
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# Debug screenshots from Playwright sessions
+*.png
