@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
+  // Idempotency: skip events we've already processed
+  const { data: existing } = await admin
+    .from("processed_stripe_events")
+    .select("event_id")
+    .eq("event_id", event.id)
+    .maybeSingle();
+  if (existing) return NextResponse.json({ received: true });
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.metadata?.supabase_user_id;
@@ -121,6 +129,9 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  // Mark event as processed
+  await admin.from("processed_stripe_events").insert({ event_id: event.id });
 
   return NextResponse.json({ received: true });
 }

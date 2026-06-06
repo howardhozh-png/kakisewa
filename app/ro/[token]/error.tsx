@@ -1,0 +1,34 @@
+"use client";
+
+import { useEffect } from "react";
+
+export default function TokenPageError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => { console.error(error); }, [error]);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
+      <p className="font-semibold tracking-widest uppercase mb-4"
+        style={{ fontSize: 11, color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}>
+        Something went wrong
+      </p>
+      <h1 className="serif mb-3"
+        style={{ fontSize: "clamp(1.5rem,4vw,2.25rem)", lineHeight: 1.15, letterSpacing: "-0.02em", color: "var(--kk-ink)" }}>
+        This link couldn't be loaded
+      </h1>
+      <p style={{ fontSize: 15, color: "var(--kk-ink-mute)", marginBottom: 32, maxWidth: 380 }}>
+        The link may have expired or already been used. Contact your agent for a new one.
+      </p>
+      <button onClick={reset}
+        className="px-6 py-2.5 rounded-full font-semibold transition-opacity hover:opacity-80"
+        style={{ background: "var(--kk-ink)", color: "#fff", fontSize: 15 }}>
+        Try again
+      </button>
+    </div>
+  );
+}

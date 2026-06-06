@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getTenantIntakeSession, completeTenantIntake } from "@/lib/db";
 import { extractTenantIntake } from "@/lib/ai-classify";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+
+const schema = z.object({
+  token: z.string().min(1).max(200),
+  answers: z.array(z.string().max(5000)).min(1).max(50),
+});
 
 export async function POST(request: NextRequest) {
-  try {
-    const { token, answers } = (await request.json()) as {
-      token: string;
-      answers: string[];
-    };
+  if (!checkRateLimit(rateLimitKey(request), 10, 60_000)) {
+    return NextResponse.json({ ok: false, message: "Too many requests" }, { status: 429 });
+  }
 
-    if (!token || !Array.isArray(answers)) {
+  try {
+    const parsed = schema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json({ ok: false, message: "Invalid request" }, { status: 400 });
     }
+    const { token, answers } = parsed.data;
 
     const session = await getTenantIntakeSession(token);
     if (!session) {
