@@ -642,7 +642,6 @@ html, body {
   input, textarea { font-size: 16px !important; }
   /* selects open a native wheel picker — no auto-zoom risk, keep them styleable */
   select { font-size: 16px !important; }
-  .kk-chart-ctrl select { font-size: 11px !important; }
 
   /* Kanban boards: remove sticky viewport-height behaviour — let them scroll
      naturally on the page with horizontal swipe for columns */
