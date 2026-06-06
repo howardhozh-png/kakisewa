@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { usePostHog } from "posthog-js/react"
 import { createClient } from "@/lib/supabase/client"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
 
@@ -39,6 +40,7 @@ function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const refSlug = searchParams.get("ref") ?? null
+  const ph = usePostHog()
 
   const [form, setForm] = useState({ name: "", email: "", agency: "", passcode: "" })
   const [error, setError] = useState<string | null>(null)
@@ -80,6 +82,7 @@ function SignUpForm() {
       },
     })
     if (err) { setError(err.message); setLoading(false); return }
+    ph?.capture("user_signed_up", { email: form.email, agency: form.agency, referral_slug: refSlug })
     setLoading(false)
     setSubmitted(true)
   }
