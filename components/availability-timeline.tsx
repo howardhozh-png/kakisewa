@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import { Hint } from "@/components/hint";
 import { OwnerLead } from "@/lib/types";
 
@@ -76,19 +77,32 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
             <Hint text="You earn 1 full month's rent per successful placement." side="right" />
           </p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <input
-            type="month"
-            value={startMonth}
-            onChange={(e) => setStartMonth(e.target.value)}
-            className="tabular-nums outline-none max-w-[110px] sm:max-w-none"
-            style={{ fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none" }}
-          />
+        <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">
+          <select
+            value={startMonth.split("-")[1]}
+            onChange={(e) => setStartMonth(`${startMonth.split("-")[0]}-${e.target.value}`)}
+            className="tabular-nums outline-none"
+            style={{ fontSize: 11, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
+          >
+            {MONTH_SHORT.map((name, i) => (
+              <option key={i} value={String(i + 1).padStart(2, "0")}>{name}</option>
+            ))}
+          </select>
+          <select
+            value={startMonth.split("-")[0]}
+            onChange={(e) => setStartMonth(`${e.target.value}-${startMonth.split("-")[1]}`)}
+            className="tabular-nums outline-none"
+            style={{ fontSize: 11, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
+          >
+            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
+              <option key={y} value={String(y)}>{y}</option>
+            ))}
+          </select>
           <select
             value={windowMonths}
             onChange={(e) => setWindowMonths(Number(e.target.value))}
             className="tabular-nums outline-none"
-            style={{ fontSize: 10, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
+            style={{ fontSize: 11, padding: "2px 5px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)", outline: "none", fontWeight: 500 }}
           >
             <option value={3}>3m</option>
             <option value={6}>6m</option>
