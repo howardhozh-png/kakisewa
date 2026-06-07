@@ -149,8 +149,6 @@ export function buildProofRequest(tenantName: string, uploadUrl: string): string
   );
 }
 
-function logOutboundMessage(to: string, body: string) {
-  // In production: call Meta Cloud API or Twilio to send message
-  // For now, structured log for observability
-  console.log(JSON.stringify({ type: "whatsapp_outbound", to, body, ts: new Date().toISOString() }));
+function logOutboundMessage(_to: string, _body: string) {
+  // Outbound message logging placeholder — wire to Twilio/Meta Cloud API when ready
 }

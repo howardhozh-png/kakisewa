@@ -1,7 +1,6 @@
 ---
 name: fix
 description: Bug fix workflow — diagnose root cause, not symptoms; verify with Playwright before reporting done
-disable-model-invocation: true
 ---
 
 Fix the bug: $ARGUMENTS

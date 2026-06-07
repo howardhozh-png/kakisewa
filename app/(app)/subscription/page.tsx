@@ -15,10 +15,7 @@ export default async function SubscriptionPage() {
   const trialDaysLeft = trialEndsAt
     ? Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000)
     : null;
-  // subscription_plan written by Stripe webhook — not yet in generated types
-  // subscription_plan written by Stripe webhook — not yet in generated types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const currentPlan = ((agent as any).subscription_plan as string | null) ?? null;
+  const currentPlan = agent.subscription_plan ?? null;
 
   return (
     <SubscriptionClient

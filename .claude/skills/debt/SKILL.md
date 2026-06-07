@@ -1,7 +1,6 @@
 ---
 name: debt
 description: Code health review — find CSS debt, duplicate patterns, dead code, shadcn violations, and scale blockers
-disable-model-invocation: true
 ---
 
 Run a code health review: $ARGUMENTS

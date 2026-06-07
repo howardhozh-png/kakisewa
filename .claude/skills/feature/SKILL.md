@@ -1,7 +1,6 @@
 ---
 name: feature
 description: Full feature development workflow — explore, plan, shadcn design, Playwright test on mobile + web
-disable-model-invocation: true
 ---
 
 Build the feature: $ARGUMENTS

@@ -1,7 +1,6 @@
 ---
 name: db
 description: Database/Supabase workflow — review schema, check codebase references, consolidate tables, build clean migrations
-disable-model-invocation: true
 ---
 
 Database task: $ARGUMENTS

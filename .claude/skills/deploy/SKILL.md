@@ -1,7 +1,6 @@
 ---
 name: deploy
 description: Production deployment workflow — pre-flight checks, git push, Vercel build wait, Playwright smoke test on kakisewa.com, fix any issues
-disable-model-invocation: true
 ---
 
 Deploy to production: $ARGUMENTS
