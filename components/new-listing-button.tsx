@@ -8,6 +8,8 @@ import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { toast } from "sonner";
 import type { Property } from "@/lib/types";
+import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
+import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 
 interface FormData {
   property_name: string;
@@ -45,6 +47,7 @@ export function NewListingButton({ properties = [] }: { properties?: Property[] 
   const [agreementFile, setAgreementFile] = useState<{ file: File; name: string } | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [pending, startTransition] = useTransition();
+  const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const agreementInputRef = useRef<HTMLInputElement>(null);
@@ -112,6 +115,9 @@ export function NewListingButton({ properties = [] }: { properties?: Property[] 
   function handleWaSend() {
     if (!waForm.owner_name.trim()) { toast.error("Owner name is required"); return; }
     if (!waForm.owner_phone.trim()) { toast.error("Phone number is required"); return; }
+    let didRun = false;
+    checkAndRun(() => { didRun = true; });
+    if (!didRun) return;
     startTransition(async () => {
       const res = await addOwnerLeadAction({
         owner_name: waForm.owner_name.trim(),
@@ -576,6 +582,7 @@ export function NewListingButton({ properties = [] }: { properties?: Property[] 
           </div>
         </div>
       )}
+      <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
     </>
   );
 }

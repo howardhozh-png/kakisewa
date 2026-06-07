@@ -52,6 +52,8 @@ import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
+import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
+import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 
 type Filter = "all" | "unsent" | "contacted" | "listed" | "rented" | "declined";
 type PurposeFilter = "all" | "rent" | "sell";
@@ -640,6 +642,7 @@ export function OutreachTable({ leads }: Props) {
   const exportRef = useRef<HTMLDivElement>(null);
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
 
   useEffect(() => { setSelectedIds(new Set()); }, [filter, purposeFilter, propertyFilter, search]);
 
@@ -745,6 +748,9 @@ export function OutreachTable({ leads }: Props) {
   async function handleSend(lead: OwnerLead, e: React.MouseEvent) {
     e.stopPropagation();
     if (sending) return;
+    let didRun = false;
+    checkAndRun(() => { didRun = true; });
+    if (!didRun) return;
     setSending(lead.id);
     // Open window immediately during user gesture — mobile browsers block window.open after await
     const tab = window.open("", "_blank");
@@ -1260,6 +1266,7 @@ export function OutreachTable({ leads }: Props) {
           onDelete={handleDelete}
         />
       )}
+      <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
     </div>
   );
 }

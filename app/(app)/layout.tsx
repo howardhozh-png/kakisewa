@@ -13,6 +13,7 @@ import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 import { ProfileSetupModal } from "@/components/profile-setup-modal";
+import { ProfileProvider } from "@/components/profile-context";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
@@ -60,7 +61,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         hasTenants={(tenantCount ?? 0) > 0}
         hasSupports={(supportCount ?? 0) > 0}
       />
-      <main className="flex-1">{children}</main>
+      <ProfileProvider profile={agent}>
+        <main className="flex-1">{children}</main>
+      </ProfileProvider>
       <OnboardingDemoModal />
       <TrialDowngradeNotice archivedCount={agent.trial_downgrade_archived_count ?? null} />
       <ProfileSetupModal

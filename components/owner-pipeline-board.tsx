@@ -15,6 +15,8 @@ import { ConfirmListedDialog } from "@/components/confirm-listed-dialog";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
 import { AvailabilityTimeline } from "@/components/availability-timeline";
+import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
+import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 
 type Stage = OwnerLead["stage"];
 
@@ -604,15 +606,18 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
+  const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
 
   function ping(template: "outreach_initial" | "outreach_followup" | "collect_details", advanceTo?: Stage) {
-    startTransition(async () => {
-      const res = await sendOwnerOutreach(l.id, template);
-      if (!res.ok) { toast.error(res.message); return; }
-      window.open(res.url, "_blank", "noopener,noreferrer");
-      if (advanceTo) await setOwnerLeadStage(l.id, advanceTo);
-      router.refresh();
-      toast.success("Message ready in WhatsApp");
+    checkAndRun(() => {
+      startTransition(async () => {
+        const res = await sendOwnerOutreach(l.id, template);
+        if (!res.ok) { toast.error(res.message); return; }
+        window.open(res.url, "_blank", "noopener,noreferrer");
+        if (advanceTo) await setOwnerLeadStage(l.id, advanceTo);
+        router.refresh();
+        toast.success("Message ready in WhatsApp");
+      });
     });
   }
 
@@ -626,12 +631,14 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
     }
 
     function sendIntakeForm() {
-      startTransition(async () => {
-        const res = await generateOwnerIntakeLink(l.id);
-        if (!res.ok) { toast.error(res.message); return; }
-        window.open(res.waUrl, "_blank", "noopener,noreferrer");
-        router.refresh();
-        toast.success("WhatsApp ready to send");
+      checkAndRun(() => {
+        startTransition(async () => {
+          const res = await generateOwnerIntakeLink(l.id);
+          if (!res.ok) { toast.error(res.message); return; }
+          window.open(res.waUrl, "_blank", "noopener,noreferrer");
+          router.refresh();
+          toast.success("WhatsApp ready to send");
+        });
       });
     }
 
@@ -677,32 +684,35 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
     }
 
     return (
-      <div className="space-y-2">
-        {count > 0 && <OutreachCountBadge count={count} />}
-        <button
-          type="button" data-card-action
-          onClick={(e) => { e.stopPropagation(); sendIntakeForm(); }}
-          disabled={pending}
-          className="kk-card-cta kk-card-cta-soft-green"
-        >
-          <span className="flex items-start gap-1.5 min-w-0 flex-1">
-            {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
-            <span>Send property form</span>
-          </span>
-          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        </button>
-        {count >= 2 && (
+      <>
+        <div className="space-y-2">
+          {count > 0 && <OutreachCountBadge count={count} />}
           <button
             type="button" data-card-action
-            onClick={(e) => { e.stopPropagation(); handleArchive(); }}
+            onClick={(e) => { e.stopPropagation(); sendIntakeForm(); }}
             disabled={pending}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center transition-opacity hover:opacity-70"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
+            className="kk-card-cta kk-card-cta-soft-green"
           >
-            <Archive className="w-3 h-3" /> Archive — no response
+            <span className="flex items-start gap-1.5 min-w-0 flex-1">
+              {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+              <span>Send property form</span>
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           </button>
-        )}
-      </div>
+          {count >= 2 && (
+            <button
+              type="button" data-card-action
+              onClick={(e) => { e.stopPropagation(); handleArchive(); }}
+              disabled={pending}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center transition-opacity hover:opacity-70"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
+            >
+              <Archive className="w-3 h-3" /> Archive — no response
+            </button>
+          )}
+        </div>
+        <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
+      </>
     );
   }
   if (stage === "listed") {

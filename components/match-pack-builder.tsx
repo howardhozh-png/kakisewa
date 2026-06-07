@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
+import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
+import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 
 interface Props {
   pack: MatchPack;
@@ -48,6 +50,7 @@ export function MatchPackBuilder({
   const [addMode, setAddMode] = useState<AddMode>("none");
   const [copied, setCopied] = useState(false);
   const [sending, startSend] = useTransition();
+  const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
   const [lastPoll, setLastPoll] = useState<Date | null>(null);
   const [selectedTenant, setSelectedTenant] = useState<PackTenant | null>(null);
 
@@ -101,11 +104,13 @@ export function MatchPackBuilder({
       toast.error("Add at least one tenant before sending");
       return;
     }
-    startSend(async () => {
-      const res = await buildSendPackToOwner(ownerLeadId, shareUrl);
-      if (!res.ok) { toast.error(res.message); return; }
-      window.open(res.url, "_blank", "noopener,noreferrer");
-      toast.success("WhatsApp opened with link to owner");
+    checkAndRun(() => {
+      startSend(async () => {
+        const res = await buildSendPackToOwner(ownerLeadId, shareUrl);
+        if (!res.ok) { toast.error(res.message); return; }
+        window.open(res.url, "_blank", "noopener,noreferrer");
+        toast.success("WhatsApp opened with link to owner");
+      });
     });
   }
 
@@ -297,6 +302,7 @@ export function MatchPackBuilder({
         )}
       </aside>
     </div>
+    <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
     </>
   );
 }

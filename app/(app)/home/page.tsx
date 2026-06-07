@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Upload, Users, RefreshCw, AlertCircle, ChevronRight } from "lucide-react";
+import { Upload, Users, RefreshCw, AlertCircle, ChevronRight, UserCircle2 } from "lucide-react";
 import { getAgentProfile, getHomeDashboardStats } from "@/lib/db";
+import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function HomePage() {
     getHomeDashboardStats(),
   ]);
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
+  const missingProfileFields = getMissingWhatsAppFields(agent);
 
   const STEPS = [
     {
@@ -63,6 +65,26 @@ export default async function HomePage() {
           Three steps. Each one turns your database into recurring income.
         </p>
       </div>
+
+      {/* Profile nudge */}
+      {missingProfileFields.length > 0 && (
+        <Link
+          href="/settings/account"
+          className="flex items-start gap-3 rounded-2xl px-4 py-3.5 mb-6 transition-opacity hover:opacity-80"
+          style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.18)", textDecoration: "none" }}
+        >
+          <UserCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#DC2626" }} />
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold leading-snug" style={{ color: "#991B1B" }}>
+              Your profile is incomplete
+            </p>
+            <p className="text-[12px] mt-0.5" style={{ color: "#B91C1C" }}>
+              Missing: {missingProfileFields.map(f => f.label).join(", ")}. WhatsApp messages will show blank fields until you fill this in.
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#DC2626" }} />
+        </Link>
+      )}
 
       {/* Steps */}
       <div className="space-y-4">
