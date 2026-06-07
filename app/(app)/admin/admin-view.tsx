@@ -49,6 +49,22 @@ interface AgentRow {
   joined_at: string;
 }
 
+interface InviteRow {
+  id: string;
+  email: string;
+  invited_at: string;
+  used_at: string | null;
+}
+
+interface WaitlistRow {
+  id: string;
+  name: string | null;
+  email: string;
+  ren_number: string | null;
+  expected_spend: string | null;
+  created_at: string;
+}
+
 function FunnelBar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0;
   return (
@@ -78,12 +94,14 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
   elite:    { bg: "rgba(107,61,30,0.12)",   color: "#6b3d1e" },
 };
 
-export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents }: {
+export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents, invites: initialInvites, waitlist }: {
   funnel: Funnel; links: Link[]; feedback: FeedbackRow[]; agents: AgentRow[];
+  invites: InviteRow[]; waitlist: WaitlistRow[];
 }) {
-  const [tab, setTab] = useState<"funnel" | "feedback" | "agents">("funnel");
+  const [tab, setTab] = useState<"funnel" | "feedback" | "agents" | "invites" | "waitlist">("funnel");
   const [links, setLinks] = useState<Link[]>(initialLinks);
   const [feedback, setFeedback] = useState<FeedbackRow[]>(initialFeedback);
+  const [invites, setInvites] = useState<InviteRow[]>(initialInvites);
   const [newLabel, setNewLabel] = useState("");
   const [newSlug, setNewSlug] = useState("");
   const [creating, setCreating] = useState(false);
@@ -91,6 +109,9 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
   const [editingSends, setEditingSends] = useState<string | null>(null);
   const [sendsInput, setSendsInput] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [inviteInput, setInviteInput] = useState("");
+  const [addingInvites, setAddingInvites] = useState(false);
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null);
 
   function autoSlug(label: string) {
     return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -165,6 +186,44 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
     }
   }
 
+  async function handleAddInvites() {
+    const emails = inviteInput.split(/[\n,]+/).map(e => e.trim()).filter(e => e.includes("@"));
+    if (emails.length === 0) return;
+    setAddingInvites(true);
+    const res = await fetch("/api/admin/invites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emails }),
+    });
+    if (res.ok) {
+      const body = await res.json();
+      toast.success(`${body.added} invite${body.added !== 1 ? "s" : ""} added`);
+      setInviteInput("");
+      const fresh = await fetch("/api/admin/invites").then(r => r.json()).catch(() => invites);
+      setInvites(fresh);
+    } else {
+      const body = await res.json().catch(() => ({}));
+      toast.error(body.error ?? "Failed to add invites");
+    }
+    setAddingInvites(false);
+  }
+
+  async function handleRemoveInvite(email: string) {
+    setRemovingEmail(email);
+    const res = await fetch("/api/admin/invites", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) {
+      setInvites(prev => prev.filter(i => i.email !== email));
+      toast.success("Invite removed");
+    } else {
+      toast.error("Failed to remove");
+    }
+    setRemovingEmail(null);
+  }
+
   const openFeedback = feedback.filter(f => !f.resolved);
   const resolvedFeedback = feedback.filter(f => f.resolved);
 
@@ -174,8 +233,8 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
         <h1 className="serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", letterSpacing: "-0.022em", color: "var(--kk-ink)" }}>
           Admin Dashboard
         </h1>
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-          {(["funnel", "agents", "feedback"] as const).map(t => (
+        <div className="flex gap-1 p-1 rounded-xl flex-wrap" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+          {(["funnel", "agents", "invites", "waitlist", "feedback"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all capitalize"
               style={{
@@ -184,11 +243,106 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
               }}>
               {t === "feedback" ? `Feedback${openFeedback.length ? ` (${openFeedback.length})` : ""}`
                 : t === "agents" ? `Agents (${agents.length})`
+                : t === "invites" ? `Invites (${invites.length})`
+                : t === "waitlist" ? `Waitlist (${waitlist.length})`
                 : "Funnel & Links"}
             </button>
           ))}
         </div>
       </div>
+
+      {tab === "invites" && (
+        <div>
+          <p className="kk-overline mb-4">Invite List</p>
+          <div className="mb-5">
+            <textarea
+              value={inviteInput}
+              onChange={e => setInviteInput(e.target.value)}
+              placeholder={"Paste emails, one per line or comma-separated\nagent@era.com\nagent2@iqigroup.com"}
+              rows={4}
+              className="w-full rounded-xl px-3.5 py-2.5 outline-none font-mono resize-none mb-2"
+              style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
+            />
+            <button
+              onClick={handleAddInvites}
+              disabled={addingInvites || !inviteInput.trim()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold transition-opacity hover:opacity-85 disabled:opacity-40"
+              style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-sm)" }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {addingInvites ? "Adding…" : "Add invites"}
+            </button>
+          </div>
+          <div className="space-y-2">
+            {invites.length === 0 && (
+              <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No invites yet.</p>
+            )}
+            {invites.map(inv => {
+              const date = new Date(inv.invited_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+              return (
+                <div key={inv.id} className="rounded-2xl px-5 py-3 flex items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-mono text-[13px]" style={{ color: "var(--kk-ink)" }}>{inv.email}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Invited {date}</p>
+                  </div>
+                  {inv.used_at ? (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.10)", color: "#065F46" }}>
+                      Used
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(234,179,8,0.12)", color: "#A16207" }}>
+                      Pending
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleRemoveInvite(inv.email)}
+                    disabled={removingEmail === inv.email}
+                    className="text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40"
+                    style={{ color: "#DC2626" }}
+                  >
+                    {removingEmail === inv.email ? "Removing…" : "Remove"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {tab === "waitlist" && (
+        <div>
+          <p className="kk-overline mb-4">Waitlist ({waitlist.length})</p>
+          {waitlist.length === 0 && (
+            <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No waitlist entries yet.</p>
+          )}
+          <div className="space-y-2">
+            {waitlist.map(w => {
+              const date = new Date(w.created_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+              return (
+                <div key={w.id} className="rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                  <div className="flex-1 min-w-[160px]">
+                    <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{w.name || "—"}</p>
+                    <p className="font-mono text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{w.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {w.ren_number && (
+                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                        {w.ren_number}
+                      </span>
+                    )}
+                    {w.expected_spend && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.12)", color: "#4338CA" }}>
+                        RM{w.expected_spend}/mo
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>{date}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {tab === "feedback" && (
         <div className="space-y-3">

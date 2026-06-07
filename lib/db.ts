@@ -889,6 +889,16 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       subscription_status: "beta",
       referral_slug: (meta.referral_slug as string | null) ?? null,
     });
+    // Stamp invite as used (fire-and-forget)
+    if (user.email) {
+      const { createServiceClient } = await import("./supabase/service");
+      const svc = createServiceClient();
+      svc.from("invites")
+        .update({ used_at: trialStart })
+        .eq("email", user.email.toLowerCase().trim())
+        .is("used_at", null)
+        .then(() => {});
+    }
     // Send welcome email non-blocking
     if (user.email) {
       const firstName = ((meta.full_name as string | null) ?? "").split(" ")[0] || "there";

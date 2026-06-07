@@ -7,9 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 interface Props {
   onError?: (msg: string) => void;
   onLoadingChange?: (loading: boolean) => void;
+  onNotInvited?: (email: string) => void;
 }
 
-export function GoogleSignInButton({ onError, onLoadingChange }: Props) {
+export function GoogleSignInButton({ onError, onLoadingChange, onNotInvited }: Props) {
   const router = useRouter();
   const btnRef = useRef<HTMLDivElement>(null);
 
@@ -17,18 +18,33 @@ export function GoogleSignInButton({ onError, onLoadingChange }: Props) {
     async (response: { credential: string }) => {
       onLoadingChange?.(true);
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithIdToken({
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
       });
       if (error) {
         onError?.(error.message);
         onLoadingChange?.(false);
-      } else {
-        window.location.href = "/home";
+        return;
       }
+      const email = data.user?.email ?? "";
+      if (onNotInvited && email) {
+        const res = await fetch("/api/auth/check-invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const { invited } = await res.json().catch(() => ({ invited: false }));
+        if (!invited) {
+          await supabase.auth.signOut();
+          onNotInvited(email);
+          onLoadingChange?.(false);
+          return;
+        }
+      }
+      window.location.href = "/home";
     },
-    [router, onError, onLoadingChange]
+    [router, onError, onLoadingChange, onNotInvited]
   );
 
   useEffect(() => {

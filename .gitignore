@@ -52,3 +52,4 @@ next-env.d.ts
 
 # Debug screenshots from Playwright sessions
 *.png
+supabase/.temp/

@@ -82,6 +82,16 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false })
     .limit(100);
 
+  const { data: inviteRows } = await supabase
+    .from("invites")
+    .select("id, email, invited_at, used_at")
+    .order("invited_at", { ascending: false });
+
+  const { data: waitlistRows } = await supabase
+    .from("waitlist")
+    .select("id, name, email, ren_number, expected_spend, created_at")
+    .order("created_at", { ascending: false });
+
   // Paginate through all auth users (handles >1000 agents)
   const emailById: Record<string, string> = {};
   const createdById: Record<string, string> = {};
@@ -118,5 +128,5 @@ export default async function AdminPage() {
     };
   });
 
-  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} />;
+  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} />;
 }
