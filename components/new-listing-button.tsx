@@ -68,7 +68,7 @@ export function NewListingButton({ properties = [] }: { properties?: Property[] 
   const hasExactMatch = properties.some((p) => p.name.toLowerCase() === form.property_name.trim().toLowerCase());
 
   function selectExistingProperty(p: Property) {
-    setForm((f) => ({ ...f, property_name: p.name, owner_name: p.owner_name, owner_phone: p.owner_phone }));
+    setForm((f) => ({ ...f, property_name: p.name }));
     setShowSugg(false);
   }
 

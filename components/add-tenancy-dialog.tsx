@@ -31,7 +31,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   const [ownerPhone, setOwnerPhone]     = useState("");
   const [amount, setAmount]             = useState("");
   const [showSugg, setShowSugg]         = useState(false);
-  const [contractStart, setContractStart] = useState(todayISO());
+  const [contractStart, setContractStart] = useState("");
 
   // Photo + agreement state
   const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; preview: string }>>([]);
@@ -84,7 +84,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   function reset() {
     setPropertyName(""); setPropertyId(""); setUnit("");
     setOwnerName(""); setOwnerPhone(""); setAmount("");
-    setContractStart(todayISO()); setShowSugg(false);
+    setContractStart(""); setShowSugg(false);
     photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
     setPhotoFiles([]); setAgreementFile(null);
   }
