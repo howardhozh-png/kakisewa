@@ -60,8 +60,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
   function selectExisting(ol: OwnerLead) {
     setOwnerLeadId(ol.id);
     setPropertyName(ol.property_name ?? "");
-    setOwnerName(ol.owner_name ?? "");
-    setOwnerPhone(ol.owner_phone ?? "");
     setShowSugg(false);
   }
 
@@ -208,7 +206,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                       className="w-full text-left px-4 py-2.5 transition-opacity hover:opacity-70"
                     >
                       <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{ol.property_name}</p>
-                      {ol.owner_name && <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{ol.owner_name}</p>}
                     </button>
                   ))}
                 </div>

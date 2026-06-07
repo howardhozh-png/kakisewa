@@ -63,6 +63,9 @@ function TenancyForm({
   const [ownerPhone, setOwnerPhone] = useState(tenancy.property?.owner_phone ?? "");
   const [editingOwner, setEditingOwner] = useState(false);
 
+  // Property name (always editable)
+  const [propertyName, setPropertyName] = useState(tenancy.property_name ?? "");
+
   // Basic info fields — prefer proposed values from owner form if available
   const [tenantName, setTenantName] = useState(tenancy.tenant_name ?? "");
   const [tenantPhone, setTenantPhone] = useState(tenancy.tenant_phone ?? "");
@@ -93,6 +96,7 @@ function TenancyForm({
     setOwnerName(tenancy.property?.owner_name ?? "");
     setOwnerPhone(tenancy.property?.owner_phone ?? "");
     setEditingOwner(false);
+    setPropertyName(tenancy.property_name ?? "");
     setTenantName(tenancy.tenant_name ?? "");
     setTenantPhone(tenancy.tenant_phone ?? "");
     setAmount((tenancy.renewal_proposed_rent ?? tenancy.amount)?.toString() ?? "");
@@ -209,9 +213,19 @@ function TenancyForm({
       if (repliedOwner !== (tenancy.replied_owner ?? "pending")) {
         saves.push(setReplyChip(tenancy.id, "owner", repliedOwner).then(() => ({ ok: true, message: "" })));
       }
-      // Save owner name/phone if edited and owner_lead_id is available
-      if (editingOwner && tenancy.owner_lead_id) {
-        await updateOwnerLeadDetails(tenancy.owner_lead_id, { owner_name: ownerName || undefined, owner_phone: ownerPhone || undefined });
+      // Save owner name/phone/property name if owner_lead_id is available
+      if (tenancy.owner_lead_id) {
+        const ownerUpdates: Parameters<typeof updateOwnerLeadDetails>[1] = {};
+        if (editingOwner) {
+          ownerUpdates.owner_name = ownerName || undefined;
+          ownerUpdates.owner_phone = ownerPhone || undefined;
+        }
+        if (propertyName !== (tenancy.property_name ?? "")) {
+          ownerUpdates.property_name = propertyName || undefined;
+        }
+        if (Object.keys(ownerUpdates).length > 0) {
+          await updateOwnerLeadDetails(tenancy.owner_lead_id, ownerUpdates);
+        }
       }
       const results = await Promise.all(saves);
       const failed = results.find((r) => !r.ok);
@@ -226,6 +240,7 @@ function TenancyForm({
           contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : null,
           replied_tenant: repliedTenant,
           replied_owner: repliedOwner,
+          property_name: propertyName || tenancy.property_name,
         });
         onClose();
       } else {
@@ -293,15 +308,17 @@ function TenancyForm({
         </button>
       </div>
 
-      {/* Property + owner (display only — linked record) */}
-      <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl" style={{ background: "var(--kk-surface-2)" }}>
-        <Building2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
-        <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-medium break-words" style={{ color: "var(--kk-ink)" }}>{tenancy.property_name}</p>
-          {tenancy.property?.address && (
-            <p className="text-[12px] mt-0.5 break-words" style={{ color: "var(--kk-ink-faint)" }}>{tenancy.property.address}</p>
-          )}
-        </div>
+      {/* Property name (editable) */}
+      <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)" }}>
+        <Building2 className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+        <input
+          type="text"
+          value={propertyName}
+          onChange={(e) => setPropertyName(e.target.value)}
+          placeholder="Property name"
+          className="flex-1 min-w-0 text-[13px] font-medium bg-transparent outline-none"
+          style={{ color: "var(--kk-ink)" }}
+        />
       </div>
 
       {/* Editable fields */}
