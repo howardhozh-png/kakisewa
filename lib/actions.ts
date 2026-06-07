@@ -77,13 +77,30 @@ function parseFlexDate(s: string): string | null {
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
 export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
-  const ownerLeadId = (formData.get("owner_lead_id") as string) || null;
+  let ownerLeadId = (formData.get("owner_lead_id") as string) || null;
+  const propertyNameFromForm = (formData.get("property_name") as string)?.trim() || null;
+  const ownerNameFromForm    = (formData.get("owner_name") as string)?.trim() || "";
+  const ownerPhoneFromForm   = (formData.get("owner_phone") as string)?.trim() || "";
   const photoUrls: string[] = [];
   for (let i = 0; i < 4; i++) {
     const u = (formData.get(`photo_url_${i}`) as string) || "";
     if (u) photoUrls.push(u);
   }
   const agreementUrl = (formData.get("agreement_url") as string) || null;
+
+  // If no existing owner_lead selected but a property name was typed, create one on the fly
+  if (!ownerLeadId && propertyNameFromForm) {
+    const { createOwnerLead } = await import("@/lib/db");
+    const newLead = await createOwnerLead({
+      owner_name: ownerNameFromForm,
+      owner_phone: ownerPhoneFromForm,
+      property_name: propertyNameFromForm,
+      stage: "matched",
+      is_managed: true,
+      photo_urls: [],
+    } as Parameters<typeof createOwnerLead>[0]);
+    ownerLeadId = newLead.id;
+  }
 
   // Mark the owner_lead as managed when creating the tenancy
   if (ownerLeadId) {

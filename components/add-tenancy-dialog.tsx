@@ -53,10 +53,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     }).slice(0, 8);
   }, [propertyName, ownerLeads]);
 
-  const hasExactMatch = ownerLeads.some(
-    (ol) => (ol.property_name ?? "").toLowerCase() === propertyName.trim().toLowerCase()
-  );
-
   function selectExisting(ol: OwnerLead) {
     setOwnerLeadId(ol.id);
     setPropertyName(ol.property_name ?? "");
@@ -93,7 +89,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!ownerLeadId) return;
     const fd = new FormData(e.currentTarget);
     fd.set("owner_lead_id", ownerLeadId);
     fd.set("property_name", propertyName.trim());
@@ -189,9 +184,9 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
               />
               {ownerLeadId
-                ? <p className="text-[11px]" style={{ color: "var(--kk-green)" }}>Existing owner lead selected</p>
+                ? <p className="text-[11px]" style={{ color: "var(--kk-green)" }}>Linked to existing property</p>
                 : propertyName.trim()
-                  ? <p className="text-[11px]" style={{ color: "var(--kk-blue)" }}>Type to search owner leads</p>
+                  ? <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>New property — will be saved automatically</p>
                   : null
               }
               {showSugg && (
@@ -328,7 +323,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
             <button type="button" className="kk-pill kk-pill-ghost" onClick={() => setOpen(false)}>
               Cancel
             </button>
-            <button type="submit" disabled={isBusy || !ownerLeadId} className="kk-pill kk-pill-primary flex items-center gap-1.5">
+            <button type="submit" disabled={isBusy} className="kk-pill kk-pill-primary flex items-center gap-1.5">
               {isBusy && <Loader2 className="w-3 h-3 animate-spin" />}
               {uploading ? "Uploading…" : pending ? "Saving…" : "Save tenancy"}
             </button>
