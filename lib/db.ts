@@ -1852,34 +1852,34 @@ export interface ManagedProperty {
 
 export async function getManagedProperties(): Promise<ManagedProperty[]> {
   const supabase = await createClient();
-  const { data: props, error } = await supabase
-    .from("properties")
-    .select("id, name, unit, owner_name, owner_phone")
+  const { data: leads, error } = await supabase
+    .from("owner_leads")
+    .select("id, property_name, unit, owner_name, owner_phone")
+    .eq("is_managed", true)
     .order("owner_name", { ascending: true });
   if (error) throw error;
 
   const { data: tens } = await supabase
     .from("tenancies")
-    .select("id, property_id, amount, lifecycle_stage, tenant_name, tenant_phone")
+    .select("id, owner_lead_id, amount, lifecycle_stage, tenant_name, tenant_phone")
     .neq("lifecycle_stage", "closed");
 
-  const tenByProp = new Map<string, Record<string, unknown>>();
+  const tenByLead = new Map<string, Record<string, unknown>>();
   for (const t of tens ?? []) {
     const row = t as Record<string, unknown>;
-    if (!tenByProp.has(row.property_id as string)) {
-      tenByProp.set(row.property_id as string, row);
-    }
+    const key = row.owner_lead_id as string;
+    if (key && !tenByLead.has(key)) tenByLead.set(key, row);
   }
 
-  return (props ?? []).map(p => {
-    const prop = p as Record<string, unknown>;
-    const t = tenByProp.get(prop.id as string);
+  return (leads ?? []).map(l => {
+    const lead = l as Record<string, unknown>;
+    const t = tenByLead.get(lead.id as string);
     return {
-      id: prop.id as string,
-      name: prop.name as string,
-      unit: prop.unit as string | null,
-      owner_name: prop.owner_name as string,
-      owner_phone: prop.owner_phone as string | null,
+      id: lead.id as string,
+      name: lead.property_name as string,
+      unit: lead.unit as string | null,
+      owner_name: lead.owner_name as string,
+      owner_phone: lead.owner_phone as string | null,
       amount: t ? t.amount as number : null,
       lifecycle_stage: t ? t.lifecycle_stage as string | null : null,
       tenant_name: t ? t.tenant_name as string : null,
@@ -1910,26 +1910,22 @@ export async function getAllActiveTenants(): Promise<Array<{
   if (error) throw error;
 
   const rows = (data ?? []) as Record<string, unknown>[];
-  const propIds = [...new Set(rows.map(r => r.property_id as string).filter(Boolean))];
-  const olIds   = [...new Set(rows.filter(r => !r.property_id && r.owner_lead_id).map(r => r.owner_lead_id as string))];
+  const olIds = [...new Set(rows.map(r => r.owner_lead_id as string).filter(Boolean))];
 
-  const [propsRes, olsRes] = await Promise.all([
-    propIds.length > 0 ? supabase.from("properties").select("id, name, unit").in("id", propIds) : Promise.resolve({ data: [] as {id:string;name:string;unit:string|null}[] }),
-    olIds.length > 0   ? supabase.from("owner_leads").select("id, property_name, unit").in("id", olIds) : Promise.resolve({ data: [] as {id:string;property_name:string|null;unit:string|null}[] }),
-  ]);
+  const olsRes = olIds.length > 0
+    ? await supabase.from("owner_leads").select("id, property_name, unit").in("id", olIds)
+    : { data: [] as {id:string;property_name:string|null;unit:string|null}[] };
 
-  const propMap = Object.fromEntries((propsRes.data ?? []).map((p: {id:string;name:string;unit:string|null}) => [p.id, p]));
-  const olMap   = Object.fromEntries((olsRes.data   ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
+  const olMap = Object.fromEntries((olsRes.data ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
 
   return rows.map(row => {
-    const prop = row.property_id ? propMap[row.property_id as string] : null;
-    const ol   = (!row.property_id && row.owner_lead_id) ? olMap[row.owner_lead_id as string] : null;
+    const ol = row.owner_lead_id ? olMap[row.owner_lead_id as string] : null;
     return {
       tenancy_id:     row.id as string,
       tenant_name:    row.tenant_name as string,
       tenant_phone:   row.tenant_phone as string | null,
-      property_name:  (prop?.name ?? ol?.property_name ?? null) as string | null,
-      unit:           (prop?.unit ?? ol?.unit ?? null) as string | null,
+      property_name:  (ol?.property_name ?? null) as string | null,
+      unit:           (ol?.unit ?? null) as string | null,
       amount:         row.amount as number | null,
       lifecycle_stage: row.lifecycle_stage as string | null,
     };

@@ -1578,7 +1578,6 @@ export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
     svc.from("owner_leads").delete().eq("user_id", uid),
     svc.from("tenancies").delete().eq("user_id", uid),
     svc.from("tenant_profiles").delete().eq("user_id", uid),
-    svc.from("properties").delete().eq("user_id", uid),
   ]);
   await svc.from("agent_profiles").update({
     login_streak: 0,
