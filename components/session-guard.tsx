@@ -15,6 +15,14 @@ export function SessionGuard() {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = createClient();
+
+    // Reset idle timer whenever a sign-in occurs so a fresh login never
+    // immediately triggers the stale-timestamp check below.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") touch();
+    });
+
     async function checkIdle() {
       const raw = localStorage.getItem(KEY);
       const last = raw ? Number(raw) : 0;
@@ -22,7 +30,6 @@ export function SessionGuard() {
       if (last > 0 && Date.now() - last > IDLE_MS) {
         // Clear timestamp before sign-out so re-login doesn't immediately re-trigger
         localStorage.removeItem(KEY);
-        const supabase = createClient();
         await supabase.auth.signOut();
         router.replace("/sign-in?reason=timeout");
         return;
@@ -45,6 +52,7 @@ export function SessionGuard() {
     events.forEach(e => document.addEventListener(e, touch, { passive: true }));
 
     return () => {
+      subscription.unsubscribe();
       document.removeEventListener("visibilitychange", onVisible);
       events.forEach(e => document.removeEventListener(e, touch));
     };
