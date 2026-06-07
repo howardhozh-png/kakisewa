@@ -101,6 +101,7 @@ function SignInForm() {
           <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>
             kakisewa
           </p>
+          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Welcome back</p>
         </div>
 
         {/* Session timeout notice */}
@@ -112,19 +113,6 @@ function SignInForm() {
 
         {/* Card */}
         <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-
-          {/* Google */}
-          <GoogleSignInButton
-            onError={setError}
-            onLoadingChange={setGoogleLoading}
-          />
-
-          {/* Divider */}
-          <div className="relative flex items-center gap-3">
-            <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
-            <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>or sign in with email</span>
-            <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
-          </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
@@ -153,6 +141,19 @@ function SignInForm() {
               <PasscodeInput value={passcode} onChange={setPasscode} autoComplete="current-password" required />
             </div>
 
+            {/* Divider */}
+            <div className="relative flex items-center gap-3 my-1">
+              <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
+              <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>or</span>
+              <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
+            </div>
+
+            {/* Google */}
+            <GoogleSignInButton
+              onError={setError}
+              onLoadingChange={setGoogleLoading}
+            />
+
             {error && (
               <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "var(--destructive)", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.2)" }}>
                 {error}
@@ -161,7 +162,7 @@ function SignInForm() {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || googleLoading}
               className="w-full rounded-xl h-auto py-2.5"
             >
               {loading ? "Signing in…" : "Sign in"}

@@ -320,18 +320,10 @@ function SignUpForm() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>kakisewa</p>
-          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Create your agent account</p>
+          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Join kakisewa today!</p>
         </div>
 
         <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-          <GoogleSignInButton onError={setError} onNotInvited={handleNotInvited} />
-
-          <div className="relative flex items-center gap-3 my-1">
-            <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
-            <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>or sign up with email</span>
-            <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
-          </div>
-
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
             <div className="flex flex-col gap-1.5">
               <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email</Label>
@@ -344,6 +336,15 @@ function SignUpForm() {
               <PasscodeInput value={form.passcode} onChange={v => setForm(f => ({ ...f, passcode: v }))} autoComplete="new-password" required />
               <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>8 digits — you&apos;ll use this to sign in</p>
             </div>
+
+            {/* Divider */}
+            <div className="relative flex items-center gap-3 my-1">
+              <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
+              <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>or</span>
+              <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
+            </div>
+
+            <GoogleSignInButton onError={setError} />
 
             {error && (
               <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "var(--destructive)", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.2)" }}>
