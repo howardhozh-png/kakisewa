@@ -9,6 +9,7 @@ import { GoogleSignInButton } from "@/components/google-sign-in-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { PasscodeInput } from "@/components/passcode-input"
 
 const SHAPES = [
   { label: "3 bed · 2 bath", sub: "Mont Kiara · RM 4,200/mo", x: "-2%", y: "12%", rotate: -8, delay: 0 },
@@ -149,24 +150,7 @@ function SignInForm() {
                   Forgot passcode?
                 </Link>
               </div>
-              <Input
-                type="tel"
-                required
-                autoComplete="current-password"
-                maxLength={8}
-                value={passcode}
-                onChange={e => setPasscode(e.target.value.replace(/\D/g, ""))}
-                placeholder="••••••••"
-                className="rounded-xl h-auto py-2.5 text-center"
-                style={{
-                  fontSize: "1.25rem",
-                  letterSpacing: "0.4em",
-                  WebkitTextSecurity: "disc",
-                  background: "var(--kk-bg)",
-                  color: "var(--kk-ink)",
-                } as React.CSSProperties}
-                onFocus={e => e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" })}
-              />
+              <PasscodeInput value={passcode} onChange={setPasscode} autoComplete="current-password" required />
             </div>
 
             {error && (

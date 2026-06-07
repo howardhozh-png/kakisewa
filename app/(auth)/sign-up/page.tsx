@@ -9,6 +9,7 @@ import { GoogleSignInButton } from "@/components/google-sign-in-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { PasscodeInput } from "@/components/passcode-input"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
@@ -340,13 +341,7 @@ function SignUpForm() {
 
             <div className="flex flex-col gap-1.5">
               <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Passcode</Label>
-              <Input
-                type="tel" maxLength={8} required
-                value={form.passcode} onChange={set("passcode")}
-                placeholder="••••••••"
-                className={`${sharedInputCls} text-center`}
-                style={{ ...sharedInputStyle, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
-              />
+              <PasscodeInput value={form.passcode} onChange={v => setForm(f => ({ ...f, passcode: v }))} autoComplete="new-password" required />
               <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>8 digits — you&apos;ll use this to sign in</p>
             </div>
 
