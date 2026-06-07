@@ -85,7 +85,7 @@ export default async function LeadsPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <NewListingButton />
+          <NewListingButton ownerLeads={ownerLeads} />
           <UploadOwnerCsvDialog />
         </div>
       </header>
