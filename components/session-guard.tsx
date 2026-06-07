@@ -28,11 +28,15 @@ export function SessionGuard() {
       const last = raw ? Number(raw) : 0;
 
       if (last > 0 && Date.now() - last > IDLE_MS) {
-        // Clear timestamp before sign-out so re-login doesn't immediately re-trigger
-        localStorage.removeItem(KEY);
-        await supabase.auth.signOut();
-        router.replace("/sign-in?reason=timeout");
-        return;
+        // Before kicking out, verify the Supabase session is actually expired.
+        // The SDK will auto-refresh a valid token — only redirect if that fails.
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error || !data.session) {
+          localStorage.removeItem(KEY);
+          router.replace("/sign-in?reason=timeout");
+          return;
+        }
+        // Session refreshed successfully — user is still authenticated, just idle
       }
 
       touch();

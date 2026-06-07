@@ -68,18 +68,7 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
         }}
       />
 
-      {/* Calendar icon — visual only */}
-      <div
-        className="absolute right-2.5 top-1/2 -translate-y-1/2"
-        style={{ color: "var(--kk-ink-faint)", pointerEvents: "none", zIndex: 1 }}
-        aria-hidden="true"
-      >
-        <CalendarDays className="w-4 h-4" />
-      </div>
-
-      {/* Transparent native date input covering the icon area.
-          On mobile iOS, tapping this directly opens the native date picker.
-          opacity:0 hides it visually while keeping it interactive. */}
+      {/* Native date input — truly hidden, triggered programmatically by the button below */}
       <input
         ref={nativeRef}
         type="date"
@@ -91,20 +80,20 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
         }}
         tabIndex={-1}
         aria-hidden="true"
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          width: 40,
-          height: "100%",
-          opacity: 0,
-          cursor: "pointer",
-          zIndex: 2,
-          border: "none",
-          padding: 0,
-          margin: 0,
-        }}
+        style={{ position: "absolute", width: 0, height: 0, opacity: 0, pointerEvents: "none", border: "none", padding: 0, margin: 0 }}
       />
+
+      {/* Calendar icon button — opens the native date picker on click */}
+      <button
+        type="button"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2"
+        style={{ color: "var(--kk-ink-faint)", background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 0 }}
+        onClick={() => { nativeRef.current?.showPicker?.(); nativeRef.current?.click(); }}
+        tabIndex={-1}
+        aria-label="Open date picker"
+      >
+        <CalendarDays className="w-4 h-4" />
+      </button>
     </div>
   );
 }
