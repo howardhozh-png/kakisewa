@@ -219,7 +219,7 @@ export function NewListingButton({ ownerLeads = [] }: { ownerLeads?: OwnerLead[]
           }}
         >
           <Building2 className="w-4 h-4" />
-          New property listing
+          Add listing
           <ChevronDown className="w-3.5 h-3.5" />
         </button>
 
