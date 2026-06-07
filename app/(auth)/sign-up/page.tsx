@@ -373,7 +373,7 @@ function SignUpForm() {
               <Input
                 type="tel" maxLength={8} required
                 value={form.passcode} onChange={set("passcode")}
-                placeholder="8-digit passcode"
+                placeholder="••••••••"
                 className={`${sharedInputCls} text-center`}
                 style={{ ...sharedInputStyle, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
               />
