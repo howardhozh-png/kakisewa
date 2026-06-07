@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo, useRef } from "react";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
-import { Plus, Building2, Phone, Camera, FileText, X, Loader2 } from "lucide-react";
+import { Building2, Phone, Camera, FileText, X, Loader2 } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import {
@@ -154,7 +154,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
             className="kk-pill"
             style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
           >
-            <Plus className="w-3.5 h-3.5" /> Add tenancy
+            <Building2 className="w-4 h-4" /> Add tenancy
           </button>
         }
       />
@@ -177,7 +177,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
               <Input
                 value={propertyName}
                 onChange={(e) => { setPropertyName(e.target.value); setOwnerLeadId(""); setShowSugg(true); }}
-                onFocus={() => setShowSugg(true)}
+                onFocus={() => { if (propertyName.trim()) setShowSugg(true); }}
                 placeholder="e.g. Residensi Mutiara"
                 autoComplete="off"
                 required
