@@ -22,14 +22,14 @@ const getCurrentUserId = cache(async (): Promise<string> => {
 
 // ─── Header helpers (middleware injects these) ────────────────────────────────
 
-function getAgentMeta(): { name: string | null; email: string | null; phone: string | null; agency: string | null } {
+async function getAgentMeta(): Promise<{ name: string | null; email: string | null; phone: string | null; agency: string | null }> {
   try {
-    const h = headers() as unknown as { get(name: string): string | null };
+    const h = await headers();
     return {
-      name:   h.get("x-agent-name")   || null,
-      email:  h.get("x-agent-email")  || null,
-      phone:  h.get("x-agent-phone")  || null,
-      agency: h.get("x-agent-agency") || null,
+      name:   (h as unknown as { get(name: string): string | null }).get("x-agent-name")   || null,
+      email:  (h as unknown as { get(name: string): string | null }).get("x-agent-email")  || null,
+      phone:  (h as unknown as { get(name: string): string | null }).get("x-agent-phone")  || null,
+      agency: (h as unknown as { get(name: string): string | null }).get("x-agent-agency") || null,
     };
   } catch {
     return { name: null, email: null, phone: null, agency: null };
@@ -818,7 +818,7 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       .eq("id", user.id)
       .maybeSingle();
     const base = (fresh ?? { id: 0 }) as AgentProfile;
-    const headerMeta = getAgentMeta();
+    const headerMeta = await getAgentMeta();
     if (headerMeta.name)   base.name   = headerMeta.name;
     if (headerMeta.phone)  base.phone  = headerMeta.phone;
     if (headerMeta.agency) base.agency = headerMeta.agency;
@@ -826,7 +826,7 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   }
 
   const base = row as AgentProfile;
-  const headerMeta = getAgentMeta();
+  const headerMeta = await getAgentMeta();
   if (headerMeta.name)   base.name   = headerMeta.name;
   if (headerMeta.phone)  base.phone  = headerMeta.phone;
   if (headerMeta.agency) base.agency = headerMeta.agency;
