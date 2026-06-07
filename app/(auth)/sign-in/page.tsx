@@ -6,6 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { motion } from "framer-motion"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 
 const SHAPES = [
   { label: "3 bed · 2 bath", sub: "Mont Kiara · RM 4,200/mo", x: "-2%", y: "12%", rotate: -8, delay: 0 },
@@ -125,10 +128,8 @@ function SignInForm() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
             <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
-                Email
-              </label>
-              <input
+              <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email</Label>
+              <Input
                 type="email"
                 required
                 autoComplete="email"
@@ -136,28 +137,19 @@ function SignInForm() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="kakisewa@example.com"
-                className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
-                style={{
-                  fontSize: "var(--kk-body)",
-                  border: "1px solid var(--kk-line-strong)",
-                  background: "var(--kk-bg)",
-                  color: "var(--kk-ink)",
-                }}
-                onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
-                onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
+                className="rounded-xl h-auto py-2.5 px-3.5"
+                style={{ fontSize: "var(--kk-body)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
-                  Passcode
-                </label>
+                <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Passcode</Label>
                 <Link href="/forgot-password" tabIndex={-1} style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", textDecoration: "underline", textUnderlineOffset: 3 }}>
                   Forgot passcode?
                 </Link>
               </div>
-              <input
+              <Input
                 type="tel"
                 required
                 autoComplete="current-password"
@@ -165,43 +157,31 @@ function SignInForm() {
                 value={passcode}
                 onChange={e => setPasscode(e.target.value.replace(/\D/g, ""))}
                 placeholder="••••••••"
-                className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all text-center tracking-widest"
+                className="rounded-xl h-auto py-2.5 text-center"
                 style={{
                   fontSize: "1.25rem",
-                  border: "1px solid var(--kk-line-strong)",
-                  background: "var(--kk-bg)",
-                  color: "var(--kk-ink)",
                   letterSpacing: "0.4em",
                   WebkitTextSecurity: "disc",
+                  background: "var(--kk-bg)",
+                  color: "var(--kk-ink)",
                 } as React.CSSProperties}
-                onFocus={e => {
-                  e.currentTarget.style.borderColor = "var(--kk-green)";
-                  e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
-                onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
+                onFocus={e => e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" })}
               />
             </div>
 
             {error && (
-              <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>
+              <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "var(--destructive)", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.2)" }}>
                 {error}
               </p>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
-              style={{
-                fontSize: "var(--kk-body)",
-                background: "var(--kk-ink)",
-                color: "#fff",
-                opacity: loading ? 0.6 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
+              className="w-full rounded-xl h-auto py-2.5"
             >
               {loading ? "Signing in…" : "Sign in"}
-            </button>
+            </Button>
 
           </form>
         </div>
@@ -209,7 +189,7 @@ function SignInForm() {
         <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
           Don&apos;t have an account?{" "}
           <Link
-            href="/signup"
+            href="/sign-up"
             style={{ color: "var(--kk-ink)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}
           >
             Sign up

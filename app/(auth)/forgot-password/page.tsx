@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -59,32 +62,29 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Email</label>
-                <input
+                <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email</Label>
+                <Input
                   type="email"
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
-                  style={{ fontSize: "var(--kk-body)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
-                  onFocus={e => e.currentTarget.style.borderColor = "var(--kk-green)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--kk-line-strong)"}
+                  className="rounded-xl h-auto py-2.5 px-3.5"
+                  style={{ fontSize: "var(--kk-body)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
                 />
               </div>
 
               {error && (
-                <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>{error}</p>
+                <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "var(--destructive)", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.2)" }}>{error}</p>
               )}
 
-              <button
+              <Button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
-                style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+                className="w-full rounded-xl h-auto py-2.5"
               >
                 {loading ? "Sending…" : "Send reset link"}
-              </button>
+              </Button>
             </form>
           )}
         </div>

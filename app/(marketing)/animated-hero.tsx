@@ -21,14 +21,14 @@ export function AnimatedHero() {
   }, [titleNumber, titles])
 
   return (
-    <section className="px-6 lg:px-12 pt-24 pb-28 text-center" style={{ background: "var(--kk-bg)" }}>
+    <section className="px-6 lg:px-12 pt-24 pb-12 text-center" style={{ background: "var(--kk-bg)" }}>
 
       <h1
         className="serif mx-auto"
         style={{ fontSize: "clamp(3rem, 7vw, 6rem)", lineHeight: 1.05, letterSpacing: "-0.025em", maxWidth: "20ch", marginBottom: 36 }}
       >
         <span style={{ color: "var(--kk-ink)" }}>Make more money from</span>
-        <span className="relative flex w-full justify-center overflow-hidden" style={{ height: "1.15em", marginTop: "0.05em" }}>
+        <span className="relative flex w-full justify-center overflow-hidden" style={{ height: "1.4em", marginTop: "0.05em" }}>
           {titles.map((title, index) => (
             <motion.span
               key={index}

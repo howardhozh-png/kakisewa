@@ -48,7 +48,7 @@ export default function LandingPage() {
       <AnimatedHero />
 
       {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-10 py-20 lg:py-28" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+      <section className="px-6 lg:px-10 py-12 lg:py-20" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
         <PainPointCards />
       </section>
 

@@ -6,6 +6,9 @@ import { useSearchParams } from "next/navigation"
 import { usePostHog } from "posthog-js/react"
 import { createClient } from "@/lib/supabase/client"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
@@ -18,13 +21,8 @@ const SPEND_OPTIONS = [
   { value: ">500",    label: "More than RM500" },
 ] as const
 
-const inputCls = "w-full rounded-xl px-3.5 py-2.5 outline-none transition-all"
-const inputStyle: React.CSSProperties = {
-  fontSize: "var(--kk-body)",
-  border: "1px solid var(--kk-line-strong)",
-  background: "var(--kk-bg)",
-  color: "var(--kk-ink)",
-}
+const sharedInputCls = "rounded-xl h-auto py-2.5 px-3.5"
+const sharedInputStyle: React.CSSProperties = { fontSize: "var(--kk-body)", background: "var(--kk-bg)", color: "var(--kk-ink)" }
 
 export default function SignUpPage() {
   return (
@@ -75,8 +73,6 @@ function SignUpForm() {
     }
   }
 
-  function onFocus(e: React.FocusEvent<HTMLInputElement>) { e.currentTarget.style.borderColor = "var(--kk-green)" }
-  function onBlur(e: React.FocusEvent<HTMLInputElement>)  { e.currentTarget.style.borderColor = "var(--kk-line-strong)" }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -234,21 +230,21 @@ function SignUpForm() {
         <form onSubmit={handleWaitlist} className="flex flex-col gap-4">
           {/* Email — pre-filled read-only */}
           <div className="flex flex-col gap-1.5">
-            <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Email</label>
-            <input
+            <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email</Label>
+            <Input
               type="email" readOnly value={waitlistEmail}
-              className={inputCls}
-              style={{ ...inputStyle, background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", cursor: "not-allowed" }}
+              className={sharedInputCls}
+              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", cursor: "not-allowed" }}
             />
           </div>
 
           {/* REN number */}
           <div className="flex flex-col gap-1.5">
-            <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>REN number <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400 }}>(optional)</span></label>
-            <input
+            <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>REN number <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400 }}>(optional)</span></Label>
+            <Input
               type="text" value={waitlistRen} onChange={e => setWaitlistRen(e.target.value)}
               placeholder="e.g. REN07128"
-              className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+              className={sharedInputCls} style={sharedInputStyle}
             />
           </div>
 
@@ -302,14 +298,13 @@ function SignUpForm() {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={waitlistLoading}
-            className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
-            style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: waitlistLoading ? 0.6 : 1, cursor: waitlistLoading ? "not-allowed" : "pointer", marginTop: 2 }}
+            className="w-full rounded-xl h-auto py-2.5 mt-0.5"
           >
             {waitlistLoading ? "Joining…" : "Join waitlist"}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
@@ -353,50 +348,47 @@ function SignUpForm() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Name <span style={{ color: "#DC2626" }}>*</span></label>
-                <input type="text" required value={form.name} onChange={set("name")} placeholder="Jane Lo"
-                  className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Name <span style={{ color: "var(--destructive)" }}>*</span></Label>
+                <Input type="text" required value={form.name} onChange={set("name")} placeholder="Jane Lo"
+                  className={sharedInputCls} style={sharedInputStyle} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>
-                  Agency <span style={{ color: "#DC2626" }}>*</span>
+                <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>
+                  Agency <span style={{ color: "var(--destructive)" }}>*</span>
                   {isAdmin && <span className="ml-2 text-[11px] font-semibold" style={{ color: "var(--kk-green)" }}>Admin</span>}
-                </label>
-                <input type="text" required value={form.agency} onChange={set("agency")} placeholder="kakisewa"
-                  className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+                </Label>
+                <Input type="text" required value={form.agency} onChange={set("agency")} placeholder="kakisewa"
+                  className={sharedInputCls} style={sharedInputStyle} />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Email <span style={{ color: "#DC2626" }}>*</span></label>
-              <input type="email" required value={form.email} onChange={set("email")} placeholder="you@example.com"
-                className={inputCls} style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+              <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email <span style={{ color: "var(--destructive)" }}>*</span></Label>
+              <Input type="email" required value={form.email} onChange={set("email")} placeholder="you@example.com"
+                className={sharedInputCls} style={sharedInputStyle} />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>Passcode <span style={{ color: "#DC2626" }}>*</span></label>
-              <input
+              <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Passcode <span style={{ color: "var(--destructive)" }}>*</span></Label>
+              <Input
                 type="tel" maxLength={8} required
                 value={form.passcode} onChange={set("passcode")}
                 placeholder="8-digit passcode"
-                className={`${inputCls} text-center tracking-widest`}
-                style={{ ...inputStyle, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
-                onFocus={onFocus} onBlur={onBlur}
+                className={`${sharedInputCls} text-center`}
+                style={{ ...sharedInputStyle, fontSize: "1.1rem", letterSpacing: "0.35em", WebkitTextSecurity: "disc" } as React.CSSProperties}
               />
               <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>8 digits — you&apos;ll use this to sign in</p>
             </div>
 
             {error && (
-              <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>
+              <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "var(--destructive)", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.2)" }}>
                 {error}
               </p>
             )}
 
-            <button type="submit" disabled={loading}
-              className="w-full rounded-xl py-2.5 font-semibold transition-opacity"
-              style={{ fontSize: "var(--kk-body)", background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer", marginTop: 2 }}>
+            <Button type="submit" disabled={loading} className="w-full rounded-xl h-auto py-2.5 mt-0.5">
               {loading ? "Checking…" : "Create account"}
-            </button>
+            </Button>
           </form>
         </div>
 
