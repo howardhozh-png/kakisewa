@@ -58,8 +58,6 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   function selectExisting(p: Property) {
     setPropertyId(p.id);
     setPropertyName(p.name);
-    setOwnerName(p.owner_name);
-    setOwnerPhone(p.owner_phone);
     setShowSugg(false);
   }
 
