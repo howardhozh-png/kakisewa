@@ -174,6 +174,9 @@
   input[type="radio"], input[type="submit"] { cursor: pointer; }
 }
 
+/* ─── Placeholder colour — lighter than muted-foreground so it reads as hint, not data ─── */
+input::placeholder, textarea::placeholder { color: #AEAEB2; }
+
 /* ─── Scrollbar — hidden globally; trackpad/wheel scrolling still works ─── */
 * { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }

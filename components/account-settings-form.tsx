@@ -626,7 +626,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
       </section>
 
       {/* ── WhatsApp Templates ── */}
-      <section className="kk-section p-6" style={{ overflow: "visible" }}>
+      <section id="templates" className="kk-section p-6" style={{ overflow: "visible" }}>
         <div className="flex items-center gap-2 mb-1">
           <h2 className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>WhatsApp Templates</h2>
           <div className="relative group" style={{ overflow: "visible" }}>
