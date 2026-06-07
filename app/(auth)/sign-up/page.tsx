@@ -227,7 +227,7 @@ function SignUpForm() {
             kakisewa is in exclusive beta
           </p>
           <p className="text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-            We&apos;re onboarding only <strong style={{ color: "var(--kk-ink)" }}>20 agents</strong> in this round. Join the waitlist and we&apos;ll contact you when a spot opens.
+            We&apos;re onboarding only <strong style={{ color: "var(--kk-ink)" }}>20 agents</strong>{" "}in this round. Join the waitlist and we&apos;ll contact you when a spot opens.
           </p>
         </div>
 
@@ -254,23 +254,51 @@ function SignUpForm() {
 
           {/* Pricing survey */}
           <div className="flex flex-col gap-2">
-            <label style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)" }}>What would you pay per month?</label>
-            <div className="grid grid-cols-2 gap-2">
-              {SPEND_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setWaitlistSpend(opt.value)}
-                  className="rounded-xl px-3 py-2.5 text-[13px] font-medium text-left transition-all"
-                  style={{
-                    border: `1.5px solid ${waitlistSpend === opt.value ? "var(--kk-accent)" : "var(--kk-line-strong)"}`,
-                    background: waitlistSpend === opt.value ? "var(--kk-accent)" : "var(--kk-bg)",
-                    color: waitlistSpend === opt.value ? "#fff" : "var(--kk-ink)",
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div>
+              <p style={{ fontSize: "var(--kk-sm)", fontWeight: 500, color: "var(--kk-ink)", marginBottom: 6 }}>
+                How much would you pay for this tool if it helps you to:
+              </p>
+              <ul className="flex flex-col gap-1" style={{ paddingLeft: 4 }}>
+                {[
+                  "Track all leads and never lose a single one",
+                  "Get reminders on every upcoming renewal",
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}>
+                    <span style={{ marginTop: 1, flexShrink: 0, color: "var(--kk-green)" }}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex flex-col gap-1.5 mt-1">
+              {SPEND_OPTIONS.map(opt => {
+                const selected = waitlistSpend === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setWaitlistSpend(opt.value)}
+                    className="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-left transition-all"
+                    style={{
+                      border: `1.5px solid ${selected ? "var(--kk-green)" : "var(--kk-line-strong)"}`,
+                      background: selected ? "rgba(16,185,129,0.06)" : "var(--kk-bg)",
+                    }}
+                  >
+                    <span className="flex-shrink-0 rounded-full flex items-center justify-center" style={{
+                      width: 18, height: 18,
+                      border: `2px solid ${selected ? "var(--kk-green)" : "var(--kk-line-strong)"}`,
+                      background: selected ? "var(--kk-green)" : "transparent",
+                    }}>
+                      {selected && (
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", display: "block" }} />
+                      )}
+                    </span>
+                    <span className="text-[13px] font-medium" style={{ color: selected ? "var(--kk-ink)" : "var(--kk-ink-mute)" }}>
+                      {opt.label}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
