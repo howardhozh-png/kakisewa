@@ -136,7 +136,7 @@ function TenancyForm({
       if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
       const next = [...photos, data.url as string];
       setPhotos(next);
-      await fetch(`/api/properties/${tenancy.property_id}/photos`, {
+      await fetch(`/api/owner-leads/${tenancy.owner_lead_id}/photos`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ urls: next }),
@@ -152,7 +152,7 @@ function TenancyForm({
   async function handleRemovePhoto(idx: number) {
     const next = photos.filter((_, i) => i !== idx);
     setPhotos(next);
-    await fetch(`/api/properties/${tenancy.property_id}/photos`, {
+    await fetch(`/api/owner-leads/${tenancy.owner_lead_id}/photos`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ urls: next }),

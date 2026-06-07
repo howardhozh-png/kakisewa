@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getLifecycleTenancies, getTenancies, getProperties, countOwnerLeads, getAgentProfile } from "@/lib/db";
+import { getLifecycleTenancies, getTenancies, getOwnerLeads, countOwnerLeads, getAgentProfile } from "@/lib/db";
 import { effectivePlan } from "@/lib/plan-caps";
 import { format } from "date-fns";
 import { LifecycleBoard } from "@/components/lifecycle-board";
@@ -18,10 +18,10 @@ interface Props {
 export default async function TenanciesPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
   const today = new Date();
-  const [lifecycle, allTenancies, properties, makeCount, agentProfile] = await Promise.all([
+  const [lifecycle, allTenancies, ownerLeads, makeCount, agentProfile] = await Promise.all([
     getLifecycleTenancies(),
     getTenancies(),
-    getProperties(),
+    getOwnerLeads(),
     countOwnerLeads(),
     getAgentProfile().catch(() => null),
   ]);
@@ -45,7 +45,7 @@ export default async function TenanciesPage({ searchParams }: Props) {
             Your renewal commission is passive income. Never miss an expiry again.
           </p>
         </div>
-        <AddTenancyDialog properties={properties} />
+        <AddTenancyDialog ownerLeads={ownerLeads} />
       </header>
 
       <Suspense fallback={null}>
@@ -95,7 +95,7 @@ export default async function TenanciesPage({ searchParams }: Props) {
               <p className="kk-body-sm mb-8 max-w-sm leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
                 Enter your active tenancies and kakisewa tracks every renewal automatically. Get alerted 60 days before expiry and close the commission before another agent does. You never have to remember again.
               </p>
-              <AddTenancyDialog properties={properties} />
+              <AddTenancyDialog ownerLeads={ownerLeads} />
             </div>
 
             {/* Preview of what it looks like */}

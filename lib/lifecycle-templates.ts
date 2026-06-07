@@ -48,7 +48,7 @@ function resolve(ctx: TemplateContext): Resolved {
     tenant_phone: t.tenant_phone,
     owner_name: t.property?.owner_name ?? "Owner",
     owner_phone: t.property?.owner_phone ?? "",
-    property_name: t.property_name ?? t.property_id,
+    property_name: t.property_name ?? t.owner_lead_id ?? "",
     unit: unitLabel,
     rent: `RM ${t.amount.toLocaleString()}`,
     expiry_date: expiryDate,

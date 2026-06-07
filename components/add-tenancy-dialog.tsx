@@ -12,20 +12,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addTenancy } from "@/lib/actions";
-import { Property } from "@/lib/types";
+import { OwnerLead } from "@/lib/types";
 import { toast } from "sonner";
 
 const todayISO = () => new Date().toISOString().split("T")[0];
 
-export function AddTenancyDialog({ properties }: { properties: Property[] }) {
+export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; nearestExpiryDays: number | null } | null>(null);
 
-  // Property autocomplete
+  // Owner lead autocomplete
   const [propertyName, setPropertyName] = useState("");
-  const [propertyId, setPropertyId]     = useState("");
+  const [ownerLeadId, setOwnerLeadId]   = useState("");
   const [unit, setUnit]                 = useState("");
   const [ownerName, setOwnerName]       = useState("");
   const [ownerPhone, setOwnerPhone]     = useState("");
@@ -42,22 +42,26 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   const suggestions = useMemo(() => {
     const q = propertyName.trim().toLowerCase();
     const seen = new Set<string>();
-    const base = q ? properties.filter((p) => p.name.toLowerCase().includes(q)) : properties;
-    return base.filter((p) => {
-      const key = p.name.toLowerCase();
+    const base = q
+      ? ownerLeads.filter((ol) => (ol.property_name ?? "").toLowerCase().includes(q))
+      : ownerLeads;
+    return base.filter((ol) => {
+      const key = (ol.property_name ?? "").toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     }).slice(0, 8);
-  }, [propertyName, properties]);
+  }, [propertyName, ownerLeads]);
 
-  const hasExactMatch = properties.some(
-    (p) => p.name.toLowerCase() === propertyName.trim().toLowerCase()
+  const hasExactMatch = ownerLeads.some(
+    (ol) => (ol.property_name ?? "").toLowerCase() === propertyName.trim().toLowerCase()
   );
 
-  function selectExisting(p: Property) {
-    setPropertyId(p.id);
-    setPropertyName(p.name);
+  function selectExisting(ol: OwnerLead) {
+    setOwnerLeadId(ol.id);
+    setPropertyName(ol.property_name ?? "");
+    setOwnerName(ol.owner_name ?? "");
+    setOwnerPhone(ol.owner_phone ?? "");
     setShowSugg(false);
   }
 
@@ -82,7 +86,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
   }
 
   function reset() {
-    setPropertyName(""); setPropertyId(""); setUnit("");
+    setPropertyName(""); setOwnerLeadId(""); setUnit("");
     setOwnerName(""); setOwnerPhone(""); setAmount("");
     setContractStart(""); setShowSugg(false);
     photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
@@ -91,9 +95,9 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!propertyName.trim()) return;
+    if (!ownerLeadId) return;
     const fd = new FormData(e.currentTarget);
-    fd.set("property_id", propertyId);
+    fd.set("owner_lead_id", ownerLeadId);
     fd.set("property_name", propertyName.trim());
     fd.set("property_unit", unit);
     fd.set("owner_name", ownerName);
@@ -179,17 +183,17 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
               <FieldLabel required>Property name</FieldLabel>
               <Input
                 value={propertyName}
-                onChange={(e) => { setPropertyName(e.target.value); setPropertyId(""); setShowSugg(true); }}
+                onChange={(e) => { setPropertyName(e.target.value); setOwnerLeadId(""); setShowSugg(true); }}
                 onFocus={() => setShowSugg(true)}
                 placeholder="e.g. Residensi Mutiara"
                 autoComplete="off"
                 required
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
               />
-              {propertyId
-                ? <p className="text-[11px]" style={{ color: "var(--kk-green)" }}>Existing property</p>
+              {ownerLeadId
+                ? <p className="text-[11px]" style={{ color: "var(--kk-green)" }}>Existing owner lead selected</p>
                 : propertyName.trim()
-                  ? <p className="text-[11px]" style={{ color: "var(--kk-blue)" }}>New property will be created</p>
+                  ? <p className="text-[11px]" style={{ color: "var(--kk-blue)" }}>Type to search owner leads</p>
                   : null
               }
               {showSugg && (
@@ -197,25 +201,16 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
                   className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden"
                   style={{ zIndex: 9999, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: 240, overflowY: "auto" }}
                 >
-                  {suggestions.map((p) => (
+                  {suggestions.map((ol) => (
                     <button
-                      key={p.id} type="button" tabIndex={0}
-                      onMouseDown={(e) => { e.preventDefault(); selectExisting(p); }}
+                      key={ol.id} type="button" tabIndex={0}
+                      onMouseDown={(e) => { e.preventDefault(); selectExisting(ol); }}
                       className="w-full text-left px-4 py-2.5 transition-opacity hover:opacity-70"
                     >
-                      <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{p.name}</p>
+                      <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{ol.property_name}</p>
+                      {ol.owner_name && <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{ol.owner_name}</p>}
                     </button>
                   ))}
-                  {propertyName.trim() && !hasExactMatch && (
-                    <button
-                      type="button" tabIndex={0}
-                      onMouseDown={(e) => { e.preventDefault(); setPropertyId(""); setShowSugg(false); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px]"
-                      style={{ color: "var(--kk-blue)", borderTop: suggestions.length ? "1px solid var(--kk-line)" : "none" }}
-                    >
-                      + Create &ldquo;{propertyName.trim()}&rdquo; as new property
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -336,7 +331,7 @@ export function AddTenancyDialog({ properties }: { properties: Property[] }) {
             <button type="button" className="kk-pill kk-pill-ghost" onClick={() => setOpen(false)}>
               Cancel
             </button>
-            <button type="submit" disabled={isBusy || !propertyName.trim()} className="kk-pill kk-pill-primary flex items-center gap-1.5">
+            <button type="submit" disabled={isBusy || !ownerLeadId} className="kk-pill kk-pill-primary flex items-center gap-1.5">
               {isBusy && <Loader2 className="w-3 h-3 animate-spin" />}
               {uploading ? "Uploading…" : pending ? "Saving…" : "Save tenancy"}
             </button>

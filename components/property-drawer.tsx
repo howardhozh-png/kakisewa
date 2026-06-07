@@ -3,18 +3,18 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { X, Building2, MapPin, Phone, ImagePlus, Trash2, Loader2 } from "lucide-react";
-import { Property } from "@/lib/types";
-import { removeProperty } from "@/lib/actions";
+import type { OwnerLead } from "@/lib/types";
+import { removeOwnerLead } from "@/lib/actions";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 
 interface Props {
-  property: Property;
+  lead: OwnerLead;
   tenantCount: number;
 }
 
-export function PropertyDrawer({ property: p, tenantCount }: Props) {
+export function PropertyDrawer({ lead: p, tenantCount }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [photos, setPhotos] = useState<string[]>(p.photo_urls ?? []);
@@ -34,7 +34,7 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
       if (!ok) throw new Error("Upload failed");
       const next = [...photos, data.url as string];
       setPhotos(next);
-      await fetch(`/api/properties/${p.id}/photos`, {
+      await fetch(`/api/owner-leads/${p.id}/photos`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ urls: next }),
@@ -48,7 +48,7 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
   async function removePhoto(url: string) {
     const next = photos.filter((u) => u !== url);
     setPhotos(next);
-    await fetch(`/api/properties/${p.id}/photos`, {
+    await fetch(`/api/owner-leads/${p.id}/photos`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ urls: next }),
@@ -60,9 +60,9 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
       <button
         onClick={() => setOpen(true)}
         className="w-full text-left focus:outline-none"
-        aria-label={`Open details for ${p.name}`}
+        aria-label={`Open details for ${p.property_name}`}
       >
-        <PropertyCard property={p} tenantCount={tenantCount} />
+        <PropertyCard lead={p} tenantCount={tenantCount} />
       </button>
 
       {open && (
@@ -87,7 +87,7 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
             </div>
             <div>
               <p className="text-[16px] font-semibold leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.011em" }}>
-                {p.name}
+                {p.property_name ?? "Unnamed property"}
               </p>
               {p.unit && (
                 <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Unit {p.unit}</p>
@@ -107,7 +107,7 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           <div className="space-y-5">
-            <DrawerRow icon={<MapPin className="w-4 h-4" />} label="Address" value={p.address} />
+            {p.address && <DrawerRow icon={<MapPin className="w-4 h-4" />} label="Address" value={p.address} />}
             <DrawerRow icon={<Phone className="w-4 h-4" />} label="Owner" value={`${p.owner_name} · +${p.owner_phone}`} />
             <DrawerRow icon={<Building2 className="w-4 h-4" />} label="Tenants" value={`${tenantCount} active`} />
           </div>
@@ -163,10 +163,10 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
           {/* Delete */}
           {confirmDelete ? (
             <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
-              <p className="flex-1 text-[13px] font-medium" style={{ color: "#DC2626" }}>Delete this property permanently?</p>
+              <p className="flex-1 text-[13px] font-medium" style={{ color: "#DC2626" }}>Remove this property from management?</p>
               <button onClick={() => setConfirmDelete(false)} className="text-[12px] font-medium px-3 py-1.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
               <button disabled={deleting}
-                onClick={() => startTransition(async () => { await removeProperty(p.id); setOpen(false); router.refresh(); })}
+                onClick={() => startTransition(async () => { await removeOwnerLead(p.id); setOpen(false); router.refresh(); })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold"
                 style={{ background: "#DC2626", color: "#fff" }}>
                 {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -177,7 +177,7 @@ export function PropertyDrawer({ property: p, tenantCount }: Props) {
             <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 text-[13px] font-medium transition-colors hover:opacity-80"
               style={{ color: "var(--kk-ink-faint)" }}>
               <Trash2 className="w-4 h-4" />
-              Delete property
+              Remove property
             </button>
           )}
         </div>
@@ -198,7 +198,7 @@ function DrawerRow({ icon, label, value }: { icon: React.ReactNode; label: strin
   );
 }
 
-function PropertyCard({ property: p, tenantCount }: { property: Property; tenantCount: number }) {
+function PropertyCard({ lead: p, tenantCount }: { lead: OwnerLead; tenantCount: number }) {
   return (
     <div className="kk-card kk-card-hover p-6">
       <div className="flex items-start gap-4">
@@ -210,12 +210,12 @@ function PropertyCard({ property: p, tenantCount }: { property: Property; tenant
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)", letterSpacing: "-0.011em" }}>
-            {p.name}
+            {p.property_name ?? "Unnamed property"}
           </p>
           {p.unit && (
             <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Unit {p.unit}</p>
           )}
-          <p className="text-[13px] mt-3 truncate" style={{ color: "var(--kk-ink-mute)" }}>{p.address}</p>
+          {p.address && <p className="text-[13px] mt-3 truncate" style={{ color: "var(--kk-ink-mute)" }}>{p.address}</p>}
           <div className="flex items-center gap-4 mt-4 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
             <span className="flex items-center gap-1.5">
               <Phone className="w-3.5 h-3.5" />

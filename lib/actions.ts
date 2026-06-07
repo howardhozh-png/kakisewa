@@ -9,16 +9,12 @@ const revalidateTag = _revalidateTag as unknown as (tag: string) => void;
 function invalidateCache() {
   revalidateTag("kk-owner-leads");
   revalidateTag("kk-tenancies");
-  revalidateTag("kk-properties");
   revalidateTag("kk-tenant-profiles");
   revalidateTag("kk-supports");
 }
 import { format } from "date-fns";
 import { checkRenewalCardCap } from "./plan-caps";
 import {
-  createProperty,
-  getProperties,
-  deleteProperty,
   createTenancy,
   updateTenancy,
   deleteTenancy,
@@ -57,7 +53,7 @@ import {
 } from "./db";
 import { getAgentId } from "./auth";
 import { verifyReceiptImage } from "./ai-verify";
-import { Property, Tenancy, WhatsAppTemplate, daysUntil, ReplyState, LifecycleStage, SupportType } from "./types";
+import { Tenancy, WhatsAppTemplate, daysUntil, ReplyState, LifecycleStage, SupportType } from "./types";
 import { buildLhdnXml } from "./lhdn";
 import {
   buildOutbound,
@@ -78,35 +74,10 @@ function parseFlexDate(s: string): string | null {
   return null;
 }
 
-// ─── Properties ───────────────────────────────────────────────────────────────
-
-export async function addProperty(formData: FormData) {
-  const data = {
-    name: formData.get("name") as string,
-    address: formData.get("address") as string,
-    unit: (formData.get("unit") as string) || undefined,
-    owner_name: formData.get("owner_name") as string,
-    owner_phone: formData.get("owner_phone") as string,
-  };
-  await createProperty(data);
-  invalidateCache();
-  revalidatePath("/properties");
-  revalidatePath("/");
-}
-
-export async function removeProperty(id: string) {
-  await deleteProperty(id);
-  invalidateCache();
-  revalidatePath("/properties");
-  revalidatePath("/directory");
-  revalidatePath("/");
-}
-
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
 export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
-  // Resolve property — use existing or create new
-  let propertyId = (formData.get("property_id") as string) || "";
+  const ownerLeadId = (formData.get("owner_lead_id") as string) || null;
   const photoUrls: string[] = [];
   for (let i = 0; i < 4; i++) {
     const u = (formData.get(`photo_url_${i}`) as string) || "";
@@ -114,20 +85,12 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   }
   const agreementUrl = (formData.get("agreement_url") as string) || null;
 
-  if (!propertyId) {
-    const propName = ((formData.get("property_name") as string) || "").trim();
-    if (!propName) return { ok: false };
-    const newProp = await createProperty({
-      name: propName,
-      address: "",
-      unit: ((formData.get("property_unit") as string) || undefined),
-      owner_name: (formData.get("owner_name") as string) || "",
-      owner_phone: (formData.get("owner_phone") as string) || "",
-      photo_urls: photoUrls,
-    });
-    propertyId = newProp.id;
-  } else if (photoUrls.length > 0) {
-    await (await import("@/lib/db")).updatePropertyPhotos(propertyId, photoUrls);
+  // Mark the owner_lead as managed when creating the tenancy
+  if (ownerLeadId) {
+    await (await import("@/lib/db")).updateOwnerLead(ownerLeadId, { is_managed: true } as Parameters<typeof import("@/lib/db").updateOwnerLead>[1]);
+    if (photoUrls.length > 0) {
+      await (await import("@/lib/db")).updateOwnerLeadPhotos(ownerLeadId, photoUrls);
+    }
   }
 
   const contractStart = parseFlexDate((formData.get("contract_start") as string) || "");
@@ -144,7 +107,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   if (!cap.allowed) return { ok: false, reason: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
   const newTenancy = await createTenancy({
-    property_id: propertyId,
+    owner_lead_id: ownerLeadId,
     tenant_name: formData.get("tenant_name") as string,
     tenant_phone: formData.get("tenant_phone") as string,
     due_day: parseInt(formData.get("due_day") as string, 10) || 1,
@@ -412,7 +375,7 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
   const body = resolveTemplate("expiry_check_tenant", overrides, {
     tenantName: t.tenant_name,
     agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
-    propertyName: t.property_name ?? t.property_id,
+    propertyName: t.property_name ?? t.owner_lead_id ?? "",
     expiryWhen,
     renewalForm: formUrl,
   });
@@ -682,14 +645,14 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
     : `${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
   const body = resolveTemplate("expiry_check_owner", overrides, {
-    ownerName: t.property.owner_name,
+    ownerName: t.property?.owner_name ?? "",
     agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
-    propertyName: t.property_name ?? t.property_id,
+    propertyName: t.property_name ?? t.owner_lead_id ?? "",
     tenantName: t.tenant_name,
     expiryWhen,
     renewalForm: formUrl,
   });
-  const out = buildOutbound({ template: "expiry_check_owner", toPhone: t.property.owner_phone, body });
+  const out = buildOutbound({ template: "expiry_check_owner", toPhone: t.property?.owner_phone ?? "", body });
   await logWhatsApp({
     related_id: t.id,
     related_type: "tenancy",
@@ -802,22 +765,6 @@ export async function convertLeadToTenancy(
     const lead = await getOwnerLead(ownerLeadId);
     if (!lead) return { ok: false, message: "Owner lead not found." };
 
-    // Find existing property by owner phone, else create one from lead data
-    const props = await getProperties();
-    const normalise = (p: string) => p.replace(/[^\d]/g, "");
-    let property = props.find(
-      (p) => normalise(p.owner_phone) === normalise(lead.owner_phone)
-    );
-    if (!property) {
-      property = await createProperty({
-        name: lead.property_name ?? `${lead.owner_name}'s Property`,
-        address: lead.address ?? "",
-        unit: lead.unit ?? undefined,
-        owner_name: lead.owner_name,
-        owner_phone: lead.owner_phone,
-      });
-    }
-
     const isoStart = parseFlexDate(data.contract_start) ?? data.contract_start;
     const [y, m, d] = isoStart.split("-").map(Number);
     const end = new Date(y, m - 1 + data.contract_duration_months, d);
@@ -827,7 +774,7 @@ export async function convertLeadToTenancy(
     if (!cap.allowed) return { ok: false, message: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
     const signedTenancy = await createTenancy({
-      property_id: property.id,
+      owner_lead_id: ownerLeadId,
       tenant_name: data.tenant_name,
       tenant_phone: data.tenant_phone,
       due_day: data.due_day,
@@ -843,7 +790,6 @@ export async function convertLeadToTenancy(
       contract_duration_months: data.contract_duration_months,
       replied_tenant: "pending",
       replied_owner: "pending",
-      owner_lead_id: ownerLeadId,
     });
 
     const agent = await getAgentProfile();
@@ -857,7 +803,7 @@ export async function convertLeadToTenancy(
       notes: commissionOverride ? "override applied" : null,
     });
 
-    await updateOwnerLead(ownerLeadId, { stage: "matched" });
+    await updateOwnerLead(ownerLeadId, { stage: "matched", is_managed: true });
 
     invalidateCache();
     revalidatePath("/new-owners");
@@ -1490,7 +1436,7 @@ export async function generateLhdn(
     tenancyId,
     tenantName: tenancy.tenant_name,
     tenantPhone: tenancy.tenant_phone,
-    propertyName: tenancy.property_name ?? tenancy.property_id,
+    propertyName: tenancy.property_name ?? tenancy.owner_lead_id ?? "",
     amount: tenancy.amount,
     month: format(new Date(), "MMMM yyyy"),
   });

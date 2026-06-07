@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updatePropertyPhotos } from "@/lib/db";
+import { updateOwnerLeadPhotos } from "@/lib/db";
 
 export async function PATCH(
   req: NextRequest,
@@ -10,6 +10,6 @@ export async function PATCH(
   if (!Array.isArray(urls)) {
     return NextResponse.json({ error: "urls must be an array" }, { status: 400 });
   }
-  await updatePropertyPhotos(id, urls.slice(0, 4));
+  await updateOwnerLeadPhotos(id, urls.slice(0, 4));
   return NextResponse.json({ ok: true });
 }

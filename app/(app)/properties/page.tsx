@@ -1,16 +1,27 @@
-import { getProperties, getTenancies } from "@/lib/db";
-import { removeProperty } from "@/lib/actions";
-import { Building2, Phone, X } from "lucide-react";
-import { AddPropertyDialog } from "@/components/add-property-dialog";
-import { PropertyDrawer } from "@/components/property-drawer";
+import { createClient } from "@/lib/supabase/server";
+import { getTenancies } from "@/lib/db";
+import { Building2, Phone } from "lucide-react";
+import type { OwnerLead } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function PropertiesPage() {
-  const [properties, tenancies] = await Promise.all([getProperties(), getTenancies()]);
+  const supabase = await createClient();
+  const [{ data: managedLeadsRaw }, tenancies] = await Promise.all([
+    supabase
+      .from("owner_leads")
+      .select("id, owner_name, owner_phone, property_name, unit, address")
+      .eq("is_managed", true)
+      .order("created_at", { ascending: false }),
+    getTenancies(),
+  ]);
+
+  const managedLeads = (managedLeadsRaw ?? []) as Pick<OwnerLead, "id" | "owner_name" | "owner_phone" | "property_name" | "unit" | "address">[];
 
   const countMap = tenancies.reduce<Record<string, number>>((acc, t) => {
-    acc[t.property_id] = (acc[t.property_id] ?? 0) + 1;
+    if (t.owner_lead_id) {
+      acc[t.owner_lead_id] = (acc[t.owner_lead_id] ?? 0) + 1;
+    }
     return acc;
   }, {});
 
@@ -23,13 +34,12 @@ export default async function PropertiesPage() {
             Properties
           </h1>
           <p className="mt-3 kk-body-sm" style={{ color: "var(--kk-ink-mute)" }}>
-            {properties.length} propert{properties.length === 1 ? "y" : "ies"} · tap any to open details.
+            {managedLeads.length} propert{managedLeads.length === 1 ? "y" : "ies"} under management.
           </p>
         </div>
-        <AddPropertyDialog />
       </header>
 
-      {properties.length === 0 ? (
+      {managedLeads.length === 0 ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div style={{ opacity: 0.55, pointerEvents: "none" }}>
             <div className="kk-card p-6">
@@ -55,25 +65,31 @@ export default async function PropertiesPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {properties.map((p) => (
-            <div key={p.id} className="relative group">
-              <PropertyDrawer property={p} tenantCount={countMap[p.id] ?? 0} />
-              <form
-                className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                action={async () => {
-                  "use server";
-                  await removeProperty(p.id);
-                }}
-              >
-                <button
-                  type="submit"
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                  title="Delete"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </form>
+          {managedLeads.map((lead) => (
+            <div key={lead.id} className="kk-card p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}>
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.011em" }}>
+                    {lead.property_name ?? "Unnamed property"}
+                  </p>
+                  {lead.unit && (
+                    <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Unit {lead.unit}</p>
+                  )}
+                  {lead.address && (
+                    <p className="text-[13px] mt-3 truncate" style={{ color: "var(--kk-ink-mute)" }}>{lead.address}</p>
+                  )}
+                  <div className="flex items-center gap-4 mt-4 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+                    <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{lead.owner_name}</span>
+                    <span className="flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5" />
+                      {countMap[lead.id] ?? 0} tenant{(countMap[lead.id] ?? 0) === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>

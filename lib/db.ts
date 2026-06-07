@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "./supabase/server";
 import { createServiceClient } from "./supabase/service";
 import { headers } from "next/headers";
-import type { Property, Tenancy, TenancyStatus, LhdnStatus, Tier, PropertySupport, SupportType } from "./types";
+import type { Tenancy, TenancyStatus, LhdnStatus, Tier, PropertySupport, SupportType } from "./types";
 import type { WhatsAppLogEntry, WhatsAppTemplate } from "./types";
 import type { OwnerLead, AgentProfile, TenantProfile, MatchPack, PackTenant } from "./types";
 
@@ -44,42 +44,26 @@ function parsePhotoUrls(v: unknown): string[] {
   return [];
 }
 
-function toProp(r: Record<string, unknown>): Property {
-  return {
-    id: r.id as string,
-    name: r.name as string,
-    address: r.address as string,
-    unit: (r.unit as string | null) ?? undefined,
-    owner_name: r.owner_name as string,
-    owner_phone: r.owner_phone as string,
-    photo_urls: parsePhotoUrls(r.photo_urls),
-    created_at: r.created_at as string,
-  };
-}
-
 function normaliseReply(r: unknown): import("./types").ReplyState {
   if (r === "yes" || r === "no") return r;
   return "pending";
 }
 
 function toTenancy(r: Record<string, unknown>): Tenancy {
-  const prop = r.properties as Record<string, unknown> | null | undefined;
-  const property: Property | undefined = prop
+  const ol = r.owner_leads as Record<string, unknown> | null | undefined;
+  const property = ol
     ? {
-        id: r.property_id as string,
-        name: prop.name as string,
-        address: (prop.address as string) ?? "",
-        unit: (prop.unit as string | null) ?? undefined,
-        owner_name: (prop.owner_name as string) ?? "",
-        owner_phone: (prop.owner_phone as string) ?? "",
-        photo_urls: parsePhotoUrls(prop.photo_urls),
-        created_at: "",
+        owner_name: (ol.owner_name as string) ?? "",
+        owner_phone: (ol.owner_phone as string) ?? "",
+        address: (ol.address as string | null) ?? undefined,
+        unit: (ol.unit as string | null) ?? undefined,
+        photo_urls: parsePhotoUrls(ol.photo_urls),
       }
     : undefined;
 
   return {
     id: r.id as string,
-    property_id: r.property_id as string,
+    property_id: (r.property_id as string | null) ?? undefined,
     tenant_name: r.tenant_name as string,
     tenant_phone: r.tenant_phone as string,
     due_day: r.due_day as number,
@@ -106,7 +90,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
     closed_reason: (r.closed_reason as string | null) ?? null,
     agreement_url: (r.agreement_url as string | null) ?? null,
     created_at: r.created_at as string,
-    property_name: prop?.name as string | undefined,
+    property_name: (ol?.property_name as string | null) ?? undefined,
     property,
     owner_lead_id: (r.owner_lead_id as string | null) ?? null,
     user_id: (r.user_id as string | null) ?? null,
@@ -123,17 +107,6 @@ function parseOwnerLead(r: Record<string, unknown>): OwnerLead {
 // ─── Cached data fetchers ─────────────────────────────────────────────────────
 // unstable_cache caches across requests (up to 60s). Cannot use cookies() inside;
 // use service client + explicit user_id filter instead.
-
-const _cachedProperties = unstable_cache(
-  async (userId: string): Promise<Property[]> => {
-    const svc = createServiceClient();
-    const { data, error } = await svc.from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []).map((r: unknown) => toProp(r as Record<string, unknown>));
-  },
-  ["kk-properties"],
-  { tags: ["kk-properties"], revalidate: 60 }
-);
 
 const _cachedTenancies = unstable_cache(
   async (userId: string): Promise<Tenancy[]> => {
@@ -241,40 +214,36 @@ const _cachedAllActiveTenants = unstable_cache(
     const svc = createServiceClient();
     const { data, error } = await svc
       .from("tenancies")
-      .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, property_id, owner_lead_id")
+      .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
       .eq("user_id", userId)
       .not("lifecycle_stage", "eq", "closed")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
     const rows = (data ?? []) as Record<string, unknown>[];
-    const propIds = [...new Set(rows.map(r => r.property_id as string).filter(Boolean))];
-    const olIds   = [...new Set(rows.filter(r => !r.property_id && r.owner_lead_id).map(r => r.owner_lead_id as string))];
+    const olIds = [...new Set(rows.map(r => r.owner_lead_id as string).filter(Boolean))];
 
-    const [propsRes, olsRes] = await Promise.all([
-      propIds.length > 0 ? svc.from("properties").select("id, name, unit").in("id", propIds) : Promise.resolve({ data: [] as {id:string;name:string;unit:string|null}[] }),
-      olIds.length > 0   ? svc.from("owner_leads").select("id, property_name, unit").in("id", olIds) : Promise.resolve({ data: [] as {id:string;property_name:string|null;unit:string|null}[] }),
-    ]);
+    const olsRes = olIds.length > 0
+      ? await svc.from("owner_leads").select("id, property_name, unit").in("id", olIds)
+      : { data: [] as {id:string;property_name:string|null;unit:string|null}[] };
 
-    const propMap = Object.fromEntries((propsRes.data ?? []).map((p: {id:string;name:string;unit:string|null}) => [p.id, p]));
-    const olMap   = Object.fromEntries((olsRes.data   ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
+    const olMap = Object.fromEntries((olsRes.data ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
 
     return rows.map(row => {
-      const prop = row.property_id ? propMap[row.property_id as string] : null;
-      const ol   = (!row.property_id && row.owner_lead_id) ? olMap[row.owner_lead_id as string] : null;
+      const ol = row.owner_lead_id ? olMap[row.owner_lead_id as string] : null;
       return {
         tenancy_id:      row.id as string,
         tenant_name:     row.tenant_name as string,
         tenant_phone:    row.tenant_phone as string | null,
-        property_name:   (prop?.name ?? ol?.property_name ?? null) as string | null,
-        unit:            (prop?.unit ?? ol?.unit ?? null) as string | null,
+        property_name:   (ol?.property_name ?? null) as string | null,
+        unit:            (ol?.unit ?? null) as string | null,
         amount:          row.amount as number | null,
         lifecycle_stage: row.lifecycle_stage as string | null,
       };
     });
   },
   ["kk-active-tenants"],
-  { tags: ["kk-tenancies", "kk-properties", "kk-owner-leads"], revalidate: 60 }
+  { tags: ["kk-tenancies", "kk-owner-leads"], revalidate: 60 }
 );
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
@@ -353,69 +322,9 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
   });
 }
 
-// ─── Properties ───────────────────────────────────────────────────────────────
-
-export async function getProperties(): Promise<Property[]> {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    const supabase = await createClient();
-    const { data, error } = await supabase.from("properties").select("*").order("created_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []).map(r => toProp(r as Record<string, unknown>));
-  }
-  return _cachedProperties(userId);
-}
-
-export async function getProperty(id: string): Promise<Property | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? toProp(data as Record<string, unknown>) : null;
-}
-
-export async function createProperty(data: Omit<Property, "id" | "created_at">): Promise<Property> {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
-  const id = `prop_${Date.now()}`;
-  const { error } = await supabase
-    .from("properties")
-    .insert({
-      id,
-      user_id: user!.id,
-      name: data.name,
-      address: data.address,
-      unit: data.unit ?? null,
-      owner_name: data.owner_name,
-      owner_phone: data.owner_phone,
-      photo_urls: data.photo_urls ?? [],
-    });
-  if (error) throw error;
-  return (await getProperty(id))!;
-}
-
-export async function updatePropertyPhotos(id: string, urls: string[]): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("properties")
-    .update({ photo_urls: urls.slice(0, 4) })
-    .eq("id", id);
-  if (error) throw error;
-}
-
-export async function deleteProperty(id: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("properties").delete().eq("id", id);
-  if (error) throw error;
-}
-
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-const TENANCY_SELECT = "*, properties!property_id(*)";
+const TENANCY_SELECT = "*, owner_leads!owner_lead_id(id, owner_name, owner_phone, property_name, unit, address, photo_urls, is_managed)";
 
 export async function getTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();
@@ -451,7 +360,7 @@ export async function createTenancy(
     .insert({
       id,
       user_id: user!.id,
-      property_id: data.property_id,
+      property_id: data.property_id ?? null,
       tenant_name: data.tenant_name,
       tenant_phone: data.tenant_phone,
       due_day: data.due_day,
@@ -486,7 +395,7 @@ export async function upsertTenancyByPhone(
     return (await getTenancy(existing.id))!;
   }
   return createTenancy({
-    property_id: data.property_id ?? "",
+    property_id: data.property_id ?? undefined,
     tenant_name: data.tenant_name ?? "Unknown",
     tenant_phone: phone,
     due_day: data.due_day ?? 1,
@@ -738,7 +647,7 @@ export async function getExpiringContractsPreview(days = 60): Promise<Array<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, contract_end, property_id, owner_lead_id, properties!property_id(name, unit), owner_leads!owner_lead_id(property_name, unit)")
+    .select("id, tenant_name, contract_end, owner_lead_id, owner_leads!owner_lead_id(property_name, unit)")
     .not("contract_end", "is", null)
     .gte("contract_end", todayStr)
     .lte("contract_end", cutoff)
@@ -748,14 +657,13 @@ export async function getExpiringContractsPreview(days = 60): Promise<Array<{
 
   return (data ?? []).map((r) => {
     const row = r as Record<string, unknown>;
-    const prop = row.properties as Record<string, unknown> | null;
-    const ol   = row.owner_leads as Record<string, unknown> | null;
+    const ol = row.owner_leads as Record<string, unknown> | null;
     const contract_end = row.contract_end as string;
     return {
       id: row.id as string,
       tenant_name: row.tenant_name as string,
-      property_name: (prop?.name ?? ol?.property_name ?? null) as string | null,
-      unit: (prop?.unit ?? ol?.unit ?? null) as string | null,
+      property_name: (ol?.property_name ?? null) as string | null,
+      unit: (ol?.unit ?? null) as string | null,
       contract_end,
       daysLeft: Math.ceil((new Date(contract_end).getTime() - today.getTime()) / 86400000),
     };
@@ -1184,6 +1092,8 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   if (data.photo_urls !== undefined)             updates.photo_urls = data.photo_urls ?? [];
   if (data.agreement_url !== undefined)          updates.agreement_url = data.agreement_url;
   if (data.intake_sent_at !== undefined)         updates.intake_sent_at = data.intake_sent_at;
+  if (data.is_managed !== undefined)             updates.is_managed = data.is_managed;
+  if (data.managed_at !== undefined)             updates.managed_at = data.managed_at;
   if (Object.keys(updates).length === 0) return;
   const supabase = await createClient();
   const { error } = await supabase.from("owner_leads").update(updates).eq("id", id);
@@ -1193,6 +1103,15 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
 export async function deleteOwnerLead(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("owner_leads").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateOwnerLeadPhotos(id: string, urls: string[]): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("owner_leads")
+    .update({ photo_urls: urls.slice(0, 4) })
+    .eq("id", id);
   if (error) throw error;
 }
 

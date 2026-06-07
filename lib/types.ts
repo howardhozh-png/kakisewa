@@ -9,17 +9,6 @@ export type LhdnStatus = "none" | "generated" | "submitted";
 
 export type Tier = "starter" | "pro" | "elite";
 
-export interface Property {
-  id: string;
-  name: string;
-  address: string;
-  unit?: string;
-  owner_name: string;
-  owner_phone: string;
-  photo_urls?: string[];   // up to 4 Vercel Blob URLs
-  created_at: string;
-}
-
 export type ReplyState = "pending" | "yes" | "no";
 
 export type LifecycleStage =
@@ -35,7 +24,7 @@ export type LifecycleStage =
 
 export interface Tenancy {
   id: string;
-  property_id: string;
+  property_id?: string;
   property_name?: string;
   tenant_name: string;
   tenant_phone: string;
@@ -63,7 +52,13 @@ export interface Tenancy {
   closed_reason?: string | null;
   agreement_url?: string | null;
   created_at: string;
-  property?: Property;
+  property?: {
+    owner_name?: string;
+    owner_phone?: string;
+    address?: string;
+    unit?: string;
+    photo_urls?: string[];
+  };
   owner_lead_id?: string | null;
   user_id?: string | null;
 }
@@ -123,6 +118,8 @@ export interface OwnerLead {
   agreement_url?: string | null;
   outreach_count?: number | null;
   listing_purpose?: "rent" | "sell" | null;
+  is_managed?: boolean;
+  managed_at?: string | null;
   created_at: string;
 }
 
