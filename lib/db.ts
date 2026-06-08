@@ -63,7 +63,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
 
   return {
     id: r.id as string,
-    property_id: (r.property_id as string | null) ?? undefined,
+
     tenant_name: r.tenant_name as string,
     tenant_phone: r.tenant_phone as string,
     due_day: r.due_day as number,
@@ -360,7 +360,7 @@ export async function createTenancy(
     .insert({
       id,
       user_id: user!.id,
-      property_id: data.property_id ?? null,
+
       tenant_name: data.tenant_name,
       tenant_phone: data.tenant_phone,
       due_day: data.due_day,
@@ -395,7 +395,6 @@ export async function upsertTenancyByPhone(
     return (await getTenancy(existing.id))!;
   }
   return createTenancy({
-    property_id: data.property_id ?? undefined,
     tenant_name: data.tenant_name ?? "Unknown",
     tenant_phone: phone,
     due_day: data.due_day ?? 1,
@@ -1904,7 +1903,7 @@ export async function getAllActiveTenants(): Promise<Array<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, property_id, owner_lead_id")
+    .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
     .not("lifecycle_stage", "eq", "closed")
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -2144,7 +2143,7 @@ export async function getTenancyByTenantRenewalToken(token: string): Promise<Ten
   const svc = createServiceClient();
   const { data } = await svc
     .from("tenancies")
-    .select("*, properties!property_id(*)")
+    .select("*")
     .eq("tenant_renewal_token", token)
     .maybeSingle();
   return data ? toTenancy(data as Record<string, unknown>) : null;
@@ -2154,7 +2153,7 @@ export async function getTenancyByOwnerRenewalToken(token: string): Promise<Tena
   const svc = createServiceClient();
   const { data } = await svc
     .from("tenancies")
-    .select("*, properties!property_id(*)")
+    .select("*")
     .eq("owner_renewal_token", token)
     .maybeSingle();
   return data ? toTenancy(data as Record<string, unknown>) : null;

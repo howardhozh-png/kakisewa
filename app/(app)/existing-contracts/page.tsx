@@ -71,7 +71,6 @@ export default async function TenanciesPage({ searchParams }: Props) {
       {lifecycle.length === 0 ? (() => {
         const demoTenancy: Tenancy = {
           id: "__demo__",
-          property_id: "__demo__",
           tenant_name: "Sarah Chong",
           tenant_phone: "0187654321",
           due_day: 1,

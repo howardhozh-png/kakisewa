@@ -24,7 +24,6 @@ export type LifecycleStage =
 
 export interface Tenancy {
   id: string;
-  property_id?: string;
   property_name?: string;
   tenant_name: string;
   tenant_phone: string;

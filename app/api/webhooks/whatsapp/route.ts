@@ -116,7 +116,6 @@ async function handleNewTenancy(senderPhone: string, args: string) {
     tenant_phone: phone,
     amount,
     due_day,
-    property_id: propertyId ?? "prop_1",
     status: "Pending",
     current_month_paid: false,
     lhdn_status: "none",
