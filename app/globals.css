@@ -611,6 +611,8 @@ html, body {
   /* Ensure desktop-only nav sections never bleed through on mobile */
   .kk-topnav-desktop { display: none; }
   .kk-topnav-hamburger { display: flex; padding-top: env(safe-area-inset-top); }
+  .kk-sidebar-nav { display: none; }
+  .kk-bottom-tab  { display: flex; }
 
   /* Prevent iOS Safari from auto-zooming when tapping any input (iOS zooms inputs < 16px) */
   input, textarea { font-size: 16px !important; }
@@ -679,6 +681,11 @@ html, body {
     border-radius: 0 18px 18px 0;
   }
 }
+
+/* ─── Sidebar / bottom-tab defaults (desktop-first) ─────────────────────── */
+/* Standalone definitions so Lightning CSS doesn't strip them as dead rules  */
+.kk-sidebar-nav { display: flex; flex-direction: column; }
+.kk-bottom-tab  { display: none; }
 
 /* ─── Desktop nav visibility (≥ 1024px) ─────────────────────────────────── */
 @media (min-width: 1024px) {

@@ -703,11 +703,12 @@ interface TopNavProps {
   agent: AgentProfile;
   isAdmin?: boolean;
   trialDaysLeft?: number | null;
+  hideTabs?: boolean;
 }
 
 type ActiveModal = "account" | "billing" | "support" | null;
 
-export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
+export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps) {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -859,8 +860,8 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
             <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} isBeta={agent.subscription_status === "beta"} />
           </div>
 
-          {/* Nav — desktop only */}
-          <nav className="kk-topnav-desktop items-center gap-1">
+          {/* Nav — desktop only (hidden when sidebar is active) */}
+          {!hideTabs && <nav className="kk-topnav-desktop items-center gap-1">
             {NAV.map((NAV_ITEM) => {
               const active = NAV_ITEM.matchPaths.some((p) => path === p || path.startsWith(`${p}/`));
               const locked = !navHasAccess(NAV_ITEM.minPlan, agent.subscription_plan, agent.subscription_status, !!isAdmin);
@@ -888,7 +889,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
                 </Link>
               );
             })}
-          </nav>
+          </nav>}
 
           {/* Right cluster — desktop only */}
           <div className="kk-topnav-desktop ml-auto items-center gap-3">
@@ -1070,8 +1071,8 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
 
           {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto">
-            {/* Nav links */}
-            <div className="px-4 py-4 space-y-1">
+            {/* Nav links — hidden when bottom tab bar is active */}
+            {!hideTabs && <div className="px-4 py-4 space-y-1">
               {NAV.map((item) => {
                 const active = item.matchPaths.some((p) => path === p || path.startsWith(`${p}/`));
                 const locked = !navHasAccess(item.minPlan, agent.subscription_plan, agent.subscription_status, !!isAdmin);
@@ -1108,9 +1109,9 @@ export function TopNav({ agent, isAdmin, trialDaysLeft }: TopNavProps) {
                   </Link>
                 );
               })}
-            </div>
+            </div>}
 
-            <div className="mx-4" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }} />
+            {!hideTabs && <div className="mx-4" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }} />}
 
             {/* Account section */}
             <div className="px-4 py-4 space-y-1">
