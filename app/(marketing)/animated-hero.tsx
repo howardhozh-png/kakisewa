@@ -1,59 +1,35 @@
-"use client"
-
-import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import { SeeHowButton } from "./see-how-button"
 
 export function AnimatedHero() {
-  const [titleNumber, setTitleNumber] = useState(0)
-  const titles = useMemo(
-    () => ["every renewal", "passive income", "each listing", "your pipeline", "every commission"],
-    []
-  )
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setTitleNumber(n => (n === titles.length - 1 ? 0 : n + 1))
-    }, 2200)
-    return () => clearTimeout(id)
-  }, [titleNumber, titles])
-
   return (
     <section className="px-6 lg:px-12 pt-24 pb-12 text-center" style={{ background: "var(--kk-bg)" }}>
-
       <h1
         className="serif mx-auto"
-        style={{ fontSize: "clamp(3rem, 7vw, 6rem)", lineHeight: 1.05, letterSpacing: "-0.025em", maxWidth: "20ch", marginBottom: 36 }}
+        style={{
+          fontSize: "clamp(2.5rem, 6vw, 5rem)",
+          lineHeight: 1.08,
+          letterSpacing: "-0.025em",
+          maxWidth: "22ch",
+          marginBottom: 36,
+          color: "var(--kk-ink)",
+        }}
       >
-        <span style={{ color: "var(--kk-ink)" }}>Make more money from</span>
-        <span className="relative flex w-full justify-center overflow-hidden" style={{ height: "1.4em", marginTop: "0.05em" }}>
-          {titles.map((title, index) => (
-            <motion.span
-              key={index}
-              className="absolute font-semibold"
-              style={{ color: "var(--kk-green)" }}
-              initial={{ opacity: 0, y: 80 }}
-              transition={{ type: "spring", stiffness: 60, damping: 18 }}
-              animate={
-                titleNumber === index
-                  ? { y: 0, opacity: 1 }
-                  : { y: titleNumber > index ? -80 : 80, opacity: 0 }
-              }
-            >
-              {title}
-            </motion.span>
-          ))}
-        </span>
+        Every agent is missing 30 to 40% of their renewal income.{" "}
+        <span style={{ color: "var(--kk-ink-mute)" }}>The ones earning RM100k just don&apos;t feel it yet.</span>
       </h1>
 
       <p
         className="mx-auto mb-10"
-        style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "var(--kk-ink-mute)", lineHeight: 1.6, maxWidth: "48ch" }}
+        style={{
+          fontSize: "clamp(1rem, 2vw, 1.2rem)",
+          color: "var(--kk-ink-mute)",
+          lineHeight: 1.6,
+          maxWidth: "48ch",
+        }}
       >
-        Renewal commission is passive income. Most agents leave it on the table
-        because they have no system. kakisewa makes sure you never miss another one.
+        The more leases you manage, the more slip through. Most agents lose renewals not from laziness, but because they have no system. kakisewa puts every expiry on your radar so the next agent never gets the call first.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

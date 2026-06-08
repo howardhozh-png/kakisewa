@@ -7,6 +7,7 @@ import { Faq } from "./faq";
 import { AnimatedHero } from "./animated-hero";
 import { ComparisonSlider } from "./comparison-slider";
 import { PainPointCards } from "./pain-point-cards";
+import { PLAN_MONTHLY_PRICE } from "@/lib/pricing";
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
   return (
@@ -47,33 +48,32 @@ export default function LandingPage() {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <AnimatedHero />
 
-      {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-10 py-12 lg:py-20" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
-        <PainPointCards />
-      </section>
-
       {/* ── Today vs KakiSewa ─────────────────────────────────────────────── */}
       <section id="comparison" className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <ComparisonSlider />
       </section>
 
-      {/* ── PropertyGuru callout ──────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-14" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+      {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
+      <section className="px-6 lg:px-10 py-12 lg:py-20" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
+        <PainPointCards />
+      </section>
+
+      {/* ── Platform callout ──────────────────────────────────────────────── */}
+      <section className="px-6 lg:px-12 py-14" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
         <div className="max-w-[760px] mx-auto text-center">
-          <p className="uppercase font-semibold mb-4" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}>
-            Think about it
+          <p className="uppercase font-semibold mb-6" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}>
+            Two tools. Two kinds of income.
           </p>
-          <p className="serif" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink)" }}>
-            You pay{" "}
-            <span style={{ color: "#DC2626" }}>RM 1,000–2,000/month</span>
-            {" "}to PropertyGuru to find tenants.
+          <p className="serif" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink-mute)" }}>
+            Your property platform earns you new tenants.
           </p>
           <p className="serif mt-3" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink)" }}>
-            Pay{" "}
-            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM 165/month</span>
-            {" "}to kakisewa so you{" "}
-            <span style={{ borderBottom: "2px solid var(--kk-green)" }}>never lose a tenancy</span>
-            {" "}— forever.
+            kakisewa earns you the{" "}
+            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>30 to 40% income</span>
+            {" "}you forgot to capture today.
+          </p>
+          <p className="mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
+            One plan. <span style={{ fontWeight: 600, color: "var(--kk-ink)" }}>RM {PLAN_MONTHLY_PRICE}/month.</span> No commitment.
           </p>
         </div>
       </section>
