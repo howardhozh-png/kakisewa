@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, AlertCircle, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, ChevronDown, Check, BellRing } from "lucide-react";
+import { Bell, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, ChevronDown, BellRing } from "lucide-react";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
 const LS_READ_KEY = "kk_notif_read_ids";
@@ -137,16 +137,6 @@ export function NotificationBell() {
     if (item.href) router.push(item.href);
   }
 
-  function handleToggleRead(e: React.MouseEvent, id: string) {
-    e.stopPropagation();
-    const newIds = new Set(readIds);
-    if (newIds.has(id)) newIds.delete(id);
-    else newIds.add(id);
-    setReadIds(newIds);
-    saveReadIds(newIds);
-    setBadge(items.filter((i) => !newIds.has(i.id)).length);
-  }
-
   async function enablePush() {
     setPushEnabling(true);
     try {
@@ -224,13 +214,29 @@ export function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--kk-line)" }}>
             <p className="text-[14px] font-bold" style={{ color: "var(--kk-ink)" }}>Notifications</p>
-            <button
-              onClick={() => setOpen(false)}
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => {
+                    const all = new Set(items.map((i) => i.id));
+                    setReadIds(all);
+                    saveReadIds(all);
+                    setBadge(0);
+                  }}
+                  className="text-[12px] font-medium"
+                  style={{ color: "var(--kk-accent)" }}
+                >
+                  Mark all read
+                </button>
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* Push notification setup prompt */}
@@ -283,16 +289,26 @@ export function NotificationBell() {
                     <button
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--kk-surface-2)]"
+                      className="w-full flex items-start text-left transition-colors hover:bg-[var(--kk-surface-2)]"
                       style={{ background: isUnread ? `color-mix(in srgb, ${color} 6%, transparent)` : undefined }}
                     >
+                      {/* Unread dot — left edge */}
+                      <div className="flex items-center justify-center shrink-0" style={{ width: 16, paddingTop: 18 }}>
+                        {isUnread && (
+                          <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+                        )}
+                      </div>
+
+                      {/* Icon */}
                       <div
-                        className="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center"
+                        className="shrink-0 mt-3 w-7 h-7 rounded-full flex items-center justify-center"
                         style={{ background: `${color}22` }}
                       >
                         <Icon className="w-3.5 h-3.5" style={{ color }} />
                       </div>
-                      <div className="flex-1 min-w-0">
+
+                      {/* Text */}
+                      <div className="flex-1 min-w-0 py-3 pl-3 pr-4">
                         <p
                           className="text-[13px] leading-snug"
                           style={{ color: "var(--kk-ink)", fontWeight: isUnread ? 700 : 500 }}
@@ -306,18 +322,6 @@ export function NotificationBell() {
                           {timeAgo(item.createdAt)}
                         </p>
                       </div>
-                      {/* Read/unread toggle */}
-                      <button
-                        onClick={(e) => handleToggleRead(e, item.id)}
-                        className="shrink-0 mt-1 w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-                        style={{
-                          background: isUnread ? color : "var(--kk-surface-2)",
-                          border: isUnread ? "none" : "1px solid var(--kk-line)",
-                        }}
-                        title={isUnread ? "Mark as read" : "Mark as unread"}
-                      >
-                        {isUnread && <Check className="w-2.5 h-2.5" style={{ color: "#fff" }} />}
-                      </button>
                     </button>
                   );
                 })}
