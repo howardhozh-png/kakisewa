@@ -62,15 +62,15 @@ export default function LandingPage() {
             Two tools. Two kinds of income.
           </p>
           <p className="serif" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink-mute)" }}>
-            Your property platform earns you new tenants.
+            Your RM 1,000 to 2,000/month on a property platform earns you new tenants.
           </p>
           <p className="serif mt-3" style={{ fontSize: "clamp(1.4rem, 2.8vw, 2.1rem)", lineHeight: 1.25, letterSpacing: "-0.02em", color: "var(--kk-ink)" }}>
-            kakisewa earns you the{" "}
+            kakisewa earns you an additional{" "}
             <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>30 to 40% income</span>
-            {" "}you forgot to capture today.
+            {" "}from RM {PLAN_MONTHLY_PRICE}/month.
           </p>
           <p className="mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
-            One plan. <span style={{ fontWeight: 600, color: "var(--kk-ink)" }}>RM {PLAN_MONTHLY_PRICE}/month.</span> No commitment.
+            No commitment. Cancel anytime.
           </p>
         </div>
       </section>
