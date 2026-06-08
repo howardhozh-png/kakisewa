@@ -1,6 +1,6 @@
 "use client";
 
-import { NewListingButton } from "@/components/new-listing-button";
+import { AddListingButton } from "@/components/add-listing-button";
 
 export function ActiveDealsEmptyState() {
   return (
@@ -9,9 +9,9 @@ export function ActiveDealsEmptyState() {
         Add all your active deals
       </h2>
       <p className="kk-body-sm max-w-sm leading-relaxed mb-6" style={{ color: "var(--kk-ink-mute)" }}>
-        Add a property listing to get started. Once an owner responds and wants to proceed, their deal appears here.
+        Owner confirmed? Add a listing and it appears here ready to match with tenants.
       </p>
-      <NewListingButton />
+      <AddListingButton />
     </div>
   );
 }

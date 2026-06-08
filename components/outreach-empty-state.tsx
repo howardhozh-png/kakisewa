@@ -1,7 +1,7 @@
 "use client";
 
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
-import { NewListingButton } from "@/components/new-listing-button";
+import { AddOutreachButton } from "@/components/add-outreach-button";
 
 export function OutreachEmptyState() {
   return (
@@ -16,7 +16,7 @@ export function OutreachEmptyState() {
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <UploadOwnerCsvDialog />
         <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>or</span>
-        <NewListingButton />
+        <AddOutreachButton />
       </div>
     </div>
   );

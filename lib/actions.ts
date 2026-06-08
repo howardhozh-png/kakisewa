@@ -82,7 +82,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   const ownerNameFromForm    = (formData.get("owner_name") as string)?.trim() || "";
   const ownerPhoneFromForm   = (formData.get("owner_phone") as string)?.trim() || "";
   const photoUrls: string[] = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 10; i++) {
     const u = (formData.get(`photo_url_${i}`) as string) || "";
     if (u) photoUrls.push(u);
   }
@@ -1314,6 +1314,7 @@ export async function addOwnerLeadAction(data: {
   notes?: string | null;
   available_from?: string | null;
   listing_purpose?: "rent" | "sell" | null;
+  stage?: "imported" | "listed";
 }): Promise<{ ok: boolean; id?: string; message?: string }> {
   const { createOwnerLead } = await import("@/lib/db");
   try {
@@ -1329,7 +1330,7 @@ export async function addOwnerLeadAction(data: {
       notes: data.notes ?? null,
       source: "manual",
       import_batch_id: null,
-      stage: "imported",
+      stage: data.stage ?? "imported",
       intake_token: null,
       intake_sent_at: null,
       intake_completed_at: null,

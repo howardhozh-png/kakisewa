@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
-import { NewListingButton } from "@/components/new-listing-button";
+import { AddOutreachButton } from "@/components/add-outreach-button";
+import { AddListingButton } from "@/components/add-listing-button";
 import { LeadsSubNav } from "@/components/leads-sub-nav";
 import { OutreachTable } from "@/components/outreach-table";
 import { OutreachEmptyState } from "@/components/outreach-empty-state";
@@ -84,9 +85,16 @@ export default async function LeadsPage({ searchParams }: Props) {
             Track every owner from first message to listing in one place.
           </p>
         </div>
+        {/* Tab-specific action buttons */}
         <div className="flex items-center gap-3">
-          <NewListingButton ownerLeads={ownerLeads} />
-          <UploadOwnerCsvDialog />
+          {activeTab === "outreach" ? (
+            <>
+              <AddOutreachButton ownerLeads={ownerLeads} />
+              <UploadOwnerCsvDialog />
+            </>
+          ) : (
+            <AddListingButton ownerLeads={ownerLeads} />
+          )}
         </div>
       </header>
 
