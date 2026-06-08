@@ -24,3 +24,5 @@ Last audited: 2026-06-08
 - Modal naming unified to `-dialog` convention (3 files renamed)
 - `properties` table and `tenancies.property_id` column dropped from DB
 - SW cache kk-v4 → kk-v5 (push notification handlers)
+- SW cache kk-v5 → kk-v6 (stale module fix after dialog renames)
+- File rename protocol added to GUIDELINES.md to prevent recurrence

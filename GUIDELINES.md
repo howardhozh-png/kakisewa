@@ -29,6 +29,17 @@ Never skip to Execute without completing Explore and Plan first.
 
 ---
 
+## File Rename Protocol (mandatory)
+
+Renaming any component file breaks the Turbopack/SW module cache. Every time you rename a file in `components/` or `app/`:
+
+1. Update **all** import paths via `sed` or global search.
+2. **Bump `const CACHE` in `public/sw.js`** — increment the version number (e.g. `kk-v5` → `kk-v6`). Skipping this leaves the old SW serving stale JS chunks that reference the old module path, causing a "module factory not available" crash for all users.
+3. Hard-restart the dev server: `lsof -ti :3000 | xargs kill -9 && rm -rf .next && npm run dev`
+4. Tell the user to hard-reload (Cmd+Shift+R) to flush the old service worker.
+
+---
+
 ## CSS Gotchas (hard-won)
 
 | Problem | Why | Fix |
