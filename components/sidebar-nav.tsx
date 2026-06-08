@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, FileText, BookOpen, BarChart2, Lock, X } from "lucide-react";
+import { Home, Users, FileText, BookOpen, BarChart2, Lock, Menu } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/home",               icon: Home,      label: "Home",        matchPaths: ["/home"],                                                       minPlan: null },
@@ -32,44 +32,40 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Listen for mobile toggle event from top nav
   useEffect(() => {
     function onToggle() { setMobileOpen(o => !o); }
     document.addEventListener("kk-sidebar-toggle", onToggle);
     return () => document.removeEventListener("kk-sidebar-toggle", onToggle);
   }, []);
 
-  // Close mobile sidebar on route change
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const isExpanded = expanded || mobileOpen;
 
   return (
     <>
-      {/* Backdrop — mobile only, closes sidebar on tap */}
+      {/* Backdrop — mobile only */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 39,
-            background: "rgba(0,0,0,0.4)",
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 39, background: "rgba(0,0,0,0.4)" }}
         />
       )}
 
+      {/*
+        Aside starts at top:64 (below the sticky top nav) so its entire surface
+        is visible and hoverable — no z-index conflict with the top nav.
+      */}
       <aside
         className="kk-sidebar-nav flex-col"
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
         style={{
           width: isExpanded ? 200 : 64,
-          height: "100vh",
+          height: "calc(100vh - 64px)",
           position: "fixed",
-          top: 0,
+          top: 64,
           left: 0,
-          // mobileOpen overrides the CSS class transform (translateX(-200px) on mobile)
           transform: mobileOpen ? "translateX(0)" : undefined,
           transition: "width 0.22s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)",
           borderRight: "1px solid var(--kk-line)",
@@ -79,36 +75,22 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
           boxShadow: mobileOpen ? "4px 0 24px rgba(0,0,0,0.12)" : "none",
         }}
       >
-        {/* Nav items — paddingTop clears the fixed top nav (64px) */}
-        <nav style={{ flex: 1, padding: "0 8px", paddingTop: 80, display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Mobile close row — only shown when sidebar is open on mobile */}
-          {mobileOpen && (
-            <button
-              onClick={() => setMobileOpen(false)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "10px 12px",
-                marginBottom: 4,
-                borderRadius: 12,
-                background: "transparent",
-                color: "var(--kk-ink-faint)",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-                width: "100%",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-              }}
-              aria-label="Close menu"
-            >
-              <X style={{ width: 20, height: 20, flexShrink: 0 }} />
-              <span style={{ fontSize: 14, fontWeight: 500, flex: 1, opacity: 0, animation: "fadeIn 0.12s 0.08s ease forwards" }}>
-                Close
-              </span>
-            </button>
-          )}
+        {/* Menu icon header — visual indicator, also acts as hover target */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "10px 12px",
+            height: 40,
+            flexShrink: 0,
+            color: "var(--kk-ink-faint)",
+          }}
+        >
+          <Menu style={{ width: 20, height: 20, flexShrink: 0, strokeWidth: 1.8 }} />
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {NAV_ITEMS.map((item) => {
             const active = item.matchPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
             const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
@@ -137,9 +119,7 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
                   transition: "background 0.12s ease, color 0.12s ease",
                 }}
               >
-                <item.icon
-                  style={{ width: 20, height: 20, flexShrink: 0, strokeWidth: active ? 2.2 : 1.8 }}
-                />
+                <item.icon style={{ width: 20, height: 20, flexShrink: 0, strokeWidth: active ? 2.2 : 1.8 }} />
                 {isExpanded && (
                   <span
                     style={{
