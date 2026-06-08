@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Users, FileText, BookOpen, BarChart2, Lock, PanelLeft } from "lucide-react";
 
-const STORAGE_KEY = "kk_sidebar_expanded";
+const STORAGE_KEY = "kk_sidebar_pinned";
 const W_OPEN = 220;
 const W_CLOSED = 64;
 
@@ -36,14 +36,15 @@ interface Props {
 }
 
 export function SidebarNav({ plan, status, isAdmin }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) === "1";
-    setExpanded(stored);
+    setPinned(stored);
     document.documentElement.style.setProperty("--kk-sidebar-w", stored ? `${W_OPEN}px` : `${W_CLOSED}px`);
   }, []);
 
@@ -55,8 +56,8 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
-  function toggleExpanded() {
-    setExpanded(prev => {
+  function togglePinned() {
+    setPinned(prev => {
       const next = !prev;
       localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
       document.documentElement.style.setProperty("--kk-sidebar-w", next ? `${W_OPEN}px` : `${W_CLOSED}px`);
@@ -64,8 +65,10 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
     });
   }
 
-  const showLabels = expanded || mobileOpen;
+  // Hover expands as overlay (no layout shift); pin shifts layout via --kk-sidebar-w
+  const showLabels = pinned || hovered || mobileOpen;
   const sidebarWidth = showLabels ? W_OPEN : W_CLOSED;
+  const isOverlay = hovered && !pinned && !mobileOpen;
 
   return (
     <>
@@ -78,6 +81,8 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
 
       <aside
         className="kk-sidebar-nav"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           width: sidebarWidth,
           height: "100vh",
@@ -92,11 +97,11 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
           display: "flex",
           flexDirection: "column",
           transform: mobileOpen ? "translateX(0)" : undefined,
-          transition: "width 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)",
-          boxShadow: mobileOpen ? "4px 0 24px rgba(0,0,0,0.12)" : undefined,
+          transition: "width 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s",
+          boxShadow: isOverlay ? "4px 0 20px rgba(0,0,0,0.10)" : mobileOpen ? "4px 0 24px rgba(0,0,0,0.12)" : undefined,
         }}
       >
-        {/* Toggle button */}
+        {/* Pin button */}
         <div
           style={{
             height: 44,
@@ -108,20 +113,24 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
           }}
         >
           <button
-            onClick={toggleExpanded}
-            aria-label={showLabels ? "Collapse sidebar" : "Expand sidebar"}
+            onClick={togglePinned}
+            aria-label={pinned ? "Unpin sidebar" : "Pin sidebar open"}
+            title={pinned ? "Unpin sidebar" : "Pin sidebar open"}
             style={{
               width: 30,
               height: 30,
               border: "none",
-              background: "transparent",
+              background: pinned ? "var(--kk-surface-2)" : "transparent",
               borderRadius: 6,
               cursor: "pointer",
-              color: "var(--kk-ink-faint)",
+              color: pinned ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              opacity: showLabels ? 1 : 0,
+              transition: "opacity 0.15s, background 0.15s",
+              pointerEvents: showLabels ? "auto" : "none",
             }}
           >
             <PanelLeft
@@ -129,7 +138,7 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
                 width: 16,
                 height: 16,
                 transition: "transform 0.2s",
-                transform: showLabels ? "rotate(180deg)" : "none",
+                transform: pinned ? "rotate(180deg)" : "none",
               }}
             />
           </button>
