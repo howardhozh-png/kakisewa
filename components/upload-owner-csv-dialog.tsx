@@ -154,6 +154,7 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
         id="tour-btn-upload-csv"
         type="button"
         className="kk-pill kk-pill-white"
+        style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}
         onClick={() => setOpen(true)}
       >
         <Upload className="w-3.5 h-3.5" /> Upload CSV

@@ -243,7 +243,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
     <>
       <span onClick={() => { reset(); setOpen(true); }} style={{ cursor: "pointer", display: "inline-flex" }}>
         {trigger ?? (
-          <button className="kk-pill kk-pill-white">
+          <button className="kk-pill kk-pill-white" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
             <Upload size={14} />
             Upload CSV
           </button>
