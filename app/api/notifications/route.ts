@@ -21,16 +21,16 @@ export async function GET() {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const in60 = new Date(today.getTime() + 60 * 86400000).toISOString().slice(0, 10);
-  const since24h = new Date(today.getTime() - 24 * 3600000).toISOString();
+  const since30d = new Date(today.getTime() - 30 * 86400000).toISOString();
 
   const items: NotificationItem[] = [];
 
-  // ── Owner filled in intake form (last 24h) ────────────────────────────────
+  // ── Owner filled in intake form (last 30 days) ───────────────────────────
   const { data: recentIntakes } = await supabase
     .from("owner_leads")
     .select("id, owner_name, property_name, unit, intake_completed_at")
     .not("intake_completed_at", "is", null)
-    .gte("intake_completed_at", since24h)
+    .gte("intake_completed_at", since30d)
     .order("intake_completed_at", { ascending: false })
     .limit(10);
 
@@ -48,12 +48,12 @@ export async function GET() {
     });
   }
 
-  // ── Owner filled in renewal form (last 24h) ───────────────────────────────
+  // ── Owner filled in renewal form (last 30 days) ──────────────────────────
   const { data: recentRenewals } = await supabase
     .from("tenancies")
     .select("id, tenant_name, property_name, owner_renewal_completed_at, replied_owner")
     .not("owner_renewal_completed_at", "is", null)
-    .gte("owner_renewal_completed_at", since24h)
+    .gte("owner_renewal_completed_at", since30d)
     .order("owner_renewal_completed_at", { ascending: false })
     .limit(10);
 
@@ -70,12 +70,12 @@ export async function GET() {
     });
   }
 
-  // ── Owner saved ranking in tenant pack (last 24h) ────────────────────────────
+  // ── Owner saved ranking in tenant pack (last 30 days) ───────────────────────
   const { data: rankedPacks } = await supabase
     .from("match_packs")
     .select("id, owner_lead_id, property_label, owner_ranked_at")
     .not("owner_ranked_at", "is", null)
-    .gte("owner_ranked_at", since24h)
+    .gte("owner_ranked_at", since30d)
     .order("owner_ranked_at", { ascending: false })
     .limit(5);
 
