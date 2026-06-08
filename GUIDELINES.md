@@ -82,6 +82,11 @@ await page.screenshot({ path: 'desktop-check.png' });
 
 ## Context & Memory
 
-- At the start of every session, check `MEMORY.md` (auto-loaded) for prior decisions, feedback, and project state.
+- `MEMORY.md` is auto-loaded into every session. **At the start of every new session, before doing anything else, read every file linked in MEMORY.md and output a brief context brief:**
+  - What kakisewa is and who it's for
+  - What was pending or in-progress last session
+  - Any workflow rules that apply (no dashes, deploy only on request, etc.)
+  - Then ask: "Anything changed since last time, or shall I pick up where we left off?"
+- Update `MEMORY.md` and the linked files whenever something changes: new pending items, decisions made, features shipped, objectives revised.
 - Use the Explore subagent for broad codebase research — it doesn't bloat the main context window.
 - `/clear` between unrelated tasks. Long sessions with accumulated corrections degrade quality — start fresh with a better prompt.
