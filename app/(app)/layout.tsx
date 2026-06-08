@@ -59,7 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         .kk-top-bar     { margin-left: calc(-1 * var(--kk-sidebar-w, 64px)); width: calc(100% + var(--kk-sidebar-w, 64px)); padding-left: var(--kk-sidebar-w, 64px); background: var(--kk-topnav-bg); transition: margin-left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1), padding-left 0.22s cubic-bezier(0.4,0,0.2,1); }
         @media (max-width: 1023px) {
           /* Slide sidebar off-screen by default; React overrides transform when open */
-          .kk-sidebar-nav { transform: translateX(-200px); }
+          .kk-sidebar-nav { transform: translateX(-220px); }
           .kk-main-col    { padding-left: 0; transition: none; }
           .kk-top-bar     { margin-left: 0; width: 100%; padding-left: 0; transition: none; }
         }

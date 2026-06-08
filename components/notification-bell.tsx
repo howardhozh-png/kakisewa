@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Bell, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, ChevronDown, BellRing } from "lucide-react";
+import { Bell, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, BellRing } from "lucide-react";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
 const LS_READ_KEY = "kk_notif_read_ids";
 const LS_PUSH_KEY = "kk_push_subscribed";
-const VISIBLE_COUNT = 5;
 
 function getReadIds(): Set<string> {
   if (typeof window === "undefined") return new Set();
@@ -70,35 +70,41 @@ export function NotificationBell() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [tab, setTab] = useState<"all" | "unread">("all");
   const [loading, setLoading] = useState(true);
   const [isStandalone, setIsStandalone] = useState(false);
   const [pushGranted, setPushGranted] = useState(false);
   const [pushEnabling, setPushEnabling] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
-
-    const alreadySubscribed = localStorage.getItem(LS_PUSH_KEY) === "1";
-    setPushGranted(alreadySubscribed || Notification.permission === "granted");
-
+    setPushGranted(
+      localStorage.getItem(LS_PUSH_KEY) === "1" || Notification.permission === "granted",
+    );
     setReadIds(getReadIds());
+
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (!res.ok) return;
-      const { items: fetched } = await res.json() as { items: NotificationItem[] };
+      const { items: fetched } = (await res.json()) as { items: NotificationItem[] };
       setItems(fetched);
       const ids = getReadIds();
-      const unread = fetched.filter((n) => !ids.has(n.id)).length;
-      setBadge(unread);
+      setBadge(fetched.filter((n) => !ids.has(n.id)).length);
     } finally {
       setLoading(false);
     }
@@ -110,22 +116,37 @@ export function NotificationBell() {
     return () => clearInterval(id);
   }, [load]);
 
+  // Close on outside click (desktop only)
   useEffect(() => {
-    if (!open) return;
+    if (!open || isMobile) return;
     function onDown(e: MouseEvent) {
       if (
         panelRef.current && !panelRef.current.contains(e.target as Node) &&
         btnRef.current && !btnRef.current.contains(e.target as Node)
       ) setOpen(false);
     }
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
     document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, isMobile]);
+
+  // Escape key
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
-  const visible = showAll ? items : items.slice(0, VISIBLE_COUNT);
+  const tabItems = tab === "unread" ? items.filter((i) => !readIds.has(i.id)) : items;
+  const showPushPrompt = isStandalone && !pushGranted && Notification.permission !== "denied";
+
+  function markAllRead() {
+    const all = new Set(items.map((i) => i.id));
+    setReadIds(all);
+    saveReadIds(all);
+    setBadge(0);
+  }
 
   function handleItemClick(item: NotificationItem) {
     const newIds = new Set(readIds);
@@ -141,10 +162,7 @@ export function NotificationBell() {
     setPushEnabling(true);
     try {
       const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setPushEnabling(false);
-        return;
-      }
+      if (permission !== "granted") { setPushEnabling(false); return; }
       const reg = await navigator.serviceWorker.ready;
       const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
       const sub = await reg.pushManager.subscribe({
@@ -165,7 +183,289 @@ export function NotificationBell() {
     }
   }
 
-  const showPushPrompt = isStandalone && !pushGranted && Notification.permission !== "denied";
+  const panelContent = (
+    <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" }}>
+      {/* Header */}
+      <div
+        style={{
+          padding: "16px 16px 0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+        }}
+      >
+        <p style={{ fontSize: 15, fontWeight: 700, color: "var(--kk-ink)" }}>Notifications</p>
+        <button
+          onClick={() => setOpen(false)}
+          style={{
+            width: 28,
+            height: 28,
+            border: "none",
+            borderRadius: 6,
+            background: "var(--kk-surface-2)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--kk-ink-mute)",
+          }}
+          aria-label="Close notifications"
+        >
+          <X style={{ width: 14, height: 14 }} />
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          padding: "10px 16px 0",
+          borderBottom: "1px solid var(--kk-line)",
+          flexShrink: 0,
+          gap: 0,
+        }}
+      >
+        {(["all", "unread"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              fontSize: 13,
+              fontWeight: tab === t ? 600 : 400,
+              color: tab === t ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+              background: "none",
+              border: "none",
+              borderBottom: tab === t ? "2px solid var(--kk-ink)" : "2px solid transparent",
+              padding: "0 2px 9px",
+              marginRight: 16,
+              cursor: "pointer",
+              transition: "color 0.1s",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            {t === "all" ? "All" : "Unread"}
+            {t === "unread" && unreadCount > 0 && (
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 800,
+                  background: "#DC2626",
+                  color: "#fff",
+                  borderRadius: 100,
+                  padding: "1px 4px",
+                  lineHeight: 1.5,
+                }}
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        ))}
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllRead}
+            style={{
+              marginLeft: "auto",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--kk-accent)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              paddingBottom: 9,
+            }}
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      {/* Push prompt */}
+      {showPushPrompt && tab === "all" && (
+        <div
+          style={{
+            margin: "10px 12px 0",
+            borderRadius: 12,
+            padding: "12px",
+            background: "color-mix(in srgb, var(--kk-accent) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--kk-accent) 20%, transparent)",
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "var(--kk-accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <BellRing style={{ width: 15, height: 15, color: "#fff" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3 }}>
+              Get notified without opening the app
+            </p>
+            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4, marginTop: 2 }}>
+              Expiring contracts, owner responses and more — straight to your lock screen.
+            </p>
+            <button
+              onClick={enablePush}
+              disabled={pushEnabling}
+              style={{
+                marginTop: 8,
+                padding: "4px 12px",
+                borderRadius: 100,
+                fontSize: 11,
+                fontWeight: 600,
+                background: "var(--kk-accent)",
+                color: "#fff",
+                border: "none",
+                cursor: pushEnabling ? "not-allowed" : "pointer",
+                opacity: pushEnabling ? 0.7 : 1,
+              }}
+            >
+              {pushEnabling ? "Enabling…" : "Enable notifications"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Notification list */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {loading ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "var(--kk-ink-faint)" }}>
+            Loading…
+          </div>
+        ) : tabItems.length === 0 ? (
+          <div style={{ padding: "48px 16px", textAlign: "center" }}>
+            <Bell
+              style={{ width: 32, height: 32, margin: "0 auto 8px", color: "var(--kk-ink-faint)", opacity: 0.25, display: "block" }}
+            />
+            <p style={{ fontSize: 13, color: "var(--kk-ink-faint)" }}>
+              {tab === "unread" ? "No unread notifications" : "All caught up"}
+            </p>
+          </div>
+        ) : (
+          <div style={{ paddingTop: 4, paddingBottom: 4 }}>
+            {tabItems.map((item) => {
+              const isUnread = !readIds.has(item.id);
+              const Icon = ICONS[item.type];
+              const color = TYPE_COLOR[item.type];
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleItemClick(item)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    padding: "10px 16px 10px 12px",
+                    background: isUnread
+                      ? `color-mix(in srgb, ${color} 5%, transparent)`
+                      : "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "background 0.1s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "var(--kk-surface-2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = isUnread
+                      ? `color-mix(in srgb, ${color} 5%, transparent)`
+                      : "transparent";
+                  }}
+                >
+                  {/* Unread dot */}
+                  <div
+                    style={{
+                      width: 14,
+                      flexShrink: 0,
+                      display: "flex",
+                      justifyContent: "center",
+                      paddingTop: 7,
+                    }}
+                  >
+                    {isUnread && (
+                      <div
+                        style={{ width: 6, height: 6, borderRadius: "50%", background: color }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Type icon */}
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: `${color}22`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon style={{ width: 13, height: 13, color }} />
+                  </div>
+
+                  {/* Text */}
+                  <div style={{ flex: 1, minWidth: 0, paddingLeft: 10 }}>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: isUnread ? 700 : 500,
+                        color: "var(--kk-ink)",
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {item.title}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--kk-ink-mute)",
+                        lineHeight: 1.4,
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.body}
+                    </p>
+                    <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", marginTop: 4 }}>
+                      {timeAgo(item.createdAt)}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const panelStyle: React.CSSProperties = {
+    background: "var(--kk-surface)",
+    border: "1px solid var(--kk-line)",
+    borderRadius: 16,
+    boxShadow: "0 16px 48px rgba(0,0,0,0.12)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  };
 
   return (
     <div className="relative">
@@ -174,176 +474,89 @@ export function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
         style={{
-          background: open ? "var(--kk-accent)" : "color-mix(in srgb, var(--kk-topnav-ink) 10%, transparent)",
+          background: open
+            ? "var(--kk-accent)"
+            : "color-mix(in srgb, var(--kk-topnav-ink) 10%, transparent)",
           border: "1px solid",
-          borderColor: open ? "transparent" : "color-mix(in srgb, var(--kk-topnav-ink) 22%, transparent)",
+          borderColor: open
+            ? "transparent"
+            : "color-mix(in srgb, var(--kk-topnav-ink) 22%, transparent)",
           color: open ? "#fff" : "var(--kk-topnav-ink)",
         }}
         aria-label="Notifications"
+        aria-expanded={open}
       >
         <Bell className="w-4 h-4" />
         {!loading && unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full text-[9px] font-black"
-            style={{ minWidth: 16, height: 16, padding: "0 3px", background: "#DC2626", color: "#fff", lineHeight: 1 }}
+            style={{
+              minWidth: 16,
+              height: 16,
+              padding: "0 3px",
+              background: "#DC2626",
+              color: "#fff",
+              lineHeight: 1,
+            }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
-      {open && (
+      {/* Desktop panel */}
+      {open && !isMobile && (
         <div
           ref={panelRef}
           style={{
+            ...panelStyle,
             position: "fixed",
             top: (btnRef.current?.getBoundingClientRect().bottom ?? 64) + 8,
             right: 16,
             zIndex: 99999,
-            width: 340,
-            maxHeight: "80vh",
-            background: "var(--kk-surface)",
-            border: "1px solid var(--kk-line)",
-            borderRadius: 20,
-            boxShadow: "0 16px 48px rgba(0,0,0,0.16)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
+            width: 360,
+            maxHeight: "min(80vh, 560px)",
           }}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--kk-line)" }}>
-            <p className="text-[14px] font-bold" style={{ color: "var(--kk-ink)" }}>Notifications</p>
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  onClick={() => {
-                    const all = new Set(items.map((i) => i.id));
-                    setReadIds(all);
-                    saveReadIds(all);
-                    setBadge(0);
-                  }}
-                  className="text-[12px] font-medium"
-                  style={{ color: "var(--kk-accent)" }}
-                >
-                  Mark all read
-                </button>
-              )}
-              <button
-                onClick={() => setOpen(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Push notification setup prompt */}
-          {showPushPrompt && (
-            <div
-              className="mx-3 mt-3 rounded-2xl px-3.5 py-3 flex items-start gap-3"
-              style={{ background: "color-mix(in srgb, var(--kk-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--kk-accent) 20%, transparent)" }}
-            >
-              <div
-                className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ background: "var(--kk-accent)" }}
-              >
-                <BellRing className="w-4 h-4" style={{ color: "#fff" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
-                  Get notified without opening the app
-                </p>
-                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>
-                  Expiring contracts, owner responses and more — straight to your lock screen.
-                </p>
-                <button
-                  onClick={enablePush}
-                  disabled={pushEnabling}
-                  className="mt-2 px-3 py-1 rounded-full text-[11px] font-semibold"
-                  style={{ background: "var(--kk-accent)", color: "#fff" }}
-                >
-                  {pushEnabling ? "Enabling…" : "Enable notifications"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Items */}
-          <div className="overflow-y-auto flex-1">
-            {loading ? (
-              <div className="px-4 py-8 text-center text-[13px]" style={{ color: "var(--kk-ink-faint)" }}>Loading…</div>
-            ) : items.length === 0 ? (
-              <div className="px-4 py-10 text-center">
-                <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--kk-ink-faint)", opacity: 0.3 }} />
-                <p className="text-[13px]" style={{ color: "var(--kk-ink-faint)" }}>All caught up</p>
-              </div>
-            ) : (
-              <div className="py-1.5">
-                {visible.map((item) => {
-                  const isUnread = !readIds.has(item.id);
-                  const Icon = ICONS[item.type];
-                  const color = TYPE_COLOR[item.type];
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleItemClick(item)}
-                      className="w-full flex items-start text-left transition-colors hover:bg-[var(--kk-surface-2)]"
-                      style={{ background: isUnread ? `color-mix(in srgb, ${color} 6%, transparent)` : undefined }}
-                    >
-                      {/* Unread dot — left edge */}
-                      <div className="flex items-center justify-center shrink-0" style={{ width: 16, paddingTop: 18 }}>
-                        {isUnread && (
-                          <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
-                        )}
-                      </div>
-
-                      {/* Icon */}
-                      <div
-                        className="shrink-0 mt-3 w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: `${color}22` }}
-                      >
-                        <Icon className="w-3.5 h-3.5" style={{ color }} />
-                      </div>
-
-                      {/* Text */}
-                      <div className="flex-1 min-w-0 py-3 pl-3 pr-4">
-                        <p
-                          className="text-[13px] leading-snug"
-                          style={{ color: "var(--kk-ink)", fontWeight: isUnread ? 700 : 500 }}
-                        >
-                          {item.title}
-                        </p>
-                        <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>
-                          {item.body}
-                        </p>
-                        <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
-                          {timeAgo(item.createdAt)}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-
-                {items.length > VISIBLE_COUNT && (
-                  <button
-                    onClick={() => setShowAll((s) => !s)}
-                    className="w-full py-2.5 text-[12px] font-semibold flex items-center justify-center gap-1.5"
-                    style={{ color: "var(--kk-accent)", borderTop: "1px solid var(--kk-line)" }}
-                  >
-                    {showAll ? "Show less" : `View ${items.length - VISIBLE_COUNT} more`}
-                    <ChevronDown
-                      className="w-3.5 h-3.5 transition-transform"
-                      style={{ transform: showAll ? "rotate(180deg)" : "none" }}
-                    />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {panelContent}
         </div>
       )}
+
+      {/* Mobile bottom sheet via portal */}
+      {open && isMobile && mounted &&
+        createPortal(
+          <div style={{ position: "fixed", inset: 0, zIndex: 99999 }}>
+            <div
+              onClick={() => setOpen(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)" }}
+            />
+            <div
+              style={{
+                ...panelStyle,
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                borderRadius: "20px 20px 0 0",
+                maxHeight: "80vh",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 4,
+                  borderRadius: 2,
+                  background: "var(--kk-line)",
+                  margin: "12px auto 0",
+                  flexShrink: 0,
+                }}
+              />
+              {panelContent}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
