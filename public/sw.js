@@ -1,4 +1,4 @@
-const CACHE = 'kk-v4';
+const CACHE = 'kk-v5';
 const OFFLINE_URL = '/offline';
 
 self.addEventListener('install', (event) => {
@@ -68,4 +68,36 @@ self.addEventListener('message', (event) => {
       self.clearAppBadge?.().catch(() => {});
     }
   }
+});
+
+// Push notification received
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+  const title = data.title ?? 'KakiSewa';
+  const options = {
+    body: data.body ?? '',
+    icon: '/pwa-icon/192',
+    badge: '/pwa-icon/96',
+    data: { url: data.url ?? '/home' },
+    tag: data.tag ?? 'kk-notification',
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification tapped — open or focus the app
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? '/home';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
+  );
 });

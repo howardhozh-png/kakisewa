@@ -1,25 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, MessageCircle, AlertCircle, UserX, X, ClipboardCheck, RefreshCw, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bell, AlertCircle, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, ChevronDown, Check, BellRing } from "lucide-react";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
-const LS_KEY = "kk_notif_read_at";
+const LS_READ_KEY = "kk_notif_read_ids";
+const LS_PUSH_KEY = "kk_push_subscribed";
+const VISIBLE_COUNT = 5;
 
-function getLastReadAt(): number {
-  if (typeof window === "undefined") return 0;
-  return parseInt(localStorage.getItem(LS_KEY) ?? "0", 10);
+function getReadIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try { return new Set(JSON.parse(localStorage.getItem(LS_READ_KEY) ?? "[]")); }
+  catch { return new Set(); }
 }
 
-function markAllRead() {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(LS_KEY, Date.now().toString());
-  }
+function saveReadIds(ids: Set<string>) {
+  localStorage.setItem(LS_READ_KEY, JSON.stringify([...ids]));
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
 function setBadge(count: number) {
   if (typeof navigator === "undefined") return;
-  // Direct API (Chrome desktop/Android)
   if ("setAppBadge" in navigator) {
     if (count > 0) {
       (navigator as Navigator & { setAppBadge(n: number): Promise<void> }).setAppBadge(count).catch(() => {});
@@ -27,27 +35,22 @@ function setBadge(count: number) {
       (navigator as Navigator & { clearAppBadge(): Promise<void> }).clearAppBadge?.().catch(() => {});
     }
   }
-  // iOS Safari PWA requires the SW to call setAppBadge
   if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({ type: "SET_BADGE", count });
   }
 }
 
 const ICONS: Record<NotificationItem["type"], React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
-  wa_reminder:       MessageCircle,
-  action_needed:     AlertCircle,
+  contract_expiry:   CalendarClock,
   tenant_leaving:    UserX,
-  owner_leaving:     UserX,
   owner_intake:      ClipboardCheck,
   owner_renewal:     RefreshCw,
   owner_pack_ranked: Star,
 };
 
 const TYPE_COLOR: Record<NotificationItem["type"], string> = {
-  wa_reminder:       "#25D366",
-  action_needed:     "#f59e0b",
+  contract_expiry:   "#f59e0b",
   tenant_leaving:    "#DC2626",
-  owner_leaving:     "#DC2626",
   owner_intake:      "#0A84FF",
   owner_renewal:     "#30D158",
   owner_pack_ranked: "#FF9F0A",
@@ -63,31 +66,45 @@ function timeAgo(iso: string): string {
 }
 
 export function NotificationBell() {
+  const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
-  const [unread, setUnread] = useState(0);
+  const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [pushGranted, setPushGranted] = useState(false);
+  const [pushEnabling, setPushEnabling] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(standalone);
+
+    const alreadySubscribed = localStorage.getItem(LS_PUSH_KEY) === "1";
+    setPushGranted(alreadySubscribed || Notification.permission === "granted");
+
+    setReadIds(getReadIds());
+  }, []);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (!res.ok) return;
-      const { items: fetched } = await res.json() as { items: NotificationItem[]; unreadCount: number };
+      const { items: fetched } = await res.json() as { items: NotificationItem[] };
       setItems(fetched);
-      const lastRead = getLastReadAt();
-      const newCount = fetched.filter(n => new Date(n.createdAt).getTime() > lastRead).length;
-      setUnread(newCount);
-      setBadge(newCount);
+      const ids = getReadIds();
+      const unread = fetched.filter((n) => !ids.has(n.id)).length;
+      setBadge(unread);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  // Re-check every 5 min while tab is open
   useEffect(() => {
     const id = setInterval(load, 5 * 60 * 1000);
     return () => clearInterval(id);
@@ -96,10 +113,10 @@ export function NotificationBell() {
   useEffect(() => {
     if (!open) return;
     function onDown(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node) &&
-          btnRef.current && !btnRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (
+        panelRef.current && !panelRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false);
     }
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
     document.addEventListener("mousedown", onDown);
@@ -107,29 +124,64 @@ export function NotificationBell() {
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
 
-  function handleOpen() {
-    setOpen((o) => {
-      if (!o) {
-        markAllRead();
-        setUnread(0);
-        setBadge(0);
-      }
-      return !o;
-    });
-  }
+  const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
+  const visible = showAll ? items : items.slice(0, VISIBLE_COUNT);
 
   function handleItemClick(item: NotificationItem) {
+    const newIds = new Set(readIds);
+    newIds.add(item.id);
+    setReadIds(newIds);
+    saveReadIds(newIds);
+    setBadge(items.filter((i) => !newIds.has(i.id)).length);
     setOpen(false);
-    if (item.href) {
-      window.location.href = item.href;
+    if (item.href) router.push(item.href);
+  }
+
+  function handleToggleRead(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    const newIds = new Set(readIds);
+    if (newIds.has(id)) newIds.delete(id);
+    else newIds.add(id);
+    setReadIds(newIds);
+    saveReadIds(newIds);
+    setBadge(items.filter((i) => !newIds.has(i.id)).length);
+  }
+
+  async function enablePush() {
+    setPushEnabling(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushEnabling(false);
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key as unknown as ArrayBuffer,
+      });
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      localStorage.setItem(LS_PUSH_KEY, "1");
+      setPushGranted(true);
+    } catch {
+      // permission denied or SW not ready
+    } finally {
+      setPushEnabling(false);
     }
   }
+
+  const showPushPrompt = isStandalone && !pushGranted && Notification.permission !== "denied";
 
   return (
     <div className="relative">
       <button
         ref={btnRef}
-        onClick={handleOpen}
+        onClick={() => setOpen((o) => !o)}
         className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
         style={{
           background: open ? "var(--kk-accent)" : "color-mix(in srgb, var(--kk-topnav-ink) 10%, transparent)",
@@ -140,12 +192,12 @@ export function NotificationBell() {
         aria-label="Notifications"
       >
         <Bell className="w-4 h-4" />
-        {!loading && unread > 0 && (
+        {!loading && unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full text-[9px] font-black"
             style={{ minWidth: 16, height: 16, padding: "0 3px", background: "#DC2626", color: "#fff", lineHeight: 1 }}
           >
-            {unread > 9 ? "9+" : unread}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
@@ -172,11 +224,45 @@ export function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--kk-line)" }}>
             <p className="text-[14px] font-bold" style={{ color: "var(--kk-ink)" }}>Notifications</p>
-            <button onClick={() => setOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+            <button
+              onClick={() => setOpen(false)}
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Push notification setup prompt */}
+          {showPushPrompt && (
+            <div
+              className="mx-3 mt-3 rounded-2xl px-3.5 py-3 flex items-start gap-3"
+              style={{ background: "color-mix(in srgb, var(--kk-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--kk-accent) 20%, transparent)" }}
+            >
+              <div
+                className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "var(--kk-accent)" }}
+              >
+                <BellRing className="w-4 h-4" style={{ color: "#fff" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
+                  Get notified without opening the app
+                </p>
+                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>
+                  Expiring contracts, owner responses and more — straight to your lock screen.
+                </p>
+                <button
+                  onClick={enablePush}
+                  disabled={pushEnabling}
+                  className="mt-2 px-3 py-1 rounded-full text-[11px] font-semibold"
+                  style={{ background: "var(--kk-accent)", color: "#fff" }}
+                >
+                  {pushEnabling ? "Enabling…" : "Enable notifications"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Items */}
           <div className="overflow-y-auto flex-1">
@@ -189,7 +275,8 @@ export function NotificationBell() {
               </div>
             ) : (
               <div className="py-1.5">
-                {items.map((item) => {
+                {visible.map((item) => {
+                  const isUnread = !readIds.has(item.id);
                   const Icon = ICONS[item.type];
                   const color = TYPE_COLOR[item.type];
                   return (
@@ -197,14 +284,19 @@ export function NotificationBell() {
                       key={item.id}
                       onClick={() => handleItemClick(item)}
                       className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--kk-surface-2)]"
+                      style={{ background: isUnread ? `color-mix(in srgb, ${color} 6%, transparent)` : undefined }}
                     >
-                      {/* Icon dot */}
-                      <div className="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: `${color}18` }}>
+                      <div
+                        className="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center"
+                        style={{ background: `${color}22` }}
+                      >
                         <Icon className="w-3.5 h-3.5" style={{ color }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
+                        <p
+                          className="text-[13px] leading-snug"
+                          style={{ color: "var(--kk-ink)", fontWeight: isUnread ? 700 : 500 }}
+                        >
                           {item.title}
                         </p>
                         <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>
@@ -214,13 +306,38 @@ export function NotificationBell() {
                           {timeAgo(item.createdAt)}
                         </p>
                       </div>
+                      {/* Read/unread toggle */}
+                      <button
+                        onClick={(e) => handleToggleRead(e, item.id)}
+                        className="shrink-0 mt-1 w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+                        style={{
+                          background: isUnread ? color : "var(--kk-surface-2)",
+                          border: isUnread ? "none" : "1px solid var(--kk-line)",
+                        }}
+                        title={isUnread ? "Mark as read" : "Mark as unread"}
+                      >
+                        {isUnread && <Check className="w-2.5 h-2.5" style={{ color: "#fff" }} />}
+                      </button>
                     </button>
                   );
                 })}
+
+                {items.length > VISIBLE_COUNT && (
+                  <button
+                    onClick={() => setShowAll((s) => !s)}
+                    className="w-full py-2.5 text-[12px] font-semibold flex items-center justify-center gap-1.5"
+                    style={{ color: "var(--kk-accent)", borderTop: "1px solid var(--kk-line)" }}
+                  >
+                    {showAll ? "Show less" : `View ${items.length - VISIBLE_COUNT} more`}
+                    <ChevronDown
+                      className="w-3.5 h-3.5 transition-transform"
+                      style={{ transform: showAll ? "rotate(180deg)" : "none" }}
+                    />
+                  </button>
+                )}
               </div>
             )}
           </div>
-
         </div>
       )}
     </div>

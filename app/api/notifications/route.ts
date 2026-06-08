@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export interface NotificationItem {
   id: string;
-  type: "wa_reminder" | "action_needed" | "tenant_leaving" | "owner_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked";
+  type: "contract_expiry" | "tenant_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked";
   title: string;
   body: string;
   href?: string;
@@ -20,44 +20,10 @@ export async function GET() {
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
-  const in14 = new Date(today.getTime() + 14 * 86400000).toISOString().slice(0, 10);
-  const since7d = new Date(today.getTime() - 7 * 86400000).toISOString();
+  const in60 = new Date(today.getTime() + 60 * 86400000).toISOString().slice(0, 10);
   const since24h = new Date(today.getTime() - 24 * 3600000).toISOString();
 
   const items: NotificationItem[] = [];
-
-  // ── WA reminders queued by cron ─────────────────────────────────────────────
-  const { data: waRows } = await supabase
-    .from("whatsapp_log")
-    .select("id, template, recipient_name, recipient_phone, sent_at, related_id, related_type")
-    .eq("channel", "auto_queued")
-    .gte("sent_at", since7d)
-    .order("sent_at", { ascending: false })
-    .limit(20);
-
-  for (const r of waRows ?? []) {
-    const row = r as { id: string; template: string; recipient_name: string | null; recipient_phone: string; sent_at: string; related_id: string | null; related_type: string | null };
-    const isRenewal = row.template.includes("renewal");
-    const days = row.template.includes("60d") ? 60 : row.template.includes("7d") ? 7 : 30;
-    const whenLabel = days === 60 ? "2 months" : days === 30 ? "1 month" : "7 days";
-    const relatedId = row.related_id;
-    const href = relatedId
-      ? (row.related_type === "tenancy"
-          ? `/existing-contracts?highlight=${relatedId}`
-          : `/new-owners?tab=pipeline&highlight=${relatedId}`)
-      : (isRenewal ? "/existing-contracts" : "/new-owners?tab=pipeline");
-    items.push({
-      id: `wa_${row.id}`,
-      type: "wa_reminder",
-      title: isRenewal
-        ? `Renewal reminder — ${whenLabel} out`
-        : `Availability reminder — ${whenLabel} out`,
-      body: row.recipient_name ? `For ${row.recipient_name}` : `To ${row.recipient_phone}`,
-      href,
-      createdAt: row.sent_at,
-      priority: days <= 30 ? "high" : "normal",
-    });
-  }
 
   // ── Owner filled in intake form (last 24h) ────────────────────────────────
   const { data: recentIntakes } = await supabase
@@ -126,28 +92,40 @@ export async function GET() {
     });
   }
 
-  // ── Contracts expiring in 14 days with no action yet ─────────────────────────
+  // ── Contracts expiring within 60 days — 60d / 30d / 7d milestones ────────
   const { data: expiring } = await supabase
     .from("tenancies")
     .select("id, tenant_name, contract_end, property_name, lifecycle_stage")
     .not("contract_end", "is", null)
     .gte("contract_end", todayStr)
-    .lte("contract_end", in14)
+    .lte("contract_end", in60)
     .neq("lifecycle_stage", "closed")
-    .eq("replied_tenant", "pending")
-    .limit(10);
+    .limit(30);
 
   for (const r of expiring ?? []) {
     const row = r as { id: string; tenant_name: string; contract_end: string; property_name: string | null };
     const daysLeft = Math.ceil((new Date(row.contract_end).getTime() - today.getTime()) / 86400000);
+
+    let bucket: string;
+    let label: string;
+    let priority: "high" | "normal";
+
+    if (daysLeft <= 7) {
+      bucket = "7d"; label = "7 days"; priority = "high";
+    } else if (daysLeft <= 30) {
+      bucket = "30d"; label = "1 month"; priority = "normal";
+    } else {
+      bucket = "60d"; label = "2 months"; priority = "normal";
+    }
+
     items.push({
-      id: `exp_${row.id}`,
-      type: "action_needed",
-      title: `Contract expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`,
+      id: `exp_${row.id}_${bucket}`,
+      type: "contract_expiry",
+      title: `Contract expiring — ${label} left`,
       body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
       href: `/existing-contracts?highlight=${row.id}`,
       createdAt: today.toISOString(),
-      priority: "high",
+      priority,
     });
   }
 

@@ -14,6 +14,7 @@ import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTena
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 import { ProfileSetupModal } from "@/components/profile-setup-modal";
 import { ProfileProvider } from "@/components/profile-context";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
@@ -52,6 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="sticky top-0 z-50">
         {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={status === "beta"} />}
         <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} />
+        <PwaInstallBanner />
       </div>
       <GreetingBar name={agent.name} streak={streak} checkedInToday={checkedInToday} />
       <OnboardingNudge
