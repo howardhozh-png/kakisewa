@@ -665,16 +665,20 @@ const TIER_BADGE = {
   },
 } as const;
 
-function TierBadge({ plan, isOnTrial, isAdmin, isBeta }: { plan?: "silver" | "gold" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean; isBeta?: boolean }) {
+function TierBadge({ plan, isOnTrial, isAdmin, isBeta, small }: { plan?: "silver" | "gold" | "platinum" | "elite" | null; isOnTrial?: boolean; isAdmin?: boolean; isBeta?: boolean; small?: boolean }) {
   const key: keyof typeof TIER_BADGE | "trial" | null =
     isAdmin ? "god" : (plan ?? (isOnTrial ? "trial" : null));
 
   if (!key) return null;
 
+  const px = small ? "px-2" : "px-3";
+  const py = small ? "py-0.5" : "py-1.5";
+  const fs = small ? "text-[9px]" : "text-[11px]";
+
   if (key === "trial") {
     return (
       <div
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
+        className={`inline-flex items-center gap-1 ${px} ${py} rounded-full relative overflow-hidden select-none`}
         style={{
           background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%)",
           border: "1px solid rgba(217,119,6,0.8)",
@@ -682,7 +686,7 @@ function TierBadge({ plan, isOnTrial, isAdmin, isBeta }: { plan?: "silver" | "go
         }}
       >
         <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }} />
-        <span className="text-[11px] font-bold tracking-widest uppercase relative" style={{ color: "#78350f", letterSpacing: "0.12em" }}>{isBeta ? "Beta" : "Trial"}</span>
+        <span className={`${fs} font-bold tracking-widest uppercase relative`} style={{ color: "#78350f", letterSpacing: "0.12em" }}>{isBeta ? "Beta" : "Trial"}</span>
       </div>
     );
   }
@@ -690,11 +694,11 @@ function TierBadge({ plan, isOnTrial, isAdmin, isBeta }: { plan?: "silver" | "go
   const t = TIER_BADGE[key];
   return (
     <div
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full relative overflow-hidden select-none"
+      className={`inline-flex items-center gap-1 ${px} ${py} rounded-full relative overflow-hidden select-none`}
       style={{ background: t.bg, border: `1px solid ${t.border}`, boxShadow: t.shadow }}
     >
       <div className="absolute inset-0 pointer-events-none" style={{ background: t.shine }} />
-      <span className="text-[11px] font-bold tracking-widest uppercase relative" style={{ color: t.ink, letterSpacing: "0.12em" }}>{t.label}</span>
+      <span className={`${fs} font-bold tracking-widest uppercase relative`} style={{ color: t.ink, letterSpacing: "0.12em" }}>{t.label}</span>
     </div>
   );
 }
@@ -715,6 +719,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const mobileBtnRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [themeKey, setThemeKey] = useState(agent.accent_color ?? "default");
@@ -803,6 +808,14 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
     setMenuOpen((o) => !o);
   }
 
+  function handleMobileAccountToggle() {
+    if (!menuOpen && mobileBtnRef.current) {
+      const rect = mobileBtnRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+    }
+    setMenuOpen((o) => !o);
+  }
+
   function handleThemeToggle() {
     if (!themeOpen && themeBtnRef.current) {
       const rect = themeBtnRef.current.getBoundingClientRect();
@@ -855,9 +868,9 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
             </span>
           </Link>
 
-          {/* Tier badge — mobile only, sits right after brand */}
+          {/* Tier badge — mobile only, compact size */}
           <div className="md:hidden">
-            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} isBeta={agent.subscription_status === "beta"} />
+            <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} isBeta={agent.subscription_status === "beta"} small />
           </div>
 
           {/* Nav — desktop only (hidden when sidebar is active) */}
@@ -951,18 +964,29 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
             />
           </div>
 
-          {/* Hamburger — mobile only */}
+          {/* Right cluster — mobile only */}
           <div className="kk-topnav-hamburger ml-auto items-center gap-1">
             <NotificationBell />
+            <button
+              ref={mobileBtnRef}
+              onClick={handleMobileAccountToggle}
+              className="flex items-center justify-center w-11 h-11 rounded-full"
+              style={{ color: "var(--kk-topnav-ink)" }}
+              aria-label="Account"
+            >
+              {agent.photo_url ? (
+                <img
+                  src={agent.photo_url}
+                  alt={agent.name ?? "avatar"}
+                  style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", display: "block" }}
+                />
+              ) : (
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--kk-accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
+                  {initials(agent.name)}
+                </div>
+              )}
+            </button>
           </div>
-          <button
-            className="kk-topnav-hamburger items-center justify-center w-11 h-11 rounded-full"
-            onClick={() => setMobileMenuOpen((o) => !o)}
-            style={{ color: "var(--kk-topnav-ink)" }}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
 
         {/* Dropdown */}

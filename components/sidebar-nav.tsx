@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, FileText, BookOpen, BarChart2, Lock } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { Home, Users, FileText, BookOpen, BarChart2, Lock, Menu } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/home",               icon: Home,      label: "Home",        matchPaths: ["/home"],                                                       minPlan: null },
@@ -35,15 +33,15 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
 
   return (
     <aside
-      className="kk-sidebar-nav flex-col shrink-0"
+      className="kk-sidebar-nav flex-col"
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       style={{
         width: expanded ? 200 : 64,
-        minHeight: "100vh",
-        position: "sticky",
+        height: "100vh",
+        position: "fixed",
         top: 0,
-        alignSelf: "flex-start",
+        left: 0,
         transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
         borderRight: "1px solid var(--kk-line)",
         background: "var(--kk-surface)",
@@ -51,31 +49,18 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
         zIndex: 40,
       }}
     >
-      {/* Logo */}
-      <Link
-        href="/home"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "14px 16px",
-          marginBottom: 8,
-          textDecoration: "none",
-          color: "var(--kk-ink)",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-        }}
-      >
-        <Logo size={28} />
-        {expanded && (
-          <span
-            className="serif"
-            style={{ fontSize: 18, letterSpacing: "-0.02em", opacity: 0, animation: "fadeIn 0.15s 0.1s ease forwards" }}
-          >
-            kakisewa
-          </span>
-        )}
-      </Link>
+      {/* Menu icon — aligns with top nav height, replaces duplicate logo */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 64,
+        marginBottom: 4,
+        color: "var(--kk-ink-faint)",
+        flexShrink: 0,
+      }}>
+        <Menu style={{ width: 18, height: 18 }} />
+      </div>
 
       {/* Nav items */}
       <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>

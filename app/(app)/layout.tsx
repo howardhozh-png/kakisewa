@@ -59,18 +59,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <style>{`
         .kk-sidebar-nav { display: flex; flex-direction: column; }
         .kk-bottom-tab  { display: none; }
+        .kk-main-col    { padding-left: 64px; }
         @media (max-width: 1023px) {
           .kk-sidebar-nav { display: none; }
           .kk-bottom-tab  { display: flex; }
+          .kk-main-col    { padding-left: 0; }
         }
       `}</style>
       <AccentProvider color={agent.accent_color} />
 
-      {/* Left sidebar — desktop only */}
+      {/* Left sidebar — desktop only, fixed overlay (doesn't push content) */}
       <SidebarNav plan={plan} status={status} isAdmin={isAdmin} />
 
-      {/* Main column */}
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+      {/* Main column — padding-left matches collapsed sidebar width on desktop */}
+      <div className="kk-main-col" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
 
         {/* Top bar — sticky */}
         <div className="sticky top-0 z-50">
