@@ -40,6 +40,10 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty("--kk-sidebar-w", (expanded || mobileOpen) ? "160px" : "64px");
+  }, [expanded, mobileOpen]);
+
   const isExpanded = expanded || mobileOpen;
 
   return (
@@ -53,19 +57,21 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
       )}
 
       {/*
-        Aside starts at top:64 (below the sticky top nav) so its entire surface
-        is visible and hoverable — no z-index conflict with the top nav.
+        Aside covers full height (top:0, height:100vh) so its white background
+        buries the greeting bar grey at y=64-108. paddingTop:64 pushes the
+        visible content (≡ icon + nav items) below the top nav.
       */}
       <aside
         className="kk-sidebar-nav flex-col"
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
         style={{
-          width: isExpanded ? 200 : 64,
-          height: "calc(100vh - 64px)",
+          width: isExpanded ? 160 : 64,
+          height: "100vh",
           position: "fixed",
-          top: 64,
+          top: 0,
           left: 0,
+          paddingTop: 64,
           transform: mobileOpen ? "translateX(0)" : undefined,
           transition: "width 0.22s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)",
           borderRight: "1px solid var(--kk-line)",

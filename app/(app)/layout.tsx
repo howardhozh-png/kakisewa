@@ -52,15 +52,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div style={{ display: "flex", minHeight: "100vh", background: "var(--kk-bg)" }}>
       {/* Sidebar visibility — inlined to avoid Turbopack CSS chunk caching */}
       <style>{`
+        :root { --kk-sidebar-w: 64px; }
         .kk-sidebar-nav { display: flex; flex-direction: column; }
-        .kk-main-col    { padding-left: 64px; }
-        /* Extend top bar left to cover the fixed sidebar rail */
-        .kk-top-bar     { margin-left: -64px; width: calc(100% + 64px); padding-left: 64px; background: var(--kk-topnav-bg); }
+        .kk-main-col    { padding-left: var(--kk-sidebar-w, 64px); transition: padding-left 0.22s cubic-bezier(0.4,0,0.2,1); }
+        /* Extend top bar left to cover the fixed sidebar — tracks sidebar width via CSS var */
+        .kk-top-bar     { margin-left: calc(-1 * var(--kk-sidebar-w, 64px)); width: calc(100% + var(--kk-sidebar-w, 64px)); padding-left: var(--kk-sidebar-w, 64px); background: var(--kk-topnav-bg); transition: margin-left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1), padding-left 0.22s cubic-bezier(0.4,0,0.2,1); }
         @media (max-width: 1023px) {
           /* Slide sidebar off-screen by default; React overrides transform when open */
           .kk-sidebar-nav { transform: translateX(-200px); }
-          .kk-main-col    { padding-left: 0; }
-          .kk-top-bar     { margin-left: 0; width: 100%; padding-left: 0; }
+          .kk-main-col    { padding-left: 0; transition: none; }
+          .kk-top-bar     { margin-left: 0; width: 100%; padding-left: 0; transition: none; }
         }
       `}</style>
       <AccentProvider color={agent.accent_color} />
