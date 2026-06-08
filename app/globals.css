@@ -183,7 +183,7 @@ input::placeholder, textarea::placeholder { color: #AEAEB2; }
 
 /* ─── Scrollbar — hidden globally; trackpad/wheel scrolling still works ─── */
 * { scrollbar-width: none; -ms-overflow-style: none; }
-*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 /* ─── PWA / Native app feel ─────────────────────────────────────────────── */
 html, body {
@@ -613,9 +613,8 @@ html, body {
   .kk-topnav-hamburger { display: flex; padding-top: env(safe-area-inset-top); }
 
   /* Prevent iOS Safari from auto-zooming when tapping any input (iOS zooms inputs < 16px) */
-  input, textarea { font-size: 16px !important; }
-  /* selects open a native wheel picker — no auto-zoom risk, keep them styleable */
-  select { font-size: 16px !important; }
+  input, textarea { font-size: 16px; }
+  select { font-size: 16px; }
 
   /* Kanban boards: remove sticky viewport-height behaviour — let them scroll
      naturally on the page with horizontal swipe for columns */
@@ -721,12 +720,12 @@ html, body {
   --rdp-selected-border: 2px solid var(--kk-ink);
   font-size: 13px;
 }
-.rdp-day_button:hover:not(:disabled) {
-  background: var(--kk-surface-2) !important;
+.rdp-root .rdp-day_button:hover:not(:disabled) {
+  background: var(--kk-surface-2);
 }
-.rdp-selected .rdp-day_button {
-  background: var(--kk-ink) !important;
-  color: #fff !important;
+.rdp-root .rdp-selected .rdp-day_button {
+  background: var(--kk-ink);
+  color: #fff;
 }
 .rdp-chevron {
   fill: var(--kk-ink-mute);

@@ -360,7 +360,7 @@ export function NewListingButton({ ownerLeads = [] }: { ownerLeads?: OwnerLead[]
                       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                     />
                     {existingLeadSelected && (
-                      <p className="text-[11px] mt-1" style={{ color: "var(--kk-orange, #f59e0b)" }}>Already in your pipeline — saving will create a new entry</p>
+                      <p className="text-[11px] mt-1" style={{ color: "var(--kk-green-ink, #1F8B4C)" }}>Existing property selected</p>
                     )}
                     {showPropertySugg && propertySuggestions.length > 0 && (
                       <div
@@ -374,7 +374,7 @@ export function NewListingButton({ ownerLeads = [] }: { ownerLeads?: OwnerLead[]
                             tabIndex={0}
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              setForm((f) => ({ ...f, property_name: ol.property_name ?? "", owner_name: ol.owner_name ?? f.owner_name, owner_phone: ol.owner_phone ?? f.owner_phone }));
+                              setForm((f) => ({ ...f, property_name: ol.property_name ?? "" }));
                               setExistingLeadSelected(true);
                               setShowPropertySugg(false);
                             }}
