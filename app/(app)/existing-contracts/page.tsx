@@ -4,6 +4,7 @@ import { effectivePlan } from "@/lib/plan-caps";
 import { format } from "date-fns";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
+import { UploadTenancyCsvDialog } from "@/components/upload-tenancy-csv-dialog";
 import { MoneySubNav } from "@/components/money-sub-nav";
 import { PageHelpButton } from "@/components/page-help-button";
 import { defaultLifecycleStage } from "@/lib/types";
@@ -45,7 +46,10 @@ export default async function TenanciesPage({ searchParams }: Props) {
             Your renewal commission is passive income. Never miss an expiry again.
           </p>
         </div>
-        <AddTenancyDialog ownerLeads={ownerLeads} />
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <UploadTenancyCsvDialog />
+          <AddTenancyDialog ownerLeads={ownerLeads} />
+        </div>
       </header>
 
       <Suspense fallback={null}>

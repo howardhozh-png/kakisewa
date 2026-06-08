@@ -1073,6 +1073,76 @@ export async function bulkCreateOwnerLeads(
   return records.length;
 }
 
+export interface BulkImportTenancyRow {
+  property_name: string;
+  unit: string;
+  owner_name: string;
+  owner_phone: string;
+  tenant_name: string;
+  tenant_phone: string;
+  amount: number | null;
+  contract_start: string;
+  contract_end: string;
+  contract_duration_months: number | null;
+  due_day: number | null;
+}
+
+export async function bulkImportTenancies(
+  rows: BulkImportTenancyRow[],
+  userId: string
+): Promise<{ imported: number }> {
+  if (rows.length === 0) return { imported: 0 };
+  const supabase = await createClient();
+  const svcMod = await import("@/lib/supabase/service");
+  const svc = svcMod.createServiceClient();
+  const now = Date.now();
+  const CHUNK = 200;
+
+  // Step 1: create owner_leads and collect their IDs
+  const ownerLeadRecords = rows.map((row, i) => ({
+    id: `olead_${now}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+    user_id: userId,
+    owner_name: row.owner_name || "Unknown",
+    owner_phone: row.owner_phone || "",
+    property_name: row.property_name || null,
+    unit: row.unit || null,
+    source: "csv" as const,
+    stage: "imported" as const,
+  }));
+
+  for (let i = 0; i < ownerLeadRecords.length; i += CHUNK) {
+    const { error } = await svc.from("owner_leads").insert(ownerLeadRecords.slice(i, i + CHUNK));
+    if (error) throw error;
+  }
+
+  // Step 2: create tenancies linked to owner_lead IDs
+  const tenancyRecords = rows.map((row, i) => ({
+    id: `ten_${now}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+    user_id: userId,
+    owner_lead_id: ownerLeadRecords[i].id,
+    tenant_name: row.tenant_name || "Unknown",
+    tenant_phone: row.tenant_phone || "",
+    amount: row.amount ?? 0,
+    due_day: row.due_day ?? 1,
+    current_month_paid: false,
+    lhdn_status: "none",
+    status: "Pending",
+    replied_tenant: "pending",
+    replied_owner: "pending",
+    lifecycle_stage: "active",
+    contract_start: row.contract_start || null,
+    contract_end: row.contract_end || null,
+    contract_duration_months: row.contract_duration_months ?? null,
+  }));
+
+  for (let i = 0; i < tenancyRecords.length; i += CHUNK) {
+    const { error } = await supabase.from("tenancies").insert(tenancyRecords.slice(i, i + CHUNK));
+    if (error) throw error;
+  }
+
+  return { imported: rows.length };
+}
+
 export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Promise<void> {
   const updates: Record<string, unknown> = {};
   if (data.owner_name !== undefined)             updates.owner_name = data.owner_name;
@@ -1109,7 +1179,7 @@ export async function updateOwnerLeadPhotos(id: string, urls: string[]): Promise
   const supabase = await createClient();
   const { error } = await supabase
     .from("owner_leads")
-    .update({ photo_urls: urls.slice(0, 4) })
+    .update({ photo_urls: urls.slice(0, 10) })
     .eq("id", id);
   if (error) throw error;
 }
