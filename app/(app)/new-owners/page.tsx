@@ -78,7 +78,7 @@ export default async function LeadsPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-            New Owners
+            Leads
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track every owner from first message to listing in one place.

@@ -40,10 +40,10 @@ export default async function TenanciesPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-            Existing Contracts
+            Contracts
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
-            Your renewal commission is passive income. Never miss an expiry again.
+            Track every tenancy. Get alerted 60 days before any contract expires.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -91,14 +91,30 @@ export default async function TenanciesPage({ searchParams }: Props) {
         return (
           <>
             {/* Empty state CTA */}
-            <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
+            <div className="flex flex-col items-center justify-center py-12 px-6 text-center max-w-md mx-auto">
               <h2 className="serif kk-h2 mb-3" style={{ color: "var(--kk-ink)" }}>
-                Add once. Earn forever.
+                Upload your existing contracts
               </h2>
-              <p className="kk-body-sm mb-8 max-w-sm leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-                Enter your active tenancies and kakisewa tracks every renewal automatically. Get alerted 60 days before expiry and close the commission before another agent does. You never have to remember again.
+              <p className="kk-body-sm mb-6 leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                Bring in what you already manage. We'll track every expiry and alert you 60 days before renewal time.
               </p>
-              <AddTenancyDialog ownerLeads={ownerLeads} />
+              <div className="w-full rounded-2xl px-5 py-4 mb-6 text-left" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+                <p className="text-[12px] font-semibold mb-3" style={{ color: "var(--kk-ink-soft)" }}>
+                  Make sure these fields are filled in:
+                </p>
+                <ul className="space-y-2">
+                  {["Property name", "Unit number", "Owner contact", "Contract start date", "Duration (we default to 1 year if blank)"].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--kk-amber)" }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex items-center gap-3">
+                <UploadTenancyCsvDialog />
+                <AddTenancyDialog ownerLeads={ownerLeads} />
+              </div>
             </div>
 
             {/* Preview of what it looks like */}
