@@ -122,8 +122,10 @@
   --kk-amber-soft:   rgba(255,149,0,0.12);
   --kk-green:        #34C759;
   --kk-green-soft:   rgba(52,199,89,0.12);
+  --kk-green-ink:    #1F8B4C;             /* status text: paid/active */
   --kk-purple:       #AF52DE;
   --kk-purple-soft:  rgba(175,82,222,0.10);
+  --kk-purple-ink:   #6F2DA8;             /* status text: LHDN/via-form badge */
 
   /* ── Type scale (Apple-style display sizes) ── */
   --kk-display-1: 4rem;       /* 64 — landing hero */

@@ -17,7 +17,7 @@ const INPUT_STYLE: React.CSSProperties = {
   outline: "none",
 };
 
-export function AddPropertyButton() {
+export function DirectoryAddButton() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [ownerName, setOwnerName] = useState("");

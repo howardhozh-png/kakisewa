@@ -81,7 +81,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         <div className="flex items-start justify-between gap-3 p-6 border-b" style={{ borderColor: "var(--kk-line)" }}>
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-[15px] font-semibold"
-              style={{ background: "var(--kk-purple-soft)", color: "#6F2DA8" }}>
+              style={{ background: "var(--kk-purple-soft)", color: "var(--kk-purple-ink)" }}>
               {profile.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -89,7 +89,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
               <span
                 className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block mt-1"
                 style={profile.intake_completed_at
-                  ? { background: "var(--kk-purple-soft)", color: "#6F2DA8" }
+                  ? { background: "var(--kk-purple-soft)", color: "var(--kk-purple-ink)" }
                   : { background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }
                 }
               >
@@ -149,12 +149,12 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         <div className="p-5 border-t space-y-2" style={{ borderColor: "var(--kk-line)" }}>
           {confirmDelete ? (
             <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
-              <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Delete this tenant permanently?</p>
+              <p className="flex-1 text-[12px] font-medium" style={{ color: "var(--destructive)" }}>Delete this tenant permanently?</p>
               <button onClick={() => setConfirmDelete(false)} className="text-[12px] font-medium px-3 py-1.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
               <button disabled={pending}
                 onClick={() => startTransition(async () => { await removeTenantProfile(profile.id); onClose(); })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
-                style={{ background: "#DC2626", color: "#fff" }}>
+                style={{ background: "var(--destructive)", color: "#fff" }}>
                 {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                 {pending ? "Deleting…" : "Yes, delete"}
               </button>
@@ -252,7 +252,7 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
             href={`/existing-contracts?open=${t.tenancy_id}`}
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
-            style={{ background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }}
+            style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)" }}
           >
             <CheckCircle2 className="w-4 h-4" />
             View tenancy
@@ -393,8 +393,8 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       <span
                         className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                         style={isViaForm
-                          ? { background: "var(--kk-purple-soft)", color: "#6F2DA8" }
-                          : { background: "rgba(52,199,89,0.14)", color: "#1F8B4C" }
+                          ? { background: "var(--kk-purple-soft)", color: "var(--kk-purple-ink)" }
+                          : { background: "var(--kk-green-soft)", color: "var(--kk-green-ink)" }
                         }
                       >
                         {isViaForm ? "Via form" : "Available"}
