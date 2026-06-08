@@ -1,11 +1,16 @@
 import webpush from "web-push";
 import { createServiceClient } from "@/lib/supabase/service";
 
-webpush.setVapidDetails(
-  process.env.VAPID_MAILTO!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let vapidInitialised = false;
+function ensureVapid() {
+  if (vapidInitialised) return;
+  const mailto = process.env.VAPID_MAILTO;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!mailto || !pub || !priv) return;
+  webpush.setVapidDetails(mailto, pub, priv);
+  vapidInitialised = true;
+}
 
 export interface PushPayload {
   title: string;
@@ -25,6 +30,7 @@ export async function sendPushToUser(
   userId: string,
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
+  ensureVapid();
   const supabase = createServiceClient();
 
   const { data: subs } = await supabase
