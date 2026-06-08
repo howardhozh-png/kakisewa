@@ -30,18 +30,20 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PwaRegister() {
-  // Never render during SSR
-  if (typeof window === "undefined") return null;
   return <PwaRegisterInner />;
 }
 
 function PwaRegisterInner() {
+  const [mounted, setMounted] = useState(false);
   const [showAndroid, setShowAndroid] = useState(false);
   const [androidVisible, setAndroidVisible] = useState(false);
   const [showIOS, setShowIOS] = useState(false);
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
+    if (!mounted) return;
     // Register service worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {
@@ -76,7 +78,9 @@ function PwaRegisterInner() {
 
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  }, [mounted]);
+
+  if (!mounted) return null;
 
   // Android bottom sheet
   if (showAndroid) {

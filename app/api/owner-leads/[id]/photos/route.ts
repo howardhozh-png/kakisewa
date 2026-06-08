@@ -10,6 +10,6 @@ export async function PATCH(
   if (!Array.isArray(urls)) {
     return NextResponse.json({ error: "urls must be an array" }, { status: 400 });
   }
-  await updateOwnerLeadPhotos(id, urls.slice(0, 4));
+  await updateOwnerLeadPhotos(id, urls.slice(0, 10));
   return NextResponse.json({ ok: true });
 }

@@ -68,7 +68,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || photos.length >= 4) return;
+    if (!file || photos.length >= 10) return;
     setUploadingPhoto(true);
     try {
       const form = new FormData();
@@ -285,7 +285,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
               <ImagePlus className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-faint)" }} />
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Property photos</p>
-              <span className="ml-auto text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{photos.length}/4</span>
+              <span className="ml-auto text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{photos.length}/10</span>
             </div>
             <div className="p-3 grid grid-cols-3 gap-2">
               {photos.map((url, i) => (
@@ -306,7 +306,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   </button>
                 </div>
               ))}
-              {photos.length < 4 && (
+              {photos.length < 10 && (
                 <label
                   className="flex items-center justify-center rounded-lg cursor-pointer"
                   style={{ aspectRatio: "16/9", border: "1.5px dashed var(--kk-line)", background: "var(--kk-surface-2)" }}
