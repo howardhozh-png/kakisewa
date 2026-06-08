@@ -55,7 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         .kk-sidebar-nav { display: flex; flex-direction: column; }
         .kk-main-col    { padding-left: 64px; }
         /* Extend top bar left to cover the fixed sidebar rail */
-        .kk-top-bar     { margin-left: -64px; width: calc(100% + 64px); padding-left: 64px; }
+        .kk-top-bar     { margin-left: -64px; width: calc(100% + 64px); padding-left: 64px; background: var(--kk-topnav-bg); }
         @media (max-width: 1023px) {
           /* Slide sidebar off-screen by default; React overrides transform when open */
           .kk-sidebar-nav { transform: translateX(-200px); }

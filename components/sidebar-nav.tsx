@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, FileText, BookOpen, BarChart2, Lock, Menu, X } from "lucide-react";
+import { Home, Users, FileText, BookOpen, BarChart2, Lock, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/home",               icon: Home,      label: "Home",        matchPaths: ["/home"],                                                       minPlan: null },
@@ -79,58 +79,36 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
           boxShadow: mobileOpen ? "4px 0 24px rgba(0,0,0,0.12)" : "none",
         }}
       >
-        {/* Header row — same padding/alignment as nav items */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "0 12px",
-            height: 64,
-            flexShrink: 0,
-            color: "var(--kk-ink-faint)",
-          }}
-        >
-          <Menu style={{ width: 20, height: 20, flexShrink: 0 }} />
-          {isExpanded && (
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                flex: 1,
-                opacity: 0,
-                animation: "fadeIn 0.12s 0.08s ease forwards",
-                color: "var(--kk-ink-mute)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Menu
-            </span>
-          )}
-          {/* Close button — mobile only */}
+        {/* Nav items — paddingTop clears the fixed top nav (64px) */}
+        <nav style={{ flex: 1, padding: "0 8px", paddingTop: 80, display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Mobile close row — only shown when sidebar is open on mobile */}
           {mobileOpen && (
             <button
               onClick={() => setMobileOpen(false)}
               style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 4,
-                color: "var(--kk-ink-faint)",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
+                gap: 12,
+                padding: "10px 12px",
+                marginBottom: 4,
+                borderRadius: 12,
+                background: "transparent",
+                color: "var(--kk-ink-faint)",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                width: "100%",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
               }}
               aria-label="Close menu"
             >
-              <X style={{ width: 18, height: 18 }} />
+              <X style={{ width: 20, height: 20, flexShrink: 0 }} />
+              <span style={{ fontSize: 14, fontWeight: 500, flex: 1, opacity: 0, animation: "fadeIn 0.12s 0.08s ease forwards" }}>
+                Close
+              </span>
             </button>
           )}
-        </div>
-
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {NAV_ITEMS.map((item) => {
             const active = item.matchPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
             const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
