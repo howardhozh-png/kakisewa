@@ -16,6 +16,7 @@ import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { Suspense } from "react";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
@@ -67,7 +68,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AccentProvider color={agent.accent_color} />
 
       {/* Left sidebar — desktop only, fixed overlay (doesn't push content) */}
-      <SidebarNav plan={plan} status={status} isAdmin={isAdmin} />
+      <Suspense fallback={null}><SidebarNav plan={plan} status={status} isAdmin={isAdmin} /></Suspense>
 
       {/* Main column — padding-left matches collapsed sidebar width on desktop */}
       <div className="kk-main-col" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>

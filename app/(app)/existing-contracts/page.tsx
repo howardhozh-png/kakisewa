@@ -40,7 +40,7 @@ export default async function TenanciesPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
-            Contracts
+            Track renewal
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track every tenancy. Get alerted 60 days before any contract expires.

@@ -1,45 +1,52 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, FileText, BookOpen, BarChart2, Lock, PanelLeft } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft } from "lucide-react";
 
 const STORAGE_KEY = "kk_sidebar_pinned";
 const W_OPEN = 220;
 const W_CLOSED = 64;
 
-const NAV_ITEMS = [
-  { href: "/home",               icon: Home,      label: "Home",        matchPaths: ["/home"],                                                        minPlan: null },
-  { href: "/new-owners",         icon: Users,     label: "Leads",       matchPaths: ["/new-owners", "/leads"],                                        minPlan: null },
-  { href: "/existing-contracts", icon: FileText,  label: "Contracts",   matchPaths: ["/existing-contracts", "/tenancies"],                            minPlan: null },
-  { href: "/directory",          icon: BookOpen,  label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"],  minPlan: "platinum" },
-  { href: "/performance",        icon: BarChart2, label: "Performance", matchPaths: ["/performance"],                                                 minPlan: "elite" },
+const TOP_ITEMS = [
+  { href: "/home", icon: Home, label: "Home", matchPaths: ["/home"], minPlan: null },
+] as const;
+
+const PIPELINE_ITEMS = [
+  { href: "/new-owners",              icon: MessageCircle, label: "Message owner", minPlan: null },
+  { href: "/new-owners?tab=pipeline", icon: ClipboardList,  label: "Track listing",  minPlan: null },
+  { href: "/existing-contracts",      icon: RefreshCw,     label: "Track renewal",  minPlan: null },
+] as const;
+
+const BOTTOM_ITEMS = [
+  { href: "/directory",   icon: BookOpen,  label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: "platinum" },
+  { href: "/performance", icon: BarChart2, label: "Performance", matchPaths: ["/performance"], minPlan: "elite" },
 ] as const;
 
 const PLAN_RANK: Record<string, number> = { silver: 1, gold: 2, platinum: 3, elite: 4 };
 
-function hasAccess(
-  minPlan: string | null,
-  plan: string | null | undefined,
-  status: string | null | undefined,
-  isAdmin: boolean,
-): boolean {
+function hasAccess(minPlan: string | null, plan: string | null | undefined, status: string | null | undefined, isAdmin: boolean): boolean {
   if (isAdmin || !minPlan) return true;
   if (status === "beta" || status === "trial") return true;
   return (PLAN_RANK[plan ?? ""] ?? 0) >= PLAN_RANK[minPlan];
 }
 
-interface Props {
-  plan: string | null;
-  status: string | null;
-  isAdmin: boolean;
+function isPipelineActive(href: string, pathname: string, tab: string | null): boolean {
+  if (href === "/new-owners?tab=pipeline") return pathname === "/new-owners" && tab === "pipeline";
+  if (href === "/new-owners") return pathname === "/new-owners" && tab !== "pipeline";
+  if (href === "/existing-contracts") return pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
+  return false;
 }
+
+interface Props { plan: string | null; status: string | null; isAdmin: boolean; }
 
 export function SidebarNav({ plan, status, isAdmin }: Props) {
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
   const router = useRouter();
 
   useEffect(() => {
@@ -65,18 +72,64 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
     });
   }
 
-  // Hover expands as overlay (no layout shift); pin shifts layout via --kk-sidebar-w
   const showLabels = pinned || hovered || mobileOpen;
   const sidebarWidth = showLabels ? W_OPEN : W_CLOSED;
   const isOverlay = hovered && !pinned && !mobileOpen;
 
+  function navButton(
+    href: string,
+    icon: React.ElementType,
+    label: string,
+    active: boolean,
+    accessible: boolean,
+    indent = false,
+  ) {
+    const Icon = icon;
+    return (
+      <button
+        key={href}
+        onClick={() => { router.push(accessible ? href : "/subscription"); setMobileOpen(false); }}
+        title={!showLabels ? label : undefined}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: showLabels
+            ? `9px 12px 9px ${indent ? 18 : 12}px`
+            : "9px 12px",
+          justifyContent: showLabels ? "flex-start" : "center",
+          borderRadius: 8,
+          background: active ? "var(--kk-surface-2)" : "transparent",
+          color: active ? "var(--kk-ink)" : accessible ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
+          border: "none",
+          cursor: "pointer",
+          width: "100%",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textAlign: "left",
+          flexShrink: 0,
+          transition: "background 0.1s",
+        }}
+      >
+        <Icon style={{ width: 18, height: 18, flexShrink: 0, strokeWidth: active ? 2.2 : 1.7 }} />
+        {showLabels && (
+          <>
+            <span style={{ fontSize: 13, fontWeight: active ? 600 : 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
+              {label}
+            </span>
+            {!accessible && <Lock style={{ width: 10, height: 10, flexShrink: 0, opacity: 0.4 }} />}
+          </>
+        )}
+      </button>
+    );
+  }
+
+  const anyPipelineActive = PIPELINE_ITEMS.some(item => isPipelineActive(item.href, pathname, tab));
+
   return (
     <>
       {mobileOpen && (
-        <div
-          onClick={() => setMobileOpen(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 39, background: "rgba(0,0,0,0.4)" }}
-        />
+        <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 39, background: "rgba(0,0,0,0.4)" }} />
       )}
 
       <aside
@@ -102,128 +155,77 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
         }}
       >
         {/* Pin button */}
-        <div
-          style={{
-            height: 44,
-            display: "flex",
-            alignItems: "center",
-            padding: "0 16px",
-            justifyContent: showLabels ? "flex-end" : "center",
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 16px", justifyContent: showLabels ? "flex-end" : "center", flexShrink: 0 }}>
           <button
             onClick={togglePinned}
             aria-label={pinned ? "Unpin sidebar" : "Pin sidebar open"}
             title={pinned ? "Unpin sidebar" : "Pin sidebar open"}
             style={{
-              width: 30,
-              height: 30,
-              border: "none",
+              width: 30, height: 30, border: "none",
               background: pinned ? "var(--kk-surface-2)" : "transparent",
-              borderRadius: 6,
-              cursor: "pointer",
+              borderRadius: 6, cursor: "pointer",
               color: pinned ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               opacity: showLabels ? 1 : 0,
               transition: "opacity 0.15s, background 0.15s",
               pointerEvents: showLabels ? "auto" : "none",
             }}
           >
-            <PanelLeft
-              style={{
-                width: 16,
-                height: 16,
-                transition: "transform 0.2s",
-                transform: pinned ? "rotate(180deg)" : "none",
-              }}
-            />
+            <PanelLeft style={{ width: 16, height: 16, transition: "transform 0.2s", transform: pinned ? "rotate(180deg)" : "none" }} />
           </button>
         </div>
 
         {/* Divider */}
         <div style={{ height: 1, background: "var(--kk-line)", margin: "0 10px", flexShrink: 0 }} />
 
-        {/* Nav items */}
-        <nav
-          style={{
-            flex: 1,
-            padding: "6px 8px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            overflowY: "auto",
-          }}
-        >
-          {NAV_ITEMS.map((item) => {
-            const active = item.matchPaths.some(
-              (p) => pathname === p || pathname.startsWith(`${p}/`),
-            );
-            const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 1, overflowY: "auto" }}>
 
-            return (
-              <button
-                key={item.href}
-                onClick={() => {
-                  router.push(accessible ? item.href : "/subscription");
-                  setMobileOpen(false);
-                }}
-                title={!showLabels ? item.label : undefined}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "9px 12px",
-                  justifyContent: showLabels ? "flex-start" : "center",
-                  borderRadius: 8,
-                  background: active ? "var(--kk-surface-2)" : "transparent",
-                  color: active
-                    ? "var(--kk-ink)"
-                    : accessible
-                      ? "var(--kk-ink-mute)"
-                      : "var(--kk-ink-faint)",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textAlign: "left",
-                  flexShrink: 0,
-                  transition: "background 0.1s",
-                }}
-              >
-                <item.icon
-                  style={{
-                    width: 18,
-                    height: 18,
-                    flexShrink: 0,
-                    strokeWidth: active ? 2.2 : 1.7,
-                  }}
-                />
-                {showLabels && (
-                  <>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: active ? 600 : 400,
-                        flex: 1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                    {!accessible && (
-                      <Lock style={{ width: 10, height: 10, flexShrink: 0, opacity: 0.4 }} />
-                    )}
-                  </>
-                )}
-              </button>
-            );
+          {/* Top items */}
+          {TOP_ITEMS.map(item => {
+            const active = item.matchPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));
+            return navButton(item.href, item.icon, item.label, active, true);
           })}
+
+          {/* My pipeline group */}
+          <div style={{ marginTop: 6 }}>
+            {/* Group header — only visible when expanded */}
+            {showLabels && (
+              <div style={{
+                padding: "6px 12px 2px 12px",
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "var(--kk-ink-faint)",
+                whiteSpace: "nowrap",
+              }}>
+                My pipeline
+              </div>
+            )}
+
+            {/* Collapsed: thin accent line on left to visually group */}
+            {!showLabels && anyPipelineActive && (
+              <div style={{ height: 1, background: "var(--kk-line)", margin: "2px 10px" }} />
+            )}
+
+            {PIPELINE_ITEMS.map(item => {
+              const active = isPipelineActive(item.href, pathname, tab);
+              const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
+              return navButton(item.href, item.icon, item.label, active, accessible, true);
+            })}
+          </div>
+
+          {/* Divider before bottom items */}
+          <div style={{ height: 1, background: "var(--kk-line)", margin: "6px 2px" }} />
+
+          {/* Bottom items */}
+          {BOTTOM_ITEMS.map(item => {
+            const active = item.matchPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));
+            const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
+            return navButton(item.href, item.icon, item.label, active, accessible);
+          })}
+
         </nav>
       </aside>
     </>

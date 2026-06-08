@@ -17,7 +17,7 @@ export function MoneySubNav({ renewCount, helpSlot }: Props) {
   return (
     <div className="mb-8 flex items-center justify-between border-b" style={{ borderColor: "var(--kk-line)" }}>
       <div className="flex items-center gap-1">
-        <Tab href="/existing-contracts" label="Existing contracts" count={renewCount} active={isRenew} />
+        <Tab href="/existing-contracts" label="Track renewal" count={renewCount} active={isRenew} />
       </div>
       {helpSlot && <div className="pb-1 shrink-0 pl-4">{helpSlot}</div>}
     </div>

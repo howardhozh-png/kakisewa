@@ -4,7 +4,6 @@ import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { AddOutreachButton } from "@/components/add-outreach-button";
 import { AddListingButton } from "@/components/add-listing-button";
-import { LeadsSubNav } from "@/components/leads-sub-nav";
 import { OutreachTable } from "@/components/outreach-table";
 import { OutreachEmptyState } from "@/components/outreach-empty-state";
 import { ActiveDealsEmptyState } from "@/components/active-deals-empty-state";
@@ -52,24 +51,24 @@ export default async function LeadsPage({ searchParams }: Props) {
     <PageHelpButton
       variant="question"
       module={0}
-      pageTitle="Outreach — find and message landlords"
+      pageTitle="Message owner — find and message landlords"
       bullets={[
         "Upload your Excel owner list or add owners one by one",
         "Download the bulk-send sheet and text all owners via WhatsApp Business",
         "Or tap the WhatsApp icon to send each owner a personalised intake link",
-        "Move interested owners to Active Deals and send them a tenant pack",
+        "Move interested owners to Track listing and send them a tenant pack",
       ]}
     />
   ) : (
     <PageHelpButton
       variant="question"
       module={1}
-      pageTitle="Active Deals — send your tenant pack"
+      pageTitle="Track listing — send your tenant pack"
       bullets={[
         "Move owners here once they respond and want to proceed",
         "Send your branded tenant pack link to build trust and credibility",
         "kakisewa auto-tracks when owners open your pack and their interest level",
-        "Once matched with a tenant, the deal moves to Existing Contracts",
+        "Once matched with a tenant, the deal moves to Track renewal",
       ]}
     />
   );
@@ -79,10 +78,12 @@ export default async function LeadsPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-            Leads
+            {activeTab === "pipeline" ? "Track listing" : "Message owner"}
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
-            Track every owner from first message to listing in one place.
+            {activeTab === "pipeline"
+              ? "Send your tenant pack and track every active listing."
+              : "Track every owner from first message to listing in one place."}
           </p>
         </div>
         {/* Tab-specific action buttons */}
@@ -99,12 +100,7 @@ export default async function LeadsPage({ searchParams }: Props) {
       </header>
 
       <Suspense fallback={null}>
-        <LeadsSubNav
-          tab={activeTab}
-          outreachCount={ownerLeads.length}
-          pipelineCount={pipelineLeads.length}
-          helpSlot={helpButton}
-        />
+        <div className="mb-8 flex justify-end">{helpButton}</div>
       </Suspense>
 
       {activeTab === "outreach" ? (
