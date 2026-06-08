@@ -382,7 +382,7 @@ function TenancyForm({
 
         {/* WhatsApp pings */}
         {tenancy.contract_end && (
-          <PingButtons tenancy={tenancy} />
+          <PingButtons tenancy={tenancy} onMissingOwnerPhone={() => setEditingOwner(true)} />
         )}
       </div>
 
@@ -520,7 +520,7 @@ function ContractBadge({ contractEnd }: { contractEnd: string }) {
   );
 }
 
-function PingButtons({ tenancy }: { tenancy: Tenancy }) {
+function PingButtons({ tenancy, onMissingOwnerPhone }: { tenancy: Tenancy; onMissingOwnerPhone?: () => void }) {
   const [pending, startTransition] = useTransition();
   const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
   const bucket = computeContractBucket(tenancy, new Date());
@@ -536,6 +536,11 @@ function PingButtons({ tenancy }: { tenancy: Tenancy }) {
     });
   }
   function pingOwner() {
+    if (!tenancy.property?.owner_phone) {
+      onMissingOwnerPhone?.();
+      toast.error("Add the owner's phone number first, then message them.");
+      return;
+    }
     checkAndRun(() => {
       startTransition(async () => {
         const res = await buildExpiryPingOwner(tenancy.id);
