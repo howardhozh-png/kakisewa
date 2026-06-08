@@ -12,6 +12,13 @@ export async function POST(req: Request) {
   const { endpoint } = sub;
   const keys = (sub as unknown as { keys: { p256dh: string; auth: string } }).keys;
 
+  // Remove this endpoint from any other user so one device = one active account.
+  const svc = (await import("@/lib/supabase/service")).createServiceClient();
+  await svc.from("push_subscriptions")
+    .delete()
+    .eq("endpoint", endpoint)
+    .neq("user_id", session.user.id);
+
   await supabase.from("push_subscriptions").upsert({
     user_id: session.user.id,
     endpoint,
