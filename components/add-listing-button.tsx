@@ -135,8 +135,8 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
       <button
         type="button"
         onClick={() => { reset(); setOpen(true); }}
-        className="kk-pill flex items-center gap-2 px-4 py-2"
-        style={{ fontSize: "13px", fontWeight: 500, background: "var(--kk-ink)", border: "1px solid var(--kk-ink)", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
+        className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"
+        style={{ fontSize: "13px", fontWeight: 500 }}
       >
         <ListingIcon className="w-4 h-4" />
         Add listing

@@ -153,11 +153,10 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
       <button
         id="tour-btn-upload-csv"
         type="button"
-        className="kk-pill"
-        style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
+        className="kk-pill kk-pill-white"
         onClick={() => setOpen(true)}
       >
-        <Upload className="w-3.5 h-3.5" /> Upload owner CSV
+        <Upload className="w-3.5 h-3.5" /> Upload CSV
       </button>
 
       <Dialog

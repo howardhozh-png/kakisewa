@@ -156,8 +156,8 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
         <button
           type="button"
           onClick={() => setDropdownOpen((v) => !v)}
-          className="kk-pill flex items-center gap-2 px-4 py-2"
-          style={{ fontSize: "13px", fontWeight: 500, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
+          className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"
+          style={{ fontSize: "13px", fontWeight: 500 }}
         >
           <Users className="w-4 h-4" />
           Add to outreach

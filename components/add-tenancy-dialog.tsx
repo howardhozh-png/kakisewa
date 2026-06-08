@@ -177,7 +177,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
       <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); setOpen(o); }}>
         <DialogTrigger
           render={
-            <button className="kk-pill" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+            <button className="kk-pill kk-pill-white">
               Add tenancy
             </button>
           }
