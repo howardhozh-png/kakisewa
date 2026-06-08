@@ -7,11 +7,11 @@ import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
-import { DEMO_EVENT } from "@/components/onboarding-demo-modal";
+import { DEMO_EVENT } from "@/components/onboarding-demo-dialog";
 import { THEMES, getTheme, applyTheme, type Theme } from "@/components/accent-provider";
 import { AgentProfile } from "@/lib/types";
 import { saveProfileDetails } from "@/lib/actions";
-import { PhotoCropModal } from "@/components/photo-crop-modal";
+import { PhotoCropDialog } from "@/components/photo-crop-dialog";
 import { toast } from "sonner";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -192,7 +192,7 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
   return (
     <>
       {cropSrc && (
-        <PhotoCropModal
+        <PhotoCropDialog
           src={cropSrc}
           aspectRatio={1}
           shape="circle"

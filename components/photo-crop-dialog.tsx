@@ -13,7 +13,7 @@ interface Props {
 
 const AREA_W = 400;
 
-export function PhotoCropModal({ src, aspectRatio, shape = "rect", onDone, onCancel }: Props) {
+export function PhotoCropDialog({ src, aspectRatio, shape = "rect", onDone, onCancel }: Props) {
   const areaH = Math.round(AREA_W / aspectRatio);
 
   const [zoom, setZoom] = useState(1);

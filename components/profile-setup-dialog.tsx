@@ -9,7 +9,7 @@ interface Props {
   agentName?: string | null;
 }
 
-export function ProfileSetupModal({ needsSetup, agentName }: Props) {
+export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [ren, setRen] = useState("");

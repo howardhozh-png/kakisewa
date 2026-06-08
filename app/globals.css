@@ -126,6 +126,8 @@
   --kk-purple:       #AF52DE;
   --kk-purple-soft:  rgba(175,82,222,0.10);
   --kk-purple-ink:   #6F2DA8;             /* status text: LHDN/via-form badge */
+  --kk-red-bg:       #FEF2F2;             /* destructive confirm background */
+  --kk-red-border:   #FECACA;             /* destructive confirm border */
 
   /* ── Type scale (Apple-style display sizes) ── */
   --kk-display-1: 4rem;       /* 64 — landing hero */

@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { TopNav } from "@/components/top-nav";
 import { GreetingBar } from "@/components/greeting-bar";
 import { AccentProvider } from "@/components/accent-provider";
-import { OnboardingDemoModal } from "@/components/onboarding-demo-modal";
+import { OnboardingDemoDialog } from "@/components/onboarding-demo-dialog";
 import { TrialBanner } from "@/components/trial-banner";
 import { TrialGate } from "@/components/trial-gate";
 import { BetaFrozenGate } from "@/components/beta-frozen-gate";
@@ -12,7 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
-import { ProfileSetupModal } from "@/components/profile-setup-modal";
+import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 
@@ -66,9 +66,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ProfileProvider profile={agent}>
         <main className="flex-1">{children}</main>
       </ProfileProvider>
-      <OnboardingDemoModal />
+      <OnboardingDemoDialog />
       <TrialDowngradeNotice archivedCount={agent.trial_downgrade_archived_count ?? null} />
-      <ProfileSetupModal
+      <ProfileSetupDialog
         needsSetup={!isAdmin && (!agent.phone || !agent.ren_number)}
         agentName={agent.name}
       />

@@ -1,6 +1,6 @@
 "use client";
 
-import { PAGE_HELP_EVENT } from "./onboarding-demo-modal";
+import { PAGE_HELP_EVENT } from "./onboarding-demo-dialog";
 
 interface Props {
   module: 0 | 1 | 2;

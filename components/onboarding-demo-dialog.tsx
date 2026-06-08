@@ -981,7 +981,7 @@ interface PageHelpPayload {
 
 export const PAGE_HELP_EVENT = "kk:open-page-help";
 
-export function OnboardingDemoModal({ autoOpen = true }: { autoOpen?: boolean }) {
+export function OnboardingDemoDialog({ autoOpen = true }: { autoOpen?: boolean }) {
   const [open, setOpen]       = useState(false);
   const [playing, setPlaying] = useState(false);
   const [mod, setMod]         = useState(0);

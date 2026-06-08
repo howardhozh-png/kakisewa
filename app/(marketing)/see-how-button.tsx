@@ -1,6 +1,6 @@
 "use client";
 
-import { DEMO_EVENT } from "@/components/onboarding-demo-modal";
+import { DEMO_EVENT } from "@/components/onboarding-demo-dialog";
 
 export function SeeHowButton() {
   return (
