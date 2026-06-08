@@ -872,8 +872,28 @@ export async function saveOwnerPackRanking(
   packId: string,
   rankings: Array<{ tenant_id: string; rank: number; liked: number; owner_note?: string | null }>
 ) {
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const { sendPushToUser } = await import("@/lib/push");
+
+  const sb = createServiceClient();
+  const { data: pack } = await sb
+    .from("match_packs")
+    .select("user_id, property_label, owner_lead_id")
+    .eq("id", packId)
+    .maybeSingle();
+
   await setOwnerRanking(packId, rankings);
   revalidatePath("/matching");
+
+  if (pack?.user_id) {
+    sendPushToUser(pack.user_id, {
+      title: "Owner ranked tenants in pack",
+      body: pack.property_label ?? "Tenant pack",
+      url: `/new-owners?tab=pipeline&highlight=${pack.owner_lead_id}`,
+      tag: `packranked_${packId}`,
+    }).catch(() => {});
+  }
+
   return { ok: true };
 }
 

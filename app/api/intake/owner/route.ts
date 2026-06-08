@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getOwnerLeadByIntakeToken, completeOwnerIntake } from "@/lib/db";
 import { classifyOwnerIntake } from "@/lib/ai-classify";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { sendPushToUser } from "@/lib/push";
 
 const schema = z.object({
   token: z.string().min(1).max(200),
@@ -32,6 +33,17 @@ export async function POST(request: NextRequest) {
 
     const classified = await classifyOwnerIntake(answers);
     await completeOwnerIntake(token, { ...classified, photoUrls: photoUrls ?? [] });
+
+    if (lead.user_id) {
+      const propParts = [lead.property_name, lead.unit ? `Unit ${lead.unit}` : null].filter(Boolean);
+      const propLabel = propParts.length ? ` · ${propParts.join(" · ")}` : "";
+      sendPushToUser(lead.user_id, {
+        title: "Owner filled in details",
+        body: `${lead.owner_name}${propLabel}`,
+        url: `/new-owners?tab=pipeline&highlight=${lead.id}`,
+        tag: `intake_${lead.id}`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true, message: "Submitted successfully" });
   } catch (err) {
