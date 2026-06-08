@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, animate } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { PLAN_PRICES } from "@/lib/plans";
 
 // ── Plan data ─────────────────────────────────────────────────────────────────
 
@@ -58,10 +59,7 @@ const TIER_STYLES = {
 const PLANS = [
   {
     name: "Silver" as const, planId: "silver" as const,
-    monthly: 69, annualMonthly: 57,
-    annualTotal: 570,     // annualMonthly × 10 — actual charge
-    originalAnnual: 690,  // monthly × 10 — reference shown next to "2 months free"
-    annualSavings: 120,
+    ...PLAN_PRICES.silver,
     headline: "Move your pipeline.",
     archetype: "New agent · <RM4k/month",
     quote: "I want to start building my portfolio and learn renewal cycle",
@@ -69,10 +67,7 @@ const PLANS = [
   },
   {
     name: "Gold" as const, planId: "gold" as const,
-    monthly: 119, annualMonthly: 99,
-    annualTotal: 990,
-    originalAnnual: 1190,
-    annualSavings: 200,
+    ...PLAN_PRICES.gold,
     headline: "Scale your portfolio.",
     archetype: "Growing agent · RM4-8k/month",
     quote: "I have enough existing contracts and I don't want to miss them",
@@ -80,10 +75,7 @@ const PLANS = [
   },
   {
     name: "Platinum" as const, planId: "platinum" as const,
-    monthly: 179, annualMonthly: 149,
-    annualTotal: 1490,
-    originalAnnual: 1790,
-    annualSavings: 300,
+    ...PLAN_PRICES.platinum,
     headline: "Never miss a renewal.",
     archetype: "Established agent · RM8-15k/month",
     quote: "Renewal contract is a big portion of my passive income and I must capture them",
@@ -91,10 +83,7 @@ const PLANS = [
   },
   {
     name: "Elite" as const, planId: "elite" as const,
-    monthly: 299, annualMonthly: 249,
-    annualTotal: 2490,
-    originalAnnual: 2990,
-    annualSavings: 500,
+    ...PLAN_PRICES.elite,
     headline: "Your all-in-one hub.",
     archetype: "Elite agent · >RM15k/month",
     quote: "I am successful, and I want to build my own personal brand",
