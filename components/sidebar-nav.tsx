@@ -89,8 +89,8 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
           <Menu style={{ width: 20, height: 20, flexShrink: 0, strokeWidth: 1.8 }} />
         </div>
 
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Nav items — paddingTop separates header from first item to avoid colour contrast appearing as a line */}
+        <nav style={{ flex: 1, padding: "0 8px", paddingTop: 12, display: "flex", flexDirection: "column", gap: 2 }}>
           {NAV_ITEMS.map((item) => {
             const active = item.matchPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
             const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
