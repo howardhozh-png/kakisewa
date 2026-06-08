@@ -857,6 +857,16 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
     <>
       <header className="kk-topnav">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center px-3 lg:px-5 gap-8">
+          {/* Sidebar toggle — mobile only */}
+          <button
+            className="kk-topnav-hamburger items-center justify-center w-10 h-10 rounded-full -ml-2 shrink-0"
+            onClick={() => document.dispatchEvent(new CustomEvent("kk-sidebar-toggle"))}
+            aria-label="Open navigation"
+            style={{ color: "var(--kk-topnav-ink)" }}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           {/* Brand */}
           <Link href="/home" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity shrink-0" style={{ color: "var(--kk-topnav-ink)" }} aria-label="kakisewa home">
             <Logo size={32} />

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, FileText, BookOpen, BarChart2, Lock, Menu } from "lucide-react";
+import { Home, Users, FileText, BookOpen, BarChart2, Lock, Menu, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/home",               icon: Home,      label: "Home",        matchPaths: ["/home"],                                                       minPlan: null },
@@ -28,90 +28,161 @@ interface Props {
 
 export function SidebarNav({ plan, status, isAdmin }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
+  // Listen for mobile toggle event from top nav
+  useEffect(() => {
+    function onToggle() { setMobileOpen(o => !o); }
+    document.addEventListener("kk-sidebar-toggle", onToggle);
+    return () => document.removeEventListener("kk-sidebar-toggle", onToggle);
+  }, []);
+
+  // Close mobile sidebar on route change
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  const isExpanded = expanded || mobileOpen;
+
   return (
-    <aside
-      className="kk-sidebar-nav flex-col"
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
-      style={{
-        width: expanded ? 200 : 64,
-        height: "100vh",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
-        borderRight: "1px solid var(--kk-line)",
-        background: "var(--kk-surface)",
-        overflow: "hidden",
-        zIndex: 40,
-      }}
-    >
-      {/* Menu icon — aligns with top nav height, replaces duplicate logo */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: 64,
-        marginBottom: 4,
-        color: "var(--kk-ink-faint)",
-        flexShrink: 0,
-      }}>
-        <Menu style={{ width: 18, height: 18 }} />
-      </div>
+    <>
+      {/* Backdrop — mobile only, closes sidebar on tap */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 39,
+            background: "rgba(0,0,0,0.4)",
+          }}
+        />
+      )}
 
-      {/* Nav items */}
-      <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-        {NAV_ITEMS.map((item) => {
-          const active = item.matchPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-          const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
-
-          return (
-            <button
-              key={item.href}
-              onClick={() => router.push(accessible ? item.href : "/subscription")}
+      <aside
+        className="kk-sidebar-nav flex-col"
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+        style={{
+          width: isExpanded ? 200 : 64,
+          height: "100vh",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          // mobileOpen overrides the CSS class transform (translateX(-200px) on mobile)
+          transform: mobileOpen ? "translateX(0)" : undefined,
+          transition: "width 0.22s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+          borderRight: "1px solid var(--kk-line)",
+          background: "var(--kk-surface)",
+          overflow: "hidden",
+          zIndex: 40,
+          boxShadow: mobileOpen ? "4px 0 24px rgba(0,0,0,0.12)" : "none",
+        }}
+      >
+        {/* Header row — same padding/alignment as nav items */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "0 12px",
+            height: 64,
+            flexShrink: 0,
+            color: "var(--kk-ink-faint)",
+          }}
+        >
+          <Menu style={{ width: 20, height: 20, flexShrink: 0 }} />
+          {isExpanded && (
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "10px 12px",
-                borderRadius: 12,
-                background: active ? "var(--kk-surface-2)" : "transparent",
-                color: active ? "var(--kk-accent)" : accessible ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-                width: "100%",
+                fontSize: 14,
+                fontWeight: 500,
+                flex: 1,
+                opacity: 0,
+                animation: "fadeIn 0.12s 0.08s ease forwards",
+                color: "var(--kk-ink-mute)",
                 whiteSpace: "nowrap",
-                overflow: "hidden",
-                transition: "background 0.12s ease, color 0.12s ease",
               }}
             >
-              <item.icon
-                style={{ width: 20, height: 20, flexShrink: 0, strokeWidth: active ? 2.2 : 1.8 }}
-              />
-              {expanded && (
-                <span
-                  style={{
-                    fontSize: 14,
-                    fontWeight: active ? 600 : 400,
-                    flex: 1,
-                    opacity: 0,
-                    animation: "fadeIn 0.12s 0.08s ease forwards",
-                  }}
-                >
-                  {item.label}
-                </span>
-              )}
-              {expanded && !accessible && (
-                <Lock style={{ width: 11, height: 11, flexShrink: 0, opacity: 0.5 }} />
-              )}
+              Menu
+            </span>
+          )}
+          {/* Close button — mobile only */}
+          {mobileOpen && (
+            <button
+              onClick={() => setMobileOpen(false)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 4,
+                color: "var(--kk-ink-faint)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+              aria-label="Close menu"
+            >
+              <X style={{ width: 18, height: 18 }} />
             </button>
-          );
-        })}
-      </nav>
-    </aside>
+          )}
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: "0 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+          {NAV_ITEMS.map((item) => {
+            const active = item.matchPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+            const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
+
+            return (
+              <button
+                key={item.href}
+                onClick={() => {
+                  router.push(accessible ? item.href : "/subscription");
+                  setMobileOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  background: active ? "var(--kk-surface-2)" : "transparent",
+                  color: active ? "var(--kk-accent)" : accessible ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
+                  border: "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  width: "100%",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  transition: "background 0.12s ease, color 0.12s ease",
+                }}
+              >
+                <item.icon
+                  style={{ width: 20, height: 20, flexShrink: 0, strokeWidth: active ? 2.2 : 1.8 }}
+                />
+                {isExpanded && (
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: active ? 600 : 400,
+                      flex: 1,
+                      opacity: 0,
+                      animation: "fadeIn 0.12s 0.08s ease forwards",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                )}
+                {isExpanded && !accessible && (
+                  <Lock style={{ width: 11, height: 11, flexShrink: 0, opacity: 0.5 }} />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }

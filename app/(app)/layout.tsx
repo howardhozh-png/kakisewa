@@ -10,24 +10,21 @@ import { TrialDowngradeNotice } from "@/components/trial-downgrade-notice";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports, getHomeDashboardStats } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { SidebarNav } from "@/components/sidebar-nav";
-import { BottomTabBar } from "@/components/bottom-tab-bar";
-import { GuideStrip } from "@/components/guide-strip";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
   const trialStart = agent.trial_started_at ? new Date(agent.trial_started_at) : undefined;
-  const [leadCount, contractCount, tenantCount, supportCount, dashStats] = await Promise.all([
+  const [leadCount, contractCount, tenantCount, supportCount] = await Promise.all([
     countOwnerLeads().catch(() => null),
     countLifecycleTenancies().catch(() => null),
     countTenantProfiles().catch(() => null),
     countPropertySupports(trialStart).catch(() => null),
-    getHomeDashboardStats().catch(() => null),
   ]);
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
@@ -50,20 +47,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isNewAgent = status === "beta" || status === "trial" || daysSinceSignup <= 14;
 
   const plan = agent.subscription_plan ?? null;
-  const uncontacted = dashStats?.uncontacted ?? 0;
-  const expiringIn60 = dashStats?.expiringIn60 ?? 0;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "var(--kk-bg)" }}>
-      {/* Sidebar / bottom-tab visibility — inlined so it's never stale from CSS cache */}
+      {/* Sidebar visibility — inlined to avoid Turbopack CSS chunk caching */}
       <style>{`
         .kk-sidebar-nav { display: flex; flex-direction: column; }
-        .kk-bottom-tab  { display: none; }
         .kk-main-col    { padding-left: 64px; }
+        /* Extend top bar left to cover the fixed sidebar rail */
+        .kk-top-bar     { margin-left: -64px; width: calc(100% + 64px); padding-left: 64px; }
         @media (max-width: 1023px) {
-          .kk-sidebar-nav { display: none; }
-          .kk-bottom-tab  { display: flex; }
+          /* Slide sidebar off-screen by default; React overrides transform when open */
+          .kk-sidebar-nav { transform: translateX(-200px); }
           .kk-main-col    { padding-left: 0; }
+          .kk-top-bar     { margin-left: 0; width: 100%; padding-left: 0; }
         }
       `}</style>
       <AccentProvider color={agent.accent_color} />
@@ -74,15 +71,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Main column — padding-left matches collapsed sidebar width on desktop */}
       <div className="kk-main-col" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
 
-        {/* Top bar — sticky */}
-        <div className="sticky top-0 z-50">
+        {/* Top bar — sticky, extends left to cover sidebar rail */}
+        <div className="kk-top-bar sticky top-0 z-50">
           {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={status === "beta"} />}
           <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs />
           <PwaInstallBanner />
         </div>
-
-        {/* Contextual guide strip — every page */}
-        <GuideStrip uncontacted={uncontacted} expiringIn60={expiringIn60} />
 
         {/* Streak / greeting bar */}
         <GreetingBar name={agent.name} streak={streak} checkedInToday={checkedInToday} />
@@ -96,13 +90,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         />
 
         <ProfileProvider profile={agent}>
-          {/* pb-20 on mobile leaves room for the bottom tab bar */}
-          <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+          <main className="flex-1">{children}</main>
         </ProfileProvider>
       </div>
-
-      {/* Bottom tab bar — mobile only */}
-      <BottomTabBar />
 
       {/* Overlays & dialogs */}
       <OnboardingDemoDialog />
