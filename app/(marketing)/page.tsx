@@ -2,11 +2,11 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { HowItWorks } from "./how-it-works";
 import { Faq } from "./faq";
 import { AnimatedHero } from "./animated-hero";
 import { ComparisonSlider } from "./comparison-slider";
-import { PainPointCards } from "./pain-point-cards";
+import { FeatureSection } from "./feature-section";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { PLAN_MONTHLY_PRICE } from "@/lib/pricing";
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
@@ -48,15 +48,24 @@ export default function LandingPage() {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <AnimatedHero />
 
-      {/* ── Today vs KakiSewa ─────────────────────────────────────────────── */}
-      <section id="comparison" className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
-        <ComparisonSlider />
+      {/* ── Product reveal (scroll animation) ─────────────────────────────── */}
+      <section style={{ background: "var(--kk-bg)", borderTop: "1px solid var(--kk-line)" }}>
+        <ContainerScroll
+          titleComponent={
+            <p
+              className="uppercase font-semibold"
+              style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
+            >
+              Today vs with kakisewa
+            </p>
+          }
+        >
+          <ComparisonSlider />
+        </ContainerScroll>
       </section>
 
-      {/* ── 3 Pain Points ─────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-10 py-12 lg:py-20" style={{ background: "var(--kk-surface-2)", borderTop: "1px solid var(--kk-line)" }}>
-        <PainPointCards />
-      </section>
+      {/* ── Feature section ───────────────────────────────────────────────── */}
+      <FeatureSection />
 
       {/* ── Platform callout ──────────────────────────────────────────────── */}
       <section className="px-6 lg:px-12 py-14" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
@@ -78,39 +87,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How It Works ──────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
-        <div className="max-w-[1100px] mx-auto">
-          <h2
-            className="serif mb-16"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1.08, letterSpacing: "-0.022em", maxWidth: "22ch" }}
-          >
-            Set up in minutes.<br />See results in days.
-          </h2>
-          <HowItWorks />
-        </div>
-      </section>
-
-      {/* ── Mid-page CTA ──────────────────────────────────────────────────── */}
-      <section className="px-6 lg:px-12 py-16 text-center" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
-        <p
-          className="serif mx-auto mb-2"
-          style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)", lineHeight: 1.15, letterSpacing: "-0.022em", maxWidth: "30ch", color: "var(--kk-ink)" }}
-        >
-          One renewal pays for a whole year of kakisewa.
-        </p>
-        <p className="mb-8" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
-          Start your free trial. No credit card needed.
-        </p>
-        <Link
-          href="/sign-up"
-          className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold transition-opacity hover:opacity-90"
-          style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-body)" }}
-        >
-          Start free trial <ArrowRight className="w-4 h-4" />
-        </Link>
-      </section>
-
       {/* ── Beta notice ───────────────────────────────────────────────────── */}
       <section className="px-6 lg:px-12 py-16" style={{ background: "var(--kk-ink)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="max-w-[760px] mx-auto">
@@ -124,7 +100,7 @@ export default function LandingPage() {
             We&apos;re just getting started.
           </h2>
           <p style={{ fontSize: "var(--kk-body)", color: "rgba(255,255,255,0.55)", maxWidth: "50ch", lineHeight: 1.7, marginBottom: 20 }}>
-            kakisewa is in beta. Early adopters lock in pricing before rates increase — and shape what we build next.
+            kakisewa is in beta. Early adopters lock in pricing before rates increase and shape what we build next.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[580px]">
             {[
@@ -168,7 +144,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ───────────────────────────────────────────────────────────── */}
+      {/* ── Final CTA ─────────────────────────────────────────────────────── */}
       <section className="px-6 lg:px-12 py-28 text-center" style={{ background: "var(--kk-ink)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="max-w-[560px] mx-auto">
           <div className="flex justify-center mb-8"><BrandMark size={32} dark={false} /></div>
