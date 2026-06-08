@@ -6,7 +6,6 @@ import { Faq } from "./faq";
 import { AnimatedHero } from "./animated-hero";
 import { ComparisonSlider } from "./comparison-slider";
 import { FeatureSection } from "./feature-section";
-import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { PLAN_MONTHLY_PRICE } from "@/lib/pricing";
 
 function BrandMark({ size = 32, dark = true }: { size?: number; dark?: boolean }) {
@@ -48,20 +47,9 @@ export default function LandingPage() {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <AnimatedHero />
 
-      {/* ── Product reveal (scroll animation) ─────────────────────────────── */}
-      <section style={{ background: "var(--kk-bg)", borderTop: "1px solid var(--kk-line)" }}>
-        <ContainerScroll
-          titleComponent={
-            <p
-              className="uppercase font-semibold"
-              style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
-            >
-              Today vs with kakisewa
-            </p>
-          }
-        >
-          <ComparisonSlider />
-        </ContainerScroll>
+      {/* ── Today vs KakiSewa ─────────────────────────────────────────────── */}
+      <section id="comparison" className="px-6 lg:px-12 py-16 lg:py-24" style={{ background: "#fff", borderTop: "1px solid var(--kk-line)" }}>
+        <ComparisonSlider />
       </section>
 
       {/* ── Feature section ───────────────────────────────────────────────── */}

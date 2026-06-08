@@ -16,7 +16,9 @@ export function AnimatedHero() {
           color: "var(--kk-ink)",
         }}
       >
-        Every agent is missing 30 to 40% of their renewal income.{" "}
+        Every agent is{" "}
+        <span style={{ color: "#DC2626" }}>missing 30 to 40%</span>
+        {" "}of their renewal income.{" "}
         <span style={{ color: "var(--kk-ink-mute)" }}>The ones earning RM100k just don&apos;t feel it yet.</span>
       </h1>
 
