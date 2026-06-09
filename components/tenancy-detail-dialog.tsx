@@ -64,6 +64,10 @@ function TenancyForm({
   const [ownerPhone, setOwnerPhone] = useState(tenancy.property?.owner_phone ?? "");
   const [editingOwner, setEditingOwner] = useState(false);
 
+  // Property specs (bedrooms/bathrooms live on owner_leads)
+  const [bedrooms, setBedrooms] = useState(tenancy.property?.bedrooms != null ? String(tenancy.property.bedrooms) : "");
+  const [bathrooms, setBathrooms] = useState(tenancy.property?.bathrooms != null ? String(tenancy.property.bathrooms) : "");
+
   // Property name (always editable)
   const [propertyName, setPropertyName] = useState(tenancy.property_name ?? "");
 
@@ -92,12 +96,16 @@ function TenancyForm({
 
   // Sync on tenancy change (different record opened)
   useEffect(() => {
+    setLightboxUrl(null);
     setPhotos(tenancy.property?.photo_urls ?? []);
     setAgreementUrl(tenancy.agreement_url ?? null);
     setOwnerName(tenancy.property?.owner_name ?? "");
     setOwnerPhone(tenancy.property?.owner_phone ?? "");
     setEditingOwner(false);
     setPropertyName(tenancy.property_name ?? "");
+    setBedrooms(tenancy.property?.bedrooms != null ? String(tenancy.property.bedrooms) : "");
+    setBathrooms(tenancy.property?.bathrooms != null ? String(tenancy.property.bathrooms) : "");
+    setCoverIndex(tenancy.property?.cover_photo_index ?? 0);
     setTenantName(tenancy.tenant_name ?? "");
     setTenantPhone(tenancy.tenant_phone ?? "");
     setAmount((tenancy.renewal_proposed_rent ?? tenancy.amount)?.toString() ?? "");
@@ -117,8 +125,15 @@ function TenancyForm({
   function recomputeEnd(s: string, d: string) {
     if (!s || !d) return;
     const [y, m, day] = s.split("-").map(Number);
-    const endDate = new Date(y, m - 1 + parseInt(d, 10), day);
-    setContractEnd(`${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`);
+    const months = parseInt(d, 10);
+    let end: Date;
+    if (day === 1) {
+      end = new Date(y, m - 1 + months + 1, 0);
+    } else {
+      const anniversary = new Date(y, m - 1 + months, day);
+      end = new Date(anniversary.getTime() - 86400000);
+    }
+    setContractEnd(`${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`);
   }
 
   function recomputeDuration(s: string, e: string) {
@@ -227,7 +242,7 @@ function TenancyForm({
       if (repliedOwner !== (tenancy.replied_owner ?? "pending")) {
         saves.push(setReplyChip(tenancy.id, "owner", repliedOwner).then(() => ({ ok: true, message: "" })));
       }
-      // Save owner name/phone/property name if owner_lead_id is available
+      // Save owner name/phone/property name/bed/bath if owner_lead_id is available
       if (tenancy.owner_lead_id) {
         const ownerUpdates: Parameters<typeof updateOwnerLeadDetails>[1] = {};
         if (editingOwner) {
@@ -237,6 +252,10 @@ function TenancyForm({
         if (propertyName !== (tenancy.property_name ?? "")) {
           ownerUpdates.property_name = propertyName || undefined;
         }
+        const bedroomsNum = bedrooms ? parseInt(bedrooms, 10) : null;
+        const bathroomsNum = bathrooms ? parseInt(bathrooms, 10) : null;
+        if (bedroomsNum !== (tenancy.property?.bedrooms ?? null)) ownerUpdates.bedrooms = bedroomsNum ?? undefined;
+        if (bathroomsNum !== (tenancy.property?.bathrooms ?? null)) ownerUpdates.bathrooms = bathroomsNum ?? undefined;
         if (Object.keys(ownerUpdates).length > 0) {
           await updateOwnerLeadDetails(tenancy.owner_lead_id, ownerUpdates);
         }
@@ -340,6 +359,9 @@ function TenancyForm({
         <Field label="Tenant name" value={tenantName} onChange={setTenantName} placeholder="e.g. Ahmad Farid" full />
         <Field label="Phone (with country code)" value={tenantPhone} onChange={setTenantPhone} placeholder="e.g. 60123456789" full />
         <Field label="Monthly rent (RM)" value={amount} onChange={setAmount} placeholder="e.g. 1,500" money />
+        <div /> {/* spacer so rent stays left */}
+        <Field label="Bedrooms" value={bedrooms} onChange={setBedrooms} placeholder="e.g. 3" />
+        <Field label="Bathrooms" value={bathrooms} onChange={setBathrooms} placeholder="e.g. 2" />
         {tenancy.contract_end && (
           <div className="space-y-1.5">
             <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Days to expiry</label>

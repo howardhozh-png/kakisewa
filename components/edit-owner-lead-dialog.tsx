@@ -7,7 +7,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
-import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2 } from "lucide-react";
+import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [pending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [coverIndex, setCoverIndex] = useState<number>(0);
   const [agreementUrl, setAgreementUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
@@ -46,6 +47,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   useEffect(() => {
     if (lead) {
       setPhotos(lead.photo_urls ?? []);
+      setCoverIndex(lead.cover_photo_index ?? 0);
       setAgreementUrl(lead.agreement_url ?? null);
       setOwnerName(lead.owner_name ?? "");
       setOwnerPhone(lead.owner_phone ?? "");
@@ -81,8 +83,17 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
 
   async function handleRemovePhoto(idx: number) {
     const next = photos.filter((_, i) => i !== idx);
+    const newCover = idx === coverIndex ? 0 : idx < coverIndex ? coverIndex - 1 : coverIndex;
     setPhotos(next);
+    setCoverIndex(newCover);
     await saveOwnerLeadPhotos(lead!.id, next);
+    await updateOwnerLeadDetails(lead!.id, { cover_photo_index: newCover });
+  }
+
+  async function handleSetCover(idx: number) {
+    setCoverIndex(idx);
+    await updateOwnerLeadDetails(lead!.id, { cover_photo_index: idx });
+    toast.success("Cover photo updated");
   }
 
   async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -263,14 +274,31 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   onClick={() => setLightboxUrl(url)}
                 >
                   <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleRemovePhoto(i); }}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "rgba(0,0,0,0.55)" }}
-                  >
-                    <Trash2 className="w-3 h-3 text-white" />
-                  </button>
+                  {i === coverIndex && (
+                    <span className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+                      style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}>Cover</span>
+                  )}
+                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {i !== coverIndex && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleSetCover(i); }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center"
+                        style={{ background: "rgba(0,0,0,0.55)" }}
+                        title="Set as cover"
+                      >
+                        <Star className="w-3 h-3 text-white" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleRemovePhoto(i); }}
+                      className="w-6 h-6 rounded-md flex items-center justify-center"
+                      style={{ background: "rgba(0,0,0,0.55)" }}
+                    >
+                      <Trash2 className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
                 </div>
               ))}
               {photos.length < 10 && (

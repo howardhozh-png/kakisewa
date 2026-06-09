@@ -14,9 +14,14 @@ export function PhotoLightbox({ url, onClose }: Props) {
 
   useEffect(() => {
     setMounted(true);
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", onKey, true); // capture phase — fires before dialog handlers
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
   async function handleDownload() {

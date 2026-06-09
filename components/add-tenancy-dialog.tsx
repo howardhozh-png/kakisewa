@@ -203,7 +203,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                         <button key={ol.id} type="button" onMouseDown={(e) => { e.preventDefault(); selectExisting(ol); }}
                           className="w-full text-left px-4 py-2.5 hover:opacity-70">
                           <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{ol.property_name}</p>
-                          {ol.owner_name && <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{ol.owner_name}</p>}
                         </button>
                       ))}
                     </div>
