@@ -109,7 +109,7 @@ export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
           {/* Phone */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>
-              Phone number <span style={{ color: "#DC2626" }}>*</span>
+              Phone number <span style={{ color: "var(--kk-red)" }}>*</span>
             </label>
             <input
               type="tel"
@@ -126,7 +126,7 @@ export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
           {/* REN */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>
-              REN number <span style={{ color: "#DC2626" }}>*</span>
+              REN number <span style={{ color: "var(--kk-red)" }}>*</span>
             </label>
             <input
               type="text"
@@ -137,7 +137,7 @@ export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
               className={inputCls}
               style={{
                 ...inputStyle,
-                borderColor: renStatus === "valid" ? "var(--kk-green)" : renStatus === "invalid" ? "#DC2626" : undefined,
+                borderColor: renStatus === "valid" ? "var(--kk-green)" : renStatus === "invalid" ? "var(--kk-red)" : undefined,
               }}
               onFocus={onFocus}
             />
@@ -162,12 +162,12 @@ export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
               </label>
             )}
             {renHint && renStatus === "invalid" && (
-              <p className="text-[11px]" style={{ color: "#DC2626" }}>{renHint}</p>
+              <p className="text-[11px]" style={{ color: "var(--kk-red)" }}>{renHint}</p>
             )}
           </div>
 
           {error && (
-            <p className="rounded-xl px-3.5 py-2.5 text-[13px]" style={{ color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>
+            <p className="rounded-xl px-3.5 py-2.5 text-[13px]" style={{ color: "var(--kk-red)", background: "var(--kk-red-bg)", border: "1px solid var(--kk-red-border)" }}>
               {error}
             </p>
           )}
