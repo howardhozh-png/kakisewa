@@ -492,7 +492,8 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
   const days = t.contract_end ? daysUntil(t.contract_end, today) : 0;
   const propBase = t.property_name?.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim() ?? "";
   const unitLabel = (t.property_name?.match(/Unit\s+[A-Za-z0-9-]+/i) ?? [])[0] ?? (t.property?.unit ? `Unit ${t.property.unit}` : "");
-  const photo = t.property?.photo_urls?.[0];
+  const coverIdx = t.property?.cover_photo_index ?? 0;
+  const photo = t.property?.photo_urls?.[coverIdx] ?? t.property?.photo_urls?.[0];
 
   const daysBg    = days < 0 ? "var(--kk-surface-2)" : days <= 30 ? "var(--kk-red-soft)"   : "var(--kk-amber-soft)";
   const daysColor = days < 0 ? "var(--kk-ink-mute)"  : days <= 30 ? "#C62828"              : "#B45309";
@@ -537,6 +538,14 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
           <p className="text-[11px] leading-tight">
             {unitLabel && <span style={{ color: "var(--kk-ink-soft)" }}>{unitLabel} · </span>}
             <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>
+            {(t.property?.bedrooms != null || t.property?.bathrooms != null) && (
+              <span style={{ color: "var(--kk-ink-faint)" }}>
+                {" · "}
+                {t.property.bedrooms != null ? `${t.property.bedrooms}bd` : ""}
+                {t.property.bedrooms != null && t.property.bathrooms != null ? " " : ""}
+                {t.property.bathrooms != null ? `${t.property.bathrooms}ba` : ""}
+              </span>
+            )}
           </p>
 
           <div className="flex items-center justify-between gap-1.5">
@@ -931,7 +940,8 @@ function CardPreview({ t, today }: { t: Tenancy; today: Date }) {
   const days = t.contract_end ? daysUntil(t.contract_end, today) : 0;
   const propBase = t.property_name?.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim() ?? "";
   const unitLabel = (t.property_name?.match(/Unit\s+[A-Za-z0-9-]+/i) ?? [])[0] ?? (t.property?.unit ? `Unit ${t.property.unit}` : "");
-  const photo = t.property?.photo_urls?.[0];
+  const coverIdx = t.property?.cover_photo_index ?? 0;
+  const photo = t.property?.photo_urls?.[coverIdx] ?? t.property?.photo_urls?.[0];
   const daysBg    = days < 0 ? "var(--kk-surface-2)" : days <= 30 ? "var(--kk-red-soft)"   : "var(--kk-amber-soft)";
   const daysColor = days < 0 ? "var(--kk-ink-mute)"  : days <= 30 ? "#C62828"              : "#B45309";
   const daysLabel = days < 0 ? `${Math.abs(days)}d over` : days === 0 ? "Today" : `${days}d`;

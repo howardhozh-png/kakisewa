@@ -6,7 +6,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, computeContractBucket, daysUntil } from "@/lib/types";
 import { buildExpiryPingTenant, buildExpiryPingOwner, updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
-import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2 } from "lucide-react";
+import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { ReplyState } from "@/lib/types";
@@ -51,6 +51,7 @@ function TenancyForm({
   const [pending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [photos, setPhotos] = useState<string[]>(tenancy.property?.photo_urls ?? []);
+  const [coverIndex, setCoverIndex] = useState<number>(tenancy.property?.cover_photo_index ?? 0);
   const [agreementUrl, setAgreementUrl] = useState<string | null>(tenancy.agreement_url ?? null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
@@ -155,12 +156,25 @@ function TenancyForm({
 
   async function handleRemovePhoto(idx: number) {
     const next = photos.filter((_, i) => i !== idx);
+    const newCover = idx === coverIndex ? 0 : idx < coverIndex ? coverIndex - 1 : coverIndex;
     setPhotos(next);
+    setCoverIndex(newCover);
     await fetch(`/api/owner-leads/${tenancy.owner_lead_id}/photos`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ urls: next }),
     });
+    if (tenancy.owner_lead_id) {
+      await updateOwnerLeadDetails(tenancy.owner_lead_id, { cover_photo_index: newCover });
+    }
+  }
+
+  async function handleSetCover(idx: number) {
+    setCoverIndex(idx);
+    if (tenancy.owner_lead_id) {
+      await updateOwnerLeadDetails(tenancy.owner_lead_id, { cover_photo_index: idx });
+      toast.success("Cover photo updated");
+    }
   }
 
   async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -402,14 +416,31 @@ function TenancyForm({
               onClick={() => setLightboxUrl(url)}
             >
               <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleRemovePhoto(i); }}
-                className="absolute top-1 right-1 w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: "rgba(0,0,0,0.55)" }}
-              >
-                <Trash2 className="w-3 h-3 text-white" />
-              </button>
+              {i === coverIndex && (
+                <span className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+                  style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}>Cover</span>
+              )}
+              <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {i !== coverIndex && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleSetCover(i); }}
+                    className="w-6 h-6 rounded-md flex items-center justify-center"
+                    style={{ background: "rgba(0,0,0,0.55)" }}
+                    title="Set as cover"
+                  >
+                    <Star className="w-3 h-3 text-white" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemovePhoto(i); }}
+                  className="w-6 h-6 rounded-md flex items-center justify-center"
+                  style={{ background: "rgba(0,0,0,0.55)" }}
+                >
+                  <Trash2 className="w-3 h-3 text-white" />
+                </button>
+              </div>
             </div>
           ))}
           {photos.length < 10 && (

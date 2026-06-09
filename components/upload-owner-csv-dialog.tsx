@@ -83,8 +83,22 @@ export function UploadOwnerCsvDialog() {
       }
 
       const detected = detectColumns(headers, rows);
-      setParsedData({ headers, rows, total: rows.length });
-      setMapping(detected);
+      // Merge saved column preferences: if a saved mapping's value exists in
+      // the current file's headers, prefer it over the auto-detected value.
+      try {
+        const saved = JSON.parse(localStorage.getItem("kk-csv-mapping") ?? "{}") as Partial<ColumnMapping>;
+        const merged = { ...detected };
+        for (const [k, v] of Object.entries(saved)) {
+          if (typeof v === "string" && headers.includes(v)) {
+            (merged as Record<string, unknown>)[k] = v;
+          }
+        }
+        setParsedData({ headers, rows, total: rows.length });
+        setMapping(refreshMappingFlags(merged));
+      } catch {
+        setParsedData({ headers, rows, total: rows.length });
+        setMapping(detected);
+      }
       setStep("map");
     };
 
@@ -98,7 +112,16 @@ export function UploadOwnerCsvDialog() {
   function handleMappingChange(field: keyof ColumnMapping, value: string) {
     if (!mapping) return;
     const updated = { ...mapping, [field]: value === "__none__" ? null : value };
-    setMapping(refreshMappingFlags(updated));
+    const refreshed = refreshMappingFlags(updated);
+    setMapping(refreshed);
+    // Persist non-null string mappings so the next import starts with these columns
+    try {
+      const toSave: Partial<ColumnMapping> = {};
+      for (const [k, v] of Object.entries(refreshed)) {
+        if (typeof v === "string") (toSave as Record<string, unknown>)[k] = v;
+      }
+      localStorage.setItem("kk-csv-mapping", JSON.stringify(toSave));
+    } catch { /* ignore */ }
   }
 
   async function handleImport() {

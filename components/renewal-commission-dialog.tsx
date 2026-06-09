@@ -39,8 +39,14 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
   const [rentVal, setRentVal]   = useState(String(defaultRent));
   const [newStart, setNewStart] = useState(defaultStart);
   const [newEnd, setNewEnd]     = useState(defaultEnd);
+  const [commissionType, setCommissionType] = useState<"full_year" | "half_month">(
+    t.renewal_commission_type ?? "full_year"
+  );
 
   const effectiveRent = parseFloat(rentVal) || defaultRent;
+  const commissionAmt = commissionType === "full_year"
+    ? Math.round(effectiveRent)
+    : Math.round(effectiveRent * 0.5);
 
   function confirm() {
     if (!newEnd) return;
@@ -49,6 +55,7 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
         newContractEnd:   newEnd,
         newContractStart: newStart || null,
         newRent:          parseFloat(rentVal) || null,
+        commissionType,
       });
       if (res.ok) {
         toast.success("Commission recorded. Tenancy restarted as Active.");
@@ -79,13 +86,35 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
             </button>
           </div>
 
+          {/* Commission type toggle */}
+          <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+            {(["full_year", "half_month"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setCommissionType(type)}
+                className="flex-1 py-2 text-[12px] font-semibold transition-colors"
+                style={{
+                  background: commissionType === type ? "#1F8B4C" : "var(--kk-surface-2)",
+                  color: commissionType === type ? "#fff" : "var(--kk-ink-mute)",
+                }}
+              >
+                {type === "full_year" ? "1 year rental" : "50% of month"}
+              </button>
+            ))}
+          </div>
+
           {/* Commission summary */}
           <div className="rounded-xl p-4" style={{ background: "var(--kk-green-soft)" }}>
             <p className="text-[12px] font-medium" style={{ color: "#1F8B4C" }}>Renewal commission earned</p>
             <p className="text-[22px] font-bold tabular-nums mt-1" style={{ color: "#1F8B4C" }}>
-              RM {Math.round(effectiveRent * 0.5).toLocaleString()}
+              RM {commissionAmt.toLocaleString()}
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: "#1F8B4C", opacity: 0.75 }}>50% of RM {effectiveRent.toLocaleString()}/mo rent</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "#1F8B4C", opacity: 0.75 }}>
+              {commissionType === "full_year"
+                ? `1 month rent · RM ${effectiveRent.toLocaleString()}/mo`
+                : `50% of RM ${effectiveRent.toLocaleString()}/mo rent`}
+            </p>
           </div>
 
           {/* New contract fields */}

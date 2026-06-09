@@ -116,7 +116,16 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   let contractEnd: string | null = null;
   if (contractStart && durationMonths) {
     const [y, m, d] = contractStart.split("-").map(Number);
-    const end = new Date(y, m - 1 + durationMonths, d);
+    let end: Date;
+    if (d === 1) {
+      // Starts on 1st: end = last day of the Nth month after start
+      // new Date(y, month, 0) gives last day of the previous month
+      end = new Date(y, m - 1 + durationMonths + 1, 0);
+    } else {
+      // Otherwise: end = anniversary date − 1 day
+      const anniversary = new Date(y, m - 1 + durationMonths, d);
+      end = new Date(anniversary.getTime() - 86400000);
+    }
     contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
   }
 
@@ -517,6 +526,7 @@ export async function collectRenewalCommission(
     newContractEnd: string;
     newContractStart?: string | null;
     newRent?: number | null;
+    commissionType?: "full_year" | "half_month";
   }
 ): Promise<{ ok: boolean; message: string }> {
   try {
@@ -524,6 +534,10 @@ export async function collectRenewalCommission(
     if (!tenancy) return { ok: false, message: "Tenancy not found." };
 
     const effectiveRent = opts.newRent ?? tenancy.amount;
+    const commissionType = opts.commissionType ?? "full_year";
+    const commissionAmt = commissionType === "full_year"
+      ? Math.round(effectiveRent)
+      : Math.round(effectiveRent * 0.5);
 
     // Compute duration in months if we have both start and end
     let durationMonths: number | undefined;
@@ -539,6 +553,7 @@ export async function collectRenewalCommission(
       ...(opts.newContractStart ? { contract_start: opts.newContractStart } : {}),
       ...(durationMonths ? { contract_duration_months: durationMonths } : {}),
       contract_end: opts.newContractEnd,
+      renewal_commission_type: commissionType,
       lifecycle_stage: null,
       replied_tenant: "pending",
       replied_owner: "pending",
@@ -551,9 +566,9 @@ export async function collectRenewalCommission(
       tenancy_id: tenancyId,
       owner_lead_id: tenancy.owner_lead_id,
       type: "renewal",
-      amount: Math.round(effectiveRent * 0.5),
+      amount: commissionAmt,
       earned_on: today,
-      notes: `Renewal — new end ${opts.newContractEnd}`,
+      notes: `Renewal (${commissionType === "full_year" ? "1 year rental" : "50%"}) — new end ${opts.newContractEnd}`,
     });
 
     invalidateCache();
@@ -950,7 +965,7 @@ No login needed — link is private 🙏
 
 export async function updateOwnerLeadDetails(
   id: string,
-  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "notes" | "available_from" | "listing_purpose">>
+  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
 ) {
   await updateOwnerLead(id, data);
 

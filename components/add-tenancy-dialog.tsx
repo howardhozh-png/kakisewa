@@ -36,7 +36,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
 
   // Property
   const [propertyName, setPropertyName] = useState("");
-  const [ownerLeadId, setOwnerLeadId] = useState("");
   const [unit, setUnit] = useState("");
   const [showSugg, setShowSugg] = useState(false);
 
@@ -72,12 +71,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
   }, [propertyName, ownerLeads]);
 
   function selectExisting(ol: OwnerLead) {
-    setOwnerLeadId(ol.id);
     setPropertyName(ol.property_name ?? "");
-    if (ol.owner_name) setOwnerName(ol.owner_name);
-    if (ol.owner_phone) setOwnerPhone(ol.owner_phone);
-    if (ol.unit) setUnit(ol.unit);
-    if (ol.expected_rent != null) setAmount(String(ol.expected_rent));
     setShowSugg(false);
   }
 
@@ -91,7 +85,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
   }
 
   function reset() {
-    setPropertyName(""); setOwnerLeadId(""); setUnit("");
+    setPropertyName(""); setUnit("");
     setOwnerName(""); setOwnerPhone("");
     setAmount(""); setContractStart(""); setDurationMonths("");
     photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
@@ -115,7 +109,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     startTransition(async () => {
       try {
         const fd = new FormData();
-        fd.set("owner_lead_id", ownerLeadId);
+        fd.set("owner_lead_id", "");
         fd.set("property_name", propertyName.trim());
         fd.set("property_unit", unit.trim());
         fd.set("owner_name", ownerName.trim());
@@ -197,13 +191,11 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                 <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setShowSugg(false); }}>
                   <FieldLabel required>Property name</FieldLabel>
                   <TextInput value={propertyName}
-                    onChange={(v) => { setPropertyName(v); setOwnerLeadId(""); setShowSugg(true); }}
+                    onChange={(v) => { setPropertyName(v); setShowSugg(true); }}
                     placeholder="e.g. Residensi Mutiara" />
-                  {ownerLeadId
-                    ? <p className="text-[11px] mt-1" style={{ color: "var(--kk-green-ink)" }}>Linked to existing property — details pre-filled</p>
-                    : propertyName.trim()
-                      ? <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>New property</p>
-                      : null}
+                  {propertyName.trim() && (
+                    <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Suggestions help avoid typos only</p>
+                  )}
                   {showSugg && suggestions.length > 0 && (
                     <div className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden"
                       style={{ zIndex: 9999, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: 240, overflowY: "auto" }}>

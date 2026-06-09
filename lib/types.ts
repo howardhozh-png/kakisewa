@@ -51,12 +51,16 @@ export interface Tenancy {
   closed_reason?: string | null;
   agreement_url?: string | null;
   created_at: string;
+  renewal_commission_type?: "full_year" | "half_month" | null;
   property?: {
     owner_name?: string;
     owner_phone?: string;
     address?: string;
     unit?: string;
     photo_urls?: string[];
+    cover_photo_index?: number | null;
+    bedrooms?: number | null;
+    bathrooms?: number | null;
   };
   owner_lead_id?: string | null;
   user_id?: string | null;
@@ -112,6 +116,7 @@ export interface OwnerLead {
   available_from?: string | null;
   tenant_preferences?: string | null;
   photo_urls?: string[];
+  cover_photo_index?: number | null;
   agreement_url?: string | null;
   outreach_count?: number | null;
   listing_purpose?: "rent" | "sell" | null;

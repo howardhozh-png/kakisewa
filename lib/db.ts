@@ -58,6 +58,9 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
         address: (ol.address as string | null) ?? undefined,
         unit: (ol.unit as string | null) ?? undefined,
         photo_urls: parsePhotoUrls(ol.photo_urls),
+        cover_photo_index: (ol.cover_photo_index as number | null) ?? null,
+        bedrooms: (ol.bedrooms as number | null) ?? null,
+        bathrooms: (ol.bathrooms as number | null) ?? null,
       }
     : undefined;
 
@@ -87,6 +90,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
     renewal_proposed_start:  (r.renewal_proposed_start as string | null) ?? null,
     renewal_proposed_months: (r.renewal_proposed_months as number | null) ?? null,
     renewal_proposed_rent:   (r.renewal_proposed_rent as number | null) ?? null,
+    renewal_commission_type: (r.renewal_commission_type as "full_year" | "half_month" | null) ?? null,
     closed_reason: (r.closed_reason as string | null) ?? null,
     agreement_url: (r.agreement_url as string | null) ?? null,
     created_at: r.created_at as string,
@@ -324,7 +328,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
 
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-const TENANCY_SELECT = "*, owner_leads!owner_lead_id(id, owner_name, owner_phone, property_name, unit, address, photo_urls, is_managed)";
+const TENANCY_SELECT = "*, owner_leads!owner_lead_id(id, owner_name, owner_phone, property_name, unit, address, photo_urls, cover_photo_index, bedrooms, bathrooms, is_managed)";
 
 export async function getTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();

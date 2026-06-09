@@ -21,11 +21,14 @@ interface Form {
   listing_purpose: "rent" | "sell" | null;
   expected_rent: string;
   available_from: string;
+  bedrooms: string;
+  bathrooms: string;
 }
 
 const EMPTY: Form = {
   property_name: "", unit: "", owner_name: "", owner_phone: "",
   listing_purpose: null, expected_rent: "", available_from: "",
+  bedrooms: "", bathrooms: "",
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -101,6 +104,8 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         listing_purpose: form.listing_purpose,
         expected_rent: parseFloat(form.expected_rent) || null,
         available_from: form.available_from || null,
+        bedrooms: form.bedrooms ? parseInt(form.bedrooms, 10) : null,
+        bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
         stage: "listed",
       });
 
@@ -239,6 +244,16 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                           Now
                         </button>
                       </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <FieldLabel>Bedrooms</FieldLabel>
+                      <TextInput type="number" value={form.bedrooms} onChange={(v) => setForm((f) => ({ ...f, bedrooms: v }))} placeholder="e.g. 3" />
+                    </div>
+                    <div>
+                      <FieldLabel>Bathrooms</FieldLabel>
+                      <TextInput type="number" value={form.bathrooms} onChange={(v) => setForm((f) => ({ ...f, bathrooms: v }))} placeholder="e.g. 2" />
                     </div>
                   </div>
                 </div>
