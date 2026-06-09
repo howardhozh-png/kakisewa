@@ -135,7 +135,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
 
       toast.success("Listing added");
       setOpen(false); reset();
-      router.push(`/track-listing?highlight=${res.id}`);
+      router.push(`/my-listing?highlight=${res.id}`);
     });
   }
 

@@ -31,7 +31,7 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-            Track renewal
+            Existing listing
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track every tenancy. Get alerted 60 days before any contract expires.
@@ -51,7 +51,7 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
             <PageHelpButton
               variant="question"
               module={2}
-              pageTitle="Track renewal — capture your passive income"
+              pageTitle="Existing listing — capture your passive income"
               bullets={[
                 "Add each active tenancy with its contract expiry date",
                 "kakisewa alerts you 60 days before any contract expires",

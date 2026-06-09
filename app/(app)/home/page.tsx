@@ -152,14 +152,14 @@ function SetupState({
           done={leadsComplete}
           title="Upload your leads"
           why="Never lose a number again. You'll see exactly who you haven't contacted yet."
-          href="/message-owners"
+          href="/potential-listing"
           cta="Start →"
         />
         <ChecklistItem
           done={contractsComplete}
           title="Upload your existing contracts"
           why="We track when each one expires and alert you 60 days before. Every renewal is half a month's rent."
-          href="/track-renewal"
+          href="/existing-listing"
           cta="Start →"
         />
         <ChecklistItem
@@ -192,7 +192,7 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
 
       {stats.expiringIn60 > 0 && (
         <Link
-          href="/track-renewal"
+          href="/existing-listing"
           className="flex items-center gap-3 rounded-2xl px-4 py-4 mb-4 transition-opacity hover:opacity-80"
           style={{
             background: "rgba(220,38,38,0.06)",
@@ -215,7 +215,7 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
 
       {stats.uncontacted > 0 && (
         <Link
-          href="/message-owners"
+          href="/potential-listing"
           className="flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-4 transition-opacity hover:opacity-80"
           style={{
             background: "rgba(234,179,8,0.08)",
@@ -232,7 +232,7 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
       )}
 
       <div className="grid grid-cols-2 gap-3 mt-2">
-        <Link href="/track-renewal" className="kk-card p-4" style={{ textDecoration: "none" }}>
+        <Link href="/existing-listing" className="kk-card p-4" style={{ textDecoration: "none" }}>
           <p
             className="text-[11px] font-semibold uppercase tracking-widest mb-2"
             style={{ color: "var(--kk-ink-faint)" }}
@@ -246,7 +246,7 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
             expiring within 60 days
           </p>
         </Link>
-        <Link href="/track-listing" className="kk-card p-4" style={{ textDecoration: "none" }}>
+        <Link href="/my-listing" className="kk-card p-4" style={{ textDecoration: "none" }}>
           <p
             className="text-[11px] font-semibold uppercase tracking-widest mb-2"
             style={{ color: "var(--kk-ink-faint)" }}
@@ -265,7 +265,7 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
       {stats.totalOwners > 0 && (
         <div className="mt-3">
           <Link
-            href="/message-owners"
+            href="/potential-listing"
             className="kk-card p-4 flex items-center justify-between"
             style={{ textDecoration: "none" }}
           >

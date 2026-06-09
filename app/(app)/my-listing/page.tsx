@@ -46,7 +46,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-            Track listing
+            My listing
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Send your tenant pack and track every active listing.
@@ -60,12 +60,12 @@ export default async function TrackListingPage({ searchParams }: Props) {
           <PageHelpButton
             variant="question"
             module={1}
-            pageTitle="Track listing — send your tenant pack"
+            pageTitle="My listing — send your tenant pack"
             bullets={[
               "Move owners here once they respond and want to proceed",
               "Send your branded tenant pack link to build trust and credibility",
               "kakisewa auto-tracks when owners open your pack and their interest level",
-              "Once matched with a tenant, the deal moves to Track renewal",
+              "Once matched with a tenant, the deal moves to Existing listing",
             ]}
           />
         </div>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function MatchingIndexRedirect() {
-  redirect("/message-owners");
+  redirect("/potential-listing");
 }

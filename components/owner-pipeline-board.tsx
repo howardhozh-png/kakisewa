@@ -87,7 +87,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (lead) {
         setEditingLead(lead);
         hasAutoOpened.current = true;
-        router.replace("/track-listing", { scroll: false });
+        router.replace("/my-listing", { scroll: false });
       }
     }
   }, [openLeadId, leads, router]);

@@ -79,7 +79,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       if (t) {
         setOpenTenancy(t);
         hasAutoOpened.current = true;
-        router.replace("/track-renewal", { scroll: false });
+        router.replace("/existing-listing", { scroll: false });
       }
     }
   }, [openTenancyId, tenancies, router]);

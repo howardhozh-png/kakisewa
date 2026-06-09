@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     await completeTenantRenewalIntake(token, staying, newEndDate);
-    revalidatePath("/track-renewal");
+    revalidatePath("/existing-listing");
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[intake/renewal/tenant]", err);

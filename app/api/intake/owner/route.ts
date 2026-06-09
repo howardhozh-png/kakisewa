@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       sendPushToUser(lead.user_id, {
         title: "Owner filled in details",
         body: `${lead.owner_name}${propLabel}`,
-        url: `/track-listing&highlight=${lead.id}`,
+        url: `/my-listing&highlight=${lead.id}`,
         tag: `intake_${lead.id}`,
       }).catch(() => {});
     }

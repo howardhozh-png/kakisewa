@@ -465,7 +465,7 @@ function LeadPopup({
           {status === "listed" ? (
             <button
               type="button"
-              onClick={() => { onClose(); router.push(`/track-listing?highlight=${lead.id}`); }}
+              onClick={() => { onClose(); router.push(`/my-listing?highlight=${lead.id}`); }}
               className="w-full py-3 rounded-xl text-[14px] font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
               style={{ background: "var(--kk-blue)", color: "#fff" }}
             >
@@ -1104,7 +1104,7 @@ export function OutreachTable({ leads }: Props) {
                       {(status === "listed" || status === "rented") ? (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); router.push(`/track-listing?highlight=${lead.id}`); }}
+                          onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}
                           className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-[12px] font-semibold transition-opacity hover:opacity-80"
                           style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
                         >

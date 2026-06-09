@@ -13,9 +13,9 @@ const TOP_ITEMS = [
 ] as const;
 
 const PIPELINE_ITEMS = [
-  { href: "/message-owners", icon: MessageCircle, label: "Message owner", minPlan: null },
-  { href: "/track-listing",  icon: ClipboardList,  label: "Track listing",  minPlan: null },
-  { href: "/track-renewal",  icon: RefreshCw,      label: "Track renewal",  minPlan: null },
+  { href: "/potential-listing", icon: MessageCircle, label: "Potential listing", minPlan: null },
+  { href: "/my-listing",  icon: ClipboardList,  label: "My listing",  minPlan: null },
+  { href: "/existing-listing",  icon: RefreshCw,      label: "Existing listing",  minPlan: null },
 ] as const;
 
 const BOTTOM_ITEMS = [
@@ -32,9 +32,9 @@ function hasAccess(minPlan: string | null, plan: string | null | undefined, stat
 }
 
 function isPipelineActive(href: string, pathname: string, _tab: string | null): boolean {
-  if (href === "/message-owners") return pathname.startsWith("/message-owners") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
-  if (href === "/track-listing")  return pathname.startsWith("/track-listing");
-  if (href === "/track-renewal")  return pathname.startsWith("/track-renewal") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
+  if (href === "/potential-listing") return pathname.startsWith("/potential-listing") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
+  if (href === "/my-listing")  return pathname.startsWith("/my-listing");
+  if (href === "/existing-listing")  return pathname.startsWith("/existing-listing") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
   return false;
 }
 

@@ -560,7 +560,7 @@ function PingButtons({ tenancy, onMissingOwnerPhone }: { tenancy: Tenancy; onMis
         </button>
         <button onClick={pingOwner} disabled={pending} type="button" className="kk-pill kk-pill-ghost" style={{ padding: "0.35rem 0.75rem" }}>
           <WhatsAppIcon className="w-3.5 h-3.5" />
-          Message owner
+          Potential listing
         </button>
       </div>
       <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
