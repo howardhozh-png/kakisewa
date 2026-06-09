@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function TenanciesRedirect() {
-  redirect("/existing-contracts");
+  redirect("/track-renewal");
 }

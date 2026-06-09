@@ -10,7 +10,7 @@ import { TenantsTable } from "@/components/tenants-table";
 import { SupportsDirectory } from "@/components/supports-directory";
 import { AddTenantButton } from "@/components/add-tenant-button";
 import { AddSupportButton } from "@/components/add-support-button";
-import { DirectoryAddButton } from "@/components/add-property-button";
+import { AddListingButton } from "@/components/add-listing-button";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +84,7 @@ export default async function NetworkPage({ searchParams }: Props) {
             {VIEW_DESCS[view]}
           </p>
         </div>
-        {view === "properties" && <DirectoryAddButton />}
+        {view === "properties" && <AddListingButton ownerLeads={listed} />}
         {view === "tenants" && <AddTenantButton />}
         {view === "contacts" && <AddSupportButton />}
       </header>

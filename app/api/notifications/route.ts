@@ -42,7 +42,7 @@ export async function GET() {
       type: "owner_intake",
       title: "Owner filled in details",
       body: `${row.owner_name}${propLabel ? ` · ${propLabel}` : ""}`,
-      href: `/new-owners?tab=pipeline&highlight=${row.id}`,
+      href: `/track-listing&highlight=${row.id}`,
       createdAt: row.intake_completed_at,
       priority: "normal",
     });
@@ -64,7 +64,7 @@ export async function GET() {
       type: "owner_renewal",
       title: row.replied_owner === "yes" ? "Owner wants to renew!" : "Owner not renewing",
       body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
-      href: `/existing-contracts?highlight=${row.id}`,
+      href: `/track-renewal?highlight=${row.id}`,
       createdAt: row.owner_renewal_completed_at,
       priority: row.replied_owner === "yes" ? "normal" : "high",
     });
@@ -86,7 +86,7 @@ export async function GET() {
       type: "owner_pack_ranked",
       title: "Owner ranked tenants in pack",
       body: row.property_label ?? "Tenant pack",
-      href: `/new-owners?tab=pipeline&highlight=${row.owner_lead_id}`,
+      href: `/track-listing&highlight=${row.owner_lead_id}`,
       createdAt: row.owner_ranked_at,
       priority: "normal",
     });
@@ -123,7 +123,7 @@ export async function GET() {
       type: "contract_expiry",
       title: `Contract expiring — ${label} left`,
       body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
-      href: `/existing-contracts?highlight=${row.id}`,
+      href: `/track-renewal?highlight=${row.id}`,
       createdAt: today.toISOString(),
       priority,
     });
@@ -145,7 +145,7 @@ export async function GET() {
       type: "tenant_leaving",
       title: "Tenant not renewing",
       body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""} — find a replacement`,
-      href: `/existing-contracts?highlight=${row.id}`,
+      href: `/track-renewal?highlight=${row.id}`,
       createdAt: today.toISOString(),
       priority: "high",
     });

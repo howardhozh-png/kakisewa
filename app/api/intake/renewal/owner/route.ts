@@ -32,14 +32,14 @@ export async function POST(request: NextRequest) {
     }
 
     await completeOwnerRenewalIntake(token, continuing, newRent, tenantIntent, newContractStart, durationYears);
-    revalidatePath("/existing-contracts");
+    revalidatePath("/track-renewal");
 
     if (tenancy.user_id) {
       const propLabel = tenancy.property_name ? ` · ${tenancy.property_name}` : "";
       sendPushToUser(tenancy.user_id, {
         title: continuing ? "Owner wants to renew!" : "Owner not renewing",
         body: `${tenancy.tenant_name}${propLabel}`,
-        url: `/existing-contracts?highlight=${tenancy.id}`,
+        url: `/track-renewal?highlight=${tenancy.id}`,
         tag: `ownerrenewal_${tenancy.id}`,
       }).catch(() => {});
     }

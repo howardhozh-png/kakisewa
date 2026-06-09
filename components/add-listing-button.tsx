@@ -124,7 +124,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
 
       toast.success("Listing added");
       setOpen(false); reset();
-      router.push(`/new-owners?tab=pipeline&highlight=${res.id}`);
+      router.push(`/track-listing?highlight=${res.id}`);
     });
   }
 
@@ -151,7 +151,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="serif text-[20px] tracking-tight" style={{ color: "var(--kk-ink)" }}>Add listing</h2>
-                <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Owner confirmed — add to Active Deals</p>
+                <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Listing of properties pending to rent</p>
               </div>
               <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-soft)" }}>✕</button>
             </div>
@@ -222,7 +222,14 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                         style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                     </div>
                     <div>
-                      <FieldLabel>Available from</FieldLabel>
+                      <div className="flex items-center justify-between mb-1">
+                        <FieldLabel>Available from</FieldLabel>
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, available_from: new Date().toISOString().split("T")[0] }))}
+                          className="text-[11px] px-2 py-0.5 rounded-full"
+                          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
+                          Now
+                        </button>
+                      </div>
                       <DateInput value={form.available_from} onChange={(iso) => setForm((f) => ({ ...f, available_from: iso }))}
                         className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                         style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />

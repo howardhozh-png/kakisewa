@@ -27,8 +27,8 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
   const router = useRouter();
 
   const missions: Mission[] = [
-    { id: "leads",     label: "Upload your owner list",        cta: "Upload now",    href: "/new-owners",         done: hasLeads },
-    { id: "contracts", label: "Add a tenancy contract",        cta: "Add contract",  href: "/existing-contracts", done: hasContracts },
+    { id: "leads",     label: "Upload your owner list",        cta: "Upload now",    href: "/message-owners",         done: hasLeads },
+    { id: "contracts", label: "Add a tenancy contract",        cta: "Add contract",  href: "/track-renewal", done: hasContracts },
     { id: "tenants",   label: "Add your first tenant profile", cta: "Add tenant",    href: "/tenants",            done: hasTenants },
     { id: "supports",  label: "Save a support contact",        cta: "Go to network", href: "/network",            done: hasSupports },
   ];

@@ -6,8 +6,8 @@ import { Home, Users, FileText, BookOpen, BarChart2 } from "lucide-react";
 
 const TABS = [
   { href: "/home",               icon: Home,      label: "Home",        matchPaths: ["/home"] },
-  { href: "/new-owners",         icon: Users,     label: "Leads",       matchPaths: ["/new-owners", "/leads"] },
-  { href: "/existing-contracts", icon: FileText,  label: "Contracts",   matchPaths: ["/existing-contracts", "/tenancies"] },
+  { href: "/message-owners",     icon: Users,     label: "Outreach",    matchPaths: ["/message-owners", "/track-listing", "/new-owners", "/leads"] },
+  { href: "/track-renewal",      icon: FileText,  label: "Renewals",    matchPaths: ["/track-renewal", "/existing-contracts", "/tenancies"] },
   { href: "/directory",          icon: BookOpen,  label: "Directory",   matchPaths: ["/directory", "/supports", "/tenants"] },
   { href: "/performance",        icon: BarChart2, label: "Performance", matchPaths: ["/performance"] },
 ] as const;

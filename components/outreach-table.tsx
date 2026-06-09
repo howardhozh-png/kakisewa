@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 const WA_DAILY_KEY = "kk_wa_daily";
@@ -43,7 +43,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
 import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search } from "lucide-react";
@@ -468,7 +468,7 @@ function LeadPopup({
           {status === "listed" ? (
             <button
               type="button"
-              onClick={() => { onClose(); router.push(`/new-owners?tab=pipeline&highlight=${lead.id}`); }}
+              onClick={() => { onClose(); router.push(`/track-listing?highlight=${lead.id}`); }}
               className="w-full py-3 rounded-xl text-[14px] font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
               style={{ background: "var(--kk-blue)", color: "#fff" }}
             >
@@ -1092,7 +1092,7 @@ export function OutreachTable({ leads }: Props) {
                       {(status === "listed" || status === "rented") ? (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); router.push(`/new-owners?tab=pipeline&highlight=${lead.id}`); }}
+                          onClick={(e) => { e.stopPropagation(); router.push(`/track-listing?highlight=${lead.id}`); }}
                           className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-[12px] font-semibold transition-opacity hover:opacity-80"
                           style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
                         >
@@ -1292,10 +1292,15 @@ function PropertyPopover({
   onChange: (v: string) => void;
   stats: PropertyStats;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dropRect, setDropRect] = useState<{ top: number; left: number } | null>(null);
+  const [renamingProp, setRenamingProp] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renamePending, startRenameTransition] = useTransition();
   const btnRef = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -1400,12 +1405,56 @@ function PropertyPopover({
               {rows.map(([p, s], i) => (
                 <tr
                   key={p}
-                  onClick={() => pick(p)}
-                  style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--kk-line)" : "none", cursor: "pointer", background: value === p ? "rgba(0,113,227,0.06)" : undefined }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = value === p ? "rgba(0,113,227,0.06)" : "transparent"; }}
+                  onClick={() => { if (renamingProp !== p) pick(p); }}
+                  style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--kk-line)" : "none", cursor: renamingProp === p ? "default" : "pointer", background: value === p ? "rgba(0,113,227,0.06)" : undefined }}
+                  onMouseEnter={(e) => { if (renamingProp !== p) (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
+                  onMouseLeave={(e) => { if (renamingProp !== p) (e.currentTarget as HTMLElement).style.background = value === p ? "rgba(0,113,227,0.06)" : "transparent"; }}
                 >
-                  <td className="px-4 py-2.5 text-[13px] font-medium" style={{ color: "var(--kk-ink)", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p}</td>
+                  <td className="px-4 py-1.5 text-[13px] font-medium" style={{ color: "var(--kk-ink)", maxWidth: 220 }}>
+                    {renamingProp === p ? (
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          ref={renameInputRef}
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              startRenameTransition(async () => {
+                                const res = await renamePropertyGroupAction(p, renameValue);
+                                if (res.ok) { toast.success("Property renamed"); if (value === p) onChange(renameValue.trim()); router.refresh(); setRenamingProp(null); }
+                                else toast.error(res.message ?? "Could not rename");
+                              });
+                            }
+                            if (e.key === "Escape") setRenamingProp(null);
+                          }}
+                          className="flex-1 px-2 py-1 rounded-lg text-[13px] outline-none min-w-0"
+                          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-theme-dark)", color: "var(--kk-ink)", width: 140 }}
+                          disabled={renamePending}
+                          autoFocus
+                        />
+                        <button type="button" disabled={renamePending} onClick={(e) => { e.stopPropagation(); startRenameTransition(async () => { const res = await renamePropertyGroupAction(p, renameValue); if (res.ok) { toast.success("Property renamed"); if (value === p) onChange(renameValue.trim()); router.refresh(); setRenamingProp(null); } else toast.error(res.message ?? "Could not rename"); }); }}
+                          className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+                          style={{ background: "var(--kk-ink)", color: "#fff" }}>
+                          {renamePending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        </button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setRenamingProp(null); }}
+                          className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+                          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 group/row" style={{ overflow: "hidden" }}>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p}</span>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setRenamingProp(p); setRenameValue(p); setTimeout(() => renameInputRef.current?.select(), 50); }}
+                          className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                          style={{ color: "var(--kk-ink-faint)" }}>
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
                   {STAT_COLS.map((c) => (
                     <td key={c.key} className="px-3 py-2.5 text-right text-[12px] tabular-nums font-semibold" style={{ color: s[c.key] > 0 ? "var(--kk-ink)" : "var(--kk-line-strong)" }}>
                       {s[c.key] > 0 ? s[c.key] : "—"}

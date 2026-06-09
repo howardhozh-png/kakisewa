@@ -249,7 +249,7 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
 
         <div className="p-5 border-t" style={{ borderColor: "var(--kk-line)" }}>
           <Link
-            href={`/existing-contracts?open=${t.tenancy_id}`}
+            href={`/track-renewal?open=${t.tenancy_id}`}
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
             style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)" }}

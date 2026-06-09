@@ -29,7 +29,7 @@ interface ColMeta {
 
 const COLUMNS: ColMeta[] = [
   { stage: "headsup",  label: "Expiring",  hint: "Expires soon. Use 'What's next?' on the card to choose the outcome.", dot: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", ink: "var(--kk-theme-dark)", Icon: AlertTriangle },
-  { stage: "renewing", label: "Renewing",  hint: "Both confirmed. Collect commission and set the new end date.",         dot: "var(--kk-green)",     soft: "var(--kk-green-soft)", ink: "#1F8B4C",            Icon: CheckCircle   },
+  { stage: "renewing", label: "Renewing",  hint: "Only half of rent is counted as renewal income",                       dot: "var(--kk-green)",     soft: "var(--kk-green-soft)", ink: "#1F8B4C",            Icon: CheckCircle   },
   { stage: "active",   label: "Active",    hint: "Tenancy in good standing. Nothing due yet.",                           dot: "var(--kk-ink-faint)", soft: "var(--kk-surface-2)",  ink: "var(--kk-ink-mute)", Icon: CircleDashed  },
 ];
 
@@ -79,7 +79,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       if (t) {
         setOpenTenancy(t);
         hasAutoOpened.current = true;
-        router.replace("/existing-contracts", { scroll: false });
+        router.replace("/track-renewal", { scroll: false });
       }
     }
   }, [openTenancyId, tenancies, router]);

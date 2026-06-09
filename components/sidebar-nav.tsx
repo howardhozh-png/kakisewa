@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft } from "lucide-react";
 
 const STORAGE_KEY = "kk_sidebar_pinned";
@@ -13,9 +13,9 @@ const TOP_ITEMS = [
 ] as const;
 
 const PIPELINE_ITEMS = [
-  { href: "/new-owners",              icon: MessageCircle, label: "Message owner", minPlan: null },
-  { href: "/new-owners?tab=pipeline", icon: ClipboardList,  label: "Track listing",  minPlan: null },
-  { href: "/existing-contracts",      icon: RefreshCw,     label: "Track renewal",  minPlan: null },
+  { href: "/message-owners", icon: MessageCircle, label: "Message owner", minPlan: null },
+  { href: "/track-listing",  icon: ClipboardList,  label: "Track listing",  minPlan: null },
+  { href: "/track-renewal",  icon: RefreshCw,      label: "Track renewal",  minPlan: null },
 ] as const;
 
 const BOTTOM_ITEMS = [
@@ -31,10 +31,10 @@ function hasAccess(minPlan: string | null, plan: string | null | undefined, stat
   return (PLAN_RANK[plan ?? ""] ?? 0) >= PLAN_RANK[minPlan];
 }
 
-function isPipelineActive(href: string, pathname: string, tab: string | null): boolean {
-  if (href === "/new-owners?tab=pipeline") return pathname === "/new-owners" && tab === "pipeline";
-  if (href === "/new-owners") return pathname === "/new-owners" && tab !== "pipeline";
-  if (href === "/existing-contracts") return pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
+function isPipelineActive(href: string, pathname: string, _tab: string | null): boolean {
+  if (href === "/message-owners") return pathname.startsWith("/message-owners") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
+  if (href === "/track-listing")  return pathname.startsWith("/track-listing");
+  if (href === "/track-renewal")  return pathname.startsWith("/track-renewal") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
   return false;
 }
 
@@ -45,8 +45,6 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
   const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tab = searchParams.get("tab");
   const router = useRouter();
 
   useEffect(() => {
@@ -124,7 +122,7 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
     );
   }
 
-  const anyPipelineActive = PIPELINE_ITEMS.some(item => isPipelineActive(item.href, pathname, tab));
+  const anyPipelineActive = PIPELINE_ITEMS.some(item => isPipelineActive(item.href, pathname, null));
 
   return (
     <>
@@ -210,7 +208,7 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
             )}
 
             {PIPELINE_ITEMS.map(item => {
-              const active = isPipelineActive(item.href, pathname, tab);
+              const active = isPipelineActive(item.href, pathname, null);
               const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
               return navButton(item.href, item.icon, item.label, active, accessible, true);
             })}

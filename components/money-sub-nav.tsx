@@ -12,12 +12,12 @@ interface Props {
 }
 
 export function MoneySubNav({ renewCount, helpSlot }: Props) {
-  const isRenew = usePathname().startsWith("/existing-contracts");
+  const isRenew = usePathname().startsWith("/track-renewal");
 
   return (
     <div className="mb-8 flex items-center justify-between border-b" style={{ borderColor: "var(--kk-line)" }}>
       <div className="flex items-center gap-1">
-        <Tab href="/existing-contracts" label="Track renewal" count={renewCount} active={isRenew} />
+        <Tab href="/track-renewal" label="Track renewal" count={renewCount} active={isRenew} />
       </div>
       {helpSlot && <div className="pb-1 shrink-0 pl-4">{helpSlot}</div>}
     </div>

@@ -65,7 +65,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "tour-btn-upload-csv",
-    href: "/new-owners?tab=outreach",
+    href: "/message-owners",
     label: "Workflow 1 of 3",
     title: "Get new owners listed",
     Icon: Upload,
@@ -77,7 +77,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "kk-col-listed",
-    href: "/new-owners?tab=pipeline",
+    href: "/track-listing",
     label: "Workflow 2 of 3",
     title: "Send the tenant pack",
     Icon: Send,
@@ -89,7 +89,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "kk-col-headsup",
-    href: "/existing-contracts",
+    href: "/track-renewal",
     label: "Workflow 3 of 3",
     title: "Renew and collect commission",
     Icon: RefreshCw,

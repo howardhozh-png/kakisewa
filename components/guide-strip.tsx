@@ -11,21 +11,21 @@ interface Guide {
 }
 
 function getGuide(pathname: string, uncontacted: number, expiringIn60: number): Guide | null {
-  if (pathname.startsWith("/new-owners") || pathname.startsWith("/leads")) {
+  if (pathname.startsWith("/message-owners") || pathname.startsWith("/track-listing") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads")) {
     return {
       what: "Follow up with every owner on your list.",
       why: "First contact wins the listing. Owners remember who reached out first.",
       action: uncontacted > 0
-        ? { label: `${uncontacted} not yet contacted`, href: "/new-owners", urgent: false }
+        ? { label: `${uncontacted} not yet contacted`, href: "/message-owners", urgent: false }
         : undefined,
     };
   }
-  if (pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies")) {
+  if (pathname.startsWith("/track-renewal") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies")) {
     return {
       what: "Catch every renewal before it slips.",
       why: "Every renewal you close = half a month's rent. Miss it and another agent earns it.",
       action: expiringIn60 > 0
-        ? { label: `${expiringIn60} expiring within 60 days`, href: "/existing-contracts", urgent: true }
+        ? { label: `${expiringIn60} expiring within 60 days`, href: "/track-renewal", urgent: true }
         : undefined,
     };
   }

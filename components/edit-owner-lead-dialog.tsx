@@ -41,8 +41,6 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [bathrooms, setBathrooms] = useState<string>("");
   const [availableFrom, setAvailableFrom] = useState("");
   const [notes, setNotes] = useState("");
-  const [isRenewal, setIsRenewal] = useState(false);
-  const [commissionOverride, setCommissionOverride] = useState<string>("");
 
   // Reset fields when a new lead is opened
   useEffect(() => {
@@ -59,8 +57,6 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setBathrooms(lead.bathrooms != null ? String(lead.bathrooms) : "");
       setAvailableFrom(lead.available_from ?? new Date().toISOString().split("T")[0]);
       setNotes(lead.notes ?? "");
-      setIsRenewal(!!lead.is_renewal);
-      setCommissionOverride(lead.commission_override_rm != null ? String(lead.commission_override_rm) : "");
     }
   }, [lead?.id, open]);
 
@@ -134,8 +130,6 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
       available_from: availableFrom || null,
       notes: notes || null,
-      is_renewal: isRenewal ? 1 : 0,
-      commission_override_rm: commissionOverride ? parseFloat(commissionOverride) : null,
     };
     startTransition(async () => {
       const res = await updateOwnerLeadDetails(lead.id, updates);
@@ -156,7 +150,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
         <div className="overflow-y-auto flex-1 space-y-5 p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <p className="kk-overline mb-2">Edit lead</p>
+              <p className="kk-overline mb-2">Edit listing</p>
               {editingOwner ? (
                 <div className="space-y-1">
                   <input
@@ -216,7 +210,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>{tenantInfo.tenant_name}</p>
                   <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{tenantInfo.tenant_phone}</p>
                 </div>
-                <a href={`/existing-contracts?open=${tenantInfo.tenancy_id}`} className="text-[12px] font-medium px-3 py-1.5 rounded-full hover:opacity-80" style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C" }}>
+                <a href={`/track-renewal?open=${tenantInfo.tenancy_id}`} className="text-[12px] font-medium px-3 py-1.5 rounded-full hover:opacity-80" style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C" }}>
                   View tenancy →
                 </a>
               </div>
@@ -251,33 +245,6 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
               className="w-full text-[14px] px-3 py-2 rounded-xl"
               style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", minHeight: 80 }}
             />
-          </div>
-
-          <div className="rounded-xl p-3 space-y-3" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Commission</p>
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isRenewal}
-                onChange={(e) => { setIsRenewal(e.target.checked); if (e.target.checked) setCommissionOverride(""); }}
-                className="rounded"
-              />
-              <span className="text-[13px]" style={{ color: "var(--kk-ink-soft)" }}>
-                Renewal (existing tenant). Earns 50% of 1st month rent.
-              </span>
-            </label>
-            <div className="space-y-1">
-              <label className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
-                Override commission (RM). Leave blank to use formula.
-              </label>
-              <MoneyInput
-                value={commissionOverride}
-                onChange={(raw) => { setCommissionOverride(raw); if (raw) setIsRenewal(false); }}
-                placeholder={expectedRent ? `e.g. RM ${isRenewal ? Math.round(parseFloat(expectedRent) * 0.5).toLocaleString() : Math.round(parseFloat(expectedRent)).toLocaleString()}` : "e.g. 1,500"}
-                className="w-full text-[14px] px-3 py-2 rounded-xl"
-                style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-              />
-            </div>
           </div>
 
           {/* Property photos */}

@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     const result = await sendPushToUser(row.user_id, {
       title: `Contract expiring — ${label} left`,
       body: `${row.tenant_name}${propLabel}`,
-      url: `/existing-contracts?highlight=${row.id}`,
+      url: `/track-renewal?highlight=${row.id}`,
       tag: notifKey,
     });
 
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
     const result = await sendPushToUser(row.user_id, {
       title: "Tenant not renewing",
       body: `${row.tenant_name}${propLabel} — find a replacement`,
-      url: `/existing-contracts?highlight=${row.id}`,
+      url: `/track-renewal?highlight=${row.id}`,
       tag: notifKey,
     });
 

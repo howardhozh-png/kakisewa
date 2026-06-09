@@ -111,8 +111,6 @@ export interface OwnerLead {
   intake_completed_at?: string | null;
   available_from?: string | null;
   tenant_preferences?: string | null;
-  is_renewal?: number | null;            // 0/1 — renewal deal earns 50% of 1st month rent
-  commission_override_rm?: number | null; // manual commission override (overrides formula)
   photo_urls?: string[];
   agreement_url?: string | null;
   outreach_count?: number | null;

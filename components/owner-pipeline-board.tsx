@@ -87,7 +87,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (lead) {
         setEditingLead(lead);
         hasAutoOpened.current = true;
-        router.replace("/new-owners", { scroll: false });
+        router.replace("/track-listing", { scroll: false });
       }
     }
   }, [openLeadId, leads, router]);
@@ -190,11 +190,8 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     }
   }
 
-  // Per-lead commission: override > formula (renewal 50%, new tenant 100%)
   function leadCommission(l: OwnerLead): number {
-    if (l.commission_override_rm != null) return l.commission_override_rm;
-    const rent = l.expected_rent ?? 0;
-    return l.is_renewal ? rent * 0.5 : rent;
+    return l.expected_rent ?? 0;
   }
 
   return (
@@ -384,7 +381,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         onOpenChange={(o) => !o && setCommissionLead(null)}
         ownerName={commissionLead?.lead.owner_name ?? ""}
         propertyName={commissionLead?.lead.property_name ?? null}
-        commissionRm={commissionLead?.lead.commission_override_rm ?? (commissionLead?.lead.expected_rent ?? 0) * (commissionLead?.lead.is_renewal ? 0.5 : 1)}
+        commissionRm={commissionLead?.lead.expected_rent ?? 0}
         onConfirm={async () => {
           if (!commissionLead) return { ok: false };
           const res = await markCommissionCollected(commissionLead.tenancyId);
