@@ -20,6 +20,18 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+function computeEnd(start: string, months: number): string {
+  const [y, m, day] = start.split("-").map(Number);
+  let end: Date;
+  if (day === 1) {
+    end = new Date(y, m - 1 + months + 1, 0);
+  } else {
+    const anniversary = new Date(y, m - 1 + months, day);
+    end = new Date(anniversary.getTime() - 86400000);
+  }
+  return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+}
+
 export function TenancyDetailDialog({ tenancy: tenancyProp, open, onOpenChange }: Props) {
   const [tenancy, setTenancy] = useState<Tenancy | null>(tenancyProp);
   useEffect(() => { setTenancy(tenancyProp); }, [tenancyProp]);
@@ -86,11 +98,9 @@ function TenancyForm({
     (tenancy.renewal_proposed_months ?? tenancy.contract_duration_months)?.toString() ?? ""
   );
   const [contractEnd, setContractEnd] = useState(() => {
-    if (tenancy.renewal_proposed_start && tenancy.renewal_proposed_months) {
-      const d = new Date(tenancy.renewal_proposed_start);
-      d.setMonth(d.getMonth() + tenancy.renewal_proposed_months);
-      return d.toISOString().slice(0, 10);
-    }
+    const s = tenancy.renewal_proposed_start ?? tenancy.contract_start;
+    const mo = tenancy.renewal_proposed_months ?? tenancy.contract_duration_months;
+    if (s && mo) return computeEnd(s, mo);
     return tenancy.contract_end ?? "";
   });
 
@@ -113,27 +123,14 @@ function TenancyForm({
     setRepliedOwner(tenancy.replied_owner ?? "pending");
     setContractStart(tenancy.renewal_proposed_start ?? tenancy.contract_start ?? "");
     setContractDuration((tenancy.renewal_proposed_months ?? tenancy.contract_duration_months)?.toString() ?? "");
-    if (tenancy.renewal_proposed_start && tenancy.renewal_proposed_months) {
-      const d = new Date(tenancy.renewal_proposed_start);
-      d.setMonth(d.getMonth() + tenancy.renewal_proposed_months);
-      setContractEnd(d.toISOString().slice(0, 10));
-    } else {
-      setContractEnd(tenancy.contract_end ?? "");
-    }
+    const s = tenancy.renewal_proposed_start ?? tenancy.contract_start;
+    const mo = tenancy.renewal_proposed_months ?? tenancy.contract_duration_months;
+    setContractEnd(s && mo ? computeEnd(s, mo) : (tenancy.contract_end ?? ""));
   }, [tenancy.id]);
 
   function recomputeEnd(s: string, d: string) {
     if (!s || !d) return;
-    const [y, m, day] = s.split("-").map(Number);
-    const months = parseInt(d, 10);
-    let end: Date;
-    if (day === 1) {
-      end = new Date(y, m - 1 + months + 1, 0);
-    } else {
-      const anniversary = new Date(y, m - 1 + months, day);
-      end = new Date(anniversary.getTime() - 86400000);
-    }
-    setContractEnd(`${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`);
+    setContractEnd(computeEnd(s, parseInt(d, 10)));
   }
 
   function recomputeDuration(s: string, e: string) {
