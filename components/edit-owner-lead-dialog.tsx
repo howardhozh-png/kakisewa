@@ -88,11 +88,13 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
     setCoverIndex(newCover);
     await saveOwnerLeadPhotos(lead!.id, next);
     await updateOwnerLeadDetails(lead!.id, { cover_photo_index: newCover });
+    onSaved?.({ cover_photo_index: newCover });
   }
 
   async function handleSetCover(idx: number) {
     setCoverIndex(idx);
     await updateOwnerLeadDetails(lead!.id, { cover_photo_index: idx });
+    onSaved?.({ cover_photo_index: idx });
     toast.success("Cover photo updated");
   }
 

@@ -473,7 +473,7 @@ function EmptyDrop({ col }: { col: ColMeta }) {
 
 // Pure visual snapshot used by DragOverlay — no hooks, no buttons
 function CardPreview({ l }: { l: OwnerLead }) {
-  const photo = l.photo_urls?.[0];
+  const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
     <div
@@ -512,7 +512,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
 }
 
 function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
-  const photo = l.photo_urls?.[0];
+  const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
     <>
