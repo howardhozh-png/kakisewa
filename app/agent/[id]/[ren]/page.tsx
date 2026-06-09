@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ id: string; ren: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }
 
 interface AgentRow {
@@ -125,8 +126,9 @@ function seededShuffle(arr: string[], seed: string): string[] {
 
 const STRENGTH_POOL = ["Responsive","Handles tenants well","End-to-end service","Clear communicator","Renewal specialist","Quick to act","Trusted by owners","Strong negotiator"];
 
-export default async function AgentProfilePage({ params }: Props) {
-  const { ren } = await params;
+export default async function AgentProfilePage({ params, searchParams }: Props) {
+  const [{ ren }, { preview }] = await Promise.all([params, searchParams]);
+  const isPreview = preview === "1";
   const agent = await getPublicAgentByRen(ren);
 
   if (!agent) notFound();
@@ -135,8 +137,9 @@ export default async function AgentProfilePage({ params }: Props) {
   const plan = agent.subscription_plan;
   const isElite = plan === "elite";
   const isPlatinum = plan === "platinum";
+  const isPublic = isActive && (isElite || isPlatinum);
 
-  if (!isActive || (!isElite && !isPlatinum)) {
+  if (!isPublic && !isPreview) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "#F2F2F7" }}>
         <div className="text-center max-w-sm">
@@ -192,6 +195,13 @@ export default async function AgentProfilePage({ params }: Props) {
       </header>
 
       <main className="mx-auto max-w-[600px] px-4 py-8 space-y-4">
+        {isPreview && !isPublic && (
+          <div className="rounded-2xl px-4 py-3 flex items-center gap-3 text-[13px]"
+            style={{ background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)", color: "#92400E" }}>
+            <span style={{ fontWeight: 600 }}>Preview only.</span>
+            <span>This profile is not publicly visible. Upgrade to Platinum or Elite to publish it.</span>
+          </div>
+        )}
 
         {/* Main profile card — avatar is OUTSIDE overflow-hidden */}
         <div className="profile-card rounded-3xl" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>

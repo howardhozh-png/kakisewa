@@ -90,7 +90,7 @@ export default async function AgentProfilePage({ params }: Props) {
 
   // Redirect to the prettier firstName/renNumber URL if possible
   if (agent.ren_number) {
-    const firstName = (agent.name ?? "agent").trim().split(/\s+/)[0].toLowerCase();
+    const firstName = agent.name?.trim().split(/\s+/)[0].toLowerCase() || "agent";
     redirect(`/agent/${encodeURIComponent(firstName)}/${encodeURIComponent(agent.ren_number)}`);
   }
 

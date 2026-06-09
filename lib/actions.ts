@@ -1065,10 +1065,14 @@ export async function saveTodayChecklist(items: { id: string; text: string; done
 }
 
 export async function saveProfileDetails(p: { name?: string; phone?: string; agency?: string; ren_number?: string | null; photo_url?: string | null; accent_color?: string | null; motivation_photo_url?: string | null }) {
-  await updateAgentProfile(p);
-  revalidatePath("/settings/account");
-  revalidatePath("/");
-  return { ok: true };
+  try {
+    await updateAgentProfile(p);
+    revalidatePath("/settings/account");
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
 }
 
 export async function saveWhatsAppTemplatesAction(overrides: TemplateOverrides): Promise<{ ok: boolean }> {

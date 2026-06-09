@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useMemo } from "react";
+import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FileText as ListingIcon, Loader2, Camera, FileText, X } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -53,6 +53,12 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
   const [showSugg, setShowSugg] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   const agreementRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape" && open && !pending && !uploading) setOpen(false); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, pending, uploading]);
 
   const propertySuggestions = useMemo(() => {
     const q = form.property_name.trim().toLowerCase();

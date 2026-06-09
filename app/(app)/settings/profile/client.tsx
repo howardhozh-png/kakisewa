@@ -146,8 +146,9 @@ export function ProfileSettingsClient({
 
   const waUrl = agentPhone ? `https://wa.me/${normalisePhone(agentPhone)}` : null;
 
+  const agentFirstName = agentName?.trim().split(/\s+/)[0].toLowerCase() || "agent";
   const profilePath = agentRen
-    ? `/agent/${encodeURIComponent((agentName ?? "agent").trim().split(/\s+/)[0].toLowerCase())}/${encodeURIComponent(agentRen)}`
+    ? `/agent/${encodeURIComponent(agentFirstName)}/${encodeURIComponent(agentRen)}?preview=1`
     : null;
 
   function toggleStrength(label: string) {

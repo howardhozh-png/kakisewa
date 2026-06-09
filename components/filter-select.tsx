@@ -61,7 +61,7 @@ export function FilterSelect({
       <button
         ref={btnRef}
         onClick={handleToggle}
-        className="flex items-center justify-between gap-2 text-[13px] px-3 py-2.5 rounded-full w-full min-h-[40px]"
+        className="flex items-center justify-between gap-2 text-[13px] px-3 py-1.5 rounded-full w-full"
         style={{
           background: open ? "var(--kk-ink)" : "var(--kk-surface-2)",
           border: open ? "none" : "1px solid var(--kk-line)",

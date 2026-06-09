@@ -879,7 +879,8 @@ export async function updateAgentProfile(p: Partial<AgentProfile>): Promise<void
   if (p.ren_number !== undefined)             updates.ren_number = p.ren_number;
   if (Object.keys(updates).length === 0) return;
 
-  await supabase.from("agent_profiles").update(updates).eq("id", user.id);
+  const { error } = await supabase.from("agent_profiles").update(updates).eq("id", user.id);
+  if (error) throw new Error(error.message);
 }
 
 export async function getMonthlyCommissionTimeline(year: number = new Date().getFullYear()): Promise<{

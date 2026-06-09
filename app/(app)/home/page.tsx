@@ -237,13 +237,13 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
             className="text-[11px] font-semibold uppercase tracking-widest mb-2"
             style={{ color: "var(--kk-ink-faint)" }}
           >
-            Contracts
+            Active contracts
           </p>
           <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--kk-ink)" }}>
-            {stats.activeContracts}
+            {stats.expiringIn60}
           </p>
           <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-            active
+            expiring within 60 days
           </p>
         </Link>
         <Link href="/track-listing" className="kk-card p-4" style={{ textDecoration: "none" }}>
@@ -251,13 +251,13 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
             className="text-[11px] font-semibold uppercase tracking-widest mb-2"
             style={{ color: "var(--kk-ink-faint)" }}
           >
-            Pipeline
+            Active listing
           </p>
           <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--kk-ink)" }}>
-            {stats.pipeline}
+            {stats.listedWithoutTenant}
           </p>
           <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-            deals in progress
+            awaiting tenant
           </p>
         </Link>
       </div>
