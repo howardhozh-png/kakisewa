@@ -1160,6 +1160,7 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   if (data.address !== undefined)                updates.address = data.address;
   if (data.available_from !== undefined)         updates.available_from = data.available_from;
   if (data.photo_urls !== undefined)             updates.photo_urls = data.photo_urls ?? [];
+  if (data.cover_photo_index !== undefined)      updates.cover_photo_index = data.cover_photo_index;
   if (data.agreement_url !== undefined)          updates.agreement_url = data.agreement_url;
   if (data.intake_sent_at !== undefined)         updates.intake_sent_at = data.intake_sent_at;
   if (data.is_managed !== undefined)             updates.is_managed = data.is_managed;
