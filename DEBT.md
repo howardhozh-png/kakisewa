@@ -1,31 +1,31 @@
 # Technical Debt Backlog
 
-Last audited: 2026-06-08
-
-## Tier 1 — Fixed this session ✓
-- All 8 `!important` rules removed from `globals.css` (scrollbars, input font-size, react-day-picker)
-- Property name combobox in `new-listing-button.tsx`: selecting a suggestion no longer overwrites owner name/phone
-- Sidebar rebuilt from scratch (shadcn/sidebar style, click-toggle with localStorage persistence)
-- Notification bell rebuilt (Vercel-style, All/Unread tabs, mobile bottom sheet)
-- `bottom-tab-bar.tsx` — confirmed dead code (see Tier 2 below for deletion)
+Last audited: 2026-06-09
 
 ## Tier 2 — Needs decision before touching
 
 - **Native `type="date"` inputs in styled dialogs** — iOS renders native picker, overrides styles. Files: `convert-to-tenancy-dialog.tsx:105`, `edit-owner-lead-dialog.tsx:242`, `ui/date-input.tsx:74`. Fix: Popover + react-day-picker (same as `date-range-filter.tsx`).
-- **80+ hardcoded hex colours in components** — `profile-setup-dialog.tsx` (6×), `accent-provider.tsx` (41× — intentional theme palette), `add-support-button.tsx`, `onboarding-nudge.tsx`, `date-range-filter.tsx`. Fix: replace with `--kk-*` variables where not intentional.
 - **Hardcoded colours in `components/intake-chat.tsx`** — intentional Apple/iMessage palette, centralized in `const C = {}`. Do not change without a deliberate design review.
 - **4 parallel date picker implementations** — `date-input.tsx` (native), `date-range-filter.tsx` (best, react-day-picker), `intake-chat.tsx` (inline card), `month-picker-pill.tsx` (month popover). Fix: standardise on `date-range-filter.tsx` pattern.
 - **13+ dialogs with no shared wrapper** — each reinvents backdrop, close button, button row. Fix: `components/ui/app-dialog.tsx` shared shell.
-- **Dead code**: `bottom-tab-bar.tsx` and `guide-strip.tsx` — both never imported. Safe to delete.
 - **Triple CSS token system** — `--kk-*`, shadcn semantic (`--primary`), legacy (`--bg-base`). Fix: audit and delete legacy aliases.
 
 ## Tier 3 — Nice to have
 
+- **Inline `fontSize` declarations (~100+ instances)** — in `top-nav.tsx`, `notification-bell.tsx`, `onboarding-demo-dialog.tsx`, `tenancies-timeline.tsx`, `month-picker-pill.tsx`, etc. Fix opportunistically when touching each file. Avoid changing on native `<input>` elements (iOS font-size interaction).
+- **Hardcoded colours in `accent-provider.tsx`** — intentional: this file IS the theme engine, hardcoded hex is the source-of-truth palette. Do not change.
 - **Hardcoded `"#fff"` / `"#000"` scattered across components** — low risk, fix opportunistically when editing those files.
 - **Sidebar CSS tokens** (`--sidebar`, `--sidebar-foreground`) duplicate `--card` and `--primary` — could use `var()` references.
 - **`--kk-*-soft` opacity** (0.10/0.12) scattered — no single `--kk-soft-opacity` token.
+- **`router.refresh()` over-reliance (~77 instances)** — full page refresh after every mutation instead of optimistic updates. Fix when migrating to React 19 `useOptimistic`.
 
 ## Completed ✓
+
+- **`cover_photo_index` never persisted** — `updateOwnerLead()` had no mapping. Fixed `lib/db.ts`.
+- **`listing_purpose` never persisted** — same class of bug. Fixed `lib/db.ts`.
+- **Dead components** — `bottom-tab-bar.tsx`, `guide-strip.tsx`, `ui/container-scroll-animation.tsx` deleted (zero imports).
+- **Hardcoded reds in `profile-setup-dialog.tsx`** — replaced `#DC2626`, `#FEF2F2`, `#FECACA` with CSS vars.
+- **Duplicate photo upload logic** — extracted to `hooks/use-photo-upload.ts`; used in `tenancy-detail-dialog` and `edit-owner-lead-dialog`.
 
 - SW cache bumped kk-v3 → kk-v4
 - Deleted dead `property-drawer.tsx`
