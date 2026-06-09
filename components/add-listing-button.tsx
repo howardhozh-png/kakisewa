@@ -222,17 +222,17 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                         style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                     </div>
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <FieldLabel>Available from</FieldLabel>
+                      <FieldLabel>Available from</FieldLabel>
+                      <div className="flex items-center gap-1.5">
+                        <DateInput value={form.available_from} onChange={(iso) => setForm((f) => ({ ...f, available_from: iso }))}
+                          className="flex-1 px-3 py-2 rounded-xl text-[13px] outline-none"
+                          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                         <button type="button" onClick={() => setForm((f) => ({ ...f, available_from: new Date().toISOString().split("T")[0] }))}
-                          className="text-[11px] px-2 py-0.5 rounded-full"
+                          className="shrink-0 text-[11px] px-2 py-1.5 rounded-lg"
                           style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
                           Now
                         </button>
                       </div>
-                      <DateInput value={form.available_from} onChange={(iso) => setForm((f) => ({ ...f, available_from: iso }))}
-                        className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
-                        style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                     </div>
                   </div>
                 </div>
