@@ -216,15 +216,27 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
             })}
           </div>
 
-          {/* Divider before bottom items */}
-          <div style={{ height: 1, background: "var(--kk-line)", margin: "6px 2px" }} />
-
-          {/* Bottom items */}
-          {BOTTOM_ITEMS.map(item => {
-            const active = item.matchPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));
-            const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
-            return navButton(item.href, item.icon, item.label, active, accessible);
-          })}
+          {/* My desk group */}
+          <div style={{ marginTop: 6 }}>
+            {showLabels && (
+              <div style={{
+                padding: "6px 12px 2px 12px",
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "var(--kk-ink-faint)",
+                whiteSpace: "nowrap",
+              }}>
+                My desk
+              </div>
+            )}
+            {BOTTOM_ITEMS.map(item => {
+              const active = item.matchPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));
+              const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
+              return navButton(item.href, item.icon, item.label, active, accessible, true);
+            })}
+          </div>
 
         </nav>
       </aside>
