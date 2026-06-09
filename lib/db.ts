@@ -816,20 +816,10 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       .select("*")
       .eq("id", user.id)
       .maybeSingle();
-    const base = (fresh ?? { id: 0 }) as AgentProfile;
-    const headerMeta = await getAgentMeta();
-    if (headerMeta.name)   base.name   = headerMeta.name;
-    if (headerMeta.phone)  base.phone  = headerMeta.phone;
-    if (headerMeta.agency) base.agency = headerMeta.agency;
-    return base;
+    return (fresh ?? { id: 0 }) as AgentProfile;
   }
 
-  const base = row as AgentProfile;
-  const headerMeta = await getAgentMeta();
-  if (headerMeta.name)   base.name   = headerMeta.name;
-  if (headerMeta.phone)  base.phone  = headerMeta.phone;
-  if (headerMeta.agency) base.agency = headerMeta.agency;
-  return base;
+  return row as AgentProfile;
 });
 
 export async function saveProfileContent(data: {
@@ -880,6 +870,15 @@ export async function updateAgentProfile(p: Partial<AgentProfile>): Promise<void
 
   const { error } = await supabase.from("agent_profiles").update(updates).eq("id", user.id);
   if (error) throw new Error(error.message);
+
+  // Keep auth user_metadata in sync so middleware headers reflect latest values
+  const metaUpdates: Record<string, string> = {};
+  if (p.name !== undefined)   metaUpdates.full_name = p.name ?? "";
+  if (p.phone !== undefined)  metaUpdates.phone     = p.phone ?? "";
+  if (p.agency !== undefined) metaUpdates.agency    = p.agency ?? "";
+  if (Object.keys(metaUpdates).length > 0) {
+    await supabase.auth.updateUser({ data: metaUpdates });
+  }
 }
 
 export async function getMonthlyCommissionTimeline(year: number = new Date().getFullYear()): Promise<{
