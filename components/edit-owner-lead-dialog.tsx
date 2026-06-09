@@ -6,9 +6,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
-import { updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
+import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
 import { PhotoLightbox } from "@/components/photo-lightbox";
+import { usePhotoUpload } from "@/hooks/use-photo-upload";
 import { toast } from "sonner";
 
 interface Props {
@@ -23,13 +24,12 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [coverIndex, setCoverIndex] = useState<number>(0);
+  const { photos, coverIndex, uploading: uploadingPhoto, inputRef: photoInputRef, reset: resetPhotos,
+          handleUpload: handlePhotoUpload, handleRemove: handleRemovePhoto, handleSetCover } =
+    usePhotoUpload(lead?.id ?? "", lead?.photo_urls ?? [], lead?.cover_photo_index ?? 0, onSaved);
   const [agreementUrl, setAgreementUrl] = useState<string | null>(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const agreementInputRef = useRef<HTMLInputElement>(null);
 
   const [ownerName, setOwnerName] = useState("");
@@ -46,8 +46,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   // Reset fields when a new lead is opened
   useEffect(() => {
     if (lead) {
-      setPhotos(lead.photo_urls ?? []);
-      setCoverIndex(lead.cover_photo_index ?? 0);
+      resetPhotos(lead.photo_urls ?? [], lead.cover_photo_index ?? 0);
       setAgreementUrl(lead.agreement_url ?? null);
       setOwnerName(lead.owner_name ?? "");
       setOwnerPhone(lead.owner_phone ?? "");
@@ -64,39 +63,6 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
 
   if (!lead) return null;
 
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || photos.length >= 10) return;
-    setUploadingPhoto(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/upload/document", { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
-      const next = [...photos, data.url as string];
-      setPhotos(next);
-      await saveOwnerLeadPhotos(lead!.id, next);
-    } catch { toast.error("Upload failed"); }
-    finally { setUploadingPhoto(false); if (photoInputRef.current) photoInputRef.current.value = ""; }
-  }
-
-  async function handleRemovePhoto(idx: number) {
-    const next = photos.filter((_, i) => i !== idx);
-    const newCover = idx === coverIndex ? 0 : idx < coverIndex ? coverIndex - 1 : coverIndex;
-    setPhotos(next);
-    setCoverIndex(newCover);
-    await saveOwnerLeadPhotos(lead!.id, next);
-    await updateOwnerLeadDetails(lead!.id, { cover_photo_index: newCover });
-    onSaved?.({ cover_photo_index: newCover });
-  }
-
-  async function handleSetCover(idx: number) {
-    setCoverIndex(idx);
-    await updateOwnerLeadDetails(lead!.id, { cover_photo_index: idx });
-    onSaved?.({ cover_photo_index: idx });
-    toast.success("Cover photo updated");
-  }
 
   async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

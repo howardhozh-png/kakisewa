@@ -13,6 +13,7 @@ import { ReplyState } from "@/lib/types";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
+import { usePhotoUpload } from "@/hooks/use-photo-upload";
 
 interface Props {
   tenancy: Tenancy | null;
@@ -62,13 +63,12 @@ function TenancyForm({
 }) {
   const [pending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [photos, setPhotos] = useState<string[]>(tenancy.property?.photo_urls ?? []);
-  const [coverIndex, setCoverIndex] = useState<number>(tenancy.property?.cover_photo_index ?? 0);
+  const { photos, coverIndex, uploading: uploadingPhoto, inputRef: photoInputRef, reset: resetPhotos,
+          handleUpload: handlePhotoUpload, handleRemove: handleRemovePhoto, handleSetCover } =
+    usePhotoUpload(tenancy.owner_lead_id ?? "", tenancy.property?.photo_urls ?? [], tenancy.property?.cover_photo_index ?? 0);
   const [agreementUrl, setAgreementUrl] = useState<string | null>(tenancy.agreement_url ?? null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const agreementInputRef = useRef<HTMLInputElement>(null);
 
   // Owner info (editable but locked behind pencil)
@@ -107,7 +107,7 @@ function TenancyForm({
   // Sync on tenancy change (different record opened)
   useEffect(() => {
     setLightboxUrl(null);
-    setPhotos(tenancy.property?.photo_urls ?? []);
+    resetPhotos(tenancy.property?.photo_urls ?? [], tenancy.property?.cover_photo_index ?? 0);
     setAgreementUrl(tenancy.agreement_url ?? null);
     setOwnerName(tenancy.property?.owner_name ?? "");
     setOwnerPhone(tenancy.property?.owner_phone ?? "");
@@ -115,7 +115,6 @@ function TenancyForm({
     setPropertyName(tenancy.property_name ?? "");
     setBedrooms(tenancy.property?.bedrooms != null ? String(tenancy.property.bedrooms) : "");
     setBathrooms(tenancy.property?.bathrooms != null ? String(tenancy.property.bathrooms) : "");
-    setCoverIndex(tenancy.property?.cover_photo_index ?? 0);
     setTenantName(tenancy.tenant_name ?? "");
     setTenantPhone(tenancy.tenant_phone ?? "");
     setAmount((tenancy.renewal_proposed_rent ?? tenancy.amount)?.toString() ?? "");
@@ -139,54 +138,6 @@ function TenancyForm({
     const end = new Date(e);
     const months = Math.round((end.getTime() - start.getTime()) / (30.4375 * 86400000));
     if (months > 0) setContractDuration(String(months));
-  }
-
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || photos.length >= 10) return;
-    setUploadingPhoto(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/upload/document", { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
-      const next = [...photos, data.url as string];
-      setPhotos(next);
-      await fetch(`/api/owner-leads/${tenancy.owner_lead_id}/photos`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls: next }),
-      });
-    } catch {
-      toast.error("Upload failed");
-    } finally {
-      setUploadingPhoto(false);
-      if (photoInputRef.current) photoInputRef.current.value = "";
-    }
-  }
-
-  async function handleRemovePhoto(idx: number) {
-    const next = photos.filter((_, i) => i !== idx);
-    const newCover = idx === coverIndex ? 0 : idx < coverIndex ? coverIndex - 1 : coverIndex;
-    setPhotos(next);
-    setCoverIndex(newCover);
-    await fetch(`/api/owner-leads/${tenancy.owner_lead_id}/photos`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ urls: next }),
-    });
-    if (tenancy.owner_lead_id) {
-      await updateOwnerLeadDetails(tenancy.owner_lead_id, { cover_photo_index: newCover });
-    }
-  }
-
-  async function handleSetCover(idx: number) {
-    setCoverIndex(idx);
-    if (tenancy.owner_lead_id) {
-      await updateOwnerLeadDetails(tenancy.owner_lead_id, { cover_photo_index: idx });
-      toast.success("Cover photo updated");
-    }
   }
 
   async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
