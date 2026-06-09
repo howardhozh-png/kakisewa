@@ -39,7 +39,7 @@ export default async function TenanciesPage({ searchParams }: Props) {
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="serif kk-display" style={{ color: "var(--kk-ink)" }}>
+          <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
             Track renewal
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>

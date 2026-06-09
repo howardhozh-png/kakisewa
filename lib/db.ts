@@ -1132,7 +1132,7 @@ export async function bulkImportTenancies(
     lifecycle_stage: "active",
     contract_start: row.contract_start || null,
     contract_end: row.contract_end || null,
-    contract_duration_months: row.contract_duration_months ?? null,
+    contract_duration_months: row.contract_duration_months ?? 12,
   }));
 
   for (let i = 0; i < tenancyRecords.length; i += CHUNK) {

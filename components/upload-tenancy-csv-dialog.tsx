@@ -279,9 +279,9 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
               </p>
 
               {/* Default duration */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 13, color: "var(--kk-ink)", whiteSpace: "nowrap" }}>
-                  Default contract duration
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)", whiteSpace: "nowrap" }}>
+                  Rows with no expiry date will default to
                 </span>
                 <input
                   type="number"
@@ -290,8 +290,8 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                   value={defaultDuration}
                   onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
                   style={{
-                    width: 64,
-                    padding: "5px 8px",
+                    width: 52,
+                    padding: "4px 8px",
                     border: "1px solid var(--kk-border)",
                     borderRadius: 6,
                     fontSize: 13,
@@ -300,7 +300,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                     textAlign: "center",
                   }}
                 />
-                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>months</span>
+                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>months duration</span>
               </div>
 
               {/* Drop zone */}
@@ -343,24 +343,65 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
               />
 
               {/* Column guide */}
-              <div style={{
-                background: "var(--kk-surface)",
-                border: "1px solid var(--kk-border)",
-                borderRadius: 8,
-                padding: "10px 14px",
-              }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", margin: "0 0 6px" }}>
-                  Critical columns (amber if missing)
-                </p>
-                <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
-                  property_name, unit, owner_name, owner_phone, contract_start, amount (rental)
-                </p>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", margin: "8px 0 4px" }}>
-                  Optional columns
-                </p>
-                <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
-                  contract_end, contract_duration_months, tenant_name, tenant_phone, due_day
-                </p>
+              <div style={{ border: "1px solid var(--kk-border)", borderRadius: 10, overflow: "hidden" }}>
+                {/* Critical */}
+                <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--kk-border)" }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Required columns
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {["Property name", "Unit", "Owner name", "Owner phone", "Contract start", "Monthly rent"].map(col => (
+                      <span key={col} style={{
+                        fontSize: 11, fontWeight: 500,
+                        padding: "2px 8px", borderRadius: 999,
+                        background: "rgba(255,149,0,0.12)", color: "#B45309",
+                        border: "1px solid rgba(255,149,0,0.25)",
+                      }}>{col}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Optional */}
+                <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--kk-border)" }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Optional columns
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {["Contract end", "Duration (months)", "Tenant name", "Tenant phone", "Due day"].map(col => (
+                      <span key={col} style={{
+                        fontSize: 11, fontWeight: 500,
+                        padding: "2px 8px", borderRadius: 999,
+                        background: "rgba(0,0,0,0.05)", color: "var(--kk-ink-mute)",
+                        border: "1px solid var(--kk-border)",
+                      }}>{col}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Example row */}
+                <div style={{ padding: "10px 14px", background: "var(--kk-surface)" }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Example row
+                  </p>
+                  <div style={{ display: "flex", gap: 0, borderRadius: 6, overflow: "hidden", border: "1px solid var(--kk-border)", fontSize: 11 }}>
+                    {[
+                      { label: "Sunway Pyramid", muted: false },
+                      { label: "A-12-05", muted: true },
+                      { label: "Ahmad Hassan", muted: false },
+                      { label: "0123456789", muted: true },
+                      { label: "01/01/2024", muted: true },
+                      { label: "2500", muted: false },
+                    ].map((cell, i) => (
+                      <div key={i} style={{
+                        flex: 1, padding: "5px 6px",
+                        borderRight: i < 5 ? "1px solid var(--kk-border)" : undefined,
+                        color: cell.muted ? "var(--kk-ink-mute)" : "var(--kk-ink)",
+                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                        background: "#fff",
+                      }}>
+                        {cell.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}

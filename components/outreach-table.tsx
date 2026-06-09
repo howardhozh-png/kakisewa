@@ -1112,7 +1112,7 @@ export function OutreachTable({ leads }: Props) {
                           ) : (
                             <WhatsAppIcon className="w-3 h-3" />
                           )}
-                          <span className="hidden lg:inline">Send form</span>
+                          <span className="hidden lg:inline">Send</span>
                         </button>
                       )}
                     </td>
