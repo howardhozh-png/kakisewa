@@ -859,9 +859,8 @@ export async function saveWhatsAppTemplates(overrides: import("./whatsapp-templa
 
 export async function updateAgentProfile(p: Partial<AgentProfile>): Promise<void> {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
-  if (!user) return;
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Not authenticated");
 
   const updates: Record<string, unknown> = {};
   if (p.name !== undefined)                    updates.name = p.name;
