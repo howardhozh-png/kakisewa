@@ -212,6 +212,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         </div>
         <AvailabilityTimeline
           leads={local.filter((l) => {
+            if (l.is_competitor_target) return false;
             if (propertyFilter && l.property_name !== propertyFilter) return false;
             return l.stage === "listed" || l.stage === "wants_rent" || l.stage === "replied";
           })}

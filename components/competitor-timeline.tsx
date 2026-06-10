@@ -50,8 +50,7 @@ export function CompetitorTimeline({ leads, onMonthClick, selectedMonth }: Props
   }, [leads, months]);
 
   const maxAmount = Math.max(1, ...Array.from(buckets.values()));
-  // Total across ALL leads, not just those expiring in the window
-  const totalRm = leads.reduce((sum, l) => sum + (l.expected_rent ?? 0), 0);
+  const totalRm = Array.from(buckets.values()).reduce((sum, v) => sum + v, 0);
 
   function fmtRm(n: number): string {
     if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
