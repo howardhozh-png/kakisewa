@@ -1,12 +1,9 @@
-import { Suspense } from "react";
-import { getLifecycleTenancies, getOwnerLeads, countOwnerLeads, getAgentProfile } from "@/lib/db";
+import { getLifecycleTenancies, getOwnerLeads, getAgentProfile } from "@/lib/db";
 import { effectivePlan } from "@/lib/plan-caps";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
 import { UploadTenancyCsvDialog } from "@/components/upload-tenancy-csv-dialog";
-import { MoneySubNav } from "@/components/money-sub-nav";
 import { PageHelpButton } from "@/components/page-help-button";
-import { defaultLifecycleStage } from "@/lib/types";
 import type { Tenancy } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +14,9 @@ interface Props {
 
 export default async function TrackRenewalPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const today = new Date();
-  const [lifecycle, ownerLeads, makeCount, agentProfile] = await Promise.all([
+  const [lifecycle, ownerLeads, agentProfile] = await Promise.all([
     getLifecycleTenancies(),
     getOwnerLeads(),
-    countOwnerLeads(),
     getAgentProfile().catch(() => null),
   ]);
   const plan = effectivePlan(agentProfile);
@@ -38,30 +33,21 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <PageHelpButton
+            variant="question"
+            module={2}
+            pageTitle="Existing listing — capture your passive income"
+            bullets={[
+              "Add each active tenancy with its contract expiry date",
+              "kakisewa alerts you 60 days before any contract expires",
+              "Reach out to the owner before another agent does",
+              "Renew the contract and earn half a month's rent in commission. Automatically tracked.",
+            ]}
+          />
           <UploadTenancyCsvDialog />
           <AddTenancyDialog ownerLeads={ownerLeads} />
         </div>
       </header>
-
-      <Suspense fallback={null}>
-        <MoneySubNav
-          makeCount={makeCount}
-          renewCount={lifecycle.filter(t => { const s = defaultLifecycleStage(t, today); return s !== null && s !== "closed"; }).length}
-          helpSlot={
-            <PageHelpButton
-              variant="question"
-              module={2}
-              pageTitle="Existing listing — capture your passive income"
-              bullets={[
-                "Add each active tenancy with its contract expiry date",
-                "kakisewa alerts you 60 days before any contract expires",
-                "Reach out to the owner before another agent does",
-                "Renew the contract and earn half a month's rent in commission. Automatically tracked.",
-              ]}
-            />
-          }
-        />
-      </Suspense>
 
       {lifecycle.length === 0 ? (() => {
         const demoTenancy: Tenancy = {
