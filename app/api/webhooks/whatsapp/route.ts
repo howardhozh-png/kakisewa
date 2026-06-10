@@ -2,6 +2,7 @@ import { createHmac } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendPushToUser } from "@/lib/push";
+import { classifyWaReply } from "@/lib/ai-classify";
 
 // ─── GET — Meta webhook verification handshake ────────────────────────────────
 
@@ -173,6 +174,17 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         wa_status: "replied",
       })
       .eq("id", cardId);
+
+    // For tenancy cards (tenant replies), classify intent and auto-move the card
+    if (cardType === "tenancy") {
+      const intent = await classifyWaReply(messageText, "tenant");
+      if (intent !== "unclear") {
+        await svc
+          .from("tenancies")
+          .update({ replied_tenant: intent })
+          .eq("id", cardId);
+      }
+    }
 
     // Push notification to agent
     const snippet = messageText.length > 100 ? messageText.slice(0, 97) + "..." : messageText;

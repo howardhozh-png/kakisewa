@@ -463,14 +463,17 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
     renewalForm: formUrl,
   });
   const out = buildOutbound({ template: "expiry_check_tenant", toPhone: t.tenant_phone ?? "", body });
-  await logWhatsApp({
-    related_id: t.id,
-    related_type: "tenancy",
-    template: "expiry_check_tenant",
-    recipient_phone: t.tenant_phone ?? "",
-    recipient_name: t.tenant_name ?? "",
-    body,
-  });
+  await Promise.all([
+    logWhatsApp({
+      related_id: t.id,
+      related_type: "tenancy",
+      template: "expiry_check_tenant",
+      recipient_phone: t.tenant_phone ?? "",
+      recipient_name: t.tenant_name ?? "",
+      body,
+    }),
+    updateTenancy(tenancyId, { wa_status: "pending" }),
+  ]);
   return { url: out.url, body };
 }
 
@@ -546,14 +549,17 @@ export async function sendLifecycleTemplate(
       body: p.body,
     });
     urls.push(out.url);
-    await logWhatsApp({
-      related_id: t.id,
-      related_type: "tenancy",
-      template: stage === "pinged" ? (p.to === "tenant" ? "expiry_check_tenant" : "expiry_check_owner") : "expiry_check_tenant",
-      recipient_phone: p.phone,
-      recipient_name: p.to === "tenant" ? t.tenant_name : (t.property?.owner_name ?? "Owner"),
-      body: p.body,
-    });
+    await Promise.all([
+      logWhatsApp({
+        related_id: t.id,
+        related_type: "tenancy",
+        template: stage === "pinged" ? (p.to === "tenant" ? "expiry_check_tenant" : "expiry_check_owner") : "expiry_check_tenant",
+        recipient_phone: p.phone,
+        recipient_name: p.to === "tenant" ? t.tenant_name : (t.property?.owner_name ?? "Owner"),
+        body: p.body,
+      }),
+      updateTenancy(id, { wa_status: "pending" }),
+    ]);
   }
   return { ok: true, urls, message: `Prepared ${urls.length} message${urls.length === 1 ? "" : "s"}` };
 }
@@ -742,14 +748,17 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
     renewalForm: formUrl,
   });
   const out = buildOutbound({ template: "expiry_check_owner", toPhone: t.property?.owner_phone ?? "", body });
-  await logWhatsApp({
-    related_id: t.id,
-    related_type: "tenancy",
-    template: "expiry_check_owner",
-    recipient_phone: t.property.owner_phone,
-    recipient_name: t.property.owner_name,
-    body,
-  });
+  await Promise.all([
+    logWhatsApp({
+      related_id: t.id,
+      related_type: "tenancy",
+      template: "expiry_check_owner",
+      recipient_phone: t.property.owner_phone,
+      recipient_name: t.property.owner_name,
+      body,
+    }),
+    updateTenancy(tenancyId, { wa_status: "pending" }),
+  ]);
   return { url: out.url, body };
 }
 
@@ -990,14 +999,17 @@ No login needed — link is private 🙏
 — ${agent.name ?? "Your agent"}${agent.agency ? `, ${agent.agency}` : ""}`;
 
   const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, body });
-  await logWhatsApp({
-    related_id: ownerLeadId,
-    related_type: "owner_lead",
-    template: "owner_outreach",
-    recipient_phone: owner.owner_phone,
-    recipient_name: owner.owner_name,
-    body,
-  });
+  await Promise.all([
+    logWhatsApp({
+      related_id: ownerLeadId,
+      related_type: "owner_lead",
+      template: "owner_outreach",
+      recipient_phone: owner.owner_phone,
+      recipient_name: owner.owner_name,
+      body,
+    }),
+    updateOwnerLead(ownerLeadId, { wa_status: "pending" }),
+  ]);
   return { ok: true, url: out.url, body, message: "Message ready" };
 }
 
@@ -1074,14 +1086,17 @@ Reply here or I can send you a quick form — takes about 2 minutes 🙏
   }
 
   const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, body });
-  await logWhatsApp({
-    related_id: owner.id,
-    related_type: "owner_lead",
-    template: "owner_outreach",
-    recipient_phone: owner.owner_phone,
-    recipient_name: owner.owner_name,
-    body,
-  });
+  await Promise.all([
+    logWhatsApp({
+      related_id: owner.id,
+      related_type: "owner_lead",
+      template: "owner_outreach",
+      recipient_phone: owner.owner_phone,
+      recipient_name: owner.owner_name,
+      body,
+    }),
+    updateOwnerLead(id, { wa_status: "pending" }),
+  ]);
   if (template === "outreach_initial") {
     await updateOwnerLead(id, { intake_sent_at: new Date().toISOString() });
   }
@@ -1298,14 +1313,17 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
 
   const { buildOutbound } = await import("./whatsapp");
   const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, body });
-  await logWhatsApp({
-    related_id: ownerLeadId,
-    related_type: "owner_lead",
-    template: "owner_outreach",
-    recipient_phone: owner.owner_phone,
-    recipient_name: owner.owner_name,
-    body,
-  });
+  await Promise.all([
+    logWhatsApp({
+      related_id: ownerLeadId,
+      related_type: "owner_lead",
+      template: "owner_outreach",
+      recipient_phone: owner.owner_phone,
+      recipient_name: owner.owner_name,
+      body,
+    }),
+    updateOwnerLead(ownerLeadId, { wa_status: "pending" }),
+  ]);
   await incrementOwnerOutreachCount(ownerLeadId);
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
   return { ok: true, url, waUrl: out.url, message: "Intake form link ready" };

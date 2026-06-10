@@ -586,6 +586,9 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
         </div>
       </div>
 
+      {/* WA reply status badge */}
+      <WaStatusBadge t={t} />
+
       {/* Actions */}
       {plan !== "silver" && <RentReminderAction t={t} today={today} />}
       {col.stage !== "headsup" && (
@@ -625,6 +628,55 @@ function RenewalResponses({ t }: { t: Tenancy }) {
       <span className="text-[11px] font-semibold" style={{ color: ownerColor }}>{ownerLabel}</span>
     </div>
   );
+}
+
+// ─── WA reply status badge ────────────────────────────────────────────────────
+
+function WaStatusBadge({ t }: { t: Tenancy }) {
+  if (!t.wa_status) return null;
+
+  if (t.wa_status === "pending") {
+    return (
+      <div className="flex items-center gap-1.5 px-0.5" style={{ color: "#B45309" }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", flexShrink: 0, display: "inline-block" }} />
+        <span className="text-[11px] font-medium">Sent, waiting for reply</span>
+      </div>
+    );
+  }
+
+  if (t.wa_status === "replied" && t.last_wa_reply_at) {
+    const minutesAgo = Math.round((Date.now() - new Date(t.last_wa_reply_at).getTime()) / 60000);
+    const timeLabel = minutesAgo < 60
+      ? `${minutesAgo}m ago`
+      : minutesAgo < 1440
+      ? `${Math.round(minutesAgo / 60)}h ago`
+      : `${Math.round(minutesAgo / 1440)}d ago`;
+    const snippet = t.last_wa_reply_text
+      ? t.last_wa_reply_text.length > 50
+        ? t.last_wa_reply_text.slice(0, 47) + "…"
+        : t.last_wa_reply_text
+      : "";
+    return (
+      <div className="flex items-start gap-1.5 px-0.5">
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", flexShrink: 0, marginTop: 3, display: "inline-block" }} />
+        <span className="text-[11px] leading-tight" style={{ color: "var(--kk-ink-mute)" }}>
+          <span className="font-semibold" style={{ color: "#166534" }}>Replied {timeLabel}</span>
+          {snippet && <span> · {snippet}</span>}
+        </span>
+      </div>
+    );
+  }
+
+  if (t.wa_status === "no_response") {
+    return (
+      <div className="flex items-center gap-1.5 px-0.5" style={{ color: "#991B1B" }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444", flexShrink: 0, display: "inline-block" }} />
+        <span className="text-[11px] font-medium">No response</span>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 // ─── Rent reminder — date-driven, shown regardless of stage ──────────────────

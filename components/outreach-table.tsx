@@ -137,6 +137,38 @@ function PurposeBadge({ purpose }: { purpose: "rent" | "sell" | null | undefined
   );
 }
 
+function OwnerLeadWaBadge({ lead }: { lead: OwnerLead }) {
+  if (!lead.wa_status) return null;
+  if (lead.wa_status === "pending") {
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#B45309" }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#F59E0B", display: "inline-block", flexShrink: 0 }} />
+        Sent
+      </span>
+    );
+  }
+  if (lead.wa_status === "replied") {
+    const snippet = lead.last_wa_reply_text
+      ? lead.last_wa_reply_text.length > 30 ? lead.last_wa_reply_text.slice(0, 27) + "…" : lead.last_wa_reply_text
+      : null;
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#166534" }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22C55E", display: "inline-block", flexShrink: 0 }} />
+        {snippet ?? "Replied"}
+      </span>
+    );
+  }
+  if (lead.wa_status === "no_response") {
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#991B1B" }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#EF4444", display: "inline-block", flexShrink: 0 }} />
+        No response
+      </span>
+    );
+  }
+  return null;
+}
+
 // ─── Lead detail popup (fully editable) ──────────────────────────────────────
 
 const FIELD_STYLE: React.CSSProperties = {
@@ -1159,6 +1191,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                       <div className="flex flex-col items-start gap-1">
                         <StatusBadge lead={lead} />
                         <PurposeBadge purpose={lead.listing_purpose} />
+                        <OwnerLeadWaBadge lead={lead} />
                       </div>
                     </td>
 

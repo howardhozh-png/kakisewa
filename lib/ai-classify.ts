@@ -170,3 +170,52 @@ function mockTenantIntake(answers: string[]): TenantIntakeData {
     furnishing_preference: answers[11] || undefined,
   };
 }
+
+// ─── WhatsApp reply intent classification ─────────────────────────────────────
+// Classifies a free-text WhatsApp reply as yes (wants to renew), no (doesn't),
+// or unclear (needs human judgement). Handles Malay + English.
+
+export async function classifyWaReply(
+  messageText: string,
+  context: "owner" | "tenant"
+): Promise<"yes" | "no" | "unclear"> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return classifyWaReplyHeuristic(messageText);
+
+  const openai = new OpenAI({ apiKey });
+  const who = context === "owner" ? "property owner" : "tenant";
+  const prompt = `You are helping a Malaysian property agent track rental renewal intent.
+A ${who} sent this WhatsApp reply: "${messageText}"
+
+Does this reply indicate they WANT TO RENEW (yes), DO NOT WANT TO RENEW (no), or is it UNCLEAR?
+
+Rules:
+- "boleh", "ok", "setuju", "nak renew", "yes", "sure", "confirm" → yes
+- "tak nak", "no", "tidak", "cancel", "stop", "move out", "vacate", "end" → no
+- Questions, greetings, "fikir dulu", "later", emoji-only, unrelated topics → unclear
+
+Return ONLY one word: yes, no, or unclear`;
+
+  try {
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 5,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const raw = (res.choices[0]?.message?.content ?? "").trim().toLowerCase();
+    if (raw === "yes") return "yes";
+    if (raw === "no") return "no";
+    return "unclear";
+  } catch {
+    return classifyWaReplyHeuristic(messageText);
+  }
+}
+
+function classifyWaReplyHeuristic(text: string): "yes" | "no" | "unclear" {
+  const t = text.toLowerCase();
+  const yesWords = ["boleh", "ok", "okay", "setuju", "nak renew", "yes", "sure", "confirm", "agree", "renew"];
+  const noWords = ["tak nak", "tidak nak", "no", "tidak", "cancel", "stop", "move out", "vacate", "end", "keluar"];
+  if (yesWords.some((w) => t.includes(w))) return "yes";
+  if (noWords.some((w) => t.includes(w))) return "no";
+  return "unclear";
+}

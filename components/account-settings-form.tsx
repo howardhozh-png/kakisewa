@@ -553,15 +553,52 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
 
   return (
     <section className="kk-section p-6">
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 mb-4">
         <MessageCircle className="w-4 h-4" style={{ color: isConnected ? "#25D366" : "var(--kk-ink-faint)" }} />
-        <h2 className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>WhatsApp Integration</h2>
+        <h2 className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>WhatsApp reply tracking</h2>
         {isConnected && <CheckCircle2 className="w-3.5 h-3.5 ml-auto" style={{ color: "#25D366" }} />}
+      </div>
+
+      {/* Two-mode explanation — always visible */}
+      <div className="space-y-3 mb-5">
+        <div
+          className="rounded-xl p-3.5"
+          style={{
+            background: isConnected ? "var(--kk-surface-2)" : "var(--kk-surface-2)",
+            border: `1.5px solid ${isConnected ? "var(--kk-line)" : "var(--kk-theme-dark)"}`,
+            opacity: isConnected ? 0.6 : 1,
+          }}
+        >
+          <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Personal WhatsApp (default)</p>
+          <p className="text-[12px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+            Send messages via wa.me links as usual. Owners and tenants click the renewal link in your message to record their reply. Cards update automatically.
+          </p>
+          <p className="text-[11px] mt-1.5 font-medium" style={{ color: "var(--kk-ink-faint)" }}>No setup needed. Works today.</p>
+        </div>
+
+        <div
+          className="rounded-xl p-3.5"
+          style={{
+            background: "var(--kk-surface-2)",
+            border: `1.5px solid ${isConnected ? "#25D366" : "var(--kk-line)"}`,
+          }}
+        >
+          <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>
+            WhatsApp Business API
+            <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#166534" }}>Auto</span>
+          </p>
+          <p className="text-[12px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+            Connect a dedicated business number. When owners or tenants reply on WhatsApp, kakisewa detects the message automatically and moves your cards.
+          </p>
+          <p className="text-[11px] mt-1.5 font-medium" style={{ color: "#B45309" }}>
+            Requires a separate SIM card registered as your business number.
+          </p>
+        </div>
       </div>
 
       {isConnected ? (
         <div>
-          <p className="text-[13px] mt-3 mb-1" style={{ color: "var(--kk-ink-mute)" }}>
+          <p className="text-[13px] mb-1" style={{ color: "var(--kk-ink-mute)" }}>
             Connected number: <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>+{connectedNumber ?? agent.whatsapp_number}</span>
           </p>
           {connectedSince && (
@@ -578,24 +615,19 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
             }}
           >
             {disconnecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {disconnecting ? "Disconnecting…" : "Disconnect"}
+            {disconnecting ? "Disconnecting…" : "Disconnect business number"}
           </button>
         </div>
       ) : (
-        <div>
-          <p className="text-[13px] mt-3 mb-4" style={{ color: "var(--kk-ink-mute)" }}>
-            When owners and tenants reply to you on WhatsApp, kakisewa will automatically update your pipeline cards.
-          </p>
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            className="kk-pill flex items-center gap-2"
-            style={{ background: "#25D366", color: "#fff" }}
-          >
-            {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {connecting ? "Opening Meta…" : "Connect WhatsApp Business"}
-          </button>
-        </div>
+        <button
+          onClick={handleConnect}
+          disabled={connecting}
+          className="kk-pill flex items-center gap-2"
+          style={{ background: "#25D366", color: "#fff" }}
+        >
+          {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {connecting ? "Opening Meta…" : "Connect WhatsApp Business number"}
+        </button>
       )}
     </section>
   );
