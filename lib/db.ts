@@ -135,32 +135,30 @@ const _cachedLifecycleTenancies = unstable_cache(
   { tags: ["kk-tenancies"], revalidate: 60 }
 );
 
-const _cachedOwnerLeads = unstable_cache(
-  async (userId: string): Promise<OwnerLead[]> => {
-    const svc = createServiceClient();
-    // PostgREST max_rows = 1000; paginate to get all rows
-    const PAGE = 1000;
-    const all: OwnerLead[] = [];
-    let from = 0;
-    while (true) {
-      const { data, error } = await svc
-        .from("owner_leads")
-        .select("*")
-        .eq("user_id", userId)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      const batch = (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
-      all.push(...batch);
-      if (batch.length < PAGE) break;
-      from += PAGE;
-    }
-    return all;
-  },
-  ["kk-owner-leads"],
-  { tags: ["kk-owner-leads"], revalidate: 60 }
-);
+// Not wrapped in unstable_cache — result can exceed 2MB for large accounts,
+// and all callers use force-dynamic pages so per-request caching adds no value.
+async function _cachedOwnerLeads(userId: string): Promise<OwnerLead[]> {
+  const svc = createServiceClient();
+  // PostgREST max_rows = 1000; paginate to get all rows
+  const PAGE = 1000;
+  const all: OwnerLead[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await svc
+      .from("owner_leads")
+      .select("*")
+      .eq("user_id", userId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    const batch = (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
+    all.push(...batch);
+    if (batch.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
 
 const _cachedListedOwnerLeads = unstable_cache(
   async (userId: string): Promise<OwnerLead[]> => {
