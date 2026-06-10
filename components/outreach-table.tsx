@@ -979,13 +979,13 @@ export function OutreachTable({ leads }: Props) {
                     />
                   </div>
                 </th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 120, color: "var(--kk-accent)" }}>Owner</th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 108, color: "var(--kk-accent)" }}>Number</th>
-                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 60, color: "var(--kk-accent)" }}>Unit</th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 160, color: "var(--kk-accent)" }}>Property</th>
-                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-accent)" }}>Remarks</th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 94, color: "var(--kk-accent)" }}>Status</th>
-                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 68, color: "var(--kk-accent)" }}>Last sent</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 130, color: "var(--kk-accent)" }}>Owner</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 118, color: "var(--kk-accent)" }}>Number</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 65, color: "var(--kk-accent)" }}>Unit</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 170, color: "var(--kk-accent)" }}>Property</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 200, color: "var(--kk-accent)" }}>Remarks</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 95, color: "var(--kk-accent)" }}>Status</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" style={{ width: 84, color: "var(--kk-accent)" }}>Last sent</th>
                 <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 68, background: "var(--kk-surface)" }}></th>
               </tr>
             </thead>
