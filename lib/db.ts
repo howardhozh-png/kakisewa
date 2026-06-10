@@ -138,7 +138,7 @@ const _cachedLifecycleTenancies = unstable_cache(
 const _cachedOwnerLeads = unstable_cache(
   async (userId: string): Promise<OwnerLead[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).is("deleted_at", null).order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
   },
@@ -1009,11 +1009,18 @@ export async function getOwnerLeads(): Promise<OwnerLead[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("owner_leads").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("owner_leads").select("*").is("deleted_at", null).order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
   }
   return _cachedOwnerLeads(userId);
+}
+
+export async function getSoftDeletedOwnerLeads(): Promise<OwnerLead[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).order("deleted_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
 }
 
 export async function createOwnerLead(data: Omit<OwnerLead, "id" | "created_at">): Promise<OwnerLead> {
@@ -1174,8 +1181,28 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
 
 export async function deleteOwnerLead(id: string): Promise<void> {
   const supabase = await createClient();
+  const { error } = await supabase.from("owner_leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function restoreOwnerLead(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("owner_leads").update({ deleted_at: null }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function hardDeleteOwnerLead(id: string): Promise<void> {
+  const supabase = await createClient();
   const { error } = await supabase.from("owner_leads").delete().eq("id", id);
   if (error) throw error;
+}
+
+export async function purgeSoftDeletedLeads(): Promise<number> {
+  const supabase = createServiceClient();
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase.from("owner_leads").delete().not("deleted_at", "is", null).lt("deleted_at", cutoff).select("id");
+  if (error) throw error;
+  return data?.length ?? 0;
 }
 
 export async function updateOwnerLeadPhotos(id: string, urls: string[]): Promise<void> {

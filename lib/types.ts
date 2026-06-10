@@ -127,6 +127,7 @@ export interface OwnerLead {
   competitor_contract_duration_months?: number | null;
   competitor_contract_end?: string | null;
   competitor_stage?: "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
+  deleted_at?: string | null;
   created_at: string;
 }
 

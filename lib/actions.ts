@@ -28,6 +28,8 @@ import {
   updateOwnerLead,
   getOwnerLead,
   deleteOwnerLead,
+  restoreOwnerLead,
+  hardDeleteOwnerLead,
   createTenantProfile,
   getTenantProfileByPhone,
   getTenantProfileByPhoneAndName,
@@ -220,6 +222,20 @@ export async function bulkDeleteOwnerLeads(ids: string[]): Promise<void> {
   await Promise.all(ids.map((id) => deleteOwnerLead(id)));
   invalidateCache();
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/");
+}
+
+export async function restoreOwnerLeadAction(id: string): Promise<void> {
+  await restoreOwnerLead(id);
+  invalidateCache();
+  revalidatePath("/potential-listing");
+  revalidatePath("/");
+}
+
+export async function hardDeleteOwnerLeadAction(id: string): Promise<void> {
+  await hardDeleteOwnerLead(id);
+  invalidateCache();
+  revalidatePath("/potential-listing");
   revalidatePath("/");
 }
 

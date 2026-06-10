@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
+import { getOwnerLeads, getSoftDeletedOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { AddOutreachButton } from "@/components/add-outreach-button";
 import { OutreachTable } from "@/components/outreach-table";
@@ -9,7 +9,10 @@ import { PageHelpButton } from "@/components/page-help-button";
 export const dynamic = "force-dynamic";
 
 export default async function MessageOwnersPage() {
-  const ownerLeads = await getOwnerLeads();
+  const [ownerLeads, deletedLeads] = await Promise.all([
+    getOwnerLeads(),
+    getSoftDeletedOwnerLeads(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
@@ -44,7 +47,7 @@ export default async function MessageOwnersPage() {
         </div>
       </Suspense>
 
-      {ownerLeads.length === 0 ? <OutreachEmptyState /> : <OutreachTable leads={ownerLeads} />}
+      {ownerLeads.length === 0 && deletedLeads.length === 0 ? <OutreachEmptyState /> : <OutreachTable leads={ownerLeads} deletedLeads={deletedLeads} />}
     </div>
   );
 }
