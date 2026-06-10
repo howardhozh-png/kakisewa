@@ -979,44 +979,44 @@ export function OutreachTable({ leads }: Props) {
                     />
                   </div>
                 </th>
-                <th className="px-2 lg:px-4 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 96, color: "var(--kk-accent)" }}>Owner</th>
-                <th className="px-2 lg:px-4 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 78, color: "var(--kk-accent)" }}>Number</th>
-                <th className="hidden lg:table-cell px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 72, color: "var(--kk-accent)" }}>Unit</th>
-                <th className="px-2 lg:px-4 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 94, color: "var(--kk-accent)" }}>Property</th>
-                <th className="hidden lg:table-cell px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 120, color: "var(--kk-accent)" }}>Remarks</th>
-                <th className="px-2 lg:px-4 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 82, color: "var(--kk-accent)" }}>Status</th>
-                <th className="hidden lg:table-cell px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 80, color: "var(--kk-accent)" }}>Last sent</th>
-                <th className="sticky right-0 lg:static px-2 lg:px-4 py-2 lg:py-3" style={{ width: 48, background: "var(--kk-surface)" }}></th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 76, color: "var(--kk-accent)" }}>Owner</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 76, color: "var(--kk-accent)" }}>Number</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 56, color: "var(--kk-accent)" }}>Unit</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 90, color: "var(--kk-accent)" }}>Property</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 180, color: "var(--kk-accent)" }}>Remarks</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 78, color: "var(--kk-accent)" }}>Status</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 72, color: "var(--kk-accent)" }}>Last sent</th>
+                <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 64, background: "var(--kk-surface)" }}></th>
               </tr>
             </thead>
             <tbody>
               {visible.length === 0 ? (
                 <tr style={{ opacity: 0.5, pointerEvents: "none" }}>
-                  <td className="px-2 lg:px-3 py-2 lg:py-3" style={{ verticalAlign: "middle" }}>
+                  <td className="px-2 py-2 lg:py-3" style={{ verticalAlign: "middle" }}>
                     <input type="checkbox" disabled className="w-3.5 h-3.5 block" />
                   </td>
-                  <td className="px-2 lg:px-4 py-2 lg:py-3">
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>Ahmad Hassan</p>
+                  <td className="px-2 py-2 lg:py-3">
+                    <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>Ahmad Hassan</p>
                   </td>
-                  <td className="px-2 lg:px-4 py-2 lg:py-3">
-                    <p className="text-[12px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>0123456789</p>
+                  <td className="px-2 py-2 lg:py-3">
+                    <p className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>0123456789</p>
                   </td>
-                  <td className="hidden lg:table-cell px-4 py-3">
-                    <p className="text-[13px]" style={{ color: "var(--kk-ink)" }}>A-12-05</p>
+                  <td className="hidden lg:table-cell px-2 py-3">
+                    <p className="text-[11px]" style={{ color: "var(--kk-ink)" }}>A-12-05</p>
                   </td>
-                  <td className="px-2 lg:px-4 py-2 lg:py-3">
-                    <p className="text-[13px]" style={{ color: "var(--kk-ink)" }}>Agile Mont Kiara</p>
+                  <td className="px-2 py-2 lg:py-3">
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink)" }}>Agile Mont Kiara</p>
                   </td>
-                  <td className="hidden lg:table-cell px-4 py-3">
-                    <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                  <td className="hidden lg:table-cell px-2 py-3">
+                    <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                   </td>
-                  <td className="px-2 lg:px-4 py-2 lg:py-3">
+                  <td className="px-2 py-2 lg:py-3">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)", border: "1px solid var(--kk-line)" }}>Sample</span>
                   </td>
-                  <td className="hidden lg:table-cell px-4 py-3">
-                    <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                  <td className="hidden lg:table-cell px-2 py-3">
+                    <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                   </td>
-                  <td className="sticky right-0 lg:static px-2 lg:px-4 py-2 lg:py-3" style={{ background: "var(--kk-surface)" }} />
+                  <td className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ background: "var(--kk-surface)" }} />
                 </tr>
               ) : visible.map((lead, i) => {
                 const status = getStatus(lead);
@@ -1047,52 +1047,52 @@ export function OutreachTable({ leads }: Props) {
                     </td>
 
                     {/* Owner */}
-                    <td className="px-2 lg:px-4 py-2 lg:py-3 overflow-hidden">
-                      <p className="text-[11px] lg:text-[13px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>
+                    <td className="px-2 py-2 lg:py-3 overflow-hidden">
+                      <p className="text-[11px] lg:text-[12px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>
                         {lead.owner_name ?? "—"}
                       </p>
                     </td>
 
                     {/* Number */}
-                    <td className="px-2 lg:px-4 py-2 lg:py-3 overflow-hidden">
+                    <td className="px-2 py-2 lg:py-3 overflow-hidden">
                       {lead.owner_phone ? (
-                        <p className="text-[10px] lg:text-[12px] truncate tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{lead.owner_phone}</p>
+                        <p className="text-[10px] lg:text-[11px] truncate tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{lead.owner_phone}</p>
                       ) : (
-                        <span className="text-[10px] lg:text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                        <span className="text-[10px] lg:text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                       )}
                     </td>
 
                     {/* Unit */}
-                    <td className="hidden lg:table-cell px-4 py-3 overflow-hidden">
+                    <td className="hidden lg:table-cell px-2 py-3 overflow-hidden">
                       {lead.unit ? (
-                        <p className="text-[13px] truncate" style={{ color: "var(--kk-ink)" }}>{lead.unit}</p>
+                        <p className="text-[11px] truncate" style={{ color: "var(--kk-ink)" }}>{lead.unit}</p>
                       ) : (
-                        <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                        <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                       )}
                     </td>
 
                     {/* Property */}
-                    <td className="px-2 lg:px-4 py-2 lg:py-3 overflow-hidden">
+                    <td className="px-2 py-2 lg:py-3 overflow-hidden">
                       {lead.property_name ? (
-                        <p className="text-[11px] lg:text-[13px] truncate" style={{ color: "var(--kk-ink)" }}>{lead.property_name}</p>
+                        <p className="text-[11px] lg:text-[12px] truncate" style={{ color: "var(--kk-ink)" }}>{lead.property_name}</p>
                       ) : (
                         <span className="text-[11px] lg:text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                       )}
                     </td>
 
                     {/* Remarks */}
-                    <td className="hidden lg:table-cell px-4 py-3 overflow-hidden">
+                    <td className="hidden lg:table-cell px-2 py-3 overflow-hidden" style={{ maxWidth: 180 }}>
                       {lead.notes ? (
-                        <p className="text-[12px] truncate" style={{ color: "var(--kk-ink-mute)", maxWidth: 120 }}>
-                          {lead.notes.length > 60 ? lead.notes.slice(0, 60) + "…" : lead.notes}
+                        <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>
+                          {lead.notes.length > 80 ? lead.notes.slice(0, 80) + "…" : lead.notes}
                         </p>
                       ) : (
-                        <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
+                        <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                       )}
                     </td>
 
                     {/* Status */}
-                    <td className="px-2 lg:px-4 py-2 lg:py-3">
+                    <td className="px-2 py-2 lg:py-3">
                       <div className="flex flex-col items-start gap-1">
                         <StatusBadge lead={lead} />
                         <PurposeBadge purpose={lead.listing_purpose} />
@@ -1100,40 +1100,54 @@ export function OutreachTable({ leads }: Props) {
                     </td>
 
                     {/* Last sent */}
-                    <td className="hidden lg:table-cell px-4 py-3">
-                      <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+                    <td className="hidden lg:table-cell px-2 py-3">
+                      <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
                         {status === "unsent" ? "—" : relativeTime(lead.intake_sent_at)}
                       </span>
                     </td>
 
-                    {/* Action — sticky on mobile so button is always visible */}
-                    <td className="sticky right-0 lg:static px-2 lg:px-4 py-2 lg:py-3 text-right" style={{ background: "var(--kk-surface)" }} onClick={(e) => e.stopPropagation()}>
-                      {(status === "listed" || status === "rented") ? (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}
-                          className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-[12px] font-semibold transition-opacity hover:opacity-80"
-                          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                        >
-                          <span className="hidden lg:inline">Go to card</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={sending === lead.id}
-                          onClick={(e) => handleSend(lead, e)}
-                          className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1.5 rounded-full text-[11px] lg:text-[12px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
-                          style={{ background: "#25D366", color: "#fff" }}
-                        >
-                          {sending === lead.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <WhatsAppIcon className="w-3 h-3" />
-                          )}
-                          <span className="hidden lg:inline">Send</span>
-                        </button>
-                      )}
+                    {/* Action */}
+                    <td className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ background: "var(--kk-surface)" }} onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1 justify-end">
+                        {(status === "listed" || status === "rented") ? (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}
+                            className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                            title="Go to card"
+                          >
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={sending === lead.id}
+                              onClick={(e) => handleSend(lead, e)}
+                              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
+                              style={{ background: "#25D366", color: "#fff" }}
+                              title="Send WhatsApp"
+                            >
+                              {sending === lead.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <WhatsAppIcon className="w-3.5 h-3.5" />
+                              }
+                            </button>
+                            {lead.owner_phone && (
+                              <a
+                                href={`tel:+${lead.owner_phone}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                                title="Call"
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
