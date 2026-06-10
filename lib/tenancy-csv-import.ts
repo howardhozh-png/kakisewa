@@ -216,9 +216,29 @@ export function addMonths(dateStr: string, months: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+// Tenancy convention: last day = start + N months - 1 day
+// e.g. 1 Jun 2025 + 12 mo → 31 May 2026; 4 Jun 2025 + 12 mo → 3 Jun 2026
+export function tenancyEndDate(startStr: string, months: number): string {
+  if (!startStr) return "";
+  const d = new Date(startStr + "T00:00:00");
+  d.setMonth(d.getMonth() + months);
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+// Reverse: start = (end + 1 day) - N months
+export function tenancyStartDate(endStr: string, months: number): string {
+  if (!endStr) return "";
+  const d = new Date(endStr + "T00:00:00");
+  d.setDate(d.getDate() + 1);
+  d.setMonth(d.getMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
 export function monthsBetween(startStr: string, endStr: string): number {
   const s = new Date(startStr + "T00:00:00");
   const e = new Date(endStr + "T00:00:00");
+  e.setDate(e.getDate() + 1); // end is last day; add 1 to get the anniversary
   return Math.round((e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()));
 }
 
@@ -254,15 +274,15 @@ function buildRow(
   const durationRaw = get("contract_duration_months");
   let contract_duration_months: number | null = durationRaw ? parseInt(durationRaw) || null : null;
 
-  // Auto-fill logic
+  // Auto-fill logic (tenancy convention: end = start + N months - 1 day)
   if (contract_start && !contract_end) {
     const dur = contract_duration_months ?? defaultDurationMonths;
-    contract_end = addMonths(contract_start, dur);
+    contract_end = tenancyEndDate(contract_start, dur);
     if (!contract_duration_months) contract_duration_months = dur;
     autoFilled.add("contract_end");
     if (!durationRaw) autoFilled.add("contract_duration_months");
   } else if (!contract_start && contract_end && contract_duration_months) {
-    contract_start = addMonths(contract_end, -contract_duration_months);
+    contract_start = tenancyStartDate(contract_end, contract_duration_months);
     autoFilled.add("contract_start");
   } else if (contract_start && contract_end && !contract_duration_months) {
     contract_duration_months = monthsBetween(contract_start, contract_end);

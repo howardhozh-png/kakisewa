@@ -10,7 +10,7 @@ import {
   detectColumnMap,
   isCriticalMissing,
   rowHasCriticalErrors,
-  addMonths,
+  tenancyEndDate,
   type TenancyImportRow,
   type RawImportData,
   type CanonicalField,
@@ -82,9 +82,9 @@ const FIELD_LABELS: Record<TenancyMappingField, string> = {
 };
 
 const DISPLAY_ORDER: TenancyMappingField[] = [
-  "contract_start", "address", "owner_name", "owner_phone", "amount",
+  "contract_start", "contract_end", "address", "owner_name", "owner_phone", "amount",
   "tenant_name", "tenant_phone", "property_name", "unit",
-  "contract_end", "contract_duration_months", "due_day",
+  "contract_duration_months", "due_day",
 ];
 
 const ALWAYS_SHOW = new Set<TenancyMappingField>([
@@ -176,11 +176,13 @@ function MappingTable({
   headers,
   rows,
   mapping,
+  defaultContractStart,
   onChange,
 }: {
   headers: string[];
   rows: Record<string, string>[];
   mapping: TenancyColumnMapping;
+  defaultContractStart: string | null;
   onChange: (field: TenancyMappingField, value: string) => void;
 }) {
   const sample = rows.slice(0, 3);
@@ -198,7 +200,8 @@ function MappingTable({
         const isLast = i === fieldsToShow.length - 1;
         const mappedHeader = mapping[field] as string | null;
         const isRequired = field === "contract_start";
-        const isMissing = isRequired && !mappedHeader;
+        // Not missing if resolved via "Add today"
+        const isMissing = isRequired && !mappedHeader && !defaultContractStart;
         const isFromAddress =
           (field === "unit" && mapping.parseAddressForUnit) ||
           (field === "property_name" && mapping.parseAddressForCondo);
@@ -456,7 +459,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
       row._autoFilled = autoFilled;
 
       if (field === "contract_start" && row.contract_duration_months) {
-        row.contract_end = addMonths(rawVal, row.contract_duration_months);
+        row.contract_end = tenancyEndDate(rawVal, row.contract_duration_months);
         autoFilled.add("contract_end");
         row._autoFilled = autoFilled;
       }
@@ -701,6 +704,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                   headers={rawData.headers}
                   rows={rawData.sampleRows}
                   mapping={mapping}
+                  defaultContractStart={defaultContractStart}
                   onChange={handleMappingChange}
                 />
 
