@@ -67,6 +67,17 @@ export function TenantIntakeClient({ token, agentName, agentAgency, prefilledNam
       text: "When are you looking to move in?",
       placeholder: "e.g. 1 July 2026 or ASAP",
     },
+    {
+      key: "area_preference",
+      text: "Which areas or neighbourhoods are you open to?",
+      placeholder: "e.g. Mont Kiara, Bangsar, Petaling Jaya",
+    },
+    {
+      key: "furnishing_preference",
+      text: "What's your furnishing preference?",
+      inputType: "choice",
+      choices: ["Fully furnished", "Semi-furnished", "Unfurnished", "Flexible"],
+    },
   ];
 
   async function handleComplete(answers: Record<string, string>) {

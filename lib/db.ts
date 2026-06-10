@@ -1845,12 +1845,25 @@ export async function completeOwnerIntake(
 
 export async function createTenantIntakeSession(
   agentId: string,
-  opts?: { name?: string; phone?: string; ownerLeadId?: string }
+  opts?: { name?: string; phone?: string; ownerLeadId?: string; userId?: string }
 ): Promise<string> {
+  const token = `ti_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  // If caller supplies userId directly (e.g. public API routes with no auth session), use service client
+  if (opts?.userId) {
+    const svc = createServiceClient();
+    await svc.from("tenant_intake_sessions").insert({
+      token,
+      user_id: opts.userId,
+      agent_id: agentId,
+      name: opts?.name ?? null,
+      phone: opts?.phone ?? null,
+      owner_lead_id: opts?.ownerLeadId ?? null,
+    });
+    return token;
+  }
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
-  const token = `ti_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
   await supabase.from("tenant_intake_sessions").insert({
     token,
     user_id: user!.id,
@@ -1918,6 +1931,8 @@ export async function completeTenantIntake(
     bedrooms_pref?: number;
     preferred_move_in?: string;
     notes?: string;
+    area_preference?: string;
+    furnishing_preference?: string;
   },
   agentId: string
 ): Promise<TenantProfile> {
@@ -1947,6 +1962,8 @@ export async function completeTenantIntake(
     bedrooms_pref: data.bedrooms_pref ?? null,
     preferred_move_in: data.preferred_move_in ?? null,
     notes: data.notes ?? null,
+    area_preference: data.area_preference ?? null,
+    furnishing_preference: data.furnishing_preference ?? null,
     intake_token: token,
     intake_completed_at: new Date().toISOString(),
     source: "intake_form",
@@ -1992,6 +2009,38 @@ export async function completeTenantIntake(
 
   const { data: fresh } = await svc.from("tenant_profiles").select("*").eq("id", id).single();
   return fresh as unknown as TenantProfile;
+}
+
+// ─── Property profile pack ────────────────────────────────────────────────────
+
+export async function getOwnerLeadByPropertyShareToken(token: string): Promise<OwnerLead | null> {
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from("owner_leads")
+    .select("*")
+    .eq("property_share_token", token)
+    .maybeSingle();
+  return data ? parseOwnerLead(data as Record<string, unknown>) : null;
+}
+
+export async function getOrCreatePropertyShareToken(ownerLeadId: string): Promise<string> {
+  const supabase = await createClient();
+  // Return existing token if already generated
+  const { data: existing } = await supabase
+    .from("owner_leads")
+    .select("property_share_token")
+    .eq("id", ownerLeadId)
+    .maybeSingle();
+  const row = existing as Record<string, unknown> | null;
+  if (row?.property_share_token) return row.property_share_token as string;
+
+  // Generate a new one
+  const token = `pp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  await supabase
+    .from("owner_leads")
+    .update({ property_share_token: token })
+    .eq("id", ownerLeadId);
+  return token;
 }
 
 export async function getAllTenantProfiles(): Promise<TenantProfile[]> {

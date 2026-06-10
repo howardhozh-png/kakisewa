@@ -9,7 +9,8 @@ export type TemplateKey =
   | "expiry_check_owner"
   | "competitor_expiry_owner"
   | "rent_reminder"
-  | "service_contact_share";
+  | "service_contact_share"
+  | "property_pack";
 
 export interface TemplateVar { key: string; description: string }
 
@@ -165,6 +166,35 @@ Feel free to contact them directly.`,
       { key: "contactPhone",    description: "Phone number (digits only)" },
       { key: "contactAreaLine", description: "'\\nArea: ...' or blank" },
       { key: "contactNotesLine", description: "'\\nNote: ...' or blank" },
+    ],
+  },
+  {
+    key: "property_pack",
+    label: "Property profile pack",
+    description: "Sent to a prospective tenant to share property details and collect their profile.",
+    defaultBody:
+`Hi {{tenantName}}! I'm {{agentName}}{{agencyLine}}.
+
+I have a great unit that might be a perfect fit for you:
+
+*{{propertyName}}*{{unitLine}}
+RM {{rent}}/mo · {{beds}} bed · {{baths}} bath{{availableLine}}
+
+Take a look here:
+{{propertyPackUrl}}
+
+If you're keen, tap the link to view the details and let me know 🏠`,
+    variables: [
+      { key: "tenantName",      description: "Tenant's first name or 'there'" },
+      { key: "agentName",       description: "Your name" },
+      { key: "agencyLine",      description: "' from Agency' or blank" },
+      { key: "propertyName",    description: "Property name" },
+      { key: "unitLine",        description: "' · Unit X' or blank" },
+      { key: "rent",            description: "Monthly rent e.g. 2,500" },
+      { key: "beds",            description: "Bedrooms" },
+      { key: "baths",           description: "Bathrooms" },
+      { key: "availableLine",   description: "' · Available Jan 2026' or blank" },
+      { key: "propertyPackUrl", description: "Link to property profile pack" },
     ],
   },
 ];

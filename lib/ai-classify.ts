@@ -91,6 +91,8 @@ export interface TenantIntakeData {
   budget_max?: number;
   bedrooms_pref?: number;
   preferred_move_in?: string;
+  area_preference?: string;
+  furnishing_preference?: string;
 }
 
 export async function extractTenantIntake(rawAnswers: string[]): Promise<TenantIntakeData> {
@@ -111,6 +113,8 @@ Answers (in order):
 8. Budget range (RM): ${rawAnswers[7] ?? ""}
 9. Bedrooms needed: ${rawAnswers[8] ?? ""}
 10. Move-in date: ${rawAnswers[9] ?? ""}
+11. Preferred areas/locations: ${rawAnswers[10] ?? ""}
+12. Furnishing preference: ${rawAnswers[11] ?? ""}
 
 Return ONLY valid JSON:
 {
@@ -124,13 +128,15 @@ Return ONLY valid JSON:
   "budget_min": number or null,
   "budget_max": number or null,
   "bedrooms_pref": integer or null,
-  "preferred_move_in": "YYYY-MM-DD" or null
+  "preferred_move_in": "YYYY-MM-DD" or null,
+  "area_preference": string or null,
+  "furnishing_preference": "Fully furnished" | "Semi-furnished" | "Unfurnished" | "Flexible" or null
 }`;
 
   try {
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 400,
+      max_tokens: 500,
       messages: [{ role: "user", content: prompt }],
     });
     return JSON.parse(res.choices[0]?.message?.content ?? "{}") as TenantIntakeData;
@@ -160,5 +166,7 @@ function mockTenantIntake(answers: string[]): TenantIntakeData {
     budget_max: nums[1] ?? nums[0] ?? undefined,
     bedrooms_pref: isNaN(bedNum) ? undefined : bedNum,
     preferred_move_in: undefined,
+    area_preference: answers[10] || undefined,
+    furnishing_preference: answers[11] || undefined,
   };
 }

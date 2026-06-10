@@ -129,6 +129,7 @@ export interface OwnerLead {
   competitor_contract_end?: string | null;
   competitor_stage?: "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
   deleted_at?: string | null;
+  property_share_token?: string | null;
   created_at: string;
 }
 
@@ -214,6 +215,8 @@ export interface TenantProfile {
   is_seeking?: number;          // 0/1 — tenant is looking for a new place
   seeking_from?: string | null; // 'YYYY-MM-DD'
   seeking_budget_max?: number | null;
+  area_preference?: string | null;
+  furnishing_preference?: string | null;
   created_at: string;
 }
 
@@ -329,6 +332,7 @@ export type WhatsAppTemplate =
   | "competitor_expiry_owner"  // target listing: outreach to competitor unit's owner
   | "owner_outreach"           // bulk to imported owner list (Phase C)
   | "tenant_intake"            // sends intake-form link (Phase D)
+  | "property_pack"            // sends property profile pack link (Phase D)
   | "viewing_schedule"         // Phase E
   ;
 

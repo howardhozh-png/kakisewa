@@ -49,6 +49,7 @@ import {
   clearRenewalData,
   createTenantIntakeSession,
   deleteTenantIntakeSession,
+  getOrCreatePropertyShareToken,
   recordCommissionEvent,
   createPropertySupport,
   updatePropertySupport,
@@ -1372,6 +1373,44 @@ No login needed — the link is private.`;
 
   const out = buildOutbound({ template: "tenant_intake", toPhone: "", body });
   return { ok: true, url, waUrl: out.url, message: "Tenant intake form link ready" };
+}
+
+export async function getOrCreatePropertyPackLink(ownerLeadId: string): Promise<{
+  ok: boolean; url: string; waUrl: string;
+}> {
+  const [token, lead, agent, siteUrl] = await Promise.all([
+    getOrCreatePropertyShareToken(ownerLeadId),
+    getOwnerLead(ownerLeadId),
+    getAgentProfile(),
+    getBaseUrl(),
+  ]);
+  const url = `${siteUrl}/p/${token}`;
+  const propertyName = lead?.property_name ?? "the property";
+  const unitLine = lead?.unit ? ` · Unit ${lead.unit}` : "";
+  const rent = lead?.expected_rent != null ? `RM ${lead.expected_rent.toLocaleString()}/mo` : "";
+  const beds = lead?.bedrooms != null ? `${lead.bedrooms} bed` : "";
+  const baths = lead?.bathrooms != null ? `${lead.bathrooms} bath` : "";
+  const stats = [rent, beds, baths].filter(Boolean).join(" · ");
+  const agencyLine = agent.agency ? ` from ${agent.agency}` : "";
+  const availableLine = lead?.available_from
+    ? ` · Available ${new Date(lead.available_from).toLocaleDateString("en-MY", { month: "short", year: "numeric" })}`
+    : "";
+
+  const body = `Hi! I'm ${agent.name ?? "your agent"}${agencyLine}.
+
+I have a unit that might be a great fit for you:
+
+*${propertyName}*${unitLine}
+${stats}${availableLine}
+
+Take a look here:
+${url}
+
+If you're keen, tap the link to view the details and let me know 🏠`;
+
+  const { buildOutbound } = await import("./whatsapp");
+  const out = buildOutbound({ template: "property_pack", toPhone: "", body });
+  return { ok: true, url, waUrl: out.url };
 }
 
 // ─── Manual lead / tenant creation ───────────────────────────────────────────
