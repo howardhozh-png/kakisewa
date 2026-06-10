@@ -88,8 +88,13 @@ const DISPLAY_ORDER: TenancyMappingField[] = [
 ];
 
 const ALWAYS_SHOW = new Set<TenancyMappingField>([
-  "contract_start", "address", "owner_name", "owner_phone", "amount",
+  "contract_start", "contract_end", "address", "owner_name", "owner_phone", "amount",
 ]);
+
+const FIELD_HINTS: Partial<Record<TenancyMappingField, string>> = {
+  contract_duration_months: "defaults to 12 if blank",
+  contract_end: "auto-filled: start + duration if blank",
+};
 
 const LS_KEY = "kk-tenancy-mapping";
 
@@ -216,8 +221,8 @@ function MappingTable({
                 {FIELD_LABELS[field]}
                 {isRequired && <span style={{ color: "var(--kk-red)" }}> *</span>}
               </p>
-              {field === "contract_duration_months" && (
-                <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>defaults to 12 if blank</p>
+              {FIELD_HINTS[field] && (
+                <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{FIELD_HINTS[field]}</p>
               )}
             </div>
 
@@ -628,58 +633,69 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
               <div style={{ overflow: "auto", flex: 1, padding: "16px 24px" }} className="space-y-4">
 
                 {/* ── Decisions banner (top) ── */}
-                {(!mapping.contract_start || !mapping.contract_end) && (
-                  <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #F59E0B" }}>
-                    {/* Item 1: no contract start */}
-                    {!mapping.contract_start && (
-                      <div
-                        className="px-4 py-3 flex items-start gap-3"
-                        style={{
-                          background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB",
-                          borderBottom: !mapping.contract_end ? "1px solid #F59E0B" : "none",
-                        }}
-                      >
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: defaultContractStart ? "var(--kk-green)" : "#D97706" }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>
-                            {defaultContractStart
-                              ? `Start date: today (${defaultContractStart}) applied to all rows`
-                              : "No contract start date column found"}
-                          </p>
-                          <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-                            {defaultContractStart ? "Editable per row in the next step." : "Map a start date column below, or use today as a placeholder."}
-                          </p>
+                {(!mapping.contract_start || !mapping.contract_end) && (() => {
+                  const item1Unresolved = !mapping.contract_start && !defaultContractStart;
+                  const item2Unresolved = !mapping.contract_end && !defaultContractStart;
+                  const anyUnresolved = item1Unresolved || item2Unresolved;
+                  return (
+                    <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${anyUnresolved ? "#F59E0B" : "var(--kk-green)"}` }}>
+                      {/* Item 1: no contract start */}
+                      {!mapping.contract_start && (
+                        <div
+                          className="px-4 py-3 flex items-start gap-3"
+                          style={{
+                            background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB",
+                            borderBottom: !mapping.contract_end ? `1px solid ${anyUnresolved ? "#F59E0B" : "var(--kk-green)"}` : "none",
+                          }}
+                        >
+                          {defaultContractStart
+                            ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--kk-green)" }} />
+                            : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#D97706" }} />
+                          }
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>
+                              {defaultContractStart
+                                ? `Start date: today (${defaultContractStart}) applied to all rows`
+                                : "No contract start date column found"}
+                            </p>
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+                              {defaultContractStart ? "Editable per row in the next step." : "Map a start date column below, or use today as a placeholder."}
+                            </p>
+                          </div>
+                          {!defaultContractStart && (
+                            <button
+                              type="button"
+                              className="kk-pill kk-pill-ghost shrink-0"
+                              style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
+                              onClick={() => setDefaultContractStart(new Date().toISOString().slice(0, 10))}
+                            >
+                              Add today
+                            </button>
+                          )}
                         </div>
-                        {!defaultContractStart && (
-                          <button
-                            type="button"
-                            className="kk-pill kk-pill-ghost shrink-0"
-                            style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
-                            onClick={() => setDefaultContractStart(new Date().toISOString().slice(0, 10))}
-                          >
-                            Add today
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {/* Item 2: no contract end → duration default */}
-                    {!mapping.contract_end && (
-                      <div
-                        className="px-4 py-3 flex items-center gap-2 flex-wrap"
-                        style={{ background: "#FFFBEB", fontSize: 12, color: "var(--kk-ink)" }}
-                      >
-                        <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#D97706" }} />
-                        <span style={{ color: "var(--kk-ink-mute)" }}>No contract end date — defaulting to</span>
-                        <input
-                          type="number" min={1} max={60} value={defaultDuration}
-                          onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
-                          style={{ width: 44, padding: "2px 6px", border: "1px solid #F59E0B", borderRadius: 6, fontSize: 12, color: "var(--kk-ink)", background: "#fff", textAlign: "center" }}
-                        />
-                        <span style={{ color: "var(--kk-ink-mute)" }}>months</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                      {/* Item 2: no contract end → duration default */}
+                      {!mapping.contract_end && (
+                        <div
+                          className="px-4 py-3 flex items-center gap-2 flex-wrap"
+                          style={{ background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB", fontSize: 12, color: "var(--kk-ink)" }}
+                        >
+                          {defaultContractStart
+                            ? <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: "var(--kk-green)" }} />
+                            : <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#D97706" }} />
+                          }
+                          <span style={{ color: "var(--kk-ink-mute)" }}>No contract end date — auto-filling</span>
+                          <input
+                            type="number" min={1} max={60} value={defaultDuration}
+                            onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
+                            style={{ width: 44, padding: "2px 6px", border: `1px solid ${defaultContractStart ? "var(--kk-green)" : "#F59E0B"}`, borderRadius: 6, fontSize: 12, color: "var(--kk-ink)", background: defaultContractStart ? "var(--kk-green-soft)" : "#fff", textAlign: "center" }}
+                          />
+                          <span style={{ color: "var(--kk-ink-mute)" }}>months from start date</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <MappingTable
                   headers={rawData.headers}
