@@ -53,6 +53,7 @@ import {
   markCompetitorRented,
   setCompetitorStage,
   winCompetitorUnit,
+  archiveCompetitorLead,
 } from "./db";
 import { getAgentId } from "./auth";
 import { verifyReceiptImage } from "./ai-verify";
@@ -1700,6 +1701,64 @@ export async function winCompetitorUnitAction(id: string): Promise<{ ok: boolean
   revalidatePath("/target-units");
   revalidatePath("/my-listing");
   return { ok: true };
+}
+
+export async function archiveCompetitorLeadAction(id: string): Promise<{ ok: boolean }> {
+  "use server";
+  await archiveCompetitorLead(id);
+  invalidateCache();
+  revalidatePath("/target-units");
+  return { ok: true };
+}
+
+export async function updateCompetitorLeadAction(
+  id: string,
+  data: {
+    owner_name?: string;
+    owner_phone?: string;
+    property_name?: string;
+    unit?: string;
+    expected_rent?: number | null;
+    bedrooms?: number | null;
+    bathrooms?: number | null;
+    competitor_contract_end?: string | null;
+  }
+): Promise<{ ok: boolean }> {
+  "use server";
+  await updateOwnerLead(id, data);
+  invalidateCache();
+  revalidatePath("/target-units");
+  return { ok: true };
+}
+
+export async function buildCompetitorOwnerPing(leadId: string): Promise<{ url: string; body: string } | null> {
+  const lead = await getOwnerLead(leadId);
+  if (!lead || !lead.owner_phone || !lead.competitor_contract_end) return null;
+  const agent = await getAgentProfile();
+  const days = daysUntil(lead.competitor_contract_end, new Date());
+  const expiryWhen = days > 0
+    ? `in ${days} day${days === 1 ? "" : "s"}`
+    : days === 0 ? "today"
+    : `${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
+  const firstName = agent.name?.trim().split(/\s+/)[0] ?? undefined;
+  const overrides = parseTemplateOverrides(agent.whatsapp_templates);
+  const body = resolveTemplate("competitor_expiry_owner", overrides, {
+    ownerName: lead.owner_name ?? "",
+    agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
+    agentName: agent.name ?? "Your agent",
+    propertyName: lead.property_name ? (lead.unit ? `${lead.property_name}, Unit ${lead.unit}` : lead.property_name) : "your property",
+    expiryWhen,
+  });
+  const out = buildOutbound({ template: "competitor_expiry_owner", toPhone: lead.owner_phone, body });
+  await logWhatsApp({
+    related_id: leadId,
+    related_type: "owner_lead",
+    template: "competitor_expiry_owner",
+    recipient_phone: lead.owner_phone,
+    recipient_name: lead.owner_name ?? "",
+    body,
+  });
+  return { url: out.url, body };
 }
 
 export async function clearTrialDowngradeNotice(): Promise<void> {

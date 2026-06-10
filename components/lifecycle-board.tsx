@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
-import { setLifecycleStage, buildExpiryPingOwner } from "@/lib/actions";
+import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
 import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
@@ -574,6 +574,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       )}
       {col.stage === "headsup" && (
         <>
+          {plan !== "silver" && <HeadsupTenantAction t={t} />}
           {plan !== "silver" && <HeadsupOwnerAction t={t} />}
           <WhatsNext
             t={t}
@@ -728,7 +729,40 @@ const OUTCOME_META: Record<Exclude<OutcomeChoice, "">, {
   },
 };
 
-// ─── Headsup: notify owner ────────────────────────────────────────────────────
+// ─── Headsup: message tenant ──────────────────────────────────────────────────
+
+function HeadsupTenantAction({ t }: { t: Tenancy }) {
+  const [pending, startTransition] = useTransition();
+
+  if (!t.tenant_phone) return null;
+
+  function handleClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    startTransition(async () => {
+      const res = await buildExpiryPingTenant(t.id);
+      if (res) window.open(res.url, "_blank", "noopener");
+    });
+  }
+
+  return (
+    <button
+      data-card-action
+      onClick={handleClick}
+      disabled={pending}
+      className="kk-card-cta kk-card-cta-soft-green"
+    >
+      <span className="flex items-start gap-1.5 min-w-0 flex-1">
+        {pending
+          ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" />
+          : <MessageCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+        <span>Message tenant</span>
+      </span>
+      <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+    </button>
+  );
+}
+
+// ─── Headsup: message owner ───────────────────────────────────────────────────
 
 function HeadsupOwnerAction({ t }: { t: Tenancy }) {
   const [pending, startTransition] = useTransition();
@@ -754,7 +788,7 @@ function HeadsupOwnerAction({ t }: { t: Tenancy }) {
         {pending
           ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" />
           : <MessageCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
-        <span>Notify owner</span>
+        <span>Message owner</span>
       </span>
       <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
     </button>

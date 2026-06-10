@@ -317,6 +317,7 @@ export type WhatsAppTemplate =
   | "forward_receipt_to_owner"
   | "expiry_check_tenant"      // "Are you renewing?"
   | "expiry_check_owner"       // "Still want to rent it out?"
+  | "competitor_expiry_owner"  // target listing: outreach to competitor unit's owner
   | "owner_outreach"           // bulk to imported owner list (Phase C)
   | "tenant_intake"            // sends intake-form link (Phase D)
   | "viewing_schedule"         // Phase E

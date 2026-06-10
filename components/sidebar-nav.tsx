@@ -16,7 +16,7 @@ const PIPELINE_ITEMS = [
   { href: "/potential-listing", icon: MessageCircle, label: "Potential listing", minPlan: null },
   { href: "/my-listing",  icon: ClipboardList,  label: "My listing",  minPlan: null },
   { href: "/existing-listing",  icon: RefreshCw,      label: "Existing listing",  minPlan: null },
-  { href: "/target-units",      icon: Target,         label: "Target units",       minPlan: null },
+  { href: "/target-units",      icon: Target,         label: "Target listing",     minPlan: null },
 ] as const;
 
 const BOTTOM_ITEMS = [

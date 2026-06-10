@@ -7,6 +7,7 @@ export type TemplateKey =
   | "owner_intake_form"
   | "expiry_check_tenant"
   | "expiry_check_owner"
+  | "competitor_expiry_owner"
   | "rent_reminder"
   | "service_contact_share";
 
@@ -111,6 +112,23 @@ Here's a sample tenant package I put together for you, ready for houseviewing:
       { key: "tenantName",   description: "Tenant's full name" },
       { key: "expiryWhen",   description: "'in 5 days' / 'today' / '3 days ago'" },
       { key: "renewalForm",  description: "Renewal form link" },
+    ],
+  },
+  {
+    key: "competitor_expiry_owner",
+    label: "Target listing: Owner",
+    description: "Sent to a competitor unit owner when their tenancy is expiring.",
+    defaultBody:
+`Hi {{ownerName}}! {{agentLine}}The tenancy at *{{propertyName}}* is expiring {{expiryWhen}}. I'd love to help manage your property when the current tenancy ends.
+
+Are you open to renting it out?
+— {{agentName}}`,
+    variables: [
+      { key: "ownerName",    description: "Owner's full name" },
+      { key: "agentLine",    description: "'I'm Name from Agency. ' or blank" },
+      { key: "agentName",    description: "Your name" },
+      { key: "propertyName", description: "Property name" },
+      { key: "expiryWhen",   description: "'in 5 days' / 'today' / '3 days ago'" },
     ],
   },
   {

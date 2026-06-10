@@ -1471,6 +1471,15 @@ export async function winCompetitorUnit(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function archiveCompetitorLead(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("owner_leads")
+    .update({ is_competitor_target: false, stage: "archived" })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function getListedOwnerLeads(): Promise<OwnerLead[]> {
   const userId = await getCurrentUserId();
   if (!userId) {

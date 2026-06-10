@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead, CompetitorStage, daysUntil } from "@/lib/types";
-import { setCompetitorStageAction, winCompetitorUnitAction } from "@/lib/actions";
+import { setCompetitorStageAction, winCompetitorUnitAction, archiveCompetitorLeadAction, buildCompetitorOwnerPing } from "@/lib/actions";
 import { FilterSelect } from "@/components/filter-select";
 import { CompetitorTimeline } from "@/components/competitor-timeline";
+import { EditCompetitorDialog } from "@/components/edit-competitor-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Eye, Phone, MessageCircle, XCircle, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote } from "lucide-react";
+import { Eye, Clock, MessageCircle, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, Lock, ChevronDown, Loader2, XCircle } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
 interface ColMeta {
-  stage: CompetitorStage;
+  stage: "reach_out" | "watching";
   label: string;
   hint: string;
   dot: string;
@@ -26,51 +27,35 @@ interface ColMeta {
 
 const COLUMNS: ColMeta[] = [
   {
+    stage: "reach_out",
+    label: "Expiring",
+    hint: "60 days or less. Use 'What's next?' on the card to choose the outcome.",
+    dot: "#B45309",
+    soft: "rgba(251,191,36,0.10)",
+    ink: "#B45309",
+    Icon: Clock,
+  },
+  {
     stage: "watching",
     label: "Watching",
-    hint: "Tracking — auto-moves to Reach out 60 days before contract end.",
+    hint: "Tracking — auto-moves to Expiring 60 days before contract end.",
     dot: "var(--kk-ink-faint)",
     soft: "var(--kk-surface-2)",
     ink: "var(--kk-ink-mute)",
     Icon: Eye,
   },
-  {
-    stage: "reach_out",
-    label: "Reach out",
-    hint: "60 days or less. Contact the owner now before another agent does.",
-    dot: "#B45309",
-    soft: "rgba(251,191,36,0.10)",
-    ink: "#B45309",
-    Icon: Phone,
-  },
-  {
-    stage: "in_talks",
-    label: "In talks",
-    hint: "Owner is interested. Keep the conversation going.",
-    dot: "var(--kk-theme-dark)",
-    soft: "var(--kk-theme-light)",
-    ink: "var(--kk-theme-dark)",
-    Icon: MessageCircle,
-  },
-  {
-    stage: "missed",
-    label: "Missed",
-    hint: "Didn't get it this time.",
-    dot: "var(--kk-ink-faint)",
-    soft: "var(--kk-surface-2)",
-    ink: "var(--kk-ink-faint)",
-    Icon: XCircle,
-  },
 ];
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-function effectiveStage(lead: OwnerLead, today: Date): CompetitorStage {
+function effectiveColumn(lead: OwnerLead, today: Date): "reach_out" | "watching" {
   const stored = (lead.competitor_stage ?? "watching") as CompetitorStage;
-  if (stored === "watching" && lead.competitor_contract_end) {
-    if (daysUntil(lead.competitor_contract_end, today) <= 60) return "reach_out";
-  }
-  return stored;
+  // in_talks/missed are removed from UI — treat as watching
+  if (stored === "in_talks" || stored === "missed") return "watching";
+  if (stored === "reach_out") return "reach_out";
+  // watching: auto-promote to expiring if within 60 days
+  if (lead.competitor_contract_end && daysUntil(lead.competitor_contract_end, today) <= 60) return "reach_out";
+  return "watching";
 }
 
 function normalizePropName(name: string): string {
@@ -97,7 +82,8 @@ export function CompetitorBoard({ leads }: Props) {
   const [draggingLead, setDraggingLead] = useState<OwnerLead | null>(null);
   const [propertyFilter, setPropertyFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("");
-  const [pendingMove, setPendingMove] = useState<{ lead: OwnerLead; target: CompetitorStage } | null>(null);
+  const [pendingMove, setPendingMove] = useState<{ lead: OwnerLead; target: "reach_out" | "watching" } | null>(null);
+  const [editLead, setEditLead] = useState<OwnerLead | null>(null);
 
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
@@ -124,13 +110,12 @@ export function CompetitorBoard({ leads }: Props) {
   }, [local]);
 
   const byStage = useMemo(() => {
-    const out: Record<CompetitorStage, OwnerLead[]> = { watching: [], reach_out: [], in_talks: [], missed: [] };
+    const out: Record<"reach_out" | "watching", OwnerLead[]> = { reach_out: [], watching: [] };
     local
       .filter((l) => propertyFilter === "all" || normalizePropName(l.property_name ?? "") === propertyFilter)
       .filter((l) => !monthFilter || l.competitor_contract_end?.slice(0, 7) === monthFilter)
       .forEach((l) => {
-        const stage = effectiveStage(l, today);
-        out[stage].push(l);
+        out[effectiveColumn(l, today)].push(l);
       });
     Object.values(out).forEach((arr) =>
       arr.sort((a, b) => (a.competitor_contract_end ?? "").localeCompare(b.competitor_contract_end ?? ""))
@@ -143,10 +128,11 @@ export function CompetitorBoard({ leads }: Props) {
     setDraggingLead(null);
     if (!e.over) return;
     const id = String(e.active.id);
-    const target = String(e.over.id) as CompetitorStage;
+    const target = String(e.over.id) as "reach_out" | "watching";
+    if (target !== "reach_out" && target !== "watching") return;
     const lead = local.find((x) => x.id === id);
     if (!lead) return;
-    if (effectiveStage(lead, today) === target) return;
+    if (effectiveColumn(lead, today) === target) return;
     setPendingMove({ lead, target });
   }
 
@@ -160,17 +146,23 @@ export function CompetitorBoard({ leads }: Props) {
     else router.refresh();
   }
 
-  async function handleSetStage(id: string, stage: CompetitorStage) {
-    setLocal((prev) => prev.map((x) => x.id === id ? { ...x, competitor_stage: stage } : x));
-    const res = await setCompetitorStageAction(id, stage);
-    if (!res.ok) { setLocal(leads); toast.error("Could not update"); }
-    else router.refresh();
-  }
-
   async function handleWin(id: string) {
     setLocal((prev) => prev.filter((x) => x.id !== id));
     await winCompetitorUnitAction(id);
-    toast.success("Won! Card moved to My listing.");
+    toast.success("Won! Card moved to Existing listing.");
+    router.refresh();
+  }
+
+  async function handleBackToWatching(id: string) {
+    setLocal((prev) => prev.map((x) => x.id === id ? { ...x, competitor_stage: "watching" as CompetitorStage } : x));
+    await setCompetitorStageAction(id, "watching");
+    router.refresh();
+  }
+
+  async function handleArchive(id: string) {
+    setLocal((prev) => prev.filter((x) => x.id !== id));
+    await archiveCompetitorLeadAction(id);
+    toast.success("Removed from target list.");
     router.refresh();
   }
 
@@ -219,7 +211,7 @@ export function CompetitorBoard({ leads }: Props) {
           <div className="kk-board-row px-3 lg:px-5">
             {COLUMNS.map((col) => {
               const cards = byStage[col.stage];
-              const isReachOut = col.stage === "reach_out";
+              const isExpiring = col.stage === "reach_out";
 
               const columnContent = cards.length === 0
                 ? <EmptyDrop col={col} />
@@ -230,12 +222,14 @@ export function CompetitorBoard({ leads }: Props) {
                       col={col}
                       today={today}
                       isDragging={draggingId === l.id}
-                      onSetStage={handleSetStage}
+                      onOpen={() => setEditLead(l)}
                       onWin={handleWin}
+                      onBackToWatching={handleBackToWatching}
+                      onArchive={handleArchive}
                     />
                   ));
 
-              if (isReachOut) {
+              if (isExpiring) {
                 return (
                   <div key={col.stage} style={{ position: "relative", flex: 2, minWidth: 380, minHeight: 0, display: "flex", flexDirection: "column" }}>
                     <div style={{ position: "absolute", top: -50, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
@@ -295,6 +289,15 @@ export function CompetitorBoard({ leads }: Props) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Edit dialog */}
+      {editLead && (
+        <EditCompetitorDialog
+          lead={editLead}
+          open={!!editLead}
+          onOpenChange={(o) => { if (!o) setEditLead(null); }}
+        />
+      )}
     </>
   );
 }
@@ -304,7 +307,7 @@ export function CompetitorBoard({ leads }: Props) {
 function Column({ col, count, children, extraStyle }: { col: ColMeta; count: number; children: React.ReactNode; extraStyle?: React.CSSProperties }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.stage });
   const Icon = col.Icon;
-  const isReachOut = col.stage === "reach_out";
+  const isExpiring = col.stage === "reach_out";
 
   return (
     <div
@@ -314,18 +317,18 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
       style={{
         background: isOver
           ? col.soft
-          : isReachOut
+          : isExpiring
             ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, var(--kk-theme-dark) 18%, transparent) 0%, color-mix(in srgb, var(--kk-theme-dark) 8%, transparent) 40%, var(--kk-surface) 68%)"
             : "var(--kk-surface)",
         outline: isOver
           ? `2px solid ${col.ink}`
-          : isReachOut
+          : isExpiring
             ? "1px solid color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)"
             : "1px solid transparent",
         outlineOffset: "-1px",
         boxShadow: isOver
           ? undefined
-          : isReachOut
+          : isExpiring
             ? "0 0 0 1px color-mix(in srgb, var(--kk-theme-dark) 22%, transparent), 0 0 14px 5px color-mix(in srgb, var(--kk-theme-dark) 15%, transparent)"
             : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
         ...extraStyle,
@@ -335,7 +338,7 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         className="kk-board-col-header"
         style={{
           borderBottomColor: col.soft,
-          ...(isReachOut ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}),
+          ...(isExpiring ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}),
         }}
       >
         <div className="flex items-center gap-2">
@@ -404,18 +407,21 @@ function CardPreview({ lead }: { lead: OwnerLead }) {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function Card({ lead, col, today, isDragging, onSetStage, onWin }: {
+function Card({ lead, col, today, isDragging, onOpen, onWin, onBackToWatching, onArchive }: {
   lead: OwnerLead;
   col: ColMeta;
   today: Date;
   isDragging: boolean;
-  onSetStage: (id: string, stage: CompetitorStage) => void;
+  onOpen: () => void;
   onWin: (id: string) => void;
+  onBackToWatching: (id: string) => void;
+  onArchive: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
+  const isExpiring = col.stage === "reach_out";
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
-  if (col.stage === "reach_out" && !isDragging) {
+  if (isExpiring && !isDragging) {
     cardStyle.boxShadow = "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 14%, transparent), 0 1px 4px rgba(0,0,0,0.06)";
   }
 
@@ -434,6 +440,10 @@ function Card({ lead, col, today, isDragging, onSetStage, onWin }: {
       {...listeners}
       style={cardStyle}
       className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("[data-card-action]")) return;
+        onOpen();
+      }}
     >
       {/* Photo + info */}
       <div className="flex gap-2.5">
@@ -491,130 +501,214 @@ function Card({ lead, col, today, isDragging, onSetStage, onWin }: {
         </div>
       </div>
 
-      <CardAction lead={lead} col={col} onSetStage={onSetStage} onWin={onWin} />
+      {/* Actions — only on Expiring column */}
+      {isExpiring && (
+        <>
+          <MessageOwnerAction lead={lead} />
+          <ExpiringWhatsNext
+            lead={lead}
+            onWin={onWin}
+            onBackToWatching={onBackToWatching}
+            onArchive={onArchive}
+          />
+        </>
+      )}
     </div>
   );
 }
 
-// ─── Card actions ─────────────────────────────────────────────────────────────
+// ─── Message owner action ─────────────────────────────────────────────────────
 
-function CardAction({ lead, col, onSetStage, onWin }: {
-  lead: OwnerLead;
-  col: ColMeta;
-  onSetStage: (id: string, stage: CompetitorStage) => void;
-  onWin: (id: string) => void;
-}) {
-  const waUrl = lead.owner_phone
-    ? `https://wa.me/${lead.owner_phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${lead.owner_name ?? "there"}, I noticed your unit at ${lead.property_name ?? "your property"} is coming up for renewal. Are you open to discussing new tenancy arrangements?`)}`
-    : null;
+function MessageOwnerAction({ lead }: { lead: OwnerLead }) {
+  const [pending, startTransition] = useTransition();
+  if (!lead.owner_phone) return null;
 
-  if (col.stage === "watching") {
-    return (
-      <span className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-faint)" }}>
-        <Eye className="w-3.5 h-3.5" />
-        Monitoring
-      </span>
-    );
-  }
-
-  if (col.stage === "reach_out") {
-    return (
-      <div className="space-y-1.5">
-        {waUrl && (
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-card-action
-            onClick={(e) => { e.stopPropagation(); onSetStage(lead.id, "in_talks"); }}
-            className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
-            style={{ textDecoration: "none" }}
-          >
-            <span className="flex items-start gap-1.5 min-w-0 flex-1">
-              <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <span>Text owner</span>
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          </a>
-        )}
-        <button
-          type="button"
-          data-card-action
-          onClick={(e) => { e.stopPropagation(); onSetStage(lead.id, "in_talks"); }}
-          className="kk-card-cta flex items-center justify-between w-full"
-          style={{ background: "var(--kk-theme-light)", color: "var(--kk-theme-dark)", border: "none" }}
-        >
-          <span className="flex items-start gap-1.5 min-w-0 flex-1">
-            <Phone className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>Mark contacted</span>
-          </span>
-          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        </button>
-        <button
-          type="button"
-          data-card-action
-          onClick={(e) => { e.stopPropagation(); onSetStage(lead.id, "missed"); }}
-          className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center"
-          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
-        >
-          <XCircle className="w-3 h-3" />
-          Missed
-        </button>
-      </div>
-    );
-  }
-
-  if (col.stage === "in_talks") {
-    return (
-      <div className="space-y-1.5">
-        {waUrl && (
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-card-action
-            onClick={(e) => e.stopPropagation()}
-            className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
-            style={{ textDecoration: "none" }}
-          >
-            <span className="flex items-start gap-1.5 min-w-0 flex-1">
-              <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <span>Text owner</span>
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          </a>
-        )}
-        <button
-          type="button"
-          data-card-action
-          onClick={(e) => { e.stopPropagation(); onWin(lead.id); }}
-          className="kk-card-cta flex items-center justify-between w-full"
-          style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C", border: "none" }}
-        >
-          <span className="flex items-start gap-1.5 min-w-0 flex-1">
-            <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>Won — add to My listing</span>
-          </span>
-          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        </button>
-        <button
-          type="button"
-          data-card-action
-          onClick={(e) => { e.stopPropagation(); onSetStage(lead.id, "missed"); }}
-          className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center"
-          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
-        >
-          <XCircle className="w-3 h-3" />
-          Missed
-        </button>
-      </div>
-    );
+  function handleClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    startTransition(async () => {
+      const res = await buildCompetitorOwnerPing(lead.id);
+      if (res) window.open(res.url, "_blank", "noopener");
+    });
   }
 
   return (
-    <span className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-faint)" }}>
-      <XCircle className="w-3.5 h-3.5" />
-      No action
-    </span>
+    <button
+      data-card-action
+      onClick={handleClick}
+      disabled={pending}
+      className="kk-card-cta kk-card-cta-soft-green"
+    >
+      <span className="flex items-start gap-1.5 min-w-0 flex-1">
+        {pending
+          ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" />
+          : <WhatsAppIcon className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+        <span>Message owner</span>
+      </span>
+      <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+    </button>
+  );
+}
+
+// ─── "What's next?" for Expiring cards ───────────────────────────────────────
+
+type ExpiringOutcome = "" | "win" | "back" | "archive";
+
+const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
+  label: string;
+  description: string;
+  confirm: string;
+  soft: string;
+  ink: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = {
+  win: {
+    label: "Owner rents with me",
+    description: "Move this unit to Existing listing. You've won it.",
+    confirm: "Yes, move to Existing listing",
+    soft: "rgba(52,199,89,0.12)",
+    ink: "#1F8B4C",
+    Icon: CheckCircle2,
+  },
+  back: {
+    label: "Owner doesn't rent",
+    description: "Move back to Watching. You can follow up again later.",
+    confirm: "Move back to Watching",
+    soft: "var(--kk-surface-2)",
+    ink: "var(--kk-ink-mute)",
+    Icon: Eye,
+  },
+  archive: {
+    label: "Owner own stay",
+    description: "The owner will occupy the unit. Remove it from your target list.",
+    confirm: "Remove from target list",
+    soft: "var(--kk-surface-2)",
+    ink: "var(--kk-ink-faint)",
+    Icon: Lock,
+  },
+};
+
+function ExpiringWhatsNext({ lead, onWin, onBackToWatching, onArchive }: {
+  lead: OwnerLead;
+  onWin: (id: string) => void;
+  onBackToWatching: (id: string) => void;
+  onArchive: (id: string) => void;
+}) {
+  const [choice, setChoice] = useState<ExpiringOutcome>("");
+  const [confirming, setConfirming] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function onDown(e: MouseEvent) {
+      if (!dropdownRef.current?.contains(e.target as Node)) setDropdownOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [dropdownOpen]);
+
+  function onSelectChange(val: ExpiringOutcome) {
+    setDropdownOpen(false);
+    setChoice(val);
+    if (val) setConfirming(true);
+  }
+
+  function handleConfirm() {
+    setConfirming(false);
+    setChoice("");
+    if (choice === "win")     onWin(lead.id);
+    if (choice === "back")    onBackToWatching(lead.id);
+    if (choice === "archive") onArchive(lead.id);
+  }
+
+  const meta = choice ? EXPIRING_OUTCOMES[choice] : null;
+
+  return (
+    <>
+      <div
+        data-card-action
+        className="flex flex-col gap-2 pt-2"
+        style={{ borderTop: "1px solid var(--kk-line)" }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div ref={dropdownRef} className="relative shrink-0 inline-block">
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((o) => !o)}
+            className="flex items-center gap-2 text-[12px] pl-3 pr-2.5 py-1.5 rounded-lg"
+            style={{
+              background: "var(--kk-surface-2)",
+              color: choice ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+              border: "1px solid var(--kk-line)",
+            }}
+          >
+            {choice ? EXPIRING_OUTCOMES[choice].label : "What's next?"}
+            <ChevronDown className="w-3 h-3 shrink-0 transition-transform" style={{ color: "var(--kk-ink-faint)", transform: dropdownOpen ? "rotate(180deg)" : "none" }} />
+          </button>
+          {dropdownOpen && (
+            <div
+              className="absolute left-0 top-full mt-1 z-50 rounded-xl overflow-hidden"
+              style={{ background: "#fff", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 200 }}
+            >
+              {(["win", "back", "archive"] as const).map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => onSelectChange(val)}
+                  className="w-full text-left px-3 py-2 text-[12px] hover:bg-[var(--kk-surface-2)] transition-colors"
+                  style={{ color: "var(--kk-ink)" }}
+                >
+                  {EXPIRING_OUTCOMES[val].label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {meta && (
+        <Dialog open={confirming} onOpenChange={(v) => { if (!v) { setConfirming(false); setChoice(""); } }}>
+          <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{ background: meta.soft, color: meta.ink }}>
+                    <meta.Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>{meta.label}</p>
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{lead.owner_name} · {lead.property_name}</p>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="rounded-xl p-4" style={{ background: meta.soft }}>
+                <p className="text-[13px] leading-relaxed" style={{ color: meta.ink }}>{meta.description}</p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }}
+                  className="flex-1 kk-pill kk-pill-ghost text-[13px] py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleConfirm(); }}
+                  className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
+                  style={{ background: meta.ink, color: "#fff" }}
+                >
+                  {meta.confirm} →
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
