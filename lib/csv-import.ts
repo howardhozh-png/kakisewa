@@ -106,6 +106,9 @@ export interface ColumnMapping {
   bedrooms: string | null;
   bathrooms: string | null;
   notes: string | null;
+  contract_start: string | null;
+  contract_end: string | null;
+  contract_duration_months: string | null;
   parseAddressForUnit: boolean;   // no unit column — extract from address
   parseAddressForCondo: boolean;  // no property column — extract from address
 }
@@ -153,6 +156,7 @@ export function detectColumns(
     owner_name: null, owner_phone: null, address: null,
     property_name: null, unit: null, expected_rent: null,
     bedrooms: null, bathrooms: null, notes: null,
+    contract_start: null, contract_end: null, contract_duration_months: null,
     parseAddressForUnit: false, parseAddressForCondo: false,
   };
 

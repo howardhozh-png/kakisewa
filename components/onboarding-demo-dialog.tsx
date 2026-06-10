@@ -245,7 +245,7 @@ function Scene1({ active }: { active: boolean }) {
                 transition: "all 0.15s",
               }}>
                 <Upload style={{ width: 11, height: 11 }} />
-                Upload CSV
+                Upload file
               </div>
               <div className="relative">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{

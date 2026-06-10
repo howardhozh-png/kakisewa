@@ -1,24 +1,27 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, X, AlertCircle, CheckCircle2, FileSpreadsheet } from "lucide-react";
+import { Upload, AlertCircle, CheckCircle2, FileSpreadsheet, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  parseTenancyFile,
+  extractRawData,
+  buildRowsFromMapping,
+  detectColumnMap,
   isCriticalMissing,
   rowHasCriticalErrors,
   addMonths,
   type TenancyImportRow,
+  type RawImportData,
+  type CanonicalField,
   CRITICAL_FIELDS,
 } from "@/lib/tenancy-csv-import";
+import {
+  detectColumns,
+  parseOwnerAddress,
+} from "@/lib/csv-import";
 
-// ─── Column display config ────────────────────────────────────────────────────
+// ─── Column display config (review grid) ─────────────────────────────────────
 
 interface ColDef {
   field: keyof TenancyImportRow;
@@ -29,20 +32,105 @@ interface ColDef {
 }
 
 const COLUMNS: ColDef[] = [
-  { field: "property_name",           label: "Property",      width: 160, type: "text",   critical: true },
-  { field: "unit",                    label: "Unit",          width: 90,  type: "text",   critical: true },
-  { field: "owner_name",              label: "Owner Name",    width: 140, type: "text",   critical: true },
-  { field: "owner_phone",             label: "Owner Phone",   width: 130, type: "text",   critical: true },
-  { field: "tenant_name",             label: "Tenant Name",   width: 140, type: "text",   critical: false },
-  { field: "tenant_phone",            label: "Tenant Phone",  width: 130, type: "text",   critical: false },
-  { field: "amount",                  label: "Rent (RM)",     width: 100, type: "number", critical: true },
-  { field: "contract_start",          label: "Start Date",    width: 115, type: "date",   critical: true },
-  { field: "contract_end",            label: "End Date",      width: 115, type: "date",   critical: false },
-  { field: "contract_duration_months",label: "Duration (mo)", width: 105, type: "number", critical: false },
-  { field: "due_day",                 label: "Due Day",       width: 80,  type: "number", critical: false },
+  { field: "property_name",            label: "Property",      width: 160, type: "text",   critical: false },
+  { field: "unit",                     label: "Unit",          width: 90,  type: "text",   critical: false },
+  { field: "owner_name",               label: "Owner Name",    width: 140, type: "text",   critical: false },
+  { field: "owner_phone",              label: "Owner Phone",   width: 130, type: "text",   critical: false },
+  { field: "tenant_name",              label: "Tenant Name",   width: 140, type: "text",   critical: false },
+  { field: "tenant_phone",             label: "Tenant Phone",  width: 130, type: "text",   critical: false },
+  { field: "amount",                   label: "Rent (RM)",     width: 100, type: "number", critical: false },
+  { field: "contract_start",           label: "Start Date",    width: 115, type: "date",   critical: true },
+  { field: "contract_end",             label: "End Date",      width: 115, type: "date",   critical: false },
+  { field: "contract_duration_months", label: "Duration (mo)", width: 105, type: "number", critical: false },
+  { field: "due_day",                  label: "Due Day",       width: 80,  type: "number", critical: false },
 ];
 
-// ─── Cell editor ─────────────────────────────────────────────────────────────
+// ─── Tenancy column mapping type ──────────────────────────────────────────────
+
+interface TenancyColumnMapping {
+  contract_start: string | null;
+  address: string | null;
+  property_name: string | null;
+  unit: string | null;
+  owner_name: string | null;
+  owner_phone: string | null;
+  amount: string | null;
+  tenant_name: string | null;
+  tenant_phone: string | null;
+  contract_end: string | null;
+  contract_duration_months: string | null;
+  due_day: string | null;
+  parseAddressForUnit: boolean;
+  parseAddressForCondo: boolean;
+}
+
+type TenancyMappingField = keyof Omit<TenancyColumnMapping, "parseAddressForUnit" | "parseAddressForCondo">;
+
+const FIELD_LABELS: Record<TenancyMappingField, string> = {
+  contract_start:           "Contract start",
+  address:                  "Address (unit + property)",
+  owner_name:               "Owner name",
+  owner_phone:              "Owner phone",
+  amount:                   "Monthly rent (RM)",
+  tenant_name:              "Tenant name",
+  tenant_phone:             "Tenant phone",
+  property_name:            "Property name",
+  unit:                     "Unit number",
+  contract_end:             "Contract end",
+  contract_duration_months: "Duration (months)",
+  due_day:                  "Due day",
+};
+
+const DISPLAY_ORDER: TenancyMappingField[] = [
+  "contract_start", "address", "owner_name", "owner_phone", "amount",
+  "tenant_name", "tenant_phone", "property_name", "unit",
+  "contract_end", "contract_duration_months", "due_day",
+];
+
+const ALWAYS_SHOW = new Set<TenancyMappingField>([
+  "contract_start", "address", "owner_name", "owner_phone", "amount",
+]);
+
+const LS_KEY = "kk-tenancy-mapping";
+
+// ─── Detection + flag refresh ─────────────────────────────────────────────────
+
+function detectTenancyMapping(
+  headers: string[],
+  sampleRows: Record<string, string>[]
+): TenancyColumnMapping {
+  // Smart owner-level detection (address, name, phone, property, unit)
+  const ownerMap = detectColumns(headers, sampleRows);
+  // Alias-based tenancy-specific detection (contract_start, amount, tenant, etc.)
+  const tenancyMap = detectColumnMap(headers);
+
+  return refreshTenancyFlags({
+    contract_start:           tenancyMap.contract_start ?? null,
+    address:                  ownerMap.address,
+    property_name:            ownerMap.property_name ?? tenancyMap.property_name ?? null,
+    unit:                     ownerMap.unit ?? tenancyMap.unit ?? null,
+    owner_name:               ownerMap.owner_name,
+    owner_phone:              ownerMap.owner_phone,
+    amount:                   tenancyMap.amount ?? null,
+    tenant_name:              tenancyMap.tenant_name ?? null,
+    tenant_phone:             tenancyMap.tenant_phone ?? null,
+    contract_end:             tenancyMap.contract_end ?? null,
+    contract_duration_months: tenancyMap.contract_duration_months ?? null,
+    due_day:                  tenancyMap.due_day ?? null,
+    parseAddressForUnit:      false,
+    parseAddressForCondo:     false,
+  });
+}
+
+function refreshTenancyFlags(m: TenancyColumnMapping): TenancyColumnMapping {
+  return {
+    ...m,
+    parseAddressForUnit:  !!m.address && !m.unit,
+    parseAddressForCondo: !!m.address && !m.property_name,
+  };
+}
+
+// ─── Cell editor (review grid) ────────────────────────────────────────────────
 
 interface CellProps {
   value: string | number | null;
@@ -61,30 +149,9 @@ function EditableCell({ value, field, isMissing, isAutoFilled, width, type, onCh
   else if (isAutoFilled) bg = "#E8F4FD";
 
   return (
-    <td
-      style={{
-        width,
-        minWidth: width,
-        maxWidth: width,
-        padding: 0,
-        borderRight: "1px solid #E5E7EB",
-        borderBottom: "1px solid #E5E7EB",
-        background: bg,
-        position: "relative",
-      }}
-    >
+    <td style={{ width, minWidth: width, maxWidth: width, padding: 0, borderRight: "1px solid #E5E7EB", borderBottom: "1px solid #E5E7EB", background: bg, position: "relative" }}>
       {isMissing && (
-        <span style={{
-          position: "absolute",
-          top: 2,
-          left: 2,
-          width: 5,
-          height: 5,
-          borderRadius: "50%",
-          background: "#F59E0B",
-          zIndex: 1,
-          pointerEvents: "none",
-        }} />
+        <span style={{ position: "absolute", top: 2, left: 2, width: 5, height: 5, borderRadius: "50%", background: "#F59E0B", zIndex: 1, pointerEvents: "none" }} />
       )}
       <input
         type={type === "date" ? "text" : type}
@@ -92,25 +159,148 @@ function EditableCell({ value, field, isMissing, isAutoFilled, width, type, onCh
         placeholder={type === "date" ? "YYYY-MM-DD" : ""}
         onChange={(e) => onChange(e.target.value)}
         data-field={field}
-        style={{
-          width: "100%",
-          height: "100%",
-          padding: "4px 6px 4px 10px",
-          border: "none",
-          outline: "none",
-          background: "transparent",
-          fontSize: 12,
-          color: "var(--kk-ink)",
-          fontFamily: "inherit",
-        }}
+        style={{ width: "100%", height: "100%", padding: "4px 6px 4px 10px", border: "none", outline: "none", background: "transparent", fontSize: 12, color: "var(--kk-ink)", fontFamily: "inherit" }}
       />
     </td>
   );
 }
 
+// ─── Mapping table ────────────────────────────────────────────────────────────
+
+function MappingTable({
+  headers,
+  rows,
+  mapping,
+  onChange,
+}: {
+  headers: string[];
+  rows: Record<string, string>[];
+  mapping: TenancyColumnMapping;
+  onChange: (field: TenancyMappingField, value: string) => void;
+}) {
+  const sample = rows.slice(0, 3);
+
+  const fieldsToShow = DISPLAY_ORDER.filter((f) => {
+    if (ALWAYS_SHOW.has(f)) return true;
+    if (f === "property_name" && mapping.parseAddressForCondo) return false;
+    if (f === "unit" && mapping.parseAddressForUnit) return false;
+    return !!(mapping[f]);
+  });
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+      {fieldsToShow.map((field, i) => {
+        const isLast = i === fieldsToShow.length - 1;
+        const mappedHeader = mapping[field] as string | null;
+        const isRequired = field === "contract_start";
+        const isMissing = isRequired && !mappedHeader;
+        const isFromAddress =
+          (field === "unit" && mapping.parseAddressForUnit) ||
+          (field === "property_name" && mapping.parseAddressForCondo);
+
+        const sampleValues = mappedHeader
+          ? sample.map((r) => (r[mappedHeader] ?? "").trim()).filter(Boolean)
+          : [];
+
+        return (
+          <div
+            key={field}
+            className="px-4 py-3 flex items-start gap-3 overflow-hidden"
+            style={{
+              borderBottom: isLast ? "none" : "1px solid var(--kk-line)",
+              background: isMissing ? "var(--kk-red-soft)" : "transparent",
+            }}
+          >
+            <div className="w-[140px] shrink-0 pt-0.5">
+              <p className="text-[12px] font-semibold" style={{ color: isMissing ? "var(--kk-red)" : "var(--kk-ink)" }}>
+                {FIELD_LABELS[field]}
+                {isRequired && <span style={{ color: "var(--kk-red)" }}> *</span>}
+              </p>
+              {field === "contract_duration_months" && (
+                <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>defaults to 12 if blank</p>
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              {isFromAddress ? (
+                <span className="text-[12px] italic" style={{ color: "var(--kk-ink-mute)" }}>
+                  extracted from address
+                </span>
+              ) : (
+                <select
+                  value={mappedHeader ?? "__none__"}
+                  onChange={(e) => onChange(field, e.target.value)}
+                  className="w-full text-[12px] rounded-lg px-2 py-1.5 outline-none"
+                  style={{
+                    background: "var(--kk-surface-2)",
+                    border: `1px solid ${isMissing ? "var(--kk-red)" : "var(--kk-line)"}`,
+                    color: "var(--kk-ink)",
+                  }}
+                >
+                  <option value="__none__">(not in file)</option>
+                  {headers.map((h) => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
+              )}
+
+              {sampleValues.length > 0 && (
+                <p
+                  className="text-[11px] mt-1 truncate"
+                  style={{ color: "var(--kk-ink-faint)" }}
+                  title={sampleValues.join(" · ")}
+                >
+                  e.g. {sampleValues[0]}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Address extraction preview ───────────────────────────────────────────────
+
+function AddressExtractionPreview({
+  addressHeader,
+  rows,
+  extractUnit,
+  extractCondo,
+}: {
+  addressHeader: string;
+  rows: Record<string, string>[];
+  extractUnit: boolean;
+  extractCondo: boolean;
+}) {
+  const samples = rows.slice(0, 3).map((r) => (r[addressHeader] ?? "").trim()).filter(Boolean);
+  if (samples.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl p-4 space-y-2" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>
+        Address extraction preview
+      </p>
+      {samples.map((raw, i) => {
+        const { unit, propertyName } = parseOwnerAddress(raw);
+        return (
+          <div key={i} className="text-[12px] space-y-0.5 overflow-hidden">
+            <p className="font-mono truncate" style={{ color: "var(--kk-ink-faint)", fontSize: "11px" }} title={raw}>{raw}</p>
+            <div className="flex flex-wrap gap-3 pl-1">
+              {extractUnit && <span style={{ color: "var(--kk-ink)" }}>Unit: <strong>{unit ?? "—"}</strong></span>}
+              {extractCondo && <span style={{ color: "var(--kk-ink)" }}>Property: <strong>{propertyName ?? "—"}</strong></span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-type Step = "upload" | "review" | "done";
+type Step = "upload" | "map" | "review" | "done";
 
 interface Props {
   trigger?: React.ReactNode;
@@ -121,7 +311,10 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("upload");
   const [rows, setRows] = useState<TenancyImportRow[]>([]);
+  const [rawData, setRawData] = useState<RawImportData | null>(null);
+  const [mapping, setMapping] = useState<TenancyColumnMapping | null>(null);
   const [defaultDuration, setDefaultDuration] = useState(12);
+  const [defaultContractStart, setDefaultContractStart] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
   const [dragOver, setDragOver] = useState(false);
@@ -130,24 +323,52 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   const reset = useCallback(() => {
     setStep("upload");
     setRows([]);
+    setRawData(null);
+    setMapping(null);
     setImporting(false);
     setDefaultDuration(12);
+    setDefaultContractStart(null);
     setDragOver(false);
   }, []);
 
+  function downloadSampleCsv() {
+    const csv = `Contract Start,Contract End,Owner Name,Owner Phone,Property,Unit,Monthly Rent,Tenant Name,Tenant Phone
+01/01/2024,31/12/2024,Ahmad bin Hassan,0123456789,Sunway Pyramid,A-12-05,2500,Sarah Lim,0187654321
+15/03/2023,14/03/2024,Tan Wei Ming,0198765432,Mont Kiara Meridin,B-08-02,3200,,
+01/06/2024,,Raj Kumar,60181112222,Residensi Mutiara,C-05-11,1800,Amirah Yusof,0112345678
+`;
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kakisewa-contracts-sample.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const handleFile = useCallback(async (file: File) => {
-    const result = await parseTenancyFile(file, defaultDuration);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    if (result.rows.length === 0) {
-      toast.error("No data rows found in the file.");
-      return;
-    }
-    setRows(result.rows);
-    setStep("review");
-  }, [defaultDuration]);
+    const result = await extractRawData(file);
+    if (result.error) { toast.error(result.error); return; }
+    if (result.allRows.length === 0) { toast.error("No data rows found in the file."); return; }
+
+    let detected = detectTenancyMapping(result.headers, result.sampleRows);
+
+    // Apply saved column preferences
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) ?? "{}") as Partial<TenancyColumnMapping>;
+      const merged = { ...detected };
+      for (const [k, v] of Object.entries(saved)) {
+        if (typeof v === "string" && result.headers.includes(v)) {
+          (merged as Record<string, unknown>)[k] = v;
+        }
+      }
+      detected = refreshTenancyFlags(merged);
+    } catch { /* ignore */ }
+
+    setRawData(result);
+    setMapping(detected);
+    setStep("map");
+  }, []);
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -155,6 +376,66 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
     const file = e.dataTransfer.files[0];
     if (file) await handleFile(file);
   }, [handleFile]);
+
+  function handleMappingChange(field: TenancyMappingField, value: string) {
+    if (!mapping) return;
+    const updated = { ...mapping, [field]: value === "__none__" ? null : value };
+    const refreshed = refreshTenancyFlags(updated);
+    setMapping(refreshed);
+    try {
+      const toSave: Record<string, string> = {};
+      for (const [k, v] of Object.entries(refreshed)) {
+        if (typeof v === "string") toSave[k] = v;
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(toSave));
+    } catch { /* ignore */ }
+  }
+
+  function handleApplyMapping() {
+    if (!rawData || !mapping) return;
+
+    // Pre-process rows: inject parsed unit/property from address column
+    const processedRows = rawData.allRows.map((row) => {
+      const out = { ...row };
+      if (mapping.address && row[mapping.address]) {
+        const { unit, propertyName } = parseOwnerAddress(row[mapping.address]);
+        if (unit) out["__unit__"] = unit;
+        if (propertyName) out["__property__"] = propertyName;
+      }
+      return out;
+    });
+
+    const colMap: Partial<Record<CanonicalField, string>> = {};
+    if (mapping.contract_start)           colMap.contract_start = mapping.contract_start;
+    if (mapping.parseAddressForUnit && mapping.address) colMap.unit = "__unit__";
+    else if (mapping.unit)                colMap.unit = mapping.unit;
+    if (mapping.parseAddressForCondo && mapping.address) colMap.property_name = "__property__";
+    else if (mapping.property_name)       colMap.property_name = mapping.property_name;
+    if (mapping.owner_name)               colMap.owner_name = mapping.owner_name;
+    if (mapping.owner_phone)              colMap.owner_phone = mapping.owner_phone;
+    if (mapping.amount)                   colMap.amount = mapping.amount;
+    if (mapping.tenant_name)              colMap.tenant_name = mapping.tenant_name;
+    if (mapping.tenant_phone)             colMap.tenant_phone = mapping.tenant_phone;
+    if (mapping.contract_end)             colMap.contract_end = mapping.contract_end;
+    if (mapping.contract_duration_months) colMap.contract_duration_months = mapping.contract_duration_months;
+    if (mapping.due_day)                  colMap.due_day = mapping.due_day;
+
+    const newRows = buildRowsFromMapping(processedRows, colMap, defaultDuration);
+    if (newRows.length === 0) { toast.error("No data rows found."); return; }
+
+    // Inject today's date as contract_start for any row that has none
+    if (defaultContractStart) {
+      for (const row of newRows) {
+        if (!row.contract_start) {
+          row.contract_start = defaultContractStart;
+          row._autoFilled.add("contract_start");
+        }
+      }
+    }
+
+    setRows(newRows);
+    setStep("review");
+  }
 
   function updateCell(rowIdx: number, field: keyof TenancyImportRow, rawVal: string) {
     setRows((prev) => {
@@ -169,21 +450,13 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
         (row as Record<string, unknown>)[field] = rawVal;
       }
 
-      // Remove auto-filled marker when user manually edits
       autoFilled.delete(field as string);
       row._autoFilled = autoFilled;
 
-      // Auto-derive contract_end if start + duration are both set
-      if ((field === "contract_start" || field === "contract_duration_months") && row.contract_start) {
-        const dur = row.contract_duration_months ?? defaultDuration;
-        if (dur && !autoFilled.has("contract_end")) {
-          // only recompute if contract_end was auto-filled, not user-set
-        }
-        if (field === "contract_start" && row.contract_duration_months) {
-          row.contract_end = addMonths(rawVal, row.contract_duration_months);
-          autoFilled.add("contract_end");
-          row._autoFilled = autoFilled;
-        }
+      if (field === "contract_start" && row.contract_duration_months) {
+        row.contract_end = addMonths(rawVal, row.contract_duration_months);
+        autoFilled.add("contract_end");
+        row._autoFilled = autoFilled;
       }
 
       next[rowIdx] = row;
@@ -194,7 +467,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   async function handleImport() {
     const errorCount = rows.filter(rowHasCriticalErrors).length;
     if (errorCount > 0) {
-      toast.error(`${errorCount} row${errorCount > 1 ? "s are" : " is"} still missing critical fields (highlighted in amber).`);
+      toast.error(`${errorCount} row${errorCount > 1 ? "s are" : " is"} still missing a contract start date (highlighted in amber).`);
       return;
     }
 
@@ -222,7 +495,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Import failed");
+        throw new Error((err as { error?: string }).error ?? "Import failed");
       }
 
       const data = await res.json() as { imported: number };
@@ -237,7 +510,8 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   }
 
   const missingCount = rows.filter(rowHasCriticalErrors).length;
-  const totalWidth = COLUMNS.reduce((s, c) => s + c.width, 0) + 50; // +50 for row number col
+  const totalWidth = COLUMNS.reduce((s, c) => s + c.width, 0) + 50;
+  const canProceed = !!(mapping?.contract_start) || !!defaultContractStart;
 
   return (
     <>
@@ -245,337 +519,264 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
         {trigger ?? (
           <button className="kk-pill kk-pill-white" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
             <Upload size={14} />
-            Upload CSV
+            Upload file
           </button>
         )}
       </span>
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); setOpen(v); }}>
         <DialogContent
+          showCloseButton={false}
           style={{
-            maxWidth: step === "review" ? "min(98vw, 1100px)" : 480,
+            maxWidth: step === "review" ? "min(98vw, 1100px)" : "min(98vw, 560px)",
             width: "100%",
-            maxHeight: "90vh",
+            maxHeight: "92vh",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
             padding: 0,
           }}
         >
-          {/* Header */}
-          <DialogHeader style={{ padding: "20px 24px 0", flexShrink: 0 }}>
-            <DialogTitle style={{ fontSize: 17, fontWeight: 600, color: "var(--kk-ink)" }}>
-              {step === "upload" && "Import Existing Contracts"}
-              {step === "review" && `Review ${rows.length} rows`}
-              {step === "done" && "Import Complete"}
-            </DialogTitle>
-          </DialogHeader>
+          {/* ── Header ── */}
+          <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-0 shrink-0">
+            <div className="flex items-center gap-2">
+              {step === "map" && (
+                <button
+                  type="button"
+                  onClick={() => setStep("upload")}
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
+              <div>
+                <p className="kk-overline mb-1">Bulk import</p>
+                <h2 className="text-[18px] font-semibold leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.014em" }}>
+                  {step === "upload" && "Import existing contracts"}
+                  {step === "map"    && "Confirm column mapping"}
+                  {step === "review" && `Review ${rows.length} rows`}
+                  {step === "done"   && "Import complete"}
+                </h2>
+                {step === "map" && rawData && (
+                  <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
+                    {rawData.allRows.length} rows detected · confirm how kakisewa reads each column
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
           {/* ── Step 1: Upload ── */}
           {step === "upload" && (
-            <div style={{ padding: "16px 24px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
-              <p style={{ fontSize: 13, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>
-                Upload a CSV or Excel file with your existing tenancies. We will auto-detect columns and highlight any missing critical fields for you to fill in.
-              </p>
+            <>
+              <div className="px-6 pb-0 pt-1 space-y-5">
+                <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+                  CSV, Excel or Google Sheets export. Contract start date is the only required column — everything else is optional.
+                </p>
 
-              {/* Default duration */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)", whiteSpace: "nowrap" }}>
-                  Rows with no expiry date will default to
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={defaultDuration}
-                  onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
+                <button
+                  type="button"
+                  onClick={downloadSampleCsv}
+                  className="flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+                  style={{ color: "var(--kk-blue)" }}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Download sample CSV
+                </button>
+
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  className="rounded-2xl p-6 flex flex-col items-center gap-3 cursor-pointer transition-colors select-none"
                   style={{
-                    width: 52,
-                    padding: "4px 8px",
-                    border: "1px solid var(--kk-border)",
-                    borderRadius: 6,
-                    fontSize: 13,
-                    color: "var(--kk-ink)",
-                    background: "var(--kk-surface)",
-                    textAlign: "center",
+                    border: `1.5px dashed ${dragOver ? "var(--kk-blue)" : "var(--kk-line-strong)"}`,
+                    background: dragOver ? "var(--kk-blue-soft)" : "var(--kk-surface-2)",
                   }}
+                >
+                  <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--kk-ink-mute)" }} />
+                  <div className="text-center">
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>Click to pick a file</p>
+                    <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>.csv, .xlsx, or .xls — up to 20 000 rows</p>
+                  </div>
+                </div>
+                <input ref={fileRef} type="file" accept=".csv,.xls,.xlsx" className="hidden"
+                  onChange={async (e) => { const f = e.target.files?.[0]; if (f) await handleFile(f); e.target.value = ""; }}
                 />
-                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>months duration</span>
               </div>
 
-              {/* Drop zone */}
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                onClick={() => fileRef.current?.click()}
-                style={{
-                  border: `2px dashed ${dragOver ? "var(--kk-theme-dark)" : "var(--kk-border)"}`,
-                  borderRadius: 12,
-                  padding: "36px 24px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 10,
-                  cursor: "pointer",
-                  background: dragOver ? "rgba(0,0,0,0.03)" : "transparent",
-                  transition: "border-color 150ms, background 150ms",
-                }}
-              >
-                <FileSpreadsheet size={32} color="var(--kk-ink-mute)" />
-                <span style={{ fontSize: 14, fontWeight: 500, color: "var(--kk-ink)" }}>
-                  Click to upload or drag a file here
-                </span>
-                <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>
-                  CSV, XLS, or XLSX — max 5 000 rows
-                </span>
+              <div className="flex justify-end gap-2 px-6 py-4">
+                <button type="button" className="kk-pill kk-pill-ghost" onClick={() => setOpen(false)}>Cancel</button>
+                <button type="button" className="kk-pill kk-pill-primary" disabled style={{ opacity: 0.4 }}>
+                  Analyse columns <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".csv,.xls,.xlsx"
-                style={{ display: "none" }}
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (f) await handleFile(f);
-                  e.target.value = "";
-                }}
-              />
+            </>
+          )}
 
-              {/* Column guide */}
-              <div style={{ border: "1px solid var(--kk-border)", borderRadius: 10, overflow: "hidden" }}>
-                {/* Critical */}
-                <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--kk-border)" }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Required columns
-                  </p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {["Property name", "Unit", "Owner name", "Owner phone", "Contract start", "Monthly rent"].map(col => (
-                      <span key={col} style={{
-                        fontSize: 11, fontWeight: 500,
-                        padding: "2px 8px", borderRadius: 999,
-                        background: "rgba(255,149,0,0.12)", color: "#B45309",
-                        border: "1px solid rgba(255,149,0,0.25)",
-                      }}>{col}</span>
-                    ))}
-                  </div>
+          {/* ── Step 2: Map columns ── */}
+          {step === "map" && mapping && rawData && (
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+              <div style={{ overflow: "auto", flex: 1, padding: "16px 24px" }} className="space-y-4">
+                {/* Default duration inline in mapping step */}
+                <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>
+                  <span>No contract end or duration?</span>
+                  <span>Default to</span>
+                  <input
+                    type="number" min={1} max={60} value={defaultDuration}
+                    onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
+                    style={{ width: 48, padding: "3px 8px", border: "1px solid var(--kk-border)", borderRadius: 6, fontSize: 13, color: "var(--kk-ink)", background: "var(--kk-surface)", textAlign: "center" }}
+                  />
+                  <span>months</span>
                 </div>
-                {/* Optional */}
-                <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--kk-border)" }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Optional columns
-                  </p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {["Contract end", "Duration (months)", "Tenant name", "Tenant phone", "Due day"].map(col => (
-                      <span key={col} style={{
-                        fontSize: 11, fontWeight: 500,
-                        padding: "2px 8px", borderRadius: 999,
-                        background: "rgba(0,0,0,0.05)", color: "var(--kk-ink-mute)",
-                        border: "1px solid var(--kk-border)",
-                      }}>{col}</span>
-                    ))}
+                <MappingTable
+                  headers={rawData.headers}
+                  rows={rawData.sampleRows}
+                  mapping={mapping}
+                  onChange={handleMappingChange}
+                />
+
+                {mapping.address && (mapping.parseAddressForUnit || mapping.parseAddressForCondo) && (
+                  <AddressExtractionPreview
+                    addressHeader={mapping.address}
+                    rows={rawData.sampleRows}
+                    extractUnit={mapping.parseAddressForUnit}
+                    extractCondo={mapping.parseAddressForCondo}
+                  />
+                )}
+
+                {!mapping?.contract_start && (
+                  <div
+                    className="rounded-2xl px-4 py-3 flex items-start gap-3"
+                    style={{ background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB", border: `1px solid ${defaultContractStart ? "var(--kk-green)" : "#F59E0B"}` }}
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: defaultContractStart ? "var(--kk-green)" : "#D97706" }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>
+                        {defaultContractStart
+                          ? `Contract start set to today (${defaultContractStart}) for all rows`
+                          : "No contract start date column found"}
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+                        {defaultContractStart
+                          ? "Duration defaults to 12 months unless mapped. You can edit individual rows in the next step."
+                          : "Map a start date column above, or use today as a placeholder for all rows."}
+                      </p>
+                    </div>
+                    {!defaultContractStart && (
+                      <button
+                        type="button"
+                        className="kk-pill kk-pill-ghost shrink-0"
+                        style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
+                        onClick={() => setDefaultContractStart(new Date().toISOString().slice(0, 10))}
+                      >
+                        Add today
+                      </button>
+                    )}
                   </div>
-                </div>
-                {/* Example row */}
-                <div style={{ padding: "10px 14px", background: "var(--kk-surface)" }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Example row
-                  </p>
-                  <div style={{ display: "flex", gap: 0, borderRadius: 6, overflow: "hidden", border: "1px solid var(--kk-border)", fontSize: 11 }}>
-                    {[
-                      { label: "Sunway Pyramid", muted: false },
-                      { label: "A-12-05", muted: true },
-                      { label: "Ahmad Hassan", muted: false },
-                      { label: "0123456789", muted: true },
-                      { label: "01/01/2024", muted: true },
-                      { label: "2500", muted: false },
-                    ].map((cell, i) => (
-                      <div key={i} style={{
-                        flex: 1, padding: "5px 6px",
-                        borderRight: i < 5 ? "1px solid var(--kk-border)" : undefined,
-                        color: cell.muted ? "var(--kk-ink-mute)" : "var(--kk-ink)",
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                        background: "#fff",
-                      }}>
-                        {cell.label}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
+              </div>
+
+              <div style={{ padding: "14px 24px", borderTop: "1px solid var(--kk-border)", display: "flex", justifyContent: "flex-end", gap: 8, flexShrink: 0 }}>
+                <button
+                  type="button"
+                  className="kk-pill kk-pill-ghost"
+                  onClick={() => setStep("upload")}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  className="kk-pill kk-pill-primary"
+                  disabled={!canProceed}
+                  onClick={handleApplyMapping}
+                >
+                  Import {rawData.allRows.length} rows
+                </button>
               </div>
             </div>
           )}
 
-          {/* ── Step 2: Review grid ── */}
+          {/* ── Step 3: Review grid ── */}
           {step === "review" && (
             <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-              {/* Status bar */}
-              <div style={{
-                padding: "10px 24px",
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-                flexShrink: 0,
-                borderBottom: "1px solid var(--kk-border)",
-                flexWrap: "wrap",
-              }}>
-                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>
-                  {rows.length} rows detected
-                </span>
+              <div style={{ padding: "10px 24px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0, borderBottom: "1px solid var(--kk-border)", flexWrap: "wrap" }}>
+                <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>{rows.length} rows</span>
                 {missingCount > 0 ? (
                   <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#B45309" }}>
                     <AlertCircle size={13} />
-                    {missingCount} row{missingCount > 1 ? "s have" : " has"} amber cells — fill them in before importing
+                    {missingCount} row{missingCount > 1 ? "s" : ""} missing contract start date (amber)
                   </span>
                 ) : (
                   <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#15803D" }}>
                     <CheckCircle2 size={13} />
-                    All critical fields filled
+                    All rows have a start date
                   </span>
                 )}
                 <span style={{ fontSize: 11, color: "var(--kk-ink-mute)", marginLeft: "auto" }}>
                   <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#FFF3CD", border: "1px solid #F59E0B", marginRight: 4 }} />
-                  Missing critical field
+                  Missing start date
                   <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#E8F4FD", border: "1px solid #93C5FD", marginRight: 4, marginLeft: 10 }} />
                   Auto-filled
                 </span>
               </div>
 
-              {/* Scrollable grid */}
               <div style={{ overflow: "auto", flex: 1 }}>
-                <table
-                  style={{
-                    borderCollapse: "collapse",
-                    minWidth: totalWidth,
-                    fontSize: 12,
-                    tableLayout: "fixed",
-                  }}
-                >
+                <table style={{ borderCollapse: "collapse", minWidth: totalWidth, fontSize: 12, tableLayout: "fixed" }}>
                   <thead>
                     <tr style={{ background: "var(--kk-surface)", position: "sticky", top: 0, zIndex: 2 }}>
-                      <th style={{
-                        width: 40,
-                        minWidth: 40,
-                        padding: "6px 8px",
-                        borderRight: "1px solid var(--kk-border)",
-                        borderBottom: "2px solid var(--kk-border)",
-                        textAlign: "center",
-                        color: "var(--kk-ink-mute)",
-                        fontWeight: 500,
-                        fontSize: 11,
-                      }}>
-                        #
-                      </th>
+                      <th style={{ width: 40, minWidth: 40, padding: "6px 8px", borderRight: "1px solid var(--kk-border)", borderBottom: "2px solid var(--kk-border)", textAlign: "center", color: "var(--kk-ink-mute)", fontWeight: 500, fontSize: 11 }}>#</th>
                       {COLUMNS.map((c) => (
-                        <th
-                          key={c.field}
-                          style={{
-                            width: c.width,
-                            minWidth: c.width,
-                            maxWidth: c.width,
-                            padding: "6px 8px",
-                            borderRight: "1px solid var(--kk-border)",
-                            borderBottom: "2px solid var(--kk-border)",
-                            textAlign: "left",
-                            color: c.critical ? "var(--kk-ink)" : "var(--kk-ink-mute)",
-                            fontWeight: c.critical ? 600 : 500,
-                            fontSize: 11,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {c.label}
-                          {c.critical && (
-                            <span style={{ color: "#F59E0B", marginLeft: 2 }}>*</span>
-                          )}
+                        <th key={c.field} style={{ width: c.width, minWidth: c.width, maxWidth: c.width, padding: "6px 8px", borderRight: "1px solid var(--kk-border)", borderBottom: "2px solid var(--kk-border)", textAlign: "left", color: c.critical ? "var(--kk-ink)" : "var(--kk-ink-mute)", fontWeight: c.critical ? 600 : 500, fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {c.label}{c.critical && <span style={{ color: "#F59E0B", marginLeft: 2 }}>*</span>}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row, ri) => (
-                      <tr
-                        key={ri}
-                        style={{ background: ri % 2 === 0 ? "transparent" : "rgba(0,0,0,0.015)" }}
-                      >
-                        <td style={{
-                          width: 40,
-                          minWidth: 40,
-                          padding: "0 8px",
-                          borderRight: "1px solid var(--kk-border)",
-                          borderBottom: "1px solid var(--kk-border)",
-                          textAlign: "center",
-                          color: "var(--kk-ink-mute)",
-                          fontSize: 11,
-                          userSelect: "none",
-                        }}>
+                      <tr key={ri} style={{ background: ri % 2 === 0 ? "transparent" : "rgba(0,0,0,0.015)" }}>
+                        <td style={{ width: 40, minWidth: 40, padding: "0 8px", borderRight: "1px solid var(--kk-border)", borderBottom: "1px solid var(--kk-border)", textAlign: "center", color: "var(--kk-ink-mute)", fontSize: 11, userSelect: "none" }}>
                           {row._rowIndex}
                         </td>
-                        {COLUMNS.map((c) => {
-                          const rawVal = row[c.field];
-                          const missing = isCriticalMissing(row, c.field);
-                          const autoFilled = row._autoFilled.has(c.field as string);
-                          return (
-                            <EditableCell
-                              key={c.field}
-                              value={rawVal as string | number | null}
-                              field={c.field}
-                              isMissing={missing}
-                              isAutoFilled={!missing && autoFilled}
-                              width={c.width}
-                              type={c.type}
-                              onChange={(val) => updateCell(ri, c.field, val)}
-                            />
-                          );
-                        })}
+                        {COLUMNS.map((c) => (
+                          <EditableCell
+                            key={c.field}
+                            value={row[c.field] as string | number | null}
+                            field={c.field}
+                            isMissing={isCriticalMissing(row, c.field)}
+                            isAutoFilled={!isCriticalMissing(row, c.field) && row._autoFilled.has(c.field as string)}
+                            width={c.width}
+                            type={c.type}
+                            onChange={(val) => updateCell(ri, c.field, val)}
+                          />
+                        ))}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Footer */}
-              <div style={{
-                padding: "14px 24px",
-                borderTop: "1px solid var(--kk-border)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexShrink: 0,
-                gap: 12,
-              }}>
-                <button
-                  onClick={() => { setStep("upload"); setRows([]); }}
-                  disabled={importing}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: 8,
-                    border: "1px solid var(--kk-border)",
-                    background: "var(--kk-surface)",
-                    color: "var(--kk-ink)",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    opacity: importing ? 0.5 : 1,
-                  }}
-                >
+              <div style={{ padding: "14px 24px", borderTop: "1px solid var(--kk-border)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, gap: 12 }}>
+                <button onClick={() => setStep("map")} disabled={importing} className="kk-pill kk-pill-ghost" style={{ opacity: importing ? 0.5 : 1 }}>
                   Back
                 </button>
                 <button
                   onClick={handleImport}
                   disabled={importing}
-                  style={{
-                    padding: "8px 20px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: missingCount > 0 ? "#9CA3AF" : "var(--kk-theme-dark)",
-                    color: "#fff",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: importing ? "not-allowed" : "pointer",
-                    opacity: importing ? 0.7 : 1,
-                  }}
+                  className="kk-pill kk-pill-primary"
+                  style={{ opacity: importing ? 0.7 : 1 }}
                 >
                   {importing ? "Importing..." : `Import ${rows.length} row${rows.length !== 1 ? "s" : ""}`}
                 </button>
@@ -583,16 +784,9 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
             </div>
           )}
 
-          {/* ── Step 3: Done ── */}
+          {/* ── Step 4: Done ── */}
           {step === "done" && (
-            <div style={{
-              padding: "24px 24px 28px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 14,
-              textAlign: "center",
-            }}>
+            <div style={{ padding: "24px 24px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}>
               <CheckCircle2 size={40} color="#22C55E" />
               <div>
                 <p style={{ fontSize: 16, fontWeight: 600, color: "var(--kk-ink)", margin: "0 0 6px" }}>
@@ -602,24 +796,12 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                   They now appear on your Existing Contracts board.
                 </p>
               </div>
-              <button
-                onClick={() => { setOpen(false); reset(); }}
-                style={{
-                  padding: "9px 24px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "var(--kk-theme-dark)",
-                  color: "#fff",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  marginTop: 4,
-                }}
-              >
+              <button onClick={() => { setOpen(false); reset(); }} className="kk-pill kk-pill-primary" style={{ marginTop: 4 }}>
                 Done
               </button>
             </div>
           )}
+
         </DialogContent>
       </Dialog>
     </>

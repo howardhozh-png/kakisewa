@@ -23,19 +23,14 @@ export interface TenancyImportRow {
   _autoFilled: Set<string>;        // fields that were auto-computed
 }
 
-// Fields that must be filled before import is allowed
+// Only contract_start is required — everything else is optional
 export const CRITICAL_FIELDS: (keyof TenancyImportRow)[] = [
-  "property_name",
-  "unit",
-  "owner_name",
-  "owner_phone",
   "contract_start",
-  "amount",
 ];
 
 // ─── Header aliases ───────────────────────────────────────────────────────────
 
-type CanonicalField = keyof Omit<TenancyImportRow, "_rowIndex" | "_autoFilled">;
+export type CanonicalField = keyof Omit<TenancyImportRow, "_rowIndex" | "_autoFilled">;
 
 const ALIASES: Record<string, CanonicalField> = {
   // property_name
@@ -296,7 +291,7 @@ function buildRow(
 
 // ─── Column mapping from headers ─────────────────────────────────────────────
 
-function detectColumnMap(headers: string[]): Partial<Record<CanonicalField, string>> {
+export function detectColumnMap(headers: string[]): Partial<Record<CanonicalField, string>> {
   const map: Partial<Record<CanonicalField, string>> = {};
   for (const h of headers) {
     const field = normaliseHeader(h);
@@ -305,6 +300,60 @@ function detectColumnMap(headers: string[]): Partial<Record<CanonicalField, stri
     }
   }
   return map;
+}
+
+// ─── Raw data extraction (for mapping step) ───────────────────────────────────
+
+export interface RawImportData {
+  headers: string[];
+  sampleRows: Record<string, string>[];
+  allRows: Record<string, string>[];
+  error?: string;
+}
+
+export async function extractRawData(file: File): Promise<RawImportData> {
+  try {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    let allRows: Record<string, string>[] = [];
+    let headers: string[] = [];
+
+    if (ext === "csv") {
+      const text = await file.text();
+      const result = Papa.parse<Record<string, string>>(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.trim(),
+      });
+      headers = result.meta.fields ?? [];
+      allRows = result.data;
+    } else if (ext === "xlsx" || ext === "xls") {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array", cellDates: false });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json<Record<string, string | number>>(ws, { raw: false, defval: "" });
+      if (data.length === 0) return { headers: [], sampleRows: [], allRows: [], error: "The file is empty." };
+      headers = Object.keys(data[0]).map((h) => String(h).trim());
+      allRows = data.map((row) => {
+        const out: Record<string, string> = {};
+        for (const [k, v] of Object.entries(row)) out[k.trim()] = String(v ?? "").trim();
+        return out;
+      });
+    } else {
+      return { headers: [], sampleRows: [], allRows: [], error: "Only CSV, XLS, and XLSX files are supported." };
+    }
+
+    return { headers, sampleRows: allRows.slice(0, 3), allRows };
+  } catch (err) {
+    return { headers: [], sampleRows: [], allRows: [], error: err instanceof Error ? err.message : "Failed to parse file." };
+  }
+}
+
+export function buildRowsFromMapping(
+  allRows: Record<string, string>[],
+  colMap: Partial<Record<CanonicalField, string>>,
+  defaultDurationMonths: number
+): TenancyImportRow[] {
+  return allRows.map((raw, i) => buildRow(raw, colMap, i + 2, defaultDurationMonths));
 }
 
 // ─── Public parse entrypoint ──────────────────────────────────────────────────

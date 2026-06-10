@@ -138,7 +138,7 @@ const _cachedLifecycleTenancies = unstable_cache(
 const _cachedOwnerLeads = unstable_cache(
   async (userId: string): Promise<OwnerLead[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).is("deleted_at", null).order("created_at", { ascending: false });
+    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).is("deleted_at", null).order("created_at", { ascending: false }).limit(20000);
     if (error) throw error;
     return (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
   },
@@ -1040,7 +1040,7 @@ export async function getOwnerLeads(): Promise<OwnerLead[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("owner_leads").select("*").is("deleted_at", null).order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("owner_leads").select("*").is("deleted_at", null).order("created_at", { ascending: false }).limit(20000);
     if (error) throw error;
     return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
   }
