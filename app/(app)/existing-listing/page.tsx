@@ -1,9 +1,10 @@
-import { getLifecycleTenancies, getOwnerLeads, getAgentProfile } from "@/lib/db";
+import { getLifecycleTenancies, getOwnerLeads, getAgentProfile, getSoftDeletedTenancies } from "@/lib/db";
 import { effectivePlan } from "@/lib/plan-caps";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
 import { UploadTenancyCsvDialog } from "@/components/upload-tenancy-csv-dialog";
 import { PageHelpButton } from "@/components/page-help-button";
+import { DeletedTenanciesPanel } from "@/components/deleted-tenancies-panel";
 import type { Tenancy } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +15,11 @@ interface Props {
 
 export default async function TrackRenewalPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const [lifecycle, ownerLeads, agentProfile] = await Promise.all([
+  const [lifecycle, ownerLeads, agentProfile, deletedTenancies] = await Promise.all([
     getLifecycleTenancies(),
     getOwnerLeads(),
     getAgentProfile().catch(() => null),
+    getSoftDeletedTenancies(),
   ]);
   const plan = effectivePlan(agentProfile);
 
@@ -48,6 +50,8 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
           <AddTenancyDialog ownerLeads={ownerLeads} />
         </div>
       </header>
+
+      <DeletedTenanciesPanel tenancies={deletedTenancies} />
 
       {lifecycle.length === 0 ? (() => {
         const demoTenancy: Tenancy = {
