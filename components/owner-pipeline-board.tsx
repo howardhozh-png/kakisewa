@@ -437,6 +437,9 @@ function formatMonthKey(key: string): string {
 
 function formatAvailDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
+  const today = new Date();
+  const avail = new Date(y, m - 1, d);
+  if (avail <= today) return "now";
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${d} ${months[m - 1]} '${String(y).slice(2)}`;
 }

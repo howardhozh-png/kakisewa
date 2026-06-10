@@ -1745,7 +1745,7 @@ export async function buildCompetitorOwnerPing(leadId: string): Promise<{ url: s
   const { getOrCreateOwnerIntakeToken } = await import("./db");
   const token = await getOrCreateOwnerIntakeToken(leadId);
   const siteUrl = await getBaseUrl();
-  const intakeUrl = `${siteUrl}/intake/${token}`;
+  const intakeUrl = `${siteUrl}/o/${token}`;
   const body = resolveTemplate("expiry_check_owner", overrides, {
     ownerName: lead.owner_name ?? "",
     agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
