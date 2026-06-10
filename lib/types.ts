@@ -53,6 +53,9 @@ export interface Tenancy {
   deleted_at?: string | null;
   created_at: string;
   renewal_commission_type?: "full_year" | "half_month" | null;
+  last_wa_reply_at?: string | null;
+  last_wa_reply_text?: string | null;
+  wa_status?: "pending" | "replied" | "no_response" | null;
   property?: {
     owner_name?: string;
     owner_phone?: string;
@@ -130,6 +133,9 @@ export interface OwnerLead {
   competitor_stage?: "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
   deleted_at?: string | null;
   property_share_token?: string | null;
+  last_wa_reply_at?: string | null;
+  last_wa_reply_text?: string | null;
+  wa_status?: "pending" | "replied" | "no_response" | null;
   created_at: string;
 }
 
@@ -163,6 +169,10 @@ export interface AgentProfile {
   trial_downgrade_archived_count?: number | null;
   profile_strengths?: ProfileStrengthItem[] | null;
   profile_verbatim?: ProfileVerbatimItem[] | null;
+  whatsapp_phone_number_id?: string | null;
+  whatsapp_business_account_id?: string | null;
+  whatsapp_connected_at?: string | null;
+  whatsapp_number?: string | null;
 }
 
 export interface ProfileStrengthItem {

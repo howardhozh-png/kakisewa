@@ -12,7 +12,7 @@ import {
   type TemplateVar,
 } from "@/lib/whatsapp-templates";
 import { toast } from "sonner";
-import { Loader2, ChevronDown, RotateCcw, Eye, X, Info } from "lucide-react";
+import { Loader2, ChevronDown, RotateCcw, Eye, X, Info, CheckCircle2, MessageCircle } from "lucide-react";
 
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
@@ -496,6 +496,156 @@ function TemplateCard({
 
 // ── Main form ─────────────────────────────────────────────────────────────────
 
+// ── WhatsApp Integration section ──────────────────────────────────────────────
+
+function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
+  const isConnected = !!agent.whatsapp_phone_number_id;
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [connectedNumber, setConnectedNumber] = useState(agent.whatsapp_number ?? null);
+
+  async function handleConnect() {
+    setConnecting(true);
+    try {
+      // Load Facebook SDK
+      await loadFbSdk();
+      const code = await launchEmbeddedSignup();
+      if (!code) { setConnecting(false); return; }
+
+      const res = await fetch("/api/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json() as { ok: boolean; phoneNumber?: string; error?: string };
+      if (data.ok && data.phoneNumber) {
+        setConnectedNumber(data.phoneNumber);
+        toast.success(`WhatsApp connected — ${data.phoneNumber}`);
+        // Reload so agent profile reflects connected state
+        window.location.reload();
+      } else {
+        toast.error(data.error ?? "Connection failed");
+      }
+    } catch (err) {
+      console.error("[WA connect]", err);
+      toast.error("Could not connect WhatsApp");
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setDisconnecting(true);
+    const res = await fetch("/api/whatsapp/connect", { method: "DELETE" });
+    const data = await res.json() as { ok: boolean };
+    setDisconnecting(false);
+    if (data.ok) {
+      toast.success("WhatsApp disconnected");
+      window.location.reload();
+    } else {
+      toast.error("Failed to disconnect");
+    }
+  }
+
+  const connectedSince = agent.whatsapp_connected_at
+    ? new Date(agent.whatsapp_connected_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })
+    : null;
+
+  return (
+    <section className="kk-section p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <MessageCircle className="w-4 h-4" style={{ color: isConnected ? "#25D366" : "var(--kk-ink-faint)" }} />
+        <h2 className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>WhatsApp Integration</h2>
+        {isConnected && <CheckCircle2 className="w-3.5 h-3.5 ml-auto" style={{ color: "#25D366" }} />}
+      </div>
+
+      {isConnected ? (
+        <div>
+          <p className="text-[13px] mt-3 mb-1" style={{ color: "var(--kk-ink-mute)" }}>
+            Connected number: <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>+{connectedNumber ?? agent.whatsapp_number}</span>
+          </p>
+          {connectedSince && (
+            <p className="text-[12px] mb-4" style={{ color: "var(--kk-ink-faint)" }}>Connected since {connectedSince}</p>
+          )}
+          <button
+            onClick={handleDisconnect}
+            disabled={disconnecting}
+            className="kk-pill flex items-center gap-2"
+            style={{
+              background: "var(--kk-surface-2)",
+              color: "var(--kk-ink-mute)",
+              border: "1px solid var(--kk-line)",
+            }}
+          >
+            {disconnecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {disconnecting ? "Disconnecting…" : "Disconnect"}
+          </button>
+        </div>
+      ) : (
+        <div>
+          <p className="text-[13px] mt-3 mb-4" style={{ color: "var(--kk-ink-mute)" }}>
+            When owners and tenants reply to you on WhatsApp, kakisewa will automatically update your pipeline cards.
+          </p>
+          <button
+            onClick={handleConnect}
+            disabled={connecting}
+            className="kk-pill flex items-center gap-2"
+            style={{ background: "#25D366", color: "#fff" }}
+          >
+            {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {connecting ? "Opening Meta…" : "Connect WhatsApp Business"}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Load the Facebook JS SDK once
+function loadFbSdk(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve();
+    if ((window as unknown as Record<string, unknown>).FB) return resolve();
+    const script = document.createElement("script");
+    script.src = "https://connect.facebook.net/en_US/sdk.js";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    document.head.appendChild(script);
+  });
+}
+
+declare global {
+  interface Window {
+    FB?: {
+      init(opts: Record<string, unknown>): void;
+      login(cb: (res: { authResponse?: { code?: string } }) => void, opts: Record<string, unknown>): void;
+    };
+    fbAsyncInit?: () => void;
+  }
+}
+
+function launchEmbeddedSignup(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const appId = process.env.NEXT_PUBLIC_WHATSAPP_APP_ID;
+    if (!window.FB || !appId) { resolve(null); return; }
+
+    window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: "v19.0" });
+    window.FB.login(
+      (response) => {
+        resolve(response.authResponse?.code ?? null);
+      },
+      {
+        scope: "whatsapp_business_messaging,whatsapp_business_management",
+        response_type: "code",
+        extras: { feature: "whatsapp_embedded_signup", setup: {} },
+      }
+    );
+  });
+}
+
+// ── Main form ─────────────────────────────────────────────────────────────────
+
 export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const [name, setName] = useState(agent.name ?? "");
   const [phone, setPhone] = useState(agent.phone ?? "");
@@ -624,6 +774,9 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           {pending ? "Saving…" : "Save profile"}
         </button>
       </section>
+
+      {/* ── WhatsApp Integration ── */}
+      <WhatsAppIntegrationSection agent={agent} />
 
       {/* ── WhatsApp Templates ── */}
       <section id="templates" className="kk-section p-6" style={{ overflow: "visible" }}>

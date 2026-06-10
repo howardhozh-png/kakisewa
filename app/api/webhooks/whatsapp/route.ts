@@ -1,7 +1,7 @@
+import { createHmac } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { upsertTenancyByPhone } from "@/lib/db";
-
-const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN ?? "kakisewa_webhook_token";
+import { createServiceClient } from "@/lib/supabase/service";
+import { sendPushToUser } from "@/lib/push";
 
 // ─── GET — Meta webhook verification handshake ────────────────────────────────
 
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   if (
     p.get("hub.mode") === "subscribe" &&
-    p.get("hub.verify_token") === VERIFY_TOKEN
+    p.get("hub.verify_token") === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN
   ) {
     return new Response(p.get("hub.challenge") ?? "", { status: 200 });
   }
@@ -19,135 +19,175 @@ export async function GET(req: NextRequest) {
 // ─── POST — Incoming message handler ─────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  let body: unknown;
+  const rawBody = await req.text();
+
+  // Verify the request is genuinely from Meta
+  const sig = req.headers.get("x-hub-signature-256") ?? "";
+  const secret = process.env.WHATSAPP_APP_SECRET ?? "";
+  if (secret) {
+    const expected = "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
+    if (sig !== expected) {
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
+
+  // Return 200 immediately — Meta retries if it doesn't get a response within 5s
+  // Process asynchronously after responding
+  processWebhook(rawBody).catch((err) =>
+    console.error("[whatsapp/webhook] processing error", err)
+  );
+
+  return new Response("OK", { status: 200 });
+}
+
+// ─── Async processing ─────────────────────────────────────────────────────────
+
+interface WaMeta {
+  phone_number_id: string;
+  display_phone_number: string;
+}
+
+interface WaMessage {
+  from: string;
+  id: string;
+  timestamp: string;
+  type: string;
+  text?: { body: string };
+}
+
+async function processWebhook(rawBody: string) {
+  let payload: Record<string, unknown>;
   try {
-    body = await req.json();
+    payload = JSON.parse(rawBody);
   } catch {
-    return NextResponse.json({ error: "invalid json" }, { status: 400 });
-  }
-
-  const payload = body as Record<string, unknown>;
-
-  // Support both Meta Cloud API shape and Twilio shape
-  const messages = extractMessages(payload);
-
-  for (const msg of messages) {
-    await handleMessage(msg);
-  }
-
-  return NextResponse.json({ ok: true });
-}
-
-// ─── Message extraction ───────────────────────────────────────────────────────
-
-interface IncomingMessage {
-  from: string;        // E.164 phone number e.g. "601234567890"
-  text: string;        // message body
-  messageId: string;
-}
-
-function extractMessages(payload: Record<string, unknown>): IncomingMessage[] {
-  const out: IncomingMessage[] = [];
-
-  // Meta Cloud API shape
-  try {
-    const entry = (payload.entry as Array<Record<string, unknown>>)?.[0];
-    const changes = (entry?.changes as Array<Record<string, unknown>>)?.[0];
-    const value = changes?.value as Record<string, unknown> | undefined;
-    const msgs = value?.messages as Array<Record<string, unknown>> | undefined;
-    if (msgs) {
-      for (const m of msgs) {
-        const text = (m.text as Record<string, unknown>)?.body as string | undefined;
-        if (m.from && text) {
-          out.push({ from: String(m.from), text, messageId: String(m.id ?? "") });
-        }
-      }
-      return out;
-    }
-  } catch { /* fall through */ }
-
-  // Twilio shape
-  try {
-    if (payload.From && payload.Body) {
-      out.push({
-        from: String(payload.From).replace(/^whatsapp:/, ""),
-        text: String(payload.Body),
-        messageId: String(payload.MessageSid ?? ""),
-      });
-    }
-  } catch { /* fall through */ }
-
-  return out;
-}
-
-// ─── Message handler ──────────────────────────────────────────────────────────
-
-const CMD_NEW   = /^NEW\s+(.+)/i;
-//  NEW <name> <phone> <amount> <due_day> <property_id>
-//  e.g. NEW Ahmad 60187654321 1800 1 prop_1
-
-async function handleMessage(msg: IncomingMessage) {
-  const text = msg.text.trim();
-
-  const newMatch = CMD_NEW.exec(text);
-  if (newMatch) {
-    await handleNewTenancy(msg.from, newMatch[1]);
     return;
   }
 
-  // Unknown command — silently ignore (don't send noise back)
+  if (payload.object !== "whatsapp_business_account") return;
+
+  const entries = (payload.entry as Array<Record<string, unknown>>) ?? [];
+
+  for (const entry of entries) {
+    const changes = (entry.changes as Array<Record<string, unknown>>) ?? [];
+    for (const change of changes) {
+      const value = change.value as Record<string, unknown> | undefined;
+      if (!value) continue;
+
+      const meta = value.metadata as WaMeta | undefined;
+      const messages = (value.messages as WaMessage[]) ?? [];
+
+      for (const msg of messages) {
+        if (msg.type !== "text" || !msg.text?.body) continue;
+        await processMessage(msg, meta);
+      }
+    }
+  }
 }
 
-async function handleNewTenancy(senderPhone: string, args: string) {
-  const parts = args.trim().split(/\s+/);
-  // Expect: <name> <phone> <amount> <due_day> [property_id]
-  if (parts.length < 4) return;
+async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
+  const svc = createServiceClient();
+  const messageText = msg.text!.body;
+  const fromNumber = normalizePhone(msg.from);
+  const phoneNumberId = meta?.phone_number_id ?? "";
+  const toNumber = normalizePhone(meta?.display_phone_number ?? "");
+  const receivedAt = new Date(parseInt(msg.timestamp, 10) * 1000).toISOString();
 
-  const [name, phone, amountStr, dueDayStr, propertyId] = parts;
-  const amount = parseFloat(amountStr);
-  const due_day = parseInt(dueDayStr, 10);
+  // Deduplication — skip if we've already processed this Meta message ID
+  const { data: existing } = await svc
+    .from("whatsapp_messages")
+    .select("id")
+    .eq("wa_message_id", msg.id)
+    .maybeSingle();
+  if (existing) return;
 
-  if (!name || !phone || isNaN(amount) || isNaN(due_day)) return;
+  // Find the agent whose phone number ID matches
+  const { data: agentRow } = await svc
+    .from("agent_profiles")
+    .select("id")
+    .eq("whatsapp_phone_number_id", phoneNumberId)
+    .maybeSingle();
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  if (!agentRow) {
+    // No agent configured for this phone number — log and bail
+    console.warn("[whatsapp/webhook] no agent for phone_number_id", phoneNumberId);
+    await svc.from("whatsapp_messages").insert({
+      user_id: null,
+      card_id: null,
+      card_type: null,
+      direction: "inbound",
+      from_number: fromNumber,
+      to_number: toNumber,
+      message_text: messageText,
+      wa_message_id: msg.id,
+      received_at: receivedAt,
+    });
+    return;
+  }
 
-  const tenancy = await upsertTenancyByPhone(phone, {
-    tenant_name: name,
-    tenant_phone: phone,
-    amount,
-    due_day,
-    status: "Pending",
-    current_month_paid: false,
-    lhdn_status: "none",
+  const agentId = agentRow.id as string;
+
+  // Try matching to an owner_lead by owner_phone
+  const { data: ownerLead } = await svc
+    .from("owner_leads")
+    .select("id, owner_name")
+    .eq("user_id", agentId)
+    .eq("owner_phone", fromNumber)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  // Try matching to a tenancy by tenant_phone
+  const { data: tenancy } = !ownerLead
+    ? await svc
+        .from("tenancies")
+        .select("id, tenant_name")
+        .eq("user_id", agentId)
+        .eq("tenant_phone", fromNumber)
+        .is("deleted_at", null)
+        .maybeSingle()
+    : { data: null };
+
+  const cardId: string | null = ownerLead?.id ?? tenancy?.id ?? null;
+  const cardType: string | null = ownerLead ? "owner_lead" : tenancy ? "tenancy" : null;
+  const cardName: string | null = ownerLead?.owner_name ?? tenancy?.tenant_name ?? null;
+
+  // Insert the inbound message log
+  await svc.from("whatsapp_messages").insert({
+    user_id: agentId,
+    card_id: cardId,
+    card_type: cardType,
+    direction: "inbound",
+    from_number: fromNumber,
+    to_number: toNumber,
+    message_text: messageText,
+    wa_message_id: msg.id,
+    received_at: receivedAt,
   });
 
-  const uploadUrl = `${baseUrl}/upload/${tenancy.id}`;
+  if (cardId && cardType) {
+    const table = cardType === "owner_lead" ? "owner_leads" : "tenancies";
+    await svc
+      .from(table)
+      .update({
+        last_wa_reply_at: receivedAt,
+        last_wa_reply_text: messageText,
+        wa_status: "replied",
+      })
+      .eq("id", cardId);
 
-  // Send PROOF_REQUEST via WhatsApp (log only — actual send requires API credentials)
-  const proofRequest = buildProofRequest(name, uploadUrl);
-  logOutboundMessage(phone, proofRequest);
+    // Push notification to agent
+    const snippet = messageText.length > 100 ? messageText.slice(0, 97) + "..." : messageText;
+    await sendPushToUser(agentId, {
+      title: `WhatsApp reply from ${cardName ?? fromNumber}`,
+      body: snippet,
+      url: cardType === "owner_lead" ? "/outreach" : "/home",
+      tag: `wa-reply-${cardId}`,
+    });
+  } else {
+    console.warn("[whatsapp/webhook] unmatched number", fromNumber, "for agent", agentId);
+  }
 }
 
-// ─── Message templates ────────────────────────────────────────────────────────
-
-export function buildReminderMessage(
-  tenantName: string,
-  propertyName: string,
-  amount: number,
-): string {
-  return (
-    `Hi ${tenantName}, your rent for ${propertyName} is due soon (RM${amount.toLocaleString()}). ` +
-    `Please transfer and upload your receipt as soon as possible. Thank you!`
-  );
-}
-
-export function buildProofRequest(tenantName: string, uploadUrl: string): string {
-  return (
-    `Hi ${tenantName}, please upload your transfer screenshot here: ${uploadUrl}\n\n` +
-    `This link is unique to your account. Reply NEW to register a new tenancy.`
-  );
-}
-
-function logOutboundMessage(_to: string, _body: string) {
-  // Outbound message logging placeholder — wire to Twilio/Meta Cloud API when ready
+// Strip leading + to normalise to E.164 without prefix (e.g. 60198765432)
+function normalizePhone(phone: string): string {
+  return phone.replace(/^\+/, "").trim();
 }
