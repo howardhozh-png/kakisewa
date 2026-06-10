@@ -50,7 +50,8 @@ export function CompetitorTimeline({ leads, onMonthClick, selectedMonth }: Props
   }, [leads, months]);
 
   const maxAmount = Math.max(1, ...Array.from(buckets.values()));
-  const totalRm = Array.from(buckets.values()).reduce((a, b) => a + b, 0);
+  // Total across ALL leads, not just those expiring in the window
+  const totalRm = leads.reduce((sum, l) => sum + (l.expected_rent ?? 0), 0);
 
   function fmtRm(n: number): string {
     if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
@@ -62,13 +63,13 @@ export function CompetitorTimeline({ leads, onMonthClick, selectedMonth }: Props
       <div className="flex items-start justify-between mb-3 gap-2">
         <div>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--kk-ink-faint)", marginBottom: 2 }}>
-            Potential rental income · {windowMonths} month{windowMonths === 1 ? "" : "s"}
+            Total potential income · {windowMonths} month{windowMonths === 1 ? "" : "s"}
           </p>
           <p style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--kk-theme-dark)", fontVariantNumeric: "tabular-nums" }}>
             RM {totalRm.toLocaleString()}/mo
           </p>
           <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
-            competitor contracts expiring in this window
+            across all {leads.length} target unit{leads.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">

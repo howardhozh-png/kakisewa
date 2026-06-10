@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Poin
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -46,6 +46,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [openTenancy, setOpenTenancy] = useState<Tenancy | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingTenancy, setDraggingTenancy] = useState<Tenancy | null>(null);
+  const [search, setSearch] = useState("");
   const [propertyFilter, setPropertyFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("");
   const boardRef = useRef<HTMLDivElement>(null);
@@ -126,9 +127,11 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       active: [], stalled: [], headsup: [], pinged: [], renewing: [],
       pending_payment: [], replacing: [], ending: [], closed: [],
     };
+    const q = search.toLowerCase().trim();
     local
       .filter((t) => propertyFilter === "all" || normalizePropName(t.property_name ?? "") === propertyFilter)
       .filter((t) => !monthFilter || t.contract_end?.slice(0, 7) === monthFilter)
+      .filter((t) => !q || [t.property_name, t.tenant_name, t.property?.owner_name, t.property?.unit].some(f => f?.toLowerCase().includes(q)))
       .forEach((t) => {
         const stage = defaultLifecycleStage(t, today);
         if (!stage) return;
@@ -141,7 +144,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       out[k as LifecycleStage].sort((a, b) => (a.contract_end ?? "").localeCompare(b.contract_end ?? ""));
     });
     return out;
-  }, [local, today, propertyFilter, monthFilter]);
+  }, [local, today, search, propertyFilter, monthFilter]);
 
   function checkPlanCap(targetStage: LifecycleStage): boolean {
     if (!isFinite(planCap)) return false;
@@ -219,7 +222,23 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
         onDragEnd={handleDragEnd}
         onDragCancel={() => { setDraggingId(null); setDraggingTenancy(null); }}
       >
-        <div className="flex items-center gap-3 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <div className="relative shrink-0 flex items-center">
+            <Search className="absolute left-2.5 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--kk-ink-faint)" }} />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="text-[13px] pl-8 pr-3 py-1.5 rounded-full outline-none"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", minWidth: 160, fontSize: 13 }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-2.5" style={{ color: "var(--kk-ink-faint)" }}>
+                <XIcon className="w-3 h-3" />
+              </button>
+            )}
+          </div>
           <FilterSelect
             value={propertyFilter}
             onChange={setPropertyFilter}
@@ -574,8 +593,8 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       )}
       {col.stage === "headsup" && (
         <>
-          {plan !== "silver" && <HeadsupTenantAction t={t} />}
-          {plan !== "silver" && <HeadsupOwnerAction t={t} />}
+          <HeadsupTenantAction t={t} />
+          <HeadsupOwnerAction t={t} />
           <WhatsNext
             t={t}
             onMoveToStage={onMoveToStage}

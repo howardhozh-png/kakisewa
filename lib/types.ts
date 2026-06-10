@@ -124,11 +124,11 @@ export interface OwnerLead {
   managed_at?: string | null;
   is_competitor_target?: boolean;
   competitor_contract_end?: string | null;
-  competitor_stage?: "watching" | "reach_out" | "in_talks" | "missed";
+  competitor_stage?: "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
   created_at: string;
 }
 
-export type CompetitorStage = "watching" | "reach_out" | "in_talks" | "missed";
+export type CompetitorStage = "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
 
 export type SubscriptionStatus = "beta" | "beta_frozen" | "trial" | "active" | "expired" | "cancelled";
 

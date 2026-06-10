@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
-import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2 } from "lucide-react";
+import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
 import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
@@ -63,6 +63,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [competitorRentedLead, setCompetitorRentedLead] = useState<OwnerLead | null>(null);
 
   // Filter state
+  const [search, setSearch] = useState("");
   const [propertyFilter, setPropertyFilter] = useState<string>("");
   const [purposeFilter, setPurposeFilter] = useState<"" | "rent" | "sell">("");
   const [monthFilter, setMonthFilter] = useState<string>("");
@@ -129,8 +130,10 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   }, [local]);
 
   const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
     return local.filter((l) => {
       if (l.is_competitor_target) return false;
+      if (q && ![l.property_name, l.owner_name, l.unit].some(f => f?.toLowerCase().includes(q))) return false;
       if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
       if (purposeFilter && l.listing_purpose !== purposeFilter) return false;
       if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
@@ -138,7 +141,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (ownerRespondedFilter && ["listed", "wants_rent", "replied"].includes(l.stage) && !rankedLeadIds.has(l.id)) return false;
       return true;
     });
-  }, [local, propertyFilter, purposeFilter, monthFilter, ownerRespondedFilter, rankedLeadIds]);
+  }, [local, search, propertyFilter, purposeFilter, monthFilter, ownerRespondedFilter, rankedLeadIds]);
 
   const byStage = useMemo(() => {
     const out: Record<Stage, OwnerLead[]> = {
@@ -220,6 +223,22 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
       {/* Filter row */}
       <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-0.5 lg:flex-wrap" style={{ scrollbarWidth: "none" }}>
+        <div className="relative shrink-0 flex items-center">
+          <Search className="absolute left-2.5 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--kk-ink-faint)" }} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="text-[13px] pl-8 pr-3 py-1.5 rounded-full outline-none"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", minWidth: 160, fontSize: 13 }}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-2.5" style={{ color: "var(--kk-ink-faint)" }}>
+              <XIcon className="w-3 h-3" />
+            </button>
+          )}
+        </div>
         <FilterSelect
           value={propertyFilter}
           onChange={setPropertyFilter}

@@ -9,14 +9,16 @@ import { FilterSelect } from "@/components/filter-select";
 import { CompetitorTimeline } from "@/components/competitor-timeline";
 import { EditCompetitorDialog } from "@/components/edit-competitor-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Eye, Clock, MessageCircle, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, Lock, ChevronDown, Loader2, XCircle } from "lucide-react";
+import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, Lock, ChevronDown, Loader2, XCircle, Search, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
+type ColStage = "reach_out" | "renewing" | "watching";
+
 interface ColMeta {
-  stage: "reach_out" | "watching";
+  stage: ColStage;
   label: string;
   hint: string;
   dot: string;
@@ -36,6 +38,15 @@ const COLUMNS: ColMeta[] = [
     Icon: Clock,
   },
   {
+    stage: "renewing",
+    label: "Renewing",
+    hint: "Owner agreed to rent with you. Tap 'Moved in' once the tenant is settled.",
+    dot: "#1F8B4C",
+    soft: "rgba(52,199,89,0.12)",
+    ink: "#1F8B4C",
+    Icon: CheckCircle2,
+  },
+  {
     stage: "watching",
     label: "Watching",
     hint: "Tracking — auto-moves to Expiring 60 days before contract end.",
@@ -48,11 +59,11 @@ const COLUMNS: ColMeta[] = [
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-function effectiveColumn(lead: OwnerLead, today: Date): "reach_out" | "watching" {
+function effectiveColumn(lead: OwnerLead, today: Date): ColStage {
   const stored = (lead.competitor_stage ?? "watching") as CompetitorStage;
-  // in_talks/missed are removed from UI — treat as watching
   if (stored === "in_talks" || stored === "missed") return "watching";
   if (stored === "reach_out") return "reach_out";
+  if (stored === "renewing") return "renewing";
   // watching: auto-promote to expiring if within 60 days
   if (lead.competitor_contract_end && daysUntil(lead.competitor_contract_end, today) <= 60) return "reach_out";
   return "watching";
@@ -82,7 +93,8 @@ export function CompetitorBoard({ leads }: Props) {
   const [draggingLead, setDraggingLead] = useState<OwnerLead | null>(null);
   const [propertyFilter, setPropertyFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("");
-  const [pendingMove, setPendingMove] = useState<{ lead: OwnerLead; target: "reach_out" | "watching" } | null>(null);
+  const [search, setSearch] = useState("");
+  const [pendingMove, setPendingMove] = useState<{ lead: OwnerLead; target: ColStage } | null>(null);
   const [editLead, setEditLead] = useState<OwnerLead | null>(null);
 
   const [local, setLocal] = useState<OwnerLead[]>(leads);
@@ -110,10 +122,12 @@ export function CompetitorBoard({ leads }: Props) {
   }, [local]);
 
   const byStage = useMemo(() => {
-    const out: Record<"reach_out" | "watching", OwnerLead[]> = { reach_out: [], watching: [] };
+    const q = search.toLowerCase().trim();
+    const out: Record<ColStage, OwnerLead[]> = { reach_out: [], renewing: [], watching: [] };
     local
       .filter((l) => propertyFilter === "all" || normalizePropName(l.property_name ?? "") === propertyFilter)
       .filter((l) => !monthFilter || l.competitor_contract_end?.slice(0, 7) === monthFilter)
+      .filter((l) => !q || [l.property_name, l.owner_name, l.unit].some(f => f?.toLowerCase().includes(q)))
       .forEach((l) => {
         out[effectiveColumn(l, today)].push(l);
       });
@@ -121,15 +135,15 @@ export function CompetitorBoard({ leads }: Props) {
       arr.sort((a, b) => (a.competitor_contract_end ?? "").localeCompare(b.competitor_contract_end ?? ""))
     );
     return out;
-  }, [local, today, propertyFilter, monthFilter]);
+  }, [local, today, propertyFilter, monthFilter, search]);
 
   function handleDragEnd(e: DragEndEvent) {
     setDraggingId(null);
     setDraggingLead(null);
     if (!e.over) return;
     const id = String(e.active.id);
-    const target = String(e.over.id) as "reach_out" | "watching";
-    if (target !== "reach_out" && target !== "watching") return;
+    const target = String(e.over.id) as ColStage;
+    if (target !== "reach_out" && target !== "renewing" && target !== "watching") return;
     const lead = local.find((x) => x.id === id);
     if (!lead) return;
     if (effectiveColumn(lead, today) === target) return;
@@ -140,8 +154,8 @@ export function CompetitorBoard({ leads }: Props) {
     if (!pendingMove) return;
     const { lead, target } = pendingMove;
     setPendingMove(null);
-    setLocal((prev) => prev.map((x) => x.id === lead.id ? { ...x, competitor_stage: target } : x));
-    const res = await setCompetitorStageAction(lead.id, target);
+    setLocal((prev) => prev.map((x) => x.id === lead.id ? { ...x, competitor_stage: target as CompetitorStage } : x));
+    const res = await setCompetitorStageAction(lead.id, target as CompetitorStage);
     if (!res.ok) { setLocal(leads); toast.error("Could not move card"); }
     else router.refresh();
   }
@@ -151,6 +165,13 @@ export function CompetitorBoard({ leads }: Props) {
     await winCompetitorUnitAction(id);
     toast.success("Won! Card moved to Existing listing.");
     router.refresh();
+  }
+
+  async function handleMoveToRenewing(id: string) {
+    setLocal((prev) => prev.map((x) => x.id === id ? { ...x, competitor_stage: "renewing" as CompetitorStage } : x));
+    const res = await setCompetitorStageAction(id, "renewing");
+    if (!res.ok) { setLocal(leads); toast.error("Could not move card"); }
+    else router.refresh();
   }
 
   async function handleBackToWatching(id: string) {
@@ -197,8 +218,26 @@ export function CompetitorBoard({ leads }: Props) {
         onDragEnd={handleDragEnd}
         onDragCancel={() => { setDraggingId(null); setDraggingLead(null); }}
       >
-        {/* Filter row */}
+        {/* Filter row — search first */}
         <div className="flex items-center gap-3 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <div className="relative shrink-0 flex items-center">
+            <Search className="absolute left-2.5 pointer-events-none" style={{ width: 14, height: 14, color: "var(--kk-ink-faint)" }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", minWidth: 160, fontSize: 13, paddingLeft: 32, paddingRight: search ? 28 : 12, paddingTop: 6, paddingBottom: 6, borderRadius: 999, outline: "none" }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                style={{ position: "absolute", right: 8, color: "var(--kk-ink-faint)", display: "flex", alignItems: "center" }}
+              >
+                <X style={{ width: 12, height: 12 }} />
+              </button>
+            )}
+          </div>
           <FilterSelect
             value={propertyFilter}
             onChange={setPropertyFilter}
@@ -224,6 +263,7 @@ export function CompetitorBoard({ leads }: Props) {
                       isDragging={draggingId === l.id}
                       onOpen={() => setEditLead(l)}
                       onWin={handleWin}
+                      onMoveToRenewing={handleMoveToRenewing}
                       onBackToWatching={handleBackToWatching}
                       onArchive={handleArchive}
                     />
@@ -308,6 +348,7 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
   const { setNodeRef, isOver } = useDroppable({ id: col.stage });
   const Icon = col.Icon;
   const isExpiring = col.stage === "reach_out";
+  const isRenewing = col.stage === "renewing";
 
   return (
     <div
@@ -319,18 +360,24 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
           ? col.soft
           : isExpiring
             ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, var(--kk-theme-dark) 18%, transparent) 0%, color-mix(in srgb, var(--kk-theme-dark) 8%, transparent) 40%, var(--kk-surface) 68%)"
-            : "var(--kk-surface)",
+            : isRenewing
+              ? "radial-gradient(ellipse 110% 70% at 50% 25%, rgba(52,199,89,0.10) 0%, rgba(52,199,89,0.04) 40%, var(--kk-surface) 68%)"
+              : "var(--kk-surface)",
         outline: isOver
           ? `2px solid ${col.ink}`
           : isExpiring
             ? "1px solid color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)"
-            : "1px solid transparent",
+            : isRenewing
+              ? "1px solid rgba(52,199,89,0.25)"
+              : "1px solid transparent",
         outlineOffset: "-1px",
         boxShadow: isOver
           ? undefined
           : isExpiring
             ? "0 0 0 1px color-mix(in srgb, var(--kk-theme-dark) 22%, transparent), 0 0 14px 5px color-mix(in srgb, var(--kk-theme-dark) 15%, transparent)"
-            : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+            : isRenewing
+              ? "0 0 0 1px rgba(52,199,89,0.15), 0 0 14px 5px rgba(52,199,89,0.08)"
+              : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
         ...extraStyle,
       }}
     >
@@ -339,6 +386,7 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         style={{
           borderBottomColor: col.soft,
           ...(isExpiring ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}),
+          ...(isRenewing ? { background: "rgba(52,199,89,0.06)" } : {}),
         }}
       >
         <div className="flex items-center gap-2">
@@ -407,22 +455,27 @@ function CardPreview({ lead }: { lead: OwnerLead }) {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function Card({ lead, col, today, isDragging, onOpen, onWin, onBackToWatching, onArchive }: {
+function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, onBackToWatching, onArchive }: {
   lead: OwnerLead;
   col: ColMeta;
   today: Date;
   isDragging: boolean;
   onOpen: () => void;
   onWin: (id: string) => void;
+  onMoveToRenewing: (id: string) => void;
   onBackToWatching: (id: string) => void;
   onArchive: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
   const isExpiring = col.stage === "reach_out";
+  const isRenewing = col.stage === "renewing";
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
   if (isExpiring && !isDragging) {
     cardStyle.boxShadow = "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 14%, transparent), 0 1px 4px rgba(0,0,0,0.06)";
+  }
+  if (isRenewing && !isDragging) {
+    cardStyle.boxShadow = "0 4px 14px rgba(52,199,89,0.15), 0 1px 4px rgba(0,0,0,0.06)";
   }
 
   const days = lead.competitor_contract_end ? daysUntil(lead.competitor_contract_end, today) : null;
@@ -501,17 +554,22 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onBackToWatching, o
         </div>
       </div>
 
-      {/* Actions — only on Expiring column */}
+      {/* Actions — Expiring column */}
       {isExpiring && (
         <>
           <MessageOwnerAction lead={lead} />
           <ExpiringWhatsNext
             lead={lead}
-            onWin={onWin}
+            onMoveToRenewing={onMoveToRenewing}
             onBackToWatching={onBackToWatching}
             onArchive={onArchive}
           />
         </>
+      )}
+
+      {/* Actions — Renewing column */}
+      {isRenewing && (
+        <MovedInAction lead={lead} onWin={onWin} />
       )}
     </div>
   );
@@ -549,9 +607,73 @@ function MessageOwnerAction({ lead }: { lead: OwnerLead }) {
   );
 }
 
+// ─── "Moved in" action for Renewing cards ────────────────────────────────────
+
+function MovedInAction({ lead, onWin }: { lead: OwnerLead; onWin: (id: string) => void }) {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <>
+      <button
+        data-card-action
+        onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+        className="kk-card-cta"
+        style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C", border: "1px solid rgba(52,199,89,0.20)" }}
+      >
+        <span className="flex items-center gap-1.5 min-w-0 flex-1">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span>Moved in</span>
+        </span>
+        <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+      </button>
+
+      {confirming && (
+        <Dialog open onOpenChange={(v) => { if (!v) setConfirming(false); }}>
+          <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C" }}>
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Tenant moved in?</p>
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{lead.owner_name} · {lead.property_name}</p>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); }} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "rgba(52,199,89,0.12)" }}>
+                <p className="text-[13px] leading-relaxed" style={{ color: "#1F8B4C" }}>
+                  This will move the unit to Existing listing and record your commission.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); }} className="flex-1 kk-pill kk-pill-ghost text-[13px] py-2">
+                  Cancel
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); onWin(lead.id); }}
+                  className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
+                  style={{ background: "#1F8B4C", color: "#fff" }}
+                >
+                  Yes, moved in →
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+}
+
 // ─── "What's next?" for Expiring cards ───────────────────────────────────────
 
-type ExpiringOutcome = "" | "win" | "back" | "archive";
+type ExpiringOutcome = "" | "renewing" | "back" | "archive";
 
 const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
   label: string;
@@ -561,10 +683,10 @@ const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
   ink: string;
   Icon: React.ComponentType<{ className?: string }>;
 }> = {
-  win: {
+  renewing: {
     label: "Owner rents with me",
-    description: "Move this unit to Existing listing. You've won it.",
-    confirm: "Yes, move to Existing listing",
+    description: "Owner agreed to rent with you. Move to Renewing while you finalize the contract.",
+    confirm: "Yes, move to Renewing",
     soft: "rgba(52,199,89,0.12)",
     ink: "#1F8B4C",
     Icon: CheckCircle2,
@@ -587,9 +709,9 @@ const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
   },
 };
 
-function ExpiringWhatsNext({ lead, onWin, onBackToWatching, onArchive }: {
+function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching, onArchive }: {
   lead: OwnerLead;
-  onWin: (id: string) => void;
+  onMoveToRenewing: (id: string) => void;
   onBackToWatching: (id: string) => void;
   onArchive: (id: string) => void;
 }) {
@@ -616,9 +738,9 @@ function ExpiringWhatsNext({ lead, onWin, onBackToWatching, onArchive }: {
   function handleConfirm() {
     setConfirming(false);
     setChoice("");
-    if (choice === "win")     onWin(lead.id);
-    if (choice === "back")    onBackToWatching(lead.id);
-    if (choice === "archive") onArchive(lead.id);
+    if (choice === "renewing") onMoveToRenewing(lead.id);
+    if (choice === "back")     onBackToWatching(lead.id);
+    if (choice === "archive")  onArchive(lead.id);
   }
 
   const meta = choice ? EXPIRING_OUTCOMES[choice] : null;
@@ -650,7 +772,7 @@ function ExpiringWhatsNext({ lead, onWin, onBackToWatching, onArchive }: {
               className="absolute left-0 top-full mt-1 z-50 rounded-xl overflow-hidden"
               style={{ background: "#fff", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 200 }}
             >
-              {(["win", "back", "archive"] as const).map((val) => (
+              {(["renewing", "back", "archive"] as const).map((val) => (
                 <button
                   key={val}
                   type="button"

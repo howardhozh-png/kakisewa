@@ -1685,7 +1685,7 @@ export async function markCompetitorRentedAction(
 
 export async function setCompetitorStageAction(
   id: string,
-  stage: "watching" | "reach_out" | "in_talks" | "missed"
+  stage: "watching" | "reach_out" | "renewing" | "in_talks" | "missed"
 ): Promise<{ ok: boolean }> {
   "use server";
   await setCompetitorStage(id, stage);
