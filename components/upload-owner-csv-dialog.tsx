@@ -10,7 +10,6 @@ import {
   detectColumns, refreshMappingFlags, parseOwnerAddress, parseSpreadsheetRows,
   type ColumnMapping,
 } from "@/lib/csv-import";
-import { detectColumnMap } from "@/lib/tenancy-csv-import";
 import { Upload, FileText, AlertCircle, CheckCircle2, X, Download, ArrowRight, ChevronLeft } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { toast } from "sonner";
@@ -18,29 +17,22 @@ import { toast } from "sonner";
 type Step = "pick" | "map" | "result";
 
 const FIELD_LABELS: Record<string, string> = {
-  owner_name:               "Owner name",
-  owner_phone:              "Phone number",
-  address:                  "Address",
-  property_name:            "Property / condo name",
-  unit:                     "Unit number",
-  expected_rent:            "Expected rent (RM)",
-  bedrooms:                 "Bedrooms",
-  bathrooms:                "Bathrooms",
-  notes:                    "Notes",
-  contract_start:           "Contract start",
-  contract_end:             "Contract end",
-  contract_duration_months: "Duration (months)",
+  owner_name:    "Owner name",
+  owner_phone:   "Phone number",
+  address:       "Address",
+  property_name: "Property / condo name",
+  unit:          "Unit number",
+  expected_rent: "Expected rent (RM)",
+  bedrooms:      "Bedrooms",
+  bathrooms:     "Bathrooms",
+  notes:         "Notes",
 };
 
 const REQUIRED_FIELDS = ["owner_name", "owner_phone"] as const;
 const DISPLAY_FIELDS = [
   "owner_name", "owner_phone", "address",
   "property_name", "unit", "expected_rent", "bedrooms", "bathrooms", "notes",
-  "contract_start", "contract_end", "contract_duration_months",
 ] as const;
-
-// Always show these even when not auto-detected
-const ALWAYS_SHOW_FIELDS = new Set(["owner_name", "owner_phone", "address", "contract_start", "contract_duration_months"]);
 
 interface ParsedData {
   headers: string[];
@@ -56,7 +48,6 @@ export function UploadOwnerCsvDialog() {
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importProgress, setImportProgress] = useState<number | null>(null);
-  const [defaultContractStart, setDefaultContractStart] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -65,7 +56,6 @@ export function UploadOwnerCsvDialog() {
     setParsedData(null);
     setMapping(null);
     setResult(null);
-    setDefaultContractStart(null);
     setStep("pick");
   }
 
@@ -92,15 +82,7 @@ export function UploadOwnerCsvDialog() {
         rows = parsed.data;
       }
 
-      const ownerDetected = detectColumns(headers, rows);
-      // Also detect contract date columns from tenancy aliases
-      const contractDetected = detectColumnMap(headers);
-      const detected: ColumnMapping = {
-        ...ownerDetected,
-        contract_start:           ownerDetected.contract_start           ?? contractDetected.contract_start           ?? null,
-        contract_end:             ownerDetected.contract_end             ?? contractDetected.contract_end             ?? null,
-        contract_duration_months: ownerDetected.contract_duration_months ?? contractDetected.contract_duration_months ?? null,
-      };
+      const detected = detectColumns(headers, rows);
 
       // Merge saved column preferences: if a saved mapping's value exists in
       // the current file's headers, prefer it over the auto-detected value.
@@ -344,36 +326,6 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
                   />
                 )}
 
-                {/* Contract start alert */}
-                {!mapping.contract_start && (
-                  <div
-                    className="rounded-2xl px-4 py-3 flex items-start gap-3"
-                    style={{ background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB", border: `1px solid ${defaultContractStart ? "var(--kk-green)" : "#F59E0B"}` }}
-                  >
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: defaultContractStart ? "var(--kk-green)" : "#D97706" }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>
-                        {defaultContractStart
-                          ? `Contract start set to today (${defaultContractStart})`
-                          : "No contract start date column found"}
-                      </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-                        Contract dates are optional for owner leads and can be added later.
-                      </p>
-                    </div>
-                    {!defaultContractStart && (
-                      <button
-                        type="button"
-                        className="kk-pill kk-pill-ghost shrink-0"
-                        style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
-                        onClick={() => setDefaultContractStart(new Date().toISOString().slice(0, 10))}
-                      >
-                        Add today
-                      </button>
-                    )}
-                  </div>
-                )}
-
                 {!canImport && (
                   <p className="text-[12px]" style={{ color: "var(--kk-red)" }}>
                     Owner name and phone number must be mapped before importing.
@@ -492,8 +444,8 @@ function MappingTable({
 
   const fieldsToShow = DISPLAY_FIELDS.filter((f) => {
     if (REQUIRED_FIELDS.includes(f as typeof REQUIRED_FIELDS[number])) return true;
-    if (ALWAYS_SHOW_FIELDS.has(f)) return headers.length > 0;
     if (mapping[f as keyof ColumnMapping]) return true;
+    if (f === "address") return headers.length > 0;
     return false;
   });
 
@@ -524,14 +476,11 @@ function MappingTable({
             }}
           >
             {/* Field label */}
-            <div className="w-[140px] shrink-0 pt-0.5">
+            <div className="w-[120px] shrink-0 pt-0.5">
               <p className="text-[12px] font-semibold" style={{ color: isMissing ? "var(--kk-red)" : "var(--kk-ink)" }}>
                 {FIELD_LABELS[field]}
                 {showAsterisk && <span style={{ color: "var(--kk-red)" }}> *</span>}
               </p>
-              {field === "contract_duration_months" && (
-                <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>defaults to 12 if blank</p>
-              )}
             </div>
 
             {/* Column picker */}

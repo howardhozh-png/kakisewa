@@ -629,17 +629,61 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
           {step === "map" && mapping && rawData && (
             <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
               <div style={{ overflow: "auto", flex: 1, padding: "16px 24px" }} className="space-y-4">
-                {/* Default duration inline in mapping step */}
-                <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>
-                  <span>No contract end or duration?</span>
-                  <span>Default to</span>
-                  <input
-                    type="number" min={1} max={60} value={defaultDuration}
-                    onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
-                    style={{ width: 48, padding: "3px 8px", border: "1px solid var(--kk-border)", borderRadius: 6, fontSize: 13, color: "var(--kk-ink)", background: "var(--kk-surface)", textAlign: "center" }}
-                  />
-                  <span>months</span>
-                </div>
+
+                {/* ── Decisions banner (top) ── */}
+                {(!mapping.contract_start || !mapping.contract_end) && (
+                  <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #F59E0B" }}>
+                    {/* Item 1: no contract start */}
+                    {!mapping.contract_start && (
+                      <div
+                        className="px-4 py-3 flex items-start gap-3"
+                        style={{
+                          background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB",
+                          borderBottom: !mapping.contract_end ? "1px solid #F59E0B" : "none",
+                        }}
+                      >
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: defaultContractStart ? "var(--kk-green)" : "#D97706" }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>
+                            {defaultContractStart
+                              ? `Start date: today (${defaultContractStart}) applied to all rows`
+                              : "No contract start date column found"}
+                          </p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+                            {defaultContractStart ? "Editable per row in the next step." : "Map a start date column below, or use today as a placeholder."}
+                          </p>
+                        </div>
+                        {!defaultContractStart && (
+                          <button
+                            type="button"
+                            className="kk-pill kk-pill-ghost shrink-0"
+                            style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
+                            onClick={() => setDefaultContractStart(new Date().toISOString().slice(0, 10))}
+                          >
+                            Add today
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {/* Item 2: no contract end → duration default */}
+                    {!mapping.contract_end && (
+                      <div
+                        className="px-4 py-3 flex items-center gap-2 flex-wrap"
+                        style={{ background: "#FFFBEB", fontSize: 12, color: "var(--kk-ink)" }}
+                      >
+                        <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#D97706" }} />
+                        <span style={{ color: "var(--kk-ink-mute)" }}>No contract end date — defaulting to</span>
+                        <input
+                          type="number" min={1} max={60} value={defaultDuration}
+                          onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
+                          style={{ width: 44, padding: "2px 6px", border: "1px solid #F59E0B", borderRadius: 6, fontSize: 12, color: "var(--kk-ink)", background: "#fff", textAlign: "center" }}
+                        />
+                        <span style={{ color: "var(--kk-ink-mute)" }}>months</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <MappingTable
                   headers={rawData.headers}
                   rows={rawData.sampleRows}
@@ -654,37 +698,6 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                     extractUnit={mapping.parseAddressForUnit}
                     extractCondo={mapping.parseAddressForCondo}
                   />
-                )}
-
-                {!mapping?.contract_start && (
-                  <div
-                    className="rounded-2xl px-4 py-3 flex items-start gap-3"
-                    style={{ background: defaultContractStart ? "var(--kk-green-soft)" : "#FFFBEB", border: `1px solid ${defaultContractStart ? "var(--kk-green)" : "#F59E0B"}` }}
-                  >
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: defaultContractStart ? "var(--kk-green)" : "#D97706" }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>
-                        {defaultContractStart
-                          ? `Contract start set to today (${defaultContractStart}) for all rows`
-                          : "No contract start date column found"}
-                      </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-                        {defaultContractStart
-                          ? "Duration defaults to 12 months unless mapped. You can edit individual rows in the next step."
-                          : "Map a start date column above, or use today as a placeholder for all rows."}
-                      </p>
-                    </div>
-                    {!defaultContractStart && (
-                      <button
-                        type="button"
-                        className="kk-pill kk-pill-ghost shrink-0"
-                        style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
-                        onClick={() => setDefaultContractStart(new Date().toISOString().slice(0, 10))}
-                      >
-                        Add today
-                      </button>
-                    )}
-                  </div>
                 )}
               </div>
 

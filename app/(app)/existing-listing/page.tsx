@@ -46,8 +46,8 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
               "Renew the contract and earn half a month's rent in commission. Automatically tracked.",
             ]}
           />
-          <UploadTenancyCsvDialog />
           <AddTenancyDialog ownerLeads={ownerLeads} />
+          <UploadTenancyCsvDialog />
         </div>
       </header>
 
@@ -92,8 +92,8 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
                 </ul>
               </div>
               <div className="flex items-center gap-3">
-                <UploadTenancyCsvDialog />
                 <AddTenancyDialog ownerLeads={ownerLeads} />
+                <UploadTenancyCsvDialog />
               </div>
             </div>
             <p className="text-center text-[12px] mb-4" style={{ color: "var(--kk-ink-faint)" }}>
