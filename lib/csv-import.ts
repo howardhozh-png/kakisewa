@@ -194,10 +194,16 @@ export function detectColumns(
 
 // Recompute the derived parse flags after user edits the mapping.
 export function refreshMappingFlags(m: ColumnMapping): ColumnMapping {
+  // If address and property_name point to the same column AND unit is explicitly
+  // set, the "address" is just a condo name with nothing to extract — clear it.
+  const address = (m.address && m.address === m.property_name && m.unit)
+    ? null
+    : m.address;
   return {
     ...m,
-    parseAddressForUnit: !!m.address && !m.unit,
-    parseAddressForCondo: !!m.address && !m.property_name,
+    address,
+    parseAddressForUnit: !!address && !m.unit,
+    parseAddressForCondo: !!address && !m.property_name,
   };
 }
 

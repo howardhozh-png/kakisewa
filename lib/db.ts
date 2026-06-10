@@ -127,9 +127,28 @@ const _cachedLifecycleTenancies = unstable_cache(
   async (userId: string): Promise<Tenancy[]> => {
     const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
     const svc = createServiceClient();
-    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", earliest).order("contract_end", { ascending: true });
-    if (error) throw error;
-    return (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
+    // PostgREST max_rows=1000; paginate in case user has many tenancies
+    const PAGE = 1000;
+    const all: Tenancy[] = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await svc
+        .from("tenancies")
+        .select(TENANCY_SELECT)
+        .eq("user_id", userId)
+        .is("deleted_at", null)
+        .not("contract_end", "is", null)
+        .gte("contract_end", earliest)
+        .order("contract_end", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      const batch = (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
+      all.push(...batch);
+      if (batch.length < PAGE) break;
+      from += PAGE;
+    }
+    return all;
   },
   ["kk-lifecycle-tenancies"],
   { tags: ["kk-tenancies"], revalidate: 60 }

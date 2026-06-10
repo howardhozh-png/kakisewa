@@ -394,7 +394,8 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   function handleApplyMapping() {
     if (!rawData || !mapping) return;
 
-    // Pre-process rows: inject parsed unit/property from address column
+    // Pre-process rows: inject parsed unit/property from address column,
+    // and inject a synthetic __default_start__ column when using "Add today"
     const processedRows = rawData.allRows.map((row) => {
       const out = { ...row };
       if (mapping.address && row[mapping.address]) {
@@ -402,11 +403,17 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
         if (unit) out["__unit__"] = unit;
         if (propertyName) out["__property__"] = propertyName;
       }
+      if (!mapping.contract_start && defaultContractStart) {
+        out["__default_start__"] = defaultContractStart;
+      }
       return out;
     });
 
     const colMap: Partial<Record<CanonicalField, string>> = {};
+    // Use real column if mapped, otherwise use synthetic default-start column so
+    // buildRowsFromMapping auto-fills contract_end correctly in the same pass
     if (mapping.contract_start)           colMap.contract_start = mapping.contract_start;
+    else if (defaultContractStart)        colMap.contract_start = "__default_start__";
     if (mapping.parseAddressForUnit && mapping.address) colMap.unit = "__unit__";
     else if (mapping.unit)                colMap.unit = mapping.unit;
     if (mapping.parseAddressForCondo && mapping.address) colMap.property_name = "__property__";
@@ -422,16 +429,6 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
 
     const newRows = buildRowsFromMapping(processedRows, colMap, defaultDuration);
     if (newRows.length === 0) { toast.error("No data rows found."); return; }
-
-    // Inject today's date as contract_start for any row that has none
-    if (defaultContractStart) {
-      for (const row of newRows) {
-        if (!row.contract_start) {
-          row.contract_start = defaultContractStart;
-          row._autoFilled.add("contract_start");
-        }
-      }
-    }
 
     setRows(newRows);
     setStep("review");
