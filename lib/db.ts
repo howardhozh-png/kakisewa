@@ -150,6 +150,7 @@ async function _cachedOwnerLeads(userId: string): Promise<OwnerLead[]> {
       .eq("user_id", userId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .range(from, from + PAGE - 1);
     if (error) throw error;
     const batch = (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
@@ -1228,6 +1229,21 @@ export async function deleteOwnerLead(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("owner_leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) throw error;
+}
+
+export async function bulkSoftDeleteOwnerLeads(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  // Process in chunks of 500 to stay within PostgREST URL length limits
+  const CHUNK = 500;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const { error } = await supabase
+      .from("owner_leads")
+      .update({ deleted_at: now })
+      .in("id", ids.slice(i, i + CHUNK));
+    if (error) throw error;
+  }
 }
 
 export async function restoreOwnerLead(id: string): Promise<void> {

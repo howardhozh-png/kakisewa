@@ -28,6 +28,7 @@ import {
   updateOwnerLead,
   getOwnerLead,
   deleteOwnerLead,
+  bulkSoftDeleteOwnerLeads,
   restoreOwnerLead,
   hardDeleteOwnerLead,
   restoreTenancy,
@@ -221,7 +222,7 @@ export async function removeOwnerLead(id: string) {
 }
 
 export async function bulkDeleteOwnerLeads(ids: string[]): Promise<void> {
-  await Promise.all(ids.map((id) => deleteOwnerLead(id)));
+  await bulkSoftDeleteOwnerLeads(ids);
   invalidateCache();
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
   revalidatePath("/");
