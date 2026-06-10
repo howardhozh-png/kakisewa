@@ -6,7 +6,8 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, daysUntil } from "@/lib/types";
 import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
-import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
+import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { ReplyState } from "@/lib/types";
 import { toast } from "sonner";
@@ -269,9 +270,21 @@ function TenancyForm({
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
-                {ownerPhone ? `+${ownerPhone}` : tenancy.tenant_phone ? `+${tenancy.tenant_phone}` : ""}
-              </p>
+              {(ownerPhone || tenancy.tenant_phone) ? (
+                <div className="flex items-center gap-0.5 mt-1">
+                  <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+                    +{ownerPhone || tenancy.tenant_phone}
+                  </p>
+                  <a href={`https://wa.me/${ownerPhone || tenancy.tenant_phone}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                    <WhatsAppIcon className="w-3.5 h-3.5" />
+                  </a>
+                  <a href={`tel:+${ownerPhone || tenancy.tenant_phone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                    <Phone className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              ) : (
+                <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}></p>
+              )}
             </div>
           )}
         </div>
@@ -302,7 +315,22 @@ function TenancyForm({
       {/* Editable fields */}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tenant name" value={tenantName} onChange={setTenantName} placeholder="e.g. Ahmad Farid" full />
-        <Field label="Phone (with country code)" value={tenantPhone} onChange={setTenantPhone} placeholder="e.g. 60123456789" full />
+        <div className="space-y-1.5 col-span-2">
+          <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Phone (with country code)</label>
+          <div className="flex items-center gap-1">
+            <input type="text" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} placeholder="e.g. 60123456789" className="flex-1 min-w-0 text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
+            {tenantPhone && (
+              <>
+                <a href={`https://wa.me/${tenantPhone}`} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                  <WhatsAppIcon className="w-4 h-4" />
+                </a>
+                <a href={`tel:+${tenantPhone}`} className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                  <Phone className="w-4 h-4" />
+                </a>
+              </>
+            )}
+          </div>
+        </div>
         <Field label="Monthly rent (RM)" value={amount} onChange={setAmount} placeholder="e.g. 1,500" money />
         <div /> {/* spacer so rent stays left */}
         <Field label="Bedrooms" value={bedrooms} onChange={setBedrooms} placeholder="e.g. 3" />

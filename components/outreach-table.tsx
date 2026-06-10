@@ -46,7 +46,7 @@ import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -55,7 +55,7 @@ import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 
-type Filter = "all" | "unsent" | "contacted" | "listed" | "rented" | "declined";
+type Filter = "all" | "unsent" | "contacted";
 type PurposeFilter = "all" | "rent" | "sell";
 type ContactStatus = "listed" | "rented" | "contacted" | "unsent" | "declined";
 
@@ -327,13 +327,25 @@ function LeadPopup({
                 <Pencil className="w-3.5 h-3.5" />
               </button>
             </div>
-            <input
-              value={form.owner_phone}
-              onChange={(e) => set("owner_phone", e.target.value)}
-              className="text-[12px] w-full bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] mt-1"
-              style={{ color: "var(--kk-ink-mute)" }}
-              placeholder="Phone"
-            />
+            <div className="flex items-center gap-0.5 mt-1">
+              <input
+                value={form.owner_phone}
+                onChange={(e) => set("owner_phone", e.target.value)}
+                className="text-[12px] flex-1 min-w-0 bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)]"
+                style={{ color: "var(--kk-ink-mute)" }}
+                placeholder="Phone"
+              />
+              {form.owner_phone && (
+                <>
+                  <a href={`https://wa.me/${form.owner_phone}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                    <WhatsAppIcon className="w-3.5 h-3.5" />
+                  </a>
+                  <a href={`tel:+${form.owner_phone}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                    <Phone className="w-3.5 h-3.5" />
+                  </a>
+                </>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <StatusBadge lead={lead} />
@@ -699,11 +711,8 @@ export function OutreachTable({ leads }: Props) {
     .filter((l) => {
       if (l.is_competitor_target) return false;
       const s = getStatus(l);
-      if (filter === "unsent")    { if (s !== "unsent")    return false; }
+      if (filter === "unsent")         { if (s !== "unsent")    return false; }
       else if (filter === "contacted") { if (s !== "contacted") return false; }
-      else if (filter === "listed")    { if (s !== "listed")    return false; }
-      else if (filter === "rented")    { if (s !== "rented")    return false; }
-      else if (filter === "declined")  { if (s !== "declined")  return false; }
       if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter) return false;
       if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
       if (searchLower) {
@@ -866,9 +875,6 @@ export function OutreachTable({ leads }: Props) {
     { key: "all",       label: `All ${counts.all}` },
     { key: "unsent",    label: `Uncontacted ${counts.unsent}` },
     { key: "contacted", label: `Contacted ${counts.contacted}` },
-    { key: "listed",    label: `Listed ${counts.listed}` },
-    { key: "rented",    label: `Rented ${counts.rented}` },
-    { key: "declined",  label: `Declined ${counts.declined}` },
   ];
 
   return (

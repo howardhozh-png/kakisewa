@@ -250,7 +250,8 @@ export interface PackTenant extends TenantProfile {
 
 export const SUPPORT_TYPES = [
   "cleaner", "electrician", "plumber", "aircon",
-  "renovation", "interior_design", "locksmith", "pest_control", "other",
+  "renovation", "interior_design", "locksmith", "pest_control",
+  "wifi", "stamping", "other",
 ] as const;
 export type SupportType = typeof SUPPORT_TYPES[number];
 
@@ -263,6 +264,8 @@ export const SUPPORT_LABELS: Record<SupportType, string> = {
   interior_design: "Interior Design",
   locksmith: "Locksmith",
   pest_control: "Pest Control",
+  wifi: "WiFi",
+  stamping: "Stamping",
   other: "Other",
 };
 
@@ -275,6 +278,8 @@ export const SUPPORT_ICONS: Record<SupportType, string> = {
   interior_design: "🛋️",
   locksmith: "🔑",
   pest_control: "🐜",
+  wifi: "📶",
+  stamping: "📄",
   other: "📋",
 };
 
