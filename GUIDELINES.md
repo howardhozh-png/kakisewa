@@ -5,7 +5,7 @@
 - **Tailwind CSS v4** with Lightning CSS — CSS pipeline strips compound/descendant selectors inside `@media` blocks (e.g. `.kk-chart-ctrl select` won't survive). Use inline styles for critical sizing.
 - **shadcn/ui** built on `@base-ui/react` (not Radix UI). Check `components/ui/` before building anything UI-related.
 - **Supabase** (project: `binqdtfvyhipgwpiarkb`) for auth + data. Always use Supabase MCP for schema work.
-- **Vercel** for deployment via `git push` hook.
+- **Vercel** for deployment — auto-deploys when `main` is pushed. Push only via `/deploy` skill.
 
 ---
 
@@ -73,10 +73,10 @@ await page.screenshot({ path: 'desktop-check.png' });
 
 ## Deployment
 
-- **All work happens on localhost only.** Run `npm run dev`, verify with Playwright, commit, but do NOT push.
-- **Never `git push` unless the user explicitly says "deploy to production" or "push to prod"** in that turn. A past approval does not carry forward.
-- After every localhost verification, end with: "Verified on localhost — say 'deploy to production' when you're ready to ship."
-- Live users are on production. Pushing mid-session exposes incomplete or untested features to them.
+- **All work stays on localhost.** Run `npm run dev`, verify with Playwright, commit locally — but do NOT push.
+- **`git push` only happens inside the `/deploy` skill.** That skill is the only place it belongs. Do not run `git push` anywhere else, under any circumstances, for any reason.
+- After every localhost verification, end with: "Verified on localhost — run `/deploy` when you're ready to ship."
+- Live users are on production. Pushing outside of `/deploy` exposes untested work to real users immediately via Vercel.
 - Dev server cache issue: if UI changes don't appear, run `lsof -ti :3000 | xargs kill -9 && rm -rf .next && npm run dev`.
 
 ---

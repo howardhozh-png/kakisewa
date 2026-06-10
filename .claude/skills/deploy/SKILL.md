@@ -5,6 +5,9 @@ description: Production deployment workflow — pre-flight checks, git push, Ver
 
 Deploy to production: $ARGUMENTS
 
+> **This is the only place `git push` is ever run.** Outside this skill, commits stay local.
+> Running this skill is Howard's explicit sign-off to ship to kakisewa.com.
+
 Follow this sequence exactly. Do not skip steps.
 
 ## Step 1 — Pre-flight checks
