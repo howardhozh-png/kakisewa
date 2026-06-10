@@ -2,23 +2,37 @@
 
 import { useState, useTransition, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { updateCompetitorLeadAction, saveOwnerLeadPhotos } from "@/lib/actions";
+import { updateCompetitorLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { OwnerLead } from "@/lib/types";
-import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star } from "lucide-react";
+import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star, FileText, Upload } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { daysUntil } from "@/lib/types";
 
-const FIELD_CLS = "w-full text-[14px] px-3 py-2 rounded-xl outline-none";
+const FIELD_CLS = "w-full text-[13px] px-3 py-2 rounded-xl outline-none";
 const FIELD_STY: React.CSSProperties = {
   background: "var(--kk-surface-2)",
   border: "1px solid var(--kk-line)",
   color: "var(--kk-ink)",
 };
+const FIELD14_CLS = "w-full text-[14px] px-3 py-2 rounded-xl outline-none";
+const FIELD14_STY: React.CSSProperties = FIELD_STY;
+
+function computeEnd(start: string, months: number): string {
+  const [y, m, day] = start.split("-").map(Number);
+  let end: Date;
+  if (day === 1) {
+    end = new Date(y, m - 1 + months + 1, 0);
+  } else {
+    const anniversary = new Date(y, m - 1 + months, day);
+    end = new Date(anniversary.getTime() - 86400000);
+  }
+  return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+}
 
 interface Props {
   lead: OwnerLead;
@@ -30,6 +44,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const agreementInputRef = useRef<HTMLInputElement>(null);
 
   const [editingOwner, setEditingOwner] = useState(false);
   const [ownerName, setOwnerName] = useState(lead.owner_name ?? "");
@@ -39,24 +54,53 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
   const [expectedRent, setExpectedRent] = useState(lead.expected_rent != null ? String(lead.expected_rent) : "");
   const [bedrooms, setBedrooms] = useState(lead.bedrooms != null ? String(lead.bedrooms) : "");
   const [bathrooms, setBathrooms] = useState(lead.bathrooms != null ? String(lead.bathrooms) : "");
-  const [contractEnd, setContractEnd] = useState(lead.competitor_contract_end ?? "");
 
+  // Contract fields
+  const [contractStart, setContractStart] = useState(lead.competitor_contract_start ?? "");
+  const [contractDuration, setContractDuration] = useState(
+    lead.competitor_contract_duration_months != null ? String(lead.competitor_contract_duration_months) : ""
+  );
+  const [contractEnd, setContractEnd] = useState(() => {
+    const s = lead.competitor_contract_start;
+    const mo = lead.competitor_contract_duration_months;
+    if (s && mo) return computeEnd(s, mo);
+    return lead.competitor_contract_end ?? "";
+  });
+
+  function recomputeEnd(s: string, d: string) {
+    if (!s || !d) return;
+    setContractEnd(computeEnd(s, parseInt(d, 10)));
+  }
+  function recomputeDuration(s: string, e: string) {
+    if (!s || !e) return;
+    const months = Math.round((new Date(e).getTime() - new Date(s).getTime()) / (30.4375 * 86400000));
+    if (months > 0) setContractDuration(String(months));
+  }
+
+  // Photos
   const [photos, setPhotos] = useState<string[]>(lead.photo_urls ?? []);
-  const [coverIndex, setCoverIndex] = useState(0);
+  const [coverIndex, setCoverIndex] = useState(lead.cover_photo_index ?? 0);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Agreement
+  const [agreementUrl, setAgreementUrl] = useState<string | null>(lead.agreement_url ?? null);
+  const [uploadingAgreement, setUploadingAgreement] = useState(false);
+
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   function handleSave() {
     startTransition(async () => {
       const res = await updateCompetitorLeadAction(lead.id, {
-        property_name: propertyName.trim() || lead.property_name || undefined,
+        property_name: propertyName.trim() || undefined,
         unit: unit || undefined,
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
         expected_rent: expectedRent ? parseFloat(expectedRent) : null,
         bedrooms: bedrooms ? parseInt(bedrooms, 10) : null,
         bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
+        competitor_contract_start: contractStart || null,
+        competitor_contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : null,
         competitor_contract_end: contractEnd || null,
       });
       if (!res.ok) { toast.error("Could not save"); return; }
@@ -96,6 +140,33 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
     await saveOwnerLeadPhotos(lead.id, updated).catch(() => toast.error("Failed to remove photo"));
   }
 
+  async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAgreement(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload/document", { method: "POST", body: form });
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
+      const url = data.url as string;
+      setAgreementUrl(url);
+      await saveOwnerLeadAgreementUrl(lead.id, url);
+      toast.success("Agreement uploaded");
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploadingAgreement(false);
+      if (agreementInputRef.current) agreementInputRef.current.value = "";
+    }
+  }
+
+  async function handleRemoveAgreement() {
+    setAgreementUrl(null);
+    await saveOwnerLeadAgreementUrl(lead.id, null).catch(() => toast.error("Failed to remove"));
+  }
+
   const daysLeft = contractEnd ? daysUntil(contractEnd, new Date()) : null;
 
   return (
@@ -133,13 +204,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                     <h2 className="text-[18px] font-semibold leading-tight" style={{ color: "var(--kk-ink)", letterSpacing: "-0.014em" }}>
                       {ownerName || "Unknown owner"}
                     </h2>
-                    <button
-                      type="button"
-                      onClick={() => setEditingOwner(true)}
-                      className="p-1 rounded-full shrink-0"
-                      style={{ color: "var(--kk-ink-mute)" }}
-                      aria-label="Edit owner info"
-                    >
+                    <button type="button" onClick={() => setEditingOwner(true)} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-mute)" }} aria-label="Edit owner info">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -159,13 +224,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-              aria-label="Close"
-            >
+            <button type="button" onClick={() => onOpenChange(false)} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }} aria-label="Close">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -173,26 +232,32 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
           {/* Property pill */}
           <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)" }}>
             <Building2 className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
-            <input
-              type="text"
-              value={propertyName}
-              onChange={(e) => setPropertyName(e.target.value)}
-              placeholder="Property name"
-              className="flex-1 min-w-0 text-[13px] font-medium bg-transparent outline-none"
-              style={{ color: "var(--kk-ink)" }}
-            />
+            <input type="text" value={propertyName} onChange={(e) => setPropertyName(e.target.value)} placeholder="Property name"
+              className="flex-1 min-w-0 text-[13px] font-medium bg-transparent outline-none" style={{ color: "var(--kk-ink)" }} />
           </div>
 
           {/* Fields */}
           <div className="grid grid-cols-2 gap-3">
-            <CField label="Unit" value={unit} onChange={setUnit} placeholder="e.g. A-12-05" />
-            <CField label="Expected rent (RM)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 2500" type="number" />
-            <CField label="Bedrooms" value={bedrooms} onChange={setBedrooms} placeholder="e.g. 3" type="number" />
-            <CField label="Bathrooms" value={bathrooms} onChange={setBathrooms} placeholder="e.g. 2" type="number" />
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Unit</label>
+              <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="e.g. A-12-05" className={FIELD14_CLS} style={FIELD14_STY} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Expected rent (RM)</label>
+              <input type="number" value={expectedRent} onChange={(e) => setExpectedRent(e.target.value)} placeholder="e.g. 2500" className={FIELD14_CLS} style={FIELD14_STY} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bedrooms</label>
+              <input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder="e.g. 3" className={FIELD14_CLS} style={FIELD14_STY} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bathrooms</label>
+              <input type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder="e.g. 2" className={FIELD14_CLS} style={FIELD14_STY} />
+            </div>
             {contractEnd && daysLeft !== null && (
               <div className="space-y-1.5">
                 <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Days to expiry</label>
-                <div className={`${FIELD_CLS}`} style={FIELD_STY}>
+                <div className={FIELD14_CLS} style={FIELD14_STY}>
                   {daysLeft < 0 ? `Expired ${Math.abs(daysLeft)}d ago` : daysLeft === 0 ? "Expires today" : `${daysLeft} days left`}
                 </div>
               </div>
@@ -203,23 +268,43 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
           <div className="rounded-xl p-4 space-y-3" style={{ border: "1px solid var(--kk-line)" }}>
             <div className="flex items-center gap-2">
               <FileSignature className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-faint)" }} />
-              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Contract end</p>
-              {contractEnd && daysLeft !== null && (
-                <ContractBadge daysLeft={daysLeft} />
-              )}
+              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Contract</p>
+              {contractEnd && daysLeft !== null && <ContractBadge daysLeft={daysLeft} />}
             </div>
-            <div>
-              <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>End date</label>
-              <DateInput
-                value={contractEnd}
-                onChange={setContractEnd}
-                className="w-full mt-1.5 text-[13px] px-3 py-2 rounded-xl"
-                style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Start date</label>
+                <DateInput
+                  value={contractStart}
+                  onChange={(v) => { setContractStart(v); recomputeEnd(v, contractDuration); }}
+                  className="w-full text-[13px] px-3 py-2 rounded-xl"
+                  style={FIELD_STY}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months)</label>
+                <input
+                  type="number"
+                  value={contractDuration}
+                  onChange={(e) => { setContractDuration(e.target.value); recomputeEnd(contractStart, e.target.value); }}
+                  placeholder="12"
+                  className="w-full text-[13px] px-3 py-2 rounded-xl"
+                  style={FIELD_STY}
+                />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>End date</label>
+                <DateInput
+                  value={contractEnd}
+                  onChange={(v) => { setContractEnd(v); recomputeDuration(contractStart, v); }}
+                  className="w-full text-[13px] px-3 py-2 rounded-xl"
+                  style={FIELD_STY}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Photos */}
+          {/* Property photos */}
           <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
             <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
               <ImagePlus className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-faint)" }} />
@@ -228,12 +313,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
             </div>
             <div className="p-3 grid grid-cols-3 gap-2">
               {photos.map((url, i) => (
-                <div
-                  key={url}
-                  className="relative rounded-lg overflow-hidden group cursor-pointer"
-                  style={{ aspectRatio: "16/9" }}
-                  onClick={() => setLightboxUrl(url)}
-                >
+                <div key={url} className="relative rounded-lg overflow-hidden group cursor-pointer" style={{ aspectRatio: "16/9" }} onClick={() => setLightboxUrl(url)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   {i === coverIndex && (
@@ -261,6 +341,39 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                 </label>
               )}
             </div>
+          </div>
+
+          {/* Tenancy agreement */}
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+            <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
+              <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-faint)" }} />
+              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Tenancy agreement</p>
+            </div>
+            {agreementUrl ? (
+              <div className="flex items-center gap-3 px-3 py-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
+                  <FileText className="w-4 h-4" style={{ color: "var(--kk-green)" }} />
+                </div>
+                <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Agreement</p>
+                <a href={agreementUrl} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.3rem 0.75rem", fontSize: 12 }}>View</a>
+                <label className="kk-pill kk-pill-ghost shrink-0 cursor-pointer" style={{ padding: "0.3rem 0.75rem", fontSize: 12 }}>
+                  {uploadingAgreement ? <Loader2 className="w-3 h-3 animate-spin" /> : "Replace"}
+                  <input ref={agreementInputRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
+                </label>
+                <button type="button" onClick={handleRemoveAgreement} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--kk-ink-faint)" }}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="px-3 py-4 flex flex-col items-center gap-1.5">
+                <label className="kk-pill kk-pill-ghost cursor-pointer flex items-center gap-1.5">
+                  {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                  Upload agreement
+                  <input ref={agreementInputRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
+                </label>
+                <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>PDF or image, max 20 MB</p>
+              </div>
+            )}
           </div>
 
           {/* Save / Delete */}
@@ -293,18 +406,6 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function CField({ label, value, onChange, placeholder, type = "text" }: {
-  label: string; value: string; onChange: (s: string) => void; placeholder?: string; type?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className={FIELD_CLS} style={FIELD_STY} />
-    </div>
   );
 }
 

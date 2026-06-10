@@ -123,6 +123,8 @@ export interface OwnerLead {
   is_managed?: boolean;
   managed_at?: string | null;
   is_competitor_target?: boolean;
+  competitor_contract_start?: string | null;
+  competitor_contract_duration_months?: number | null;
   competitor_contract_end?: string | null;
   competitor_stage?: "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
   created_at: string;
