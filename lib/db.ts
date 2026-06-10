@@ -115,7 +115,7 @@ function parseOwnerLead(r: Record<string, unknown>): OwnerLead {
 const _cachedTenancies = unstable_cache(
   async (userId: string): Promise<Tenancy[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).order("due_day", { ascending: true });
+    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).is("deleted_at", null).order("due_day", { ascending: true });
     if (error) throw error;
     return (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
   },
@@ -127,7 +127,7 @@ const _cachedLifecycleTenancies = unstable_cache(
   async (userId: string): Promise<Tenancy[]> => {
     const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
     const svc = createServiceClient();
-    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).not("contract_end", "is", null).gte("contract_end", earliest).order("contract_end", { ascending: true });
+    const { data, error } = await svc.from("tenancies").select(TENANCY_SELECT).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", earliest).order("contract_end", { ascending: true });
     if (error) throw error;
     return (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
   },
@@ -197,8 +197,8 @@ const _cachedHomeDashboardStats = unstable_cache(
       svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("stage", "imported").or("outreach_count.is.null,outreach_count.eq.0"),
       svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).in("stage", ["replied","wants_rent","listed","matched"]),
       svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("stage", "listed"),
-      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).not("contract_end", "is", null).gte("contract_end", earliest),
-      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", in60),
+      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", earliest),
+      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", in60),
     ]);
     return {
       totalOwners: totalOwners ?? 0,
@@ -220,6 +220,7 @@ const _cachedAllActiveTenants = unstable_cache(
       .from("tenancies")
       .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .not("lifecycle_stage", "eq", "closed")
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -334,7 +335,7 @@ export async function getTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).order("due_day", { ascending: true });
+    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).is("deleted_at", null).order("due_day", { ascending: true });
     if (error) throw error;
     return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
   }
@@ -444,8 +445,35 @@ export async function updateTenancy(id: string, data: Partial<Tenancy>): Promise
 
 export async function deleteTenancy(id: string): Promise<void> {
   const supabase = await createClient();
+  const { error } = await supabase.from("tenancies").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function restoreTenancy(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("tenancies").update({ deleted_at: null }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function hardDeleteTenancy(id: string): Promise<void> {
+  const supabase = await createClient();
   const { error } = await supabase.from("tenancies").delete().eq("id", id);
   if (error) throw error;
+}
+
+export async function getSoftDeletedTenancies(): Promise<Tenancy[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("deleted_at", "is", null).order("deleted_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
+}
+
+export async function purgeSoftDeletedTenancies(): Promise<number> {
+  const supabase = createServiceClient();
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase.from("tenancies").delete().not("deleted_at", "is", null).lt("deleted_at", cutoff).select("id");
+  if (error) throw error;
+  return data?.length ?? 0;
 }
 
 // ─── Algorithm of Trust ───────────────────────────────────────────────────────
@@ -456,6 +484,7 @@ export async function getCriticalTenancies(): Promise<Tenancy[]> {
   const { data, error } = await supabase
     .from("tenancies")
     .select(TENANCY_SELECT)
+    .is("deleted_at", null)
     .eq("current_month_paid", false)
     .lte("due_day", day)
     .order("due_day", { ascending: true });
@@ -576,6 +605,7 @@ export async function countLifecycleTenancies(): Promise<number> {
   const { count, error } = await supabase
     .from("tenancies")
     .select("*", { count: "exact", head: true })
+    .is("deleted_at", null)
     .not("contract_end", "is", null)
     .gte("contract_end", earliest);
   if (error) throw error;
@@ -627,8 +657,8 @@ export async function getHomeDashboardStats(): Promise<{
     supabase.from("owner_leads").select("*", { count: "exact", head: true }).eq("stage", "imported").or("outreach_count.is.null,outreach_count.eq.0"),
     supabase.from("owner_leads").select("*", { count: "exact", head: true }).in("stage", ["replied","wants_rent","listed","matched"]),
     supabase.from("owner_leads").select("*", { count: "exact", head: true }).eq("stage", "listed"),
-    supabase.from("tenancies").select("*", { count: "exact", head: true }).not("contract_end", "is", null).gte("contract_end", earliest),
-    supabase.from("tenancies").select("*", { count: "exact", head: true }).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", in60),
+    supabase.from("tenancies").select("*", { count: "exact", head: true }).is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", earliest),
+    supabase.from("tenancies").select("*", { count: "exact", head: true }).is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", in60),
   ]);
   return {
     totalOwners: totalOwners ?? 0,
@@ -651,6 +681,7 @@ export async function getExpiringContractsPreview(days = 60): Promise<Array<{
   const { data, error } = await supabase
     .from("tenancies")
     .select("id, tenant_name, contract_end, owner_lead_id, owner_leads!owner_lead_id(property_name, unit)")
+    .is("deleted_at", null)
     .not("contract_end", "is", null)
     .gte("contract_end", todayStr)
     .lte("contract_end", cutoff)

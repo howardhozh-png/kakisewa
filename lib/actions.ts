@@ -30,6 +30,8 @@ import {
   deleteOwnerLead,
   restoreOwnerLead,
   hardDeleteOwnerLead,
+  restoreTenancy,
+  hardDeleteTenancy,
   createTenantProfile,
   getTenantProfileByPhone,
   getTenantProfileByPhoneAndName,
@@ -236,6 +238,20 @@ export async function hardDeleteOwnerLeadAction(id: string): Promise<void> {
   await hardDeleteOwnerLead(id);
   invalidateCache();
   revalidatePath("/potential-listing");
+  revalidatePath("/");
+}
+
+export async function restoreTenancyAction(id: string): Promise<void> {
+  await restoreTenancy(id);
+  invalidateCache();
+  revalidatePath("/existing-listing");
+  revalidatePath("/");
+}
+
+export async function hardDeleteTenancyAction(id: string): Promise<void> {
+  await hardDeleteTenancy(id);
+  invalidateCache();
+  revalidatePath("/existing-listing");
   revalidatePath("/");
 }
 

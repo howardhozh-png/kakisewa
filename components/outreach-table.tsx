@@ -46,7 +46,7 @@ import { OwnerLead } from "@/lib/types";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction } from "@/lib/actions";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, ChevronRight, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -55,7 +55,7 @@ import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 
-type Filter = "all" | "unsent" | "contacted";
+type Filter = "all" | "unsent" | "contacted" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
 type ContactStatus = "listed" | "rented" | "contacted" | "unsent" | "declined";
 
@@ -508,29 +508,32 @@ function LeadPopup({
               Delete lead
             </button>
           ) : (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm(false)}
-                className="flex-1 py-2 rounded-xl text-[13px] font-medium"
-                style={{ background: "transparent", color: "var(--kk-ink-mute)", border: "1px solid rgba(0,0,0,0.10)" }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={async () => {
-                  setDeleting(true);
-                  await onDelete(lead.id);
-                  onClose();
-                }}
-                className="flex-1 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
-                style={{ background: "#FF3B30", color: "#fff" }}
-              >
-                {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Move to deleted
-              </button>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-center text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>Moved to bin — auto-deleted after 7 days</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirm(false)}
+                  className="flex-1 py-2 rounded-xl text-[13px] font-medium"
+                  style={{ background: "transparent", color: "var(--kk-ink-mute)", border: "1px solid rgba(0,0,0,0.10)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={async () => {
+                    setDeleting(true);
+                    await onDelete(lead.id);
+                    onClose();
+                  }}
+                  className="flex-1 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  style={{ background: "#FF3B30", color: "#fff" }}
+                >
+                  {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Move to bin
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -653,7 +656,6 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
-  const [deletedOpen, setDeletedOpen] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [hardDeletingId, setHardDeletingId] = useState<string | null>(null);
   const [hardDeleteConfirmId, setHardDeleteConfirmId] = useState<string | null>(null);
@@ -712,28 +714,34 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
   const searchLower = search.trim().toLowerCase();
 
-  const visible = leads
-    .filter((l) => {
-      if (l.is_competitor_target) return false;
-      const s = getStatus(l);
-      if (filter === "unsent")         { if (s !== "unsent")    return false; }
-      else if (filter === "contacted") { if (s !== "contacted") return false; }
-      if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter) return false;
-      if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
-      if (searchLower) {
+  const visible = filter === "deleted"
+    ? deletedLeads.filter((l) => {
+        if (!searchLower) return true;
         const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
-          .map((v) => (v ?? "").toLowerCase())
-          .join(" ");
-        if (!haystack.includes(searchLower)) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      const sa = getStatus(a), sb = getStatus(b);
-      const order: Record<ContactStatus, number> = { unsent: 0, contacted: 1, listed: 2, rented: 3, declined: 4 };
-      if (order[sa] !== order[sb]) return order[sa] - order[sb];
-      return a.created_at.localeCompare(b.created_at);
-    });
+          .map((v) => (v ?? "").toLowerCase()).join(" ");
+        return haystack.includes(searchLower);
+      })
+    : leads
+        .filter((l) => {
+          if (l.is_competitor_target) return false;
+          const s = getStatus(l);
+          if (filter === "unsent")         { if (s !== "unsent")    return false; }
+          else if (filter === "contacted") { if (s !== "contacted") return false; }
+          if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter) return false;
+          if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
+          if (searchLower) {
+            const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
+              .map((v) => (v ?? "").toLowerCase()).join(" ");
+            if (!haystack.includes(searchLower)) return false;
+          }
+          return true;
+        })
+        .sort((a, b) => {
+          const sa = getStatus(a), sb = getStatus(b);
+          const order: Record<ContactStatus, number> = { unsent: 0, contacted: 1, listed: 2, rented: 3, declined: 4 };
+          if (order[sa] !== order[sb]) return order[sa] - order[sb];
+          return a.created_at.localeCompare(b.created_at);
+        });
 
   const allSelected = visible.length > 0 && visible.every((l) => selectedIds.has(l.id));
   const someSelected = !allSelected && visible.some((l) => selectedIds.has(l.id));
@@ -901,6 +909,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
     { key: "all",       label: `All ${counts.all}` },
     { key: "unsent",    label: `Uncontacted ${counts.unsent}` },
     { key: "contacted", label: `Contacted ${counts.contacted}` },
+    ...(deletedLeads.length > 0 ? [{ key: "deleted" as Filter, label: `Deleted ${deletedLeads.length}` }] : []),
   ];
 
   return (
@@ -1047,17 +1056,20 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
               ) : visible.map((lead, i) => {
                 const status = getStatus(lead);
                 const isLast = i === visible.length - 1;
+                const isDeleted = filter === "deleted";
+                const isHardDeleteConfirming = hardDeleteConfirmId === lead.id;
                 return (
                   <tr
                     key={lead.id}
-                    onClick={() => setSelectedLead(lead)}
-                    className="group cursor-pointer transition-colors"
+                    onClick={() => !isDeleted && setSelectedLead(lead)}
+                    className={`group transition-colors ${isDeleted ? "cursor-default" : "cursor-pointer"}`}
                     style={{
                       borderBottom: isLast ? "none" : "1px solid var(--kk-line)",
                       background: selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : undefined,
+                      opacity: isDeleted ? 0.6 : 1,
                     }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : "transparent"; }}
+                    onMouseEnter={(e) => { if (!isDeleted) (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
+                    onMouseLeave={(e) => { if (!isDeleted) (e.currentTarget as HTMLElement).style.background = selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : "transparent"; }}
                   >
                     {/* Checkbox */}
                     <td className="px-2 lg:px-3 py-2 lg:py-3" style={{ verticalAlign: "middle" }} onClick={(e) => e.stopPropagation()}>
@@ -1133,47 +1145,96 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                     </td>
 
                     {/* Action */}
-                    <td className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ background: "var(--kk-surface)" }} onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1 justify-end">
-                        {(status === "listed" || status === "rented") ? (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}
-                            className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                            title="Go to card"
-                          >
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <>
+                    <td className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ background: "var(--kk-surface)", width: isDeleted ? 180 : undefined }} onClick={(e) => e.stopPropagation()}>
+                      {isDeleted ? (
+                        <div className="flex items-center gap-1.5 justify-end">
+                          {!isHardDeleteConfirming ? (
+                            <>
+                              <button
+                                type="button"
+                                disabled={restoringId === lead.id}
+                                onClick={() => handleRestore(lead.id)}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 whitespace-nowrap"
+                                style={{ background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)" }}
+                              >
+                                {restoringId === lead.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                                Restore
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setHardDeleteConfirmId(lead.id)}
+                                className="w-6 h-6 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
+                                style={{ background: "rgba(255,59,48,0.10)", color: "#FF3B30" }}
+                                title="Delete forever"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setHardDeleteConfirmId(null)}
+                                className="px-2 py-1 rounded-lg text-[11px] font-medium"
+                                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={hardDeletingId === lead.id}
+                                onClick={() => handleHardDelete(lead.id)}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold disabled:opacity-50 whitespace-nowrap"
+                                style={{ background: "#FF3B30", color: "#fff" }}
+                              >
+                                {hardDeletingId === lead.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                                Delete forever
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 justify-end">
+                          {(status === "listed" || status === "rented") ? (
                             <button
                               type="button"
-                              disabled={sending === lead.id}
-                              onClick={(e) => handleSend(lead, e)}
-                              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
-                              style={{ background: "#25D366", color: "#fff" }}
-                              title="Send WhatsApp"
+                              onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}
+                              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                              title="Go to card"
                             >
-                              {sending === lead.id
-                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                : <WhatsAppIcon className="w-3.5 h-3.5" />
-                              }
+                              <ArrowRight className="w-3.5 h-3.5" />
                             </button>
-                            {lead.owner_phone && (
-                              <a
-                                href={`tel:+${lead.owner_phone}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                                title="Call"
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                disabled={sending === lead.id}
+                                onClick={(e) => handleSend(lead, e)}
+                                className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
+                                style={{ background: "#25D366", color: "#fff" }}
+                                title="Send WhatsApp"
                               >
-                                <Phone className="w-3.5 h-3.5" />
-                              </a>
-                            )}
-                          </>
-                        )}
-                      </div>
+                                {sending === lead.id
+                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  : <WhatsAppIcon className="w-3.5 h-3.5" />
+                                }
+                              </button>
+                              {lead.owner_phone && (
+                                <a
+                                  href={`tel:+${lead.owner_phone}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                                  title="Call"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -1185,114 +1246,6 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       </div>
 
       {/* Deleted section */}
-      {deletedLeads.length > 0 && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setDeletedOpen((v) => !v)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-70 w-full"
-            style={{ color: "var(--kk-ink-mute)", background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
-          >
-            {deletedOpen ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
-            Deleted ({deletedLeads.length})
-            <span className="ml-1 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-              — auto-purged after 7 days
-            </span>
-          </button>
-          {deletedOpen && (
-            <div className="kk-section overflow-hidden p-0 mt-2">
-              <div className="overflow-x-auto">
-                <table className="w-full" style={{ minWidth: 380, tableLayout: "fixed" }}>
-                  <tbody>
-                    {deletedLeads.map((lead, i) => {
-                      const isLast = i === deletedLeads.length - 1;
-                      const isConfirming = hardDeleteConfirmId === lead.id;
-                      return (
-                        <tr
-                          key={lead.id}
-                          style={{
-                            borderBottom: isLast ? "none" : "1px solid var(--kk-line)",
-                            opacity: 0.55,
-                          }}
-                        >
-                          <td className="px-3 py-2.5 overflow-hidden" style={{ width: 130 }}>
-                            <p className="text-[12px] font-medium truncate line-through" style={{ color: "var(--kk-ink)" }}>
-                              {lead.owner_name}
-                            </p>
-                          </td>
-                          <td className="px-2 py-2.5 overflow-hidden" style={{ width: 118 }}>
-                            <p className="text-[11px] truncate tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>
-                              {lead.owner_phone || "—"}
-                            </p>
-                          </td>
-                          <td className="hidden lg:table-cell px-2 py-2.5 overflow-hidden" style={{ width: 65 }}>
-                            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-faint)" }}>{lead.unit || "—"}</p>
-                          </td>
-                          <td className="px-2 py-2.5 overflow-hidden" style={{ width: 170 }}>
-                            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>{lead.property_name || "—"}</p>
-                          </td>
-                          <td className="hidden lg:table-cell px-2 py-2.5 overflow-hidden" style={{ width: 200 }}>
-                            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-faint)" }}>
-                              {lead.deleted_at ? `Deleted ${relativeTime(lead.deleted_at)}` : ""}
-                            </p>
-                          </td>
-                          <td className="px-2 py-2" style={{ width: 163 }}>
-                            {!isConfirming ? (
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  disabled={restoringId === lead.id}
-                                  onClick={() => handleRestore(lead.id)}
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40"
-                                  style={{ background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)" }}
-                                >
-                                  {restoringId === lead.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-                                  Restore
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setHardDeleteConfirmId(lead.id)}
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
-                                  style={{ background: "rgba(255,59,48,0.10)", color: "#FF3B30" }}
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                  Delete forever
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => setHardDeleteConfirmId(null)}
-                                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-opacity hover:opacity-70"
-                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={hardDeletingId === lead.id}
-                                  onClick={() => handleHardDelete(lead.id)}
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold disabled:opacity-50"
-                                  style={{ background: "#FF3B30", color: "#fff" }}
-                                >
-                                  {hardDeletingId === lead.id && <Loader2 className="w-3 h-3 animate-spin" />}
-                                  Confirm
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div

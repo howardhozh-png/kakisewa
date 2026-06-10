@@ -50,6 +50,7 @@ export interface Tenancy {
   renewal_proposed_rent?: number | null;
   closed_reason?: string | null;
   agreement_url?: string | null;
+  deleted_at?: string | null;
   created_at: string;
   renewal_commission_type?: "full_year" | "half_month" | null;
   property?: {

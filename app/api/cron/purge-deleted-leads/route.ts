@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { purgeSoftDeletedLeads } from "@/lib/db";
+import { purgeSoftDeletedLeads, purgeSoftDeletedTenancies } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +9,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const purged = await purgeSoftDeletedLeads();
-  return NextResponse.json({ purged });
+  const [leads, tenancies] = await Promise.all([
+    purgeSoftDeletedLeads(),
+    purgeSoftDeletedTenancies(),
+  ]);
+  return NextResponse.json({ purged: { leads, tenancies } });
 }

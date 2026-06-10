@@ -379,8 +379,17 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
           {/* Save / Delete */}
           {confirmDelete ? (
             <div className="flex items-center gap-2 pt-1 rounded-xl px-3 py-2" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
-              <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Remove this target listing?</p>
+              <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Moved to bin — auto-deleted after 7 days</p>
               <button type="button" className="kk-pill kk-pill-ghost text-[12px]" onClick={() => setConfirmDelete(false)}>Cancel</button>
+              <button
+                type="button"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                style={{ background: "#DC2626", color: "#fff" }}
+                onClick={() => startTransition(async () => { const { removeOwnerLead } = await import("@/lib/actions"); await removeOwnerLead(lead.id); onOpenChange(false); })}
+              >
+                <Trash2 className="w-3 h-3" />
+                Move to bin
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 pt-1">
