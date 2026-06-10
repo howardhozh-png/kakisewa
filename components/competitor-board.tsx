@@ -348,7 +348,6 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
   const { setNodeRef, isOver } = useDroppable({ id: col.stage });
   const Icon = col.Icon;
   const isExpiring = col.stage === "reach_out";
-  const isRenewing = col.stage === "renewing";
 
   return (
     <div
@@ -360,24 +359,18 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
           ? col.soft
           : isExpiring
             ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, var(--kk-theme-dark) 18%, transparent) 0%, color-mix(in srgb, var(--kk-theme-dark) 8%, transparent) 40%, var(--kk-surface) 68%)"
-            : isRenewing
-              ? "radial-gradient(ellipse 110% 70% at 50% 25%, rgba(52,199,89,0.10) 0%, rgba(52,199,89,0.04) 40%, var(--kk-surface) 68%)"
-              : "var(--kk-surface)",
+            : "var(--kk-surface)",
         outline: isOver
           ? `2px solid ${col.ink}`
           : isExpiring
             ? "1px solid color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)"
-            : isRenewing
-              ? "1px solid rgba(52,199,89,0.25)"
-              : "1px solid transparent",
+            : "1px solid transparent",
         outlineOffset: "-1px",
         boxShadow: isOver
           ? undefined
           : isExpiring
             ? "0 0 0 1px color-mix(in srgb, var(--kk-theme-dark) 22%, transparent), 0 0 14px 5px color-mix(in srgb, var(--kk-theme-dark) 15%, transparent)"
-            : isRenewing
-              ? "0 0 0 1px rgba(52,199,89,0.15), 0 0 14px 5px rgba(52,199,89,0.08)"
-              : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+            : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
         ...extraStyle,
       }}
     >
@@ -386,7 +379,6 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         style={{
           borderBottomColor: col.soft,
           ...(isExpiring ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}),
-          ...(isRenewing ? { background: "rgba(52,199,89,0.06)" } : {}),
         }}
       >
         <div className="flex items-center gap-2">
@@ -473,9 +465,6 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
   if (isExpiring && !isDragging) {
     cardStyle.boxShadow = "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 14%, transparent), 0 1px 4px rgba(0,0,0,0.06)";
-  }
-  if (isRenewing && !isDragging) {
-    cardStyle.boxShadow = "0 4px 14px rgba(52,199,89,0.15), 0 1px 4px rgba(0,0,0,0.06)";
   }
 
   const days = lead.competitor_contract_end ? daysUntil(lead.competitor_contract_end, today) : null;
