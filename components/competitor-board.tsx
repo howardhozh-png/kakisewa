@@ -4,12 +4,12 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead, CompetitorStage, daysUntil } from "@/lib/types";
-import { setCompetitorStageAction, winCompetitorUnitAction, archiveCompetitorLeadAction, buildCompetitorOwnerPing } from "@/lib/actions";
+import { setCompetitorStageAction, winCompetitorUnitAction, buildCompetitorOwnerPing } from "@/lib/actions";
 import { FilterSelect } from "@/components/filter-select";
 import { CompetitorTimeline } from "@/components/competitor-timeline";
 import { EditCompetitorDialog } from "@/components/edit-competitor-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, Lock, ChevronDown, Loader2, XCircle, Search, X } from "lucide-react";
+import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, ChevronDown, Loader2, XCircle, Search, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 
@@ -180,13 +180,6 @@ export function CompetitorBoard({ leads }: Props) {
     router.refresh();
   }
 
-  async function handleArchive(id: string) {
-    setLocal((prev) => prev.filter((x) => x.id !== id));
-    await archiveCompetitorLeadAction(id);
-    toast.success("Removed from target list.");
-    router.refresh();
-  }
-
   return (
     <>
       {/* Chart */}
@@ -265,7 +258,6 @@ export function CompetitorBoard({ leads }: Props) {
                       onWin={handleWin}
                       onMoveToRenewing={handleMoveToRenewing}
                       onBackToWatching={handleBackToWatching}
-                      onArchive={handleArchive}
                     />
                   ));
 
@@ -447,7 +439,7 @@ function CardPreview({ lead }: { lead: OwnerLead }) {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, onBackToWatching, onArchive }: {
+function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, onBackToWatching }: {
   lead: OwnerLead;
   col: ColMeta;
   today: Date;
@@ -456,7 +448,6 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
   onWin: (id: string) => void;
   onMoveToRenewing: (id: string) => void;
   onBackToWatching: (id: string) => void;
-  onArchive: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
   const isExpiring = col.stage === "reach_out";
@@ -551,7 +542,6 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
             lead={lead}
             onMoveToRenewing={onMoveToRenewing}
             onBackToWatching={onBackToWatching}
-            onArchive={onArchive}
           />
         </>
       )}
@@ -662,7 +652,7 @@ function MovedInAction({ lead, onWin }: { lead: OwnerLead; onWin: (id: string) =
 
 // ─── "What's next?" for Expiring cards ───────────────────────────────────────
 
-type ExpiringOutcome = "" | "renewing" | "back" | "archive";
+type ExpiringOutcome = "" | "renewing" | "back";
 
 const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
   label: string;
@@ -688,21 +678,12 @@ const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
     ink: "var(--kk-ink-mute)",
     Icon: Eye,
   },
-  archive: {
-    label: "Owner own stay",
-    description: "The owner will occupy the unit. Remove it from your target list.",
-    confirm: "Remove from target list",
-    soft: "var(--kk-surface-2)",
-    ink: "var(--kk-ink-faint)",
-    Icon: Lock,
-  },
 };
 
-function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching, onArchive }: {
+function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching }: {
   lead: OwnerLead;
   onMoveToRenewing: (id: string) => void;
   onBackToWatching: (id: string) => void;
-  onArchive: (id: string) => void;
 }) {
   const [choice, setChoice] = useState<ExpiringOutcome>("");
   const [confirming, setConfirming] = useState(false);
@@ -729,7 +710,6 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching, onArchive
     setChoice("");
     if (choice === "renewing") onMoveToRenewing(lead.id);
     if (choice === "back")     onBackToWatching(lead.id);
-    if (choice === "archive")  onArchive(lead.id);
   }
 
   const meta = choice ? EXPIRING_OUTCOMES[choice] : null;
@@ -761,7 +741,7 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching, onArchive
               className="absolute left-0 top-full mt-1 z-50 rounded-xl overflow-hidden"
               style={{ background: "#fff", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 200 }}
             >
-              {(["renewing", "back", "archive"] as const).map((val) => (
+              {(["renewing", "back"] as const).map((val) => (
                 <button
                   key={val}
                   type="button"

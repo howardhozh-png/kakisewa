@@ -40,7 +40,6 @@ const COLUMNS: ColMeta[] = [
 
 // Terminal stages — hidden by default
 const TERMINAL_COLUMNS: ColMeta[] = [
-  { stage: "own_stay",   label: "Own stay",      hint: "Declined. Keeping it for themselves.",      ink: "var(--kk-ink-mute)",  soft: "var(--kk-surface-2)", dot: "#9E9E9E", Icon: XCircle },
   { stage: "archived",   label: "Archived",      hint: "Out of pipeline. No further action.",       ink: "var(--kk-ink-faint)", soft: "var(--kk-surface-2)", dot: "#6E6E73", Icon: Archive },
 ];
 
@@ -280,11 +279,11 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           onClick={() => setShowTerminal((v) => !v)}
           className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5 shrink-0"
           style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
-          title="Show or hide uninterested leads (Own stay, Archived)"
+          title="Show or hide archived leads"
         >
-          {showTerminal ? "Hide uninterested lead" : "Show uninterested lead"}
+          {showTerminal ? "Hide archived" : "Show archived"}
           <span className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-faint)" }}>
-            {byStage.own_stay.length + byStage.archived.length}
+            {byStage.archived.length}
           </span>
         </button>
         <span className="ml-auto shrink-0 text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
