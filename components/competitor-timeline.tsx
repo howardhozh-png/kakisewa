@@ -66,10 +66,10 @@ export function CompetitorTimeline({ leads, onMonthClick, selectedMonth }: Props
             Total potential income · {windowMonths} month{windowMonths === 1 ? "" : "s"}
           </p>
           <p style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--kk-theme-dark)", fontVariantNumeric: "tabular-nums" }}>
-            RM {totalRm.toLocaleString()}/mo
+            RM {totalRm.toLocaleString()}
           </p>
           <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
-            across all {leads.length} target unit{leads.length === 1 ? "" : "s"}
+            across all {leads.length} target listing{leads.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">

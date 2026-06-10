@@ -224,14 +224,14 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       {/* Filter row */}
       <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-0.5 lg:flex-wrap" style={{ scrollbarWidth: "none" }}>
         <div className="relative shrink-0 flex items-center">
-          <Search className="absolute left-2.5 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--kk-ink-faint)" }} />
+          <Search className="absolute pointer-events-none" style={{ left: 12, width: 14, height: 14, color: "var(--kk-ink-faint)" }} />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search..."
-            className="text-[13px] pl-8 pr-3 py-1.5 rounded-full outline-none"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", minWidth: 160, fontSize: 13 }}
+            className="rounded-full outline-none"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", minWidth: 160, fontSize: 13, paddingLeft: 36, paddingRight: search ? 28 : 12, paddingTop: 6, paddingBottom: 6 }}
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-2.5" style={{ color: "var(--kk-ink-faint)" }}>

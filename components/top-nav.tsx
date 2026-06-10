@@ -17,7 +17,7 @@ import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
   { href: "/home",               label: "Home",               matchPaths: ["/home"],                                                      tourId: "tour-nav-home",        minPlan: null },
-  { href: "/potential-listing",     label: "Outreach",           matchPaths: ["/potential-listing", "/my-listing", "/target-units", "/new-owners", "/leads"], tourId: "tour-nav-new-owners",  minPlan: null },
+  { href: "/potential-listing",     label: "Outreach",           matchPaths: ["/potential-listing", "/my-listing", "/target-listing", "/new-owners", "/leads"], tourId: "tour-nav-new-owners",  minPlan: null },
   { href: "/existing-listing",      label: "Existing listing",      matchPaths: ["/existing-listing", "/existing-contracts", "/tenancies"],        tourId: "tour-nav-contracts",   minPlan: null },
   { href: "/directory",          label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"],tourId: "tour-nav-directory",   minPlan: "platinum" as const },
   { href: "/performance",        label: "Performance",        matchPaths: ["/performance"],                                               tourId: "tour-nav-performance", minPlan: "elite" as const },

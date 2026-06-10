@@ -16,7 +16,7 @@ const PIPELINE_ITEMS = [
   { href: "/potential-listing", icon: MessageCircle, label: "Potential listing", minPlan: null },
   { href: "/my-listing",  icon: ClipboardList,  label: "My listing",  minPlan: null },
   { href: "/existing-listing",  icon: RefreshCw,      label: "Existing listing",  minPlan: null },
-  { href: "/target-units",      icon: Target,         label: "Target listing",     minPlan: null },
+  { href: "/target-listing",      icon: Target,         label: "Target listing",     minPlan: null },
 ] as const;
 
 const BOTTOM_ITEMS = [
@@ -36,7 +36,7 @@ function isPipelineActive(href: string, pathname: string, _tab: string | null): 
   if (href === "/potential-listing") return pathname.startsWith("/potential-listing") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
   if (href === "/my-listing")  return pathname.startsWith("/my-listing");
   if (href === "/existing-listing")  return pathname.startsWith("/existing-listing") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
-  if (href === "/target-units")      return pathname.startsWith("/target-units");
+  if (href === "/target-listing")      return pathname.startsWith("/target-listing");
   return false;
 }
 

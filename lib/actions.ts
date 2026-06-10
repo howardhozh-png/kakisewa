@@ -1679,7 +1679,7 @@ export async function markCompetitorRentedAction(
   invalidateCache();
   revalidatePath("/potential-listing");
   revalidatePath("/my-listing");
-  revalidatePath("/target-units");
+  revalidatePath("/target-listing");
   return { ok: true };
 }
 
@@ -1690,7 +1690,7 @@ export async function setCompetitorStageAction(
   "use server";
   await setCompetitorStage(id, stage);
   invalidateCache();
-  revalidatePath("/target-units");
+  revalidatePath("/target-listing");
   return { ok: true };
 }
 
@@ -1698,7 +1698,7 @@ export async function winCompetitorUnitAction(id: string): Promise<{ ok: boolean
   "use server";
   await winCompetitorUnit(id);
   invalidateCache();
-  revalidatePath("/target-units");
+  revalidatePath("/target-listing");
   revalidatePath("/my-listing");
   return { ok: true };
 }
@@ -1707,7 +1707,7 @@ export async function archiveCompetitorLeadAction(id: string): Promise<{ ok: boo
   "use server";
   await archiveCompetitorLead(id);
   invalidateCache();
-  revalidatePath("/target-units");
+  revalidatePath("/target-listing");
   return { ok: true };
 }
 
@@ -1727,7 +1727,7 @@ export async function updateCompetitorLeadAction(
   "use server";
   await updateOwnerLead(id, data);
   invalidateCache();
-  revalidatePath("/target-units");
+  revalidatePath("/target-listing");
   return { ok: true };
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Hint } from "@/components/hint";
 import { MonthPickerPill } from "@/components/month-picker-pill";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tenancy } from "@/lib/types";
@@ -73,8 +72,7 @@ export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMont
             RM {Math.round(total.potential).toLocaleString()}
           </p>
           <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
-            {total.count} contract{total.count === 1 ? "" : "s"} · {renewalCommissionPct}% commission per renewal
-            <Hint text="You earn half a month's rent per renewal closed." side="right" />
+            {total.count} contract{total.count === 1 ? "" : "s"} · 1 month rent counted as renewal income
           </p>
         </div>
         <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">
