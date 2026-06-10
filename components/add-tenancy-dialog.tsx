@@ -102,8 +102,6 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     if (!amount)               { toast.error("Monthly rent is required"); return; }
     if (!contractStart)        { toast.error("Contract start date is required"); return; }
     if (!durationMonths)       { toast.error("Duration is required"); return; }
-    if (!tenantName.trim())    { toast.error("Tenant name is required"); return; }
-    if (!tenantPhone.trim())   { toast.error("Tenant phone is required"); return; }
 
     setUploading(true);
     startTransition(async () => {

@@ -46,7 +46,7 @@ export default async function TenantRenewalPage({ params }: Props) {
   return (
     <TenantRenewalClient
       token={token}
-      tenantName={tenancy.tenant_name}
+      tenantName={tenancy.tenant_name ?? ""}
       propertyName={tenancy.property_name ?? "your property"}
       contractEnd={tenancy.contract_end ?? ""}
       agentName={agent.name ?? "Your Agent"}

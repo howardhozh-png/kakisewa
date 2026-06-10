@@ -640,7 +640,7 @@ function RentReminderAction({ t, today }: { t: Tenancy; today: Date }) {
       : 999;
     if (daysSinceStart < -7 || daysSinceStart > 90 || daysToEnd <= 0) return;
     setWaUrl(buildWhatsAppPingUrl(
-      t.tenant_phone, t.tenant_name,
+      t.tenant_phone ?? "", t.tenant_name ?? "",
       t.property_name ?? "your property", t.amount,
       `${window.location.origin}/upload/${t.id}`,
     ));

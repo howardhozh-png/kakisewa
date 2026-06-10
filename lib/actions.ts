@@ -422,19 +422,19 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
     : `${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
   const body = resolveTemplate("expiry_check_tenant", overrides, {
-    tenantName: t.tenant_name,
+    tenantName: t.tenant_name ?? "",
     agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
     propertyName: t.property_name ?? t.owner_lead_id ?? "",
     expiryWhen,
     renewalForm: formUrl,
   });
-  const out = buildOutbound({ template: "expiry_check_tenant", toPhone: t.tenant_phone, body });
+  const out = buildOutbound({ template: "expiry_check_tenant", toPhone: t.tenant_phone ?? "", body });
   await logWhatsApp({
     related_id: t.id,
     related_type: "tenancy",
     template: "expiry_check_tenant",
-    recipient_phone: t.tenant_phone,
-    recipient_name: t.tenant_name,
+    recipient_phone: t.tenant_phone ?? "",
+    recipient_name: t.tenant_name ?? "",
     body,
   });
   return { url: out.url, body };
@@ -651,7 +651,7 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     // Look up by both phone AND name to avoid updating the wrong profile
     // when multiple tenants share the same phone number (common in test data)
     const tenantProfile = t.tenant_phone
-      ? await getTenantProfileByPhoneAndName(t.tenant_phone, t.tenant_name)
+      ? await getTenantProfileByPhoneAndName(t.tenant_phone, t.tenant_name ?? "")
       : null;
     if (tenantProfile) {
       await updateTenantProfile(tenantProfile.id, {
@@ -662,7 +662,7 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     } else {
       // No profile yet — create one so the tenant appears in All Tenants as seeking
       await createTenantProfile({
-        name: t.tenant_name,
+        name: t.tenant_name ?? "",
         phone: t.tenant_phone || null,
         is_seeking: 1,
         seeking_from: t.contract_end ?? null,
@@ -703,7 +703,7 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
     ownerName: t.property?.owner_name ?? "",
     agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
     propertyName: t.property_name ?? t.owner_lead_id ?? "",
-    tenantName: t.tenant_name,
+    tenantName: t.tenant_name ?? "",
     expiryWhen,
     renewalForm: formUrl,
   });
@@ -1512,8 +1512,8 @@ export async function generateLhdn(
 
   const xml = buildLhdnXml({
     tenancyId,
-    tenantName: tenancy.tenant_name,
-    tenantPhone: tenancy.tenant_phone,
+    tenantName: tenancy.tenant_name ?? "",
+    tenantPhone: tenancy.tenant_phone ?? "",
     propertyName: tenancy.property_name ?? tenancy.owner_lead_id ?? "",
     amount: tenancy.amount,
     month: format(new Date(), "MMMM yyyy"),

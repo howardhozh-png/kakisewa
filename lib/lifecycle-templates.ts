@@ -44,8 +44,8 @@ function resolve(ctx: TemplateContext): Resolved {
     return "";
   })();
   return {
-    tenant_name: t.tenant_name,
-    tenant_phone: t.tenant_phone,
+    tenant_name: t.tenant_name ?? "",
+    tenant_phone: t.tenant_phone ?? "",
     owner_name: t.property?.owner_name ?? "Owner",
     owner_phone: t.property?.owner_phone ?? "",
     property_name: t.property_name ?? t.owner_lead_id ?? "",

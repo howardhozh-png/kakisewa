@@ -331,8 +331,8 @@ function LeadPopup({
               <input
                 value={form.owner_phone}
                 onChange={(e) => set("owner_phone", e.target.value)}
-                className="text-[12px] flex-1 min-w-0 bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)]"
-                style={{ color: "var(--kk-ink-mute)" }}
+                className="text-[12px] bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] shrink-0"
+                style={{ color: "var(--kk-ink-mute)", width: form.owner_phone ? `${form.owner_phone.length + 1}ch` : "6ch", minWidth: "6ch", maxWidth: "100%" }}
                 placeholder="Phone"
               />
               {form.owner_phone && (
