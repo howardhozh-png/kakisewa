@@ -50,6 +50,9 @@ import {
   deletePropertySupport,
   bumpLoginStreak,
   saveWhatsAppTemplates,
+  markCompetitorRented,
+  setCompetitorStage,
+  winCompetitorUnit,
 } from "./db";
 import { getAgentId } from "./auth";
 import { verifyReceiptImage } from "./ai-verify";
@@ -1659,6 +1662,43 @@ export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
   }).eq("id", uid);
 
   revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function markCompetitorRentedAction(
+  id: string,
+  rentedOn: string,
+  durationMonths: number
+): Promise<{ ok: boolean }> {
+  "use server";
+  const [y, m, day] = rentedOn.split("-").map(Number);
+  const end = new Date(y, m - 1 + durationMonths, day);
+  const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+  await markCompetitorRented(id, contractEnd);
+  invalidateCache();
+  revalidatePath("/potential-listing");
+  revalidatePath("/my-listing");
+  revalidatePath("/target-units");
+  return { ok: true };
+}
+
+export async function setCompetitorStageAction(
+  id: string,
+  stage: "watching" | "reach_out" | "in_talks" | "missed"
+): Promise<{ ok: boolean }> {
+  "use server";
+  await setCompetitorStage(id, stage);
+  invalidateCache();
+  revalidatePath("/target-units");
+  return { ok: true };
+}
+
+export async function winCompetitorUnitAction(id: string): Promise<{ ok: boolean }> {
+  "use server";
+  await winCompetitorUnit(id);
+  invalidateCache();
+  revalidatePath("/target-units");
+  revalidatePath("/my-listing");
   return { ok: true };
 }
 

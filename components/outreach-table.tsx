@@ -697,6 +697,7 @@ export function OutreachTable({ leads }: Props) {
 
   const visible = leads
     .filter((l) => {
+      if (l.is_competitor_target) return false;
       const s = getStatus(l);
       if (filter === "unsent")    { if (s !== "unsent")    return false; }
       else if (filter === "contacted") { if (s !== "contacted") return false; }

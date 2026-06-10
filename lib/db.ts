@@ -1430,6 +1430,47 @@ export async function getEliteAnalyticsData(): Promise<{
   };
 }
 
+export async function getCompetitorLeads(): Promise<OwnerLead[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("owner_leads")
+    .select("*")
+    .eq("is_competitor_target", true)
+    .order("competitor_contract_end", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+}
+
+export async function markCompetitorRented(
+  id: string,
+  competitorContractEnd: string
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("owner_leads")
+    .update({ is_competitor_target: true, competitor_contract_end: competitorContractEnd, competitor_stage: "watching" })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function setCompetitorStage(id: string, stage: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("owner_leads")
+    .update({ competitor_stage: stage })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function winCompetitorUnit(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("owner_leads")
+    .update({ is_competitor_target: false, competitor_stage: "watching", competitor_contract_end: null, stage: "listed" })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function getListedOwnerLeads(): Promise<OwnerLead[]> {
   const userId = await getCurrentUserId();
   if (!userId) {

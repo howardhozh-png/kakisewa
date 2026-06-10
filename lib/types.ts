@@ -122,8 +122,13 @@ export interface OwnerLead {
   listing_purpose?: "rent" | "sell" | null;
   is_managed?: boolean;
   managed_at?: string | null;
+  is_competitor_target?: boolean;
+  competitor_contract_end?: string | null;
+  competitor_stage?: "watching" | "reach_out" | "in_talks" | "missed";
   created_at: string;
 }
+
+export type CompetitorStage = "watching" | "reach_out" | "in_talks" | "missed";
 
 export type SubscriptionStatus = "beta" | "beta_frozen" | "trial" | "active" | "expired" | "cancelled";
 

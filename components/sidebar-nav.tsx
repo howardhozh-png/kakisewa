@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft } from "lucide-react";
+import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft, Target } from "lucide-react";
 
 const STORAGE_KEY = "kk_sidebar_pinned";
 const W_OPEN = 220;
@@ -16,6 +16,7 @@ const PIPELINE_ITEMS = [
   { href: "/potential-listing", icon: MessageCircle, label: "Potential listing", minPlan: null },
   { href: "/my-listing",  icon: ClipboardList,  label: "My listing",  minPlan: null },
   { href: "/existing-listing",  icon: RefreshCw,      label: "Existing listing",  minPlan: null },
+  { href: "/target-units",      icon: Target,         label: "Target units",       minPlan: null },
 ] as const;
 
 const BOTTOM_ITEMS = [
@@ -35,6 +36,7 @@ function isPipelineActive(href: string, pathname: string, _tab: string | null): 
   if (href === "/potential-listing") return pathname.startsWith("/potential-listing") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
   if (href === "/my-listing")  return pathname.startsWith("/my-listing");
   if (href === "/existing-listing")  return pathname.startsWith("/existing-listing") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
+  if (href === "/target-units")      return pathname.startsWith("/target-units");
   return false;
 }
 

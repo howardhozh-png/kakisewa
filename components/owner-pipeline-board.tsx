@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
-import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar } from "lucide-react";
+import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
 import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
 import { ConvertToTenancyDialog } from "@/components/convert-to-tenancy-dialog";
 import { CommissionConfirmDialog } from "@/components/commission-confirm-dialog";
 import { ConfirmListedDialog } from "@/components/confirm-listed-dialog";
+import { CompetitorRentedDialog } from "@/components/competitor-rented-dialog";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
 import { AvailabilityTimeline } from "@/components/availability-timeline";
@@ -59,6 +60,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [editingLead, setEditingLead] = useState<OwnerLead | null>(null);
   const [matchingLead, setMatchingLead] = useState<OwnerLead | null>(null);
   const [commissionLead, setCommissionLead] = useState<{ lead: OwnerLead; tenancyId: string } | null>(null);
+  const [competitorRentedLead, setCompetitorRentedLead] = useState<OwnerLead | null>(null);
 
   // Filter state
   const [propertyFilter, setPropertyFilter] = useState<string>("");
@@ -128,6 +130,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
   const filtered = useMemo(() => {
     return local.filter((l) => {
+      if (l.is_competitor_target) return false;
       if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
       if (purposeFilter && l.listing_purpose !== purposeFilter) return false;
       if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
@@ -309,6 +312,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
                     tenantInfo={tenantsByLeadId[l.id]}
                     hasOwnerRanking={rankedLeadIds.has(l.id)}
                     onCommission={(tenancyId) => setCommissionLead({ lead: l, tenancyId })}
+                    onCompetitorRented={() => setCompetitorRentedLead(l)}
                   />
                 ))
               );
@@ -391,6 +395,12 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           }
           return res;
         }}
+      />
+
+      <CompetitorRentedDialog
+        lead={competitorRentedLead}
+        open={!!competitorRentedLead}
+        onOpenChange={(o) => !o && setCompetitorRentedLead(null)}
       />
 
     </>
@@ -511,7 +521,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
   );
 }
 
-function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
   const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
@@ -565,12 +575,12 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission }: { l:
         </div>
       </div>
 
-      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} />
+      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onCompetitorRented={onCompetitorRented} />
     </>
   );
 }
 
-function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
 
   const cardStyle: React.CSSProperties = {
@@ -594,12 +604,12 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
         onEdit();
       }}
     >
-      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} />
+      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onCompetitorRented={onCompetitorRented} />
     </div>
   );
 }
 
-function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l: OwnerLead; stage: Stage; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void }) {
+function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; stage: Stage; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -742,6 +752,16 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission }: { l
           </span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
         </Link>
+        <button
+          type="button"
+          data-card-action
+          onClick={(e) => { e.stopPropagation(); onCompetitorRented(); }}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center transition-opacity hover:opacity-70"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
+        >
+          <Building2 className="w-3 h-3 shrink-0" />
+          Competitor rented
+        </button>
       </div>
     );
   }
