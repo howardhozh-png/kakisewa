@@ -1742,18 +1742,23 @@ export async function buildCompetitorOwnerPing(leadId: string): Promise<{ url: s
     : `${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
   const firstName = agent.name?.trim().split(/\s+/)[0] ?? undefined;
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
-  const body = resolveTemplate("competitor_expiry_owner", overrides, {
+  const { getOrCreateOwnerIntakeToken } = await import("./db");
+  const token = await getOrCreateOwnerIntakeToken(leadId);
+  const siteUrl = await getBaseUrl();
+  const intakeUrl = `${siteUrl}/intake/${token}`;
+  const body = resolveTemplate("expiry_check_owner", overrides, {
     ownerName: lead.owner_name ?? "",
     agentLine: firstName ? `I'm ${firstName}${agent.ren_number ? ` (${agent.ren_number})` : ""}${agent.agency ? ` from ${agent.agency}` : ""}. ` : "",
-    agentName: agent.name ?? "Your agent",
     propertyName: lead.property_name ? (lead.unit ? `${lead.property_name}, Unit ${lead.unit}` : lead.property_name) : "your property",
+    tenantName: "your current tenant",
     expiryWhen,
+    renewalForm: intakeUrl,
   });
-  const out = buildOutbound({ template: "competitor_expiry_owner", toPhone: lead.owner_phone, body });
+  const out = buildOutbound({ template: "expiry_check_owner", toPhone: lead.owner_phone, body });
   await logWhatsApp({
     related_id: leadId,
     related_type: "owner_lead",
-    template: "competitor_expiry_owner",
+    template: "expiry_check_owner",
     recipient_phone: lead.owner_phone,
     recipient_name: lead.owner_name ?? "",
     body,

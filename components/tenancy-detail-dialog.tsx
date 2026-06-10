@@ -4,15 +4,12 @@ import { useState, useEffect, useTransition, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
-import { Tenancy, computeContractBucket, daysUntil } from "@/lib/types";
-import { buildExpiryPingTenant, buildExpiryPingOwner, updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
+import { Tenancy, daysUntil } from "@/lib/types";
+import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
 import { PhotoLightbox } from "@/components/photo-lightbox";
-import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { ReplyState } from "@/lib/types";
 import { toast } from "sonner";
-import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
-import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 import { usePhotoUpload } from "@/hooks/use-photo-upload";
 
 interface Props {
@@ -364,10 +361,6 @@ function TenancyForm({
           </div>
         </div>
 
-        {/* WhatsApp pings */}
-        {tenancy.contract_end && (
-          <PingButtons tenancy={tenancy} onMissingOwnerPhone={() => setEditingOwner(true)} />
-        )}
       </div>
 
       {/* Property photos */}
@@ -521,52 +514,6 @@ function ContractBadge({ contractEnd }: { contractEnd: string }) {
   );
 }
 
-function PingButtons({ tenancy, onMissingOwnerPhone }: { tenancy: Tenancy; onMissingOwnerPhone?: () => void }) {
-  const [pending, startTransition] = useTransition();
-  const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
-  const bucket = computeContractBucket(tenancy, new Date());
-  if (bucket === "active" || bucket === "no_contract") return null;
-
-  function pingTenant() {
-    checkAndRun(() => {
-      startTransition(async () => {
-        const res = await buildExpiryPingTenant(tenancy.id);
-        if (!res) { toast.error("Cannot build message"); return; }
-        window.open(res.url, "_blank", "noopener,noreferrer");
-      });
-    });
-  }
-  function pingOwner() {
-    if (!tenancy.property?.owner_phone) {
-      onMissingOwnerPhone?.();
-      toast.error("Add the owner's phone number first, then message them.");
-      return;
-    }
-    checkAndRun(() => {
-      startTransition(async () => {
-        const res = await buildExpiryPingOwner(tenancy.id);
-        if (!res) { toast.error("Cannot build message. Owner phone is missing."); return; }
-        window.open(res.url, "_blank", "noopener,noreferrer");
-      });
-    });
-  }
-
-  return (
-    <>
-      <div className="flex flex-wrap gap-2 pt-1">
-        <button onClick={pingTenant} disabled={pending} type="button" className="kk-pill kk-pill-ghost" style={{ padding: "0.35rem 0.75rem" }}>
-          <WhatsAppIcon className="w-3.5 h-3.5" />
-          Message tenant
-        </button>
-        <button onClick={pingOwner} disabled={pending} type="button" className="kk-pill kk-pill-ghost" style={{ padding: "0.35rem 0.75rem" }}>
-          <WhatsAppIcon className="w-3.5 h-3.5" />
-          Potential listing
-        </button>
-      </div>
-      <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
-    </>
-  );
-}
 
 const REPLY_VALUES: ReplyState[] = ["pending", "yes", "no"];
 
