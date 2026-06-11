@@ -199,7 +199,7 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
                       {(l.bedrooms != null || l.bathrooms != null || tenantInfo) && (
                         <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>
                           {[
-                            l.bedrooms != null ? `${l.bedrooms}bd` : null,
+                            l.bedrooms != null ? (l.bedrooms === 0 ? "Studio" : `${l.bedrooms}bd`) : null,
                             l.bathrooms != null ? `${l.bathrooms}ba` : null,
                             tenantInfo ? `Tenant: ${tenantInfo.tenant_name}` : null,
                           ].filter(Boolean).join(" · ")}
@@ -300,7 +300,7 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bedrooms ?? "—"}</span>
+                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bedrooms != null ? (l.bedrooms === 0 ? "Studio" : l.bedrooms) : "—"}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{l.bathrooms ?? "—"}</span>

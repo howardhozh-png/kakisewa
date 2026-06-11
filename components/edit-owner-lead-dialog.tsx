@@ -7,6 +7,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
+import { normalizePhone, phoneError } from "@/lib/phone";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { usePhotoUpload } from "@/hooks/use-photo-upload";
@@ -40,6 +41,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [expectedRent, setExpectedRent] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
   const [bathrooms, setBathrooms] = useState<string>("");
+  const [parking, setParking] = useState<string>("");
+  const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [availableFrom, setAvailableFrom] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -56,6 +59,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setExpectedRent(lead.expected_rent != null ? String(lead.expected_rent) : "");
       setBedrooms(lead.bedrooms != null ? String(lead.bedrooms) : "");
       setBathrooms(lead.bathrooms != null ? String(lead.bathrooms) : "");
+      setParking(lead.parking != null ? String(lead.parking) : "");
+      setPhoneErr(null);
       setAvailableFrom(lead.available_from ?? new Date().toISOString().split("T")[0]);
       setNotes(lead.notes ?? "");
     }
@@ -91,9 +96,18 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   function handleDelete() {
     if (!lead) return;
     startTransition(async () => {
-      await removeOwnerLead(lead.id);
-      onOpenChange(false);
-      router.refresh();
+      try {
+        await removeOwnerLead(lead.id);
+        onOpenChange(false);
+        router.refresh();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg === "PROTECTED") {
+          toast.error("This lead has activity and cannot be deleted. Only cold contacts with no replies can be removed.");
+        } else {
+          toast.error("Could not delete lead");
+        }
+      }
     });
   }
 
@@ -105,8 +119,9 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       property_name: propertyName || null,
       unit: unit || null,
       expected_rent: expectedRent ? parseFloat(expectedRent) : null,
-      bedrooms: bedrooms ? parseInt(bedrooms, 10) : null,
+      bedrooms: bedrooms !== "" ? parseInt(bedrooms, 10) : null,
       bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
+      parking: parking ? parseInt(parking, 10) : null,
       available_from: availableFrom || null,
       notes: notes || null,
     };
@@ -144,11 +159,17 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   <input
                     type="tel"
                     value={ownerPhone}
-                    onChange={(e) => setOwnerPhone(e.target.value)}
-                    placeholder="Phone (with country code)"
+                    onChange={(e) => { setOwnerPhone(e.target.value); setPhoneErr(null); }}
+                    onBlur={(e) => {
+                      const normalized = normalizePhone(e.target.value);
+                      setOwnerPhone(normalized);
+                      setPhoneErr(phoneError(normalized));
+                    }}
+                    placeholder="e.g. 0123456789"
                     className="w-full text-[12px] mt-1 bg-transparent outline-none border-b pb-0.5"
-                    style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
+                    style={{ color: "var(--kk-ink-faint)", borderColor: phoneErr ? "#FF3B30" : "var(--kk-line)" }}
                   />
+                  {phoneErr && <p className="text-[11px] mt-0.5" style={{ color: "#FF3B30" }}>{phoneErr}</p>}
                 </div>
               ) : (
                 <div>
@@ -210,8 +231,9 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             <Field label="Property name" value={propertyName} onChange={setPropertyName} placeholder="e.g. Residensi Mutiara" full />
             <Field label="Unit" value={unit} onChange={setUnit} placeholder="e.g. A-12" />
             <Field label="Expected rent (RM/mo)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 1,800" money />
-            <Field label="Bedrooms" value={bedrooms} onChange={setBedrooms} placeholder="e.g. 3" type="number" />
-            <Field label="Bathrooms" value={bathrooms} onChange={setBathrooms} placeholder="e.g. 2" type="number" />
+            <BedroomPicker value={bedrooms} onChange={setBedrooms} />
+            <Field label="Bathrooms" value={bathrooms} onChange={(v) => setBathrooms(String(Math.max(0, Number(v))))} placeholder="e.g. 2" type="number" />
+            <Field label="Parking" value={parking} onChange={(v) => setParking(String(Math.max(0, Number(v))))} placeholder="e.g. 1" type="number" />
             <Field label={lead.stage === "listed" ? "Available from *" : "Available from"} value={availableFrom} onChange={setAvailableFrom} type="date" full highlight={lead.stage === "listed" && !availableFrom} />
           </div>
 
@@ -367,6 +389,40 @@ function Field({ label, value, onChange, placeholder, type = "text", full, money
         ? <DateInput value={value} onChange={onChange} className={cls} style={sty} />
         : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} style={sty} />
       }
+    </div>
+  );
+}
+
+const BEDROOM_OPTIONS = [
+  { label: "Studio", value: "0" },
+  { label: "1", value: "1" },
+  { label: "2", value: "2" },
+  { label: "3", value: "3" },
+  { label: "4", value: "4" },
+  { label: "5+", value: "5" },
+];
+
+export function BedroomPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bedrooms</label>
+      <div className="flex gap-1 flex-wrap">
+        {BEDROOM_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(value === opt.value ? "" : opt.value)}
+            className="px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+            style={{
+              background: value === opt.value ? "var(--kk-ink)" : "var(--kk-surface-2)",
+              color: value === opt.value ? "#fff" : "var(--kk-ink-mute)",
+              border: `1px solid ${value === opt.value ? "var(--kk-ink)" : "var(--kk-line)"}`,
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -35,17 +35,7 @@ export default async function NetworkPage({ searchParams }: Props) {
   const agent = await getAgentProfile().catch(() => null);
   const plan = effectivePlan(agent);
 
-  if (!isAdmin && !planAllows(plan, "platinum")) {
-    return (
-      <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
-        <FeatureLockedState
-          title="Unlock the directory"
-          body="Access our curated directory of property lawyers, contractors, JPPH contacts, and service providers. Available on Platinum and above."
-          ctaLabel="Upgrade to Platinum — RM 179/mo"
-        />
-      </div>
-    );
-  }
+  // Directory is open to all logged-in users
 
   const { view: rawView } = await searchParams;
   const view = rawView === "properties" ? "properties" : rawView === "tenants" ? "tenants" : "contacts";

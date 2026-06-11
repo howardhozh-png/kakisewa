@@ -369,12 +369,15 @@ html, body {
   flex: 1;
   min-height: 0;        /* required for flex child to shrink and scroll */
   overflow-y: auto;     /* scroll starts at first card, not column top */
+  scroll-behavior: smooth;
   scrollbar-gutter: stable; /* reserve scrollbar space always so card width never shifts */
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   border-radius: 0 0 18px 18px;
+  /* Apple-style inset fade: bottom shadow stays fixed at element edge while content scrolls */
+  box-shadow: inset 0 -20px 20px -14px rgba(0,0,0,0.07);
 }
 .kk-board-col-body::-webkit-scrollbar { width: 5px; }
 .kk-board-col-body::-webkit-scrollbar-track { background: transparent; }
@@ -664,8 +667,10 @@ html, body {
     max-height: 480px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
     scrollbar-width: thin;
     scrollbar-color: rgba(0,0,0,0.18) transparent;
+    box-shadow: inset 0 -20px 20px -14px rgba(0,0,0,0.07);
   }
 
   /* Larger tap targets for pill/ghost buttons inside boards */

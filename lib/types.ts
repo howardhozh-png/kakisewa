@@ -110,6 +110,7 @@ export interface OwnerLead {
   expected_rent?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  parking?: number | null;
   notes?: string | null;
   source?: "csv" | "auto_replacing" | "manual" | null;
   import_batch_id?: string | null;
@@ -123,7 +124,7 @@ export interface OwnerLead {
   cover_photo_index?: number | null;
   agreement_url?: string | null;
   outreach_count?: number | null;
-  listing_purpose?: "rent" | "sell" | null;
+  listing_purpose?: "rent" | "sell" | "both" | null;
   is_managed?: boolean;
   managed_at?: string | null;
   is_competitor_target?: boolean;

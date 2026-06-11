@@ -1441,9 +1441,10 @@ export async function addOwnerLeadAction(data: {
   expected_rent: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  parking?: number | null;
   notes?: string | null;
   available_from?: string | null;
-  listing_purpose?: "rent" | "sell" | null;
+  listing_purpose?: "rent" | "sell" | "both" | null;
   stage?: "imported" | "listed";
 }): Promise<{ ok: boolean; id?: string; message?: string }> {
   const { createOwnerLead } = await import("@/lib/db");
@@ -1457,6 +1458,7 @@ export async function addOwnerLeadAction(data: {
       expected_rent: data.expected_rent,
       bedrooms: data.bedrooms ?? null,
       bathrooms: data.bathrooms ?? null,
+      parking: data.parking ?? null,
       notes: data.notes ?? null,
       source: "manual",
       import_batch_id: null,

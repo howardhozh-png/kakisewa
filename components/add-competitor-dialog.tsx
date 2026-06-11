@@ -6,6 +6,8 @@ import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, markCompetitorRentedAction } from "@/lib/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { normalizePhone, phoneError } from "@/lib/phone";
+import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
 
 interface Props {
   open: boolean;
@@ -17,13 +19,20 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState({
     property_name: "", unit: "", owner_name: "", owner_phone: "",
-    expected_rent: "", bedrooms: "", bathrooms: "",
+    expected_rent: "", bedrooms: "", bathrooms: "", parking: "",
     rented_on: new Date().toISOString().slice(0, 10),
     duration: "12",
   });
+  const [phoneErr, setPhoneErr] = useState<string | null>(null);
 
   function set(field: keyof typeof form, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  function handlePhoneBlur() {
+    const normalized = normalizePhone(form.owner_phone);
+    if (form.owner_phone) set("owner_phone", normalized);
+    setPhoneErr(phoneError(normalized));
   }
 
   const contractEnd = (() => {
@@ -38,6 +47,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
   function handleSubmit() {
     if (!form.property_name.trim()) { toast.error("Property name required"); return; }
     if (!form.rented_on || !form.duration) { toast.error("Rented on + duration required"); return; }
+    if (phoneErr) { toast.error("Fix the phone number before saving"); return; }
     startTransition(async () => {
       const res = await addOwnerLeadAction({
         owner_name: form.owner_name || "Unknown",
@@ -45,15 +55,16 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
         property_name: form.property_name.trim(),
         unit: form.unit || null,
         expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
-        bedrooms: form.bedrooms ? parseInt(form.bedrooms, 10) : null,
+        bedrooms: form.bedrooms !== "" ? parseInt(form.bedrooms, 10) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
+        parking: form.parking ? parseInt(form.parking, 10) : null,
         stage: "imported",
       });
       if (!res.ok || !res.id) { toast.error("Could not save"); return; }
       await markCompetitorRentedAction(res.id, form.rented_on, parseInt(form.duration, 10));
       toast.success("Target unit added");
       onOpenChange(false);
-      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
+      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
       router.refresh();
     });
   }
@@ -90,8 +101,22 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Owner phone</label>
-              <input value={form.owner_phone} onChange={e => set("owner_phone", e.target.value)} placeholder="601x…" className={field} style={fs} />
+              <input
+                value={form.owner_phone}
+                onChange={e => { set("owner_phone", e.target.value); setPhoneErr(null); }}
+                onBlur={handlePhoneBlur}
+                placeholder="601x…"
+                className={field}
+                style={{ ...fs, border: phoneErr ? "1px solid var(--kk-red)" : fs.border }}
+              />
+              {phoneErr && <p className="text-[11px]" style={{ color: "var(--kk-red)" }}>{phoneErr}</p>}
             </div>
+          </div>
+
+          {/* Bedrooms */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bedrooms</label>
+            <BedroomPicker value={form.bedrooms} onChange={(v) => set("bedrooms", v)} />
           </div>
 
           {/* Property details */}
@@ -101,12 +126,12 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
               <input type="number" value={form.expected_rent} onChange={e => set("expected_rent", e.target.value)} placeholder="1800" className={field} style={fs} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Beds</label>
-              <input type="number" value={form.bedrooms} onChange={e => set("bedrooms", e.target.value)} placeholder="3" className={field} style={fs} />
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Baths</label>
+              <input type="number" value={form.bathrooms} min="0" onChange={e => set("bathrooms", e.target.value)} placeholder="2" className={field} style={fs} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Baths</label>
-              <input type="number" value={form.bathrooms} onChange={e => set("bathrooms", e.target.value)} placeholder="2" className={field} style={fs} />
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Parking</label>
+              <input type="number" value={form.parking} min="0" onChange={e => set("parking", e.target.value)} placeholder="1" className={field} style={fs} />
             </div>
           </div>
 

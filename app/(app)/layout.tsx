@@ -8,6 +8,7 @@ import { TrialGate } from "@/components/trial-gate";
 import { BetaFrozenGate } from "@/components/beta-frozen-gate";
 import { TrialDowngradeNotice } from "@/components/trial-downgrade-notice";
 import { SessionGuard } from "@/components/session-guard";
+import { TopProgressBar } from "@/components/top-progress-bar";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
@@ -107,6 +108,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {isBetaFrozen && <BetaFrozenGate />}
       {isTrialExpired && <TrialGate />}
       <FeedbackButton />
+      <TopProgressBar />
       <SessionGuard />
     </div>
   );

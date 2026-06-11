@@ -121,8 +121,14 @@ function StatusBadge({ lead }: { lead: OwnerLead }) {
   );
 }
 
-function PurposeBadge({ purpose }: { purpose: "rent" | "sell" | null | undefined }) {
+function PurposeBadge({ purpose }: { purpose: "rent" | "sell" | "both" | null | undefined }) {
   if (!purpose) return null;
+  if (purpose === "both") return (
+    <>
+      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ background: "rgba(0,113,227,0.08)", color: "var(--kk-blue)" }}>Rent</span>
+      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ background: "rgba(124,58,237,0.08)", color: "#7C3AED" }}>Sell</span>
+    </>
+  );
   const isRent = purpose === "rent";
   return (
     <span
@@ -200,7 +206,7 @@ function LeadPopup({
     owner_phone: lead.owner_phone ?? "",
     property_name: lead.property_name ?? "",
     unit: lead.unit ?? "",
-    listing_purpose: lead.listing_purpose ?? null as "rent" | "sell" | null,
+    listing_purpose: lead.listing_purpose ?? null as "rent" | "sell" | "both" | null,
     expected_rent: lead.expected_rent != null ? String(lead.expected_rent) : "",
     bedrooms: lead.bedrooms != null ? String(lead.bedrooms) : "",
     bathrooms: lead.bathrooms != null ? String(lead.bathrooms) : "",

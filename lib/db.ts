@@ -61,6 +61,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
         cover_photo_index: (ol.cover_photo_index as number | null) ?? null,
         bedrooms: (ol.bedrooms as number | null) ?? null,
         bathrooms: (ol.bathrooms as number | null) ?? null,
+        parking: (ol.parking as number | null) ?? null,
       }
     : undefined;
 
@@ -1230,6 +1231,7 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   if (data.expected_rent !== undefined)          updates.expected_rent = data.expected_rent;
   if (data.bedrooms !== undefined)               updates.bedrooms = data.bedrooms;
   if (data.bathrooms !== undefined)              updates.bathrooms = data.bathrooms;
+  if (data.parking !== undefined)                updates.parking = data.parking;
   if (data.property_name !== undefined)          updates.property_name = data.property_name;
   if (data.unit !== undefined)                   updates.unit = data.unit;
   if (data.address !== undefined)                updates.address = data.address;
@@ -1248,8 +1250,15 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   if (!updated || updated.length === 0) throw new Error("Owner lead not found or permission denied");
 }
 
+const PROTECTED_STAGES = new Set(["replied", "wants_rent", "listed", "matched"]);
+
 export async function deleteOwnerLead(id: string): Promise<void> {
   const supabase = await createClient();
+  // Guard: leads with engagement or active tenancy cannot be deleted
+  const { data: lead } = await supabase.from("owner_leads").select("stage, is_managed").eq("id", id).maybeSingle();
+  if (lead && (lead.is_managed || PROTECTED_STAGES.has(lead.stage as string))) {
+    throw new Error("PROTECTED");
+  }
   const { error } = await supabase.from("owner_leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) throw error;
 }

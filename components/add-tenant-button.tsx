@@ -7,6 +7,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { addTenantProfileAction, generateTenantIntakeLink } from "@/lib/actions";
 import { toast } from "sonner";
+import { normalizePhone, phoneError } from "@/lib/phone";
 
 interface FormData {
   name: string;
@@ -36,6 +37,7 @@ export function AddTenantButton() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [pending, startTransition] = useTransition();
+  const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -67,8 +69,15 @@ export function AddTenantButton() {
     setDialogOpen(true);
   }
 
+  function handlePhoneBlur() {
+    const normalized = normalizePhone(form.phone);
+    if (form.phone) setForm((f) => ({ ...f, phone: normalized }));
+    setPhoneErr(phoneError(normalized));
+  }
+
   function handleSave() {
     if (!form.name.trim()) { toast.error("Full name is required"); return; }
+    if (phoneErr) { toast.error("Fix the phone number before saving"); return; }
 
     startTransition(async () => {
       const res = await addTenantProfileAction({
@@ -186,11 +195,13 @@ export function AddTenantButton() {
                   <input
                     type="tel"
                     value={form.phone}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) => { setForm((f) => ({ ...f, phone: e.target.value })); setPhoneErr(null); }}
+                    onBlur={handlePhoneBlur}
                     placeholder="e.g. 601XXXXXXXX"
                     className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
-                    style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+                    style={{ background: "var(--kk-surface-2)", border: phoneErr ? "1px solid var(--kk-red)" : "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                   />
+                  {phoneErr && <p className="text-[11px] mt-1" style={{ color: "var(--kk-red)" }}>{phoneErr}</p>}
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>

@@ -508,7 +508,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
             {(lead.bedrooms != null || lead.bathrooms != null) && (
               <span style={{ color: "var(--kk-ink-faint)" }}>
                 {" · "}
-                {lead.bedrooms != null ? `${lead.bedrooms}bd` : ""}
+                {lead.bedrooms != null ? (lead.bedrooms === 0 ? "Studio" : `${lead.bedrooms}bd`) : ""}
                 {lead.bedrooms != null && lead.bathrooms != null ? " " : ""}
                 {lead.bathrooms != null ? `${lead.bathrooms}ba` : ""}
               </span>

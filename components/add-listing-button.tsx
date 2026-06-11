@@ -6,6 +6,8 @@ import { FileText as ListingIcon, Loader2, Camera, FileText, X } from "lucide-re
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
+import { normalizePhone, phoneError } from "@/lib/phone";
+import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
 import { toast } from "sonner";
 import type { OwnerLead } from "@/lib/types";
 
@@ -18,17 +20,18 @@ interface Form {
   unit: string;
   owner_name: string;
   owner_phone: string;
-  listing_purpose: "rent" | "sell" | null;
+  listing_purpose: "rent" | "sell" | "both" | null;
   expected_rent: string;
   available_from: string;
   bedrooms: string;
   bathrooms: string;
+  parking: string;
 }
 
 const EMPTY: Form = {
   property_name: "", unit: "", owner_name: "", owner_phone: "",
   listing_purpose: null, expected_rent: "", available_from: "",
-  bedrooms: "", bathrooms: "",
+  bedrooms: "", bathrooms: "", parking: "",
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -37,9 +40,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--kk-ink-soft)" }}>{children}{required && <span style={{ color: "var(--kk-red)" }}> *</span>}</label>;
 }
-function TextInput({ value, onChange, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
+function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; onBlur?: (v: string) => void; placeholder?: string; type?: string }) {
   return (
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={(e) => onBlur?.(e.target.value)} placeholder={placeholder}
       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
   );
@@ -92,6 +95,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
     if (!form.property_name.trim()) { toast.error("Property name is required"); return; }
     if (!form.owner_name.trim())    { toast.error("Owner name is required"); return; }
     if (!form.owner_phone.trim())   { toast.error("Phone number is required"); return; }
+    if (phoneError(form.owner_phone)) { toast.error(phoneError(form.owner_phone)!); return; }
     if (!form.listing_purpose)      { toast.error("Select Rent or Sell"); return; }
     if (!form.expected_rent)        { toast.error("Price is required"); return; }
 
@@ -104,8 +108,9 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         listing_purpose: form.listing_purpose,
         expected_rent: parseFloat(form.expected_rent) || null,
         available_from: form.available_from || null,
-        bedrooms: form.bedrooms ? parseInt(form.bedrooms, 10) : null,
+        bedrooms: form.bedrooms !== "" ? parseInt(form.bedrooms, 10) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
+        parking: form.parking ? parseInt(form.parking, 10) : null,
         stage: "listed",
       });
 
@@ -199,7 +204,14 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                 <SectionLabel>Owner</SectionLabel>
                 <div className="grid grid-cols-2 gap-3">
                   <div><FieldLabel required>Owner name</FieldLabel><TextInput value={form.owner_name} onChange={(v) => setForm((f) => ({ ...f, owner_name: v }))} placeholder="e.g. Encik Ahmad" /></div>
-                  <div><FieldLabel required>Phone</FieldLabel><TextInput type="tel" value={form.owner_phone} onChange={(v) => setForm((f) => ({ ...f, owner_phone: v }))} placeholder="601XXXXXXXX" /></div>
+                  <div>
+                    <FieldLabel required>Phone</FieldLabel>
+                    <TextInput type="tel" value={form.owner_phone}
+                      onChange={(v) => setForm((f) => ({ ...f, owner_phone: v }))}
+                      onBlur={(v) => setForm((f) => ({ ...f, owner_phone: normalizePhone(v) }))}
+                      placeholder="e.g. 0123456789" />
+                    {phoneError(form.owner_phone) && <p className="text-[11px] mt-1" style={{ color: "#FF3B30" }}>{phoneError(form.owner_phone)}</p>}
+                  </div>
                 </div>
               </div>
 
@@ -210,18 +222,27 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                   <div>
                     <FieldLabel required>Rent or sell?</FieldLabel>
                     <div className="flex gap-2">
-                      {(["rent", "sell"] as const).map((v) => (
-                        <button key={v} type="button"
-                          onClick={() => setForm((f) => ({ ...f, listing_purpose: f.listing_purpose === v ? null : v }))}
-                          className="px-4 py-1.5 rounded-full text-[13px] font-medium transition-all"
-                          style={{
-                            background: form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-surface-2)",
-                            color: form.listing_purpose === v ? "#fff" : "var(--kk-ink-mute)",
-                            border: `1px solid ${form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-line)"}`,
-                          }}>
-                          {v === "rent" ? "For Rent" : "For Sale"}
-                        </button>
-                      ))}
+                      {(["rent", "sell"] as const).map((v) => {
+                        const active = form.listing_purpose === v || form.listing_purpose === "both";
+                        return (
+                          <button key={v} type="button"
+                            onClick={() => setForm((f) => {
+                              const cur = f.listing_purpose;
+                              if (cur === "both") return { ...f, listing_purpose: v === "rent" ? "sell" : "rent" };
+                              if (cur === v) return { ...f, listing_purpose: null };
+                              if (cur === null) return { ...f, listing_purpose: v };
+                              return { ...f, listing_purpose: "both" };
+                            })}
+                            className="px-4 py-1.5 rounded-full text-[13px] font-medium transition-all"
+                            style={{
+                              background: active ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                              color: active ? "#fff" : "var(--kk-ink-mute)",
+                              border: `1px solid ${active ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                            }}>
+                            {v === "rent" ? "For Rent" : "For Sale"}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -246,14 +267,17 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-3">
+                    <BedroomPicker value={form.bedrooms} onChange={(v) => setForm((f) => ({ ...f, bedrooms: v }))} />
+                  </div>
                   <div className="grid grid-cols-2 gap-3 mt-3">
                     <div>
-                      <FieldLabel>Bedrooms</FieldLabel>
-                      <TextInput type="number" value={form.bedrooms} onChange={(v) => setForm((f) => ({ ...f, bedrooms: v }))} placeholder="e.g. 3" />
+                      <FieldLabel>Bathrooms</FieldLabel>
+                      <TextInput type="number" value={form.bathrooms} onChange={(v) => setForm((f) => ({ ...f, bathrooms: String(Math.max(0, Number(v))) }))} placeholder="e.g. 2" />
                     </div>
                     <div>
-                      <FieldLabel>Bathrooms</FieldLabel>
-                      <TextInput type="number" value={form.bathrooms} onChange={(v) => setForm((f) => ({ ...f, bathrooms: v }))} placeholder="e.g. 2" />
+                      <FieldLabel>Parking</FieldLabel>
+                      <TextInput type="number" value={form.parking} onChange={(v) => setForm((f) => ({ ...f, parking: String(Math.max(0, Number(v))) }))} placeholder="e.g. 1" />
                     </div>
                   </div>
                 </div>
