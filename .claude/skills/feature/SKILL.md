@@ -31,10 +31,11 @@ Write a numbered implementation plan covering:
 - Use CSS variables (`var(--kk-ink)`, `var(--kk-surface)`, etc.) — never hardcode colours
 - Avoid `input[type="date/month/time"]` in styled contexts — iOS renders native; use Radix Popover or shadcn Select instead
 - For critical sizing, use inline `style={}` not Tailwind classes (Lightning CSS strips compound selectors in `@media`)
+- **Bump SW cache**: after ALL code changes, increment `const CACHE` in `public/sw.js` (e.g. `kk-v13` → `kk-v14`). Skipping this means browsers serve stale JS and changes won't appear.
 - Start dev server: `lsof -ti :3000 | xargs kill -9 2>/dev/null; rm -rf .next && npm run dev`
 
 ## Step 4 — Playwright verify (mandatory)
-Run all scenarios from the plan:
+Run all scenarios from the plan. First do a hard reload to clear the old SW cache:
 
 ```
 Mobile (390×844):
@@ -51,7 +52,12 @@ Desktop (1280×800):
 
 Do not report the feature as done until all scenarios pass.
 
-## Step 5 — Report to user
+## Step 5 — Commit and report to user
+Always commit before reporting done:
+```bash
+git add <specific files> && git commit -m "Feature: <description>\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+```
+
 - Show screenshots
 - List what was built
 - Say: "Verified on mobile and desktop. Ready to deploy — say 'deploy to production' when you've checked localhost."

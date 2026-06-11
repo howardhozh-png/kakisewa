@@ -34,6 +34,7 @@ State clearly:
 - Make the minimal change that fixes the root cause
 - Do not clean up surrounding code unless it's part of the fix
 - If fixing CSS: prefer inline `style={}` over stylesheet overrides
+- **Bump SW cache**: always increment `const CACHE` in `public/sw.js` (e.g. `kk-v13` → `kk-v14`) after any fix. Browsers cache `/_next/static/` chunks at the old SW version — without bumping, users see old code even after a deploy.
 - Restart dev server after changes: `lsof -ti :3000 | xargs kill -9 2>/dev/null; rm -rf .next && npm run dev`
 
 ## Step 4 — Playwright verify
