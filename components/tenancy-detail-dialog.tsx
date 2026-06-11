@@ -17,6 +17,7 @@ interface Props {
   tenancy: Tenancy | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdated?: (updated: Partial<Tenancy>) => void;
 }
 
 function computeEnd(start: string, months: number): string {
@@ -31,11 +32,16 @@ function computeEnd(start: string, months: number): string {
   return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 }
 
-export function TenancyDetailDialog({ tenancy: tenancyProp, open, onOpenChange }: Props) {
+export function TenancyDetailDialog({ tenancy: tenancyProp, open, onOpenChange, onUpdated: onUpdatedExternal }: Props) {
   const [tenancy, setTenancy] = useState<Tenancy | null>(tenancyProp);
   useEffect(() => { setTenancy(tenancyProp); }, [tenancyProp]);
 
   if (!tenancy) return null;
+
+  function handleUpdated(updated: Partial<Tenancy>) {
+    setTenancy((prev) => prev ? { ...prev, ...updated } : prev);
+    onUpdatedExternal?.(updated);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,7 +49,7 @@ export function TenancyDetailDialog({ tenancy: tenancyProp, open, onOpenChange }
         <TenancyForm
           tenancy={tenancy}
           onClose={() => onOpenChange(false)}
-          onUpdated={(updated) => setTenancy((prev) => prev ? { ...prev, ...updated } : prev)}
+          onUpdated={handleUpdated}
         />
       </DialogContent>
     </Dialog>

@@ -306,6 +306,10 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
         tenancy={openTenancy}
         open={!!openTenancy}
         onOpenChange={(o) => !o && setOpenTenancy(null)}
+        onUpdated={(updated) => {
+          setLocal((prev) => prev.map((t) => t.id === openTenancy?.id ? { ...t, ...updated } : t));
+          if (openTenancy) setOpenTenancy((prev) => prev ? { ...prev, ...updated } : prev);
+        }}
       />
 
       {commissionTenancy && (

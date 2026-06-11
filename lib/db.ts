@@ -1243,8 +1243,9 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   if (data.managed_at !== undefined)             updates.managed_at = data.managed_at;
   if (Object.keys(updates).length === 0) return;
   const supabase = await createClient();
-  const { error } = await supabase.from("owner_leads").update(updates).eq("id", id);
+  const { data: updated, error } = await supabase.from("owner_leads").update(updates).eq("id", id).select("id");
   if (error) throw error;
+  if (!updated || updated.length === 0) throw new Error("Owner lead not found or permission denied");
 }
 
 export async function deleteOwnerLead(id: string): Promise<void> {
