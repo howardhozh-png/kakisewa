@@ -12,7 +12,7 @@ import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { daysUntil } from "@/lib/types";
-import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
+import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 
 function parseAgreementUrls(url: string | null): string[] {
   if (!url) return [];
@@ -373,7 +373,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
                     <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-green)" }} />
                   </div>
-                  <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Document {i + 1}</p>
+                  <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }} title={getDocumentName(url)}>{getDocumentName(url)}</p>
                   <a href={url} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.25rem 0.6rem", fontSize: 12 }}>View</a>
                   <button type="button" onClick={() => handleRemoveAgreementFile(i)} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--kk-ink-faint)" }}>
                     <Trash2 className="w-3.5 h-3.5" />

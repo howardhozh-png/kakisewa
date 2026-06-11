@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File too large (max 20 MB)." }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
-    const filename = `documents/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_').slice(0, 80);
+    const filename = `documents/${Date.now()}-${safeName}`;
     let url: string;
 
     if (process.env.BLOB_READ_WRITE_TOKEN) {

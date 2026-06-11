@@ -353,7 +353,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
                     <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-green)" }} />
                   </div>
-                  <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Document {i + 1}</p>
+                  <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }} title={getDocumentName(url)}>{getDocumentName(url)}</p>
                   <a href={url} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.25rem 0.6rem", fontSize: 12 }}>View</a>
                   <button type="button" onClick={() => handleRemoveAgreementFile(i)} className="p-1.5 rounded-lg" style={{ color: "var(--kk-ink-faint)" }}>
                     <Trash2 className="w-3.5 h-3.5" />
@@ -416,6 +416,10 @@ function serializeAgreementUrls(urls: string[]): string | null {
   if (urls.length === 0) return null;
   if (urls.length === 1) return urls[0];
   return JSON.stringify(urls);
+}
+export function getDocumentName(url: string): string {
+  const part = decodeURIComponent(url.split('/').pop() ?? '');
+  return part.replace(/^\d{13}-/, '') || 'Document';
 }
 
 function Field({ label, value, onChange, placeholder, type = "text", full, money, highlight }: {

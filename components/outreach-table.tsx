@@ -43,10 +43,11 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, getOrCreatePropertyPackLink } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, getOrCreatePropertyPackLink } from "@/lib/actions";
+import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw, Share2 } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw, Share2, Upload } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -177,6 +178,17 @@ function OwnerLeadWaBadge({ lead }: { lead: OwnerLead }) {
 
 // ─── Lead detail popup (fully editable) ──────────────────────────────────────
 
+function parseAgreementUrls(url: string | null): string[] {
+  if (!url) return [];
+  if (url.startsWith('[')) { try { return JSON.parse(url); } catch {} }
+  return [url];
+}
+function serializeAgreementUrls(urls: string[]): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+}
+
 const FIELD_STYLE: React.CSSProperties = {
   width: "100%",
   background: "var(--kk-surface-2)",
@@ -210,6 +222,7 @@ function LeadPopup({
     expected_rent: lead.expected_rent != null ? String(lead.expected_rent) : "",
     bedrooms: lead.bedrooms != null ? String(lead.bedrooms) : "",
     bathrooms: lead.bathrooms != null ? String(lead.bathrooms) : "",
+    parking: lead.parking ?? "",
     notes: lead.notes ?? "",
     available_from: lead.available_from ?? "",
   });
@@ -223,6 +236,9 @@ function LeadPopup({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
   const [sendingPack, setSendingPack] = useState(false);
+  const [agreementUrls, setAgreementUrls] = useState<string[]>(parseAgreementUrls(lead.agreement_url ?? null));
+  const [uploadingAgreement, setUploadingAgreement] = useState(false);
+  const agreementInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const status = getStatus(lead);
@@ -235,6 +251,7 @@ function LeadPopup({
     form.expected_rent !== (lead.expected_rent != null ? String(lead.expected_rent) : "") ||
     form.bedrooms !== (lead.bedrooms != null ? String(lead.bedrooms) : "") ||
     form.bathrooms !== (lead.bathrooms != null ? String(lead.bathrooms) : "") ||
+    form.parking !== (lead.parking ?? "") ||
     form.notes !== (lead.notes ?? "") ||
     form.available_from !== (lead.available_from ?? "") ||
     form.listing_purpose !== (lead.listing_purpose ?? null);
@@ -261,8 +278,9 @@ function LeadPopup({
         property_name: form.property_name || undefined,
         unit: form.unit || undefined,
         expected_rent: form.expected_rent ? Number(form.expected_rent) : undefined,
-        bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
+        bedrooms: form.bedrooms !== "" ? Number(form.bedrooms) : null,
         bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
+        parking: form.parking.trim() || null,
         notes: form.notes || undefined,
         available_from: form.available_from || undefined,
         listing_purpose: form.listing_purpose ?? null,
@@ -332,6 +350,30 @@ function LeadPopup({
     await saveOwnerLeadPhotos(lead.id, updated).catch(() => toast.error("Failed to remove photo"));
   }
 
+  async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAgreement(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/upload/document", { method: "POST", body: fd });
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
+      const updated = [...agreementUrls, data.url as string];
+      setAgreementUrls(updated);
+      await saveOwnerLeadAgreementUrl(lead.id, serializeAgreementUrls(updated));
+      toast.success("Document saved");
+    } catch { toast.error("Upload failed"); }
+    finally { setUploadingAgreement(false); if (agreementInputRef.current) agreementInputRef.current.value = ""; }
+  }
+
+  async function handleRemoveAgreementFile(index: number) {
+    const updated = agreementUrls.filter((_, i) => i !== index);
+    setAgreementUrls(updated);
+    await saveOwnerLeadAgreementUrl(lead.id, serializeAgreementUrls(updated)).catch(() => toast.error("Failed to remove"));
+    toast.success("Document removed");
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
@@ -396,24 +438,36 @@ function LeadPopup({
 
         {/* Editable fields */}
         <div className="px-5 py-4 grid grid-cols-2 gap-x-4 gap-y-3">
-          {[
-            { label: "Property", field: "property_name" as const, colSpan: 2, placeholder: "e.g. Agile Mont Kiara" },
-            { label: "Unit", field: "unit" as const, placeholder: "e.g. A-12-05" },
-            { label: "Rent (RM)", field: "expected_rent" as const, type: "number", placeholder: "e.g. 2500", req: true },
-            { label: "Bedrooms", field: "bedrooms" as const, type: "number", placeholder: "e.g. 3", req: true },
-            { label: "Bathrooms", field: "bathrooms" as const, type: "number", placeholder: "e.g. 2", req: true },
-            { label: "Available from", field: "available_from" as const, type: "date", placeholder: "" },
-          ].map(({ label, field, type, colSpan, placeholder, req }) => (
-            <div key={field} className={colSpan === 2 ? "col-span-2" : ""}>
-              <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: fieldErrors.has(field) ? "#ef4444" : "var(--kk-ink-faint)" }}>
-                {label}{req && status === "contacted" && <span style={{ color: "#ef4444" }}> *</span>}
-              </p>
-              {type === "date"
-                ? <DateInput value={form[field]} onChange={(v) => set(field, v)} style={{ ...FIELD_STYLE, borderColor: fieldErrors.has(field) ? "#ef4444" : "var(--kk-line)" }} />
-                : <input type={type ?? "text"} value={form[field]} onChange={(e) => set(field, e.target.value)} style={{ ...FIELD_STYLE, borderColor: fieldErrors.has(field) ? "#ef4444" : "var(--kk-line)" }} placeholder={placeholder} />
-              }
-            </div>
-          ))}
+          {/* Property — full width */}
+          <div className="col-span-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: fieldErrors.has("property_name") ? "#ef4444" : "var(--kk-ink-faint)" }}>Property</p>
+            <input value={form.property_name} onChange={(e) => set("property_name", e.target.value)} placeholder="e.g. Agile Mont Kiara" style={{ ...FIELD_STYLE, borderColor: fieldErrors.has("property_name") ? "#ef4444" : "var(--kk-line)" }} />
+          </div>
+          {/* Unit | Rent side by side */}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: fieldErrors.has("unit") ? "#ef4444" : "var(--kk-ink-faint)" }}>Unit</p>
+            <input value={form.unit} onChange={(e) => set("unit", e.target.value)} placeholder="e.g. A-12-05" style={{ ...FIELD_STYLE, borderColor: fieldErrors.has("unit") ? "#ef4444" : "var(--kk-line)" }} />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Expected rent (RM/mo)</p>
+            <input type="number" value={form.expected_rent} onChange={(e) => set("expected_rent", e.target.value)} placeholder="e.g. 2500" style={{ ...FIELD_STYLE }} />
+          </div>
+          {/* Bedrooms (pill buttons) | Bathrooms */}
+          <BedroomPicker value={form.bedrooms} onChange={(v) => { setForm((p) => ({ ...p, bedrooms: v })); setSaved(false); }} />
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Bathrooms</p>
+            <input type="number" min="0" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} placeholder="e.g. 2" style={{ ...FIELD_STYLE }} />
+          </div>
+          {/* Parking */}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Parking</p>
+            <input type="text" value={form.parking} onChange={(e) => set("parking", e.target.value)} placeholder="e.g. A142" style={{ ...FIELD_STYLE }} />
+          </div>
+          {/* Available from — full width */}
+          <div className="col-span-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Available from</p>
+            <DateInput value={form.available_from} onChange={(v) => set("available_from", v)} style={{ ...FIELD_STYLE }} />
+          </div>
           <div className="col-span-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Notes</p>
             <textarea
@@ -506,6 +560,36 @@ function LeadPopup({
               </button>
             )}
             <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+          </div>
+        </div>
+
+        {/* Agreement */}
+        <div className="px-5 pb-4" style={{ borderTop: "1px solid var(--kk-line)" }}>
+          <div className="flex items-center justify-between mt-4 mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-faint)" }}>Tenancy agreement</p>
+            <span className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>{agreementUrls.length}/3</span>
+          </div>
+          <div className="space-y-1">
+            {agreementUrls.map((url, i) => (
+              <div key={url} className="flex items-center gap-2 py-1">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
+                  <FileText className="w-3 h-3" style={{ color: "var(--kk-green)" }} />
+                </div>
+                <p className="flex-1 text-[12px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }} title={getDocumentName(url)}>{getDocumentName(url)}</p>
+                <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>View</a>
+                <button type="button" onClick={() => handleRemoveAgreementFile(i)} className="p-1" style={{ color: "var(--kk-ink-faint)" }}>
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            {agreementUrls.length < 3 && (
+              <label className="flex items-center gap-1.5 py-1 cursor-pointer" style={{ color: "var(--kk-ink-mute)" }}>
+                {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                <span className="text-[12px]">{agreementUrls.length === 0 ? "Upload document" : "Add document"}</span>
+                <input ref={agreementInputRef} type="file" className="hidden" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
+              </label>
+            )}
+            <p className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>PDF, image, or any file — max 20 MB</p>
           </div>
         </div>
 
