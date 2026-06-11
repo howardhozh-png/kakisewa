@@ -1071,30 +1071,50 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </p>
           </div>
         ) : (
-          <div style={{ maxHeight: "min(560px, calc(100vh - 320px))", overflowY: "auto", overflowX: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--kk-line-strong) transparent" }}>
+          <>
+          {/* Fixed column header — sits above the scroll container */}
+          <div style={{ paddingRight: 8, background: "var(--kk-surface)", borderBottom: "1px solid var(--kk-line)" }}>
+            <table className="w-full" style={{ minWidth: 372, tableLayout: "fixed" }}>
+              <thead>
+                <tr>
+                  <th className="px-2 py-2 lg:py-3 text-left" style={{ width: 30, verticalAlign: "middle" }}>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                        onChange={toggleAll}
+                        className="w-3.5 h-3.5 cursor-pointer block"
+                      />
+                    </div>
+                  </th>
+                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 130, color: "var(--kk-accent)" }}>Owner</th>
+                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 118, color: "var(--kk-accent)" }}>Number</th>
+                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 65, color: "var(--kk-accent)" }}>Unit</th>
+                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 170, color: "var(--kk-accent)" }}>Property</th>
+                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 200, color: "var(--kk-accent)" }}>Remarks</th>
+                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 95, color: "var(--kk-accent)" }}>Status</th>
+                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" style={{ width: 84, color: "var(--kk-accent)" }}>Last sent</th>
+                  <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 68, background: "var(--kk-surface)" }}></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          {/* Scrollable body — scrollbar starts at first data row */}
+          <div style={{ maxHeight: "min(520px, calc(100vh - 360px))", overflowY: "auto", overflowX: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--kk-line-strong) transparent" }}>
           <table className="w-full" style={{ minWidth: 380, tableLayout: "fixed" }}>
-            <thead style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--kk-surface)" }}>
-              <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
-                {/* checkbox */}
-                <th className="px-2 py-2 lg:py-3 text-left" style={{ width: 30, verticalAlign: "middle" }}>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      ref={(el) => { if (el) el.indeterminate = someSelected; }}
-                      onChange={toggleAll}
-                      className="w-3.5 h-3.5 cursor-pointer block"
-                    />
-                  </div>
-                </th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 130, color: "var(--kk-accent)" }}>Owner</th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 118, color: "var(--kk-accent)" }}>Number</th>
-                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 65, color: "var(--kk-accent)" }}>Unit</th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 170, color: "var(--kk-accent)" }}>Property</th>
-                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 200, color: "var(--kk-accent)" }}>Remarks</th>
-                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 95, color: "var(--kk-accent)" }}>Status</th>
-                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" style={{ width: 84, color: "var(--kk-accent)" }}>Last sent</th>
-                <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 68, background: "var(--kk-surface)" }}></th>
+            {/* Hidden header establishes column widths to match the fixed header above */}
+            <thead aria-hidden style={{ visibility: "hidden", height: 0, lineHeight: 0 }}>
+              <tr style={{ height: 0 }}>
+                <th style={{ padding: 0, height: 0, width: 30 }} />
+                <th style={{ padding: 0, height: 0, width: 130 }} />
+                <th style={{ padding: 0, height: 0, width: 118 }} />
+                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 65 }} />
+                <th style={{ padding: 0, height: 0, width: 170 }} />
+                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 200 }} />
+                <th style={{ padding: 0, height: 0, width: 95 }} />
+                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 84 }} />
+                <th style={{ padding: 0, height: 0, width: 68 }} />
               </tr>
             </thead>
             <tbody>
@@ -1316,6 +1336,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </tbody>
           </table>
           </div>
+          </>
         )}
       </div>
 

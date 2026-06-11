@@ -7,15 +7,19 @@ import { Loader2 } from "lucide-react";
 export function TopProgressBar() {
   const pathname = usePathname();
   const [width, setWidth] = useState(0);
-  const [visible, setVisible] = useState(false);
+  const [barVisible, setBarVisible] = useState(false);
+  const [spinnerVisible, setSpinnerVisible] = useState(false);
   const prevPathname = useRef<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const barHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spinnerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function startProgress() {
-    if (hideRef.current) { clearTimeout(hideRef.current); hideRef.current = null; }
+    if (barHideRef.current) { clearTimeout(barHideRef.current); barHideRef.current = null; }
+    if (spinnerHideRef.current) { clearTimeout(spinnerHideRef.current); spinnerHideRef.current = null; }
     if (tickRef.current) clearInterval(tickRef.current);
-    setVisible(true);
+    setBarVisible(true);
+    setSpinnerVisible(true);
     setWidth(8);
     let w = 8;
     tickRef.current = setInterval(() => {
@@ -26,8 +30,11 @@ export function TopProgressBar() {
 
   function finishProgress() {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
+    // Bar: quickly completes and disappears
     setWidth(100);
-    hideRef.current = setTimeout(() => { setVisible(false); setWidth(0); }, 350);
+    barHideRef.current = setTimeout(() => { setBarVisible(false); setWidth(0); }, 400);
+    // Spinner: stays visible longer to cover skeleton/RSC streaming phase
+    spinnerHideRef.current = setTimeout(() => setSpinnerVisible(false), 1500);
   }
 
   useEffect(() => {
@@ -53,37 +60,37 @@ export function TopProgressBar() {
     }
   }, [pathname]);
 
-  if (!visible) return null;
-
   return (
     <>
       {/* Top progress bar */}
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          zIndex: 100001,
-          pointerEvents: "none",
-          background: "color-mix(in srgb, var(--kk-theme-dark) 20%, transparent)",
-        }}
-      >
+      {barVisible && (
         <div
+          aria-hidden
           style={{
-            height: "100%",
-            width: `${width}%`,
-            background: "var(--kk-theme-dark)",
-            transition: width >= 100 ? "width 200ms ease" : "width 140ms linear",
-            borderRadius: "0 3px 3px 0",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            zIndex: 100001,
+            pointerEvents: "none",
+            background: "color-mix(in srgb, var(--kk-theme-dark) 20%, transparent)",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${width}%`,
+              background: "var(--kk-theme-dark)",
+              transition: width >= 100 ? "width 200ms ease" : "width 140ms linear",
+              borderRadius: "0 3px 3px 0",
+            }}
+          />
+        </div>
+      )}
 
-      {/* Centered spinner overlay — only shows while loading, not during the finish flash */}
-      {width < 95 && (
+      {/* Centered spinner — stays visible through RSC streaming until content renders */}
+      {spinnerVisible && (
         <div
           aria-hidden
           style={{
