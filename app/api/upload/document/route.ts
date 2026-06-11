@@ -4,20 +4,12 @@ import fs from "fs";
 
 export const runtime = "nodejs";
 
-const ALLOWED = [
-  "image/jpeg", "image/png", "image/webp", "image/heic", "image/gif",
-  "application/pdf",
-];
-
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
     const file = form.get("file") as File | null;
 
     if (!file) return NextResponse.json({ error: "Missing file" }, { status: 400 });
-    if (!ALLOWED.includes(file.type)) {
-      return NextResponse.json({ error: "Only images and PDFs are accepted." }, { status: 400 });
-    }
     if (file.size > 20 * 1024 * 1024) {
       return NextResponse.json({ error: "File too large (max 20 MB)." }, { status: 400 });
     }

@@ -1813,6 +1813,7 @@ export async function updateCompetitorLeadAction(
     expected_rent?: number | null;
     bedrooms?: number | null;
     bathrooms?: number | null;
+    parking?: string | null;
     competitor_contract_start?: string | null;
     competitor_contract_duration_months?: number | null;
     competitor_contract_end?: string | null;

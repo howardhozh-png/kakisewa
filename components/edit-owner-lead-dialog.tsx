@@ -28,7 +28,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const { photos, coverIndex, uploading: uploadingPhoto, inputRef: photoInputRef, reset: resetPhotos,
           handleUpload: handlePhotoUpload, handleRemove: handleRemovePhoto, handleSetCover } =
     usePhotoUpload(lead?.id ?? "", lead?.photo_urls ?? [], lead?.cover_photo_index ?? 0, onSaved);
-  const [agreementUrl, setAgreementUrl] = useState<string | null>(null);
+  const [agreementUrls, setAgreementUrls] = useState<string[]>([]);
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const agreementInputRef = useRef<HTMLInputElement>(null);
@@ -51,7 +51,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   useEffect(() => {
     if (lead) {
       resetPhotos(lead.photo_urls ?? [], lead.cover_photo_index ?? 0);
-      setAgreementUrl(lead.agreement_url ?? null);
+      setAgreementUrls(parseAgreementUrls(lead.agreement_url ?? null));
       setOwnerName(lead.owner_name ?? "");
       setOwnerPhone(lead.owner_phone ?? "");
       setEditingOwner(false);
@@ -82,17 +82,19 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
       const url = data.url as string;
-      setAgreementUrl(url);
-      await saveOwnerLeadAgreementUrl(lead!.id, url);
-      toast.success("Agreement saved");
+      const updated = [...agreementUrls, url];
+      setAgreementUrls(updated);
+      await saveOwnerLeadAgreementUrl(lead!.id, serializeAgreementUrls(updated));
+      toast.success("Document saved");
     } catch { toast.error("Upload failed"); }
     finally { setUploadingAgreement(false); if (agreementInputRef.current) agreementInputRef.current.value = ""; }
   }
 
-  async function handleRemoveAgreement() {
-    setAgreementUrl(null);
-    await saveOwnerLeadAgreementUrl(lead!.id, null);
-    toast.success("Agreement removed");
+  async function handleRemoveAgreementFile(index: number) {
+    const updated = agreementUrls.filter((_, i) => i !== index);
+    setAgreementUrls(updated);
+    await saveOwnerLeadAgreementUrl(lead!.id, serializeAgreementUrls(updated));
+    toast.success("Document removed");
   }
 
   function handleDelete() {
@@ -343,32 +345,32 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
               <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-faint)" }} />
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Tenancy agreement</p>
+              <span className="ml-auto text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{agreementUrls.length}/3</span>
             </div>
-            {agreementUrl ? (
-              <div className="flex items-center gap-3 px-3 py-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
-                  <FileText className="w-4 h-4" style={{ color: "var(--kk-green)" }} />
+            <div className="px-3 py-2 space-y-1">
+              {agreementUrls.map((url, i) => (
+                <div key={url} className="flex items-center gap-2 py-1.5">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
+                    <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-green)" }} />
+                  </div>
+                  <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Document {i + 1}</p>
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.25rem 0.6rem", fontSize: 12 }}>View</a>
+                  <button type="button" onClick={() => handleRemoveAgreementFile(i)} className="p-1.5 rounded-lg" style={{ color: "var(--kk-ink-faint)" }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Agreement</p>
-                <a href={agreementUrl} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.3rem 0.75rem", fontSize: 12 }}>View</a>
-                <label className="kk-pill kk-pill-ghost shrink-0 cursor-pointer" style={{ padding: "0.3rem 0.75rem", fontSize: 12 }}>
-                  {uploadingAgreement ? <Loader2 className="w-3 h-3 animate-spin" /> : "Replace"}
-                  <input ref={agreementInputRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
-                </label>
-                <button type="button" onClick={handleRemoveAgreement} className="p-1.5 rounded-lg" style={{ color: "var(--kk-ink-faint)" }}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <div className="px-3 py-4 flex flex-col items-center gap-1.5">
-                <label className="kk-pill kk-pill-ghost cursor-pointer flex items-center gap-1.5">
-                  {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  Upload agreement
-                  <input ref={agreementInputRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
-                </label>
-                <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>PDF or image, max 20 MB</p>
-              </div>
-            )}
+              ))}
+              {agreementUrls.length < 3 && (
+                <div className="py-2 flex flex-col items-center gap-1">
+                  <label className="kk-pill kk-pill-ghost cursor-pointer flex items-center gap-1.5">
+                    {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {agreementUrls.length === 0 ? "Upload document" : "Add document"}
+                    <input ref={agreementInputRef} type="file" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
+                  </label>
+                  <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>PDF, image, or any file — max 20 MB</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {confirmDelete ? (
@@ -403,6 +405,17 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       </DialogContent>
     </Dialog>
   );
+}
+
+function parseAgreementUrls(url: string | null): string[] {
+  if (!url) return [];
+  if (url.startsWith('[')) { try { return JSON.parse(url); } catch {} }
+  return [url];
+}
+function serializeAgreementUrls(urls: string[]): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
 }
 
 function Field({ label, value, onChange, placeholder, type = "text", full, money, highlight }: {

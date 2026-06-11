@@ -12,6 +12,18 @@ import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { daysUntil } from "@/lib/types";
+import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
+
+function parseAgreementUrls(url: string | null): string[] {
+  if (!url) return [];
+  if (url.startsWith('[')) { try { return JSON.parse(url); } catch {} }
+  return [url];
+}
+function serializeAgreementUrls(urls: string[]): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+}
 
 const FIELD_CLS = "w-full text-[13px] px-3 py-2 rounded-xl outline-none";
 const FIELD_STY: React.CSSProperties = {
@@ -54,6 +66,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
   const [expectedRent, setExpectedRent] = useState(lead.expected_rent != null ? String(lead.expected_rent) : "");
   const [bedrooms, setBedrooms] = useState(lead.bedrooms != null ? String(lead.bedrooms) : "");
   const [bathrooms, setBathrooms] = useState(lead.bathrooms != null ? String(lead.bathrooms) : "");
+  const [parking, setParking] = useState(lead.parking ?? "");
 
   // Contract fields
   const [contractStart, setContractStart] = useState(lead.competitor_contract_start ?? "");
@@ -84,7 +97,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Agreement
-  const [agreementUrl, setAgreementUrl] = useState<string | null>(lead.agreement_url ?? null);
+  const [agreementUrls, setAgreementUrls] = useState<string[]>(parseAgreementUrls(lead.agreement_url ?? null));
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -97,8 +110,9 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
         expected_rent: expectedRent ? parseFloat(expectedRent) : null,
-        bedrooms: bedrooms ? parseInt(bedrooms, 10) : null,
+        bedrooms: bedrooms !== "" ? parseInt(bedrooms, 10) : null,
         bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
+        parking: parking.trim() || null,
         competitor_contract_start: contractStart || null,
         competitor_contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : null,
         competitor_contract_end: contractEnd || null,
@@ -151,9 +165,10 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
       const url = data.url as string;
-      setAgreementUrl(url);
-      await saveOwnerLeadAgreementUrl(lead.id, url);
-      toast.success("Agreement uploaded");
+      const updated = [...agreementUrls, url];
+      setAgreementUrls(updated);
+      await saveOwnerLeadAgreementUrl(lead.id, serializeAgreementUrls(updated));
+      toast.success("Document uploaded");
     } catch {
       toast.error("Upload failed");
     } finally {
@@ -162,9 +177,10 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
     }
   }
 
-  async function handleRemoveAgreement() {
-    setAgreementUrl(null);
-    await saveOwnerLeadAgreementUrl(lead.id, null).catch(() => toast.error("Failed to remove"));
+  async function handleRemoveAgreementFile(index: number) {
+    const updated = agreementUrls.filter((_, i) => i !== index);
+    setAgreementUrls(updated);
+    await saveOwnerLeadAgreementUrl(lead.id, serializeAgreementUrls(updated)).catch(() => toast.error("Failed to remove"));
   }
 
   const daysLeft = contractEnd ? daysUntil(contractEnd, new Date()) : null;
@@ -243,16 +259,17 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
               <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="e.g. A-12-05" className={FIELD14_CLS} style={FIELD14_STY} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Expected rent (RM)</label>
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Expected rent (RM/mo)</label>
               <input type="number" value={expectedRent} onChange={(e) => setExpectedRent(e.target.value)} placeholder="e.g. 2500" className={FIELD14_CLS} style={FIELD14_STY} />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bedrooms</label>
-              <input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder="e.g. 3" className={FIELD14_CLS} style={FIELD14_STY} />
-            </div>
+            <BedroomPicker value={bedrooms} onChange={setBedrooms} />
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bathrooms</label>
-              <input type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder="e.g. 2" className={FIELD14_CLS} style={FIELD14_STY} />
+              <input type="number" value={bathrooms} min="0" onChange={(e) => setBathrooms(e.target.value)} placeholder="e.g. 2" className={FIELD14_CLS} style={FIELD14_STY} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Parking</label>
+              <input type="text" value={parking} onChange={(e) => setParking(e.target.value)} placeholder="e.g. A142" className={FIELD14_CLS} style={FIELD14_STY} />
             </div>
             {contractEnd && daysLeft !== null && (
               <div className="space-y-1.5">
@@ -348,32 +365,32 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
             <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
               <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-faint)" }} />
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-mute)" }}>Tenancy agreement</p>
+              <span className="ml-auto text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{agreementUrls.length}/3</span>
             </div>
-            {agreementUrl ? (
-              <div className="flex items-center gap-3 px-3 py-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
-                  <FileText className="w-4 h-4" style={{ color: "var(--kk-green)" }} />
+            <div className="px-3 py-2 space-y-1">
+              {agreementUrls.map((url, i) => (
+                <div key={url} className="flex items-center gap-2 py-1.5">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
+                    <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-green)" }} />
+                  </div>
+                  <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Document {i + 1}</p>
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.25rem 0.6rem", fontSize: 12 }}>View</a>
+                  <button type="button" onClick={() => handleRemoveAgreementFile(i)} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--kk-ink-faint)" }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <p className="flex-1 text-[13px] font-medium truncate min-w-0" style={{ color: "var(--kk-ink)" }}>Agreement</p>
-                <a href={agreementUrl} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost shrink-0" style={{ padding: "0.3rem 0.75rem", fontSize: 12 }}>View</a>
-                <label className="kk-pill kk-pill-ghost shrink-0 cursor-pointer" style={{ padding: "0.3rem 0.75rem", fontSize: 12 }}>
-                  {uploadingAgreement ? <Loader2 className="w-3 h-3 animate-spin" /> : "Replace"}
-                  <input ref={agreementInputRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
-                </label>
-                <button type="button" onClick={handleRemoveAgreement} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--kk-ink-faint)" }}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <div className="px-3 py-4 flex flex-col items-center gap-1.5">
-                <label className="kk-pill kk-pill-ghost cursor-pointer flex items-center gap-1.5">
-                  {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  Upload agreement
-                  <input ref={agreementInputRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
-                </label>
-                <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>PDF or image, max 20 MB</p>
-              </div>
-            )}
+              ))}
+              {agreementUrls.length < 3 && (
+                <div className="py-2 flex flex-col items-center gap-1">
+                  <label className="kk-pill kk-pill-ghost cursor-pointer flex items-center gap-1.5">
+                    {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {agreementUrls.length === 0 ? "Upload document" : "Add document"}
+                    <input ref={agreementInputRef} type="file" className="sr-only" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
+                  </label>
+                  <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>PDF, image, or any file — max 20 MB</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Save / Delete */}
