@@ -1,1 +1,11 @@
-{"regions":["sin1"]}
+{
+  "regions": ["sin1"],
+  "crons": [
+    { "path": "/api/cron/reminders",         "schedule": "0 1 * * *" },
+    { "path": "/api/cron/push-notifications", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/email-reminders",    "schedule": "0 3 * * *" },
+    { "path": "/api/cron/trial-expiry",       "schedule": "0 4 * * *" },
+    { "path": "/api/cron/trial-downgrade",    "schedule": "0 5 * * *" },
+    { "path": "/api/cron/purge-deleted-leads","schedule": "0 6 * * *" }
+  ]
+}
