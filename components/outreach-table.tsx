@@ -55,6 +55,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 type Filter = "all" | "unsent" | "contacted" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
@@ -1516,50 +1517,14 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
           {/* Delete selected */}
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
-          {!bulkDeleteConfirm ? (
-            <button
-              type="button"
-              onClick={() => setBulkDeleteConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
-              style={{ background: "rgba(255,59,48,0.25)", color: "#FF6B6B" }}
-            >
-              Delete
-            </button>
-          ) : (() => {
-            const selectedLeads = visible.filter((l) => selectedIds.has(l.id));
-            const safeLeads = selectedLeads.filter((l) => !getProtectingList(l.stage));
-            const protectedLeads = selectedLeads.filter((l) => getProtectingList(l.stage));
-            const protectedLists = [...new Set(protectedLeads.map((l) => getProtectingList(l.stage) as string))];
-            return (
-              <>
-                <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  {protectedLeads.length > 0
-                    ? `${protectedLeads.length} protected (${protectedLists.join(", ")})`
-                    : `Delete ${safeLeads.length} leads?`}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setBulkDeleteConfirm(false)}
-                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
-                  style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}
-                >
-                  Cancel
-                </button>
-                {safeLeads.length > 0 && (
-                  <button
-                    type="button"
-                    disabled={bulkDeleting}
-                    onClick={handleBulkDelete}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-50"
-                    style={{ background: "#FF3B30", color: "#fff" }}
-                  >
-                    {bulkDeleting && <Loader2 className="w-3 h-3 animate-spin" />}
-                    Delete {safeLeads.length} {safeLeads.length !== selectedLeads.length ? "safe " : ""}lead{safeLeads.length !== 1 ? "s" : ""}
-                  </button>
-                )}
-              </>
-            );
-          })()}
+          <button
+            type="button"
+            onClick={() => setBulkDeleteConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
+            style={{ background: "rgba(255,59,48,0.25)", color: "#FF6B6B" }}
+          >
+            Delete
+          </button>
 
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
           <button
@@ -1572,6 +1537,68 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           </button>
         </div>
       )}
+
+      {/* Bulk delete confirmation dialog */}
+      {(() => {
+        const selectedLeads = visible.filter((l) => selectedIds.has(l.id));
+        const safeLeads = selectedLeads.filter((l) => !getProtectingList(l.stage));
+        const protectedLeads = selectedLeads.filter((l) => getProtectingList(l.stage));
+        const protectedLists = [...new Set(protectedLeads.map((l) => getProtectingList(l.stage) as string))];
+        return (
+          <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>Delete leads</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-3">
+                {protectedLeads.length > 0 && (
+                  <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,59,48,0.08)" }}>
+                    <p className="text-[13px] font-semibold mb-1" style={{ color: "#FF3B30" }}>
+                      {protectedLeads.length} lead{protectedLeads.length !== 1 ? "s" : ""} cannot be deleted
+                    </p>
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+                      {protectedLeads.length === 1
+                        ? `This lead is currently in ${protectedLists.join(" and ")} and will be kept.`
+                        : `These leads are in ${protectedLists.join(" and ")} and will be kept.`}
+                    </p>
+                  </div>
+                )}
+                {safeLeads.length > 0 ? (
+                  <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+                    {safeLeads.length} lead{safeLeads.length !== 1 ? "s" : ""} will be moved to the bin and auto-deleted after 7 days.
+                  </p>
+                ) : (
+                  <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+                    All selected leads are protected and cannot be deleted.
+                  </p>
+                )}
+              </div>
+              <DialogFooter>
+                <button
+                  type="button"
+                  onClick={() => setBulkDeleteConfirm(false)}
+                  className="px-4 py-2 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-70"
+                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                >
+                  Cancel
+                </button>
+                {safeLeads.length > 0 && (
+                  <button
+                    type="button"
+                    disabled={bulkDeleting}
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center gap-1.5"
+                    style={{ background: "#FF3B30", color: "#fff" }}
+                  >
+                    {bulkDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Delete {safeLeads.length} lead{safeLeads.length !== 1 ? "s" : ""}
+                  </button>
+                )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* Lead detail popup */}
       {selectedLead && (
