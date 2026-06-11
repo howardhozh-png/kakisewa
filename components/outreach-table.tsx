@@ -72,6 +72,12 @@ function getStatus(lead: OwnerLead): ContactStatus {
   return "unsent";
 }
 
+function getProtectingList(stage: string): string | null {
+  if (stage === "listed" || stage === "wants_rent" || stage === "replied") return "My Listing";
+  if (stage === "matched") return "Existing Listing";
+  return null;
+}
+
 function relativeTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -630,44 +636,67 @@ function LeadPopup({
           ) : null}
 
           {/* Delete — always shown */}
-          {!deleteConfirm ? (
-            <button
-              type="button"
-              onClick={() => setDeleteConfirm(true)}
-              className="w-full py-2 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-70"
-              style={{ background: "transparent", color: "#AEAEB2", border: "1px solid rgba(0,0,0,0.08)" }}
-            >
-              Delete lead
-            </button>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              <p className="text-center text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>Moved to bin — auto-deleted after 7 days</p>
-              <div className="flex gap-2">
+          {(() => {
+            const protectingList = getProtectingList(lead.stage);
+            if (!deleteConfirm) {
+              return (
                 <button
                   type="button"
-                  onClick={() => setDeleteConfirm(false)}
-                  className="flex-1 py-2 rounded-xl text-[13px] font-medium"
-                  style={{ background: "transparent", color: "var(--kk-ink-mute)", border: "1px solid rgba(0,0,0,0.10)" }}
+                  onClick={() => setDeleteConfirm(true)}
+                  className="w-full py-2 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-70"
+                  style={{ background: "transparent", color: "#AEAEB2", border: "1px solid rgba(0,0,0,0.08)" }}
                 >
-                  Cancel
+                  Delete lead
                 </button>
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={async () => {
-                    setDeleting(true);
-                    await onDelete(lead.id);
-                    onClose();
-                  }}
-                  className="flex-1 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  style={{ background: "#FF3B30", color: "#fff" }}
-                >
-                  {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Move to bin
-                </button>
+              );
+            }
+            if (protectingList) {
+              return (
+                <div className="flex flex-col gap-2">
+                  <p className="text-center text-[12px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                    This lead is currently in <strong>{protectingList}</strong> and cannot be deleted from here.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirm(false)}
+                    className="w-full py-2 rounded-xl text-[13px] font-medium"
+                    style={{ background: "transparent", color: "var(--kk-ink-mute)", border: "1px solid rgba(0,0,0,0.10)" }}
+                  >
+                    OK
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <div className="flex flex-col gap-1.5">
+                <p className="text-center text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>Moved to bin — auto-deleted after 7 days</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirm(false)}
+                    className="flex-1 py-2 rounded-xl text-[13px] font-medium"
+                    style={{ background: "transparent", color: "var(--kk-ink-mute)", border: "1px solid rgba(0,0,0,0.10)" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      await onDelete(lead.id);
+                      onClose();
+                    }}
+                    className="flex-1 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    style={{ background: "#FF3B30", color: "#fff" }}
+                  >
+                    {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Move to bin
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -967,9 +996,12 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   }
 
   async function handleBulkDelete() {
+    const selectedLeads = visible.filter((l) => selectedIds.has(l.id));
+    const safeIds = selectedLeads.filter((l) => !getProtectingList(l.stage)).map((l) => l.id);
+    if (safeIds.length === 0) { setBulkDeleteConfirm(false); return; }
     setBulkDeleting(true);
     try {
-      await bulkDeleteOwnerLeads(Array.from(selectedIds));
+      await bulkDeleteOwnerLeads(safeIds);
       setSelectedIds(new Set());
       setBulkDeleteConfirm(false);
       router.refresh();
@@ -1493,31 +1525,41 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             >
               Delete
             </button>
-          ) : (
-            <>
-              <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.7)" }}>
-                Delete {selectedIds.size} leads?
-              </span>
-              <button
-                type="button"
-                onClick={() => setBulkDeleteConfirm(false)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
-                style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={bulkDeleting}
-                onClick={handleBulkDelete}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-50"
-                style={{ background: "#FF3B30", color: "#fff" }}
-              >
-                {bulkDeleting && <Loader2 className="w-3 h-3 animate-spin" />}
-                Confirm delete
-              </button>
-            </>
-          )}
+          ) : (() => {
+            const selectedLeads = visible.filter((l) => selectedIds.has(l.id));
+            const safeLeads = selectedLeads.filter((l) => !getProtectingList(l.stage));
+            const protectedLeads = selectedLeads.filter((l) => getProtectingList(l.stage));
+            const protectedLists = [...new Set(protectedLeads.map((l) => getProtectingList(l.stage) as string))];
+            return (
+              <>
+                <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  {protectedLeads.length > 0
+                    ? `${protectedLeads.length} protected (${protectedLists.join(", ")})`
+                    : `Delete ${safeLeads.length} leads?`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setBulkDeleteConfirm(false)}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}
+                >
+                  Cancel
+                </button>
+                {safeLeads.length > 0 && (
+                  <button
+                    type="button"
+                    disabled={bulkDeleting}
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-50"
+                    style={{ background: "#FF3B30", color: "#fff" }}
+                  >
+                    {bulkDeleting && <Loader2 className="w-3 h-3 animate-spin" />}
+                    Delete {safeLeads.length} {safeLeads.length !== selectedLeads.length ? "safe " : ""}lead{safeLeads.length !== 1 ? "s" : ""}
+                  </button>
+                )}
+              </>
+            );
+          })()}
 
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
           <button
