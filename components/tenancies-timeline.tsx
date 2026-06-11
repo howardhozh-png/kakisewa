@@ -19,7 +19,7 @@ function todayMonthValue() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function TenanciesTimeline({ tenancies, renewalCommissionPct = 50, onMonthClick, selectedMonth }: Props) {
+export function TenanciesTimeline({ tenancies, renewalCommissionPct = 100, onMonthClick, selectedMonth }: Props) {
   const today = useMemo(() => new Date(), []);
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const [windowMonths, setWindowMonths] = useState(12);
