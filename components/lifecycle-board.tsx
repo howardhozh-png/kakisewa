@@ -13,6 +13,7 @@ import { FeatureLockedState } from "@/components/feature-locked-state";
 import { RenewalCommissionDialog } from "@/components/renewal-commission-dialog";
 import { TenantLeavingDialog } from "@/components/tenant-leaving-dialog";
 import { OwnerLeavingDialog } from "@/components/owner-leaving-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { FilterSelect } from "@/components/filter-select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -480,7 +481,9 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         </div>
         <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
       </div>
-      <div className="kk-board-col-body">{children}</div>
+      <ScrollArea className="kk-board-col-body">
+        <div className="kk-board-col-body-inner">{children}</div>
+      </ScrollArea>
     </div>
   );
 }
