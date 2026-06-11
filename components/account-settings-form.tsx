@@ -623,7 +623,7 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
           onClick={handleConnect}
           disabled={connecting}
           className="kk-pill flex items-center gap-2"
-          style={{ background: "#25D366", color: "#fff" }}
+          style={{ background: "var(--kk-ink)", color: "#fff" }}
         >
           {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {connecting ? "Opening Meta…" : "Connect WhatsApp Business number"}

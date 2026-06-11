@@ -136,13 +136,25 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
     .is("deleted_at", null)
     .maybeSingle();
 
-  // Try matching to a tenancy by tenant_phone
+  // Try matching to a tenancy by tenant_phone (only if not an owner_lead match)
   const { data: tenancy } = !ownerLead
     ? await svc
         .from("tenancies")
         .select("id, tenant_name")
         .eq("user_id", agentId)
         .eq("tenant_phone", fromNumber)
+        .is("deleted_at", null)
+        .maybeSingle()
+    : { data: null };
+
+  // If the reply is from a property owner, check for a linked tenancy so we can
+  // also set replied_owner on that renewal card (owner_lead_id FK links them)
+  const { data: ownerTenancy } = ownerLead
+    ? await svc
+        .from("tenancies")
+        .select("id")
+        .eq("user_id", agentId)
+        .eq("owner_lead_id", ownerLead.id)
         .is("deleted_at", null)
         .maybeSingle()
     : { data: null };
@@ -175,14 +187,27 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
       })
       .eq("id", cardId);
 
-    // For tenancy cards (tenant replies), classify intent and auto-move the card
+    // Classify intent and update the relevant card
     if (cardType === "tenancy") {
+      // Tenant replied — classify and move the card
       const intent = await classifyWaReply(messageText, "tenant");
       if (intent !== "unclear") {
+        await svc.from("tenancies").update({ replied_tenant: intent }).eq("id", cardId);
+      }
+    } else if (cardType === "owner_lead") {
+      // Owner replied to outreach — classify their intent
+      const intent = await classifyWaReply(messageText, "owner");
+      // If this owner also has a linked tenancy renewal, update replied_owner there too
+      if (ownerTenancy) {
         await svc
           .from("tenancies")
-          .update({ replied_tenant: intent })
-          .eq("id", cardId);
+          .update({
+            replied_owner: intent !== "unclear" ? intent : undefined,
+            last_wa_reply_at: receivedAt,
+            last_wa_reply_text: messageText,
+            wa_status: "replied",
+          })
+          .eq("id", ownerTenancy.id);
       }
     }
 

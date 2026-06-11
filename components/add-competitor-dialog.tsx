@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, markCompetitorRentedAction } from "@/lib/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -113,7 +114,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rented on *</label>
-              <input type="date" value={form.rented_on} onChange={e => set("rented_on", e.target.value)} className={field} style={fs} />
+              <DateInput value={form.rented_on} onChange={iso => set("rented_on", iso)} className={field} style={fs} />
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months) *</label>
