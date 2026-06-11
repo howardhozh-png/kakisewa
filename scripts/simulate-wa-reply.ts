@@ -23,8 +23,10 @@ if (fs.existsSync(envPath)) {
 
 const WEBHOOK_URL = "http://localhost:3000/api/webhooks/whatsapp";
 const APP_SECRET = envVars.WHATSAPP_APP_SECRET ?? "";
-const PHONE_NUMBER_ID = "test-phone-id-123"; // must match agent_profiles.whatsapp_phone_number_id
-const DISPLAY_NUMBER = "60123456789";
+// Use 'silver' arg to simulate for the silver test account
+const isSilver = process.argv.includes("--silver");
+const PHONE_NUMBER_ID = isSilver ? "test-phone-id-silver" : "test-phone-id-123";
+const DISPLAY_NUMBER = isSilver ? "60111111111" : "60123456789";
 
 const fromNumber = process.argv[2]?.match(/^\d/) ? process.argv[2] : "60107609699";
 const messageText = process.argv.slice(fromNumber !== process.argv[2] ? 2 : 3).join(" ") || "Ok boleh renew";
