@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -18,9 +19,14 @@ export function TopProgressBar() {
     if (barHideRef.current) { clearTimeout(barHideRef.current); barHideRef.current = null; }
     if (spinnerHideRef.current) { clearTimeout(spinnerHideRef.current); spinnerHideRef.current = null; }
     if (tickRef.current) clearInterval(tickRef.current);
-    setBarVisible(true);
-    setSpinnerVisible(true);
-    setWidth(8);
+    // flushSync forces a paint BEFORE Next.js's link handler fires navigation.
+    // Without this, prefetched routes commit in the same JS tick as the click,
+    // React batches startProgress + finishProgress and the spinner never renders.
+    flushSync(() => {
+      setBarVisible(true);
+      setSpinnerVisible(true);
+      setWidth(8);
+    });
     let w = 8;
     tickRef.current = setInterval(() => {
       w = Math.min(w + Math.random() * 10 + 4, 82);
@@ -30,11 +36,10 @@ export function TopProgressBar() {
 
   function finishProgress() {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
-    // Bar: quickly completes and disappears
     setWidth(100);
     barHideRef.current = setTimeout(() => { setBarVisible(false); setWidth(0); }, 400);
-    // Spinner: stays visible longer to cover skeleton/RSC streaming phase
-    spinnerHideRef.current = setTimeout(() => setSpinnerVisible(false), 1500);
+    // 600ms gives enough time to cover RSC streaming without being too long on fast pages
+    spinnerHideRef.current = setTimeout(() => setSpinnerVisible(false), 600);
   }
 
   useEffect(() => {
