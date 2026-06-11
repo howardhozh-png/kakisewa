@@ -57,7 +57,18 @@ export async function POST(req: NextRequest) {
   const phoneNumberId    = phoneEntry.id;
   const displayPhone     = phoneEntry.display_phone_number.replace(/^\+/, "");
 
-  // 4. Save to agent_profiles
+  // 4. Subscribe the WABA to this app's webhook so messages are forwarded
+  const subRes = await fetch(
+    `https://graph.facebook.com/v19.0/${wabaId}/subscribed_apps`,
+    { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const subData = await subRes.json() as Record<string, unknown>;
+  if (!subRes.ok || !subData.success) {
+    console.error("[whatsapp/connect] waba subscription failed", subData);
+    return NextResponse.json({ ok: false, error: "Failed to subscribe WABA to webhook" }, { status: 502 });
+  }
+
+  // 5. Save to agent_profiles
   const svc = createServiceClient();
   const { error: updateErr } = await svc
     .from("agent_profiles")
