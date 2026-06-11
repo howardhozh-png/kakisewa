@@ -3,6 +3,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { getTenancyByTenantRenewalToken, completeTenantRenewalIntake } from "@/lib/db";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { sendPushToUser } from "@/lib/push";
 
 const schema = z.object({
   token: z.string().min(1).max(200),
@@ -32,6 +33,17 @@ export async function POST(request: NextRequest) {
 
     await completeTenantRenewalIntake(token, staying, newEndDate);
     revalidatePath("/existing-listing");
+
+    if (tenancy.user_id) {
+      const propLabel = tenancy.property_name ? ` · ${tenancy.property_name}` : "";
+      sendPushToUser(tenancy.user_id, {
+        title: staying ? "Tenant is renewing!" : "Tenant not renewing",
+        body: `${tenancy.tenant_name ?? "Tenant"}${propLabel}`,
+        url: `/existing-listing?highlight=${tenancy.id}`,
+        tag: `tenant_renewal_${tenancy.id}`,
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[intake/renewal/tenant]", err);

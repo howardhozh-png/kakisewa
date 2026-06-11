@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getTenantIntakeSession, completeTenantIntake } from "@/lib/db";
 import { extractTenantIntake } from "@/lib/ai-classify";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { sendPushToUser } from "@/lib/push";
 
 const schema = z.object({
   token: z.string().min(1).max(200),
@@ -31,6 +32,13 @@ export async function POST(request: NextRequest) {
 
     const extracted = await extractTenantIntake(answers);
     await completeTenantIntake(token, extracted, session.agent_id);
+
+    sendPushToUser(session.agent_id, {
+      title: "Tenant filled in profile",
+      body: extracted.name ?? session.name ?? "New tenant",
+      url: "/existing-listing",
+      tag: `tenant_intake_${token}`,
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true, message: "Profile created successfully" });
   } catch (err) {

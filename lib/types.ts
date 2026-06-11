@@ -174,6 +174,8 @@ export interface AgentProfile {
   whatsapp_business_account_id?: string | null;
   whatsapp_connected_at?: string | null;
   whatsapp_number?: string | null;
+  notif_push?: boolean | null;
+  notif_email?: boolean | null;
 }
 
 export interface ProfileStrengthItem {

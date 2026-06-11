@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef, useMemo, useCallback, useEffect } from "react";
 import { AgentProfile } from "@/lib/types";
-import { saveProfileDetails, saveWhatsAppTemplatesAction } from "@/lib/actions";
+import { saveProfileDetails, saveWhatsAppTemplatesAction, saveNotifPrefs } from "@/lib/actions";
 import {
   TEMPLATE_SPECS,
   parseTemplateOverrides,
@@ -12,7 +12,7 @@ import {
   type TemplateVar,
 } from "@/lib/whatsapp-templates";
 import { toast } from "sonner";
-import { Loader2, ChevronDown, RotateCcw, Eye, X, Info, CheckCircle2, MessageCircle } from "lucide-react";
+import { Loader2, ChevronDown, RotateCcw, Eye, X, Info, CheckCircle2, MessageCircle, Bell, Mail } from "lucide-react";
 
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
@@ -496,6 +496,108 @@ function TemplateCard({
 
 // ── Main form ─────────────────────────────────────────────────────────────────
 
+// ── Notification Preferences section ─────────────────────────────────────────
+
+function NotifToggle({
+  icon: Icon,
+  label,
+  description,
+  enabled,
+  onToggle,
+  saving,
+}: {
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  enabled: boolean;
+  onToggle: () => void;
+  saving: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--kk-line)" }}>
+      <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--kk-surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon style={{ width: 15, height: 15, color: "var(--kk-ink-mute)" }} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--kk-ink)", marginBottom: 1 }}>{label}</p>
+        <p style={{ fontSize: 12, color: "var(--kk-ink-faint)" }}>{description}</p>
+      </div>
+      <button
+        onClick={onToggle}
+        disabled={saving}
+        aria-label={enabled ? `Disable ${label}` : `Enable ${label}`}
+        style={{
+          width: 44,
+          height: 26,
+          borderRadius: 13,
+          border: "none",
+          background: enabled ? "var(--kk-ink)" : "var(--kk-line)",
+          cursor: saving ? "not-allowed" : "pointer",
+          position: "relative",
+          flexShrink: 0,
+          transition: "background 0.2s",
+          opacity: saving ? 0.6 : 1,
+        }}
+      >
+        <span style={{
+          position: "absolute",
+          top: 3,
+          left: enabled ? 21 : 3,
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          background: "#fff",
+          transition: "left 0.2s",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+        }} />
+      </button>
+    </div>
+  );
+}
+
+function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
+  const [push, setPush] = useState(agent.notif_push !== false);
+  const [email, setEmail] = useState(agent.notif_email !== false);
+  const [saving, setSaving] = useState(false);
+
+  async function toggle(field: "push" | "email") {
+    const nextPush = field === "push" ? !push : push;
+    const nextEmail = field === "email" ? !email : email;
+    if (field === "push") setPush(nextPush);
+    else setEmail(nextEmail);
+    setSaving(true);
+    await saveNotifPrefs({ notif_push: nextPush, notif_email: nextEmail });
+    setSaving(false);
+  }
+
+  return (
+    <section className="kk-section p-6">
+      <h2 className="text-[15px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Notifications</h2>
+      <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
+        Choose how you want to be notified. Push requires enabling on your device first.
+      </p>
+      <div>
+        <NotifToggle
+          icon={Bell}
+          label="Push notifications"
+          description="Phone alerts for owner replies, tenant responses, and upcoming renewals"
+          enabled={push}
+          onToggle={() => toggle("push")}
+          saving={saving}
+        />
+        <NotifToggle
+          icon={Mail}
+          label="Email reminders"
+          description="Daily email for contracts expiring in 60, 30, and 7 days"
+          enabled={email}
+          onToggle={() => toggle("email")}
+          saving={saving}
+        />
+      </div>
+    </section>
+  );
+}
+
 // ── WhatsApp Integration section ──────────────────────────────────────────────
 
 function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
@@ -868,6 +970,9 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           {tplPending ? "Saving…" : "Save templates"}
         </button>
       </section>
+
+      {/* ── Notifications ── */}
+      <NotificationPrefsSection agent={agent} />
 
       {/* ── Passcode ── */}
       <section className="kk-section p-6">

@@ -1161,6 +1161,16 @@ export async function saveWhatsAppTemplatesAction(overrides: TemplateOverrides):
   return { ok: true };
 }
 
+export async function saveNotifPrefs(prefs: { notif_push: boolean; notif_email: boolean }): Promise<{ ok: boolean }> {
+  try {
+    await updateAgentProfile(prefs);
+    revalidatePath("/settings/account");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
 // ─── Owner CSV import ────────────────────────────────────────────────────────
 
 import Papa from "papaparse";

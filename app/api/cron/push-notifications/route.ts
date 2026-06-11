@@ -15,6 +15,13 @@ export async function GET(req: NextRequest) {
   const todayStr = today.toISOString().slice(0, 10);
   const in60 = new Date(today.getTime() + 60 * 86400000).toISOString().slice(0, 10);
 
+  // Fetch users who have opted out of push so we can skip them
+  const { data: optedOut } = await supabase
+    .from("agent_profiles")
+    .select("id")
+    .eq("notif_push", false);
+  const pushOptedOut = new Set((optedOut ?? []).map((r: { id: string }) => r.id));
+
   let sent = 0;
   let skipped = 0;
   let errors = 0;
@@ -54,6 +61,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (existing) { skipped++; continue; }
+    if (pushOptedOut.has(row.user_id)) { skipped++; continue; }
 
     // Check user has push subscriptions before sending
     const { count } = await supabase
@@ -102,6 +110,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (existing) { skipped++; continue; }
+    if (pushOptedOut.has(row.user_id)) { skipped++; continue; }
 
     const { count } = await supabase
       .from("push_subscriptions")

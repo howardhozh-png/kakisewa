@@ -28,6 +28,13 @@ export async function GET(req: NextRequest) {
   const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
   const emailById = Object.fromEntries((users ?? []).map((u: { id: string; email?: string }) => [u.id, u.email]));
 
+  // Fetch users who have opted out of email reminders
+  const { data: optedOut } = await supabase
+    .from("agent_profiles")
+    .select("id")
+    .eq("notif_email", false);
+  const emailOptedOut = new Set((optedOut ?? []).map((r: { id: string }) => r.id));
+
   let sent = 0;
   let skipped = 0;
 
@@ -45,7 +52,7 @@ export async function GET(req: NextRequest) {
 
     for (const row of expiring ?? []) {
       const email = emailById[row.user_id];
-      if (!email) { skipped++; continue; }
+      if (!email || emailOptedOut.has(row.user_id)) { skipped++; continue; }
 
       const sentKey = emailSentKey("renewal", daysBefore, row.id);
 
@@ -109,7 +116,7 @@ export async function GET(req: NextRequest) {
 
     for (const row of available ?? []) {
       const email = emailById[row.user_id];
-      if (!email) { skipped++; continue; }
+      if (!email || emailOptedOut.has(row.user_id)) { skipped++; continue; }
 
       const sentKey = emailSentKey("availability", daysBefore, row.id);
 
@@ -175,7 +182,7 @@ export async function GET(req: NextRequest) {
 
   for (const row of leaving ?? []) {
     const email = emailById[row.user_id];
-    if (!email) { skipped++; continue; }
+    if (!email || emailOptedOut.has(row.user_id)) { skipped++; continue; }
 
     const sentKey = `email_leaving_${row.id}`;
 

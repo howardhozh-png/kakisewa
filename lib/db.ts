@@ -939,6 +939,8 @@ export async function updateAgentProfile(p: Partial<AgentProfile>): Promise<void
   if (p.today_checklist !== undefined)         updates.today_checklist = p.today_checklist;
   if (p.motivation_photo_url !== undefined)    updates.motivation_photo_url = p.motivation_photo_url;
   if (p.ren_number !== undefined)             updates.ren_number = p.ren_number;
+  if (p.notif_push !== undefined)             updates.notif_push = p.notif_push;
+  if (p.notif_email !== undefined)            updates.notif_email = p.notif_email;
   if (Object.keys(updates).length === 0) return;
 
   const { error } = await supabase.from("agent_profiles").update(updates).eq("id", user.id);
