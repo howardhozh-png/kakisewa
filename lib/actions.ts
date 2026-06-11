@@ -847,11 +847,14 @@ export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./type
 export async function bulkMarkOwnerLeadsContacted(ids: string[]) {
   const leads = await Promise.all(ids.map((id) => getOwnerLead(id)));
   const now = new Date().toISOString();
-  for (const lead of leads) {
-    if (!lead || (lead.outreach_count ?? 0) > 0) continue;
-    await incrementOwnerOutreachCount(lead.id);
-    await updateOwnerLead(lead.id, { intake_sent_at: now });
-  }
+  await Promise.all(
+    leads
+      .filter((lead): lead is NonNullable<typeof lead> => !!lead && (lead.outreach_count ?? 0) === 0)
+      .map((lead) => Promise.all([
+        incrementOwnerOutreachCount(lead.id),
+        updateOwnerLead(lead.id, { intake_sent_at: now }),
+      ]))
+  );
   invalidateCache();
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
   return { ok: true };

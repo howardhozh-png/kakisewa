@@ -29,12 +29,12 @@ interface Props {
 
 export default async function TrackListingPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const ownerLeads = await getOwnerLeads();
-  const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
-  const [tenantsByLeadId, rankedLeadIds] = await Promise.all([
-    getTenantsForOwnerLeads(matchedLeadIds),
+  const [ownerLeads, rankedLeadIds] = await Promise.all([
+    getOwnerLeads(),
     getRankedLeadIds(),
   ]);
+  const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
+  const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
   const pipelineLeads = ownerLeads.filter((l) => {
     if (["own_stay", "archived", "imported"].includes(l.stage)) return false;
     if (l.stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage === "active") return false;
