@@ -54,7 +54,6 @@ import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Filter = "all" | "unsent" | "contacted" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
@@ -1072,7 +1071,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </p>
           </div>
         ) : (
-          <ScrollArea style={{ maxHeight: "min(560px, calc(100vh - 320px))" }}>
+          <div style={{ maxHeight: "min(560px, calc(100vh - 320px))", overflowY: "auto", overflowX: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--kk-line-strong) transparent" }}>
           <table className="w-full" style={{ minWidth: 380, tableLayout: "fixed" }}>
             <thead style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--kk-surface)" }}>
               <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
@@ -1316,7 +1315,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
               })}
             </tbody>
           </table>
-          </ScrollArea>
+          </div>
         )}
       </div>
 

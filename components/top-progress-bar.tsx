@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export function TopProgressBar() {
   const pathname = usePathname();
@@ -26,7 +27,7 @@ export function TopProgressBar() {
   function finishProgress() {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
     setWidth(100);
-    hideRef.current = setTimeout(() => { setVisible(false); setWidth(0); }, 500);
+    hideRef.current = setTimeout(() => { setVisible(false); setWidth(0); }, 350);
   }
 
   useEffect(() => {
@@ -55,29 +56,63 @@ export function TopProgressBar() {
   if (!visible) return null;
 
   return (
-    <div
-      aria-hidden
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 4,
-        zIndex: 100001,
-        pointerEvents: "none",
-        background: "color-mix(in srgb, var(--kk-theme-dark) 20%, transparent)",
-      }}
-    >
+    <>
+      {/* Top progress bar */}
       <div
+        aria-hidden
         style={{
-          height: "100%",
-          width: `${width}%`,
-          background: "var(--kk-theme-dark)",
-          transition: width >= 100 ? "width 200ms ease" : "width 140ms linear",
-          borderRadius: "0 3px 3px 0",
-          boxShadow: "0 0 8px color-mix(in srgb, var(--kk-theme-dark) 60%, transparent)",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          zIndex: 100001,
+          pointerEvents: "none",
+          background: "color-mix(in srgb, var(--kk-theme-dark) 20%, transparent)",
         }}
-      />
-    </div>
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${width}%`,
+            background: "var(--kk-theme-dark)",
+            transition: width >= 100 ? "width 200ms ease" : "width 140ms linear",
+            borderRadius: "0 3px 3px 0",
+          }}
+        />
+      </div>
+
+      {/* Centered spinner overlay — only shows while loading, not during the finish flash */}
+      {width < 95 && (
+        <div
+          aria-hidden
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99995,
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255,255,255,0.35)",
+          }}
+        >
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 16,
+              background: "var(--kk-surface)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: "var(--kk-theme-dark)" }} />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
