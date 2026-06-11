@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
 
 export function TopProgressBar() {
   const pathname = usePathname();
-  const [value, setValue] = useState(0);
+  const [width, setWidth] = useState(0);
   const [visible, setVisible] = useState(false);
   const prevPathname = useRef<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -16,18 +15,18 @@ export function TopProgressBar() {
     if (hideRef.current) { clearTimeout(hideRef.current); hideRef.current = null; }
     if (tickRef.current) clearInterval(tickRef.current);
     setVisible(true);
-    setValue(8);
-    let v = 8;
+    setWidth(8);
+    let w = 8;
     tickRef.current = setInterval(() => {
-      v = Math.min(v + Math.random() * 10 + 4, 82);
-      setValue(v);
+      w = Math.min(w + Math.random() * 10 + 4, 82);
+      setWidth(w);
     }, 150);
   }
 
   function finishProgress() {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
-    setValue(100);
-    hideRef.current = setTimeout(() => { setVisible(false); setValue(0); }, 400);
+    setWidth(100);
+    hideRef.current = setTimeout(() => { setVisible(false); setWidth(0); }, 500);
   }
 
   useEffect(() => {
@@ -56,28 +55,29 @@ export function TopProgressBar() {
   if (!visible) return null;
 
   return (
-    <ProgressPrimitive.Root
+    <div
       aria-hidden
-      value={value}
-      style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 99997, pointerEvents: "none" }}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        zIndex: 100001,
+        pointerEvents: "none",
+        background: "color-mix(in srgb, var(--kk-theme-dark) 20%, transparent)",
+      }}
     >
-      <ProgressPrimitive.Track
+      <div
         style={{
-          width: "100%",
-          height: 4,
-          background: "color-mix(in srgb, var(--kk-theme-dark) 18%, transparent)",
-          overflow: "hidden",
-          borderRadius: 0,
+          height: "100%",
+          width: `${width}%`,
+          background: "var(--kk-theme-dark)",
+          transition: width >= 100 ? "width 200ms ease" : "width 140ms linear",
+          borderRadius: "0 3px 3px 0",
+          boxShadow: "0 0 8px color-mix(in srgb, var(--kk-theme-dark) 60%, transparent)",
         }}
-      >
-        <ProgressPrimitive.Indicator
-          style={{
-            height: "100%",
-            background: "var(--kk-theme-dark)",
-            transition: value >= 100 ? "width 180ms ease" : "width 120ms linear",
-          }}
-        />
-      </ProgressPrimitive.Track>
-    </ProgressPrimitive.Root>
+      />
+    </div>
   );
 }

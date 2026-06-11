@@ -54,6 +54,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Filter = "all" | "unsent" | "contacted" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
@@ -1063,7 +1064,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />
 
       {/* Table */}
-      <div className="kk-section overflow-hidden p-0 kk-scroll-fade">
+      <div className="kk-section overflow-hidden p-0">
         {visible.length === 0 && !(filter === "all" && propertyFilter === "all" && !searchLower) ? (
           <div className="flex flex-col items-center justify-center py-16 px-6">
             <p className="text-[14px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>
@@ -1071,9 +1072,9 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <ScrollArea style={{ maxHeight: "min(560px, calc(100vh - 320px))" }}>
           <table className="w-full" style={{ minWidth: 380, tableLayout: "fixed" }}>
-            <thead>
+            <thead style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--kk-surface)" }}>
               <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
                 {/* checkbox */}
                 <th className="px-2 py-2 lg:py-3 text-left" style={{ width: 30, verticalAlign: "middle" }}>
@@ -1315,7 +1316,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
               })}
             </tbody>
           </table>
-          </div>
+          </ScrollArea>
         )}
       </div>
 
