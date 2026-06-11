@@ -147,16 +147,15 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         .maybeSingle()
     : { data: null };
 
-  // If the reply is from a property owner, check for a linked tenancy so we can
-  // also set replied_owner on that renewal card (owner_lead_id FK links them)
-  const { data: ownerTenancy } = ownerLead
+  // If the reply is from a property owner, find ALL linked tenancies so we can
+  // set replied_owner on every renewal card (one owner can have multiple tenancies)
+  const { data: ownerTenancies } = ownerLead
     ? await svc
         .from("tenancies")
         .select("id")
         .eq("user_id", agentId)
         .eq("owner_lead_id", ownerLead.id)
         .is("deleted_at", null)
-        .maybeSingle()
     : { data: null };
 
   const cardId: string | null = ownerLead?.id ?? tenancy?.id ?? null;
@@ -197,17 +196,18 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
     } else if (cardType === "owner_lead") {
       // Owner replied to outreach — classify their intent
       const intent = await classifyWaReply(messageText, "owner");
-      // If this owner also has a linked tenancy renewal, update replied_owner there too
-      if (ownerTenancy) {
+      // Update replied_owner on every linked tenancy renewal card
+      if (ownerTenancies && ownerTenancies.length > 0) {
+        const tenancyIds = ownerTenancies.map((t: { id: string }) => t.id);
         await svc
           .from("tenancies")
           .update({
-            replied_owner: intent !== "unclear" ? intent : undefined,
+            ...(intent !== "unclear" ? { replied_owner: intent } : {}),
             last_wa_reply_at: receivedAt,
             last_wa_reply_text: messageText,
             wa_status: "replied",
           })
-          .eq("id", ownerTenancy.id);
+          .in("id", tenancyIds);
       }
     }
 

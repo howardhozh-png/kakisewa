@@ -189,6 +189,7 @@ function TenancyForm({
         saves.push(setReplyChip(tenancy.id, "owner", repliedOwner).then(() => ({ ok: true, message: "" })));
       }
       // Save owner name/phone/property name/bed/bath if owner_lead_id is available
+      let ownerSaved = false;
       if (tenancy.owner_lead_id) {
         const ownerUpdates: Parameters<typeof updateOwnerLeadDetails>[1] = {};
         if (editingOwner) {
@@ -203,7 +204,13 @@ function TenancyForm({
         if (bedroomsNum !== (tenancy.property?.bedrooms ?? null)) ownerUpdates.bedrooms = bedroomsNum ?? undefined;
         if (bathroomsNum !== (tenancy.property?.bathrooms ?? null)) ownerUpdates.bathrooms = bathroomsNum ?? undefined;
         if (Object.keys(ownerUpdates).length > 0) {
-          await updateOwnerLeadDetails(tenancy.owner_lead_id, ownerUpdates);
+          try {
+            await updateOwnerLeadDetails(tenancy.owner_lead_id, ownerUpdates);
+            ownerSaved = true;
+          } catch {
+            toast.error("Could not save owner details");
+            return;
+          }
         }
       }
       const results = await Promise.all(saves);
@@ -220,6 +227,12 @@ function TenancyForm({
           replied_tenant: repliedTenant,
           replied_owner: repliedOwner,
           property_name: propertyName || tenancy.property_name,
+          // Propagate owner field changes so the card updates without a page reload
+          property: ownerSaved && editingOwner ? {
+            ...tenancy.property,
+            owner_name: ownerName || tenancy.property?.owner_name,
+            owner_phone: ownerPhone || tenancy.property?.owner_phone,
+          } : tenancy.property,
         });
         onClose();
       } else {

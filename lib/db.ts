@@ -98,6 +98,9 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
     property,
     owner_lead_id: (r.owner_lead_id as string | null) ?? null,
     user_id: (r.user_id as string | null) ?? null,
+    wa_status: (r.wa_status as "pending" | "replied" | "no_response" | null) ?? null,
+    last_wa_reply_at: (r.last_wa_reply_at as string | null) ?? null,
+    last_wa_reply_text: (r.last_wa_reply_text as string | null) ?? null,
   };
 }
 
