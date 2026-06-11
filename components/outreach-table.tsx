@@ -43,11 +43,11 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, getOrCreatePropertyPackLink } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw, Share2, Upload } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw, Upload } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -235,7 +235,6 @@ function LeadPopup({
   const [photos, setPhotos] = useState<string[]>(lead.photo_urls ?? []);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
-  const [sendingPack, setSendingPack] = useState(false);
   const [agreementUrls, setAgreementUrls] = useState<string[]>(parseAgreementUrls(lead.agreement_url ?? null));
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
   const agreementInputRef = useRef<HTMLInputElement>(null);
@@ -629,30 +628,6 @@ function LeadPopup({
               Move to Listed
             </button>
           ) : null}
-
-          {/* Send property pack */}
-          <button
-            type="button"
-            disabled={sendingPack}
-            onClick={async () => {
-              setSendingPack(true);
-              try {
-                const res = await getOrCreatePropertyPackLink(lead.id);
-                try { await navigator.clipboard.writeText(res.url); } catch { /* ignore */ }
-                window.open(res.waUrl, "_blank", "noopener,noreferrer");
-                toast.success("Property pack link copied. Send via WhatsApp.");
-              } catch {
-                toast.error("Could not generate link");
-              } finally {
-                setSendingPack(false);
-              }
-            }}
-            className="w-full py-2.5 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line)" }}
-          >
-            {sendingPack ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
-            Send property pack
-          </button>
 
           {/* Delete — always shown */}
           {!deleteConfirm ? (
