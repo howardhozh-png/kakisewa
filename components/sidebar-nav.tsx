@@ -89,6 +89,7 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
       <button
         key={href}
         onClick={() => { router.push(accessible ? href : "/subscription"); setMobileOpen(false); }}
+        onMouseEnter={() => router.prefetch(accessible ? href : "/subscription")}
         title={!showLabels ? label : undefined}
         style={{
           display: "flex",
