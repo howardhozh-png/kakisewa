@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
+import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
-import { addOwnerLeadAction, markCompetitorRentedAction } from "@/lib/actions";
+import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
+import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { normalizePhone, phoneError } from "@/lib/phone";
-import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
+
+const PHOTO_MAX = 10;
+
+function serializeAgreementUrls(urls: string[]): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+}
 
 interface Props {
   open: boolean;
@@ -17,13 +26,18 @@ interface Props {
 export function AddCompetitorDialog({ open, onOpenChange }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     property_name: "", unit: "", owner_name: "", owner_phone: "",
-    expected_rent: "", bedrooms: "", bathrooms: "", parking: "",
+    expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "",
     rented_on: new Date().toISOString().slice(0, 10),
     duration: "12",
   });
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; preview: string }>>([]);
+  const [agreementFiles, setAgreementFiles] = useState<Array<{ file: File; name: string }>>([]);
+  const photoRef = useRef<HTMLInputElement>(null);
+  const agreementRef = useRef<HTMLInputElement>(null);
 
   function set(field: keyof typeof form, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -33,6 +47,15 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
     const normalized = normalizePhone(form.owner_phone);
     if (form.owner_phone) set("owner_phone", normalized);
     setPhoneErr(phoneError(normalized));
+  }
+
+  function addPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    setPhotoFiles((prev) => [...prev, ...files.map((f) => ({ file: f, preview: URL.createObjectURL(f) }))].slice(0, PHOTO_MAX));
+    if (photoRef.current) photoRef.current.value = "";
+  }
+  function removePhoto(i: number) {
+    setPhotoFiles((prev) => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, idx) => idx !== i); });
   }
 
   const contractEnd = (() => {
@@ -49,26 +72,65 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
     if (!form.rented_on || !form.duration) { toast.error("Rented on + duration required"); return; }
     const pErr = phoneError(normalizePhone(form.owner_phone));
     if (pErr) { setPhoneErr(pErr); toast.error(pErr); return; }
+
+    setUploading(true);
     startTransition(async () => {
-      const res = await addOwnerLeadAction({
-        owner_name: form.owner_name || "Unknown",
-        owner_phone: form.owner_phone || "0",
-        property_name: form.property_name.trim(),
-        unit: form.unit || null,
-        expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
-        bedrooms: form.bedrooms !== "" ? parseInt(form.bedrooms, 10) : null,
-        bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
-        parking: form.parking.trim() || null,
-        stage: "imported",
-      });
-      if (!res.ok || !res.id) { toast.error("Could not save"); return; }
-      await markCompetitorRentedAction(res.id, form.rented_on, parseInt(form.duration, 10));
-      toast.success("Target unit added");
-      onOpenChange(false);
-      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
-      router.refresh();
+      try {
+        const res = await addOwnerLeadAction({
+          owner_name: form.owner_name || "Unknown",
+          owner_phone: form.owner_phone || "0",
+          property_name: form.property_name.trim(),
+          unit: form.unit || null,
+          expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
+          bedrooms: form.bedrooms !== "" ? parseInt(form.bedrooms, 10) : null,
+          bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
+          parking: form.parking.trim() || null,
+          notes: form.notes.trim() || null,
+          stage: "imported",
+        });
+        if (!res.ok || !res.id) { toast.error("Could not save"); return; }
+
+        const { markCompetitorRentedAction } = await import("@/lib/actions");
+        await markCompetitorRentedAction(res.id, form.rented_on, parseInt(form.duration, 10));
+
+        // Upload photos
+        if (photoFiles.length > 0) {
+          const urls: string[] = [];
+          for (const { file } of photoFiles) {
+            const fd = new FormData(); fd.append("leadId", res.id); fd.append("file", file);
+            const r = await fetch("/api/agent/photo", { method: "POST", body: fd });
+            const d = await r.json() as { ok?: boolean; url?: string };
+            if (d.ok && d.url) urls.push(d.url);
+          }
+          if (urls.length > 0) await saveOwnerLeadPhotos(res.id, urls);
+        }
+
+        // Upload agreement files
+        if (agreementFiles.length > 0) {
+          const aUrls: string[] = [];
+          for (const { file } of agreementFiles) {
+            const fd = new FormData(); fd.append("file", file);
+            const r = await fetch("/api/upload/document", { method: "POST", body: fd });
+            const d = await r.json() as { url?: string };
+            if (d.url) aUrls.push(d.url);
+          }
+          const serialized = serializeAgreementUrls(aUrls);
+          if (serialized) await saveOwnerLeadAgreementUrl(res.id, serialized);
+        }
+
+        toast.success("Target unit added");
+        onOpenChange(false);
+        setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
+        photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
+        setPhotoFiles([]); setAgreementFiles([]);
+        router.refresh();
+      } finally {
+        setUploading(false);
+      }
     });
   }
+
+  const busy = pending || uploading;
 
   const field = "w-full text-[14px] px-3 py-2 rounded-xl outline-none";
   const fs = { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
@@ -84,14 +146,41 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
             </p>
           </div>
 
-          {/* Property */}
+          {/* Property name */}
           <div className="space-y-1.5">
             <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Property name *</label>
             <input value={form.property_name} onChange={e => set("property_name", e.target.value)} placeholder="e.g. Residensi Mutiara" className={field} style={fs} />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Unit</label>
-            <input value={form.unit} onChange={e => set("unit", e.target.value)} placeholder="e.g. A-12" className={field} style={fs} />
+
+          {/* Unit + Rent */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Unit</label>
+              <input value={form.unit} onChange={e => set("unit", e.target.value)} placeholder="e.g. A-12" className={field} style={fs} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rent (RM/mo)</label>
+              <input type="number" value={form.expected_rent} onChange={e => set("expected_rent", e.target.value)} placeholder="e.g. 1800" className={field} style={fs} />
+            </div>
+          </div>
+
+          {/* Bedrooms + Bathrooms */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <BedroomPicker value={form.bedrooms} onChange={(v) => set("bedrooms", v)} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bathrooms</label>
+              <input type="number" value={form.bathrooms} min="0" onChange={e => set("bathrooms", String(Math.max(0, Number(e.target.value))))} placeholder="2" className={field} style={fs} />
+            </div>
+          </div>
+
+          {/* Parking */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Parking</label>
+              <input type="text" value={form.parking} onChange={e => set("parking", e.target.value)} placeholder="e.g. A142" className={field} style={fs} />
+            </div>
           </div>
 
           {/* Owner */}
@@ -114,29 +203,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
             </div>
           </div>
 
-          {/* Bedrooms */}
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bedrooms</label>
-            <BedroomPicker value={form.bedrooms} onChange={(v) => set("bedrooms", v)} />
-          </div>
-
-          {/* Property details */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rent (RM)</label>
-              <input type="number" value={form.expected_rent} onChange={e => set("expected_rent", e.target.value)} placeholder="1800" className={field} style={fs} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Baths</label>
-              <input type="number" value={form.bathrooms} min="0" onChange={e => set("bathrooms", e.target.value)} placeholder="2" className={field} style={fs} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Parking</label>
-              <input type="text" value={form.parking} onChange={e => set("parking", e.target.value)} placeholder="e.g. A142" className={field} style={fs} />
-            </div>
-          </div>
-
-          {/* Competitor tenancy dates */}
+          {/* Contract dates */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rented on *</label>
@@ -156,16 +223,83 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
             </p>
           )}
 
+          {/* Notes */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Notes</label>
+            <textarea value={form.notes} onChange={e => set("notes", e.target.value)}
+              placeholder="Anything worth noting…"
+              className="w-full text-[13px] px-3 py-2 rounded-xl outline-none"
+              style={{ ...fs, minHeight: 64 }} />
+          </div>
+
+          {/* Photos */}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--kk-ink-faint)" }}>Property photos <span className="normal-case font-normal">(optional)</span></p>
+            <div className="flex flex-wrap gap-2">
+              {photoFiles.map(({ preview }, i) => (
+                <div key={preview} className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{ border: "1px solid var(--kk-line)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removePhoto(i)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ))}
+              {photoFiles.length < PHOTO_MAX && (
+                <button type="button" onClick={() => photoRef.current?.click()}
+                  className="w-14 h-14 rounded-xl flex flex-col items-center justify-center gap-1 shrink-0 hover:opacity-70"
+                  style={{ border: "1.5px dashed var(--kk-line)", color: "var(--kk-ink-mute)" }}>
+                  <Camera className="w-4 h-4" /><span className="text-[10px] font-medium">Add</span>
+                </button>
+              )}
+              <input ref={photoRef} type="file" accept="image/*" multiple className="hidden" onChange={addPhoto} />
+            </div>
+          </div>
+
+          {/* Agreement — up to 3 files */}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--kk-ink-faint)" }}>Tenancy agreement <span className="normal-case font-normal">(optional, max 3)</span></p>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+              <div className="px-3 py-2 space-y-1">
+                {agreementFiles.map((af, i) => (
+                  <div key={i} className="flex items-center gap-2 py-1.5">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--kk-green-soft)" }}>
+                      <FileText className="w-3.5 h-3.5" style={{ color: "var(--kk-green)" }} />
+                    </div>
+                    <span className="flex-1 text-[12px] truncate min-w-0" style={{ color: "var(--kk-ink-soft)" }}>{af.name}</span>
+                    <button type="button" onClick={() => setAgreementFiles((prev) => prev.filter((_, idx) => idx !== i))} className="p-1">
+                      <X className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-mute)" }} />
+                    </button>
+                  </div>
+                ))}
+                {agreementFiles.length < 3 && (
+                  <div className="py-2 flex flex-col items-center gap-1">
+                    <button type="button" onClick={() => agreementRef.current?.click()}
+                      className="flex items-center gap-2 text-[13px] hover:opacity-70"
+                      style={{ color: "var(--kk-ink-mute)" }}>
+                      <FileText className="w-4 h-4" />
+                      {agreementFiles.length === 0 ? "Upload document" : "Add document"}
+                    </button>
+                    <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>PDF, image, or any file — max 20 MB</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <input ref={agreementRef} type="file" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) setAgreementFiles((prev) => [...prev, { file: f, name: f.name }].slice(0, 3)); if (agreementRef.current) agreementRef.current.value = ""; }} />
+          </div>
+
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={() => onOpenChange(false)} className="kk-pill kk-pill-ghost flex-1">Cancel</button>
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={pending || !form.property_name.trim() || !form.rented_on || !form.duration}
-              className="kk-pill flex-1 font-semibold"
-              style={{ background: "var(--kk-ink)", color: "#fff", opacity: pending || !form.property_name.trim() ? 0.5 : 1 }}
+              disabled={busy || !form.property_name.trim() || !form.rented_on || !form.duration}
+              className="kk-pill flex-1 font-semibold flex items-center justify-center gap-1.5"
+              style={{ background: "var(--kk-ink)", color: "#fff", opacity: busy || !form.property_name.trim() ? 0.5 : 1 }}
             >
-              {pending ? "Adding…" : "Add target"}
+              {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {uploading ? "Uploading…" : pending ? "Adding…" : "Add target"}
             </button>
           </div>
         </div>

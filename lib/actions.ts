@@ -98,6 +98,11 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   }
   const agreementUrl = (formData.get("agreement_url") as string) || null;
 
+  const propertyUnit = (formData.get("property_unit") as string)?.trim() || null;
+  const bedroomsRaw = formData.get("bedrooms") as string;
+  const bathroomsRaw = formData.get("bathrooms") as string;
+  const parkingRaw = (formData.get("parking") as string)?.trim() || null;
+
   // If no existing owner_lead selected but a property name was typed, create one on the fly
   if (!ownerLeadId && propertyNameFromForm) {
     const { createOwnerLead } = await import("@/lib/db");
@@ -105,6 +110,10 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
       owner_name: ownerNameFromForm,
       owner_phone: ownerPhoneFromForm,
       property_name: propertyNameFromForm,
+      unit: propertyUnit,
+      bedrooms: bedroomsRaw !== "" && bedroomsRaw != null ? parseInt(bedroomsRaw, 10) : undefined,
+      bathrooms: bathroomsRaw !== "" && bathroomsRaw != null ? parseInt(bathroomsRaw, 10) : undefined,
+      parking: parkingRaw ?? undefined,
       stage: "matched",
       is_managed: true,
       photo_urls: [],
