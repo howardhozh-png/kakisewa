@@ -46,13 +46,14 @@ export async function GET(req: NextRequest) {
     // ── Contract expiry reminders ─────────────────────────────────────────────
     const { data: expiring } = await supabase
       .from("tenancies")
-      .select("id, user_id, tenant_name, property_name, amount, contract_end")
+      .select("id, user_id, tenant_name, property_name, amount, contract_end, replied_tenant")
       .eq("contract_end", targetStr)
       .neq("lifecycle_stage", "closed");
 
     for (const row of expiring ?? []) {
       const email = emailById[row.user_id];
       if (!email || emailOptedOut.has(row.user_id)) { skipped++; continue; }
+      if (row.replied_tenant === "yes" || row.replied_tenant === "no") { skipped++; continue; }
 
       const sentKey = emailSentKey("renewal", daysBefore, row.id);
 

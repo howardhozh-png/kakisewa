@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { resolveTemplate, parseTemplateOverrides } from "@/lib/whatsapp-templates";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   // Only run for platinum and elite agents (active subscriptions)
   const { data: agents } = await supabase
     .from("agent_profiles")
-    .select("id, name, agency, ren_number")
+    .select("id, name, agency, ren_number, whatsapp_templates")
     .or("subscription_plan.eq.platinum,subscription_plan.eq.elite")
     .eq("subscription_status", "active");
 
@@ -40,6 +41,11 @@ export async function GET(req: NextRequest) {
     const agentAgency = (agent.agency as string | null) ?? undefined;
     const renNumber = (agent.ren_number as string | null) ?? undefined;
     const agentLabel = [agentName, renNumber].filter(Boolean).join(" · ");
+    const agentLine = agentName
+      ? `I'm ${agentName}${renNumber ? ` (${renNumber})` : ""}${agentAgency ? ` from ${agentAgency}` : ""}. `
+      : "";
+    const templateOverrides = parseTemplateOverrides((agent.whatsapp_templates as string | null) ?? null);
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
 
     for (const daysBefore of REMINDER_WINDOWS) {
       const targetDate = new Date(today.getTime() + daysBefore * 86400000);
@@ -49,7 +55,7 @@ export async function GET(req: NextRequest) {
 
       const { data: expiringContracts } = await supabase
         .from("tenancies")
-        .select("id, tenant_name, tenant_phone, amount, contract_end, property_name")
+        .select("id, tenant_name, tenant_phone, amount, contract_end, property_name, tenant_renewal_token")
         .eq("user_id", userId)
         .eq("contract_end", targetStr)
         .neq("lifecycle_stage", "closed");
@@ -73,17 +79,22 @@ export async function GET(req: NextRequest) {
         const tenantName = contract.tenant_name as string;
         const tenantPhone = contract.tenant_phone as string;
         const propertyName = (contract.property_name as string | null) ?? "your property";
-        const amount = (contract.amount as number) ?? 0;
-        const contractEnd = contract.contract_end as string;
+        const expiryWhen = daysBefore === 60 ? "in 2 months" : daysBefore === 30 ? "in 1 month" : "in 7 days";
 
-        const body = buildRenewalReminderMessage({
+        // Get or create tenant renewal token
+        let renewalToken = contract.tenant_renewal_token as string | null;
+        if (!renewalToken) {
+          renewalToken = `rt_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+          await supabase.from("tenancies").update({ tenant_renewal_token: renewalToken }).eq("id", tId);
+        }
+        const renewalForm = `${siteUrl}/rt/${renewalToken}`;
+
+        const body = resolveTemplate("expiry_check_tenant", templateOverrides, {
           tenantName,
+          agentLine,
           propertyName,
-          amount,
-          contractEnd,
-          daysBefore,
-          agentLabel,
-          agentAgency,
+          expiryWhen,
+          renewalForm,
         });
 
         const waUrl = `https://wa.me/${normalisePhone(tenantPhone)}?text=${encodeURIComponent(body)}`;
@@ -169,15 +180,6 @@ export async function GET(req: NextRequest) {
 
 function normalisePhone(phone: string): string {
   return phone.replace(/[^\d]/g, "");
-}
-
-function buildRenewalReminderMessage(p: {
-  tenantName: string; propertyName: string; amount: number; contractEnd: string;
-  daysBefore: number; agentLabel: string; agentAgency?: string;
-}): string {
-  const agentLine = p.agentLabel ? `I'm ${p.agentLabel}${p.agentAgency ? ` from ${p.agentAgency}` : ""}. ` : "";
-  const when = p.daysBefore === 60 ? "in 2 months" : p.daysBefore === 30 ? "in 1 month" : "in 7 days";
-  return `Hi ${p.tenantName}! ${agentLine}Your tenancy at *${p.propertyName}* expires ${when} (${p.contractEnd}). Are you planning to renew? Please reply YES to continue or NO if you're moving out. Thank you!`;
 }
 
 function buildAvailabilityReminderMessage(p: {

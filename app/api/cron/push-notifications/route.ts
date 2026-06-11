@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   // Only for users who have at least one push subscription
   const { data: expiring } = await supabase
     .from("tenancies")
-    .select("id, user_id, tenant_name, property_name, contract_end, lifecycle_stage")
+    .select("id, user_id, tenant_name, property_name, contract_end, lifecycle_stage, replied_tenant")
     .not("contract_end", "is", null)
     .not("user_id", "is", null)
     .gte("contract_end", todayStr)
@@ -62,6 +62,8 @@ export async function GET(req: NextRequest) {
 
     if (existing) { skipped++; continue; }
     if (pushOptedOut.has(row.user_id)) { skipped++; continue; }
+    // Tenant already gave a clear answer — no point reminding
+    if (row.replied_tenant === "yes" || row.replied_tenant === "no") { skipped++; continue; }
 
     // Check user has push subscriptions before sending
     const { count } = await supabase

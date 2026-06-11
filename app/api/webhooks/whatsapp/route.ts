@@ -186,17 +186,22 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
       })
       .eq("id", cardId);
 
-    // Classify intent and update the relevant card
+    // Classify intent and update the relevant card — only push when intent is clear
+    const snippet = messageText.length > 100 ? messageText.slice(0, 97) + "..." : messageText;
+
     if (cardType === "tenancy") {
-      // Tenant replied — classify and move the card
       const intent = await classifyWaReply(messageText, "tenant");
       if (intent !== "unclear") {
         await svc.from("tenancies").update({ replied_tenant: intent }).eq("id", cardId);
+        await sendPushToUser(agentId, {
+          title: intent === "yes" ? `${cardName ?? "Tenant"} is renewing!` : `${cardName ?? "Tenant"} not renewing`,
+          body: snippet,
+          url: `/existing-listing?highlight=${cardId}`,
+          tag: `wa-reply-${cardId}`,
+        });
       }
     } else if (cardType === "owner_lead") {
-      // Owner replied to outreach — classify their intent
       const intent = await classifyWaReply(messageText, "owner");
-      // Update replied_owner on every linked tenancy renewal card
       if (ownerTenancies && ownerTenancies.length > 0) {
         const tenancyIds = ownerTenancies.map((t: { id: string }) => t.id);
         await svc
@@ -209,16 +214,15 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
           })
           .in("id", tenancyIds);
       }
+      if (intent !== "unclear") {
+        await sendPushToUser(agentId, {
+          title: intent === "yes" ? `${cardName ?? "Owner"} wants to list!` : `${cardName ?? "Owner"} not interested`,
+          body: snippet,
+          url: `/potential-listing?highlight=${cardId}`,
+          tag: `wa-reply-${cardId}`,
+        });
+      }
     }
-
-    // Push notification to agent
-    const snippet = messageText.length > 100 ? messageText.slice(0, 97) + "..." : messageText;
-    await sendPushToUser(agentId, {
-      title: `WhatsApp reply from ${cardName ?? fromNumber}`,
-      body: snippet,
-      url: cardType === "owner_lead" ? "/outreach" : "/home",
-      tag: `wa-reply-${cardId}`,
-    });
   } else {
     console.warn("[whatsapp/webhook] unmatched number", fromNumber, "for agent", agentId);
   }
