@@ -425,27 +425,37 @@ function LeadPopup({
             />
           </div>
           <div className="col-span-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--kk-ink-faint)" }}>Rent or sell?</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--kk-ink-faint)" }}>Purpose (tap both to select multiple)</p>
             <div className="flex gap-2">
-              {(["rent", "sell"] as const).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => {
-                    const next = form.listing_purpose === v ? null : v;
-                    setForm((prev) => ({ ...prev, listing_purpose: next }));
-                    setSaved(false);
-                  }}
-                  className="px-3 py-1 rounded-full text-[12px] font-medium transition-all"
-                  style={{
-                    background: form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-surface-2)",
-                    color: form.listing_purpose === v ? "#fff" : "var(--kk-ink-mute)",
-                    border: `1px solid ${form.listing_purpose === v ? "var(--kk-ink)" : "var(--kk-line)"}`,
-                  }}
-                >
-                  {v === "rent" ? "For Rent" : "For Sale"}
-                </button>
-              ))}
+              {(["rent", "sell"] as const).map((v) => {
+                const active = form.listing_purpose === v || form.listing_purpose === "both";
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => {
+                        const cur = prev.listing_purpose;
+                        let next: "rent" | "sell" | "both" | null;
+                        if (cur === "both") next = v === "rent" ? "sell" : "rent";
+                        else if (cur === v) next = null;
+                        else if (cur === null) next = v;
+                        else next = "both";
+                        return { ...prev, listing_purpose: next };
+                      });
+                      setSaved(false);
+                    }}
+                    className="px-3 py-1 rounded-full text-[12px] font-medium transition-all"
+                    style={{
+                      background: active ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                      color: active ? "#fff" : "var(--kk-ink-mute)",
+                      border: `1px solid ${active ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                    }}
+                  >
+                    {v === "rent" ? "For Rent" : "For Sale"}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
