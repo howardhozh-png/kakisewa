@@ -12,6 +12,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, ChevronDown, Loader2, XCircle, Search, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -386,7 +387,9 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         </div>
         <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
       </div>
-      <div className="kk-board-col-body">{children}</div>
+      <ScrollArea className="kk-board-col-body">
+        <div className="kk-board-col-body-inner">{children}</div>
+      </ScrollArea>
     </div>
   );
 }

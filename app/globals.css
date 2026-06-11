@@ -367,23 +367,16 @@ html, body {
 }
 .kk-board-col-body {
   flex: 1;
-  min-height: 0;        /* required for flex child to shrink and scroll */
-  overflow-y: auto;     /* scroll starts at first card, not column top */
-  scroll-behavior: smooth;
-  scrollbar-gutter: stable; /* reserve scrollbar space always so card width never shifts */
+  min-height: 0;
+  border-radius: 0 0 18px 18px;
+  overflow: hidden; /* ScrollArea Viewport handles scrolling */
+}
+.kk-board-col-body-inner {
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-radius: 0 0 18px 18px;
-  /* Apple-style fade: mask fades content at top+bottom edges so scroll feels natural */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
 }
-.kk-board-col-body::-webkit-scrollbar { width: 5px; }
-.kk-board-col-body::-webkit-scrollbar-track { background: transparent; }
-.kk-board-col-body::-webkit-scrollbar-thumb { background: var(--kk-line-strong); border-radius: 4px; }
-.kk-board-col-body::-webkit-scrollbar-thumb:hover { background: var(--kk-ink-faint); }
 
 /* ─── Card-level CTA (wraps text, full width, fits inside narrow cards) ──── */
 .kk-card-cta {
@@ -666,13 +659,6 @@ html, body {
   }
   .kk-board-col-body {
     max-height: 480px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,0.18) transparent;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%);
   }
 
   /* Larger tap targets for pill/ghost buttons inside boards */

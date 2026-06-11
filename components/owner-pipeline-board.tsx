@@ -18,6 +18,7 @@ import { FilterSelect } from "@/components/filter-select";
 import { AvailabilityTimeline } from "@/components/availability-timeline";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Stage = OwnerLead["stage"];
 
@@ -486,7 +487,9 @@ function Column({ col, count, children, extraStyle, headerExtra }: { col: ColMet
         </div>
         <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
       </div>
-      <div className="kk-board-col-body">{children}</div>
+      <ScrollArea className="kk-board-col-body">
+        <div className="kk-board-col-body-inner">{children}</div>
+      </ScrollArea>
     </div>
   );
 }
