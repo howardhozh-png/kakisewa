@@ -110,7 +110,7 @@ export interface OwnerLead {
   expected_rent?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
-  parking?: number | null;
+  parking?: string | null;
   notes?: string | null;
   source?: "csv" | "auto_replacing" | "manual" | null;
   import_batch_id?: string | null;

@@ -42,6 +42,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [bedrooms, setBedrooms] = useState<string>("");
   const [bathrooms, setBathrooms] = useState<string>("");
   const [parking, setParking] = useState<string>("");
+  const [listingPurpose, setListingPurpose] = useState<"rent" | "sell" | "both" | null>(null);
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [availableFrom, setAvailableFrom] = useState("");
   const [notes, setNotes] = useState("");
@@ -59,7 +60,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setExpectedRent(lead.expected_rent != null ? String(lead.expected_rent) : "");
       setBedrooms(lead.bedrooms != null ? String(lead.bedrooms) : "");
       setBathrooms(lead.bathrooms != null ? String(lead.bathrooms) : "");
-      setParking(lead.parking != null ? String(lead.parking) : "");
+      setParking(lead.parking ?? "");
+      setListingPurpose(lead.listing_purpose ?? null);
       setPhoneErr(null);
       setAvailableFrom(lead.available_from ?? new Date().toISOString().split("T")[0]);
       setNotes(lead.notes ?? "");
@@ -113,6 +115,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
 
   function handleSave() {
     if (!lead) return;
+    const pErr = phoneError(normalizePhone(ownerPhone));
+    if (pErr) { setPhoneErr(pErr); toast.error(pErr); return; }
     const updates = {
       owner_name: ownerName || undefined,
       owner_phone: ownerPhone || undefined,
@@ -121,7 +125,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       expected_rent: expectedRent ? parseFloat(expectedRent) : null,
       bedrooms: bedrooms !== "" ? parseInt(bedrooms, 10) : null,
       bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
-      parking: parking ? parseInt(parking, 10) : null,
+      parking: parking.trim() || null,
+      listing_purpose: listingPurpose,
       available_from: availableFrom || null,
       notes: notes || null,
     };
@@ -233,8 +238,35 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             <Field label="Expected rent (RM/mo)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 1,800" money />
             <BedroomPicker value={bedrooms} onChange={setBedrooms} />
             <Field label="Bathrooms" value={bathrooms} onChange={(v) => setBathrooms(String(Math.max(0, Number(v))))} placeholder="e.g. 2" type="number" />
-            <Field label="Parking" value={parking} onChange={(v) => setParking(String(Math.max(0, Number(v))))} placeholder="e.g. 1" type="number" />
+            <Field label="Parking" value={parking} onChange={setParking} placeholder="e.g. A142" />
             <Field label={lead.stage === "listed" ? "Available from *" : "Available from"} value={availableFrom} onChange={setAvailableFrom} type="date" full highlight={lead.stage === "listed" && !availableFrom} />
+          </div>
+
+          {/* Rent / Sale purpose — multi-select */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Purpose (tap to toggle, both allowed)</label>
+            <div className="flex gap-2">
+              {(["rent", "sell"] as const).map((v) => {
+                const active = listingPurpose === v || listingPurpose === "both";
+                return (
+                  <button key={v} type="button"
+                    onClick={() => setListingPurpose((cur) => {
+                      if (cur === "both") return v === "rent" ? "sell" : "rent";
+                      if (cur === v) return null;
+                      if (cur === null) return v;
+                      return "both";
+                    })}
+                    className="px-4 py-1.5 rounded-full text-[13px] font-medium transition-all"
+                    style={{
+                      background: active ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                      color: active ? "#fff" : "var(--kk-ink-mute)",
+                      border: `1px solid ${active ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                    }}>
+                    {v === "rent" ? "For Rent" : "For Sale"}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="space-y-1.5">

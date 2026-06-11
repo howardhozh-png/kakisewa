@@ -575,6 +575,17 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onComp
             )}
           </p>
 
+          {l.listing_purpose && (
+            <div className="flex gap-1 flex-wrap">
+              {(l.listing_purpose === "rent" || l.listing_purpose === "both") && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)" }}>Rent</span>
+              )}
+              {(l.listing_purpose === "sell" || l.listing_purpose === "both") && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.10)", color: "#7C3AED" }}>Sale</span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-1.5">
             <div className="flex items-center gap-1 min-w-0">
               <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />

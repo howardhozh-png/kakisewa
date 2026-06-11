@@ -20,7 +20,7 @@ const PIPELINE_ITEMS = [
 ] as const;
 
 const BOTTOM_ITEMS = [
-  { href: "/directory",   icon: BookOpen,  label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: "platinum" },
+  { href: "/directory",   icon: BookOpen,  label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: null },
   { href: "/performance", icon: BarChart2, label: "Performance", matchPaths: ["/performance"], minPlan: "elite" },
 ] as const;
 

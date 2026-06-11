@@ -47,7 +47,8 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
   function handleSubmit() {
     if (!form.property_name.trim()) { toast.error("Property name required"); return; }
     if (!form.rented_on || !form.duration) { toast.error("Rented on + duration required"); return; }
-    if (phoneErr) { toast.error("Fix the phone number before saving"); return; }
+    const pErr = phoneError(normalizePhone(form.owner_phone));
+    if (pErr) { setPhoneErr(pErr); toast.error(pErr); return; }
     startTransition(async () => {
       const res = await addOwnerLeadAction({
         owner_name: form.owner_name || "Unknown",
@@ -57,7 +58,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
         expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
         bedrooms: form.bedrooms !== "" ? parseInt(form.bedrooms, 10) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
-        parking: form.parking ? parseInt(form.parking, 10) : null,
+        parking: form.parking.trim() || null,
         stage: "imported",
       });
       if (!res.ok || !res.id) { toast.error("Could not save"); return; }
@@ -131,7 +132,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Parking</label>
-              <input type="number" value={form.parking} min="0" onChange={e => set("parking", e.target.value)} placeholder="1" className={field} style={fs} />
+              <input type="text" value={form.parking} onChange={e => set("parking", e.target.value)} placeholder="e.g. A142" className={field} style={fs} />
             </div>
           </div>
 

@@ -61,7 +61,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
         cover_photo_index: (ol.cover_photo_index as number | null) ?? null,
         bedrooms: (ol.bedrooms as number | null) ?? null,
         bathrooms: (ol.bathrooms as number | null) ?? null,
-        parking: (ol.parking as number | null) ?? null,
+        parking: (ol.parking as string | null) ?? null,
       }
     : undefined;
 

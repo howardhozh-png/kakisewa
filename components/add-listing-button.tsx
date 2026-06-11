@@ -110,7 +110,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         available_from: form.available_from || null,
         bedrooms: form.bedrooms !== "" ? parseInt(form.bedrooms, 10) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms, 10) : null,
-        parking: form.parking ? parseInt(form.parking, 10) : null,
+        parking: form.parking.trim() || null,
         stage: "listed",
       });
 
@@ -220,7 +220,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                 <SectionLabel>Listing</SectionLabel>
                 <div className="space-y-3">
                   <div>
-                    <FieldLabel required>Rent or sell?</FieldLabel>
+                    <FieldLabel required>Purpose (tap to toggle, both allowed)</FieldLabel>
                     <div className="flex gap-2">
                       {(["rent", "sell"] as const).map((v) => {
                         const active = form.listing_purpose === v || form.listing_purpose === "both";
@@ -277,7 +277,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                     </div>
                     <div>
                       <FieldLabel>Parking</FieldLabel>
-                      <TextInput type="number" value={form.parking} onChange={(v) => setForm((f) => ({ ...f, parking: String(Math.max(0, Number(v))) }))} placeholder="e.g. 1" />
+                      <TextInput value={form.parking} onChange={(v) => setForm((f) => ({ ...f, parking: v }))} placeholder="e.g. A142" />
                     </div>
                   </div>
                 </div>

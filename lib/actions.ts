@@ -1015,7 +1015,7 @@ No login needed — link is private 🙏
 
 export async function updateOwnerLeadDetails(
   id: string,
-  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
+  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
 ) {
   await updateOwnerLead(id, data);
 
@@ -1441,7 +1441,7 @@ export async function addOwnerLeadAction(data: {
   expected_rent: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
-  parking?: number | null;
+  parking?: string | null;
   notes?: string | null;
   available_from?: string | null;
   listing_purpose?: "rent" | "sell" | "both" | null;

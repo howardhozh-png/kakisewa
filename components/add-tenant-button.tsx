@@ -77,7 +77,8 @@ export function AddTenantButton() {
 
   function handleSave() {
     if (!form.name.trim()) { toast.error("Full name is required"); return; }
-    if (phoneErr) { toast.error("Fix the phone number before saving"); return; }
+    const pErr = phoneError(normalizePhone(form.phone));
+    if (pErr) { setPhoneErr(pErr); toast.error(pErr); return; }
 
     startTransition(async () => {
       const res = await addTenantProfileAction({
