@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Bed, Bath, CheckSquare, Square, Send, Home } from "lucide-react";
+import { ArrowLeft, Bed, Bath, CheckSquare, Square, Send, Home, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { PropertyPackLead } from "@/lib/db";
 
 interface Tenant { id: string; name: string; phone: string | null }
 
-function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[]): string {
-  const header = `Hi ${tenant.name}, here are some properties available for you:\n\n`;
+function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[], shareUrl: string): string {
+  const header = `Hi ${tenant.name}, here are some properties I've selected for you:\n\n`;
   const body = selected.map((l, i) => {
     const lines: string[] = [];
     lines.push(`${i + 1}. ${l.property_name ?? "Property"}${l.unit ? ` – Unit ${l.unit}` : ""}`);
@@ -19,7 +20,7 @@ function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[]): string {
     if (l.expected_rent) lines.push(`   RM ${l.expected_rent.toLocaleString()}/mo`);
     return lines.join("\n");
   }).join("\n\n");
-  return header + body + "\n\nLet me know which ones you'd like to view!";
+  return header + body + `\n\nView the full pack with photos here:\n${shareUrl}\n\nLet me know which ones you'd like to view!`;
 }
 
 function PropertyCard({
@@ -96,6 +97,7 @@ function PropertyCard({
 export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: PropertyPackLead[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [sending, setSending] = useState(false);
 
   function toggle(id: string) {
     setSelected(prev => {
@@ -116,11 +118,30 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
 
   const selectedLeads = leads.filter(l => selected.has(l.id));
 
-  function handleSend() {
-    if (!tenant.phone || selectedLeads.length === 0) return;
-    const phone = tenant.phone.replace(/\D/g, "").replace(/^0/, "60");
-    const msg = buildWaMessage(tenant, selectedLeads);
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+  async function handleSend() {
+    if (!tenant.phone || selectedLeads.length === 0 || sending) return;
+    setSending(true);
+    try {
+      const res = await fetch("/api/property-pack/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          tenantName: tenant.name,
+          tenantPhone: tenant.phone,
+          leads: selectedLeads,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const { url } = await res.json() as { url: string };
+      const phone = tenant.phone.replace(/\D/g, "").replace(/^0/, "60");
+      const msg = buildWaMessage(tenant, selectedLeads, url);
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Could not create property pack. Try again.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -194,16 +215,18 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
         </p>
         <button
           onClick={handleSend}
-          disabled={selected.size === 0 || !tenant.phone}
+          disabled={selected.size === 0 || !tenant.phone || sending}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold"
           style={{
-            background: selected.size > 0 && tenant.phone ? "#25D366" : "var(--kk-line)",
-            color: selected.size > 0 && tenant.phone ? "#fff" : "var(--kk-ink-faint)",
+            background: selected.size > 0 && tenant.phone && !sending ? "#25D366" : "var(--kk-line)",
+            color: selected.size > 0 && tenant.phone && !sending ? "#fff" : "var(--kk-ink-faint)",
             transition: "background 0.15s ease",
           }}
         >
-          <Send className="w-4 h-4" />
-          {tenant.phone ? "Send via WhatsApp" : "No phone on file"}
+          {sending
+            ? <Loader2 className="w-4 h-4 animate-spin" />
+            : <Send className="w-4 h-4" />}
+          {tenant.phone ? (sending ? "Creating pack..." : "Send via WhatsApp") : "No phone on file"}
         </button>
       </div>
     </div>

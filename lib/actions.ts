@@ -2009,3 +2009,28 @@ export async function clearTrialDowngradeNotice(): Promise<void> {
     .eq("id", user.id);
   revalidatePath("/", "layout");
 }
+
+export async function saveTenantPropertyRanking(
+  packToken: string,
+  rankings: Array<{ owner_lead_id: string; rank: number; liked: number }>
+): Promise<{ ok: boolean }> {
+  try {
+    const { savePropertyPackRanking } = await import("@/lib/db");
+    const { agentUserId, tenantLabel } = await savePropertyPackRanking(packToken, rankings);
+
+    if (agentUserId) {
+      const { sendPushToUser } = await import("@/lib/push");
+      sendPushToUser(agentUserId, {
+        title: "Tenant shortlisted your property pack",
+        body: `${tenantLabel ?? "A tenant"} ranked their preferred properties`,
+        url: "/directory?view=tenants",
+        tag: `proppackranked_${agentUserId}`,
+      }).catch(() => {});
+    }
+
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+

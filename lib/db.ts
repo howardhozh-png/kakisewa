@@ -2642,3 +2642,100 @@ export async function getTenantProfileById(id: string): Promise<{ id: string; na
   const r = data as Record<string, unknown>;
   return { id: r.id as string, name: r.name as string, phone: (r.phone as string | null) ?? null };
 }
+
+// ─── Property Pack Share ──────────────────────────────────────────────────────
+
+export interface PropertyPack {
+  id: string;
+  user_id: string;
+  tenant_profile_id: string | null;
+  share_token: string;
+  tenant_label: string | null;
+  tenant_phone: string | null;
+  expires_at: string;
+  tenant_viewed_at: string | null;
+  created_at: string;
+}
+
+export interface PropertyPackShareLead {
+  owner_lead_id: string;
+  position: number;
+  property_name: string | null;
+  unit: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  expected_rent: number | null;
+  photo_urls: string[];
+  cover_photo_index: number | null;
+  tenant_liked: number;
+  tenant_rank: number | null;
+  tenant_note: string | null;
+}
+
+export async function getPropertyPackByToken(
+  token: string
+): Promise<{ pack: PropertyPack; leads: PropertyPackShareLead[] } | null> {
+  const svc = createServiceClient();
+  const { data: packData } = await svc
+    .from("property_packs")
+    .select("*")
+    .eq("share_token", token)
+    .maybeSingle();
+  if (!packData) return null;
+
+  const pack = packData as unknown as PropertyPack;
+
+  if (!pack.tenant_viewed_at) {
+    svc.from("property_packs")
+      .update({ tenant_viewed_at: new Date().toISOString() })
+      .eq("id", pack.id)
+      .then(() => {});
+  }
+
+  const { data: leadsData } = await svc
+    .from("property_pack_leads")
+    .select("*")
+    .eq("pack_id", pack.id)
+    .order("position", { ascending: true });
+
+  const leads: PropertyPackShareLead[] = (leadsData ?? []).map((r: Record<string, unknown>) => ({
+    owner_lead_id:     r.owner_lead_id as string,
+    position:          r.position as number,
+    property_name:     r.property_name as string | null,
+    unit:              r.unit as string | null,
+    bedrooms:          r.bedrooms as number | null,
+    bathrooms:         r.bathrooms as number | null,
+    expected_rent:     r.expected_rent as number | null,
+    photo_urls:        (() => { try { return JSON.parse((r.photo_urls as string) ?? "[]") as string[]; } catch { return []; } })(),
+    cover_photo_index: r.cover_photo_index as number | null,
+    tenant_liked:      (r.tenant_liked as number) ?? 0,
+    tenant_rank:       r.tenant_rank as number | null,
+    tenant_note:       r.tenant_note as string | null,
+  }));
+
+  return { pack, leads };
+}
+
+export async function savePropertyPackRanking(
+  token: string,
+  rankings: Array<{ owner_lead_id: string; rank: number; liked: number }>
+): Promise<{ agentUserId: string | null; tenantLabel: string | null }> {
+  const svc = createServiceClient();
+  const { data: packData } = await svc
+    .from("property_packs")
+    .select("id, user_id, tenant_label")
+    .eq("share_token", token)
+    .maybeSingle();
+  if (!packData) return { agentUserId: null, tenantLabel: null };
+
+  const pack = packData as Record<string, unknown>;
+  await Promise.all(
+    rankings.map(r =>
+      svc.from("property_pack_leads")
+        .update({ tenant_rank: r.rank, tenant_liked: r.liked })
+        .eq("pack_id", pack.id as string)
+        .eq("owner_lead_id", r.owner_lead_id)
+    )
+  );
+  return { agentUserId: pack.user_id as string | null, tenantLabel: pack.tenant_label as string | null };
+}
