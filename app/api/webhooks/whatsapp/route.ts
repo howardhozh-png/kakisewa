@@ -193,9 +193,21 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
       const intent = await classifyWaReply(messageText, "tenant");
       if (intent !== "unclear") {
         await svc.from("tenancies").update({ replied_tenant: intent }).eq("id", cardId);
+
+        // Fetch property/unit for this tenancy via owner_lead join
+        const { data: tRow } = await svc.from("tenancies").select("property_name, owner_lead_id").eq("id", cardId).maybeSingle();
+        const ownerLeadIdForUnit = tRow?.owner_lead_id ?? null;
+        const { data: olRow } = ownerLeadIdForUnit
+          ? await svc.from("owner_leads").select("unit").eq("id", ownerLeadIdForUnit).maybeSingle()
+          : { data: null };
+        const tUnit = olRow?.unit ?? null;
+        const tPropParts = [tRow?.property_name, tUnit ? `Unit ${tUnit}` : null].filter(Boolean);
+        const tPropLabel = tPropParts.length ? tPropParts.join(" · ") : null;
+        const tBody = tPropLabel ? `${tPropLabel} — view in Existing listing` : "View in Existing listing";
+
         await sendPushToUser(agentId, {
-          title: intent === "yes" ? `${cardName ?? "Tenant"} is renewing!` : `${cardName ?? "Tenant"} not renewing`,
-          body: snippet,
+          title: intent === "yes" ? `${cardName ?? "Tenant"} confirmed renewal` : `${cardName ?? "Tenant"} is not renewing`,
+          body: tBody,
           url: `/existing-listing?highlight=${cardId}`,
           tag: `wa-reply-${cardId}`,
         });
@@ -215,9 +227,15 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
           .in("id", tenancyIds);
       }
       if (intent !== "unclear") {
+        // Fetch property/unit for this owner lead
+        const { data: olRow } = await svc.from("owner_leads").select("property_name, unit").eq("id", cardId).maybeSingle();
+        const oPropParts = [olRow?.property_name, olRow?.unit ? `Unit ${olRow.unit}` : null].filter(Boolean);
+        const oPropLabel = oPropParts.length ? oPropParts.join(" · ") : null;
+        const oBody = oPropLabel ? `${oPropLabel} — view in Potential listing` : "View in Potential listing";
+
         await sendPushToUser(agentId, {
-          title: intent === "yes" ? `${cardName ?? "Owner"} wants to list!` : `${cardName ?? "Owner"} not interested`,
-          body: snippet,
+          title: intent === "yes" ? `${cardName ?? "Owner"} wants to list` : `${cardName ?? "Owner"} is not interested`,
+          body: oBody,
           url: `/potential-listing?highlight=${cardId}`,
           tag: `wa-reply-${cardId}`,
         });

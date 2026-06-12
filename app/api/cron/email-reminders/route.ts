@@ -46,9 +46,16 @@ export async function GET(req: NextRequest) {
     // ── Contract expiry reminders ─────────────────────────────────────────────
     const { data: expiring } = await supabase
       .from("tenancies")
-      .select("id, user_id, tenant_name, property_name, amount, contract_end, replied_tenant")
+      .select("id, user_id, tenant_name, property_name, amount, contract_end, replied_tenant, owner_lead_id")
       .eq("contract_end", targetStr)
       .neq("lifecycle_stage", "closed");
+
+    // Batch-fetch units from owner_leads for this window
+    const expLeadIds = [...new Set((expiring ?? []).map((r: { owner_lead_id: string | null }) => r.owner_lead_id).filter(Boolean))] as string[];
+    const { data: expOlUnits } = expLeadIds.length
+      ? await supabase.from("owner_leads").select("id, unit").in("id", expLeadIds)
+      : { data: [] as { id: string; unit: string | null }[] };
+    const expUnitMap = Object.fromEntries((expOlUnits ?? []).map((ol: { id: string; unit: string | null }) => [ol.id, ol.unit]));
 
     for (const row of expiring ?? []) {
       const email = emailById[row.user_id];
@@ -66,7 +73,9 @@ export async function GET(req: NextRequest) {
 
       if ((count ?? 0) > 0) { skipped++; continue; }
 
-      const propLabel = row.property_name ?? "your property";
+      const unit = row.owner_lead_id ? (expUnitMap[row.owner_lead_id] ?? null) : null;
+      const propParts = [row.property_name, unit ? `Unit ${unit}` : null].filter(Boolean);
+      const propLabel = propParts.join(" · ") || "your property";
       const rent = row.amount ? `RM ${Number(row.amount).toLocaleString()}/month` : null;
       const rentLine = rent ? `<p style="font-size:13px;color:#6C6C70;margin:0 0 20px">Current rent: ${rent}</p>` : "";
 
@@ -86,13 +95,15 @@ export async function GET(req: NextRequest) {
 <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
   <p style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 24px">kakisewa</p>
   <h1 style="font-size:18px;font-weight:600;margin:0 0 8px">Contract expiring ${whenLabel}</h1>
-  <p style="font-size:14px;color:#6C6C70;margin:0 0 4px"><strong>${row.tenant_name}</strong> at ${propLabel}</p>
+  <p style="font-size:14px;color:#6C6C70;margin:0 0 4px"><strong>${row.tenant_name}</strong></p>
+  <p style="font-size:13px;color:#6C6C70;margin:0 0 4px">${propLabel}</p>
   <p style="font-size:13px;color:#6C6C70;margin:0 0 20px">Contract end: ${row.contract_end}</p>
   ${rentLine}
+  <p style="font-size:14px;color:#1C1C1E;margin:0 0 20px">Send the renewal message to ${row.tenant_name} to confirm if they are staying.</p>
   <a href="https://www.kakisewa.com/existing-listing?highlight=${row.id}"
     style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
            padding:12px 24px;border-radius:10px;text-decoration:none">
-    View in Existing listing
+    Open in Existing listing
   </a>
   <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">
     You received this because you have a contract expiring soon on kakisewa.
@@ -129,7 +140,8 @@ export async function GET(req: NextRequest) {
 
       if ((count ?? 0) > 0) { skipped++; continue; }
 
-      const propLabel = [row.property_name, row.unit].filter(Boolean).join(" · ") || "a property";
+      const propParts = [row.property_name, row.unit ? `Unit ${row.unit}` : null].filter(Boolean);
+      const propLabel = propParts.join(" · ") || "a property";
       const rentLine = row.expected_rent
         ? `<p style="font-size:13px;color:#6C6C70;margin:0 0 20px">Expected rent: RM ${Number(row.expected_rent).toLocaleString()}/month</p>`
         : "";
@@ -151,12 +163,14 @@ export async function GET(req: NextRequest) {
   <p style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 24px">kakisewa</p>
   <h1 style="font-size:18px;font-weight:600;margin:0 0 8px">Property becoming available ${whenLabel}</h1>
   <p style="font-size:14px;color:#6C6C70;margin:0 0 4px"><strong>${propLabel}</strong></p>
+  <p style="font-size:13px;color:#6C6C70;margin:0 0 4px">Owner: ${row.owner_name ?? "Owner"}</p>
   <p style="font-size:13px;color:#6C6C70;margin:0 0 20px">Available from: ${row.available_from}</p>
   ${rentLine}
-  <a href="https://www.kakisewa.com/my-listing"
+  <p style="font-size:14px;color:#1C1C1E;margin:0 0 20px">Start listing this property and find a tenant before the availability date.</p>
+  <a href="https://www.kakisewa.com/my-listing?highlight=${row.id}"
     style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
            padding:12px 24px;border-radius:10px;text-decoration:none">
-    View in My listing
+    Open in My listing
   </a>
   <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">
     You received this because you have an owner lead with an upcoming availability date on kakisewa.
@@ -176,10 +190,17 @@ export async function GET(req: NextRequest) {
   // ── Tenant not renewing — one-time email ──────────────────────────────────
   const { data: leaving } = await supabase
     .from("tenancies")
-    .select("id, user_id, tenant_name, property_name, contract_end")
+    .select("id, user_id, tenant_name, property_name, contract_end, owner_lead_id")
     .eq("replied_tenant", "no")
     .neq("lifecycle_stage", "closed")
     .gte("contract_end", todayStr);
+
+  // Batch-fetch units for leaving tenants
+  const leavingLeadIds = [...new Set((leaving ?? []).map((r: { owner_lead_id: string | null }) => r.owner_lead_id).filter(Boolean))] as string[];
+  const { data: leavingOlUnits } = leavingLeadIds.length
+    ? await supabase.from("owner_leads").select("id, unit").in("id", leavingLeadIds)
+    : { data: [] as { id: string; unit: string | null }[] };
+  const leavingUnitMap = Object.fromEntries((leavingOlUnits ?? []).map((ol: { id: string; unit: string | null }) => [ol.id, ol.unit]));
 
   for (const row of leaving ?? []) {
     const email = emailById[row.user_id];
@@ -195,7 +216,9 @@ export async function GET(req: NextRequest) {
 
     if ((count ?? 0) > 0) { skipped++; continue; }
 
-    const propLabel = row.property_name ?? "your property";
+    const lUnit = row.owner_lead_id ? (leavingUnitMap[row.owner_lead_id] ?? null) : null;
+    const lPropParts = [row.property_name, lUnit ? `Unit ${lUnit}` : null].filter(Boolean);
+    const propLabel = lPropParts.join(" · ") || "your property";
 
     await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -208,15 +231,16 @@ export async function GET(req: NextRequest) {
 <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
   <p style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 24px">kakisewa</p>
   <h1 style="font-size:18px;font-weight:600;margin:0 0 8px">Tenant not renewing</h1>
-  <p style="font-size:14px;color:#6C6C70;margin:0 0 4px"><strong>${row.tenant_name}</strong> at ${propLabel}</p>
+  <p style="font-size:14px;color:#6C6C70;margin:0 0 4px"><strong>${row.tenant_name}</strong></p>
+  <p style="font-size:13px;color:#6C6C70;margin:0 0 4px">${propLabel}</p>
   <p style="font-size:13px;color:#6C6C70;margin:0 0 20px">Contract ends: ${row.contract_end}</p>
-  <p style="font-size:14px;color:#6C6C70;margin:0 0 20px">
-    This tenant has replied that they will not be renewing. Start listing this property to find a replacement tenant before the contract ends.
+  <p style="font-size:14px;color:#1C1C1E;margin:0 0 20px">
+    Start listing this property on kakisewa to find a replacement tenant before the contract ends.
   </p>
   <a href="https://www.kakisewa.com/existing-listing?highlight=${row.id}"
     style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
            padding:12px 24px;border-radius:10px;text-decoration:none">
-    View tenancy
+    Open tenancy in Existing listing
   </a>
   <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">
     You received this because a tenant marked as not renewing on kakisewa.

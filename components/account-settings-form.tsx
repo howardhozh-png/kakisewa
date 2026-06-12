@@ -498,6 +498,15 @@ function TemplateCard({
 
 // ── Notification Preferences section ─────────────────────────────────────────
 
+const LS_PUSH_KEY = "kk_push_subscribed";
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
 function NotifToggle({
   icon: Icon,
   label,
@@ -514,7 +523,7 @@ function NotifToggle({
   saving: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--kk-line)" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderTop: "1px solid var(--kk-line)" }}>
       <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--kk-surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         <Icon style={{ width: 15, height: 15, color: "var(--kk-ink-mute)" }} />
       </div>
@@ -555,18 +564,136 @@ function NotifToggle({
   );
 }
 
+function PushSetupSection() {
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [pushGranted, setPushGranted] = useState(false);
+  const [enabling, setEnabling] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const ua = navigator.userAgent;
+    setIsIOS(/iPhone|iPad|iPod/.test(ua));
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(standalone);
+    setPushGranted(
+      localStorage.getItem(LS_PUSH_KEY) === "1" || Notification.permission === "granted"
+    );
+  }, []);
+
+  async function handleEnable() {
+    setEnabling(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") { setEnabling(false); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key as unknown as ArrayBuffer });
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      localStorage.setItem(LS_PUSH_KEY, "1");
+      setPushGranted(true);
+    } catch { /* permission denied or SW not ready */ }
+    finally { setEnabling(false); }
+  }
+
+  if (!mounted) return null;
+
+  if (pushGranted) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderRadius: 12, background: "color-mix(in srgb, #30D158 10%, transparent)", border: "1px solid color-mix(in srgb, #30D158 25%, transparent)" }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#30D158", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Bell style={{ width: 13, height: 13, color: "#fff" }} />
+        </div>
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>Push notifications active</p>
+          <p style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>This device will receive alerts for replies and renewals.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const steps = isIOS && !isStandalone
+    ? [
+        { n: 1, text: "Open kakisewa in Safari on your iPhone" },
+        { n: 2, text: `Tap the Share button ${String.fromCodePoint(0x1F4E4)} at the bottom of the screen` },
+        { n: 3, text: "Tap \"Add to Home Screen\" and confirm" },
+        { n: 4, text: "Open kakisewa from your Home Screen, then come back here to enable push" },
+      ]
+    : isIOS && isStandalone
+    ? [
+        { n: 1, text: "Tap \"Enable push notifications\" below" },
+        { n: 2, text: "When prompted, tap \"Allow\" to receive alerts" },
+      ]
+    : [
+        { n: 1, text: "Tap \"Enable push notifications\" below" },
+        { n: 2, text: "Allow notifications when your browser asks" },
+      ];
+
+  const needsInstall = isIOS && !isStandalone;
+
+  return (
+    <div style={{ borderRadius: 14, border: "1px solid var(--kk-line)", overflow: "hidden" }}>
+      <div style={{ padding: "14px 16px", background: "var(--kk-surface-2)", borderBottom: "1px solid var(--kk-line)" }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", marginBottom: 2 }}>Enable push notifications</p>
+        <p style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>
+          Get instant alerts when owners or tenants reply, and reminders before contracts expire.
+        </p>
+      </div>
+      <div style={{ padding: "12px 16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+          {steps.map((s) => (
+            <div key={s.n} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--kk-accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                {s.n}
+              </div>
+              <p style={{ fontSize: 13, color: "var(--kk-ink)", lineHeight: 1.45 }}>{s.text}</p>
+            </div>
+          ))}
+        </div>
+        {!needsInstall && (
+          <button
+            onClick={handleEnable}
+            disabled={enabling}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 18px",
+              borderRadius: 100,
+              border: "none",
+              background: "var(--kk-ink)",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: enabling ? "not-allowed" : "pointer",
+              opacity: enabling ? 0.7 : 1,
+            }}
+          >
+            <Bell style={{ width: 13, height: 13 }} />
+            {enabling ? "Enabling..." : "Enable push notifications"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
-  const [push, setPush] = useState(agent.notif_push !== false);
   const [email, setEmail] = useState(agent.notif_email !== false);
   const [saving, setSaving] = useState(false);
 
-  async function toggle(field: "push" | "email") {
-    const nextPush = field === "push" ? !push : push;
-    const nextEmail = field === "email" ? !email : email;
-    if (field === "push") setPush(nextPush);
-    else setEmail(nextEmail);
+  async function toggleEmail() {
+    const nextEmail = !email;
+    setEmail(nextEmail);
     setSaving(true);
-    await saveNotifPrefs({ notif_push: nextPush, notif_email: nextEmail });
+    await saveNotifPrefs({ notif_push: agent.notif_push ?? false, notif_email: nextEmail });
     setSaving(false);
   }
 
@@ -574,23 +701,16 @@ function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
     <section className="kk-section p-6">
       <h2 className="text-[15px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Notifications</h2>
       <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
-        Choose how you want to be notified. Push requires enabling on your device first.
+        Stay informed about contracts, replies, and renewals.
       </p>
-      <div>
-        <NotifToggle
-          icon={Bell}
-          label="Push notifications"
-          description="Phone alerts for owner replies, tenant responses, and upcoming renewals"
-          enabled={push}
-          onToggle={() => toggle("push")}
-          saving={saving}
-        />
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <PushSetupSection />
         <NotifToggle
           icon={Mail}
           label="Email reminders"
-          description="Daily email for contracts expiring in 60, 30, and 7 days"
+          description="Daily digest for contracts expiring in 60, 30, and 7 days"
           enabled={email}
-          onToggle={() => toggle("email")}
+          onToggle={toggleEmail}
           saving={saving}
         />
       </div>

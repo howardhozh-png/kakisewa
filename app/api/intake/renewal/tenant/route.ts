@@ -35,10 +35,12 @@ export async function POST(request: NextRequest) {
     revalidatePath("/existing-listing");
 
     if (tenancy.user_id) {
-      const propLabel = tenancy.property_name ? ` · ${tenancy.property_name}` : "";
+      const propParts = [tenancy.property_name, tenancy.property?.unit ? `Unit ${tenancy.property.unit}` : null].filter(Boolean);
+      const propLabel = propParts.length ? propParts.join(" · ") : null;
+      const pushBody = propLabel ? `${propLabel} — view in Existing listing` : "View in Existing listing";
       sendPushToUser(tenancy.user_id, {
-        title: staying ? "Tenant is renewing!" : "Tenant not renewing",
-        body: `${tenancy.tenant_name ?? "Tenant"}${propLabel}`,
+        title: staying ? `${tenancy.tenant_name ?? "Tenant"} confirmed renewal` : `${tenancy.tenant_name ?? "Tenant"} is not renewing`,
+        body: pushBody,
         url: `/existing-listing?highlight=${tenancy.id}`,
         tag: `tenant_renewal_${tenancy.id}`,
       }).catch(() => {});

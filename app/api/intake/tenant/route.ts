@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     await completeTenantIntake(token, extracted, session.agent_id);
 
     sendPushToUser(session.agent_id, {
-      title: "Tenant filled in profile",
-      body: extracted.name ?? session.name ?? "New tenant",
+      title: `${extracted.name ?? session.name ?? "New tenant"} submitted their profile`,
+      body: "View and assess in Existing listing",
       url: "/existing-listing",
       tag: `tenant_intake_${token}`,
     }).catch(() => {});

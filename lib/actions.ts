@@ -977,10 +977,11 @@ export async function saveOwnerPackRanking(
   revalidatePath("/matching");
 
   if (pack?.user_id) {
+    const propLabel = pack.property_label ?? "Tenant pack";
     sendPushToUser(pack.user_id, {
-      title: "Owner ranked tenants in pack",
-      body: pack.property_label ?? "Tenant pack",
-      url: `/new-owners?tab=pipeline&highlight=${pack.owner_lead_id}`,
+      title: "Owner ranked your tenant pack",
+      body: `${propLabel} — view rankings in Potential listing`,
+      url: `/potential-listing?highlight=${pack.owner_lead_id}`,
       tag: `packranked_${packId}`,
     }).catch(() => {});
   }

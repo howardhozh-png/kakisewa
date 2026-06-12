@@ -2437,7 +2437,7 @@ export async function getTenancyByTenantRenewalToken(token: string): Promise<Ten
   const svc = createServiceClient();
   const { data } = await svc
     .from("tenancies")
-    .select("*")
+    .select(TENANCY_SELECT)
     .eq("tenant_renewal_token", token)
     .maybeSingle();
   return data ? toTenancy(data as Record<string, unknown>) : null;

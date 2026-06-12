@@ -37,10 +37,11 @@ export async function POST(request: NextRequest) {
     if (lead.user_id) {
       const propParts = [lead.property_name, lead.unit ? `Unit ${lead.unit}` : null].filter(Boolean);
       const propLabel = propParts.length ? ` · ${propParts.join(" · ")}` : "";
+      const pushBody = propParts.length ? `${propParts.join(" · ")} — view in My listing` : "View in My listing";
       sendPushToUser(lead.user_id, {
-        title: "Owner filled in details",
-        body: `${lead.owner_name}${propLabel}`,
-        url: `/my-listing&highlight=${lead.id}`,
+        title: `${lead.owner_name} filled in property details`,
+        body: pushBody,
+        url: `/my-listing?highlight=${lead.id}`,
         tag: `intake_${lead.id}`,
       }).catch(() => {});
     }
