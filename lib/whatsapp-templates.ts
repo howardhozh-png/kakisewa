@@ -65,12 +65,14 @@ Just reply here so I can update my notes.
     label: "New Leads: Owner",
     description: "Sent to collect property details and list the unit.",
     defaultBody:
-`I'm {{firstName}} ({{renNumber}}) from {{company}}. If you're looking to rent out {{propertyName}}, I have a few quality tenants interested.
+`I'm {{firstName}} ({{renNumber}}) from {{company}}. If you're looking to rent out {{propertyName}}, I have quality tenants ready.
 
-30 secs from you and I'll take care of the rest:
+Please reply *YES* if you're interested and I'll get started right away, or *NO* if not.
+
+Alternatively, for a much faster response you can use our protected kakisewa link:
 {{listingForm}}
 
-Here's a sample tenant package I put together for you, ready for houseviewing:
+Here's a sample tenant package I put together for you:
 {{tenantSamplePack}}`,
     variables: [
       { key: "firstName",        description: "Your first name" },
@@ -87,8 +89,11 @@ Here's a sample tenant package I put together for you, ready for houseviewing:
     label: "Renewal: Tenant",
     description: "Sent to tenant when their lease is approaching expiry.",
     defaultBody:
-`Hi {{tenantName}}! {{agentLine}}Your tenancy at *{{propertyName}}* is expiring {{expiryWhen}}. Just tap the link to let me know if you're planning to stay:
+`Hi {{tenantName}}! {{agentLine}}Your tenancy at *{{propertyName}}* is expiring {{expiryWhen}}.
 
+Please reply *YES* if you plan to stay, or *NO* if you'll be moving out.
+
+Alternatively, for a much faster response you can use our protected kakisewa link:
 {{renewalForm}}`,
     variables: [
       { key: "tenantName",   description: "Tenant's full name" },
@@ -103,8 +108,11 @@ Here's a sample tenant package I put together for you, ready for houseviewing:
     label: "Renewal: Owner",
     description: "Sent to owner when their tenant's lease is approaching expiry.",
     defaultBody:
-`Hi {{ownerName}}! {{agentLine}}The tenancy at *{{propertyName}}* with {{tenantName}} is expiring {{expiryWhen}}. Just tap the link to let me know if you'd like to continue renting it out:
+`Hi {{ownerName}}! {{agentLine}}The tenancy at *{{propertyName}}* with {{tenantName}} is expiring {{expiryWhen}}.
 
+Please reply *YES* if you'd like to continue renting it out, or *NO* if not.
+
+Alternatively, for a much faster response you can use our protected kakisewa link:
 {{renewalForm}}`,
     variables: [
       { key: "ownerName",    description: "Owner's full name" },

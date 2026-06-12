@@ -561,7 +561,7 @@ function TenantDetailModal({
     ? `up to RM ${t.budget_max.toLocaleString()}/mo`
     : t.budget_min ? `from RM ${t.budget_min.toLocaleString()}/mo` : null;
 
-  const waPhone = t.phone?.replace(/\D/g, "");
+  const waPhone = (() => { const d = (t.phone ?? "").replace(/\D/g, ""); return d.startsWith("0") ? "60" + d.slice(1) : d; })();
   // Use everything after the first space as "first name" (handles Chinese surname-first format)
   const givenName = t.name.includes(" ") ? t.name.slice(t.name.indexOf(" ") + 1) : t.name;
   const property = propertyLabel ?? "the property";

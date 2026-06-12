@@ -424,7 +424,7 @@ function LeadPopup({
               />
               {form.owner_phone && (
                 <>
-                  <a href={`https://wa.me/${form.owner_phone}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                  <a href={`https://wa.me/${(form.owner_phone ?? "").replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
                   <a href={`tel:+${form.owner_phone}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">

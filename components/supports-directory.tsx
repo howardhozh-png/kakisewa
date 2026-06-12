@@ -135,7 +135,7 @@ function ContactCard({
           {contact.name}
         </p>
         <a
-          href={`https://wa.me/${phone}`}
+          href={`https://wa.me/${phone.replace(/\D/g, "").replace(/^0/, "60")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-[12px] font-medium hover:underline"

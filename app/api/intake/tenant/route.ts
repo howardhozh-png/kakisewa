@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
     const tenantName = extracted.name ?? session.name ?? "New tenant";
     const deepLink = "/existing-listing";
     sendPushToUser(session.agent_id, {
-      title: `${tenantName} submitted their profile`,
-      body: "View and assess in Existing listing",
+      title: "Tenant profile submitted",
+      body: `${tenantName} — view and assess in Existing listing`,
       url: deepLink,
       tag: `tenant_intake_${token}`,
     }).catch(() => {});

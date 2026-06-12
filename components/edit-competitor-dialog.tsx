@@ -227,7 +227,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                   {ownerPhone ? (
                     <div className="flex items-center gap-0.5 mt-1">
                       <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{ownerPhone}</p>
-                      <a href={`https://wa.me/${ownerPhone}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                      <a href={`https://wa.me/${ownerPhone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
                         <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
                       <a href={`tel:+${ownerPhone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">

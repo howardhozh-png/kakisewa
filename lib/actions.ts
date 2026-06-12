@@ -316,6 +316,8 @@ export async function updateTenancyContract(
       contract_start: data.contract_start,
       contract_end: data.contract_end,
       contract_duration_months: data.contract_duration_months,
+      // When agent saves an explicit duration, clear the owner-proposed value so it no longer overrides display
+      ...(data.contract_duration_months !== undefined ? { renewal_proposed_months: null } : {}),
       amount: data.amount,
     };
 
@@ -339,6 +341,18 @@ export async function updateTenancyContract(
     }
 
     await updateTenancy(id, updates);
+
+    // When contract is extended back outside the 60d window, clear notification log so
+    // re-entering the window will re-trigger push and email
+    if (updates.lifecycle_stage === null && existingTenancy?.user_id) {
+      const { createServiceClient } = await import("@/lib/supabase/service");
+      const svc = createServiceClient();
+      await svc.from("push_sent_log")
+        .delete()
+        .eq("user_id", existingTenancy.user_id)
+        .like("notification_key", `%${id}%`);
+    }
+
     invalidateCache();
     revalidatePath("/existing-listing");
     revalidatePath("/");
@@ -377,18 +391,11 @@ async function maybeFireExpiryNotification(
   else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
   else { bucket = "60d"; label = "2 months"; }
 
-  const notifKey = `exp_${tenancyId}_${bucket}`;
+  // Separate keys per channel so push cron logging doesn't block email (and vice versa)
+  const pushKey = `exp_${tenancyId}_${bucket}`;
+  const emailKey = `email_exp_${tenancyId}_${bucket}`;
   const { createServiceClient } = await import("@/lib/supabase/service");
   const supabase = createServiceClient();
-
-  // Idempotency — if this milestone already fired (naturally or manually), skip
-  const { data: existing } = await supabase
-    .from("push_sent_log")
-    .select("id")
-    .eq("user_id", tenancy.user_id)
-    .eq("notification_key", notifKey)
-    .maybeSingle();
-  if (existing) return;
 
   const propParts = [tenancy.property_name, tenancy.property?.unit ? `Unit ${tenancy.property.unit}` : null].filter(Boolean);
   const propLabel = propParts.join(" · ") || "your property";
@@ -402,49 +409,60 @@ async function maybeFireExpiryNotification(
     .eq("id", tenancy.user_id)
     .maybeSingle();
 
-  let fired = false;
-
-  // Push
+  // Push — check its own key (shared with push cron which uses the same exp_ format)
   if (prefs?.notif_push !== false) {
-    const { count } = await supabase
-      .from("push_subscriptions")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", tenancy.user_id);
-    if (count && count > 0) {
-      const { sendPushToUser } = await import("@/lib/push");
-      const result = await sendPushToUser(tenancy.user_id, {
-        title: `Contract expiring in ${label}`,
-        body: `${tenancy.tenant_name} · ${propLabel} — send renewal message now`,
-        url: deepLink,
-        tag: notifKey,
-      });
-      if (result.sent > 0) fired = true;
+    const { data: pushLogged } = await supabase
+      .from("push_sent_log")
+      .select("id")
+      .eq("user_id", tenancy.user_id)
+      .eq("notification_key", pushKey)
+      .maybeSingle();
+
+    if (!pushLogged) {
+      const { count } = await supabase
+        .from("push_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", tenancy.user_id);
+      if (count && count > 0) {
+        const { sendPushToUser } = await import("@/lib/push");
+        const result = await sendPushToUser(tenancy.user_id, {
+          title: `Contract expiring in ${label}`,
+          body: `${propLabel} · ${tenancy.tenant_name} — send renewal message now`,
+          url: deepLink,
+          tag: pushKey,
+        });
+        if (result.sent > 0) {
+          await supabase.from("push_sent_log").insert({ user_id: tenancy.user_id, notification_key: pushKey });
+        }
+      }
     }
   }
 
-  // Email
+  // Email — uses its own key so push cron cannot block it
   if (prefs?.notif_email !== false) {
-    const { sendAgentEmail, expiryReminderEmail } = await import("@/lib/email");
-    await sendAgentEmail(
-      tenancy.user_id,
-      `Contract expiring in ${label} — ${tenancy.tenant_name}`,
-      expiryReminderEmail({
-        tenantName: tenancy.tenant_name ?? "Tenant",
-        propLabel,
-        contractEnd: tenancy.contract_end,
-        whenLabel: label,
-        rent,
-        url: `${siteUrl}${deepLink}`,
-      })
-    );
-    fired = true;
-  }
+    const { data: emailLogged } = await supabase
+      .from("push_sent_log")
+      .select("id")
+      .eq("user_id", tenancy.user_id)
+      .eq("notification_key", emailKey)
+      .maybeSingle();
 
-  if (fired) {
-    await supabase.from("push_sent_log").insert({
-      user_id: tenancy.user_id,
-      notification_key: notifKey,
-    });
+    if (!emailLogged) {
+      const { sendAgentEmail, expiryReminderEmail } = await import("@/lib/email");
+      await sendAgentEmail(
+        tenancy.user_id,
+        `Contract expiring in ${label} — ${tenancy.tenant_name}`,
+        expiryReminderEmail({
+          tenantName: tenancy.tenant_name ?? "Tenant",
+          propLabel,
+          contractEnd: tenancy.contract_end,
+          whenLabel: label,
+          rent,
+          url: `${siteUrl}${deepLink}`,
+        })
+      );
+      await supabase.from("push_sent_log").insert({ user_id: tenancy.user_id, notification_key: emailKey });
+    }
   }
 }
 

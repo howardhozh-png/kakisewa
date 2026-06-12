@@ -179,7 +179,9 @@ export async function GET(req: NextRequest) {
 }
 
 function normalisePhone(phone: string): string {
-  return phone.replace(/[^\d]/g, "");
+  const digits = phone.replace(/[^\d]/g, "");
+  if (digits.startsWith("0")) return "60" + digits.slice(1);
+  return digits;
 }
 
 function buildAvailabilityReminderMessage(p: {

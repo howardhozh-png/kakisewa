@@ -207,10 +207,11 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         const tBody = tPropLabel ? `${tPropLabel} — view in Existing listing` : "View in Existing listing";
 
         const tDeepLink = `/existing-listing?highlight=${cardId}`;
-        const tTitle = intent === "yes" ? `${cardName ?? "Tenant"} confirmed renewal` : `${cardName ?? "Tenant"} is not renewing`;
+        const tTitle = intent === "yes" ? "Renewal confirmed" : "Tenant not renewing";
+        const tBodyFull = tPropLabel ? `${tPropLabel} · ${cardName ?? "Tenant"} — view in Existing listing` : `${cardName ?? "Tenant"} — view in Existing listing`;
         await sendPushToUser(agentId, {
           title: tTitle,
-          body: tBody,
+          body: tBodyFull,
           url: tDeepLink,
           tag: `wa-reply-${cardId}`,
         });
@@ -242,10 +243,11 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         const oBody = oPropLabel ? `${oPropLabel} — view in Potential listing` : "View in Potential listing";
 
         const oDeepLink = `/potential-listing?highlight=${cardId}`;
-        const oTitle = intent === "yes" ? `${cardName ?? "Owner"} wants to list` : `${cardName ?? "Owner"} is not interested`;
+        const oTitle = intent === "yes" ? "Owner wants to list" : "Owner not interested";
+        const oBodyFull = oPropLabel ? `${oPropLabel} · ${cardName ?? "Owner"} — view in Potential listing` : `${cardName ?? "Owner"} — view in Potential listing`;
         await sendPushToUser(agentId, {
           title: oTitle,
-          body: oBody,
+          body: oBodyFull,
           url: oDeepLink,
           tag: `wa-reply-${cardId}`,
         });

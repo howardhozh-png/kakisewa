@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     const propLabel = propParts.length ? propParts.join(" · ") : "your property";
     const result = await sendPushToUser(row.user_id, {
       title: `Contract expiring in ${label}`,
-      body: `${row.tenant_name} · ${propLabel} — send renewal message now`,
+      body: `${propLabel} · ${row.tenant_name} — send renewal message now`,
       url: `/existing-listing?highlight=${row.id}`,
       tag: notifKey,
     });
@@ -141,8 +141,8 @@ export async function GET(req: NextRequest) {
     const lPropParts = [row.property_name, lUnit ? `Unit ${lUnit}` : null].filter(Boolean);
     const lPropLabel = lPropParts.length ? lPropParts.join(" · ") : "your property";
     const result = await sendPushToUser(row.user_id, {
-      title: `${row.tenant_name} is not renewing`,
-      body: `${lPropLabel} — start finding a replacement now`,
+      title: "Tenant not renewing",
+      body: `${lPropLabel} · ${row.tenant_name} — start finding a replacement`,
       url: `/existing-listing?highlight=${row.id}`,
       tag: notifKey,
     });

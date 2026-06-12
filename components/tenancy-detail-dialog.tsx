@@ -244,6 +244,7 @@ function TenancyForm({
           contract_start: contractStart || null,
           contract_end: contractEnd || null,
           contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : null,
+          renewal_proposed_months: null,
           replied_tenant: repliedTenant,
           replied_owner: repliedOwner,
           property_name: propertyName || tenancy.property_name,
@@ -308,7 +309,7 @@ function TenancyForm({
                   <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
                     +{ownerPhone || tenancy.tenant_phone}
                   </p>
-                  <a href={`https://wa.me/${ownerPhone || tenancy.tenant_phone}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                  <a href={`https://wa.me/${(ownerPhone || tenancy.tenant_phone || "").replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
                   <a href={`tel:+${ownerPhone || tenancy.tenant_phone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
@@ -354,7 +355,7 @@ function TenancyForm({
             <input type="text" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} placeholder="e.g. 60123456789" className="flex-1 min-w-0 text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
             {tenantPhone && (
               <>
-                <a href={`https://wa.me/${tenantPhone}`} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                <a href={`https://wa.me/${tenantPhone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
                   <WhatsAppIcon className="w-4 h-4" />
                 </a>
                 <a href={`tel:+${tenantPhone}`} className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">

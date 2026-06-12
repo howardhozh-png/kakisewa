@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
       const tenantName = tenancy.tenant_name ?? "Tenant";
       const propParts = [tenancy.property_name, tenancy.property?.unit ? `Unit ${tenancy.property.unit}` : null].filter(Boolean);
       const propLabel = propParts.join(" · ") || null;
-      const pushBody = propLabel ? `${propLabel} — view in Existing listing` : "View in Existing listing";
+      const pushBody = propLabel ? `${propLabel} · ${tenantName} — view in Existing listing` : `${tenantName} — view in Existing listing`;
       const deepLink = `/existing-listing?highlight=${tenancy.id}`;
-      const title = staying ? `${tenantName} confirmed renewal` : `${tenantName} is not renewing`;
+      const title = staying ? "Renewal confirmed" : "Tenant not renewing";
       sendPushToUser(tenancy.user_id, {
         title,
         body: pushBody,

@@ -35,10 +35,12 @@ export async function POST(request: NextRequest) {
     revalidatePath("/existing-listing");
 
     if (tenancy.user_id) {
-      const propLabel = tenancy.property_name ? ` · ${tenancy.property_name}` : "";
+      const propParts = [tenancy.property_name].filter(Boolean);
+      const propLabel = propParts.length ? propParts.join(" · ") : "your property";
+      const ownerBody = `${propLabel} · ${tenancy.tenant_name} — view in Existing listing`;
       sendPushToUser(tenancy.user_id, {
-        title: continuing ? "Owner wants to renew!" : "Owner not renewing",
-        body: `${tenancy.tenant_name}${propLabel}`,
+        title: continuing ? "Owner wants to renew" : "Owner not renewing",
+        body: ownerBody,
         url: `/existing-listing?highlight=${tenancy.id}`,
         tag: `ownerrenewal_${tenancy.id}`,
       }).catch(() => {});

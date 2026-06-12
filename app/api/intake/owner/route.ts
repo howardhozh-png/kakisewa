@@ -38,10 +38,10 @@ export async function POST(request: NextRequest) {
     if (lead.user_id) {
       const propParts = [lead.property_name, lead.unit ? `Unit ${lead.unit}` : null].filter(Boolean);
       const propLabel = propParts.join(" · ") || lead.owner_name;
-      const pushBody = propParts.length ? `${propLabel} — view in My listing` : "View in My listing";
+      const pushBody = propParts.length ? `${propLabel} · ${lead.owner_name} — view in My listing` : `${lead.owner_name} — view in My listing`;
       const deepLink = `/my-listing?highlight=${lead.id}`;
       sendPushToUser(lead.user_id, {
-        title: `${lead.owner_name} filled in property details`,
+        title: "Property details received",
         body: pushBody,
         url: deepLink,
         tag: `intake_${lead.id}`,
