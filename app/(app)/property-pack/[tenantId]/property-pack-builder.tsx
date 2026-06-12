@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Bed, Bath, CheckSquare, Square, Send, Home, Loader2 } from "lucide-react";
+import {
+  ArrowLeft, Bed, Bath, CheckSquare, Square, Send, Home,
+  Loader2, Copy, Check, ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { PropertyPackLead } from "@/lib/db";
 
@@ -24,16 +27,9 @@ function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[], shareUrl: 
 }
 
 function PropertyCard({
-  lead,
-  selected,
-  onToggle,
-}: {
-  lead: PropertyPackLead;
-  selected: boolean;
-  onToggle: () => void;
-}) {
+  lead, selected, onToggle,
+}: { lead: PropertyPackLead; selected: boolean; onToggle: () => void }) {
   const coverUrl = lead.photo_urls[lead.cover_photo_index ?? 0] ?? lead.photo_urls[0] ?? null;
-
   return (
     <button
       onClick={onToggle}
@@ -44,7 +40,6 @@ function PropertyCard({
         boxShadow: selected ? "0 4px 16px color-mix(in srgb, var(--kk-accent) 18%, transparent)" : "none",
       }}
     >
-      {/* Photo */}
       <div className="relative w-full" style={{ paddingBottom: "56.25%", background: "var(--kk-line)" }}>
         {coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -54,23 +49,18 @@ function PropertyCard({
             <Home className="w-8 h-8" style={{ color: "var(--kk-ink-faint)" }} />
           </div>
         )}
-        {/* Selection badge */}
         <div className="absolute top-3 right-3">
           {selected
             ? <CheckSquare className="w-6 h-6 drop-shadow" style={{ color: "var(--kk-accent)" }} />
             : <Square className="w-6 h-6 drop-shadow" style={{ color: "#fff" }} />}
         </div>
       </div>
-
-      {/* Details */}
       <div className="p-4">
         <p className="text-[14px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
           {lead.property_name ?? "—"}
         </p>
         {lead.unit && (
-          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-            Unit {lead.unit}
-          </p>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Unit {lead.unit}</p>
         )}
         <div className="flex items-center gap-3 mt-2">
           {lead.bedrooms != null && (
@@ -97,7 +87,10 @@ function PropertyCard({
 export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: PropertyPackLead[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
-  const [sending, setSending] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [packUrl, setPackUrl] = useState<string | null>(null);
+  const [packDirty, setPackDirty] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   function toggle(id: string) {
     setSelected(prev => {
@@ -105,6 +98,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+    if (packUrl) setPackDirty(true);
   }
 
   const filtered = leads.filter(l => {
@@ -118,9 +112,9 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
 
   const selectedLeads = leads.filter(l => selected.has(l.id));
 
-  async function handleSend() {
-    if (!tenant.phone || selectedLeads.length === 0 || sending) return;
-    setSending(true);
+  async function generateLink(): Promise<string | null> {
+    if (selectedLeads.length === 0 || generating) return null;
+    setGenerating(true);
     try {
       const res = await fetch("/api/property-pack/create", {
         method: "POST",
@@ -134,18 +128,36 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
       });
       if (!res.ok) throw new Error("Failed");
       const { url } = await res.json() as { url: string };
-      const phone = tenant.phone.replace(/\D/g, "").replace(/^0/, "60");
-      const msg = buildWaMessage(tenant, selectedLeads, url);
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+      setPackUrl(url);
+      setPackDirty(false);
+      return url;
     } catch {
       toast.error("Could not create property pack. Try again.");
+      return null;
     } finally {
-      setSending(false);
+      setGenerating(false);
     }
   }
 
+  async function handleSend() {
+    if (!tenant.phone || selectedLeads.length === 0) return;
+    const url = (packUrl && !packDirty) ? packUrl : await generateLink();
+    if (!url) return;
+    const phone = tenant.phone.replace(/\D/g, "").replace(/^0/, "60");
+    const msg = buildWaMessage(tenant, selectedLeads, url);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+  }
+
+  function handleCopy() {
+    if (!packUrl) return;
+    navigator.clipboard.writeText(packUrl);
+    setCopied(true);
+    toast.success("Link copied");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 lg:py-10">
+    <div className="mx-auto max-w-[1200px] px-4 py-6 lg:py-10">
       {/* Header */}
       <div className="flex items-center gap-3 mb-1">
         <Link
@@ -168,45 +180,133 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
         Select properties to send. Owner details are not included.
       </p>
 
-      {/* Search */}
-      <div className="relative mb-5">
-        <input
-          type="text"
-          placeholder="Search by property or unit…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full text-[14px] px-4 py-2.5 rounded-2xl outline-none"
-          style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-        />
+      <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+        {/* Left: property cards */}
+        <div>
+          <div className="relative mb-5">
+            <input
+              type="text"
+              placeholder="Search by property or unit…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full text-[14px] px-4 py-2.5 rounded-2xl outline-none"
+              style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            />
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="text-[14px]" style={{ color: "var(--kk-ink-faint)" }}>
+                {leads.length === 0 ? "No listed properties yet. Add listings in My Listing." : "No properties match your search."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-28 lg:pb-4">
+              {filtered.map(l => (
+                <PropertyCard
+                  key={l.id}
+                  lead={l}
+                  selected={selected.has(l.id)}
+                  onToggle={() => toggle(l.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Share with Tenant panel */}
+        <aside className="space-y-4">
+          <section className="kk-section p-5">
+            <p className="kk-overline mb-3">Share with tenant</p>
+            <p className="text-[13px] mb-4" style={{ color: "var(--kk-ink-mute)" }}>
+              Anyone with this link can view the selected properties. Valid for 1 hour.
+            </p>
+
+            {/* Link box */}
+            <div
+              className="rounded-xl px-3 py-2.5 text-[12px] font-mono break-all mb-3"
+              style={{
+                background: "var(--kk-surface-2)",
+                border: "1px solid var(--kk-line)",
+                color: packUrl && !packDirty ? "var(--kk-ink-soft)" : "var(--kk-ink-faint)",
+                opacity: packDirty ? 0.5 : 1,
+              }}
+            >
+              {packUrl
+                ? packUrl
+                : selected.size === 0
+                ? "Select at least 1 property to generate a link"
+                : "Click below to generate a share link"}
+            </div>
+
+            {packDirty && (
+              <p className="text-[11px] mb-2" style={{ color: "var(--kk-orange, #FF9500)" }}>
+                Selection changed — regenerate to update the link
+              </p>
+            )}
+
+            {/* Primary action */}
+            {!packUrl || packDirty ? (
+              <button
+                onClick={generateLink}
+                disabled={selected.size === 0 || generating}
+                className="kk-pill kk-pill-primary w-full justify-center mb-2"
+                style={{ padding: "0.6rem 1rem" }}
+              >
+                {generating
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
+                  : packDirty ? "Regenerate link" : "Generate link"}
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={!tenant.phone || generating}
+                className="kk-pill kk-pill-primary w-full justify-center mb-2"
+                style={{ padding: "0.6rem 1rem" }}
+              >
+                {generating
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Opening WhatsApp…</>
+                  : <><Send className="w-3.5 h-3.5" /> Send to tenant via WhatsApp</>}
+              </button>
+            )}
+
+            {/* Copy + Preview */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopy}
+                disabled={!packUrl || packDirty}
+                className="kk-pill kk-pill-ghost flex-1 justify-center"
+                style={{ opacity: !packUrl || packDirty ? 0.4 : 1 }}
+              >
+                {copied ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy link</>}
+              </button>
+              {packUrl && !packDirty ? (
+                <a
+                  href={packUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="kk-pill kk-pill-ghost"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Preview
+                </a>
+              ) : (
+                <button
+                  disabled
+                  className="kk-pill kk-pill-ghost"
+                  style={{ opacity: 0.4 }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Preview
+                </button>
+              )}
+            </div>
+          </section>
+        </aside>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-[14px]" style={{ color: "var(--kk-ink-faint)" }}>
-            {leads.length === 0 ? "No listed properties yet. Add listings in My Listing." : "No properties match your search."}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-28">
-          {filtered.map(l => (
-            <PropertyCard
-              key={l.id}
-              lead={l}
-              selected={selected.has(l.id)}
-              onToggle={() => toggle(l.id)}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Floating send bar */}
+      {/* Mobile-only bottom bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 flex items-center justify-between gap-4 px-4 py-4"
-        style={{
-          background: "var(--kk-surface)",
-          borderTop: "1px solid var(--kk-line)",
-          zIndex: 40,
-        }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 flex items-center justify-between gap-4 px-4 py-4"
+        style={{ background: "var(--kk-surface)", borderTop: "1px solid var(--kk-line)", zIndex: 40 }}
       >
         <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
           {selected.size === 0
@@ -215,18 +315,16 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
         </p>
         <button
           onClick={handleSend}
-          disabled={selected.size === 0 || !tenant.phone || sending}
+          disabled={selected.size === 0 || !tenant.phone || generating}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold"
           style={{
-            background: selected.size > 0 && tenant.phone && !sending ? "#25D366" : "var(--kk-line)",
-            color: selected.size > 0 && tenant.phone && !sending ? "#fff" : "var(--kk-ink-faint)",
+            background: selected.size > 0 && tenant.phone && !generating ? "#25D366" : "var(--kk-line)",
+            color: selected.size > 0 && tenant.phone && !generating ? "#fff" : "var(--kk-ink-faint)",
             transition: "background 0.15s ease",
           }}
         >
-          {sending
-            ? <Loader2 className="w-4 h-4 animate-spin" />
-            : <Send className="w-4 h-4" />}
-          {tenant.phone ? (sending ? "Creating pack..." : "Send via WhatsApp") : "No phone on file"}
+          {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {tenant.phone ? (generating ? "Creating…" : "Send via WhatsApp") : "No phone on file"}
         </button>
       </div>
     </div>

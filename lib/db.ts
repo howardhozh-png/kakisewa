@@ -1721,6 +1721,14 @@ export async function removeTenantFromPack(packId: string, tenantId: string): Pr
     .eq("tenant_profile_id", tenantId);
 }
 
+export async function refreshMatchPackToken(packId: string): Promise<string> {
+  const newToken = `${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const supabase = createServiceClient();
+  await supabase.from("match_packs").update({ share_token: newToken, expires_at: expiresAt }).eq("id", packId);
+  return newToken;
+}
+
 export async function setOwnerRanking(
   packId: string,
   rankings: Array<{ tenant_id: string; rank: number; liked: number; owner_note?: string | null }>

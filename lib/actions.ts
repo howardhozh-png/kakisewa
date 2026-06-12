@@ -1105,12 +1105,18 @@ export async function saveOwnerPackRanking(
 // Build the WhatsApp message to send the share link to the owner.
 export async function buildSendPackToOwner(
   ownerLeadId: string,
-  shareUrl: string
-): Promise<{ ok: boolean; url: string; body: string; message: string }> {
+): Promise<{ ok: boolean; url: string; body: string; message: string; newShareUrl: string }> {
   const all = await getOwnerLeads();
   const owner = all.find((o) => o.id === ownerLeadId);
-  if (!owner) return { ok: false, url: "", body: "", message: "Owner lead not found." };
+  if (!owner) return { ok: false, url: "", body: "", message: "Owner lead not found.", newShareUrl: "" };
   const agent = await getAgentProfile();
+
+  // Rotate token + set 1-hour expiry so old links stop working
+  const { getOrCreateMatchPack, refreshMatchPackToken } = await import("@/lib/db");
+  const { getBaseUrl } = await import("@/lib/origin");
+  const [pack, baseUrl] = await Promise.all([getOrCreateMatchPack(ownerLeadId), getBaseUrl()]);
+  const newToken = await refreshMatchPackToken(pack.id);
+  const shareUrl = `${baseUrl}/share/pack/${newToken}`;
 
   const propertyLabel = owner.property_name
     ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : `${owner.property_name}`
@@ -1136,7 +1142,7 @@ No login needed — link is private 🙏
     }),
     updateOwnerLead(ownerLeadId, { wa_status: "pending" }),
   ]);
-  return { ok: true, url: out.url, body, message: "Message ready" };
+  return { ok: true, url: out.url, body, message: "Message ready", newShareUrl: shareUrl };
 }
 
 export async function updateOwnerLeadDetails(

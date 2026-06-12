@@ -30,8 +30,10 @@ export default async function SharePackPage({
   ]);
 
   const agentFirstName = agentData?.trim().split(/\s+/)[0] ?? null;
-  const ownerName = ownerLead?.owner_name ?? null;
   const propertyLabel = pack.property_label ?? "Your property";
+  const isExpired = (pack as Record<string, unknown>).expires_at
+    ? new Date((pack as Record<string, unknown>).expires_at as string) < new Date()
+    : false;
 
   return (
     <div className="min-h-screen" style={{ background: "#F2F2F7" }}>
@@ -46,7 +48,6 @@ export default async function SharePackPage({
       </header>
 
       <main className="mx-auto max-w-[600px] px-4 py-6">
-        {/* Property header */}
         <div className="mb-5">
           <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#AEAEB2" }}>
             Tenants for
@@ -59,10 +60,12 @@ export default async function SharePackPage({
               by {agentFirstName}
             </p>
           )}
-          <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "#6C6C70" }}>
-            Drag to rank tenants. Leave notes if any. I get notified instantly to schedule house viewing.
-          </p>
-          {(pack.property_rent || pack.property_beds || pack.property_baths) && (
+          {!isExpired && (
+            <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "#6C6C70" }}>
+              Drag to rank tenants. Leave notes if any. I get notified instantly to schedule house viewing.
+            </p>
+          )}
+          {!isExpired && (pack.property_rent || pack.property_beds || pack.property_baths) && (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {pack.property_rent != null && (
                 <span className="px-2.5 py-1 rounded-full text-[12px] font-medium" style={{ background: "#fff", color: "#1C1C1E", border: "1px solid rgba(0,0,0,0.08)" }}>
@@ -83,7 +86,17 @@ export default async function SharePackPage({
           )}
         </div>
 
-        {tenants.length === 0 ? (
+        {isExpired ? (
+          <div
+            className="rounded-2xl flex flex-col items-center justify-center gap-3 py-16 px-6 text-center"
+            style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}
+          >
+            <p className="text-[16px] font-semibold" style={{ color: "#1C1C1E" }}>This link has expired</p>
+            <p className="text-[13px]" style={{ color: "#6C6C70" }}>
+              Tenant pack links are valid for 1 hour. Ask your agent to send a fresh one.
+            </p>
+          </div>
+        ) : tenants.length === 0 ? (
           <div
             className="rounded-2xl flex flex-col items-center justify-center gap-3 py-16 px-6 text-center"
             style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}

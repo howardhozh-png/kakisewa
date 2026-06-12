@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
   );
   if (leadsErr) return NextResponse.json({ error: leadsErr.message }, { status: 500 });
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
-  return NextResponse.json({ token, url: `${siteUrl}/share/property-pack/${token}` });
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "localhost:3000";
+  const proto = host.startsWith("localhost") ? "http" : "https";
+  const url = `${proto}://${host}/share/property-pack/${token}`;
+  return NextResponse.json({ token, url });
 }

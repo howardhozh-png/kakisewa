@@ -47,6 +47,7 @@ export function MatchPackBuilder({
     : pack.property_label ?? undefined;
   const [tenants, setTenants] = useState<PackTenant[]>(initialTenants);
   const [pending, setPending] = useState<PendingIntake[]>(initialPending);
+  const [currentShareUrl, setCurrentShareUrl] = useState(shareUrl);
   const [addMode, setAddMode] = useState<AddMode>("none");
   const [copied, setCopied] = useState(false);
   const [sending, startSend] = useTransition();
@@ -106,8 +107,9 @@ export function MatchPackBuilder({
     }
     checkAndRun(() => {
       startSend(async () => {
-        const res = await buildSendPackToOwner(ownerLeadId, shareUrl);
+        const res = await buildSendPackToOwner(ownerLeadId);
         if (!res.ok) { toast.error(res.message); return; }
+        if (res.newShareUrl) setCurrentShareUrl(res.newShareUrl);
         window.open(res.url, "_blank", "noopener,noreferrer");
         toast.success("WhatsApp opened with link to owner");
       });
@@ -115,7 +117,7 @@ export function MatchPackBuilder({
   }
 
   function copyShareUrl() {
-    navigator.clipboard.writeText(shareUrl);
+    navigator.clipboard.writeText(currentShareUrl);
     setCopied(true);
     toast.success("Share link copied");
     setTimeout(() => setCopied(false), 2000);
@@ -254,7 +256,7 @@ export function MatchPackBuilder({
             className="rounded-xl px-3 py-2.5 text-[12px] font-mono break-all mb-3"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-soft)" }}
           >
-            {shareUrl}
+            {currentShareUrl}
           </div>
           <button
             onClick={sendToOwnerWhatsApp}
@@ -269,7 +271,7 @@ export function MatchPackBuilder({
             <button onClick={copyShareUrl} className="kk-pill kk-pill-ghost flex-1 justify-center">
               {copied ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy link</>}
             </button>
-            <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost">
+            <a href={currentShareUrl} target="_blank" rel="noopener noreferrer" className="kk-pill kk-pill-ghost">
               <ExternalLink className="w-3.5 h-3.5" /> Preview
             </a>
           </div>
