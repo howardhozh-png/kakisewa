@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendPushToUser } from "@/lib/push";
 import { classifyWaReply } from "@/lib/ai-classify";
+import { sendAgentEmail, waReplyTenantEmail, waReplyOwnerEmail } from "@/lib/email";
 
 // ─── GET — Meta webhook verification handshake ────────────────────────────────
 
@@ -205,12 +206,19 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         const tPropLabel = tPropParts.length ? tPropParts.join(" · ") : null;
         const tBody = tPropLabel ? `${tPropLabel} — view in Existing listing` : "View in Existing listing";
 
+        const tDeepLink = `/existing-listing?highlight=${cardId}`;
+        const tTitle = intent === "yes" ? `${cardName ?? "Tenant"} confirmed renewal` : `${cardName ?? "Tenant"} is not renewing`;
         await sendPushToUser(agentId, {
-          title: intent === "yes" ? `${cardName ?? "Tenant"} confirmed renewal` : `${cardName ?? "Tenant"} is not renewing`,
+          title: tTitle,
           body: tBody,
-          url: `/existing-listing?highlight=${cardId}`,
+          url: tDeepLink,
           tag: `wa-reply-${cardId}`,
         });
+        sendAgentEmail(
+          agentId,
+          tTitle,
+          waReplyTenantEmail({ tenantName: cardName ?? "Tenant", intent, propLabel: tPropLabel, url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com"}${tDeepLink}` })
+        ).catch(() => {});
       }
     } else if (cardType === "owner_lead") {
       const intent = await classifyWaReply(messageText, "owner");
@@ -233,12 +241,19 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         const oPropLabel = oPropParts.length ? oPropParts.join(" · ") : null;
         const oBody = oPropLabel ? `${oPropLabel} — view in Potential listing` : "View in Potential listing";
 
+        const oDeepLink = `/potential-listing?highlight=${cardId}`;
+        const oTitle = intent === "yes" ? `${cardName ?? "Owner"} wants to list` : `${cardName ?? "Owner"} is not interested`;
         await sendPushToUser(agentId, {
-          title: intent === "yes" ? `${cardName ?? "Owner"} wants to list` : `${cardName ?? "Owner"} is not interested`,
+          title: oTitle,
           body: oBody,
-          url: `/potential-listing?highlight=${cardId}`,
+          url: oDeepLink,
           tag: `wa-reply-${cardId}`,
         });
+        sendAgentEmail(
+          agentId,
+          oTitle,
+          waReplyOwnerEmail({ ownerName: cardName ?? "Owner", intent, propLabel: oPropLabel, url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com"}${oDeepLink}` })
+        ).catch(() => {});
       }
     }
   } else {

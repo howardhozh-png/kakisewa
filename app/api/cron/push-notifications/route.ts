@@ -158,5 +158,65 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── Owner leads becoming available within 60 days ────────────────────────────
+  const { data: available } = await supabase
+    .from("owner_leads")
+    .select("id, user_id, owner_name, property_name, unit, available_from")
+    .not("available_from", "is", null)
+    .not("user_id", "is", null)
+    .gte("available_from", todayStr)
+    .lte("available_from", in60)
+    .in("stage", ["wants_rent", "listed", "replied"]);
+
+  for (const row of available ?? []) {
+    const daysLeft = Math.ceil(
+      (new Date(row.available_from).getTime() - today.getTime()) / 86400000
+    );
+
+    let bucket: string;
+    let label: string;
+    if (daysLeft <= 7) { bucket = "7d"; label = "7 days"; }
+    else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
+    else { bucket = "60d"; label = "2 months"; }
+
+    const notifKey = `avail_${row.id}_${bucket}`;
+
+    const { data: existing } = await supabase
+      .from("push_sent_log")
+      .select("id")
+      .eq("user_id", row.user_id)
+      .eq("notification_key", notifKey)
+      .maybeSingle();
+
+    if (existing) { skipped++; continue; }
+    if (pushOptedOut.has(row.user_id)) { skipped++; continue; }
+
+    const { count } = await supabase
+      .from("push_subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", row.user_id);
+
+    if (!count || count === 0) { skipped++; continue; }
+
+    const aPropParts = [row.property_name, row.unit ? `Unit ${row.unit}` : null].filter(Boolean);
+    const aPropLabel = aPropParts.join(" · ") || "a property";
+    const result = await sendPushToUser(row.user_id, {
+      title: `Property available in ${label}`,
+      body: `${aPropLabel} · ${row.owner_name} — start listing now`,
+      url: `/my-listing?highlight=${row.id}`,
+      tag: notifKey,
+    });
+
+    if (result.sent > 0) {
+      await supabase.from("push_sent_log").insert({
+        user_id: row.user_id,
+        notification_key: notifKey,
+      });
+      sent += result.sent;
+    } else {
+      errors++;
+    }
+  }
+
   return NextResponse.json({ sent, skipped, errors, at: today.toISOString() });
 }

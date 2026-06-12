@@ -965,6 +965,7 @@ export async function saveOwnerPackRanking(
 ) {
   const { createServiceClient } = await import("@/lib/supabase/service");
   const { sendPushToUser } = await import("@/lib/push");
+  const { sendAgentEmail, packRankedEmail } = await import("@/lib/email");
 
   const sb = createServiceClient();
   const { data: pack } = await sb
@@ -978,12 +979,19 @@ export async function saveOwnerPackRanking(
 
   if (pack?.user_id) {
     const propLabel = pack.property_label ?? "Tenant pack";
+    const deepLink = `/potential-listing?highlight=${pack.owner_lead_id}`;
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
     sendPushToUser(pack.user_id, {
       title: "Owner ranked your tenant pack",
       body: `${propLabel} — view rankings in Potential listing`,
-      url: `/potential-listing?highlight=${pack.owner_lead_id}`,
+      url: deepLink,
       tag: `packranked_${packId}`,
     }).catch(() => {});
+    sendAgentEmail(
+      pack.user_id,
+      "Owner ranked your tenant pack",
+      packRankedEmail({ propLabel, url: `${siteUrl}${deepLink}` })
+    ).catch(() => {});
   }
 
   return { ok: true };

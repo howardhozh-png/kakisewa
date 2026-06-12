@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getTenancyByTenantRenewalToken, completeTenantRenewalIntake } from "@/lib/db";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { sendPushToUser } from "@/lib/push";
+import { sendAgentEmail, tenantRenewalEmail } from "@/lib/email";
 
 const schema = z.object({
   token: z.string().min(1).max(200),
@@ -35,15 +36,29 @@ export async function POST(request: NextRequest) {
     revalidatePath("/existing-listing");
 
     if (tenancy.user_id) {
+      const tenantName = tenancy.tenant_name ?? "Tenant";
       const propParts = [tenancy.property_name, tenancy.property?.unit ? `Unit ${tenancy.property.unit}` : null].filter(Boolean);
-      const propLabel = propParts.length ? propParts.join(" · ") : null;
+      const propLabel = propParts.join(" · ") || null;
       const pushBody = propLabel ? `${propLabel} — view in Existing listing` : "View in Existing listing";
+      const deepLink = `/existing-listing?highlight=${tenancy.id}`;
+      const title = staying ? `${tenantName} confirmed renewal` : `${tenantName} is not renewing`;
       sendPushToUser(tenancy.user_id, {
-        title: staying ? `${tenancy.tenant_name ?? "Tenant"} confirmed renewal` : `${tenancy.tenant_name ?? "Tenant"} is not renewing`,
+        title,
         body: pushBody,
-        url: `/existing-listing?highlight=${tenancy.id}`,
+        url: deepLink,
         tag: `tenant_renewal_${tenancy.id}`,
       }).catch(() => {});
+      sendAgentEmail(
+        tenancy.user_id,
+        title,
+        tenantRenewalEmail({
+          tenantName,
+          staying,
+          propLabel: propLabel ?? tenantName,
+          contractEnd: tenancy.contract_end ?? null,
+          url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com"}${deepLink}`,
+        })
+      ).catch(() => {});
     }
 
     return NextResponse.json({ ok: true });
