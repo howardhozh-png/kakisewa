@@ -181,20 +181,6 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     });
   }
 
-  // Create tenant profile if this name+phone combo isn't already in the system
-  const tenantPhone = ((formData.get("tenant_phone") as string) || "").trim();
-  const tenantNameVal = formData.get("tenant_name") as string;
-  if (tenantPhone) {
-    const existing = await getTenantProfileByPhoneAndName(tenantPhone, tenantNameVal);
-    if (!existing) {
-      await createTenantProfile({
-        name: tenantNameVal,
-        phone: tenantPhone,
-        source: "manual",
-      });
-    }
-  }
-
   if (agreementUrl) {
     await (await import("@/lib/db")).updateTenancy(newTenancy.id, { agreement_url: agreementUrl });
   }

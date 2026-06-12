@@ -81,13 +81,8 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     const [y, m, d] = contractStart.split("-").map(Number);
     const months = parseInt(durationMonths, 10);
     if (!months) return "";
-    let end: Date;
-    if (d === 1) {
-      end = new Date(y, m - 1 + months + 1, 0);
-    } else {
-      const anniversary = new Date(y, m - 1 + months, d);
-      end = new Date(anniversary.getTime() - 86400000);
-    }
+    // Last day of the Nth month from start (day 0 = last day of prior month)
+    const end = new Date(y, m - 1 + months, 0);
     return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
   })();
 

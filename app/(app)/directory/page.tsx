@@ -48,7 +48,6 @@ export default async function NetworkPage({ searchParams }: Props) {
   ]);
 
   const allPropertiesCount = listed.filter(l => l.stage === "listed").length + activeTenants.length;
-  const allTenantsCount    = tenantProfiles.length + activeTenants.length;
 
   const matchedIds = listed.filter(l => l.stage === "matched").map(l => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedIds);
@@ -61,6 +60,12 @@ export default async function NetworkPage({ searchParams }: Props) {
     unit:           t.unit ?? undefined,
     expected_rent:  t.amount ?? undefined,
   }));
+
+  // Exclude tenant profiles whose phone is already tied to an active tenancy (prevents double-listing)
+  const activePhones = new Set(activeTenants.map((t) => t.tenant_phone).filter(Boolean) as string[]);
+  const availableTenantProfiles = tenantProfiles.filter((p) => !(p.phone && activePhones.has(p.phone)));
+
+  const allTenantsCount = availableTenantProfiles.length + activeTenants.length;
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
@@ -106,7 +111,7 @@ export default async function NetworkPage({ searchParams }: Props) {
         <MatchesView listed={listed} tenantsByLeadId={tenantsByLeadId} activeTenants={activeTenants} />
       )}
       {view === "tenants" && (
-        <TenantsTable profiles={tenantProfiles} propertyTenants={propertyTenants} />
+        <TenantsTable profiles={availableTenantProfiles} propertyTenants={propertyTenants} />
       )}
       {view === "contacts" && (
         <SupportsDirectory initialContacts={supports} whatsappTemplates={agent?.whatsapp_templates} />
