@@ -148,6 +148,28 @@ export function waReplyOwnerEmail(p: {
   );
 }
 
+export function expiryReminderEmail(p: {
+  tenantName: string;
+  propLabel: string;
+  contractEnd: string;
+  whenLabel: string;
+  rent: string | null;
+  url: string;
+}): string {
+  const rentLine = p.rent ? detail(`Current rent: ${p.rent}`) : "";
+  return (
+    EMAIL_BASE +
+    `<h1 style="font-size:18px;font-weight:600;margin:0 0 12px">Contract expiring ${p.whenLabel}</h1>` +
+    `<p style="font-size:14px;color:#6C6C70;margin:0 0 4px"><strong>${p.tenantName}</strong></p>` +
+    detail(p.propLabel) +
+    detail(`Contract end: ${p.contractEnd}`) +
+    rentLine +
+    `<div style="margin:20px 0">` + action(`Send the renewal message to ${p.tenantName} to confirm if they are staying.`) + `</div>` +
+    cta("Open in Existing listing", p.url) +
+    EMAIL_FOOTER
+  );
+}
+
 export function packRankedEmail(p: {
   propLabel: string;
   url: string;

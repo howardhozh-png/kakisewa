@@ -319,20 +319,19 @@ export async function updateTenancyContract(
       amount: data.amount,
     };
 
+    let existingTenancy: Tenancy | null = null;
     if (data.contract_end) {
-      const tenancy = await getTenancy(id);
-      if (tenancy) {
+      existingTenancy = await getTenancy(id);
+      if (existingTenancy) {
         // Don't auto-adjust stages the agent deliberately chose
         const LOCKED = new Set(["renewing", "replacing", "ending", "closed"]);
-        if (!LOCKED.has(tenancy.lifecycle_stage ?? "")) {
+        if (!LOCKED.has(existingTenancy.lifecycle_stage ?? "")) {
           const days = Math.round(
             (new Date(data.contract_end).getTime() - new Date().getTime()) / 86400000
           );
           if (days <= 60) {
-            // New end date is within expiry window — move to Expiring
             updates.lifecycle_stage = "headsup";
-          } else if (["headsup", "pinged", "stalled"].includes(tenancy.lifecycle_stage ?? "")) {
-            // Extended past 60 days — clear explicit stage so it auto-computes as Active
+          } else if (["headsup", "pinged", "stalled"].includes(existingTenancy.lifecycle_stage ?? "")) {
             updates.lifecycle_stage = null;
           }
         }
@@ -343,9 +342,109 @@ export async function updateTenancyContract(
     invalidateCache();
     revalidatePath("/existing-listing");
     revalidatePath("/");
+
+    // Fire immediate expiry notification if the new date is within the 60-day window
+    if (data.contract_end && existingTenancy) {
+      maybeFireExpiryNotification(id, {
+        ...existingTenancy,
+        contract_end: data.contract_end,
+        amount: data.amount ?? existingTenancy.amount,
+      }).catch(() => {});
+    }
+
     return { ok: true, message: "Contract updated" };
   } catch {
     return { ok: false, message: "Could not update contract" };
+  }
+}
+
+async function maybeFireExpiryNotification(
+  tenancyId: string,
+  tenancy: Tenancy & { contract_end: string }
+): Promise<void> {
+  if (!tenancy.user_id) return;
+  if (tenancy.replied_tenant === "yes" || tenancy.replied_tenant === "no") return;
+
+  const today = new Date();
+  const daysLeft = Math.ceil(
+    (new Date(tenancy.contract_end).getTime() - today.getTime()) / 86400000
+  );
+  if (daysLeft > 60 || daysLeft < 0) return;
+
+  let bucket: string;
+  let label: string;
+  if (daysLeft <= 7) { bucket = "7d"; label = "7 days"; }
+  else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
+  else { bucket = "60d"; label = "2 months"; }
+
+  const notifKey = `exp_${tenancyId}_${bucket}`;
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const supabase = createServiceClient();
+
+  // Idempotency — if this milestone already fired (naturally or manually), skip
+  const { data: existing } = await supabase
+    .from("push_sent_log")
+    .select("id")
+    .eq("user_id", tenancy.user_id)
+    .eq("notification_key", notifKey)
+    .maybeSingle();
+  if (existing) return;
+
+  const propParts = [tenancy.property_name, tenancy.property?.unit ? `Unit ${tenancy.property.unit}` : null].filter(Boolean);
+  const propLabel = propParts.join(" · ") || "your property";
+  const deepLink = `/existing-listing?highlight=${tenancyId}`;
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
+  const rent = tenancy.amount ? `RM ${Number(tenancy.amount).toLocaleString()}/month` : null;
+
+  const { data: prefs } = await supabase
+    .from("agent_profiles")
+    .select("notif_push, notif_email")
+    .eq("id", tenancy.user_id)
+    .maybeSingle();
+
+  let fired = false;
+
+  // Push
+  if (prefs?.notif_push !== false) {
+    const { count } = await supabase
+      .from("push_subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", tenancy.user_id);
+    if (count && count > 0) {
+      const { sendPushToUser } = await import("@/lib/push");
+      const result = await sendPushToUser(tenancy.user_id, {
+        title: `Contract expiring in ${label}`,
+        body: `${tenancy.tenant_name} · ${propLabel} — send renewal message now`,
+        url: deepLink,
+        tag: notifKey,
+      });
+      if (result.sent > 0) fired = true;
+    }
+  }
+
+  // Email
+  if (prefs?.notif_email !== false) {
+    const { sendAgentEmail, expiryReminderEmail } = await import("@/lib/email");
+    await sendAgentEmail(
+      tenancy.user_id,
+      `Contract expiring in ${label} — ${tenancy.tenant_name}`,
+      expiryReminderEmail({
+        tenantName: tenancy.tenant_name ?? "Tenant",
+        propLabel,
+        contractEnd: tenancy.contract_end,
+        whenLabel: label,
+        rent,
+        url: `${siteUrl}${deepLink}`,
+      })
+    );
+    fired = true;
+  }
+
+  if (fired) {
+    await supabase.from("push_sent_log").insert({
+      user_id: tenancy.user_id,
+      notification_key: notifKey,
+    });
   }
 }
 
