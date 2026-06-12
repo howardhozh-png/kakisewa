@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { CheckCircle2, Circle, AlertCircle, ChevronRight } from "lucide-react";
-import { getAgentProfile, getHomeDashboardStats } from "@/lib/db";
+import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats } from "@/lib/db";
 import { getMissingWhatsAppFields } from "@/lib/profile-gate";
+import { StatsSection } from "./stats-section";
 
 export const dynamic = "force-dynamic";
 
 type Stats = Awaited<ReturnType<typeof getHomeDashboardStats>>;
+type ExpandedStats = Awaited<ReturnType<typeof getExpandedDashboardStats>>;
 
 // ─── Checklist item ───────────────────────────────────────────────────────────
 
@@ -178,7 +180,15 @@ function SetupState({
 
 // ─── Active state (full dashboard) ───────────────────────────────────────────
 
-function ActiveState({ firstName, stats }: { firstName: string | null; stats: Stats }) {
+function ActiveState({
+  firstName,
+  stats,
+  expandedStats,
+}: {
+  firstName: string | null;
+  stats: Stats;
+  expandedStats: ExpandedStats;
+}) {
   return (
     <>
       <div className="mb-6">
@@ -231,59 +241,7 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
         </Link>
       )}
 
-      <div className="grid grid-cols-2 gap-3 mt-2">
-        <Link href="/existing-listing" className="kk-card p-4" style={{ textDecoration: "none" }}>
-          <p
-            className="text-[11px] font-semibold uppercase tracking-widest mb-2"
-            style={{ color: "var(--kk-ink-faint)" }}
-          >
-            Active contracts
-          </p>
-          <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--kk-ink)" }}>
-            {stats.expiringIn60}
-          </p>
-          <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-            expiring within 60 days
-          </p>
-        </Link>
-        <Link href="/my-listing" className="kk-card p-4" style={{ textDecoration: "none" }}>
-          <p
-            className="text-[11px] font-semibold uppercase tracking-widest mb-2"
-            style={{ color: "var(--kk-ink-faint)" }}
-          >
-            Active listing
-          </p>
-          <p className="text-[28px] font-bold tabular-nums leading-none" style={{ color: "var(--kk-ink)" }}>
-            {stats.listedWithoutTenant}
-          </p>
-          <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-            awaiting tenant
-          </p>
-        </Link>
-      </div>
-
-      {stats.totalOwners > 0 && (
-        <div className="mt-3">
-          <Link
-            href="/potential-listing"
-            className="kk-card p-4 flex items-center justify-between"
-            style={{ textDecoration: "none" }}
-          >
-            <div>
-              <p
-                className="text-[11px] font-semibold uppercase tracking-widest mb-1"
-                style={{ color: "var(--kk-ink-faint)" }}
-              >
-                Leads
-              </p>
-              <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>
-                {stats.totalOwners} owner{stats.totalOwners !== 1 ? "s" : ""} tracked
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
-          </Link>
-        </div>
-      )}
+      <StatsSection initialStats={expandedStats} />
     </>
   );
 }
@@ -291,7 +249,11 @@ function ActiveState({ firstName, stats }: { firstName: string | null; stats: St
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [agent, stats] = await Promise.all([getAgentProfile(), getHomeDashboardStats()]);
+  const [agent, stats, expandedStats] = await Promise.all([
+    getAgentProfile(),
+    getHomeDashboardStats(),
+    getExpandedDashboardStats(0),
+  ]);
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
   const missingProfileFields = getMissingWhatsAppFields(agent);
 
@@ -304,7 +266,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 lg:py-16">
       {isSetupComplete ? (
-        <ActiveState firstName={firstName} stats={stats} />
+        <ActiveState firstName={firstName} stats={stats} expandedStats={expandedStats} />
       ) : (
         <SetupState
           firstName={firstName}

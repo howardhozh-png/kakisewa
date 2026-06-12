@@ -2486,3 +2486,88 @@ export async function completeOwnerRenewalIntake(
   if (tenantIntent)                       updates.owner_noted_tenant_intent = tenantIntent;
   await svc.from("tenancies").update(updates).eq("owner_renewal_token", token);
 }
+
+// ─── Expanded dashboard stats ─────────────────────────────────────────────────
+
+export type ExpandedDashboardStats = {
+  // Potential Pipeline (snapshot)
+  totalUploaded: number;
+  totalContacted: number;
+  // My Listing (snapshot)
+  listedRentCount: number;
+  listedRentAmount: number;
+  listedSaleCount: number;
+  listedSaleAmount: number;
+  repliedRentCount: number;
+  repliedRentAmount: number;
+  repliedSaleCount: number;
+  repliedSaleAmount: number;
+  // Existing Listing (range-sensitive)
+  existingTotalActiveCount: number;
+  existingTotalActiveAmount: number;
+  existingExpiringCount: number;
+  existingExpiringAmount: number;
+  // Target Listing (range-sensitive)
+  targetTotalActiveCount: number;
+  targetTotalActiveAmount: number;
+  targetExpiringCount: number;
+  targetExpiringAmount: number;
+};
+
+export async function getExpandedDashboardStats(rangeMonths: number): Promise<ExpandedDashboardStats> {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+  // "Today" pill = 60-day urgency window; other pills use months
+  const periodDays = rangeMonths === 0 ? 60 : rangeMonths * 30;
+  const periodEnd = new Date(Date.now() + periodDays * 86400000).toISOString().slice(0, 10);
+
+  const sumExpectedRent = (rows: Array<{ expected_rent?: number | null }> | null) =>
+    (rows ?? []).reduce((s, r) => s + (r.expected_rent ?? 0), 0);
+  const sumAmount = (rows: Array<{ amount?: number | null }> | null) =>
+    (rows ?? []).reduce((s, r) => s + (r.amount ?? 0), 0);
+
+  const [
+    { count: totalUploaded },
+    { count: totalContacted },
+    { data: listedRent },
+    { data: listedSale },
+    { data: repliedRent },
+    { data: repliedSale },
+    { data: existingActive },
+    { data: existingExpiring },
+    { data: targetActive },
+    { data: targetExpiring },
+  ] = await Promise.all([
+    supabase.from("owner_leads").select("id", { count: "exact", head: true }).neq("is_competitor_target", true),
+    supabase.from("owner_leads").select("id", { count: "exact", head: true }).neq("is_competitor_target", true).not("outreach_count", "is", null).gt("outreach_count", 0),
+    supabase.from("owner_leads").select("id, expected_rent").eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
+    supabase.from("owner_leads").select("id, expected_rent").eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
+    supabase.from("owner_leads").select("id, expected_rent").in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
+    supabase.from("owner_leads").select("id, expected_rent").in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
+    supabase.from("tenancies").select("id, amount").is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", today),
+    supabase.from("tenancies").select("id, amount").is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", periodEnd),
+    supabase.from("owner_leads").select("id, expected_rent").eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
+    supabase.from("owner_leads").select("id, expected_rent").eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", periodEnd),
+  ]);
+
+  return {
+    totalUploaded: totalUploaded ?? 0,
+    totalContacted: totalContacted ?? 0,
+    listedRentCount: listedRent?.length ?? 0,
+    listedRentAmount: sumExpectedRent(listedRent),
+    listedSaleCount: listedSale?.length ?? 0,
+    listedSaleAmount: sumExpectedRent(listedSale),
+    repliedRentCount: repliedRent?.length ?? 0,
+    repliedRentAmount: sumExpectedRent(repliedRent),
+    repliedSaleCount: repliedSale?.length ?? 0,
+    repliedSaleAmount: sumExpectedRent(repliedSale),
+    existingTotalActiveCount: existingActive?.length ?? 0,
+    existingTotalActiveAmount: sumAmount(existingActive),
+    existingExpiringCount: existingExpiring?.length ?? 0,
+    existingExpiringAmount: sumAmount(existingExpiring),
+    targetTotalActiveCount: targetActive?.length ?? 0,
+    targetTotalActiveAmount: sumExpectedRent(targetActive),
+    targetExpiringCount: targetExpiring?.length ?? 0,
+    targetExpiringAmount: sumExpectedRent(targetExpiring),
+  };
+}
