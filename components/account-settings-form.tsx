@@ -569,6 +569,7 @@ function PushSetupSection() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [pushGranted, setPushGranted] = useState(false);
   const [enabling, setEnabling] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -582,12 +583,15 @@ function PushSetupSection() {
     setPushGranted(
       localStorage.getItem(LS_PUSH_KEY) === "1" || Notification.permission === "granted"
     );
+    setBlocked(Notification.permission === "denied");
   }, []);
 
   async function handleEnable() {
     setEnabling(true);
+    setBlocked(false);
     try {
       const permission = await Notification.requestPermission();
+      if (permission === "denied") { setBlocked(true); setEnabling(false); return; }
       if (permission !== "granted") { setEnabling(false); return; }
       const reg = await navigator.serviceWorker.ready;
       const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
@@ -599,7 +603,7 @@ function PushSetupSection() {
       });
       localStorage.setItem(LS_PUSH_KEY, "1");
       setPushGranted(true);
-    } catch { /* permission denied or SW not ready */ }
+    } catch { setEnabling(false); }
     finally { setEnabling(false); }
   }
 
@@ -663,6 +667,16 @@ function PushSetupSection() {
             </div>
           ))}
         </div>
+        {blocked && (
+          <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "color-mix(in srgb, #DC2626 8%, transparent)", border: "1px solid color-mix(in srgb, #DC2626 20%, transparent)" }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "#DC2626", marginBottom: 3 }}>Notifications are blocked</p>
+            <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", lineHeight: 1.5 }}>
+              {isIOS
+                ? "Go to iPhone Settings → Apps → kakisewa → Notifications → turn on \"Allow Notifications\", then come back and try again."
+                : "Click the lock icon in your browser address bar and allow notifications, then refresh and try again."}
+            </p>
+          </div>
+        )}
         {!needsInstall && (
           <button
             onClick={handleEnable}
