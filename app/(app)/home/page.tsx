@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Circle, AlertCircle, ChevronRight } from "lucide-react";
+import { CheckCircle2, Circle } from "lucide-react";
 import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats } from "@/lib/db";
 import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 import { StatsSection } from "./stats-section";
@@ -200,47 +200,6 @@ function ActiveState({
         </h1>
       </div>
 
-      {stats.expiringIn60 > 0 && (
-        <Link
-          href="/existing-listing"
-          className="flex items-center gap-3 rounded-2xl px-4 py-4 mb-4 transition-opacity hover:opacity-80"
-          style={{
-            background: "rgba(220,38,38,0.06)",
-            border: "1px solid rgba(220,38,38,0.2)",
-            textDecoration: "none",
-          }}
-        >
-          <AlertCircle className="w-5 h-5 shrink-0" style={{ color: "#DC2626" }} />
-          <div>
-            <p className="text-[14px] font-semibold" style={{ color: "#991B1B" }}>
-              {stats.expiringIn60} contract{stats.expiringIn60 !== 1 ? "s" : ""} expiring within 60 days
-            </p>
-            <p className="text-[12px] mt-0.5" style={{ color: "#B91C1C" }}>
-              Act before another agent does
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 shrink-0 ml-auto" style={{ color: "#DC2626" }} />
-        </Link>
-      )}
-
-      {stats.uncontacted > 0 && (
-        <Link
-          href="/potential-listing"
-          className="flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-4 transition-opacity hover:opacity-80"
-          style={{
-            background: "rgba(234,179,8,0.08)",
-            border: "1px solid rgba(234,179,8,0.25)",
-            textDecoration: "none",
-          }}
-        >
-          <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#B45309" }} />
-          <p className="text-[13px] font-semibold" style={{ color: "#92400E" }}>
-            {stats.uncontacted} lead{stats.uncontacted !== 1 ? "s" : ""} not yet contacted
-          </p>
-          <ChevronRight className="w-4 h-4 shrink-0 ml-auto" style={{ color: "#B45309" }} />
-        </Link>
-      )}
-
       <StatsSection initialStats={expandedStats} />
     </>
   );
@@ -264,7 +223,7 @@ export default async function HomePage() {
   const isSetupComplete = leadsComplete && contractsComplete && profileComplete;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 lg:py-16">
+    <div className="mx-auto max-w-4xl px-4 py-6 lg:py-16">
       {isSetupComplete ? (
         <ActiveState firstName={firstName} stats={stats} expandedStats={expandedStats} />
       ) : (

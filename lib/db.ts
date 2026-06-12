@@ -2515,7 +2515,8 @@ export type ExpandedDashboardStats = {
 };
 
 export async function getExpandedDashboardStats(rangeMonths: number): Promise<ExpandedDashboardStats> {
-  const supabase = await createClient();
+  const userId = await getCurrentUserId();
+  const svc = createServiceClient();
   const today = new Date().toISOString().slice(0, 10);
   // "Today" pill = 60-day urgency window; other pills use months
   const periodDays = rangeMonths === 0 ? 60 : rangeMonths * 30;
@@ -2525,6 +2526,11 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     (rows ?? []).reduce((s, r) => s + (r.expected_rent ?? 0), 0);
   const sumAmount = (rows: Array<{ amount?: number | null }> | null) =>
     (rows ?? []).reduce((s, r) => s + (r.amount ?? 0), 0);
+
+  // All queries use service client + explicit user_id filter (same pattern as _cachedHomeDashboardStats)
+  const ol = () => svc.from("owner_leads").select("id", { count: "exact", head: true }).eq("user_id", userId);
+  const olD = () => svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId);
+  const tn = () => svc.from("tenancies").select("id, amount").eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null);
 
   const [
     { count: totalUploaded },
@@ -2538,16 +2544,18 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     { data: targetActive },
     { data: targetExpiring },
   ] = await Promise.all([
-    supabase.from("owner_leads").select("id", { count: "exact", head: true }).neq("is_competitor_target", true),
-    supabase.from("owner_leads").select("id", { count: "exact", head: true }).neq("is_competitor_target", true).not("outreach_count", "is", null).gt("outreach_count", 0),
-    supabase.from("owner_leads").select("id, expected_rent").eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
-    supabase.from("owner_leads").select("id, expected_rent").eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
-    supabase.from("owner_leads").select("id, expected_rent").in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
-    supabase.from("owner_leads").select("id, expected_rent").in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
-    supabase.from("tenancies").select("id, amount").is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", today),
-    supabase.from("tenancies").select("id, amount").is("deleted_at", null).not("contract_end", "is", null).gte("contract_end", today).lte("contract_end", periodEnd),
-    supabase.from("owner_leads").select("id, expected_rent").eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
-    supabase.from("owner_leads").select("id, expected_rent").eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", periodEnd),
+    ol().or("is_competitor_target.is.null,is_competitor_target.eq.false"),
+    ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
+    olD().eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
+    olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
+    olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
+    olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
+    // Active = not closed, not deleted, not yet expired — matches what the existing-listing page shows
+    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today),
+    // Expiring within selected period
+    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", periodEnd),
+    svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
+    svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", periodEnd),
   ]);
 
   return {
