@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { TenantProfile } from "@/lib/types";
 import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports, getAgentProfile } from "@/lib/db";
 import { effectivePlan, planAllows } from "@/lib/plan-caps";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -47,12 +48,16 @@ export default async function NetworkPage({ searchParams }: Props) {
     getPropertySupports().catch(() => [] as Awaited<ReturnType<typeof getPropertySupports>>),
   ]);
 
-  const allPropertiesCount = listed.filter(l => l.stage === "listed").length + activeTenants.length;
+  // Split tenants: active (still renting) vs former (closed/ended tenancies)
+  const currentTenants = activeTenants.filter(t => t.lifecycle_stage !== "closed");
+  const formerTenants  = activeTenants.filter(t => t.lifecycle_stage === "closed");
+
+  const allPropertiesCount = listed.filter(l => l.stage === "listed").length + currentTenants.length;
 
   const matchedIds = listed.filter(l => l.stage === "matched").map(l => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedIds);
 
-  const propertyTenants = activeTenants.map((t) => ({
+  const propertyTenants = currentTenants.map((t) => ({
     tenancy_id:     t.tenancy_id,
     tenant_name:    t.tenant_name,
     tenant_phone:   t.tenant_phone ?? "",
@@ -62,10 +67,25 @@ export default async function NetworkPage({ searchParams }: Props) {
   }));
 
   // Exclude tenant profiles whose phone is already tied to an active tenancy (prevents double-listing)
-  const activePhones = new Set(activeTenants.map((t) => t.tenant_phone).filter(Boolean) as string[]);
-  const availableTenantProfiles = tenantProfiles.filter((p) => !(p.phone && activePhones.has(p.phone)));
+  const activePhones = new Set(currentTenants.map((t) => t.tenant_phone).filter(Boolean) as string[]);
+  const formerPhones  = new Set(formerTenants.map((t)  => t.tenant_phone).filter(Boolean) as string[]);
 
-  const allTenantsCount = availableTenantProfiles.length + activeTenants.length;
+  // Former tenants re-enter the available pool; synthesise minimal TenantProfile objects for them
+  const formerAsProfiles: TenantProfile[] = formerTenants
+    .filter(t => !activePhones.has(t.tenant_phone ?? ""))
+    .map(t => ({
+      id:         t.tenancy_id,
+      name:       t.tenant_name,
+      phone:      t.tenant_phone ?? null,
+      created_at: new Date().toISOString(),
+    }));
+
+  const availableTenantProfiles = [
+    ...tenantProfiles.filter((p) => !(p.phone && (activePhones.has(p.phone) || formerPhones.has(p.phone)))),
+    ...formerAsProfiles,
+  ];
+
+  const allTenantsCount = availableTenantProfiles.length + currentTenants.length;
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">

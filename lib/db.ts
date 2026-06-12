@@ -259,7 +259,6 @@ const _cachedAllActiveTenants = unstable_cache(
       .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
       .eq("user_id", userId)
       .is("deleted_at", null)
-      .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -272,7 +271,10 @@ const _cachedAllActiveTenants = unstable_cache(
 
     const olMap = Object.fromEntries((olsRes.data ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
 
-    return rows.map(row => {
+    return rows.filter(row => {
+      const n = ((row.tenant_name as string | null) ?? "").trim().toLowerCase();
+      return n.length > 0 && n !== "unknown";
+    }).map(row => {
       const ol = row.owner_lead_id ? olMap[row.owner_lead_id as string] : null;
       return {
         tenancy_id:      row.id as string,
@@ -2198,7 +2200,6 @@ export async function getAllActiveTenants(): Promise<Array<{
   const { data, error } = await supabase
     .from("tenancies")
     .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
-    .not("lifecycle_stage", "eq", "closed")
     .order("created_at", { ascending: false });
   if (error) throw error;
 
@@ -2211,7 +2212,10 @@ export async function getAllActiveTenants(): Promise<Array<{
 
   const olMap = Object.fromEntries((olsRes.data ?? []).map((ol: {id:string;property_name:string|null;unit:string|null}) => [ol.id, ol]));
 
-  return rows.map(row => {
+  return rows.filter(row => {
+    const n = ((row.tenant_name as string | null) ?? "").trim().toLowerCase();
+    return n.length > 0 && n !== "unknown";
+  }).map(row => {
     const ol = row.owner_lead_id ? olMap[row.owner_lead_id as string] : null;
     return {
       tenancy_id:     row.id as string,
@@ -2582,4 +2586,53 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     targetExpiringCount: targetExpiring?.length ?? 0,
     targetExpiringAmount: sumExpectedRent(targetExpiring),
   };
+}
+
+// ─── Property pack data ────────────────────────────────────────────────────────
+
+export type PropertyPackLead = {
+  id: string;
+  property_name: string | null;
+  unit: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  photo_urls: string[];
+  cover_photo_index: number | null;
+  expected_rent: number | null;
+  listing_purpose: string | null;
+};
+
+export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[]> {
+  const userId = await getCurrentUserId();
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from("owner_leads")
+    .select("id, property_name, unit, bedrooms, bathrooms, photo_urls, cover_photo_index, expected_rent, listing_purpose")
+    .eq("user_id", userId)
+    .eq("stage", "listed")
+    .order("property_name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    id:                r.id as string,
+    property_name:     r.property_name as string | null,
+    unit:              r.unit as string | null,
+    bedrooms:          r.bedrooms as number | null,
+    bathrooms:         r.bathrooms as number | null,
+    photo_urls:        parsePhotoUrls(r.photo_urls),
+    cover_photo_index: r.cover_photo_index as number | null,
+    expected_rent:     r.expected_rent as number | null,
+    listing_purpose:   r.listing_purpose as string | null,
+  }));
+}
+
+export async function getTenantProfileById(id: string): Promise<{ id: string; name: string; phone: string | null } | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tenant_profiles")
+    .select("id, name, phone")
+    .eq("id", id)
+    .single();
+  if (!data) return null;
+  const r = data as Record<string, unknown>;
+  return { id: r.id as string, name: r.name as string, phone: (r.phone as string | null) ?? null };
 }

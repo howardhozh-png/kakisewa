@@ -6,7 +6,7 @@ import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import {
-  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2, Phone,
+  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2, Phone, Send,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { format } from "date-fns";
@@ -162,6 +162,15 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
             </div>
           ) : (
             <>
+              <Link
+                href={`/property-pack/${profile.id}`}
+                onClick={onClose}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
+                style={{ background: "var(--kk-accent)", color: "#fff", textDecoration: "none" }}
+              >
+                <Send className="w-4 h-4" />
+                Send property pack
+              </Link>
               <button
                 onClick={handleSave}
                 disabled={pending}
@@ -373,7 +382,7 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
         </div>
       ) : (
         <div className="kk-section overflow-hidden kk-scroll-fade">
-          <div className="overflow-x-auto">
+          <div style={{ maxHeight: "min(560px, calc(100vh - 340px))", overflowY: "auto", overflowX: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--kk-line-strong) transparent" }}>
           <table className="w-full border-collapse" style={{ minWidth: 600 }}>
             <colgroup>
               <col style={{ width: "20%" }} />

@@ -1,0 +1,211 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowLeft, Bed, Bath, CheckSquare, Square, Send, Home } from "lucide-react";
+import type { PropertyPackLead } from "@/lib/db";
+
+interface Tenant { id: string; name: string; phone: string | null }
+
+function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[]): string {
+  const header = `Hi ${tenant.name}, here are some properties available for you:\n\n`;
+  const body = selected.map((l, i) => {
+    const lines: string[] = [];
+    lines.push(`${i + 1}. ${l.property_name ?? "Property"}${l.unit ? ` – Unit ${l.unit}` : ""}`);
+    const details: string[] = [];
+    if (l.bedrooms != null) details.push(`${l.bedrooms} bed`);
+    if (l.bathrooms != null) details.push(`${l.bathrooms} bath`);
+    if (details.length) lines.push(`   ${details.join("  |  ")}`);
+    if (l.expected_rent) lines.push(`   RM ${l.expected_rent.toLocaleString()}/mo`);
+    return lines.join("\n");
+  }).join("\n\n");
+  return header + body + "\n\nLet me know which ones you'd like to view!";
+}
+
+function PropertyCard({
+  lead,
+  selected,
+  onToggle,
+}: {
+  lead: PropertyPackLead;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  const coverUrl = lead.photo_urls[lead.cover_photo_index ?? 0] ?? lead.photo_urls[0] ?? null;
+
+  return (
+    <button
+      onClick={onToggle}
+      className="flex flex-col overflow-hidden rounded-2xl text-left w-full transition-all duration-150"
+      style={{
+        border: selected ? "2px solid var(--kk-accent)" : "2px solid var(--kk-line)",
+        background: selected ? "color-mix(in srgb, var(--kk-accent) 5%, var(--kk-surface))" : "var(--kk-surface)",
+        boxShadow: selected ? "0 4px 16px color-mix(in srgb, var(--kk-accent) 18%, transparent)" : "none",
+      }}
+    >
+      {/* Photo */}
+      <div className="relative w-full" style={{ paddingBottom: "56.25%", background: "var(--kk-line)" }}>
+        {coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={coverUrl} alt="Property" className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Home className="w-8 h-8" style={{ color: "var(--kk-ink-faint)" }} />
+          </div>
+        )}
+        {/* Selection badge */}
+        <div className="absolute top-3 right-3">
+          {selected
+            ? <CheckSquare className="w-6 h-6 drop-shadow" style={{ color: "var(--kk-accent)" }} />
+            : <Square className="w-6 h-6 drop-shadow" style={{ color: "#fff" }} />}
+        </div>
+      </div>
+
+      {/* Details */}
+      <div className="p-4">
+        <p className="text-[14px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
+          {lead.property_name ?? "—"}
+        </p>
+        {lead.unit && (
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+            Unit {lead.unit}
+          </p>
+        )}
+        <div className="flex items-center gap-3 mt-2">
+          {lead.bedrooms != null && (
+            <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+              <Bed className="w-3.5 h-3.5" /> {lead.bedrooms}
+            </span>
+          )}
+          {lead.bathrooms != null && (
+            <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+              <Bath className="w-3.5 h-3.5" /> {lead.bathrooms}
+            </span>
+          )}
+          {lead.expected_rent != null && (
+            <span className="text-[12px] font-semibold ml-auto" style={{ color: "var(--kk-ink)" }}>
+              RM {lead.expected_rent.toLocaleString()}/mo
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: PropertyPackLead[] }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+
+  function toggle(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  const filtered = leads.filter(l => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (l.property_name ?? "").toLowerCase().includes(q) ||
+      (l.unit ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const selectedLeads = leads.filter(l => selected.has(l.id));
+
+  function handleSend() {
+    if (!tenant.phone || selectedLeads.length === 0) return;
+    const phone = tenant.phone.replace(/\D/g, "").replace(/^0/, "60");
+    const msg = buildWaMessage(tenant, selectedLeads);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-6 lg:py-10">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-1">
+        <Link
+          href="/directory?view=tenants"
+          className="w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: "var(--kk-line)", color: "var(--kk-ink-mute)" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Link>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-ink-faint)" }}>
+            Property pack
+          </p>
+          <h1 className="text-[22px] font-bold leading-tight" style={{ color: "var(--kk-ink)" }}>
+            {tenant.name}
+          </h1>
+        </div>
+      </div>
+      <p className="text-[13px] mb-6 mt-1 ml-11" style={{ color: "var(--kk-ink-mute)" }}>
+        Select properties to send. Owner details are not included.
+      </p>
+
+      {/* Search */}
+      <div className="relative mb-5">
+        <input
+          type="text"
+          placeholder="Search by property or unit…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full text-[14px] px-4 py-2.5 rounded-2xl outline-none"
+          style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="py-16 text-center">
+          <p className="text-[14px]" style={{ color: "var(--kk-ink-faint)" }}>
+            {leads.length === 0 ? "No listed properties yet. Add listings in My Listing." : "No properties match your search."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-28">
+          {filtered.map(l => (
+            <PropertyCard
+              key={l.id}
+              lead={l}
+              selected={selected.has(l.id)}
+              onToggle={() => toggle(l.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Floating send bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 flex items-center justify-between gap-4 px-4 py-4"
+        style={{
+          background: "var(--kk-surface)",
+          borderTop: "1px solid var(--kk-line)",
+          zIndex: 40,
+        }}
+      >
+        <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+          {selected.size === 0
+            ? "Select at least 1 property"
+            : `${selected.size} propert${selected.size === 1 ? "y" : "ies"} selected`}
+        </p>
+        <button
+          onClick={handleSend}
+          disabled={selected.size === 0 || !tenant.phone}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold"
+          style={{
+            background: selected.size > 0 && tenant.phone ? "#25D366" : "var(--kk-line)",
+            color: selected.size > 0 && tenant.phone ? "#fff" : "var(--kk-ink-faint)",
+            transition: "background 0.15s ease",
+          }}
+        >
+          <Send className="w-4 h-4" />
+          {tenant.phone ? "Send via WhatsApp" : "No phone on file"}
+        </button>
+      </div>
+    </div>
+  );
+}

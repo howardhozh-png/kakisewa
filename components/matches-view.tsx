@@ -246,7 +246,7 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
 
           {/* Desktop table */}
           <div className="hidden lg:block kk-section overflow-hidden kk-scroll-fade">
-            <div className="overflow-x-auto">
+            <div style={{ maxHeight: "min(560px, calc(100vh - 340px))", overflowY: "auto", overflowX: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--kk-line-strong) transparent" }}>
             <table className="w-full border-collapse" style={{ minWidth: 680 }}>
               <colgroup>
                 <col style={{ width: "22%" }} />
