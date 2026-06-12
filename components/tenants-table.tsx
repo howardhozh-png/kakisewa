@@ -454,32 +454,7 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       <span className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{t.tenant_name}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_phone || "—"}</span>
-                        {t.tenant_phone && (
-                          <>
-                            <a
-                              href={`https://wa.me/${t.tenant_phone.replace(/\D/g, "").replace(/^0/, "60")}`}
-                              target="_blank" rel="noopener"
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-1 rounded-full shrink-0"
-                              style={{ color: "#25D366" }}
-                              aria-label="WhatsApp"
-                            >
-                              <WhatsAppIcon className="w-3.5 h-3.5" />
-                            </a>
-                            <a
-                              href={`tel:${t.tenant_phone}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-1 rounded-full shrink-0"
-                              style={{ color: "var(--kk-ink-mute)" }}
-                              aria-label="Call"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                            </a>
-                          </>
-                        )}
-                      </div>
+                      <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_phone || "—"}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
@@ -498,8 +473,32 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                     <td className="px-4 py-3">
                       <span className="text-[13px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                     </td>
-                    <td className="px-4 py-3">
-                      <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
+                    <td className="px-4 py-3 text-right">
+                      {t.tenant_phone ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <a
+                            href={`https://wa.me/${t.tenant_phone.replace(/\D/g, "").replace(/^0/, "60")}`}
+                            target="_blank" rel="noopener"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "#25D366", color: "#fff" }}
+                            aria-label="WhatsApp"
+                          >
+                            <WhatsAppIcon className="w-4 h-4" />
+                          </a>
+                          <a
+                            href={`tel:${t.tenant_phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                            aria-label="Call"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        </div>
+                      ) : (
+                        <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" style={{ color: "var(--kk-ink-mute)" }} />
+                      )}
                     </td>
                   </tr>
                 );
