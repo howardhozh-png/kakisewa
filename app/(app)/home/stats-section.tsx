@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { fetchExpandedStats } from "./actions";
 import type { ExpandedDashboardStats } from "@/lib/db";
 
@@ -151,9 +151,15 @@ export function StatsSection({ initialStats }: { initialStats: ExpandedDashboard
       ? Math.round((stats.totalContacted / stats.totalUploaded) * 100)
       : 0;
 
+  const respondedPct =
+    stats.totalUploaded > 0
+      ? Math.round((stats.totalResponded / stats.totalUploaded) * 100)
+      : 0;
+
   const isCustomActive = customInput.trim() !== "" && !QUICK_RANGES.includes(range as typeof QUICK_RANGES[number]);
   const activeQuick = isCustomActive ? "" : range;
   const periodLabel = `${range}m`;
+  const hasCustomValue = customInput.trim() !== "";
 
   return (
     <div
@@ -161,19 +167,19 @@ export function StatsSection({ initialStats }: { initialStats: ExpandedDashboard
       style={{ opacity: isPending ? 0.5 : 1, transition: "opacity 0.15s ease" }}
     >
       {/* Range filter */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {QUICK_RANGES.map((r) => (
           <button
             key={r}
             onClick={() => handleQuickRange(r)}
             style={{
-              padding: "6px 16px",
+              padding: "6px 18px",
               borderRadius: 999,
               fontSize: 13,
               fontWeight: 500,
               cursor: "pointer",
               border: "none",
-              background: activeQuick === r ? "var(--kk-ink)" : "var(--kk-line)",
+              background: activeQuick === r ? "var(--kk-accent)" : "var(--kk-line)",
               color: activeQuick === r ? "#fff" : "var(--kk-ink-mute)",
               transition: "background 0.15s ease, color 0.15s ease",
             }}
@@ -181,33 +187,61 @@ export function StatsSection({ initialStats }: { initialStats: ExpandedDashboard
             {r}m
           </button>
         ))}
-        {/* Custom months input */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+
+        {/* Custom months pill — input + confirm button in one capsule */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            borderRadius: 999,
+            overflow: "hidden",
+            border: `1px solid ${isCustomActive ? "var(--kk-accent)" : "var(--kk-line)"}`,
+            background: isCustomActive ? "var(--kk-accent)" : "transparent",
+            transition: "border-color 0.15s ease, background 0.15s ease",
+          }}
+        >
           <input
             ref={customRef}
             type="number"
+            inputMode="numeric"
             min={1}
             max={120}
             placeholder="—"
             value={customInput}
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleCustomCommit(); }}
-            onBlur={handleCustomCommit}
             style={{
-              width: 44,
-              padding: "6px 8px",
-              borderRadius: 999,
+              width: 52,
+              padding: "6px 0 6px 12px",
               fontSize: 13,
               fontWeight: 500,
-              border: "1px solid var(--kk-line)",
-              background: isCustomActive ? "var(--kk-ink)" : "transparent",
+              border: "none",
+              background: "transparent",
               color: isCustomActive ? "#fff" : "var(--kk-ink-mute)",
-              textAlign: "center",
               outline: "none",
-              appearance: "textfield",
-            }}
+              MozAppearance: "textfield",
+            } as React.CSSProperties}
           />
-          <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>m</span>
+          <span style={{ fontSize: 13, color: isCustomActive ? "rgba(255,255,255,0.7)" : "var(--kk-ink-faint)", paddingRight: hasCustomValue ? 0 : 12 }}>m</span>
+          {hasCustomValue && (
+            <button
+              onClick={handleCustomCommit}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 30,
+                height: "100%",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                color: isCustomActive ? "#fff" : "var(--kk-accent)",
+                padding: "0 8px 0 4px",
+              }}
+            >
+              <ArrowRight style={{ width: 14, height: 14 }} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -223,6 +257,11 @@ export function StatsSection({ initialStats }: { initialStats: ExpandedDashboard
               label: "Contacted",
               value: stats.totalContacted,
               sub: `${contactedPct}% of total`,
+            },
+            {
+              label: "Owner responded",
+              value: stats.totalResponded,
+              sub: `${respondedPct}% of total`,
             },
           ]}
         />

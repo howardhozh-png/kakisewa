@@ -2493,6 +2493,7 @@ export type ExpandedDashboardStats = {
   // Potential Pipeline (snapshot)
   totalUploaded: number;
   totalContacted: number;
+  totalResponded: number;
   // My Listing (snapshot)
   listedRentCount: number;
   listedRentAmount: number;
@@ -2535,6 +2536,7 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
   const [
     { count: totalUploaded },
     { count: totalContacted },
+    { count: totalResponded },
     { data: listedRent },
     { data: listedSale },
     { data: repliedRent },
@@ -2546,6 +2548,7 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
   ] = await Promise.all([
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false"),
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
+    ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
     olD().eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
     olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
@@ -2561,6 +2564,7 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
   return {
     totalUploaded: totalUploaded ?? 0,
     totalContacted: totalContacted ?? 0,
+    totalResponded: totalResponded ?? 0,
     listedRentCount: listedRent?.length ?? 0,
     listedRentAmount: sumExpectedRent(listedRent),
     listedSaleCount: listedSale?.length ?? 0,

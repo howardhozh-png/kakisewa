@@ -198,6 +198,9 @@ function ActiveState({
         >
           {firstName ? `${firstName}.` : "Your portfolio."}
         </h1>
+        <p className="text-[13px] mt-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+          Good job showing up today, this is your pipeline snapshot.
+        </p>
       </div>
 
       <StatsSection initialStats={expandedStats} />
