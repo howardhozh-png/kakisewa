@@ -46,8 +46,7 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
     const map = new Map<string, { count: number; potential: number; items: OwnerLead[] }>();
     months.forEach((m) => map.set(m.key, { count: 0, potential: 0, items: [] }));
     leads.forEach((l) => {
-      if (!l.available_from) return;
-      const key = l.available_from.slice(0, 7);
+      const key = l.available_from ? l.available_from.slice(0, 7) : todayKey;
       if (!map.has(key)) return;
       const cur = map.get(key)!;
       cur.count++;

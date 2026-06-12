@@ -1,20 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchExpandedStats } from "./actions";
 import type { ExpandedDashboardStats } from "@/lib/db";
 
-const RANGES = [
-  { value: "0",  label: "Today" },
-  { value: "3",  label: "3m" },
-  { value: "6",  label: "6m" },
-  { value: "12", label: "12m" },
-  { value: "24", label: "24m" },
-  { value: "36", label: "36m" },
-] as const;
+const QUICK_RANGES = ["3", "6", "12"] as const;
 
 // 4 shades of --kk-accent, darkest → lightest
 const SHADES = [
@@ -82,10 +74,13 @@ function Quadrant({
           gap: "0 16px",
         }}
       >
-        {stats.map((s) => (
+        {stats.map((s, i) => (
           <div
             key={s.label}
-            style={{ borderTop: "1px solid var(--kk-line)", paddingTop: 12 }}
+            style={{
+              borderTop: i >= cols ? "1px solid var(--kk-line)" : "none",
+              paddingTop: 12,
+            }}
           >
             <p
               className="whitespace-nowrap"
@@ -124,16 +119,31 @@ function Quadrant({
 }
 
 export function StatsSection({ initialStats }: { initialStats: ExpandedDashboardStats }) {
-  const [range, setRange] = useState("0");
+  const [range, setRange] = useState("3");
+  const [customInput, setCustomInput] = useState("");
   const [stats, setStats] = useState(initialStats);
   const [isPending, startTransition] = useTransition();
+  const customRef = useRef<HTMLInputElement>(null);
 
-  function handleRangeChange(val: string) {
+  function applyRange(val: string) {
+    const n = parseInt(val, 10);
+    if (!n || n < 1) return;
     setRange(val);
     startTransition(async () => {
-      const fresh = await fetchExpandedStats(parseInt(val, 10));
+      const fresh = await fetchExpandedStats(n);
       setStats(fresh);
     });
+  }
+
+  function handleQuickRange(val: string) {
+    setCustomInput("");
+    applyRange(val);
+  }
+
+  function handleCustomCommit() {
+    const trimmed = customInput.trim();
+    if (!trimmed) return;
+    applyRange(trimmed);
   }
 
   const contactedPct =
@@ -141,7 +151,9 @@ export function StatsSection({ initialStats }: { initialStats: ExpandedDashboard
       ? Math.round((stats.totalContacted / stats.totalUploaded) * 100)
       : 0;
 
-  const periodLabel = range === "0" ? "60d" : `${range}m`;
+  const isCustomActive = customInput.trim() !== "" && !QUICK_RANGES.includes(range as typeof QUICK_RANGES[number]);
+  const activeQuick = isCustomActive ? "" : range;
+  const periodLabel = `${range}m`;
 
   return (
     <div
@@ -149,15 +161,55 @@ export function StatsSection({ initialStats }: { initialStats: ExpandedDashboard
       style={{ opacity: isPending ? 0.5 : 1, transition: "opacity 0.15s ease" }}
     >
       {/* Range filter */}
-      <Tabs value={range} onValueChange={handleRangeChange}>
-        <TabsList className="w-full">
-          {RANGES.map((r) => (
-            <TabsTrigger key={r.value} value={r.value}>
-              {r.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="flex items-center gap-2">
+        {QUICK_RANGES.map((r) => (
+          <button
+            key={r}
+            onClick={() => handleQuickRange(r)}
+            style={{
+              padding: "6px 16px",
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+              border: "none",
+              background: activeQuick === r ? "var(--kk-ink)" : "var(--kk-line)",
+              color: activeQuick === r ? "#fff" : "var(--kk-ink-mute)",
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+          >
+            {r}m
+          </button>
+        ))}
+        {/* Custom months input */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <input
+            ref={customRef}
+            type="number"
+            min={1}
+            max={120}
+            placeholder="—"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleCustomCommit(); }}
+            onBlur={handleCustomCommit}
+            style={{
+              width: 44,
+              padding: "6px 8px",
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 500,
+              border: "1px solid var(--kk-line)",
+              background: isCustomActive ? "var(--kk-ink)" : "transparent",
+              color: isCustomActive ? "#fff" : "var(--kk-ink-mute)",
+              textAlign: "center",
+              outline: "none",
+              appearance: "textfield",
+            }}
+          />
+          <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>m</span>
+        </div>
+      </div>
 
       {/* 4-quadrant grid: 1 col mobile, 2 col desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

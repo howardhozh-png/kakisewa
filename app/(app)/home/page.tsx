@@ -211,7 +211,7 @@ export default async function HomePage() {
   const [agent, stats, expandedStats] = await Promise.all([
     getAgentProfile(),
     getHomeDashboardStats(),
-    getExpandedDashboardStats(0),
+    getExpandedDashboardStats(3),
   ]);
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
   const missingProfileFields = getMissingWhatsAppFields(agent);
