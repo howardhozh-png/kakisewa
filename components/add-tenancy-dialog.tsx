@@ -81,8 +81,15 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     const [y, m, d] = contractStart.split("-").map(Number);
     const months = parseInt(durationMonths, 10);
     if (!months) return "";
-    // Last day of the Nth month from start (day 0 = last day of prior month)
-    const end = new Date(y, m - 1 + months, 0);
+    let end: Date;
+    if (d === 1) {
+      // Starts on 1st: last day of the Nth month (e.g. June 1 + 12m = May 31 next year)
+      end = new Date(y, m - 1 + months, 0);
+    } else {
+      // Starts mid-month: anniversary date minus 1 day (e.g. June 17 + 12m = June 16 next year)
+      const anniversary = new Date(y, m - 1 + months, d);
+      end = new Date(anniversary.getTime() - 86400000);
+    }
     return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
   })();
 
@@ -286,7 +293,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                 {contractEnd && (
                   <p className="text-[12px] px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
                     Ends <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>
-                      {new Date(contractEnd).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
+                      {new Date(contractEnd + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </p>
                 )}

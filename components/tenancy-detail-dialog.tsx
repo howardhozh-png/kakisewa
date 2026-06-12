@@ -33,9 +33,14 @@ interface Props {
 }
 
 function computeEnd(start: string, months: number): string {
-  const [y, m] = start.split("-").map(Number);
-  // Last day of the Nth month from start (day 0 = last day of prior month)
-  const end = new Date(y, m - 1 + months, 0);
+  const [y, m, d] = start.split("-").map(Number);
+  let end: Date;
+  if (d === 1) {
+    end = new Date(y, m - 1 + months, 0);
+  } else {
+    const anniversary = new Date(y, m - 1 + months, d);
+    end = new Date(anniversary.getTime() - 86400000);
+  }
   return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 }
 
@@ -302,7 +307,7 @@ function TenancyForm({
               {(ownerPhone || tenancy.tenant_phone) ? (
                 <div className="flex items-center gap-0.5 mt-1">
                   <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
-                    +{ownerPhone || tenancy.tenant_phone}
+                    {ownerPhone || tenancy.tenant_phone}
                   </p>
                   <a href={`https://wa.me/${(ownerPhone || tenancy.tenant_phone || "").replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />

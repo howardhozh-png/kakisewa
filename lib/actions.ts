@@ -137,9 +137,11 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     const [y, m, d] = contractStart.split("-").map(Number);
     let end: Date;
     if (d === 1) {
-      // Starts on 1st: end = last day of the Nth month after start
-      // new Date(y, month, 0) gives last day of the previous month
-      end = new Date(y, m - 1 + durationMonths + 1, 0);
+      // Starts on 1st: end = last day of the Nth month from start
+      // e.g. June 1 + 12m → last day of month 17 (June 2027) = May 31... no:
+      // new Date(y, m-1+months, 0) → month index m-1+months, day 0 = last day of prior month
+      // June(m=6)+12: new Date(2026,17,0) = last day of month 16 = May 31, 2027 ✓
+      end = new Date(y, m - 1 + durationMonths, 0);
     } else {
       // Otherwise: end = anniversary date − 1 day
       const anniversary = new Date(y, m - 1 + durationMonths, d);

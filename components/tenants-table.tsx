@@ -6,8 +6,9 @@ import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import {
-  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2,
+  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2, Phone,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { format } from "date-fns";
 import { updateTenantProfileAction, removeTenantProfile } from "@/lib/actions";
 import { toast } from "sonner";
@@ -231,9 +232,28 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
           {t.tenant_phone && (
             <div className="flex items-center gap-2 rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
               <User className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-mute)" }} />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>Phone</p>
                 <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{t.tenant_phone}</p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={`https://wa.me/${t.tenant_phone.replace(/\D/g, "").replace(/^0/, "60")}`}
+                  target="_blank" rel="noopener"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: "var(--kk-surface-2)", color: "#25D366" }}
+                  aria-label="WhatsApp"
+                >
+                  <WhatsAppIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href={`tel:${t.tenant_phone}`}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                  aria-label="Call"
+                >
+                  <Phone className="w-4 h-4" />
+                </a>
               </div>
             </div>
           )}
@@ -434,7 +454,32 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       <span className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{t.tenant_name}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_phone || "—"}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>{t.tenant_phone || "—"}</span>
+                        {t.tenant_phone && (
+                          <>
+                            <a
+                              href={`https://wa.me/${t.tenant_phone.replace(/\D/g, "").replace(/^0/, "60")}`}
+                              target="_blank" rel="noopener"
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1 rounded-full shrink-0"
+                              style={{ color: "#25D366" }}
+                              aria-label="WhatsApp"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5" />
+                            </a>
+                            <a
+                              href={`tel:${t.tenant_phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1 rounded-full shrink-0"
+                              style={{ color: "var(--kk-ink-mute)" }}
+                              aria-label="Call"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                            </a>
+                          </>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"

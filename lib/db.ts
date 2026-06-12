@@ -259,7 +259,7 @@ const _cachedAllActiveTenants = unstable_cache(
       .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
       .eq("user_id", userId)
       .is("deleted_at", null)
-      .not("lifecycle_stage", "eq", "closed")
+      .or("lifecycle_stage.is.null,lifecycle_stage.neq.closed")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
