@@ -259,6 +259,9 @@ const _cachedAllActiveTenants = unstable_cache(
       .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
       .eq("user_id", userId)
       .is("deleted_at", null)
+      .not("tenant_name", "is", null)
+      .neq("tenant_name", "")
+      .not("tenant_name", "ilike", "unknown")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -287,7 +290,7 @@ const _cachedAllActiveTenants = unstable_cache(
       };
     });
   },
-  ["kk-active-tenants"],
+  ["kk-active-tenants-v2"],
   { tags: ["kk-tenancies", "kk-owner-leads"], revalidate: 60 }
 );
 
@@ -2200,6 +2203,9 @@ export async function getAllActiveTenants(): Promise<Array<{
   const { data, error } = await supabase
     .from("tenancies")
     .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
+    .not("tenant_name", "is", null)
+    .neq("tenant_name", "")
+    .not("tenant_name", "ilike", "unknown")
     .order("created_at", { ascending: false });
   if (error) throw error;
 
