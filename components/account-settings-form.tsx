@@ -607,13 +607,19 @@ function PushSetupSection() {
 
   if (pushGranted) {
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderRadius: 12, background: "color-mix(in srgb, #30D158 10%, transparent)", border: "1px solid color-mix(in srgb, #30D158 25%, transparent)" }}>
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#30D158", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 12, background: "color-mix(in srgb, #30D158 10%, transparent)", border: "1px solid color-mix(in srgb, #30D158 25%, transparent)" }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#30D158", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
           <Bell style={{ width: 13, height: 13, color: "#fff" }} />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>Push notifications active</p>
-          <p style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>This device will receive alerts for replies and renewals.</p>
+          <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", marginTop: 1 }}>This device will receive alerts for replies and renewals.</p>
+          <button
+            onClick={() => { localStorage.removeItem(LS_PUSH_KEY); setPushGranted(false); }}
+            style={{ marginTop: 6, fontSize: 11, color: "var(--kk-ink-faint)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+          >
+            Not receiving notifications? Re-subscribe on this device
+          </button>
         </div>
       </div>
     );
