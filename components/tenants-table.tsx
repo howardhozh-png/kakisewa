@@ -433,8 +433,32 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                         {p.preferred_move_in ?? "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--kk-ink-mute)" }} />
+                    <td className="px-4 py-3 text-right">
+                      {p.phone ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <a
+                            href={`https://wa.me/${p.phone.replace(/\D/g, "").replace(/^0/, "60")}`}
+                            target="_blank" rel="noopener"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "#25D366", color: "#fff" }}
+                            aria-label="WhatsApp"
+                          >
+                            <WhatsAppIcon className="w-4 h-4" />
+                          </a>
+                          <a
+                            href={`tel:${p.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                            aria-label="Call"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        </div>
+                      ) : (
+                        <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" style={{ color: "var(--kk-ink-mute)" }} />
+                      )}
                     </td>
                   </tr>
                 );

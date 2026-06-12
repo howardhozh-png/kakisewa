@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
-import { Megaphone, XCircle, Archive, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
+import { Megaphone, XCircle, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
 import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
@@ -39,10 +39,6 @@ const COLUMNS: ColMeta[] = [
   { stage: "matched",  label: "Rented",     hint: "Well done, proud of you!",                                         ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Check     },
 ];
 
-// Terminal stages — hidden by default
-const TERMINAL_COLUMNS: ColMeta[] = [
-  { stage: "archived",   label: "Archived",      hint: "Out of pipeline. No further action.",       ink: "var(--kk-ink-faint)", soft: "var(--kk-surface-2)", dot: "#6E6E73", Icon: Archive },
-];
 
 interface Props {
   leads: OwnerLead[];
@@ -68,7 +64,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [purposeFilter, setPurposeFilter] = useState<"" | "rent" | "sell">("");
   const [monthFilter, setMonthFilter] = useState<string>("");
   const [ownerRespondedFilter, setOwnerRespondedFilter] = useState(false);
-  const [showTerminal, setShowTerminal] = useState(false);
 
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
@@ -276,17 +271,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
             <XIcon className="w-3 h-3" /> Clear
           </button>
         )}
-        <button
-          onClick={() => setShowTerminal((v) => !v)}
-          className="text-[13px] px-4 py-1.5 rounded-full font-medium flex items-center gap-1.5 shrink-0"
-          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
-          title="Show or hide archived leads"
-        >
-          {showTerminal ? "Hide archived" : "Show archived"}
-          <span className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-faint)" }}>
-            {byStage.archived.length}
-          </span>
-        </button>
         <span className="ml-auto shrink-0 text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
           {filtered.length} of {local.length} leads
         </span>
@@ -306,17 +290,9 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         <div className="kk-board-shell -mx-3 lg:-mx-5">
           <div className="kk-board-row px-3 lg:px-5">
           {(() => {
-            // Base columns always fill the viewport evenly; terminal columns stay 340px fixed
-            const visibleCols = [...COLUMNS, ...(showTerminal ? TERMINAL_COLUMNS : [])];
-            const isTerminalCol = (col: ColMeta) => TERMINAL_COLUMNS.some((tc) => tc.stage === col.stage);
-
-            return visibleCols.map((col) => {
-              // Responded column is 2× wider — it's the focus of daily work.
-              // Terminal cols use fixed width so the board scrolls when shown.
-              const colFlex: React.CSSProperties = showTerminal
-                ? { width: "calc((min(100vw, 1440px) - 64px) / 3)", flexShrink: 0 }
-                : isTerminalCol(col) ? {}
-                : col.stage === "listed" ? { flex: 2, minWidth: 380 }
+            return COLUMNS.map((col) => {
+              const colFlex: React.CSSProperties = col.stage === "listed"
+                ? { flex: 2, minWidth: 380 }
                 : { flex: 1, minWidth: 280 };
               const cards = byStage[col.stage];
               const columnContent = cards.length === 0 ? (
@@ -685,14 +661,6 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
       });
     }
 
-    function handleArchive() {
-      startTransition(async () => {
-        await setOwnerLeadStage(l.id, "archived");
-        router.refresh();
-        toast.success("Archived.");
-      });
-    }
-
     if (l.intake_completed_at) {
       return (
         <>
@@ -742,17 +710,6 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
             </span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           </button>
-          {count >= 2 && (
-            <button
-              type="button" data-card-action
-              onClick={(e) => { e.stopPropagation(); handleArchive(); }}
-              disabled={pending}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium w-full justify-center transition-opacity hover:opacity-70"
-              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}
-            >
-              <Archive className="w-3 h-3" /> Archive — no response
-            </button>
-          )}
         </div>
         <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
       </>
@@ -828,12 +785,7 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
       </button>
     );
   }
-  return (
-    <span className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-faint)" }}>
-      <Archive className="w-3.5 h-3.5" />
-      No action
-    </span>
-  );
+  return null;
 }
 
 // ─── Outreach count badge ──────────────────────────────────────────────────────
