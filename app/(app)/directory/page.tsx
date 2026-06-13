@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { TenantProfile } from "@/lib/types";
-import { getListedOwnerLeads, getCompetitorLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports, getAgentProfile } from "@/lib/db";
+import { getListedOwnerLeads, getCompetitorLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getLifecycleTenancies, getPropertySupports, getAgentProfile } from "@/lib/db";
 import { effectivePlan, planAllows } from "@/lib/plan-caps";
 import { FeatureLockedState } from "@/components/feature-locked-state";
 import { headers } from "next/headers";
@@ -41,11 +41,12 @@ export default async function NetworkPage({ searchParams }: Props) {
   const { view: rawView } = await searchParams;
   const view = rawView === "properties" ? "properties" : rawView === "tenants" ? "tenants" : "contacts";
 
-  const [listed, targetLeads, tenantProfiles, activeTenants, supports] = await Promise.all([
+  const [listed, targetLeads, tenantProfiles, activeTenants, lifecycleTenancies, supports] = await Promise.all([
     getListedOwnerLeads().catch(() => [] as Awaited<ReturnType<typeof getListedOwnerLeads>>),
     getCompetitorLeads().catch(() => [] as Awaited<ReturnType<typeof getCompetitorLeads>>),
     getAllTenantProfiles().catch(() => [] as Awaited<ReturnType<typeof getAllTenantProfiles>>),
     getAllActiveTenants().catch(() => [] as Awaited<ReturnType<typeof getAllActiveTenants>>),
+    getLifecycleTenancies().catch(() => [] as Awaited<ReturnType<typeof getLifecycleTenancies>>),
     getPropertySupports().catch(() => [] as Awaited<ReturnType<typeof getPropertySupports>>),
   ]);
 
@@ -53,11 +54,24 @@ export default async function NetworkPage({ searchParams }: Props) {
   const listedIds = new Set(listed.map(l => l.id));
   const allListed = [...listed, ...targetLeads.filter(l => !listedIds.has(l.id))];
 
-  // Split tenants: active (still renting) vs former (closed/ended tenancies)
+  // Split tenants: active (still renting) vs former (closed/ended tenancies) — used for Tenants tab
   const currentTenants = activeTenants.filter(t => t.lifecycle_stage !== "closed");
   const formerTenants  = activeTenants.filter(t => t.lifecycle_stage === "closed");
 
-  const allPropertiesCount = allListed.filter(l => l.stage === "listed" || l.is_competitor_target).length + currentTenants.length;
+  // All Properties tab: use full lifecycle tenancy list (460 non-closed for Silver)
+  const existingForDirectory = lifecycleTenancies
+    .filter(t => t.lifecycle_stage !== "closed")
+    .map(t => ({
+      tenancy_id:     t.id,
+      tenant_name:    t.tenant_name ?? "",
+      tenant_phone:   t.tenant_phone ?? null,
+      property_name:  t.property_name ?? null,
+      unit:           t.property?.unit ?? null,
+      amount:         (t.amount ?? null) as number | null,
+      lifecycle_stage: t.lifecycle_stage ?? null,
+    }));
+
+  const allPropertiesCount = allListed.length + existingForDirectory.length;
 
   const matchedIds = allListed.filter(l => l.stage === "matched").map(l => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedIds);
@@ -133,7 +147,7 @@ export default async function NetworkPage({ searchParams }: Props) {
       </Suspense>
 
       {view === "properties" && (
-        <MatchesView listed={allListed} tenantsByLeadId={tenantsByLeadId} activeTenants={activeTenants} />
+        <MatchesView listed={allListed} tenantsByLeadId={tenantsByLeadId} activeTenants={existingForDirectory} />
       )}
       {view === "tenants" && (
         <TenantsTable profiles={availableTenantProfiles} propertyTenants={propertyTenants} />

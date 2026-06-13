@@ -889,7 +889,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           const s = getStatus(l);
           if (filter === "unsent")         { if (s !== "unsent")    return false; }
           else if (filter === "contacted") { if (s !== "contacted") return false; }
-          if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter) return false;
+          if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
           if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
           if (searchLower) {
             const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
