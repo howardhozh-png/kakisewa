@@ -2040,3 +2040,25 @@ export async function saveTenantPropertyRanking(
   }
 }
 
+export async function lostContractAction(
+  tenancyId: string,
+  ownerLeadId: string | null,
+  competitorContractEnd: string | null
+): Promise<{ ok: boolean; message?: string }> {
+  "use server";
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const svc = createServiceClient();
+  const { error } = await svc
+    .from("tenancies")
+    .update({ lifecycle_stage: "closed", closed_reason: "lost_to_competitor" })
+    .eq("id", tenancyId);
+  if (error) return { ok: false, message: error.message };
+  if (ownerLeadId && competitorContractEnd) {
+    await markCompetitorRented(ownerLeadId, competitorContractEnd);
+  }
+  invalidateCache();
+  revalidatePath("/existing-listing");
+  revalidatePath("/target-listing");
+  return { ok: true };
+}
+

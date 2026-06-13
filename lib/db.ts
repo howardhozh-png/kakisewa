@@ -129,7 +129,6 @@ const _cachedTenancies = unstable_cache(
 
 const _cachedLifecycleTenancies = unstable_cache(
   async (userId: string): Promise<Tenancy[]> => {
-    const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
     const svc = createServiceClient();
     // PostgREST max_rows=1000; paginate in case user has many tenancies
     const PAGE = 1000;
@@ -142,7 +141,7 @@ const _cachedLifecycleTenancies = unstable_cache(
         .eq("user_id", userId)
         .is("deleted_at", null)
         .not("contract_end", "is", null)
-        .gte("contract_end", earliest)
+        .neq("lifecycle_stage", "closed")
         .order("contract_end", { ascending: true })
         .order("id", { ascending: true })
         .range(from, from + PAGE - 1);

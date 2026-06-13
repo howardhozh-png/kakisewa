@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
-import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant } from "@/lib/actions";
+import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
 import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
@@ -19,7 +19,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 interface ColMeta {
-  stage: LifecycleStage;
+  stage: LifecycleStage | "expired";
   label: string;
   hint: string;
   dot: string;
@@ -27,6 +27,16 @@ interface ColMeta {
   ink: string;
   Icon: React.ComponentType<{ className?: string }>;
 }
+
+const EXPIRED_COL: ColMeta = {
+  stage: "expired",
+  label: "Expired",
+  hint: "Contract ended with no action. Choose what happened next.",
+  dot: "#C62828",
+  soft: "#FEF2F2",
+  ink: "#C62828",
+  Icon: AlertTriangle,
+};
 
 const COLUMNS: ColMeta[] = [
   { stage: "headsup",  label: "Expiring",  hint: "Expires soon. Use 'What's next?' on the card to choose the outcome.", dot: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", ink: "var(--kk-theme-dark)", Icon: AlertTriangle },
@@ -55,6 +65,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [commissionTenancy, setCommissionTenancy] = useState<Tenancy | null>(null);
   const [tenantLeavingTenancy, setTenantLeavingTenancy] = useState<Tenancy | null>(null);
   const [ownerLeavingTenancy, setOwnerLeavingTenancy] = useState<Tenancy | null>(null);
+  const [lostTenancy, setLostTenancy] = useState<Tenancy | null>(null);
   const [pendingMove, setPendingMove] = useState<{ t: Tenancy; target: LifecycleStage } | null>(null);
   const [capBlocked, setCapBlocked] = useState(false);
 
@@ -147,6 +158,13 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     return out;
   }, [local, today, search, propertyFilter, monthFilter]);
 
+  // Cards where the contract end date has already passed — split off from the headsup bucket
+  const expiredCards = useMemo(
+    () => byStage.headsup.filter((t) => t.contract_end && daysUntil(t.contract_end, today) < 0),
+    [byStage.headsup, today]
+  );
+  const expiredIds = useMemo(() => new Set(expiredCards.map((t) => t.id)), [expiredCards]);
+
   function checkPlanCap(targetStage: LifecycleStage): boolean {
     if (!isFinite(planCap)) return false;
     const activeStages: LifecycleStage[] = ["active", "headsup", "renewing", "pinged", "stalled", "pending_payment"];
@@ -159,7 +177,9 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     setDraggingTenancy(null);
     if (!e.over) return;
     const id = String(e.active.id);
-    const target = String(e.over.id) as LifecycleStage;
+    const rawTarget = String(e.over.id);
+    if (rawTarget === "expired") return; // expired column is not a drop target
+    const target = rawTarget as LifecycleStage;
     const t = local.find((x) => x.id === id);
     if (!t) return;
     const from = defaultLifecycleStage(t, today);
@@ -250,8 +270,32 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
 
         <div className="kk-board-shell -mx-3 lg:-mx-5">
           <div className="kk-board-row px-3 lg:px-5">
+            {/* Expired column — cards past contract end with no action */}
+            {expiredCards.length > 0 && (
+              <Column col={EXPIRED_COL} count={expiredCards.length} extraStyle={{ flex: 1, minWidth: 300 }}>
+                {expiredCards.map((t) => (
+                  <Card
+                    key={t.id}
+                    t={t}
+                    col={EXPIRED_COL}
+                    today={today}
+                    plan={plan}
+                    isDragging={draggingId === t.id}
+                    onOpen={() => setOpenTenancy(t)}
+                    onShowCommission={() => setCommissionTenancy(t)}
+                    onShowTenantLeaving={() => setTenantLeavingTenancy(t)}
+                    onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
+                    onShowLostContract={() => setLostTenancy(t)}
+                    onMoveToStage={handleMoveToStage}
+                  />
+                ))}
+              </Column>
+            )}
+
             {COLUMNS.map((col) => {
-              const cards = byStage[col.stage];
+              const cards = col.stage === "headsup"
+                ? byStage.headsup.filter((t) => !expiredIds.has(t.id))
+                : byStage[col.stage as LifecycleStage];
               const columnContent = cards.length === 0 ? (
                 <EmptyDrop col={col} />
               ) : (
@@ -267,6 +311,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
                     onShowCommission={() => setCommissionTenancy(t)}
                     onShowTenantLeaving={() => setTenantLeavingTenancy(t)}
                     onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
+                    onShowLostContract={() => setLostTenancy(t)}
                     onMoveToStage={handleMoveToStage}
                   />
                 ))
@@ -332,6 +377,13 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
           t={ownerLeavingTenancy}
           open={!!ownerLeavingTenancy}
           onClose={() => { setOwnerLeavingTenancy(null); router.refresh(); }}
+        />
+      )}
+      {lostTenancy && (
+        <LostContractDialog
+          t={lostTenancy}
+          open={!!lostTenancy}
+          onClose={() => { setLostTenancy(null); router.refresh(); }}
         />
       )}
 
@@ -436,6 +488,7 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
   const { setNodeRef, isOver } = useDroppable({ id: col.stage });
   const Icon = col.Icon;
   const isHeadsup = col.stage === "headsup";
+  const isExpired = col.stage === "expired";
   return (
     <div
       ref={setNodeRef}
@@ -446,18 +499,24 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
           ? col.soft
           : isHeadsup
             ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, var(--kk-theme-dark) 18%, transparent) 0%, color-mix(in srgb, var(--kk-theme-dark) 8%, transparent) 40%, var(--kk-surface) 68%)"
-            : "var(--kk-surface)",
+            : isExpired
+              ? "radial-gradient(ellipse 110% 70% at 50% 25%, color-mix(in srgb, #C62828 10%, transparent) 0%, color-mix(in srgb, #C62828 4%, transparent) 40%, var(--kk-surface) 68%)"
+              : "var(--kk-surface)",
         outline: isOver
           ? `2px solid ${col.ink}`
           : isHeadsup
             ? "1px solid color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)"
-            : "1px solid transparent",
+            : isExpired
+              ? "1px solid color-mix(in srgb, #C62828 25%, transparent)"
+              : "1px solid transparent",
         outlineOffset: "-1px",
         boxShadow: isOver
           ? undefined
           : isHeadsup
             ? "0 0 0 1px color-mix(in srgb, var(--kk-theme-dark) 22%, transparent), 0 0 14px 5px color-mix(in srgb, var(--kk-theme-dark) 15%, transparent)"
-            : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+            : isExpired
+              ? "0 0 0 1px color-mix(in srgb, #C62828 18%, transparent), 0 0 14px 5px color-mix(in srgb, #C62828 10%, transparent)"
+              : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
         ...extraStyle,
       }}
     >
@@ -466,6 +525,7 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         style={{
           borderBottomColor: col.soft,
           ...(isHeadsup ? { background: "color-mix(in srgb, var(--kk-theme-dark) 8%, var(--kk-surface))" } : {}),
+          ...(isExpired ? { background: "color-mix(in srgb, #C62828 7%, var(--kk-surface))" } : {}),
         }}
       >
         <div className="flex items-center gap-2">
@@ -500,19 +560,22 @@ function EmptyDrop({ col }: { col: ColMeta }) {
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
-function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onMoveToStage }: {
+function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onShowLostContract, onMoveToStage }: {
   t: Tenancy; col: ColMeta; today: Date; plan: string; isDragging: boolean;
   onOpen: () => void;
   onShowCommission: () => void;
   onShowTenantLeaving: () => void;
   onShowOwnerLeaving: () => void;
+  onShowLostContract: () => void;
   onMoveToStage: (id: string, stage: LifecycleStage) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: t.id });
+  const isHeadsupLike = col.stage === "headsup" || col.stage === "expired";
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
-  if (col.stage === "headsup" && !isDragging) {
-    cardStyle.boxShadow = "0 4px 14px color-mix(in srgb, var(--kk-theme-dark) 14%, transparent), 0 1px 4px rgba(0,0,0,0.06)";
+  if (isHeadsupLike && !isDragging) {
+    const shadowColor = col.stage === "expired" ? "#C62828" : "var(--kk-theme-dark)";
+    cardStyle.boxShadow = `0 4px 14px color-mix(in srgb, ${shadowColor} 14%, transparent), 0 1px 4px rgba(0,0,0,0.06)`;
   }
 
   const days = t.contract_end ? daysUntil(t.contract_end, today) : 0;
@@ -598,10 +661,10 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
 
       {/* Actions */}
       {plan !== "silver" && <RentReminderAction t={t} today={today} />}
-      {col.stage !== "headsup" && (
-        <ColumnAction t={t} stage={col.stage} today={today} onShowCommission={onShowCommission} />
+      {!isHeadsupLike && (
+        <ColumnAction t={t} stage={col.stage as LifecycleStage} today={today} onShowCommission={onShowCommission} />
       )}
-      {col.stage === "headsup" && (
+      {isHeadsupLike && (
         <>
           <HeadsupTenantAction t={t} />
           <HeadsupOwnerAction t={t} />
@@ -611,6 +674,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
             onShowTenantLeaving={onShowTenantLeaving}
             onShowOwnerLeaving={onShowOwnerLeaving}
             onShowCommission={onShowCommission}
+            onShowLostContract={onShowLostContract}
           />
         </>
       )}
@@ -799,7 +863,7 @@ function ColumnAction({ t, stage, today, onShowCommission }: {
 
 // ─── "What's next?" dropdown + confirmation dialog for Expiring cards ────────
 
-type OutcomeChoice = "" | "renew" | "replace" | "stop";
+type OutcomeChoice = "" | "renew" | "replace" | "stop" | "lost";
 
 const OUTCOME_META: Record<Exclude<OutcomeChoice, "">, {
   label: string;
@@ -832,6 +896,14 @@ const OUTCOME_META: Record<Exclude<OutcomeChoice, "">, {
     soft: "var(--kk-surface-2)",
     ink: "var(--kk-ink-mute)",
     Icon: Lock,
+  },
+  lost: {
+    label: "Lost contract",
+    description: "Another agent took over this unit. This will close the tenancy and move the property to Target Listing so you can track and win it back.",
+    confirm: "Move to Target Listing",
+    soft: "#FEF2F2",
+    ink: "#C62828",
+    Icon: ShieldAlert,
   },
 };
 
@@ -901,12 +973,13 @@ function HeadsupOwnerAction({ t }: { t: Tenancy }) {
   );
 }
 
-function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving }: {
+function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, onShowLostContract }: {
   t: Tenancy;
   onMoveToStage: (id: string, stage: LifecycleStage) => void;
   onShowTenantLeaving: () => void;
   onShowOwnerLeaving: () => void;
   onShowCommission: () => void;
+  onShowLostContract: () => void;
 }) {
   const [choice, setChoice] = useState<OutcomeChoice>("");
   const [confirming, setConfirming] = useState(false);
@@ -925,7 +998,11 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving }
   function onSelectChange(val: OutcomeChoice) {
     setDropdownOpen(false);
     setChoice(val);
-    if (val) setConfirming(true);
+    if (val === "lost") {
+      onShowLostContract(); // go directly to the lost contract dialog (no intermediate confirm)
+    } else if (val) {
+      setConfirming(true);
+    }
   }
 
   function handleConfirm() {
@@ -934,6 +1011,7 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving }
     if (choice === "renew")   onMoveToStage(t.id, "renewing");
     if (choice === "replace") onShowTenantLeaving();
     if (choice === "stop")    onShowOwnerLeaving();
+    if (choice === "lost")    onShowLostContract();
   }
 
   const meta = choice ? OUTCOME_META[choice] : null;
@@ -977,13 +1055,13 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving }
                 className="absolute left-0 top-full mt-1 z-50 rounded-xl overflow-hidden"
                 style={{ background: "#fff", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160 }}
               >
-                {(["renew", "replace", "stop"] as const).map((val) => (
+                {(["renew", "replace", "stop", "lost"] as const).map((val) => (
                   <button
                     key={val}
                     type="button"
                     onClick={() => onSelectChange(val)}
                     className="w-full text-left px-3 py-2 text-[12px] hover:bg-[var(--kk-surface-2)] transition-colors"
-                    style={{ color: "var(--kk-ink)" }}
+                    style={{ color: val === "lost" ? "#C62828" : "var(--kk-ink)" }}
                   >
                     {OUTCOME_META[val].label}
                   </button>
@@ -1049,6 +1127,89 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving }
         </Dialog>
       )}
     </>
+  );
+}
+
+// ─── Lost contract dialog ─────────────────────────────────────────────────────
+
+function LostContractDialog({ t, open, onClose }: { t: Tenancy; open: boolean; onClose: () => void }) {
+  const [competitorEnd, setCompetitorEnd] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  function handleConfirm(e: React.MouseEvent) {
+    e.stopPropagation();
+    startTransition(async () => {
+      const res = await lostContractAction(t.id, t.owner_lead_id ?? null, competitorEnd || null);
+      if (res.ok) {
+        onClose();
+      } else {
+        toast.error(res.message ?? "Something went wrong");
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !pending) onClose(); }}>
+      <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col gap-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
+                <ShieldAlert className="w-4 h-4" style={{ color: "#C62828" }} />
+              </div>
+              <div>
+                <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Lost contract</p>
+                <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{t.property?.owner_name} · {t.property_name?.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim()}</p>
+              </div>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
+              <span style={{ fontSize: 14 }}>✕</span>
+            </button>
+          </div>
+
+          <div className="rounded-xl p-4" style={{ background: "#FEF2F2" }}>
+            <p className="text-[13px] leading-relaxed" style={{ color: "#C62828" }}>
+              Another agent took over this unit. The tenancy will be closed and the property will move to Target Listing so you can track it and win it back.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+              Competitor contract end date <span style={{ color: "var(--kk-ink-faint)" }}>(optional)</span>
+            </p>
+            <input
+              type="date"
+              value={competitorEnd}
+              onChange={(e) => setCompetitorEnd(e.target.value)}
+              className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            />
+            <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
+              Used to track when you can approach the owner again.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              disabled={pending}
+              className="flex-1 kk-pill kk-pill-ghost text-[13px] py-2"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={pending}
+              className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
+              style={{ background: "#C62828", color: "#fff", opacity: pending ? 0.7 : 1 }}
+            >
+              {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              Move to Target Listing
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
