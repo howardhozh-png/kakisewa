@@ -167,6 +167,10 @@ export interface AgentProfile {
   trial_ends_at?: string | null;
   subscription_status?: SubscriptionStatus | null;
   subscription_plan?: "silver" | "gold" | "platinum" | "elite" | null;
+  subscription_interval?: "monthly" | "annual" | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  stripe_price_id?: string | null;
   trial_downgrade_archived_count?: number | null;
   profile_strengths?: ProfileStrengthItem[] | null;
   profile_verbatim?: ProfileVerbatimItem[] | null;

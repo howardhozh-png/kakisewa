@@ -335,9 +335,21 @@ const _cachedManagedLeads = unstable_cache(
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
 
-export async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
+export async function sendWelcomeEmail(email: string, firstName: string, isBeta = false): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
+
+  const subject = isBeta
+    ? `You're in — exclusive beta access`
+    : `You're in — 2-month free trial started`;
+
+  const heroCopy = isBeta
+    ? `You have been invited to kakisewa's exclusive beta program. Enjoy full Elite access for 6 months, completely free. Your feedback helps shape the product for Malaysian rental agents.`
+    : `Your 2-month free trial is live. kakisewa is built for Malaysian rental agents — track tenancies, send tenant packs, and never miss a renewal.`;
+
+  const badgeLabel = isBeta ? "BETA ACCESS" : "TRIAL ACTIVE";
+  const badgeSub = isBeta ? "6 months free · Elite plan" : "61 days free · No card needed yet";
+
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -345,7 +357,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
       from: "kakisewa <support@kakisewa.com>",
       to: [email],
       bcc: ["howardhozh@gmail.com"],
-      subject: "You're in — 14-day trial started",
+      subject,
       html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#F2F2F7;">
@@ -360,9 +372,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
     <!-- Body -->
     <div style="padding:28px 32px 32px;">
       <h1 style="font-size:24px;font-weight:700;color:#1C1C1E;letter-spacing:-0.02em;margin:0 0 10px;">Hey ${firstName}, you're in.</h1>
-      <p style="font-size:14px;color:#48484A;line-height:1.65;margin:0 0 24px;">
-        Your 14-day free trial is live. KakiSewa is built for Malaysian rental agents — track tenancies, send tenant packs, and never miss a renewal.
-      </p>
+      <p style="font-size:14px;color:#48484A;line-height:1.65;margin:0 0 24px;">${heroCopy}</p>
 
       <!-- Steps -->
       <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">
@@ -392,8 +402,8 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
 
       <!-- Trial badge -->
       <div style="margin-top:20px;padding:11px 16px;border-radius:10px;border:1px solid #E5E5EA;display:inline-block;">
-        <span style="font-family:'Courier New',monospace;font-size:11px;color:#34C759;font-weight:700;">TRIAL ACTIVE</span>
-        <span style="font-size:12px;color:#8E8E93;margin-left:8px;">14 days free · No card needed yet</span>
+        <span style="font-family:'Courier New',monospace;font-size:11px;color:#34C759;font-weight:700;">${badgeLabel}</span>
+        <span style="font-size:12px;color:#8E8E93;margin-left:8px;">${badgeSub}</span>
       </div>
     </div>
 
@@ -896,9 +906,9 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   if (!row) {
     // First login — seed profile from user_metadata and start trial
     const meta = user.user_metadata ?? {};
-    const { BETA_DURATION_DAYS } = await import("./beta-config");
+    const { TRIAL_DURATION_DAYS } = await import("./beta-config");
     const trialStart = new Date().toISOString();
-    const trialEnd = new Date(Date.now() + BETA_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const trialEnd = new Date(Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const renRaw = (meta.ren_number as string | null) ?? null;
     const renNumber = renRaw ? renRaw.toUpperCase().replace(/^REN\s*/i, "REN").trim() : null;
     await supabase.from("agent_profiles").upsert({
@@ -909,7 +919,7 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       ren_number: renNumber,
       trial_started_at: trialStart,
       trial_ends_at: trialEnd,
-      subscription_status: "beta",
+      subscription_status: "trial",
       referral_slug: (meta.referral_slug as string | null) ?? null,
     });
     // Stamp invite as used (fire-and-forget)

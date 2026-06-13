@@ -28,7 +28,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "What is the trial period?",
-        a: "New accounts get a free trial so you can explore all features before subscribing. You will see a countdown banner at the top of the app when your trial is near expiry. Go to Subscription to choose a plan before the trial ends.",
+        a: "New accounts get a 2-month free trial (61 days) with full Elite plan access — no card required. You will see a banner when your trial is near expiry. To keep access after the trial, go to Subscription and save your card. You can cancel before the trial ends at no charge.",
       },
     ],
   },

@@ -4,6 +4,7 @@ import { GreetingBar } from "@/components/greeting-bar";
 import { AccentProvider } from "@/components/accent-provider";
 import { OnboardingDemoDialog } from "@/components/onboarding-demo-dialog";
 import { TrialBanner } from "@/components/trial-banner";
+import { TrialCardNudge } from "@/components/trial-card-nudge";
 import { TrialGate } from "@/components/trial-gate";
 import { BetaFrozenGate } from "@/components/beta-frozen-gate";
 import { TrialDowngradeNotice } from "@/components/trial-downgrade-notice";
@@ -44,6 +45,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
   const showTrialBanner = !isTrialExpired && !isBetaFrozen && (status === "beta" || status === "trial") && trialDaysLeft !== null && trialDaysLeft <= 7;
+  // Show card nudge 8-30 days before trial ends (distinct from the urgent 7-day banner)
+  const showCardNudge = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft > 7 && trialDaysLeft <= 30 && !agent.stripe_subscription_id;
   const trialStartedAt = trialStart ?? null;
   const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 0;
   const isNewAgent = status === "beta" || status === "trial" || daysSinceSignup <= 14;
@@ -76,6 +79,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Top bar — sticky, extends left to cover sidebar rail */}
         <div className="kk-top-bar sticky top-0 z-50">
+          {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} />}
           {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={status === "beta"} />}
           <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs />
           <PwaInstallBanner />

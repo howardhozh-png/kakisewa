@@ -117,7 +117,7 @@ function AnimatedPrice({ value, ink }: { value: number; ink: string }) {
 // ── 3D card ────────────────────────────────────────────────────────────────────
 
 function PricingCard({
-  plan, interval, isCurrentPlan, isSelected, onCardClick, onSelect,
+  plan, interval, isCurrentPlan, isSelected, onCardClick, onSelect, isOnTrial,
 }: {
   plan: typeof PLANS[number];
   interval: "monthly" | "annual";
@@ -125,6 +125,7 @@ function PricingCard({
   isSelected: boolean;
   onCardClick: () => void;
   onSelect: () => void;
+  isOnTrial?: boolean;
 }) {
   const s = TIER_STYLES[plan.name];
   const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
@@ -223,7 +224,9 @@ function PricingCard({
             onMouseEnter={e => (e.currentTarget.style.transform = "translate(-1px,-1px)")}
             onMouseLeave={e => (e.currentTarget.style.transform = "translate(0,0)")}
           >
-            {interval === "annual"
+            {isOnTrial
+              ? "Save card — free until trial ends"
+              : interval === "annual"
               ? `Pay RM ${plan.annualTotal.toLocaleString()}/year`
               : `Pay RM ${plan.monthly}/month`}
           </button>
@@ -241,9 +244,11 @@ interface ConfirmProps {
   onCancel: () => void;
   onConfirm: () => void;
   loading: boolean;
+  isOnTrial?: boolean;
+  trialDaysLeft?: number | null;
 }
 
-function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: ConfirmProps) {
+function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading, isOnTrial, trialDaysLeft }: ConfirmProps) {
   const s = TIER_STYLES[plan.name];
   const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
 
@@ -280,9 +285,20 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
           )}
         </div>
         <div className="px-6 pt-4 pb-5 space-y-4">
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--kk-ink-faint)" }}>
-            You&apos;ll be redirected to Stripe to complete payment securely. Subscription activates immediately after payment.
-          </p>
+          {isOnTrial && trialDaysLeft && trialDaysLeft > 0 ? (
+            <div className="rounded-xl p-3" style={{ background: "var(--kk-green-soft, #f0fdf4)", border: "1px solid var(--kk-green, #34C759)" }}>
+              <p className="text-[11px] font-semibold mb-1" style={{ color: "var(--kk-green-ink, #1F8B4C)" }}>
+                No charge today
+              </p>
+              <p className="text-[11px] leading-relaxed" style={{ color: "var(--kk-green-ink, #1F8B4C)" }}>
+                Your card is saved securely. You will only be charged after your {trialDaysLeft}-day trial ends. Cancel anytime before then at no cost.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[11px] leading-relaxed" style={{ color: "var(--kk-ink-faint)" }}>
+              You&apos;ll be redirected to Stripe to complete payment securely. Subscription activates immediately after payment.
+            </p>
+          )}
           <div className="flex gap-2">
             <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-opacity hover:opacity-70"
               style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
@@ -292,7 +308,7 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading }: Confirm
               className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90"
               style={{ background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.7 : 1 }}>
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {loading ? "Redirecting…" : "Confirm & Pay →"}
+              {loading ? "Redirecting…" : isOnTrial && trialDaysLeft && trialDaysLeft > 0 ? "Save card →" : "Confirm & Pay →"}
             </button>
           </div>
           <p className="text-[10px] text-center" style={{ color: "var(--kk-ink-faint)" }}>Press Esc to cancel</p>
@@ -341,7 +357,13 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: pending.plan.planId, interval: pending.interval }),
+      body: JSON.stringify({
+        plan: pending.plan.planId,
+        interval: pending.interval,
+        ...(isOnTrial && trialDaysLeft !== null && trialDaysLeft > 0
+          ? { trialDaysLeft }
+          : {}),
+      }),
     });
     const data = await res.json();
     if (data.upgraded) {
@@ -372,6 +394,8 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           onCancel={() => { if (!loading) setPending(null); }}
           onConfirm={handleConfirm}
           loading={loading}
+          isOnTrial={isOnTrial}
+          trialDaysLeft={trialDaysLeft}
         />
       )}
 
@@ -430,6 +454,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               isSelected={selectedPlanId === plan.planId}
               onCardClick={() => setSelectedPlanId(plan.planId)}
               onSelect={() => setPending({ plan, interval })}
+              isOnTrial={isOnTrial}
             />
           ))}
         </div>

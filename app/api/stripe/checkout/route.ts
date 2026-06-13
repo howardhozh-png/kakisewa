@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { stripe, priceId, type Plan, type Interval } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
-  const { plan, interval } = await req.json() as { plan: Plan; interval: Interval };
+  const { plan, interval, trialDaysLeft } = await req.json() as { plan: Plan; interval: Interval; trialDaysLeft?: number };
 
   const hdrs = await headers();
   const userId = hdrs.get("x-user-id");
@@ -51,6 +51,10 @@ export async function POST(req: NextRequest) {
     await admin.from("agent_profiles").update({ stripe_customer_id: customerId }).eq("id", userId);
   }
 
+  // When a trial user is securing their access, pass remaining trial days so Stripe
+  // stores the card but only charges when the in-app trial actually ends.
+  const trialDays = typeof trialDaysLeft === "number" && trialDaysLeft > 0 ? trialDaysLeft : undefined;
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
@@ -60,6 +64,7 @@ export async function POST(req: NextRequest) {
     metadata: { supabase_user_id: userId, plan, interval },
     subscription_data: {
       metadata: { supabase_user_id: userId, plan, interval },
+      ...(trialDays ? { trial_period_days: trialDays } : {}),
     },
     allow_promotion_codes: true,
     billing_address_collection: "auto",

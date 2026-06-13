@@ -19,11 +19,13 @@ export async function GET(req: NextRequest) {
     .eq("subscription_status", "beta")
     .lt("trial_ends_at", now);
 
-  // Legacy trial users whose trial has ended → expire their account
+  // Trial users whose trial has ended AND have no Stripe subscription → expire their account.
+  // Users with a stripe_subscription_id already set up auto-charge — Stripe handles them.
   const { data: expiredTrial } = await supabase
     .from("agent_profiles")
     .select("id")
     .eq("subscription_status", "trial")
+    .is("stripe_subscription_id", null)
     .lt("trial_ends_at", now);
 
   let frozen = 0;

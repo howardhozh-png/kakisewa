@@ -18,19 +18,22 @@ export async function GET(req: NextRequest) {
     return { start: start.toISOString(), end: end.toISOString() };
   }
 
-  const w1 = dayWindow(1);
-  const w3 = dayWindow(3);
-  const w7 = dayWindow(7);
+  const w1  = dayWindow(1);
+  const w3  = dayWindow(3);
+  const w7  = dayWindow(7);
+  const w14 = dayWindow(14);
 
-  type AgentRow = { id: string; name: string | null };
+  type AgentRow = { id: string; name: string | null; stripe_subscription_id: string | null };
 
   async function fetchExpiring(days: number, window: { start: string; end: string }) {
     const [{ data: beta }, { data: trial }] = await Promise.all([
-      supabase.from("agent_profiles").select("id, name")
+      supabase.from("agent_profiles").select("id, name, stripe_subscription_id")
         .eq("subscription_status", "beta")
         .gte("trial_ends_at", window.start).lte("trial_ends_at", window.end),
-      supabase.from("agent_profiles").select("id, name")
+      // Skip trial users who have already saved a card in Stripe (they'll be auto-charged)
+      supabase.from("agent_profiles").select("id, name, stripe_subscription_id")
         .eq("subscription_status", "trial")
+        .is("stripe_subscription_id", null)
         .gte("trial_ends_at", window.start).lte("trial_ends_at", window.end),
     ]);
     return [
@@ -39,13 +42,14 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  const [ex1, ex3, ex7] = await Promise.all([
+  const [ex1, ex3, ex7, ex14] = await Promise.all([
     fetchExpiring(1, w1),
     fetchExpiring(3, w3),
     fetchExpiring(7, w7),
+    fetchExpiring(14, w14),
   ]);
 
-  const expiring = [...ex1, ...ex3, ...ex7];
+  const expiring = [...ex1, ...ex3, ...ex7, ...ex14];
 
   if (expiring.length === 0) {
     return NextResponse.json({ sent: 0 });
@@ -67,21 +71,25 @@ export async function GET(req: NextRequest) {
     const periodLabel = isBeta ? "beta period" : "trial";
 
     const subject =
-      days === 1 ? `Your ${periodLabel} ends tomorrow` :
-      days === 3 ? `Your ${periodLabel} ends in 3 days` :
-                   `Your ${periodLabel} ends in 7 days`;
+      days === 1  ? `Your ${periodLabel} ends tomorrow` :
+      days === 3  ? `Your ${periodLabel} ends in 3 days` :
+      days === 7  ? `Your ${periodLabel} ends in 7 days` :
+                    `Your ${periodLabel} ends in 14 days`;
 
     const headline =
-      days === 1 ? `Hi ${firstName}, your ${periodLabel} ends tomorrow` :
-      days === 3 ? `Hi ${firstName}, 3 days left on your ${periodLabel}` :
-                   `Hi ${firstName}, 7 days left on your ${periodLabel}`;
+      days === 1  ? `Hi ${firstName}, your ${periodLabel} ends tomorrow` :
+      days === 3  ? `Hi ${firstName}, 3 days left on your ${periodLabel}` :
+      days === 7  ? `Hi ${firstName}, 7 days left on your ${periodLabel}` :
+                    `Hi ${firstName}, 14 days left on your ${periodLabel}`;
 
     const body =
       days === 1
-        ? `Your ${isBeta ? "beta" : "90-day"} access ends tomorrow. Subscribe now to keep tracking your contracts, commissions, and tenants without interruption.`
+        ? `Your ${isBeta ? "beta" : "2-month"} access ends tomorrow. Subscribe now to keep tracking your contracts, commissions, and tenants without interruption.`
         : days === 3
         ? `You have 3 days left on your kakisewa ${periodLabel}. Subscribe to keep everything running — contracts, renewals, tenant packs, and commissions.`
-        : `You have 7 days left on your kakisewa ${periodLabel}. Lock in your plan now to keep everything running seamlessly.`;
+        : days === 7
+        ? `You have 7 days left on your kakisewa ${periodLabel}. Lock in your plan now to keep everything running seamlessly.`
+        : `You have 14 days left on your kakisewa ${periodLabel}. Save your card now — you won't be charged until your trial ends, and you can cancel anytime before then.`;
 
     await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -100,7 +108,7 @@ export async function GET(req: NextRequest) {
            padding:12px 24px;border-radius:10px;text-decoration:none">
     View plans
   </a>
-  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">Silver starts at RM 69/month. Cancel anytime.</p>
+  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">Silver starts at RM 30/month. Cancel anytime.</p>
 </div>`,
       }),
     });

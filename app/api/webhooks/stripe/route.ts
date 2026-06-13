@@ -45,13 +45,21 @@ export async function POST(req: NextRequest) {
     if (userId && session.subscription) {
       const sub = await stripe.subscriptions.retrieve(session.subscription as string);
       const priceId = sub.items.data[0]?.price.id ?? "";
-      await admin.from("agent_profiles").update({
+      // If Stripe subscription is still in trial (card saved, not yet charged),
+      // keep our DB status as "trial" and sync the trial end date from Stripe.
+      // "active" is only set once Stripe charges them (handled by subscription.updated).
+      const isStripeTrial = sub.status === "trialing";
+      const updates: Record<string, unknown> = {
         stripe_subscription_id: sub.id,
         stripe_price_id: priceId,
         subscription_plan: PLAN_FROM_PRICE[priceId] ?? session.metadata?.plan,
         subscription_interval: session.metadata?.interval,
-        subscription_status: "active",
-      }).eq("id", userId);
+        subscription_status: isStripeTrial ? "trial" : "active",
+      };
+      if (isStripeTrial && sub.trial_end) {
+        updates.trial_ends_at = new Date(sub.trial_end * 1000).toISOString();
+      }
+      await admin.from("agent_profiles").update(updates).eq("id", userId);
     }
   }
 
