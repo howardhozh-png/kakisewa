@@ -382,16 +382,6 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
             Choose your plan
           </h1>
-          <p className="kk-body max-w-md mx-auto" style={{ color: "var(--kk-ink-mute)" }}>
-            You spend{" "}
-            <span style={{ color: "#DC2626", fontWeight: 600 }}>RM 800-1,000/month</span>
-            {" "}on PropertyGuru to find tenants.
-          </p>
-          <p className="kk-body max-w-md mx-auto mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-            Pay{" "}
-            <span style={{ color: "var(--kk-green)", fontWeight: 700 }}>RM <AnimatedPrice value={headerPrice} ink="var(--kk-green)" />/month</span>
-            {" "}to kakisewa so you never lose them.
-          </p>
 
           {isOnTrial && (
             <div className="mt-4 flex justify-center">
@@ -464,17 +454,12 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               {([
                 ["My pipeline (listings)",    "40 leads",    "100 leads",   "300 leads",         "800 leads",          true],
                 ["Existing contracts",        "20 cards",    "60 cards",    "200 cards",         "700 cards",          true],
-                ["Target units",             "10 units",    "40 units",    "100 units",         "500 units",          false],
-                ["Total cards",              "70",          "200",         "700",               "2,000",              false],
-                ["Renewal timeline",          "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist",       false],
-                ["Commission history",        "—",           "Yes",         "Yes",               "Yes",                true],
-                ["Property services contact", "—",           "—",           "Yes",               "Yes",                true],
-                ["Contract documents",        "Yes",         "Yes",         "Yes",               "Yes",                false],
-                ["Agent profile",             "—",           "—",           "Private",           "Public + searchable",true],
+                ["Target units",             "10 units",    "40 units",    "100 units",         "500 units",          true],
+                ["Total cards",              "70",          "200",         "700",               "2,000",              true],
+                ["Email notifications",       "Yes",         "Yes",         "Yes",               "Yes",                false],
+                ["Push notifications",        "Yes",         "Yes",         "Yes",               "Yes",                false],
+                ["Agent profile",             "—",           "—",           "Private",           "Public + searchable",false],
                 ["Performance dashboard",     "—",           "—",           "—",                 "Yes",                false],
-                ["Commission forecast",       "—",           "—",           "—",                 "Yes",                false],
-                ["Benchmarking",              "—",           "—",           "—",                 "Yes",                false],
-                ["Portfolio score",           "—",           "—",           "—",                 "Yes",                false],
               ] as [string,string,string,string,string,boolean][]).map(([feature, silver, gold, platinum, elite, highlight], i) => (
                 <tr key={feature} style={{
                   borderBottom: "1px solid var(--kk-line)",
