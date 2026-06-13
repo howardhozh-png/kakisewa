@@ -472,11 +472,11 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mx-2">
             {([
               { plan: PLANS[0], food: null },
-              { plan: PLANS[1], food: "1 egg/day" },
-              { plan: PLANS[2], food: "2 eggs/day" },
-              { plan: PLANS[3], food: "1 nasi lemak bungkus and 2 eggs/day" },
+              { plan: PLANS[1], food: "1 kopitiam egg/day" },
+              { plan: PLANS[2], food: "2 kopitiam eggs/day" },
+              { plan: PLANS[3], food: "1 set kopitiam egg and butter kaya toast/day" },
             ] as { plan: typeof PLANS[number]; food: string | null }[]).map(({ plan, food }) => (
-              <div key={plan.planId} className="relative" style={{ padding: "20px 18px 18px", backgroundColor: "var(--kk-surface)" }}>
+              <div key={plan.planId} className="relative text-center" style={{ padding: "20px 18px 18px", backgroundColor: "var(--kk-surface)" }}>
                 {/* pixel border top */}
                 <div className="absolute" style={{ top: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
                 {/* pixel border bottom */}
@@ -494,7 +494,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                 <p className="text-[10px] font-black uppercase tracking-[0.15em] mb-2" style={{ color: "var(--kk-ink-faint)" }}>
                   {plan.name}
                 </p>
-                <div className="flex items-baseline gap-1 flex-wrap">
+                <div className="flex items-baseline justify-center gap-1 flex-wrap">
                   <span className="text-[12px] font-bold" style={{ color: "var(--kk-ink-mute)" }}>RM</span>
                   <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
                     {(plan.annualTotal / 365).toFixed(2)}
