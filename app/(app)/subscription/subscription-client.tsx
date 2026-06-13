@@ -232,7 +232,7 @@ function PricingCard({
             {isOnTrial
               ? "Save card — free until trial ends"
               : interval === "annual"
-              ? `Pay RM ${plan.annualTotal.toLocaleString()}/year`
+              ? `Pay RM ${plan.annualTotal}/year`
               : `Pay RM ${plan.monthly}/month`}
           </button>
         </div>
@@ -462,6 +462,53 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               isOnTrial={isOnTrial}
             />
           ))}
+        </div>
+
+        {/* Per-plan per-day callout */}
+        <div className="mb-14">
+          <p className="text-center text-[11px] font-bold uppercase tracking-[0.12em] mb-8" style={{ color: "var(--kk-ink-faint)" }}>
+            Annual billing: what you pay per day
+          </p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mx-2">
+            {([
+              { plan: PLANS[0], food: null },
+              { plan: PLANS[1], food: "1 egg/day" },
+              { plan: PLANS[2], food: "2 eggs/day" },
+              { plan: PLANS[3], food: "1 nasi lemak bungkus and 2 eggs/day" },
+            ] as { plan: typeof PLANS[number]; food: string | null }[]).map(({ plan, food }) => (
+              <div key={plan.planId} className="relative" style={{ padding: "20px 18px 18px", backgroundColor: "var(--kk-surface)" }}>
+                {/* pixel border top */}
+                <div className="absolute" style={{ top: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
+                {/* pixel border bottom */}
+                <div className="absolute" style={{ bottom: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
+                {/* pixel border left */}
+                <div className="absolute" style={{ left: "-6px", top: "6px", bottom: "6px", width: "6px", backgroundColor: "var(--kk-ink)" }} />
+                {/* pixel border right */}
+                <div className="absolute" style={{ right: "-6px", top: "6px", bottom: "6px", width: "6px", backgroundColor: "var(--kk-ink)" }} />
+                {/* corner pixels */}
+                <div className="absolute" style={{ top: "0px", left: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
+                <div className="absolute" style={{ top: "0px", right: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
+                <div className="absolute" style={{ bottom: "0px", left: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
+                <div className="absolute" style={{ bottom: "0px", right: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
+                {/* content */}
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] mb-2" style={{ color: "var(--kk-ink-faint)" }}>
+                  {plan.name}
+                </p>
+                <div className="flex items-baseline gap-1 flex-wrap">
+                  <span className="text-[12px] font-bold" style={{ color: "var(--kk-ink-mute)" }}>RM</span>
+                  <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
+                    {(plan.annualTotal / 365).toFixed(2)}
+                  </span>
+                  <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/day</span>
+                </div>
+                {food && (
+                  <p className="mt-1.5 text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
+                    or {food}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Comparison table */}
