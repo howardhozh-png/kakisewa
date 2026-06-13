@@ -167,13 +167,23 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-ink-faint)" }}>
             Property pack
           </p>
-          <h1 className="text-[22px] font-bold leading-tight" style={{ color: "var(--kk-ink)" }}>
-            {tenant.name}
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-[22px] font-bold leading-tight" style={{ color: "var(--kk-ink)" }}>
+              {tenant.name}
+            </h1>
+            {selected.size > 0 && (
+              <span
+                className="text-[12px] font-semibold px-2.5 py-0.5 rounded-full"
+                style={{ background: "color-mix(in srgb, var(--kk-accent) 12%, var(--kk-surface))", color: "var(--kk-accent)" }}
+              >
+                {selected.size} of {leads.length} selected
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <p className="text-[13px] mb-6 mt-1 ml-11" style={{ color: "var(--kk-ink-mute)" }}>
