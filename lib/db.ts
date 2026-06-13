@@ -2619,14 +2619,24 @@ export type PropertyPackLead = {
 export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[]> {
   const userId = await getCurrentUserId();
   const svc = createServiceClient();
-  const { data, error } = await svc
-    .from("owner_leads")
-    .select("id, property_name, unit, bedrooms, bathrooms, photo_urls, cover_photo_index, expected_rent, listing_purpose")
-    .eq("user_id", userId)
-    .eq("stage", "listed")
-    .order("property_name", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((r: Record<string, unknown>) => ({
+
+  const OL_SELECT = "id, property_name, unit, bedrooms, bathrooms, photo_urls, cover_photo_index, expected_rent, listing_purpose";
+
+  const [listedRes, targetRes, tenancyRes] = await Promise.all([
+    // My Listing
+    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("stage", "listed"),
+    // Target Listing
+    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("is_competitor_target", true),
+    // Existing Listing — join owner_leads so we get property details + filter by user
+    svc.from("tenancies")
+      .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id)`)
+      .eq("owner_leads.user_id", userId)
+      .neq("lifecycle_stage", "closed")
+      .not("owner_lead_id", "is", null)
+      .not("owner_leads.property_name", "is", null),
+  ]);
+
+  const toRow = (r: Record<string, unknown>): PropertyPackLead => ({
     id:                r.id as string,
     property_name:     r.property_name as string | null,
     unit:              r.unit as string | null,
@@ -2636,7 +2646,28 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     cover_photo_index: r.cover_photo_index as number | null,
     expected_rent:     r.expected_rent as number | null,
     listing_purpose:   r.listing_purpose as string | null,
-  }));
+  });
+
+  const seen = new Set<string>();
+  const results: PropertyPackLead[] = [];
+
+  for (const r of (listedRes.data ?? []) as Record<string, unknown>[]) {
+    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r)); }
+  }
+  for (const r of (targetRes.data ?? []) as Record<string, unknown>[]) {
+    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r)); }
+  }
+  for (const t of (tenancyRes.data ?? []) as Record<string, unknown>[]) {
+    const ol = t.owner_leads as Record<string, unknown> | null;
+    if (!ol || !ol.id) continue;
+    const name = (ol.property_name as string | null) ?? "";
+    if (!name.trim()) continue;
+    if (!seen.has(ol.id as string)) { seen.add(ol.id as string); results.push(toRow(ol)); }
+  }
+
+  return results
+    .filter(r => r.property_name && r.property_name.trim().length > 0)
+    .sort((a, b) => (a.property_name ?? "").localeCompare(b.property_name ?? ""));
 }
 
 export async function getTenantProfileById(id: string): Promise<{ id: string; name: string; phone: string | null } | null> {
