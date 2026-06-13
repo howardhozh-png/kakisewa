@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Bed, Bath, CheckSquare, Square, Send, Home,
+  ArrowLeft, Bed, Bath, Square, Send, Home,
   Loader2, Copy, Check, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -35,9 +35,9 @@ function PropertyCard({
       onClick={onToggle}
       className="flex flex-col overflow-hidden rounded-2xl text-left w-full transition-all duration-150"
       style={{
-        border: selected ? "2px solid var(--kk-accent)" : "2px solid var(--kk-line)",
-        background: selected ? "color-mix(in srgb, var(--kk-accent) 5%, var(--kk-surface))" : "var(--kk-surface)",
-        boxShadow: selected ? "0 4px 16px color-mix(in srgb, var(--kk-accent) 18%, transparent)" : "none",
+        border: selected ? "2px solid var(--kk-green)" : "2px solid var(--kk-line)",
+        background: selected ? "color-mix(in srgb, var(--kk-green) 6%, var(--kk-surface))" : "var(--kk-surface)",
+        boxShadow: selected ? "0 4px 16px color-mix(in srgb, var(--kk-green) 22%, transparent)" : "none",
       }}
     >
       <div className="relative w-full" style={{ paddingBottom: "56.25%", background: "var(--kk-line)" }}>
@@ -51,7 +51,12 @@ function PropertyCard({
         )}
         <div className="absolute top-3 right-3">
           {selected
-            ? <CheckSquare className="w-6 h-6 drop-shadow" style={{ color: "var(--kk-accent)" }} />
+            ? (
+              <div className="w-6 h-6 rounded-md flex items-center justify-center drop-shadow"
+                style={{ background: "var(--kk-green)" }}>
+                <Check className="w-4 h-4" style={{ color: "#fff", strokeWidth: 3 }} />
+              </div>
+            )
             : <Square className="w-6 h-6 drop-shadow" style={{ color: "#fff" }} />}
         </div>
       </div>

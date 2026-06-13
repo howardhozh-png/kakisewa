@@ -2627,13 +2627,15 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("stage", "listed"),
     // Target Listing
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("is_competitor_target", true),
-    // Existing Listing — join owner_leads so we get property details + filter by user
+    // Existing Listing — same 90-day window as getLifecycleTenancies()
     svc.from("tenancies")
       .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id)`)
       .eq("owner_leads.user_id", userId)
       .neq("lifecycle_stage", "closed")
       .not("owner_lead_id", "is", null)
-      .not("owner_leads.property_name", "is", null),
+      .not("owner_leads.property_name", "is", null)
+      .not("contract_end", "is", null)
+      .gte("contract_end", new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)),
   ]);
 
   const toRow = (r: Record<string, unknown>): PropertyPackLead => ({
