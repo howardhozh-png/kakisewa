@@ -270,27 +270,28 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
 
         <div className="kk-board-shell -mx-3 lg:-mx-5">
           <div className="kk-board-row px-3 lg:px-5">
-            {/* Expired column — cards past contract end with no action */}
-            {expiredCards.length > 0 && (
-              <Column col={EXPIRED_COL} count={expiredCards.length} extraStyle={{ flex: 1, minWidth: 300 }}>
-                {expiredCards.map((t) => (
-                  <Card
-                    key={t.id}
-                    t={t}
-                    col={EXPIRED_COL}
-                    today={today}
-                    plan={plan}
-                    isDragging={draggingId === t.id}
-                    onOpen={() => setOpenTenancy(t)}
-                    onShowCommission={() => setCommissionTenancy(t)}
-                    onShowTenantLeaving={() => setTenantLeavingTenancy(t)}
-                    onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
-                    onShowLostContract={() => setLostTenancy(t)}
-                    onMoveToStage={handleMoveToStage}
-                  />
-                ))}
-              </Column>
-            )}
+            {/* Expired column — always visible; auto-populated when contract_end < today */}
+            <Column col={EXPIRED_COL} count={expiredCards.length} extraStyle={{ flex: 1, minWidth: 300 }}>
+              {expiredCards.length === 0
+                ? <EmptyDrop col={EXPIRED_COL} />
+                : expiredCards.map((t) => (
+                    <Card
+                      key={t.id}
+                      t={t}
+                      col={EXPIRED_COL}
+                      today={today}
+                      plan={plan}
+                      isDragging={draggingId === t.id}
+                      onOpen={() => setOpenTenancy(t)}
+                      onShowCommission={() => setCommissionTenancy(t)}
+                      onShowTenantLeaving={() => setTenantLeavingTenancy(t)}
+                      onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
+                      onShowLostContract={() => setLostTenancy(t)}
+                      onMoveToStage={handleMoveToStage}
+                    />
+                  ))
+              }
+            </Column>
 
             {COLUMNS.map((col) => {
               const cards = col.stage === "headsup"
@@ -549,11 +550,17 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
 }
 
 function EmptyDrop({ col }: { col: ColMeta }) {
+  const isExpired = col.stage === "expired";
   return (
     <div className="flex flex-col items-center justify-center rounded-xl py-8 px-3 text-center text-[12px] gap-1"
       style={{ background: "var(--kk-surface)", border: "1px dashed var(--kk-line-strong)", color: "var(--kk-ink-faint)" }}>
-      <span>Drop here</span>
-      <span className="text-[10px] uppercase tracking-wider">to move into {col.label.toLowerCase()}</span>
+      {isExpired
+        ? <span className="text-[11px] leading-snug">Contracts past their end date<br />will appear here automatically</span>
+        : <>
+            <span>Drop here</span>
+            <span className="text-[10px] uppercase tracking-wider">to move into {col.label.toLowerCase()}</span>
+          </>
+      }
     </div>
   );
 }
