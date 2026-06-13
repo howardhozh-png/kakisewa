@@ -276,12 +276,21 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
           )}
         </div>
 
-        <div className="p-5 border-t" style={{ borderColor: "var(--kk-line)" }}>
+        <div className="p-5 border-t space-y-2" style={{ borderColor: "var(--kk-line)" }}>
+          <Link
+            href={`/property-pack/${t.tenancy_id}`}
+            onClick={onClose}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
+            style={{ background: "var(--kk-accent)", color: "#fff", textDecoration: "none" }}
+          >
+            <Send className="w-4 h-4" />
+            Send property pack
+          </Link>
           <Link
             href={`/existing-listing?open=${t.tenancy_id}`}
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
-            style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)" }}
+            style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)", textDecoration: "none" }}
           >
             <CheckCircle2 className="w-4 h-4" />
             View tenancy

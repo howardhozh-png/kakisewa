@@ -6,7 +6,7 @@ import {
   useDraggable, useDroppable,
   PointerSensor, TouchSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { Heart, GripVertical, Check, Loader2, Home, Bed, Bath } from "lucide-react";
+import { Heart, GripVertical, Check, Loader2, Home, Bed, Bath, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { saveTenantPropertyRanking } from "@/lib/actions";
 import type { PropertyPackShareLead } from "@/lib/db";
@@ -152,6 +152,13 @@ function PhotoStrip({ photos, coverIndex, rankNumber }: {
     setCurrent(idx);
   }
 
+  function goTo(idx: number) {
+    if (!stripRef.current) return;
+    const clamped = Math.max(0, Math.min(ordered.length - 1, idx));
+    stripRef.current.scrollTo({ left: clamped * stripRef.current.clientWidth, behavior: "smooth" });
+    setCurrent(clamped);
+  }
+
   return (
     <div className="relative w-full" style={{ paddingBottom: "52%", background: "#F2F2F7" }}>
       {ordered.length > 0 ? (
@@ -179,13 +186,54 @@ function PhotoStrip({ photos, coverIndex, rankNumber }: {
               />
             ))}
           </div>
+
           {ordered.length > 1 && (
-            <div
-              className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-              style={{ background: "rgba(0,0,0,0.45)", color: "#fff", backdropFilter: "blur(4px)", zIndex: 2 }}
-            >
-              {current + 1}/{ordered.length}
-            </div>
+            <>
+              {/* Prev button */}
+              <button
+                onClick={() => goTo(current - 1)}
+                aria-label="Previous photo"
+                style={{
+                  position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)",
+                  zIndex: 3, width: 32, height: 32, borderRadius: "50%",
+                  background: "rgba(0,0,0,0.45)", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  opacity: current === 0 ? 0.25 : 1,
+                  border: "none", cursor: current === 0 ? "default" : "pointer",
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                <ChevronLeft style={{ width: 16, height: 16 }} />
+              </button>
+              {/* Next button */}
+              <button
+                onClick={() => goTo(current + 1)}
+                aria-label="Next photo"
+                style={{
+                  position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                  zIndex: 3, width: 32, height: 32, borderRadius: "50%",
+                  background: "rgba(0,0,0,0.45)", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  opacity: current === ordered.length - 1 ? 0.25 : 1,
+                  border: "none", cursor: current === ordered.length - 1 ? "default" : "pointer",
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                <ChevronRight style={{ width: 16, height: 16 }} />
+              </button>
+              {/* Counter */}
+              <div
+                style={{
+                  position: "absolute", bottom: 8, right: 8, zIndex: 3,
+                  padding: "2px 8px", borderRadius: 999,
+                  background: "rgba(0,0,0,0.45)", color: "#fff",
+                  fontSize: 11, fontWeight: 600,
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                {current + 1}/{ordered.length}
+              </div>
+            </>
           )}
         </>
       ) : (

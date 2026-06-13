@@ -2651,6 +2651,20 @@ export async function getTenantProfileById(id: string): Promise<{ id: string; na
   return { id: r.id as string, name: r.name as string, phone: (r.phone as string | null) ?? null };
 }
 
+export async function getTenantFromTenancy(tenancyId: string): Promise<{ id: string; name: string; phone: string | null } | null> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("tenancies")
+    .select("id, tenant_name, tenant_phone")
+    .eq("id", tenancyId)
+    .single();
+  if (!data) return null;
+  const r = data as Record<string, unknown>;
+  const name = (r.tenant_name as string | null) ?? "";
+  if (!name) return null;
+  return { id: r.id as string, name, phone: (r.tenant_phone as string | null) ?? null };
+}
+
 // ─── Property Pack Share ──────────────────────────────────────────────────────
 
 export interface PropertyPack {
