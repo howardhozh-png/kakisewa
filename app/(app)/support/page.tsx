@@ -1,4 +1,5 @@
-import { Mail, BookOpen, ChevronDown } from "lucide-react";
+import { Mail, BookOpen, ChevronDown, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = { title: "Help & support — kakisewa" };
 
@@ -59,6 +60,21 @@ export default function SupportPage() {
                 </div>
               </a>
             </div>
+          </section>
+
+          <section className="kk-section p-6">
+            <h2 className="text-[15px] font-semibold mb-2" style={{ color: "var(--kk-ink)" }}>Full FAQ</h2>
+            <p className="text-[13px] mb-4" style={{ color: "var(--kk-ink-mute)" }}>
+              Step-by-step guides for every feature in the app.
+            </p>
+            <Link
+              href="/faq"
+              className="kk-scale-hover inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2 rounded-full"
+              style={{ background: "var(--kk-blue)", color: "#fff" }}
+            >
+              Browse FAQ
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </section>
 
           <section className="kk-section p-6">
