@@ -188,15 +188,20 @@ function PricingCard({
               <span className="text-[12px] pb-1" style={{ color: s.mute }}>/mo</span>
             </div>
             {interval === "annual" ? (
-              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  style={{ background: s.accent, color: plan.name === "Silver" ? "#fff" : plan.name === "Gold" ? "#92400e" : plan.name === "Platinum" ? "#0b1f4a" : "#5c3015" }}>
-                  2 months free
-                </span>
-                <span className="text-[10px]" style={{ color: s.faint }}>
-                  from RM {plan.originalAnnual.toLocaleString()}/year
-                </span>
-              </div>
+              <>
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{ background: s.accent, color: plan.name === "Silver" ? "#fff" : plan.name === "Gold" ? "#92400e" : plan.name === "Platinum" ? "#0b1f4a" : "#5c3015" }}>
+                    2 months free
+                  </span>
+                  <span className="text-[10px]" style={{ color: s.faint }}>
+                    RM {plan.annualTotal}/year
+                  </span>
+                </div>
+                <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
+                  RM {(plan.annualTotal / 365).toFixed(2)}/day on annual plan
+                </p>
+              </>
             ) : (
               <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
                 RM {plan.perDay}/day · annual saves RM {plan.annualSavings}
