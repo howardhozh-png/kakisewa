@@ -632,7 +632,8 @@ html, body {
     height: auto;
     min-height: 50vh;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden; /* visible+auto causes CSS spec to compute both as auto, creating unwanted scroll */
+    scrollbar-width: none; /* hide horizontal scrollbar on touch — swipe is enough */
     /* Match desktop's padding-top so the balloon above Expiring column doesn't clip */
     padding-top: 60px;
     /* Reveal hint of next column so user knows it's scrollable */
