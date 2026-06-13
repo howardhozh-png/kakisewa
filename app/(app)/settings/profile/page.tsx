@@ -1,25 +1,11 @@
-import { getAgentProfile } from "@/lib/db";
-import { createClient } from "@/lib/supabase/server";
+import { getAgentProfile, getProfileStats } from "@/lib/db";
 import { ProfileSettingsClient } from "./client";
 import type { ProfileStrengthItem, ProfileVerbatimItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfileSettingsPage() {
-  const agent = await getAgentProfile();
-
-  const supabase = await createClient();
-  const [dealsRes, tenantsRes, listingsRes] = await Promise.all([
-    supabase.from("commission_events").select("*", { count: "exact", head: true }).eq("user_id", agent.id),
-    supabase.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", agent.id).neq("lifecycle_stage", "closed"),
-    supabase.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", agent.id).in("stage", ["listed", "matched"]),
-  ]);
-
-  const stats = {
-    dealCount: dealsRes.count ?? 0,
-    activeContracts: tenantsRes.count ?? 0,
-    activeListings: listingsRes.count ?? 0,
-  };
+  const [agent, stats] = await Promise.all([getAgentProfile(), getProfileStats()]);
 
   return (
     <div className="mx-auto max-w-[600px] px-4 py-8">

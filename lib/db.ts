@@ -293,6 +293,46 @@ const _cachedAllActiveTenants = unstable_cache(
   { tags: ["kk-tenancies", "kk-owner-leads"], revalidate: 60 }
 );
 
+const _cachedCompetitorLeads = unstable_cache(
+  async (userId: string): Promise<OwnerLead[]> => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).eq("is_competitor_target", true).order("competitor_contract_end", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
+  },
+  ["kk-competitor-leads"],
+  { tags: ["kk-owner-leads"], revalidate: 60 }
+);
+
+const _cachedProfileStats = unstable_cache(
+  async (userId: string) => {
+    const svc = createServiceClient();
+    const [dealsRes, tenantsRes, listingsRes] = await Promise.all([
+      svc.from("commission_events").select("*", { count: "exact", head: true }).eq("user_id", userId),
+      svc.from("tenancies").select("*", { count: "exact", head: true }).eq("user_id", userId).neq("lifecycle_stage", "closed"),
+      svc.from("owner_leads").select("*", { count: "exact", head: true }).eq("user_id", userId).in("stage", ["listed", "matched"]),
+    ]);
+    return {
+      dealCount: dealsRes.count ?? 0,
+      activeContracts: tenantsRes.count ?? 0,
+      activeListings: listingsRes.count ?? 0,
+    };
+  },
+  ["kk-profile-stats"],
+  { tags: ["kk-owner-leads", "kk-tenancies"], revalidate: 60 }
+);
+
+const _cachedManagedLeads = unstable_cache(
+  async (userId: string) => {
+    const svc = createServiceClient();
+    const { data, error } = await svc.from("owner_leads").select("id, owner_name, owner_phone, property_name, unit, address").eq("user_id", userId).eq("is_managed", true).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as { id: string; owner_name: string | null; owner_phone: string | null; property_name: string | null; unit: string | null; address: string | null }[];
+  },
+  ["kk-managed-leads"],
+  { tags: ["kk-owner-leads"], revalidate: 60 }
+);
+
 // ─── Email helpers ────────────────────────────────────────────────────────────
 
 export async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
@@ -1556,14 +1596,26 @@ export async function getEliteAnalyticsData(): Promise<{
 }
 
 export async function getCompetitorLeads(): Promise<OwnerLead[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("owner_leads")
-    .select("*")
-    .eq("is_competitor_target", true)
-    .order("competitor_contract_end", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("owner_leads").select("*").eq("is_competitor_target", true).order("competitor_contract_end", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+  }
+  return _cachedCompetitorLeads(userId);
+}
+
+export async function getProfileStats() {
+  const userId = await getCurrentUserId();
+  if (!userId) return { dealCount: 0, activeContracts: 0, activeListings: 0 };
+  return _cachedProfileStats(userId);
+}
+
+export async function getManagedLeads() {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+  return _cachedManagedLeads(userId);
 }
 
 export async function markCompetitorRented(

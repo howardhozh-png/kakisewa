@@ -1,22 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
-import { getTenancies } from "@/lib/db";
+import { getManagedLeads, getTenancies } from "@/lib/db";
 import { Building2, Phone } from "lucide-react";
-import type { OwnerLead } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function PropertiesPage() {
-  const supabase = await createClient();
-  const [{ data: managedLeadsRaw }, tenancies] = await Promise.all([
-    supabase
-      .from("owner_leads")
-      .select("id, owner_name, owner_phone, property_name, unit, address")
-      .eq("is_managed", true)
-      .order("created_at", { ascending: false }),
-    getTenancies(),
-  ]);
-
-  const managedLeads = (managedLeadsRaw ?? []) as Pick<OwnerLead, "id" | "owner_name" | "owner_phone" | "property_name" | "unit" | "address">[];
+  const [managedLeads, tenancies] = await Promise.all([getManagedLeads(), getTenancies()]);
 
   const countMap = tenancies.reduce<Record<string, number>>((acc, t) => {
     if (t.owner_lead_id) {
