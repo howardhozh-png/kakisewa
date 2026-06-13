@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useRef, useMemo } from "react";
 import {
   DndContext, DragEndEvent, DragOverlay,
   useDraggable, useDroppable,
@@ -132,6 +132,78 @@ export function PropertyPackShareViewer({ packToken, initialLeads }: Props) {
   );
 }
 
+function PhotoStrip({ photos, coverIndex, rankNumber }: {
+  photos: string[];
+  coverIndex: number;
+  rankNumber: number;
+}) {
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+
+  const ordered = useMemo(() => {
+    if (photos.length === 0) return [];
+    const ci = coverIndex >= 0 && coverIndex < photos.length ? coverIndex : 0;
+    return [photos[ci], ...photos.slice(0, ci), ...photos.slice(ci + 1)];
+  }, [photos, coverIndex]);
+
+  function onScroll() {
+    if (!stripRef.current) return;
+    const idx = Math.round(stripRef.current.scrollLeft / stripRef.current.clientWidth);
+    setCurrent(idx);
+  }
+
+  return (
+    <div className="relative w-full" style={{ paddingBottom: "52%", background: "#F2F2F7" }}>
+      {ordered.length > 0 ? (
+        <>
+          <style>{`.pp-strip::-webkit-scrollbar{display:none}`}</style>
+          <div
+            ref={stripRef}
+            onScroll={onScroll}
+            className="pp-strip absolute inset-0 flex overflow-x-auto"
+            style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}
+          >
+            {ordered.map((url, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={url}
+                alt=""
+                style={{
+                  flexShrink: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  scrollSnapAlign: "start",
+                }}
+              />
+            ))}
+          </div>
+          {ordered.length > 1 && (
+            <div
+              className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{ background: "rgba(0,0,0,0.45)", color: "#fff", backdropFilter: "blur(4px)", zIndex: 2 }}
+            >
+              {current + 1}/{ordered.length}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Home style={{ width: 32, height: 32, color: "#C7C7CC" }} />
+        </div>
+      )}
+      {/* Rank badge */}
+      <div
+        className="absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
+        style={{ background: "#1C1C1E", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.30)", zIndex: 2 }}
+      >
+        {rankNumber}
+      </div>
+    </div>
+  );
+}
+
 function PropertyCard({ lead, rankNumber, isDragging, onLike }: {
   lead: PropertyPackShareLead;
   rankNumber: number;
@@ -140,7 +212,6 @@ function PropertyCard({ lead, rankNumber, isDragging, onLike }: {
 }) {
   const drag = useDraggable({ id: lead.owner_lead_id });
   const drop = useDroppable({ id: lead.owner_lead_id });
-  const coverUrl = lead.photo_urls[lead.cover_photo_index ?? 0] ?? lead.photo_urls[0] ?? null;
 
   return (
     <div
@@ -153,29 +224,11 @@ function PropertyCard({ lead, rankNumber, isDragging, onLike }: {
         opacity: isDragging ? 0.15 : 1,
       }}
     >
-      {/* Photo */}
-      <div className="relative w-full" style={{ paddingBottom: "52%", background: "#F2F2F7" }}>
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt={lead.property_name ?? "Property"}
-            className="absolute inset-0 w-full h-full"
-            style={{ objectFit: "cover" }}
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Home style={{ width: 32, height: 32, color: "#C7C7CC" }} />
-          </div>
-        )}
-        {/* Rank badge */}
-        <div
-          className="absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
-          style={{ background: "#1C1C1E", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.30)" }}
-        >
-          {rankNumber}
-        </div>
-      </div>
+      <PhotoStrip
+        photos={lead.photo_urls}
+        coverIndex={lead.cover_photo_index ?? 0}
+        rankNumber={rankNumber}
+      />
 
       {/* Details */}
       <div className="px-4 pt-3 pb-3">
