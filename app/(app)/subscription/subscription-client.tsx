@@ -452,33 +452,43 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             </thead>
             <tbody>
               {([
-                ["My pipeline (listings)",    "40 leads",    "100 leads",   "300 leads",         "800 leads",          true],
-                ["Existing contracts",        "20 cards",    "60 cards",    "200 cards",         "700 cards",          true],
-                ["Target units",             "10 units",    "40 units",    "100 units",         "500 units",          true],
-                ["Total cards",              "70",          "200",         "700",               "2,000",              true],
-                ["Email notifications",       "Yes",         "Yes",         "Yes",               "Yes",                false],
-                ["Push notifications",        "Yes",         "Yes",         "Yes",               "Yes",                false],
-                ["Agent profile",             "—",           "—",           "Private",           "Public + searchable",false],
-                ["Performance dashboard",     "—",           "—",           "—",                 "Yes",                false],
-              ] as [string,string,string,string,string,boolean][]).map(([feature, silver, gold, platinum, elite, highlight], i) => (
-                <tr key={feature} style={{
-                  borderBottom: "1px solid var(--kk-line)",
-                  background: highlight ? "rgba(52,199,89,0.08)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
-                }}>
-                  <td className="py-2.5 pl-5 pr-6" style={{
-                    color: highlight ? "#1F8B4C" : "var(--kk-ink-mute)",
-                    fontWeight: highlight ? 600 : 500,
+                ["Total cards",           "70",       "200",       "700",       "2,000",              "header"],
+                ["My listing",            "40 cards", "100 cards", "300 cards", "800 cards",          "sub"],
+                ["Existing listing",      "20 cards", "60 cards",  "200 cards", "700 cards",          "sub"],
+                ["Target listing",        "10 cards", "40 cards",  "100 cards", "500 cards",          "sub"],
+                ["Email notifications",   "Yes",      "Yes",       "Yes",       "Yes",                "normal"],
+                ["Push notifications",    "Yes",      "Yes",       "Yes",       "Yes",                "normal"],
+                ["Agent profile",         "—",        "—",         "Private",   "Public + searchable","normal"],
+                ["Performance dashboard", "—",        "—",         "—",         "Yes",                "normal"],
+              ] as [string,string,string,string,string,string][]).map(([feature, silver, gold, platinum, elite, rowType], i) => {
+                const isHeader = rowType === "header";
+                const isSub    = rowType === "sub";
+                return (
+                  <tr key={feature} style={{
+                    borderBottom: "1px solid var(--kk-line)",
+                    background: (isHeader || isSub) ? "rgba(52,199,89,0.08)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
                   }}>
-                    {feature}
-                  </td>
-                  {[silver, gold, platinum, elite].map((val, j) => (
-                    <td key={j} className="py-2.5 px-3 text-center"
-                      style={{ color: val === "—" ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: val !== "—" ? 500 : 400 }}>
-                      {val}
+                    <td className="py-2.5 pr-6" style={{
+                      paddingLeft: isSub ? 28 : 20,
+                      color: (isHeader || isSub) ? "#1F8B4C" : "var(--kk-ink-mute)",
+                      fontWeight: isHeader ? 700 : isSub ? 500 : 500,
+                      fontSize: isSub ? 12 : undefined,
+                    }}>
+                      {feature}
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    {[silver, gold, platinum, elite].map((val, j) => (
+                      <td key={j} className="py-2.5 px-3 text-center"
+                        style={{
+                          color: val === "—" ? "var(--kk-ink-faint)" : (isHeader || isSub) ? "#1F8B4C" : "var(--kk-ink)",
+                          fontWeight: isHeader ? 700 : val !== "—" ? 500 : 400,
+                          fontSize: isSub ? 12 : undefined,
+                        }}>
+                        {val}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
