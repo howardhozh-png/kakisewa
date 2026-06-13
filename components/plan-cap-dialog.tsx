@@ -3,17 +3,25 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Link from "next/link";
 import { ArrowRight, Lock } from "lucide-react";
+import type { PipelineType } from "@/lib/plan-caps";
 
 const TIER_NAMES: Record<string, string> = {
   silver: "Silver", gold: "Gold", platinum: "Platinum", elite: "Elite",
 };
 
 const TIER_PRICES: Record<string, number> = {
-  gold: 119, platinum: 179, elite: 299,
+  gold: 99, platinum: 179, elite: 299,
+};
+
+const PIPELINE_LABELS: Record<PipelineType, { title: string; unit: string }> = {
+  existing:   { title: "You've reached your renewal limit",  unit: "renewal tracking cards" },
+  my_listing: { title: "You've reached your listing limit",  unit: "active listings" },
+  target:     { title: "You've reached your target limit",   unit: "target units" },
 };
 
 interface Props {
   open: boolean;
+  pipeline?: PipelineType;
   currentPlan: string;
   currentCount: number;
   currentCap: number;
@@ -24,12 +32,13 @@ interface Props {
 }
 
 export function PlanCapDialog({
-  open, currentPlan, currentCount, currentCap, upgradeToId, upgradeCap, nearestExpiryDays, onClose,
+  open, pipeline = "existing", currentPlan, currentCount, currentCap, upgradeToId, upgradeCap, nearestExpiryDays, onClose,
 }: Props) {
-  const planName   = TIER_NAMES[currentPlan] ?? currentPlan;
+  const planName    = TIER_NAMES[currentPlan] ?? currentPlan;
   const upgradeName = TIER_NAMES[upgradeToId] ?? upgradeToId;
   const upgradePrice = TIER_PRICES[upgradeToId];
-  const upgradeCapLabel = upgradeCap !== null ? `up to ${upgradeCap} contracts` : "unlimited contracts";
+  const { title, unit } = PIPELINE_LABELS[pipeline];
+  const upgradeCapLabel = upgradeCap !== null ? `up to ${upgradeCap} ${unit}` : `unlimited ${unit}`;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -47,15 +56,15 @@ export function PlanCapDialog({
             className="text-[17px] font-semibold tracking-tight"
             style={{ color: "var(--kk-ink)" }}
           >
-            You&apos;ve reached your renewal limit
+            {title}
           </h2>
 
           <p
             className="text-[13px] leading-relaxed"
             style={{ color: "var(--kk-ink-mute)", maxWidth: "30ch" }}
           >
-            {planName} includes {currentCap} renewal tracking cards. You have {currentCount}/{currentCap} active contracts tracked.
-            {nearestExpiryDays !== null && (
+            {planName} includes {currentCap} {unit}. You have {currentCount}/{currentCap} active.
+            {pipeline === "existing" && nearestExpiryDays !== null && (
               <>
                 {" "}Your next renewal is due in{" "}
                 <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>

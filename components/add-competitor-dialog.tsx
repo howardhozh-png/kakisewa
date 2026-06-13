@@ -4,8 +4,9 @@ import { useState, useTransition, useRef } from "react";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
-import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
+import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, checkTargetCapAction } from "@/lib/actions";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { normalizePhone, phoneError } from "@/lib/phone";
@@ -27,6 +28,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null } | null>(null);
   const [form, setForm] = useState({
     property_name: "", unit: "", owner_name: "", owner_phone: "",
     expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "",
@@ -76,6 +78,14 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
     setUploading(true);
     startTransition(async () => {
       try {
+        // Check target cap before creating anything
+        const capCheck = await checkTargetCapAction();
+        if (!capCheck.allowed) {
+          setCapBlock({ currentPlan: capCheck.current_plan, currentCount: capCheck.current_count, currentCap: capCheck.current_cap, upgradeToId: capCheck.upgrade_to, upgradeCap: capCheck.upgrade_cap });
+          setUploading(false);
+          return;
+        }
+
         const res = await addOwnerLeadAction({
           owner_name: form.owner_name || "Unknown",
           owner_phone: form.owner_phone || "0",
@@ -136,6 +146,18 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
   const fs = { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
 
   return (
+    <>
+      <PlanCapDialog
+        open={!!capBlock}
+        pipeline="target"
+        currentPlan={capBlock?.currentPlan ?? "silver"}
+        currentCount={capBlock?.currentCount ?? 0}
+        currentCap={capBlock?.currentCap ?? 10}
+        upgradeToId={capBlock?.upgradeToId ?? "gold"}
+        upgradeCap={capBlock?.upgradeCap ?? null}
+        nearestExpiryDays={null}
+        onClose={() => setCapBlock(null)}
+      />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-0 overflow-hidden max-h-[90vh] flex flex-col">
         <div className="overflow-y-auto p-6 space-y-4">
@@ -305,5 +327,6 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

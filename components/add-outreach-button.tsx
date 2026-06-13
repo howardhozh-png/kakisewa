@@ -4,6 +4,7 @@ import { useState, useTransition, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Loader2, ChevronDown, MessageCircle, PenLine, Camera, FileText, X } from "lucide-react";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
@@ -48,6 +49,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null } | null>(null);
   const [waForm, setWaForm] = useState<WaForm>(EMPTY_WA);
   const [manualForm, setManualForm] = useState<ManualForm>(EMPTY_MANUAL);
   const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; preview: string }>>([]);
@@ -117,6 +119,11 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
           owner_phone: waForm.owner_phone.trim(),
           expected_rent: null, stage: "imported",
         });
+        if (!res.ok && res.reason === "plan_cap_reached") {
+          setWaOpen(false);
+          setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 40, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
+          return;
+        }
         if (!res.ok) { toast.error(res.message ?? "Could not save"); return; }
         if (res.id) {
           const link = await generateOwnerIntakeLink(res.id);
@@ -140,6 +147,11 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
         notes: manualForm.notes.trim() || null,
         expected_rent: null, stage: "imported",
       });
+      if (!res.ok && res.reason === "plan_cap_reached") {
+        setManualOpen(false);
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 40, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
+        return;
+      }
       if (!res.ok) { toast.error(res.message ?? "Could not save"); return; }
       if (res.id) { setUploading(true); try { await uploadFiles(res.id); } finally { setUploading(false); } }
       toast.success("Added to outreach");
@@ -151,6 +163,17 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
 
   return (
     <>
+      <PlanCapDialog
+        open={!!capBlock}
+        pipeline="my_listing"
+        currentPlan={capBlock?.currentPlan ?? "silver"}
+        currentCount={capBlock?.currentCount ?? 0}
+        currentCap={capBlock?.currentCap ?? 40}
+        upgradeToId={capBlock?.upgradeToId ?? "gold"}
+        upgradeCap={capBlock?.upgradeCap ?? null}
+        nearestExpiryDays={null}
+        onClose={() => setCapBlock(null)}
+      />
       {/* Trigger */}
       <div className="relative" ref={dropRef}>
         <button

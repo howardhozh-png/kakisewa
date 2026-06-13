@@ -198,7 +198,7 @@ function PricingCard({
               </div>
             ) : (
               <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                Annual saves RM {plan.annualSavings}/year
+                RM {plan.perDay}/day · annual saves RM {plan.annualSavings}
               </p>
             )}
           </div>
@@ -462,8 +462,10 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             </thead>
             <tbody>
               {([
-                ["Existing contracts",        "20 cards",    "80 cards",    "200 cards",         "Unlimited",          true],
-                ["Active Leads",              "Unlimited",   "Unlimited",   "Unlimited",         "Unlimited",          false],
+                ["My pipeline (listings)",    "40 leads",    "100 leads",   "300 leads",         "800 leads",          true],
+                ["Existing contracts",        "20 cards",    "60 cards",    "200 cards",         "700 cards",          true],
+                ["Target units",             "10 units",    "40 units",    "100 units",         "500 units",          false],
+                ["Total cards",              "70",          "200",         "700",               "2,000",              false],
                 ["Renewal timeline",          "24 mo + hist","24 mo + hist","24 mo + hist",      "24 mo + hist",       false],
                 ["Commission history",        "—",           "Yes",         "Yes",               "Yes",                true],
                 ["Property services contact", "—",           "—",           "Yes",               "Yes",                true],

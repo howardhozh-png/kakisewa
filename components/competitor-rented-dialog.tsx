@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
 import { markCompetitorRentedAction } from "@/lib/actions";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { OwnerLead } from "@/lib/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
   const [pending, startTransition] = useTransition();
   const [rentedOn, setRentedOn] = useState(() => new Date().toISOString().slice(0, 10));
   const [duration, setDuration] = useState("12");
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null } | null>(null);
 
   const contractEnd = (() => {
     if (!rentedOn || !duration) return "";
@@ -37,6 +39,9 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
         toast.success("Moved to Target Units — watching for renewal");
         onOpenChange(false);
         router.refresh();
+      } else if (res.reason === "plan_cap_reached") {
+        onOpenChange(false);
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 10, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
       } else {
         toast.error("Could not save");
       }
@@ -49,6 +54,18 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
   const fieldStyle = { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
 
   return (
+    <>
+      <PlanCapDialog
+        open={!!capBlock}
+        pipeline="target"
+        currentPlan={capBlock?.currentPlan ?? "silver"}
+        currentCount={capBlock?.currentCount ?? 0}
+        currentCap={capBlock?.currentCap ?? 10}
+        upgradeToId={capBlock?.upgradeToId ?? "gold"}
+        upgradeCap={capBlock?.upgradeCap ?? null}
+        nearestExpiryDays={null}
+        onClose={() => setCapBlock(null)}
+      />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-0 overflow-hidden">
         <div className="p-6 space-y-5">
@@ -110,5 +127,6 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

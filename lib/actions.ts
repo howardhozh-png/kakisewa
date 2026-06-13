@@ -13,7 +13,7 @@ function invalidateCache() {
   revalidateTag("kk-supports");
 }
 import { format } from "date-fns";
-import { checkRenewalCardCap } from "./plan-caps";
+import { checkRenewalCardCap, checkLeadCap, checkTargetCap } from "./plan-caps";
 import {
   createTenancy,
   updateTenancy,
@@ -1588,9 +1588,25 @@ export async function addOwnerLeadAction(data: {
   available_from?: string | null;
   listing_purpose?: "rent" | "sell" | "both" | null;
   stage?: "imported" | "listed";
-}): Promise<{ ok: boolean; id?: string; message?: string }> {
+  skipLeadCap?: boolean;
+}): Promise<{ ok: boolean; id?: string; message?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
   const { createOwnerLead } = await import("@/lib/db");
   try {
+    if (!data.skipLeadCap) {
+      const capCheck = await checkLeadCap();
+      if (!capCheck.allowed) {
+        return {
+          ok: false,
+          reason: "plan_cap_reached",
+          current_plan: capCheck.current_plan,
+          current_count: capCheck.current_count,
+          current_cap: capCheck.current_cap,
+          upgrade_to: capCheck.upgrade_to,
+          upgrade_cap: capCheck.upgrade_cap,
+          nearest_expiry_days: null,
+        };
+      }
+    }
     const lead = await createOwnerLead({
       owner_name: data.owner_name,
       owner_phone: data.owner_phone,
@@ -1904,8 +1920,20 @@ export async function markCompetitorRentedAction(
   id: string,
   rentedOn: string,
   durationMonths: number
-): Promise<{ ok: boolean }> {
+): Promise<{ ok: boolean; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null }> {
   "use server";
+  const capCheck = await checkTargetCap();
+  if (!capCheck.allowed) {
+    return {
+      ok: false,
+      reason: "plan_cap_reached",
+      current_plan: capCheck.current_plan,
+      current_count: capCheck.current_count,
+      current_cap: capCheck.current_cap,
+      upgrade_to: capCheck.upgrade_to,
+      upgrade_cap: capCheck.upgrade_cap,
+    };
+  }
   const [y, m, day] = rentedOn.split("-").map(Number);
   const end = new Date(y, m - 1 + durationMonths, day);
   const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
@@ -1915,6 +1943,11 @@ export async function markCompetitorRentedAction(
   revalidatePath("/my-listing");
   revalidatePath("/target-listing");
   return { ok: true };
+}
+
+export async function checkTargetCapAction(): Promise<ReturnType<typeof checkTargetCap>> {
+  "use server";
+  return checkTargetCap();
 }
 
 export async function setCompetitorStageAction(

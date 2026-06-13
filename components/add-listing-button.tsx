@@ -8,6 +8,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { normalizePhone, phoneError } from "@/lib/phone";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
 import type { OwnerLead } from "@/lib/types";
 
@@ -69,6 +70,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
   const [uploading, setUploading] = useState(false);
   const [pending, startTransition] = useTransition();
   const [showSugg, setShowSugg] = useState(false);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null } | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const agreementRef = useRef<HTMLInputElement>(null);
 
@@ -127,6 +129,11 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         stage: "listed",
       });
 
+      if (!res.ok && res.reason === "plan_cap_reached") {
+        setOpen(false);
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 40, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
+        return;
+      }
       if (!res.ok) { toast.error(res.message ?? "Could not save listing"); return; }
 
       if (res.id && (photoFiles.length > 0 || agreementFiles.length > 0)) {
@@ -165,6 +172,17 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
 
   return (
     <>
+      <PlanCapDialog
+        open={!!capBlock}
+        pipeline="my_listing"
+        currentPlan={capBlock?.currentPlan ?? "silver"}
+        currentCount={capBlock?.currentCount ?? 0}
+        currentCap={capBlock?.currentCap ?? 40}
+        upgradeToId={capBlock?.upgradeToId ?? "gold"}
+        upgradeCap={capBlock?.upgradeCap ?? null}
+        nearestExpiryDays={null}
+        onClose={() => setCapBlock(null)}
+      />
       <button
         type="button"
         onClick={() => { reset(); setOpen(true); }}
