@@ -130,18 +130,32 @@ export default async function NetworkPage({ searchParams }: Props) {
           contactsCount={supports.length}
           view={view}
           helpSlot={
-            <PageHelpButton
-              variant="question"
-              module={1}
-              noVideo
-              pageTitle="Directory — your full property network"
-              bullets={[
-                "Contacts tab: add trusted service contacts like plumbers, electricians, cleaners",
-                "Service contacts are shown to owners and tenants when emergencies come up",
-                "Properties tab: every unit you manage or are actively marketing",
-                "Tenants tab: all prospects and active tenants across your portfolio",
-              ]}
-            />
+            view === "tenants" ? (
+              <PageHelpButton
+                variant="question"
+                module={3}
+                pageTitle="Tenant directory — send property packs"
+                bullets={[
+                  "Add prospect and active tenants to your directory",
+                  "Open any tenant to see their contact details and requirements",
+                  "Send a personalised property pack with one tap via WhatsApp",
+                  "Track which properties each tenant has been shown",
+                ]}
+              />
+            ) : (
+              <PageHelpButton
+                variant="question"
+                module={1}
+                noVideo
+                pageTitle="Directory — your full property network"
+                bullets={[
+                  "Contacts tab: add trusted service contacts like plumbers, electricians, cleaners",
+                  "Service contacts are shown to owners and tenants when emergencies come up",
+                  "Properties tab: every unit you manage or are actively marketing",
+                  "Tenants tab: all prospects and active tenants across your portfolio",
+                ]}
+              />
+            )
           }
         />
       </Suspense>

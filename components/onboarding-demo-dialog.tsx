@@ -83,14 +83,14 @@ function ValuePropBanner({ text }: { text: string }) {
 
 // ─── Shared atoms ──────────────────────────────────────────────────────────────
 
-function FakeNav({ active }: { active: "new-owners" | "contracts" }) {
+function FakeNav({ active }: { active: "new-owners" | "contracts" | "directory" }) {
   return (
     <div className="flex items-center gap-2 px-4" style={{ height: 34, background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
       <div className="w-[18px] h-[18px] rounded flex items-center justify-center font-bold" style={{ background: "#1C1C1E", color: "#fff", fontSize: 10 }}>K</div>
       <span style={{ fontWeight: 600, fontSize: 12, color: "#1C1C1E" }}>kakisewa</span>
       <div className="flex gap-3 ml-3">
-        {(["Home", "New Owners", "Contracts"] as const).map(l => {
-          const on = (active === "new-owners" && l === "New Owners") || (active === "contracts" && l === "Contracts");
+        {(["Home", "New Owners", "Contracts", "Directory"] as const).map(l => {
+          const on = (active === "new-owners" && l === "New Owners") || (active === "contracts" && l === "Contracts") || (active === "directory" && l === "Directory");
           return <span key={l} style={{ fontSize: 11, fontWeight: on ? 600 : 400, color: on ? "#1C1C1E" : "#AEAEB2" }}>{l}</span>;
         })}
       </div>
@@ -951,6 +951,182 @@ function Scene3({ active }: { active: boolean }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MODULE 4 — Tenant directory + send property pack
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const M4: Phase[] = [
+  { id: "idle",        ms: 1000, caption: "Your tenant directory — prospects and active renters in one place." },
+  { id: "to-row",      ms:  800, caption: "Tap any tenant to open their profile." },
+  { id: "hover-row",   ms:  700, caption: "See contact details, property, and pack options." },
+  { id: "click-row",   ms:  500, caption: "Opening..." },
+  { id: "drawer",      ms: 1800, caption: "Full profile: name, phone, property, and current stage." },
+  { id: "to-pack",     ms:  900, caption: "Send a shortlisted property pack directly from here." },
+  { id: "hover-pack",  ms:  700, caption: "One tap — WhatsApp opens with the pack link pre-filled." },
+  { id: "click-pack",  ms:  500, caption: "Sending..." },
+  { id: "wa-open",     ms: 1800, caption: "✓ Property pack link sent via WhatsApp instantly." },
+  { id: "end",         ms: 1000, caption: "Professional tenant packs. Delivered in a tap." },
+];
+
+const M4_CUR: Record<string, XY> = {
+  idle:         { x: 260, y: 135 },
+  "to-row":     { x: 230, y: 103 },
+  "hover-row":  { x: 230, y: 103 },
+  "click-row":  { x: 230, y: 103 },
+  drawer:       { x: 390, y: 135 },
+  "to-pack":    { x: 390, y: 212 },
+  "hover-pack": { x: 390, y: 212 },
+  "click-pack": { x: 390, y: 212 },
+  "wa-open":    { x: 390, y: 212 },
+  end:          { x: 260, y: 135 },
+};
+
+const TENANTS4 = [
+  { name: "Zara Idris", prop: "Taman Duta · 12A",  status: "prospect" },
+  { name: "Wei Chen",   prop: "Bangsar South · 3B", status: "active" },
+  { name: "Priya K.",   prop: "Mont Kiara · 8C",    status: "active" },
+];
+
+function Scene4({ active }: { active: boolean }) {
+  const { idx, phase, caption } = usePhaseCycle(M4, active);
+  const cur = M4_CUR[phase] ?? { x: 260, y: 135 };
+
+  const showDrawer = ["drawer", "to-pack", "hover-pack", "click-pack", "wa-open", "end"].includes(phase);
+  const rowHov     = ["hover-row", "click-row", "drawer", "to-pack", "hover-pack", "click-pack", "wa-open", "end"].includes(phase);
+  const packHov    = ["hover-pack", "click-pack"].includes(phase);
+  const packClk    = phase === "click-pack";
+  const showWa     = ["wa-open", "end"].includes(phase);
+  const clicking   = phase === "click-row" || packClk;
+
+  return (
+    <div>
+      <SceneFrame phases={M4} idx={idx}>
+        <FakeNav active="directory" />
+
+        <div className="flex" style={{ height: 236, overflow: "hidden" }}>
+          {/* Tenant table */}
+          <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+            {/* Tab sub-nav */}
+            <div className="flex gap-3 px-4 pt-2 pb-1.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+              {["Properties", "Tenants", "Contacts"].map(tab => (
+                <span key={tab} style={{
+                  fontSize: 10, fontWeight: tab === "Tenants" ? 700 : 400,
+                  color: tab === "Tenants" ? "#1C1C1E" : "#AEAEB2",
+                  paddingBottom: 3,
+                  borderBottom: tab === "Tenants" ? "2px solid #1C1C1E" : "2px solid transparent",
+                }}>{tab}</span>
+              ))}
+            </div>
+
+            {/* Column headers */}
+            <div className="grid px-4 py-1.5" style={{ gridTemplateColumns: "1fr 1fr 56px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              {["Name", "Property", "Status"].map(h => (
+                <span key={h} style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#AEAEB2" }}>{h}</span>
+              ))}
+            </div>
+
+            {/* Rows */}
+            {TENANTS4.map((t, i) => (
+              <div key={t.name} className="grid items-center px-4" style={{
+                gridTemplateColumns: "1fr 1fr 56px",
+                height: 42,
+                background: i === 0 && rowHov ? "#F2F2F7" : "transparent",
+                borderBottom: i < 2 ? "1px solid rgba(0,0,0,0.05)" : "none",
+                transition: "background 0.2s",
+              }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#1C1C1E" }}>{t.name}</span>
+                <span style={{ fontSize: 10, color: "#6C6C70" }}>{t.prop}</span>
+                <span style={{
+                  fontSize: 8, fontWeight: 700, padding: "2px 5px", borderRadius: 999,
+                  background: t.status === "active" ? "rgba(52,199,89,0.12)" : "rgba(255,149,0,0.12)",
+                  color: t.status === "active" ? "#1F8B4C" : "#955500",
+                  display: "inline-block", whiteSpace: "nowrap",
+                }}>
+                  {t.status === "active" ? "Active" : "Prospect"}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Slide-in drawer */}
+          <div style={{
+            width: showDrawer ? 190 : 0,
+            minWidth: 0,
+            background: "#fff",
+            borderLeft: showDrawer ? "1px solid rgba(0,0,0,0.08)" : "none",
+            overflow: "hidden",
+            transition: "width 0.4s cubic-bezier(0.32,0.72,0,1)",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}>
+            {showDrawer && (<>
+              <div className="px-3 py-2.5" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+                <div className="flex items-center gap-2">
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#F2F2F7", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#1C1C1E" }}>ZI</span>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>Zara Idris</p>
+                    <p style={{ fontSize: 9, color: "#6C6C70", lineHeight: 1.2 }}>Prospect</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-3 py-2.5 flex flex-col gap-2.5" style={{ flex: 1 }}>
+                {[["Property", "Taman Duta · 12A"], ["Phone", "+60 12-345 6789"], ["Budget", "RM 2,200 / mo"]].map(([label, val]) => (
+                  <div key={label}>
+                    <p style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#AEAEB2", marginBottom: 1 }}>{label}</p>
+                    <p style={{ fontSize: 11, color: "#1C1C1E" }}>{val}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="px-3 pb-3">
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  padding: "7px 10px", borderRadius: 10,
+                  background: packHov ? "#000" : "#1C1C1E", color: "#fff",
+                  fontSize: 10, fontWeight: 700,
+                  transform: packClk ? "scale(0.95)" : "scale(1)",
+                  transition: "all 0.15s",
+                }}>
+                  <Send style={{ width: 9, height: 9 }} />
+                  Send property pack
+                </div>
+              </div>
+            </>)}
+          </div>
+        </div>
+
+        {/* WA success overlay */}
+        {showWa && (
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(0,0,0,0.50)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            animation: "kk-demo-card-in 0.35s ease-out",
+          }}>
+            <div style={{
+              background: "#fff", borderRadius: 14, padding: "18px 22px",
+              maxWidth: 220, width: "100%", textAlign: "center",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.25)",
+            }}>
+              <div style={{ fontSize: 26, marginBottom: 6 }}>✅</div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#1C1C1E", marginBottom: 4 }}>Pack sent!</p>
+              <p style={{ fontSize: 10, color: "#6C6C70", lineHeight: 1.4 }}>WhatsApp opened with the property pack link for Zara Idris.</p>
+            </div>
+          </div>
+        )}
+
+        <DemoCursor x={cur.x} y={cur.y} clicking={clicking} hidden={showWa} />
+      </SceneFrame>
+      <p className="text-center mt-2" style={{ fontSize: 13, color: "#6C6C70", minHeight: 20 }}>
+        {caption}
+      </p>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Modal shell
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -969,6 +1145,11 @@ const MODULES = [
     title:     "Track & close renewals",
     valueProp: "Auto-reminder for 60-day expiry to follow up with owner",
     Scene:     Scene3,
+  },
+  {
+    title:     "Tenant directory — send property packs",
+    valueProp: "One tap sends a WhatsApp with shortlisted properties",
+    Scene:     Scene4,
   },
 ];
 

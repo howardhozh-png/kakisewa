@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kakisewa — Brand Guideline</title>
+<style>
+  /* ── Fonts ─────────────────────────────────────────────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&family=Caveat:wght@400;600&display=swap');
+
+  /* ── Tokens ─────────────────────────────────────────────────────────────────── */
+  :root {
+    --kk-bg:           #FBFBFD;
+    --kk-surface:      #FFFFFF;
+    --kk-surface-2:    #F5F5F7;
+    --kk-ink:          #1D1D1F;
+    --kk-ink-soft:     #424245;
+    --kk-ink-mute:     #6E6E73;
+    --kk-ink-faint:    #86868B;
+    --kk-line:         rgba(0,0,0,0.08);
+    --kk-line-strong:  rgba(0,0,0,0.14);
+    --kk-accent:       #1D1D1F;
+    --kk-blue:         #0071E3;
+    --kk-blue-soft:    rgba(0,113,227,0.10);
+    --kk-green:        #34C759;
+    --kk-green-soft:   rgba(52,199,89,0.12);
+    --kk-green-ink:    #1F8B4C;
+    --kk-red:          #FF3B30;
+    --kk-red-soft:     rgba(255,59,48,0.10);
+    --kk-amber:        #FF9500;
+    --kk-amber-soft:   rgba(255,149,0,0.12);
+    --kk-purple:       #AF52DE;
+    --kk-purple-soft:  rgba(175,82,222,0.10);
+    --kk-purple-ink:   #6F2DA8;
+    --kk-theme-dark:   #3D3D44;
+    --kk-theme-light:  rgba(60,60,67,0.10);
+    --radius:          0.625rem;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--kk-bg);
+    color: var(--kk-ink);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ── Layout ────────────────────────────────────────────────────────────────── */
+  .page { max-width: 960px; margin: 0 auto; padding: 60px 40px 120px; }
+
+  header {
+    margin-bottom: 64px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--kk-line);
+  }
+  header .logo {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  }
+  header .logo-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--kk-ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px; letter-spacing: -0.03em;
+  }
+  header .logo-name {
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: 18px; letter-spacing: -0.02em; color: var(--kk-ink);
+  }
+  header .logo-jp {
+    font-size: 11px; color: var(--kk-ink-faint); letter-spacing: 0.12em;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 48px; font-weight: 400; letter-spacing: -0.022em;
+    line-height: 1.07; color: var(--kk-ink); margin-bottom: 12px;
+  }
+  header p { font-size: 17px; color: var(--kk-ink-mute); line-height: 1.47; }
+
+  /* ── Section ───────────────────────────────────────────────────────────────── */
+  section { margin-bottom: 72px; }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--kk-ink-faint);
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.013em;
+    color: var(--kk-ink); margin-bottom: 8px;
+  }
+  .section-sub {
+    font-size: 15px; color: var(--kk-ink-mute); margin-bottom: 32px;
+  }
+  hr.divider {
+    border: none; border-top: 1px solid var(--kk-line); margin-bottom: 32px;
+  }
+
+  /* ── Grid helpers ──────────────────────────────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+  /* ── Card ──────────────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--kk-surface);
+    border: 1px solid var(--kk-line);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+  }
+  .card-sm { padding: 16px; border-radius: 14px; }
+
+  /* ── Colour swatch ─────────────────────────────────────────────────────────── */
+  .swatch {
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--kk-line);
+  }
+  .swatch-colour {
+    height: 72px;
+    display: flex; align-items: flex-end;
+    padding: 8px 10px;
+  }
+  .swatch-info {
+    background: var(--kk-surface); padding: 10px 12px;
+  }
+  .swatch-name  { font-size: 12px; font-weight: 600; color: var(--kk-ink); }
+  .swatch-token { font-size: 10px; color: var(--kk-ink-mute); font-family: monospace; margin-top: 2px; }
+  .swatch-hex   { font-size: 10px; color: var(--kk-ink-faint); font-family: monospace; }
+
+  /* ── Type specimen ─────────────────────────────────────────────────────────── */
+  .type-row {
+    display: flex; align-items: baseline; gap: 24px;
+    padding: 20px 0; border-bottom: 1px solid var(--kk-line);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta {
+    width: 200px; flex-shrink: 0;
+    font-size: 11px; color: var(--kk-ink-faint); font-family: monospace;
+    line-height: 1.6;
+  }
+  .type-meta strong { display: block; font-size: 12px; color: var(--kk-ink-mute); margin-bottom: 2px; }
+
+  /* ── Component row ─────────────────────────────────────────────────────────── */
+  .comp-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    padding: 20px 0; border-bottom: 1px solid var(--kk-line);
+  }
+  .comp-row:last-child { border-bottom: none; }
+  .comp-label {
+    width: 140px; flex-shrink: 0;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--kk-ink-faint);
+  }
+
+  /* ── Pill variants ─────────────────────────────────────────────────────────── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; padding: 6px 14px;
+    border-radius: 999px; cursor: pointer; border: none;
+    text-decoration: none; white-space: nowrap;
+  }
+  .pill-primary { background: var(--kk-ink);      color: #fff; }
+  .pill-blue    { background: var(--kk-blue);     color: #fff; }
+  .pill-white   { background: var(--kk-surface);  color: var(--kk-ink); border: 1px solid var(--kk-line); box-shadow: 0 1px 3px rgba(0,0,0,0.10); }
+  .pill-ghost   { background: transparent;        color: var(--kk-ink); border: 1px solid var(--kk-line-strong); }
+  .pill-green   { background: var(--kk-green-soft); color: var(--kk-green-ink); }
+  .pill-blue-s  { background: var(--kk-blue-soft);  color: var(--kk-blue); }
+  .pill-amber   { background: var(--kk-amber-soft); color: #955500; }
+  .pill-red     { background: var(--kk-red-soft);   color: var(--kk-red); }
+  .pill-purple  { background: var(--kk-purple-soft); color: var(--kk-purple-ink); }
+
+  /* ── Status badges ─────────────────────────────────────────────────────────── */
+  .status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 999px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .status::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+  }
+  .status-green  { background: var(--kk-green-soft);  color: var(--kk-green-ink); }
+  .status-amber  { background: var(--kk-amber-soft);  color: #955500; }
+  .status-red    { background: var(--kk-red-soft);    color: var(--kk-red); }
+  .status-blue   { background: var(--kk-blue-soft);   color: var(--kk-blue); }
+  .status-purple { background: var(--kk-purple-soft); color: var(--kk-purple-ink); }
+
+  /* ── Radius ────────────────────────────────────────────────────────────────── */
+  .radius-demo {
+    background: var(--kk-surface-2); border: 1px solid var(--kk-line);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 6px; height: 80px;
+  }
+  .radius-label { font-size: 10px; color: var(--kk-ink-mute); font-family: monospace; }
+
+  /* ── Shadow ────────────────────────────────────────────────────────────────── */
+  .shadow-demo {
+    background: var(--kk-surface); border-radius: 14px;
+    padding: 20px; text-align: center;
+  }
+  .shadow-name { font-size: 12px; font-weight: 600; color: var(--kk-ink); }
+  .shadow-val  { font-size: 10px; color: var(--kk-ink-faint); margin-top: 4px; font-family: monospace; word-break: break-all; line-height: 1.4; }
+
+  /* ── Token table ───────────────────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--kk-ink-faint);
+    padding: 10px 16px 8px; border-bottom: 1px solid var(--kk-line);
+  }
+  td { padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.04); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,0,0,0.015); }
+  td code { font-family: monospace; font-size: 11px; color: var(--kk-blue); background: var(--kk-blue-soft); padding: 2px 6px; border-radius: 4px; }
+  td .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 8px; border: 1px solid rgba(0,0,0,0.08); }
+
+  /* ── Do / Don't ────────────────────────────────────────────────────────────── */
+  .do-dont { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .do-box, .dont-box {
+    border-radius: 14px; padding: 20px;
+    border: 1px solid var(--kk-line);
+  }
+  .do-box   { border-top: 3px solid var(--kk-green); }
+  .dont-box { border-top: 3px solid var(--kk-red); }
+  .do-label   { font-size: 11px; font-weight: 700; color: var(--kk-green-ink); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+  .dont-label { font-size: 11px; font-weight: 700; color: var(--kk-red); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+  .do-box ul, .dont-box ul { padding-left: 18px; font-size: 13px; color: var(--kk-ink-soft); line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">k</div>
+      <div>
+        <div class="logo-name">kakisewa</div>
+        <div class="logo-jp">カ キ セ ワ</div>
+      </div>
+    </div>
+    <h1>Brand Guideline</h1>
+    <p>Reference for colours, typography, components, and voice. Use this when building UI so every screen feels like kakisewa.</p>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. COLOUR PALETTE                                                          -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">01 — Colour</p>
+    <h2 class="section-title">Colour palette</h2>
+    <p class="section-sub">Apple-inspired neutrals. One accent family per semantic meaning. Never mix semantic colours for decoration.</p>
+
+    <h3 style="font-size:13px;font-weight:600;color:var(--kk-ink-mute);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em;">Neutrals</h3>
+    <div class="grid-4" style="margin-bottom:32px;">
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#FBFBFD;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Background</div>
+          <div class="swatch-token">--kk-bg</div>
+          <div class="swatch-hex">#FBFBFD · rgb(251,251,253)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#FFFFFF;border-bottom:1px solid rgba(0,0,0,0.06);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Surface</div>
+          <div class="swatch-token">--kk-surface</div>
+          <div class="swatch-hex">#FFFFFF · rgb(255,255,255)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#F5F5F7;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Surface 2</div>
+          <div class="swatch-token">--kk-surface-2</div>
+          <div class="swatch-hex">#F5F5F7 · rgb(245,245,247)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:rgba(255,255,255,0.72);backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,0.06);"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Elevated (Glass)</div>
+          <div class="swatch-token">--kk-elevated</div>
+          <div class="swatch-hex">rgba(255,255,255,0.72)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#1D1D1F;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ink (Primary text)</div>
+          <div class="swatch-token">--kk-ink</div>
+          <div class="swatch-hex">#1D1D1F · rgb(29,29,31)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#424245;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ink Soft</div>
+          <div class="swatch-token">--kk-ink-soft</div>
+          <div class="swatch-hex">#424245 · rgb(66,66,69)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#6E6E73;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ink Mute</div>
+          <div class="swatch-token">--kk-ink-mute</div>
+          <div class="swatch-hex">#6E6E73 · rgb(110,110,115)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#86868B;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ink Faint</div>
+          <div class="swatch-token">--kk-ink-faint</div>
+          <div class="swatch-hex">#86868B · rgb(134,134,139)</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:13px;font-weight:600;color:var(--kk-ink-mute);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em;">Semantic colours</h3>
+    <div class="grid-5" style="margin-bottom:32px;">
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#0071E3;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Blue (CTA)</div>
+          <div class="swatch-token">--kk-blue</div>
+          <div class="swatch-hex">#0071E3 · rgb(0,113,227)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#34C759;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Green (Success)</div>
+          <div class="swatch-token">--kk-green</div>
+          <div class="swatch-hex">#34C759 · rgb(52,199,89)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#FF3B30;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Red (Error)</div>
+          <div class="swatch-token">--kk-red</div>
+          <div class="swatch-hex">#FF3B30 · rgb(255,59,48)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#FF9500;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Amber (Warning)</div>
+          <div class="swatch-token">--kk-amber</div>
+          <div class="swatch-hex">#FF9500 · rgb(255,149,0)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-colour" style="background:#AF52DE;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Purple (Special)</div>
+          <div class="swatch-token">--kk-purple</div>
+          <div class="swatch-hex">#AF52DE · rgb(175,82,222)</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:13px;font-weight:600;color:var(--kk-ink-mute);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em;">Soft tints (for backgrounds and tags)</h3>
+    <table style="margin-bottom:32px;">
+      <tr>
+        <th>Token</th><th>Hex / Opacity</th><th>RGB</th><th>Use with</th>
+      </tr>
+      <tr><td><code>--kk-blue-soft</code></td><td>rgba(0,113,227,0.10)</td><td>rgb(0,113,227) @ 10%</td><td>Blue text on soft-blue bg</td></tr>
+      <tr><td><code>--kk-green-soft</code></td><td>rgba(52,199,89,0.12)</td><td>rgb(52,199,89) @ 12%</td><td>--kk-green-ink #1F8B4C</td></tr>
+      <tr><td><code>--kk-red-soft</code></td><td>rgba(255,59,48,0.10)</td><td>rgb(255,59,48) @ 10%</td><td>--kk-red #FF3B30</td></tr>
+      <tr><td><code>--kk-amber-soft</code></td><td>rgba(255,149,0,0.12)</td><td>rgb(255,149,0) @ 12%</td><td>Amber text #955500</td></tr>
+      <tr><td><code>--kk-purple-soft</code></td><td>rgba(175,82,222,0.10)</td><td>rgb(175,82,222) @ 10%</td><td>--kk-purple-ink #6F2DA8</td></tr>
+    </table>
+
+    <h3 style="font-size:13px;font-weight:600;color:var(--kk-ink-mute);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em;">Chart colours</h3>
+    <div class="grid-5">
+      <div class="swatch"><div class="swatch-colour" style="background:#0071E3;"></div><div class="swatch-info"><div class="swatch-name">Chart 1</div><div class="swatch-token">--chart-1</div><div class="swatch-hex">#0071E3</div></div></div>
+      <div class="swatch"><div class="swatch-colour" style="background:#34C759;"></div><div class="swatch-info"><div class="swatch-name">Chart 2</div><div class="swatch-token">--chart-2</div><div class="swatch-hex">#34C759</div></div></div>
+      <div class="swatch"><div class="swatch-colour" style="background:#FF9500;"></div><div class="swatch-info"><div class="swatch-name">Chart 3</div><div class="swatch-token">--chart-3</div><div class="swatch-hex">#FF9500</div></div></div>
+      <div class="swatch"><div class="swatch-colour" style="background:#AF52DE;"></div><div class="swatch-info"><div class="swatch-name">Chart 4</div><div class="swatch-token">--chart-4</div><div class="swatch-hex">#AF52DE</div></div></div>
+      <div class="swatch"><div class="swatch-colour" style="background:#FF3B30;"></div><div class="swatch-info"><div class="swatch-name">Chart 5</div><div class="swatch-token">--chart-5</div><div class="swatch-hex">#FF3B30</div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. TYPOGRAPHY                                                              -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">02 — Typography</p>
+    <h2 class="section-title">Type system</h2>
+    <p class="section-sub">Three font families. Inter for everything; DM Serif Display for hero headings only; Caveat for handwritten accents.</p>
+
+    <div class="card" style="margin-bottom:32px;">
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-display-lg / serif</strong>
+          64px · weight 400 · DM Serif<br>
+          lh 1.05 · ls -0.025em
+        </div>
+        <div style="font-family:'DM Serif Display',serif;font-size:40px;font-weight:400;letter-spacing:-0.022em;line-height:1.07;color:var(--kk-ink);">Passive income starts here.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-display</strong>
+          48px · weight 600 · Inter<br>
+          lh 1.07 · ls -0.022em
+        </div>
+        <div style="font-size:36px;font-weight:600;letter-spacing:-0.022em;line-height:1.07;color:var(--kk-ink);">Existing listing</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-h1</strong>
+          36px · weight 600<br>
+          lh 1.10 · ls -0.019em
+        </div>
+        <div style="font-size:28px;font-weight:600;letter-spacing:-0.019em;line-height:1.10;color:var(--kk-ink);">Track & close renewals</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-h2</strong>
+          28px · weight 600<br>
+          lh 1.20 · ls -0.016em
+        </div>
+        <div style="font-size:22px;font-weight:600;letter-spacing:-0.016em;line-height:1.20;color:var(--kk-ink);">Renewal income — 12 months</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-h3</strong>
+          22px · weight 600<br>
+          lh 1.27 · ls -0.013em
+        </div>
+        <div style="font-size:18px;font-weight:600;letter-spacing:-0.013em;line-height:1.27;color:var(--kk-ink);">RM 22,355 projected</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-body</strong>
+          17px · weight 400<br>
+          lh 1.47 · ls -0.022em
+        </div>
+        <div style="font-size:17px;font-weight:400;letter-spacing:-0.022em;line-height:1.47;color:var(--kk-ink);">kakisewa alerts you 60 days before any contract expires so you can reach the owner before another agent does.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-body-sm</strong>
+          15px · weight 400<br>
+          lh 1.5 · ls -0.017em
+        </div>
+        <div style="font-size:15px;font-weight:400;letter-spacing:-0.017em;line-height:1.5;color:var(--kk-ink-soft);">Track every tenancy. Get alerted 60 days before a contract expires. Renew and earn half a month commission.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-caption</strong>
+          13px · weight 400<br>
+          lh 1.5 · ls -0.011em · mute colour
+        </div>
+        <div style="font-size:13px;font-weight:400;letter-spacing:-0.011em;line-height:1.5;color:var(--kk-ink-mute);">8 contracts · 1 month rent counted as renewal income</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-overline</strong>
+          11px · weight 600<br>
+          lh 1.0 · ls 0.08em · UPPERCASE
+        </div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--kk-ink-faint);">RENEWAL INCOME · 12 MONTHS</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <strong>.kk-metric-lg</strong>
+          28px · weight 700<br>
+          ls -0.030em · tabular nums
+        </div>
+        <div style="font-size:28px;font-weight:700;letter-spacing:-0.030em;color:var(--kk-ink);font-variant-numeric:tabular-nums;">RM 22,355</div>
+      </div>
+      <div class="type-row" style="border-bottom:none;">
+        <div class="type-meta">
+          <strong>Caveat (journal)</strong>
+          Handwritten accent only<br>
+          weight 400 or 600
+        </div>
+        <div style="font-family:'Caveat',cursive;font-size:24px;font-weight:600;color:var(--kk-ink);">New Owners 🏠</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:13px;font-weight:600;color:var(--kk-ink-mute);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em;">Mobile type adjustments (max-width: 1023px)</h3>
+    <table>
+      <tr><th>Class</th><th>Desktop</th><th>Mobile</th></tr>
+      <tr><td><code>.kk-display</code></td><td>48px</td><td>26px</td></tr>
+      <tr><td><code>.kk-h1</code></td><td>36px</td><td>22px</td></tr>
+      <tr><td><code>.kk-body</code></td><td>17px</td><td>15px</td></tr>
+      <tr><td>Input / select</td><td>—</td><td>16px minimum (prevents iOS zoom)</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 3. SPACING & RADIUS                                                        -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">03 — Spacing &amp; Radius</p>
+    <h2 class="section-title">Border radius scale</h2>
+    <p class="section-sub">Base: <code>--radius = 0.625rem (10px)</code>. All radii multiply from this base.</p>
+
+    <div class="grid-4" style="margin-bottom:40px;">
+      <div class="radius-demo" style="border-radius:6px;"><span class="radius-label">--radius-sm</span><span style="font-size:11px;color:var(--kk-ink);">6px</span></div>
+      <div class="radius-demo" style="border-radius:8px;"><span class="radius-label">--radius-md</span><span style="font-size:11px;color:var(--kk-ink);">8px</span></div>
+      <div class="radius-demo" style="border-radius:10px;"><span class="radius-label">--radius-lg</span><span style="font-size:11px;color:var(--kk-ink);">10px</span></div>
+      <div class="radius-demo" style="border-radius:14px;"><span class="radius-label">--radius-xl</span><span style="font-size:11px;color:var(--kk-ink);">14px</span></div>
+      <div class="radius-demo" style="border-radius:18px;"><span class="radius-label">--radius-2xl</span><span style="font-size:11px;color:var(--kk-ink);">18px · cards, sections</span></div>
+      <div class="radius-demo" style="border-radius:22px;"><span class="radius-label">--radius-3xl</span><span style="font-size:11px;color:var(--kk-ink);">22px</span></div>
+      <div class="radius-demo" style="border-radius:26px;"><span class="radius-label">--radius-4xl</span><span style="font-size:11px;color:var(--kk-ink);">26px</span></div>
+      <div class="radius-demo" style="border-radius:999px;"><span class="radius-label">999px</span><span style="font-size:11px;color:var(--kk-ink);">pills, badges</span></div>
+    </div>
+
+    <h2 class="section-title">Shadow system</h2>
+    <p class="section-sub" style="margin-bottom:24px;">Shadows are layered (base + detail). Always pair with white or near-white surfaces.</p>
+    <div class="grid-3">
+      <div class="shadow-demo" style="box-shadow:0 4px 12px -2px rgba(0,0,0,0.07),0 2px 4px -1px rgba(0,0,0,0.04);">
+        <div class="shadow-name">Card (default)</div>
+        <div class="shadow-val">0 4px 12px -2px rgba(0,0,0,0.07),<br>0 2px 4px -1px rgba(0,0,0,0.04)</div>
+      </div>
+      <div class="shadow-demo" style="box-shadow:0 14px 36px -4px rgba(0,0,0,0.12),0 4px 8px -2px rgba(0,0,0,0.07);">
+        <div class="shadow-name">Card (hover)</div>
+        <div class="shadow-val">0 14px 36px -4px rgba(0,0,0,0.12),<br>0 4px 8px -2px rgba(0,0,0,0.07)</div>
+      </div>
+      <div class="shadow-demo" style="box-shadow:0 8px 24px rgba(0,0,0,0.18);">
+        <div class="shadow-name">Tooltip / popover</div>
+        <div class="shadow-val">0 8px 24px rgba(0,0,0,0.18)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 4. COMPONENTS                                                              -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">04 — Components</p>
+    <h2 class="section-title">Pill buttons</h2>
+    <p class="section-sub">13px · 500 weight · 6px 14px padding · 999px radius · 160ms ease transitions.</p>
+    <div class="card">
+      <div class="comp-row">
+        <span class="comp-label">Primary</span>
+        <button class="pill pill-primary">Add tenancy</button>
+        <span style="font-size:11px;color:var(--kk-ink-faint);font-family:monospace;">.kk-pill-primary · bg: --kk-ink · color: #fff</span>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Blue</span>
+        <button class="pill pill-blue">Upload file</button>
+        <span style="font-size:11px;color:var(--kk-ink-faint);font-family:monospace;">.kk-pill-blue · bg: --kk-blue · color: #fff</span>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">White</span>
+        <button class="pill pill-white">How this works</button>
+        <span style="font-size:11px;color:var(--kk-ink-faint);font-family:monospace;">.kk-pill-white · bg: --kk-surface · border + shadow</span>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Ghost</span>
+        <button class="pill pill-ghost">Export</button>
+        <span style="font-size:11px;color:var(--kk-ink-faint);font-family:monospace;">.kk-pill-ghost · transparent + border</span>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Soft tints</span>
+        <button class="pill pill-green">Active</button>
+        <button class="pill pill-blue-s">Verified</button>
+        <button class="pill pill-amber">Expiring</button>
+        <button class="pill pill-red">Expired</button>
+        <button class="pill pill-purple">LHDN</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Status badges</h2>
+    <p class="section-sub">11px · 600 weight · dot prefix via ::before. Used for tenancy/lead stage indicators.</p>
+    <div class="card">
+      <div class="comp-row">
+        <span class="comp-label">Variants</span>
+        <span class="status status-green">Active</span>
+        <span class="status status-amber">Expiring</span>
+        <span class="status status-red">Expired</span>
+        <span class="status status-blue">Verified</span>
+        <span class="status status-purple">LHDN filed</span>
+      </div>
+      <div class="comp-row" style="border-bottom:none;">
+        <span class="comp-label">CSS class</span>
+        <span style="font-size:11px;color:var(--kk-ink-faint);font-family:monospace;">.kk-status + .kk-status-{green|amber|red|blue|purple}</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Cards</h2>
+    <p class="section-sub">White surface · 1px rgba(0,0,0,0.08) border · 18px radius · layered shadow.</p>
+    <div class="grid-2">
+      <div class="card">
+        <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--kk-ink-faint);margin-bottom:8px;">RENEWAL INCOME</p>
+        <p style="font-size:28px;font-weight:700;letter-spacing:-0.030em;color:var(--kk-ink);">RM 22,355</p>
+        <p style="font-size:13px;color:var(--kk-ink-mute);margin-top:4px;">8 contracts · 12 months</p>
+      </div>
+      <div class="card">
+        <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--kk-ink-faint);margin-bottom:8px;">ACTIVE CONTRACTS</p>
+        <p style="font-size:28px;font-weight:700;letter-spacing:-0.030em;color:var(--kk-ink);">8</p>
+        <p style="font-size:13px;color:var(--kk-ink-mute);margin-top:4px;">3 expiring in 60 days</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 5. VOICE & COPY                                                            -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">05 — Voice &amp; Copy</p>
+    <h2 class="section-title">Writing rules</h2>
+    <p class="section-sub">kakisewa speaks to professional property agents. Confident, clear, no fluff.</p>
+
+    <div class="do-dont">
+      <div class="do-box">
+        <div class="do-label">✓ Do</div>
+        <ul>
+          <li>Use short, action-first sentences</li>
+          <li>Speak to outcomes: "Earn half a month commission"</li>
+          <li>Use Malaysian context: RM, Bukit Jalil, owner/tenant</li>
+          <li>Sentence case for UI labels and headings</li>
+          <li>Numbers are specific: "60 days", "RM 22,355"</li>
+          <li>Warm but professional tone</li>
+        </ul>
+      </div>
+      <div class="dont-box">
+        <div class="dont-label">✗ Don't</div>
+        <ul>
+          <li>Use em dashes (—) or en dashes in copy</li>
+          <li>Use passive voice or corporate jargon</li>
+          <li>ALL CAPS for emphasis (use bold or colour)</li>
+          <li>Exclamation marks in neutral UI text</li>
+          <li>Vague filler: "Please note that...", "In order to..."</li>
+          <li>British/American spelling inconsistency</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 6. LOGO & WORDMARK                                                         -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">06 — Logo</p>
+    <h2 class="section-title">Wordmark &amp; logomark</h2>
+    <p class="section-sub">The logomark is a rounded square with "k" in Inter 800. The wordmark pairs it with the Japanese katakana "カ キ セ ワ" in a small overline.</p>
+
+    <div class="grid-2">
+      <div class="card" style="display:flex;align-items:center;justify-content:center;min-height:120px;background:var(--kk-bg);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:10px;background:#1D1D1F;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;letter-spacing:-0.03em;">k</div>
+          <div>
+            <div style="font-weight:700;font-size:20px;letter-spacing:-0.02em;color:#1D1D1F;">kakisewa</div>
+            <div style="font-size:11px;color:#86868B;letter-spacing:0.12em;">カ キ セ ワ</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;justify-content:center;min-height:120px;background:#1D1D1F;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;letter-spacing:-0.03em;">k</div>
+          <div>
+            <div style="font-weight:700;font-size:20px;letter-spacing:-0.02em;color:#fff;">kakisewa</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;">カ キ セ ワ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 7. MOTION                                                                  -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">07 — Motion</p>
+    <h2 class="section-title">Timing &amp; easing</h2>
+    <table>
+      <tr><th>Use</th><th>Duration</th><th>Easing</th></tr>
+      <tr><td>Card hover / scale</td><td>200ms</td><td>cubic-bezier(0.32, 0.72, 0, 1)</td></tr>
+      <tr><td>Button / pill feedback</td><td>160ms</td><td>ease</td></tr>
+      <tr><td>Icon / color transitions</td><td>120ms</td><td>ease</td></tr>
+      <tr><td>Nav active state</td><td>150ms</td><td>ease</td></tr>
+      <tr><td>Drawer slide-in</td><td>320ms</td><td>cubic-bezier(0.32, 0.72, 0, 1)</td></tr>
+      <tr><td>Demo cursor movement</td><td>900ms</td><td>cubic-bezier(0.33, 1, 0.68, 1)</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 8. QUICK REFERENCE                                                         -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <section>
+    <p class="section-label">08 — Quick reference</p>
+    <h2 class="section-title">For Claude — rules to always follow</h2>
+    <div class="card">
+      <table>
+        <tr><th>Rule</th><th>Detail</th></tr>
+        <tr><td><strong>Never hardcode colours</strong></td><td>Always use <code>var(--kk-*)</code> tokens</td></tr>
+        <tr><td><strong>Card radius = 18px</strong></td><td>Use <code>--radius-2xl</code> or <code>border-radius: 18px</code></td></tr>
+        <tr><td><strong>No em/en dashes in copy</strong></td><td>Use commas or colons instead</td></tr>
+        <tr><td><strong>No custom UI components</strong></td><td>Check <code>components/ui/</code> first — shadcn on @base-ui/react</td></tr>
+        <tr><td><strong>Inline styles for critical sizing</strong></td><td>Lightning CSS strips compound selectors inside @media</td></tr>
+        <tr><td><strong>Tailwind !important is stripped</strong></td><td>Use inline <code>style={{}}</code> for overrides that must win</td></tr>
+        <tr><td><strong>Touch targets min 44px</strong></td><td>Pills and CTAs on mobile must be at least 44px tall</td></tr>
+        <tr><td><strong>iOS input font = 16px</strong></td><td>Prevents auto-zoom; global rule already applied in globals.css</td></tr>
+        <tr><td><strong>Serif for display only</strong></td><td>DM Serif Display on page hero headings with <code>.serif</code> class only</td></tr>
+        <tr><td><strong>Overline = UPPERCASE 11px</strong></td><td>Section/module labels. Use <code>.kk-overline</code> class</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <footer style="padding-top:40px;border-top:1px solid var(--kk-line);font-size:12px;color:var(--kk-ink-faint);">
+    kakisewa brand guideline · auto-generated from <code>app/globals.css</code> · update whenever tokens change
+  </footer>
+
+</div>
+</body>
+</html>

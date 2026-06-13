@@ -19,6 +19,33 @@ Never skip to Execute without completing Explore and Plan first.
 
 ---
 
+## Brand Guideline
+
+The full brand guideline (colours with RGB values, typography, components, copy rules) lives at:
+- **Preview**: `http://localhost:3000/brand.html` or `public/brand.html`
+- **Source of truth for tokens**: `app/globals.css`
+
+Key rules (memorise these):
+
+| Rule | Value |
+|---|---|
+| Card border-radius | 18px (`--radius-2xl`) |
+| Primary text | `var(--kk-ink)` = #1D1D1F |
+| Background | `var(--kk-bg)` = #FBFBFD |
+| Card surface | `var(--kk-surface)` = #FFFFFF |
+| Muted text | `var(--kk-ink-mute)` = #6E6E73 |
+| Blue CTA | `var(--kk-blue)` = #0071E3 |
+| Green success | `var(--kk-green)` = #34C759 / ink `--kk-green-ink` = #1F8B4C |
+| Red error | `var(--kk-red)` = #FF3B30 |
+| Amber warning | `var(--kk-amber)` = #FF9500 |
+| Serif font | DM Serif Display — hero headings only, with `.serif` class |
+| Sans font | Inter — everything else |
+| Overline style | 11px · 600 · uppercase · ls 0.08em · `var(--kk-ink-faint)` |
+| No em/en dashes | Never in user-facing copy |
+| Soft tints | Pair bg soft token with matching ink token (e.g. `--kk-green-soft` + `--kk-green-ink`) |
+
+---
+
 ## Design — shadcn only
 
 - **Never build a custom UI component** that already exists in `components/ui/`. Check there first.
