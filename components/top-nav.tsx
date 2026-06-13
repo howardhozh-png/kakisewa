@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState, useEffect, useTransition } from "react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
-import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, Mail, MessageCircle, BookOpen, ChevronDown as ChevronDownFAQ, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
+import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, MessageCircle, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
 import { DEMO_EVENT } from "@/components/onboarding-demo-dialog";
 import { THEMES, getTheme, applyTheme, type Theme } from "@/components/accent-provider";
@@ -561,63 +561,6 @@ function BillingModal({ trialDaysLeft }: { trialDaysLeft?: number | null }) {
   );
 }
 
-// ── Help & support modal ──────────────────────────────────────────────────────
-const FAQS = [
-  { q: "How do I import owner leads?", a: "Go to Manage new leads → click the import button top-right. Upload a CSV with columns: owner_name, owner_phone, property_name, unit, expected_rent, bedrooms, bathrooms." },
-  { q: "Why is only 1 WhatsApp message sending?", a: "Browsers block multiple window.open calls in quick succession. Use the card's detail dialog to send tenant and owner messages separately." },
-  { q: "How does the renewal pipeline work?", a: "Tenancies within 60 days of expiry appear in Follow-up. Send check-ins, track T/O replies, then move to Pinged → Renewing once both confirm. Confirming commission resets the card to Active." },
-  { q: "How is commission calculated?", a: "Default is 1 month's rent = 100%. Override per deal in the lead card, or change the agency default under Set goals." },
-  { q: "Is my data backed up?", a: "Yes. All data is stored in Supabase (managed cloud database with daily backups and point-in-time recovery). You can also export your leads and tenancies to CSV at any time from the board header." },
-];
-
-function SupportModal() {
-  return (
-    <>
-      <div className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "var(--kk-line)" }}>
-        <p className="kk-overline mb-0.5">Settings</p>
-        <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Help & support</p>
-      </div>
-      <div className="px-6 py-5 space-y-5">
-        {/* Contact */}
-        <div className="flex gap-3">
-          <a href="mailto:support@kakisewa.com" className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-2xl transition-colors" style={{ background: "var(--kk-surface-2)" }}>
-            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--kk-blue-soft)", color: "var(--kk-blue)" }}>
-              <Mail className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>Email us</p>
-              <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-mute)" }}>support@kakisewa.com</p>
-            </div>
-          </a>
-        </div>
-
-        {/* FAQ */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="w-3.5 h-3.5" style={{ color: "var(--kk-ink-mute)" }} />
-            <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>Common questions</p>
-          </div>
-          <div className="rounded-2xl overflow-hidden divide-y" style={{ border: "1px solid var(--kk-line)", borderColor: "var(--kk-line)" }}>
-            {FAQS.map((faq, i) => (
-              <details key={i} className="group px-4 py-3">
-                <summary className="flex items-center justify-between cursor-pointer list-none gap-3">
-                  <span className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{faq.q}</span>
-                  <ChevronDownFAQ className="w-3.5 h-3.5 shrink-0 transition-transform group-open:rotate-180" style={{ color: "var(--kk-ink-faint)" }} />
-                </summary>
-                <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>{faq.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-
-        <a href="mailto:support@kakisewa.com?subject=Beta feedback" className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2 rounded-full" style={{ background: "var(--kk-ink)", color: "#fff" }}>
-          <Mail className="w-3.5 h-3.5" />
-          Send feedback
-        </a>
-      </div>
-    </>
-  );
-}
 
 // ── TopNav ────────────────────────────────────────────────────────────────────
 // ── Tier badge ────────────────────────────────────────────────────────────────
@@ -710,7 +653,7 @@ interface TopNavProps {
   hideTabs?: boolean;
 }
 
-type ActiveModal = "account" | "billing" | "support" | null;
+type ActiveModal = "account" | "billing" | null;
 
 export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps) {
   const path = usePathname();
@@ -847,7 +790,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
     ...(profilePath ? [{ icon: User, label: "Agent profile", highlight: true, action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/settings/profile"); } }] : []),
     { icon: User,        label: "Account settings", action: () => openModal("account") },
     { icon: CreditCard,  label: "Subscription",     action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/subscription"); } },
-    { icon: HelpCircle,  label: "Help & support",   action: () => openModal("support") },
+    { icon: HelpCircle,  label: "Help & support",   action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/faq"); } },
     ...(isAdmin ? [{ divider: true }, { icon: ShieldCheck, label: "Admin dashboard", action: () => { setMenuOpen(false); router.push("/admin"); } }] : []),
     { divider: true },
     { icon: LogOut,      label: "Sign out", danger: true, action: () => { setMenuOpen(false); router.push("/auth/signout"); } },
@@ -1216,11 +1159,6 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
       {activeModal === "billing" && (
         <Modal onClose={() => setActiveModal(null)} wide>
           <BillingModal trialDaysLeft={trialDaysLeft} />
-        </Modal>
-      )}
-      {activeModal === "support" && (
-        <Modal onClose={() => setActiveModal(null)}>
-          <SupportModal />
         </Modal>
       )}
     </>

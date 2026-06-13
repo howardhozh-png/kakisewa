@@ -16,7 +16,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
     questions: [
       {
         q: "What is KakiSewa?",
-        a: "KakiSewa is a rental management app built for Malaysian property agents. It helps you track new owner leads, manage existing tenancies, monitor competitor units, and send professional property and tenant packs — all from one dashboard.",
+        a: "KakiSewa is a rental management app built for Malaysian property agents. It helps you track new owner leads across My pipeline, manage existing tenancies, monitor target listings, and send professional property and tenant packs — all from one dashboard.",
       },
       {
         q: "Who is KakiSewa designed for?",
@@ -24,7 +24,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I complete my agent profile?",
-        a: "Go to Settings > Account. Fill in your name, phone number, and REN/REA number. A complete profile unlocks the agent directory listing (on Platinum and Elite plans) so owners and tenants can find you.",
+        a: "Go to Settings > Account. Fill in your name, phone number, and REN/REA number. A complete profile unlocks your public agent directory listing (Platinum and Elite plans) so owners and tenants can find you.",
       },
       {
         q: "What is the trial period?",
@@ -33,12 +33,12 @@ export const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    id: "new-owners",
-    title: "My pipeline (New Owners)",
+    id: "my-listing",
+    title: "My listing",
     questions: [
       {
-        q: "What is the New Owners pipeline?",
-        a: "The New Owners pipeline is a Kanban board for tracking potential new property listings. Each card represents one property you are pitching to an owner. Move cards through stages as you progress from first contact to signing the agency agreement.",
+        q: "What is My listing?",
+        a: "My listing is the Kanban board inside My pipeline for tracking potential new property listings. Each card represents one property you are pitching to an owner. Move cards through stages as you progress from first contact to signing the agency agreement.",
       },
       {
         q: "How do I add a new listing card?",
@@ -50,7 +50,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a WhatsApp message to an owner?",
-        a: "Open the card and tap the WhatsApp icon. KakiSewa opens WhatsApp Web (or your phone's WhatsApp) with a pre-filled message from your template. Tap send inside WhatsApp to deliver it.",
+        a: "Open the card and tap the WhatsApp icon. KakiSewa opens WhatsApp Web (or your phone's WhatsApp) with a pre-filled message from your template. Tap Send inside WhatsApp to deliver it.",
       },
       {
         q: "How do I send a property pack to an owner?",
@@ -58,11 +58,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I track whether an owner has replied?",
-        a: "When a WhatsApp reply arrives, open the card and use the T (tenant) or O (owner) reply chips to log the response. KakiSewa can also auto-classify replies as Yes / No / Unclear using AI when connected to WhatsApp.",
+        a: "When a WhatsApp reply arrives, open the card and use the T (tenant) or O (owner) reply chips to log the response. KakiSewa can also auto-classify replies as Yes / No / Unclear using AI when WhatsApp is connected.",
       },
       {
         q: "What happens when a competitor rents a unit I was tracking?",
-        a: "Open the card and tap 'Competitor rented'. Enter the rental date and duration. The card moves to Target Units and KakiSewa will remind you 60 days before that tenancy ends — so you can approach the owner again when the unit is coming vacant.",
+        a: "Open the card and tap 'Competitor rented'. Enter the rental date and duration. The card moves to Target listing and KakiSewa will remind you 60 days before that tenancy ends — so you can approach the owner again when the unit is coming vacant.",
       },
       {
         q: "How do I import multiple listings at once?",
@@ -71,12 +71,12 @@ export const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    id: "existing-contracts",
-    title: "Existing contracts",
+    id: "existing-listing",
+    title: "Existing listing",
     questions: [
       {
-        q: "What is the Existing Contracts page?",
-        a: "Existing Contracts tracks all the tenancies you currently manage. It shows renewal timelines, helps you send check-in messages, and moves expiring contracts into a follow-up queue automatically 60 days before they end.",
+        q: "What is Existing listing?",
+        a: "Existing listing tracks all the tenancies you currently manage. It shows renewal timelines, helps you send check-in messages, and moves expiring contracts into a follow-up queue automatically 60 days before they end.",
       },
       {
         q: "How do I add a tenancy?",
@@ -92,7 +92,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "Can I track multiple properties under the same owner?",
-        a: "Yes. Each property is a separate tenancy card. You can filter by owner name to see all their units at once. When a tenant leaves (Replacing stage), a new listing is auto-created in the New Owners pipeline under the same owner.",
+        a: "Yes. Each property is a separate card. You can filter by owner name to see all their units at once. When a tenant leaves (Replacing stage), a new listing is auto-created in My listing under the same owner.",
       },
       {
         q: "How is commission calculated?",
@@ -101,20 +101,20 @@ export const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    id: "target-units",
-    title: "Target units",
+    id: "target-listing",
+    title: "Target listing",
     questions: [
       {
-        q: "What are Target Units?",
-        a: "Target Units are properties managed by a competitor where the current tenancy will end soon. When a competitor rents a unit you were tracking, it moves here so you know when to approach the owner again.",
+        q: "What is Target listing?",
+        a: "Target listing tracks properties managed by a competitor where the current tenancy will end soon. When a competitor rents a unit you were tracking in My listing, the card moves here so you know when to approach the owner again.",
       },
       {
-        q: "How does a unit move into Target Units?",
-        a: "From a New Owners card, tap 'Competitor rented', enter the rental date and duration. The card moves to Target Units. KakiSewa calculates the end date and will remind you 60 days before that tenancy finishes.",
+        q: "How does a card move into Target listing?",
+        a: "From a My listing card, tap 'Competitor rented', enter the rental date and duration. The card moves to Target listing. KakiSewa calculates the end date and will remind you 60 days before that tenancy finishes.",
       },
       {
-        q: "How do I move a target unit back to my pipeline?",
-        a: "When the time is right, open the target unit card and tap 'Move to pipeline'. A new listing card is created in your New Owners pipeline so you can start approaching the owner again.",
+        q: "How do I move a target card back to My listing?",
+        a: "When the time is right, open the target card and tap 'Move to pipeline'. A new card is created in My listing so you can start approaching the owner again.",
       },
       {
         q: "Will I be notified when a target tenancy is about to end?",
@@ -154,7 +154,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I enable push notifications on iPhone?",
-        a: "Install KakiSewa as a PWA first: open Safari, tap the Share button, then 'Add to Home Screen'. Open the app from the Home Screen icon, go to Settings > Notifications, and tap 'Enable push notifications'. iOS will ask for permission — tap Allow.",
+        a: "Install KakiSewa as a PWA first: open Safari, tap the Share button, then 'Add to Home Screen'. Open the app from your Home Screen, go to Settings > Notifications, and tap 'Enable push notifications'. iOS will ask for permission — tap Allow.",
       },
       {
         q: "How do I enable push notifications on Android?",
@@ -166,11 +166,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "What notifications will I receive?",
-        a: "KakiSewa notifies you when a tenancy enters the 60-day renewal window, when a WhatsApp reply is classified (if connected), and when a target unit is close to becoming vacant. You can choose email, push, or both in Settings > Notifications.",
+        a: "KakiSewa notifies you when an existing listing enters the 60-day renewal window, when a WhatsApp reply is received (if connected), and when a target listing is close to becoming vacant. You can choose email, push, or both in Settings > Notifications.",
       },
       {
         q: "Why am I not receiving notifications even though they are turned on?",
-        a: "On iOS, notifications only work when KakiSewa is installed as a PWA from Safari's 'Add to Home Screen'. Opening it in the browser tab does not support push. Also check that your device's system notification settings allow KakiSewa (or your browser) to send notifications.",
+        a: "On iPhone, notifications only work when KakiSewa is installed as a PWA from Safari's 'Add to Home Screen'. Opening it in the browser tab does not support push. Also check that your device's system notification settings allow KakiSewa (or your browser) to send notifications.",
       },
     ],
   },
@@ -202,7 +202,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a property pack to an owner?",
-        a: "Open the listing card in the New Owners pipeline and tap 'Send property pack'. KakiSewa generates the pack and opens WhatsApp with a message ready to send to the owner.",
+        a: "Open the listing card in My listing and tap 'Send property pack'. KakiSewa generates the pack and opens WhatsApp with a message ready to send to the owner.",
       },
       {
         q: "What does the owner see when they open the property pack?",
@@ -282,7 +282,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How many cards can I have on each plan?",
-        a: "Silver: 70 total (40 My Listing + 20 Existing + 10 Target). Gold: 200 total (100 + 60 + 40). Platinum: 600 total (300 + 200 + 100). Elite: 2,000 total (800 + 700 + 500).",
+        a: "Silver: 70 total (40 My listing + 20 Existing listing + 10 Target listing). Gold: 200 total (100 + 60 + 40). Platinum: 600 total (300 + 200 + 100). Elite: 2,000 total (800 + 700 + 500).",
       },
       {
         q: "What happens if I reach my card limit?",
@@ -316,7 +316,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "Is my data secure?",
-        a: "Yes. All data is stored in Supabase, a managed cloud database with encryption at rest, daily backups, and row-level security so only you can see your own records. No one else — including KakiSewa staff — can read your client data without your permission. You can export your leads and tenancies to CSV at any time.",
+        a: "Yes. All data is stored in Supabase, a managed cloud database with encryption at rest, daily backups, and row-level security so only you can see your own records. No one else — including the KakiSewa team — can read your client data without your permission. You can export your data to CSV at any time.",
       },
     ],
   },

@@ -210,8 +210,8 @@ export function FaqChatbot() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {[
                     "How do I send a property pack?",
-                    "How do I turn on push notifications?",
-                    "How does the renewal pipeline work?",
+                    "How do I enable push notifications on iPhone?",
+                    "How does Existing listing renewal work?",
                   ].map((hint) => (
                     <button
                       key={hint}
