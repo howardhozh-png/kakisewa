@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo, useRef } from "react";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
+import { normalizePhone } from "@/lib/phone";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -32,9 +33,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--kk-ink-soft)" }}>{children}{required && <span style={{ color: "var(--kk-red)" }}> *</span>}</label>;
 }
-function TextInput({ value, onChange, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
+function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; onBlur?: (v: string) => void; placeholder?: string; type?: string }) {
   return (
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined} placeholder={placeholder}
       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
   );
@@ -147,13 +148,13 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
         fd.set("property_name", propertyName.trim());
         fd.set("property_unit", unit.trim());
         fd.set("owner_name", ownerName.trim());
-        fd.set("owner_phone", ownerPhone.trim());
+        fd.set("owner_phone", normalizePhone(ownerPhone.trim()));
         fd.set("amount", amount);
         fd.set("due_day", "1");
         fd.set("contract_start", contractStart);
         fd.set("contract_duration_months", durationMonths);
         fd.set("tenant_name", tenantName.trim());
-        fd.set("tenant_phone", tenantPhone.trim());
+        fd.set("tenant_phone", normalizePhone(tenantPhone.trim()));
         if (bedrooms !== "") fd.set("bedrooms", bedrooms);
         if (bathrooms !== "") fd.set("bathrooms", bathrooms);
         if (parking.trim()) fd.set("parking", parking.trim());
@@ -314,7 +315,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
               <SectionLabel>Owner</SectionLabel>
               <div className="grid grid-cols-2 gap-3">
                 <div><FieldLabel required>Owner name</FieldLabel><TextInput value={ownerName} onChange={setOwnerName} placeholder="e.g. Encik Ahmad" /></div>
-                <div><FieldLabel required>Phone</FieldLabel><TextInput type="tel" value={ownerPhone} onChange={setOwnerPhone} placeholder="601XXXXXXXX" /></div>
+                <div><FieldLabel required>Phone</FieldLabel><TextInput type="tel" value={ownerPhone} onChange={setOwnerPhone} onBlur={(v) => setOwnerPhone(normalizePhone(v))} placeholder="601XXXXXXXX" /></div>
               </div>
             </div>
 
@@ -325,7 +326,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                 <div><FieldLabel>Tenant name</FieldLabel><TextInput value={tenantName} onChange={setTenantName} placeholder="e.g. Siti Rahayu" /></div>
                 <div>
                   <FieldLabel>WhatsApp number</FieldLabel>
-                  <TextInput type="tel" value={tenantPhone} onChange={setTenantPhone} placeholder="601XXXXXXXX" />
+                  <TextInput type="tel" value={tenantPhone} onChange={setTenantPhone} onBlur={(v) => setTenantPhone(normalizePhone(v))} placeholder="601XXXXXXXX" />
                 </div>
               </div>
             </div>

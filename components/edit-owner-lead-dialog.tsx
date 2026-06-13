@@ -8,7 +8,8 @@ import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
 import { normalizePhone, phoneError } from "@/lib/phone";
-import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star } from "lucide-react";
+import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { usePhotoUpload } from "@/hooks/use-photo-upload";
 import { toast } from "sonner";
@@ -194,7 +195,17 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>+{ownerPhone}</p>
+                  {ownerPhone ? (
+                    <div className="flex items-center gap-0.5 mt-1">
+                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{ownerPhone}</p>
+                      <a href={`https://wa.me/${ownerPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
+                      </a>
+                      <a href={`tel:+${ownerPhone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>

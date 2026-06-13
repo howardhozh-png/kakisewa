@@ -7,6 +7,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, daysUntil } from "@/lib/types";
 import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone } from "lucide-react";
+import { normalizePhone } from "@/lib/phone";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 
 function parseAgreementUrls(url: string | null): string[] {
@@ -283,6 +284,7 @@ function TenancyForm({
                 type="tel"
                 value={ownerPhone}
                 onChange={(e) => setOwnerPhone(e.target.value)}
+                onBlur={(e) => setOwnerPhone(normalizePhone(e.target.value))}
                 placeholder="Phone (with country code)"
                 className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
                 style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
@@ -352,7 +354,7 @@ function TenancyForm({
         <div className="space-y-1.5 col-span-2">
           <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Phone (with country code)</label>
           <div className="flex items-center gap-1">
-            <input type="text" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} placeholder="e.g. 60123456789" className="flex-1 min-w-0 text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
+            <input type="text" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} onBlur={(e) => setTenantPhone(normalizePhone(e.target.value))} placeholder="e.g. 60123456789" className="flex-1 min-w-0 text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
             {tenantPhone && (
               <>
                 <a href={`https://wa.me/${tenantPhone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { OwnerLead } from "@/lib/types";
 import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star, FileText, Upload } from "lucide-react";
+import { normalizePhone } from "@/lib/phone";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -209,6 +210,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                     type="tel"
                     value={ownerPhone}
                     onChange={(e) => setOwnerPhone(e.target.value)}
+                    onBlur={(e) => setOwnerPhone(normalizePhone(e.target.value))}
                     placeholder="Phone (with country code)"
                     className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}

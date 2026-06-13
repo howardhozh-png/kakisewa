@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Loader2, ChevronDown, MessageCircle, PenLine, Camera, FileText, X } from "lucide-react";
+import { normalizePhone } from "@/lib/phone";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
@@ -36,9 +37,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--kk-ink-soft)" }}>{children}{required && <span style={{ color: "var(--kk-red)" }}> *</span>}</label>;
 }
-function TextInput({ value, onChange, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
+function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; onBlur?: (v: string) => void; placeholder?: string; type?: string }) {
   return (
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined} placeholder={placeholder}
       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
   );
@@ -116,7 +117,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
           property_name: waForm.property_name.trim() || null,
           unit: waForm.unit.trim() || null,
           owner_name: waForm.owner_name.trim(),
-          owner_phone: waForm.owner_phone.trim(),
+          owner_phone: normalizePhone(waForm.owner_phone.trim()),
           expected_rent: null, stage: "imported",
         });
         if (!res.ok && res.reason === "plan_cap_reached") {
@@ -143,7 +144,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
         property_name: manualForm.property_name.trim() || null,
         unit: manualForm.unit.trim() || null,
         owner_name: manualForm.owner_name.trim(),
-        owner_phone: manualForm.owner_phone.trim(),
+        owner_phone: normalizePhone(manualForm.owner_phone.trim()),
         notes: manualForm.notes.trim() || null,
         expected_rent: null, stage: "imported",
       });
@@ -224,7 +225,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
               <div><FieldLabel>Property name</FieldLabel><TextInput value={waForm.property_name} onChange={(v) => setWaForm((f) => ({ ...f, property_name: v }))} placeholder="e.g. Residensi Mutiara" /></div>
               <div><FieldLabel>Unit</FieldLabel><TextInput value={waForm.unit} onChange={(v) => setWaForm((f) => ({ ...f, unit: v }))} placeholder="e.g. A-12" /></div>
               <div><FieldLabel required>Owner name</FieldLabel><TextInput value={waForm.owner_name} onChange={(v) => setWaForm((f) => ({ ...f, owner_name: v }))} placeholder="e.g. Encik Ahmad" /></div>
-              <div><FieldLabel required>Phone number</FieldLabel><TextInput type="tel" value={waForm.owner_phone} onChange={(v) => setWaForm((f) => ({ ...f, owner_phone: v }))} placeholder="e.g. 601XXXXXXXX" /></div>
+              <div><FieldLabel required>Phone number</FieldLabel><TextInput type="tel" value={waForm.owner_phone} onChange={(v) => setWaForm((f) => ({ ...f, owner_phone: v }))} onBlur={(v) => setWaForm((f) => ({ ...f, owner_phone: normalizePhone(v) }))} placeholder="e.g. 601XXXXXXXX" /></div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setWaOpen(false)} disabled={busy} className="flex-1 py-2.5 rounded-xl text-[13px] font-medium" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
                 <button type="button" onClick={handleWaSend} disabled={busy} className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2" style={{ background: "var(--kk-green)", color: "#fff" }}>
@@ -279,7 +280,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
                 <SectionLabel>Owner</SectionLabel>
                 <div className="grid grid-cols-2 gap-3">
                   <div><FieldLabel required>Owner name</FieldLabel><TextInput value={manualForm.owner_name} onChange={(v) => setManualForm((f) => ({ ...f, owner_name: v }))} placeholder="e.g. Encik Ahmad" /></div>
-                  <div><FieldLabel required>Phone</FieldLabel><TextInput type="tel" value={manualForm.owner_phone} onChange={(v) => setManualForm((f) => ({ ...f, owner_phone: v }))} placeholder="601XXXXXXXX" /></div>
+                  <div><FieldLabel required>Phone</FieldLabel><TextInput type="tel" value={manualForm.owner_phone} onChange={(v) => setManualForm((f) => ({ ...f, owner_phone: v }))} onBlur={(v) => setManualForm((f) => ({ ...f, owner_phone: normalizePhone(v) }))} placeholder="601XXXXXXXX" /></div>
                 </div>
               </div>
 
