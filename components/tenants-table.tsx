@@ -403,9 +403,9 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
               <col style={{ width: "4%" }} />
             </colgroup>
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
+              <tr>
                 {["Name", "Phone", "Status", "Property", "Budget", "Move-in", ""].map((h) => (
-                  <th key={h} className={TH} style={{ color: "var(--kk-ink-faint)" }}>{h}</th>
+                  <th key={h} className={TH} style={{ color: "var(--kk-ink-faint)", position: "sticky", top: 0, background: "var(--kk-surface)", zIndex: 1, borderBottom: "1px solid var(--kk-line)" }}>{h}</th>
                 ))}
               </tr>
             </thead>

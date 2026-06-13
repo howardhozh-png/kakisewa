@@ -260,9 +260,9 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
                 <col style={{ width: "2%" }} />
               </colgroup>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--kk-line)" }}>
+                <tr>
                   {["Property", "Unit", "Status", "Owner", "Rent (RM)", "Beds", "Baths", "Tenant", ""].map((h) => (
-                    <th key={h} className={TH} style={{ color: "var(--kk-ink-faint)" }}>{h}</th>
+                    <th key={h} className={TH} style={{ color: "var(--kk-ink-faint)", position: "sticky", top: 0, background: "var(--kk-surface)", zIndex: 1, borderBottom: "1px solid var(--kk-line)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
