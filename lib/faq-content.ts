@@ -15,12 +15,12 @@ export const FAQ_SECTIONS: FaqSection[] = [
     title: "Getting started",
     questions: [
       {
-        q: "What is KakiSewa?",
-        a: "KakiSewa is a rental management app built for Malaysian property agents. It helps you track new owner leads across My pipeline, manage existing tenancies, monitor target listings, and send professional property and tenant packs — all from one dashboard.",
+        q: "What is kakisewa?",
+        a: "kakisewa is a rental management app built for Malaysian property agents. It helps you track new owner leads across My pipeline, manage existing tenancies, monitor target listings, and send professional property and tenant packs — all from one dashboard.",
       },
       {
-        q: "Who is KakiSewa designed for?",
-        a: "KakiSewa is built for REN/REA-licensed property agents in Malaysia who manage residential rentals. It works best for agents handling multiple properties across different owners and tenants.",
+        q: "Who is kakisewa designed for?",
+        a: "kakisewa is built for REN/REA-licensed property agents in Malaysia who manage residential rentals. It works best for agents handling multiple properties across different owners and tenants.",
       },
       {
         q: "How do I complete my agent profile?",
@@ -50,19 +50,19 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a WhatsApp message to an owner?",
-        a: "Open the card and tap the WhatsApp icon. KakiSewa opens WhatsApp Web (or your phone's WhatsApp) with a pre-filled message from your template. Tap Send inside WhatsApp to deliver it.",
+        a: "Open the card and tap the WhatsApp icon. kakisewa opens WhatsApp Web (or your phone's WhatsApp) with a pre-filled message from your template. Tap Send inside WhatsApp to deliver it.",
       },
       {
         q: "How do I send a property pack to an owner?",
-        a: "Open the listing card and tap 'Send property pack'. KakiSewa generates a professional summary of the property and your agency details, then opens WhatsApp with a message for the owner.",
+        a: "Open the listing card and tap 'Send property pack'. kakisewa generates a professional summary of the property and your agency details, then opens WhatsApp with a message for the owner.",
       },
       {
         q: "How do I track whether an owner has replied?",
-        a: "When a WhatsApp reply arrives, open the card and use the T (tenant) or O (owner) reply chips to log the response. KakiSewa can also auto-classify replies as Yes / No / Unclear using AI when WhatsApp is connected.",
+        a: "When a WhatsApp reply arrives, open the card and use the T (tenant) or O (owner) reply chips to log the response. kakisewa can also auto-classify replies as Yes / No / Unclear using AI when WhatsApp is connected.",
       },
       {
         q: "What happens when a competitor rents a unit I was tracking?",
-        a: "Open the card and tap 'Competitor rented'. Enter the rental date and duration. The card moves to Target listing and KakiSewa will remind you 60 days before that tenancy ends — so you can approach the owner again when the unit is coming vacant.",
+        a: "Open the card and tap 'Competitor rented'. Enter the rental date and duration. The card moves to Target listing and kakisewa will remind you 60 days before that tenancy ends — so you can approach the owner again when the unit is coming vacant.",
       },
       {
         q: "How do I import multiple listings at once?",
@@ -80,7 +80,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I add a tenancy?",
-        a: "Tap 'Add tenancy' and fill in the property, owner, tenant, start date, and duration. KakiSewa calculates the end date and sets a 60-day reminder automatically.",
+        a: "Tap 'Add tenancy' and fill in the property, owner, tenant, start date, and duration. kakisewa calculates the end date and sets a 60-day reminder automatically.",
       },
       {
         q: "How does the renewal pipeline work?",
@@ -88,7 +88,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a renewal reminder to a tenant or owner?",
-        a: "Open the tenancy card and tap the WhatsApp icon. Choose whether to message the owner or the tenant. KakiSewa prefills your renewal message template and opens WhatsApp ready to send.",
+        a: "Open the tenancy card and tap the WhatsApp icon. Choose whether to message the owner or the tenant. kakisewa prefills your renewal message template and opens WhatsApp ready to send.",
       },
       {
         q: "Can I track multiple properties under the same owner?",
@@ -110,7 +110,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How does a card move into Target listing?",
-        a: "From a My listing card, tap 'Competitor rented', enter the rental date and duration. The card moves to Target listing. KakiSewa calculates the end date and will remind you 60 days before that tenancy finishes.",
+        a: "From a My listing card, tap 'Competitor rented', enter the rental date and duration. The card moves to Target listing. kakisewa calculates the end date and will remind you 60 days before that tenancy finishes.",
       },
       {
         q: "How do I move a target card back to My listing?",
@@ -118,7 +118,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "Will I be notified when a target tenancy is about to end?",
-        a: "Yes. KakiSewa sends you a push or email notification 60 days before the competitor's tenancy ends. Make sure notifications are enabled in Settings > Notifications.",
+        a: "Yes. kakisewa sends you a push or email notification 60 days before the competitor's tenancy ends. Make sure notifications are enabled in Settings > Notifications.",
       },
     ],
   },
@@ -150,27 +150,27 @@ export const FAQ_SECTIONS: FaqSection[] = [
     questions: [
       {
         q: "How do I turn on email notifications?",
-        a: "Go to Settings > Notifications. Toggle on 'Email notifications'. KakiSewa will send renewal reminders and important alerts to your registered email address.",
+        a: "Go to Settings > Notifications. Toggle on 'Email notifications'. kakisewa will send renewal reminders and important alerts to your registered email address.",
       },
       {
         q: "How do I enable push notifications on iPhone?",
-        a: "Install KakiSewa as a PWA first: open Safari, tap the Share button, then 'Add to Home Screen'. Open the app from your Home Screen, go to Settings > Notifications, and tap 'Enable push notifications'. iOS will ask for permission — tap Allow.",
+        a: "Install kakisewa as a PWA first: open Safari, tap the Share button, then 'Add to Home Screen'. Open the app from your Home Screen, go to Settings > Notifications, and tap 'Enable push notifications'. iOS will ask for permission — tap Allow.",
       },
       {
         q: "How do I enable push notifications on Android?",
-        a: "Open KakiSewa in Chrome, tap the three-dot menu, and select 'Add to Home Screen'. Open the installed app, go to Settings > Notifications, and tap 'Enable push notifications'. Android will ask for permission — tap Allow.",
+        a: "Open kakisewa in Chrome, tap the three-dot menu, and select 'Add to Home Screen'. Open the installed app, go to Settings > Notifications, and tap 'Enable push notifications'. Android will ask for permission — tap Allow.",
       },
       {
         q: "How do I enable push notifications on a desktop computer?",
-        a: "Open KakiSewa in Chrome or Edge. Go to Settings > Notifications and tap 'Enable push notifications'. Your browser will ask for permission in the address bar — click Allow. Notifications will appear even when the browser tab is in the background.",
+        a: "Open kakisewa in Chrome or Edge. Go to Settings > Notifications and tap 'Enable push notifications'. Your browser will ask for permission in the address bar — click Allow. Notifications will appear even when the browser tab is in the background.",
       },
       {
         q: "What notifications will I receive?",
-        a: "KakiSewa notifies you when an existing listing enters the 60-day renewal window, when a WhatsApp reply is received (if connected), and when a target listing is close to becoming vacant. You can choose email, push, or both in Settings > Notifications.",
+        a: "kakisewa notifies you when an existing listing enters the 60-day renewal window, when a WhatsApp reply is received (if connected), and when a target listing is close to becoming vacant. You can choose email, push, or both in Settings > Notifications.",
       },
       {
         q: "Why am I not receiving notifications even though they are turned on?",
-        a: "On iPhone, notifications only work when KakiSewa is installed as a PWA from Safari's 'Add to Home Screen'. Opening it in the browser tab does not support push. Also check that your device's system notification settings allow KakiSewa (or your browser) to send notifications.",
+        a: "On iPhone, notifications only work when kakisewa is installed as a PWA from Safari's 'Add to Home Screen'. Opening it in the browser tab does not support push. Also check that your device's system notification settings allow kakisewa (or your browser) to send notifications.",
       },
     ],
   },
@@ -180,7 +180,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
     questions: [
       {
         q: "What are message templates?",
-        a: "Message templates are pre-written WhatsApp messages that KakiSewa uses when you tap the WhatsApp button on a card. They are personalised automatically with the owner's or tenant's name and property details.",
+        a: "Message templates are pre-written WhatsApp messages that kakisewa uses when you tap the WhatsApp button on a card. They are personalised automatically with the owner's or tenant's name and property details.",
       },
       {
         q: "Where do I find and edit my message templates?",
@@ -188,7 +188,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "Can I have different templates for owners and tenants?",
-        a: "Yes. KakiSewa has separate templates for owner messages and tenant messages. You can customise each one independently from Settings > Templates.",
+        a: "Yes. kakisewa has separate templates for owner messages and tenant messages. You can customise each one independently from Settings > Templates.",
       },
     ],
   },
@@ -202,7 +202,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a property pack to an owner?",
-        a: "Open the listing card in My listing and tap 'Send property pack'. KakiSewa generates the pack and opens WhatsApp with a message ready to send to the owner.",
+        a: "Open the listing card in My listing and tap 'Send property pack'. kakisewa generates the pack and opens WhatsApp with a message ready to send to the owner.",
       },
       {
         q: "What does the owner see when they open the property pack?",
@@ -220,7 +220,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a tenant pack to a landlord?",
-        a: "Go to the relevant property listing, select the tenants you want to include, and tap 'Send tenant pack'. KakiSewa generates the pack and opens WhatsApp with a message for the landlord.",
+        a: "Go to the relevant property listing, select the tenants you want to include, and tap 'Send tenant pack'. kakisewa generates the pack and opens WhatsApp with a message for the landlord.",
       },
       {
         q: "How do I rank or prioritise tenants in the pack?",
@@ -256,19 +256,19 @@ export const FAQ_SECTIONS: FaqSection[] = [
     questions: [
       {
         q: "How does the WhatsApp integration work?",
-        a: "When you tap the WhatsApp button on a card, KakiSewa opens WhatsApp Web (or your phone's WhatsApp app) with a pre-filled message. You review it and tap Send inside WhatsApp. KakiSewa does not send messages directly on your behalf.",
+        a: "When you tap the WhatsApp button on a card, kakisewa opens WhatsApp Web (or your phone's WhatsApp app) with a pre-filled message. You review it and tap Send inside WhatsApp. kakisewa does not send messages directly on your behalf.",
       },
       {
         q: "Why does clicking Send open a new tab?",
-        a: "KakiSewa uses wa.me links which open WhatsApp Web in a new tab on desktop, or the WhatsApp app on mobile. Make sure you are logged into WhatsApp Web in your browser for this to work smoothly.",
+        a: "kakisewa uses wa.me links which open WhatsApp Web in a new tab on desktop, or the WhatsApp app on mobile. Make sure you are logged into WhatsApp Web in your browser for this to work smoothly.",
       },
       {
         q: "How do I set up WhatsApp Web?",
-        a: "Open web.whatsapp.com in your browser. On your phone, open WhatsApp > Settings > Linked Devices > Link a Device. Scan the QR code shown in the browser. Once linked, KakiSewa's WhatsApp buttons will open directly in the linked session.",
+        a: "Open web.whatsapp.com in your browser. On your phone, open WhatsApp > Settings > Linked Devices > Link a Device. Scan the QR code shown in the browser. Once linked, kakisewa's WhatsApp buttons will open directly in the linked session.",
       },
       {
-        q: "Can KakiSewa send WhatsApp messages automatically?",
-        a: "Not at this time. KakiSewa opens WhatsApp with the message pre-filled so you remain in control of what is sent. This also avoids spam policy violations with WhatsApp.",
+        q: "Can kakisewa send WhatsApp messages automatically?",
+        a: "Not at this time. kakisewa opens WhatsApp with the message pre-filled so you remain in control of what is sent. This also avoids spam policy violations with WhatsApp.",
       },
     ],
   },
@@ -278,7 +278,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
     questions: [
       {
         q: "What plans are available?",
-        a: "KakiSewa offers four plans: Silver (RM30/month), Gold (RM99/month), Platinum (RM179/month), and Elite (RM299/month). All plans include email and push notifications. Annual billing saves you 2 months of fees. See the Subscription page for the full comparison.",
+        a: "kakisewa offers four plans: Silver (RM30/month), Gold (RM99/month), Platinum (RM179/month), and Elite (RM299/month). All plans include email and push notifications. Annual billing saves you 2 months of fees. See the Subscription page for the full comparison.",
       },
       {
         q: "How many cards can I have on each plan?",
@@ -286,7 +286,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "What happens if I reach my card limit?",
-        a: "KakiSewa will show an upgrade prompt when you try to add a new card. You can archive older cards to free up space, or upgrade your plan for a higher limit.",
+        a: "kakisewa will show an upgrade prompt when you try to add a new card. You can archive older cards to free up space, or upgrade your plan for a higher limit.",
       },
       {
         q: "How do I upgrade my plan?",
@@ -316,7 +316,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "Is my data secure?",
-        a: "Yes. All data is stored in Supabase, a managed cloud database with encryption at rest, daily backups, and row-level security so only you can see your own records. No one else — including the KakiSewa team — can read your client data without your permission. You can export your data to CSV at any time.",
+        a: "Yes. All data is stored in Supabase, a managed cloud database with encryption at rest, daily backups, and row-level security so only you can see your own records. No one else — including the kakisewa team — can read your client data without your permission. You can export your data to CSV at any time.",
       },
     ],
   },

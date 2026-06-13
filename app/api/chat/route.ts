@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { FAQ_CONTEXT } from "@/lib/faq-content";
 
-const SYSTEM_PROMPT = `You are a friendly support assistant for KakiSewa, a Malaysian property agent management app.
+const SYSTEM_PROMPT = `You are a friendly support assistant for kakisewa, a Malaysian property agent management app.
 
 Answer questions using ONLY the information in the FAQ below. Keep answers concise (2-4 sentences max). Use simple, friendly language. Never use em dashes or en dashes.
 

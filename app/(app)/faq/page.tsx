@@ -11,7 +11,7 @@ export default function FaqPage() {
         <p className="kk-overline mb-1">Help</p>
         <h1 className="kk-h1" style={{ letterSpacing: "-0.02em" }}>Frequently asked questions</h1>
         <p className="text-[15px] mt-2" style={{ color: "var(--kk-ink-mute)" }}>
-          Everything you need to know about using KakiSewa.
+          Everything you need to know about using kakisewa.
         </p>
       </div>
 

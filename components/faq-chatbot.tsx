@@ -137,7 +137,7 @@ export function FaqChatbot() {
           >
             <div>
               <p style={{ fontWeight: 600, fontSize: 14, color: "var(--kk-ink)", margin: 0 }}>
-                KakiSewa Help
+                kakisewa Help
               </p>
               <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0 }}>
                 Ask anything or{" "}
@@ -205,7 +205,7 @@ export function FaqChatbot() {
             {messages.length === 0 && (
               <div style={{ textAlign: "center", marginTop: 24 }}>
                 <p style={{ fontSize: 13, color: "var(--kk-ink-mute)", marginBottom: 12 }}>
-                  Hi! Ask me anything about using KakiSewa.
+                  Hi! Ask me anything about using kakisewa.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {[
