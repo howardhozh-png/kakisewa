@@ -3,7 +3,7 @@
 import { PAGE_HELP_EVENT } from "./onboarding-demo-dialog";
 
 interface Props {
-  module: 0 | 1 | 2;
+  module: 0 | 1 | 2 | 3;
   pageTitle: string;
   bullets: string[];
   noVideo?: boolean;

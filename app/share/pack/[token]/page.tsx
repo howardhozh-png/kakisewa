@@ -31,8 +31,8 @@ export default async function SharePackPage({
 
   const agentFirstName = agentData?.trim().split(/\s+/)[0] ?? null;
   const propertyLabel = pack.property_label ?? "Your property";
-  const isExpired = (pack as Record<string, unknown>).expires_at
-    ? new Date((pack as Record<string, unknown>).expires_at as string) < new Date()
+  const isExpired = (pack as unknown as Record<string, unknown>).expires_at
+    ? new Date((pack as unknown as Record<string, unknown>).expires_at as string) < new Date()
     : false;
 
   return (
