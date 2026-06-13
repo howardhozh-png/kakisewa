@@ -623,9 +623,8 @@ export async function getRecentWhatsAppForRelated(
 export async function getLifecycleTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
-    const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
     const supabase = await createClient();
-    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).gte("contract_end", earliest).order("contract_end", { ascending: true });
+    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).neq("lifecycle_stage", "closed").order("contract_end", { ascending: true });
     if (error) throw error;
     return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
   }
@@ -2626,15 +2625,13 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("stage", "listed"),
     // Target Listing
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("is_competitor_target", true),
-    // Existing Listing — same 90-day window as getLifecycleTenancies()
+    // Existing Listing — all non-closed tenancies
     svc.from("tenancies")
       .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id)`)
       .eq("owner_leads.user_id", userId)
       .neq("lifecycle_stage", "closed")
       .not("owner_lead_id", "is", null)
-      .not("owner_leads.property_name", "is", null)
-      .not("contract_end", "is", null)
-      .gte("contract_end", new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)),
+      .not("owner_leads.property_name", "is", null),
   ]);
 
   const toRow = (r: Record<string, unknown>): PropertyPackLead => ({
