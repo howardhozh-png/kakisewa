@@ -2625,13 +2625,14 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("stage", "listed"),
     // Target Listing
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("is_competitor_target", true),
-    // Existing Listing — all non-closed tenancies
+    // Existing Listing — all non-closed tenancies with a contract end date
     svc.from("tenancies")
       .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id)`)
       .eq("owner_leads.user_id", userId)
       .neq("lifecycle_stage", "closed")
       .not("owner_lead_id", "is", null)
-      .not("owner_leads.property_name", "is", null),
+      .not("owner_leads.property_name", "is", null)
+      .not("contract_end", "is", null),
   ]);
 
   const toRow = (r: Record<string, unknown>): PropertyPackLead => ({
