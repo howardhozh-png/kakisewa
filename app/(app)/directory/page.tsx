@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { TenantProfile } from "@/lib/types";
-import { getListedOwnerLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports, getAgentProfile } from "@/lib/db";
+import { getListedOwnerLeads, getCompetitorLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getPropertySupports, getAgentProfile } from "@/lib/db";
 import { effectivePlan, planAllows } from "@/lib/plan-caps";
 import { FeatureLockedState } from "@/components/feature-locked-state";
 import { headers } from "next/headers";
@@ -41,20 +41,25 @@ export default async function NetworkPage({ searchParams }: Props) {
   const { view: rawView } = await searchParams;
   const view = rawView === "properties" ? "properties" : rawView === "tenants" ? "tenants" : "contacts";
 
-  const [listed, tenantProfiles, activeTenants, supports] = await Promise.all([
+  const [listed, targetLeads, tenantProfiles, activeTenants, supports] = await Promise.all([
     getListedOwnerLeads().catch(() => [] as Awaited<ReturnType<typeof getListedOwnerLeads>>),
+    getCompetitorLeads().catch(() => [] as Awaited<ReturnType<typeof getCompetitorLeads>>),
     getAllTenantProfiles().catch(() => [] as Awaited<ReturnType<typeof getAllTenantProfiles>>),
     getAllActiveTenants().catch(() => [] as Awaited<ReturnType<typeof getAllActiveTenants>>),
     getPropertySupports().catch(() => [] as Awaited<ReturnType<typeof getPropertySupports>>),
   ]);
 
+  // Merge target leads that aren't already in listed (deduplicate by id)
+  const listedIds = new Set(listed.map(l => l.id));
+  const allListed = [...listed, ...targetLeads.filter(l => !listedIds.has(l.id))];
+
   // Split tenants: active (still renting) vs former (closed/ended tenancies)
   const currentTenants = activeTenants.filter(t => t.lifecycle_stage !== "closed");
   const formerTenants  = activeTenants.filter(t => t.lifecycle_stage === "closed");
 
-  const allPropertiesCount = listed.filter(l => l.stage === "listed").length + currentTenants.length;
+  const allPropertiesCount = allListed.filter(l => l.stage === "listed" || l.is_competitor_target).length + currentTenants.length;
 
-  const matchedIds = listed.filter(l => l.stage === "matched").map(l => l.id);
+  const matchedIds = allListed.filter(l => l.stage === "matched").map(l => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedIds);
 
   const propertyTenants = currentTenants.map((t) => ({
@@ -128,7 +133,7 @@ export default async function NetworkPage({ searchParams }: Props) {
       </Suspense>
 
       {view === "properties" && (
-        <MatchesView listed={listed} tenantsByLeadId={tenantsByLeadId} activeTenants={activeTenants} />
+        <MatchesView listed={allListed} tenantsByLeadId={tenantsByLeadId} activeTenants={activeTenants} />
       )}
       {view === "tenants" && (
         <TenantsTable profiles={availableTenantProfiles} propertyTenants={propertyTenants} />
