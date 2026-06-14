@@ -395,38 +395,44 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 pt-1">
-              <button type="button" onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-red-50"
-                style={{ color: "var(--kk-ink-faint)" }}>
-                <Trash2 className="w-3 h-3" />
-                Delete
-              </button>
-              <div className="flex-1" />
-              {lead?.stage === "listed" && (
+            <div className="flex flex-col gap-2 pt-1">
+              {/* Row 1 — secondary actions */}
+              <div className="flex items-center gap-2">
+                {lead?.stage === "listed" && (
+                  <button
+                    type="button"
+                    onClick={() => setCompetitorRentedOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-gray-100"
+                    style={{ color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+                  >
+                    <Building2 className="w-3 h-3" />
+                    Lost listing
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => setCompetitorRentedOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-gray-100"
-                  style={{ color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+                  onClick={() => setCalendarOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+                  style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
                 >
-                  <Building2 className="w-3 h-3" />
-                  Lost listing
+                  <CalendarPlus className="w-3 h-3" />
+                  + Calendar
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setCalendarOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
-                style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
-              >
-                <CalendarPlus className="w-3 h-3" />
-                + Calendar
-              </button>
-              <button type="button" className="kk-pill kk-pill-ghost" onClick={() => onOpenChange(false)} disabled={pending}>Cancel</button>
-              <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
-                {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                {pending ? "Saving…" : "Save details"}
-              </button>
+              </div>
+              {/* Row 2 — primary actions */}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-red-50"
+                  style={{ color: "var(--kk-ink-faint)" }}>
+                  <Trash2 className="w-3 h-3" />
+                  Delete
+                </button>
+                <div className="flex-1" />
+                <button type="button" className="kk-pill kk-pill-ghost" onClick={() => onOpenChange(false)} disabled={pending}>Cancel</button>
+                <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
+                  {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  {pending ? "Saving…" : "Save details"}
+                </button>
+              </div>
             </div>
           )}
 

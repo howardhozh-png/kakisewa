@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
+import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { deleteCalendarEvent } from "@/lib/actions";
-import { CalendarPlus, Trash2, ChevronLeft, ChevronRight, ExternalLink, CalendarDays, Clock } from "lucide-react";
+import { deleteCalendarEvent, updateCalendarEvent } from "@/lib/actions";
+import { CalendarPlus, Trash2, ChevronLeft, ChevronRight, ExternalLink, CalendarDays, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { CalendarEvent } from "@/lib/db";
 
@@ -300,6 +301,34 @@ function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id
   );
 }
 
+const TIMES = [
+  "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
+  "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
+  "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
+  "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
+  "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
+  "8:00 PM",
+];
+
+function to24h(label: string): string {
+  const [time, period] = label.split(" ");
+  const [h, m] = time.split(":").map(Number);
+  const hour = period === "PM" && h !== 12 ? h + 12 : period === "AM" && h === 12 ? 0 : h;
+  return `${String(hour).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function to12h(t24: string): string {
+  const [h, m] = t24.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function formatDisplay(date: Date): string {
+  return date.toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+}
+
 function EventDetailDialog({
   event, onClose, onDelete,
 }: {
@@ -309,81 +338,145 @@ function EventDetailDialog({
 }) {
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState<Date | undefined>();
+  const [timeLabel, setTimeLabel] = useState("");
+  const [showCal, setShowCal] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  // Sync fields when a different event is opened
+  useEffect(() => {
+    if (event) {
+      setTitle(event.title);
+      setDate(new Date(event.event_date + "T00:00:00"));
+      setTimeLabel(event.event_time ? to12h(event.event_time) : "");
+      setShowCal(false);
+      setConfirmDelete(false);
+    }
+  }, [event?.id]);
 
   if (!event) return null;
 
-  const timeStr = event.event_time ? formatTime(event.event_time) : "All day";
-  const dateStr = new Date(event.event_date + "T00:00:00").toLocaleDateString("en-MY", {
-    weekday: "short", day: "numeric", month: "long", year: "numeric",
-  });
+  function handleSave() {
+    if (!title.trim()) { toast.error("Please enter an event name"); return; }
+    if (!date) { toast.error("Please pick a date"); return; }
+    startTransition(async () => {
+      const res = await updateCalendarEvent(event!.id, {
+        title: title.trim(),
+        event_date: toISO(date!),
+        event_time: timeLabel ? to24h(timeLabel) : null,
+      });
+      if (!res.ok) { toast.error(res.message ?? "Failed to update"); return; }
+      toast.success("Event updated");
+      onClose();
+      router.refresh();
+    });
+  }
 
   return (
-    <Dialog open={!!event} onOpenChange={(o) => { if (!o) { onClose(); setConfirmDelete(false); } }}>
-      <DialogContent className="bg-card border-border" style={{ maxWidth: 380, padding: 0 }}>
+    <Dialog open={!!event} onOpenChange={(o) => { if (!o) { onClose(); setConfirmDelete(false); setShowCal(false); } }}>
+      <DialogContent className="bg-card border-border" style={{ maxWidth: 420, padding: 0 }}>
         {/* Header */}
         <div style={{ padding: "20px 22px 16px", borderBottom: "1px solid var(--kk-line)" }}>
-          <p className="kk-overline mb-1">Event</p>
-          <p className="text-[17px] font-semibold leading-snug" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
-            {event.title}
-          </p>
+          <p className="kk-overline mb-1">Edit event</p>
           {event.subtitle && (
             <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{event.subtitle}</p>
           )}
         </div>
 
         {/* Body */}
-        <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div className="flex items-center gap-2.5">
-            <CalendarDays style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", flexShrink: 0 }} />
-            <span className="text-[13px]" style={{ color: "var(--kk-ink)" }}>{dateStr}</span>
+        <div style={{ padding: "18px 22px" }}>
+          <p className="kk-overline mb-1.5">Event name</p>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. House viewing 3pm"
+            style={{
+              width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+              padding: "10px 13px", fontSize: 14, color: "var(--kk-ink)",
+              background: "var(--kk-surface)", outline: "none", fontFamily: "inherit", marginBottom: 16,
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
+          />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 4 }}>
+            <div>
+              <p className="kk-overline mb-1.5">Date</p>
+              <button
+                type="button"
+                onClick={() => setShowCal((v) => !v)}
+                style={{
+                  width: "100%", border: showCal ? "1.5px solid var(--kk-blue)" : "1.5px solid var(--kk-line)",
+                  borderRadius: 10, padding: "10px 13px", fontSize: 14,
+                  color: date ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+                  background: "var(--kk-surface)", textAlign: "left", cursor: "pointer",
+                  fontFamily: "inherit", display: "flex", alignItems: "center", gap: 7,
+                }}
+              >
+                <CalendarDays style={{ width: 14, height: 14, flexShrink: 0, color: "var(--kk-ink-faint)" }} />
+                {date ? formatDisplay(date) : "Pick date"}
+              </button>
+            </div>
+            <div>
+              <p className="kk-overline mb-1.5">Time (optional)</p>
+              <select
+                value={timeLabel}
+                onChange={(e) => setTimeLabel(e.target.value)}
+                style={{
+                  width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+                  padding: "10px 13px", fontSize: 14,
+                  color: timeLabel ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+                  background: "var(--kk-surface)", appearance: "none", cursor: "pointer",
+                  fontFamily: "inherit", outline: "none",
+                }}
+              >
+                <option value="">No time</option>
+                {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <Clock style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", flexShrink: 0 }} />
-            <span className="text-[13px]" style={{ color: "var(--kk-ink)" }}>{timeStr}</span>
-          </div>
+
+          {showCal && (
+            <div style={{ marginTop: 8, border: "1.5px solid var(--kk-blue)", borderRadius: 12, overflow: "hidden", background: "var(--kk-surface)" }}>
+              <Calendar mode="single" selected={date} onSelect={(d) => { setDate(d); setShowCal(false); }} />
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div style={{ padding: "12px 22px 18px", borderTop: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8 }}>
           {!confirmDelete ? (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
+            <button type="button" onClick={() => setConfirmDelete(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-red-50"
-              style={{ color: "var(--kk-ink-faint)" }}
-            >
+              style={{ color: "var(--kk-ink-faint)" }}>
               <Trash2 className="w-3 h-3" />
               Delete
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => onDelete(event.id)}
+            <button type="button" onClick={() => onDelete(event.id)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium"
-              style={{ background: "var(--kk-red)", color: "#fff" }}
-            >
+              style={{ background: "var(--kk-red)", color: "#fff" }}>
               Confirm delete
             </button>
           )}
           <div style={{ flex: 1 }} />
           {event.card_href && (
-            <button
-              type="button"
-              onClick={() => { onClose(); router.push(event.card_href!); }}
-              className="kk-pill flex items-center gap-1.5"
-              style={{ background: "var(--kk-blue)", color: "#fff", fontSize: 12, padding: "7px 14px" }}
-            >
+            <button type="button" onClick={() => { onClose(); router.push(event.card_href!); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium"
+              style={{ color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
               <ExternalLink className="w-3 h-3" />
               Go to card
             </button>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="kk-pill kk-pill-ghost"
-            style={{ fontSize: 12 }}
-          >
-            Close
+          <button type="button" onClick={onClose} className="kk-pill kk-pill-ghost" style={{ fontSize: 12 }} disabled={pending}>
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={pending}
+            className="kk-pill flex items-center gap-1.5"
+            style={{ background: "var(--kk-blue)", color: "#fff", fontSize: 12, padding: "7px 14px" }}>
+            {pending && <Loader2 className="w-3 h-3 animate-spin" />}
+            {pending ? "Saving…" : "Save"}
           </button>
         </div>
       </DialogContent>

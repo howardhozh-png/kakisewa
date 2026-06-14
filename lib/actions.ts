@@ -2150,6 +2150,27 @@ export async function createCalendarEvent(input: {
   return { ok: true, id: (data as { id: string }).id };
 }
 
+export async function updateCalendarEvent(id: string, input: {
+  title: string;
+  event_date: string;
+  event_time: string | null;
+}): Promise<{ ok: boolean; message?: string }> {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("calendar_events")
+    .update({
+      title: input.title.trim(),
+      event_date: input.event_date,
+      event_time: input.event_time || null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/calendar");
+  return { ok: true };
+}
+
 export async function deleteCalendarEvent(id: string): Promise<{ ok: boolean }> {
   "use server";
   const { createClient } = await import("@/lib/supabase/server");
