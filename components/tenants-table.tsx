@@ -105,22 +105,20 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         </div>
 
         <div className="flex flex-col gap-4 p-6 overflow-y-auto flex-1">
-          {profile.intake_completed_at && (
-            <Link
-              href={`/tenant-profile/${profile.id}`}
-              onClick={onClose}
-              className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
-              style={{ background: "var(--kk-purple-soft)", textDecoration: "none" }}
-            >
-              <div className="min-w-0">
-                <p className="text-[12px] font-semibold" style={{ color: "var(--kk-purple-ink)" }}>View submitted property form</p>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>
-                  Budget, bedrooms, area, furnishing and more
-                </p>
-              </div>
-              <ExternalLink className="w-4 h-4 shrink-0" style={{ color: "var(--kk-purple-ink)" }} />
-            </Link>
-          )}
+          <Link
+            href={`/property-pack/${profile.id}/results`}
+            onClick={onClose}
+            className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
+            style={{ background: "var(--kk-purple-soft)", textDecoration: "none" }}
+          >
+            <div className="min-w-0">
+              <p className="text-[12px] font-semibold" style={{ color: "var(--kk-purple-ink)" }}>View property ranking</p>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>
+                {profile.intake_completed_at ? "Preferences + pack ranking" : "Pack ranking with unit numbers"}
+              </p>
+            </div>
+            <ExternalLink className="w-4 h-4 shrink-0" style={{ color: "var(--kk-purple-ink)" }} />
+          </Link>
           <div>
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Name</label>
             <input className={inputCls} style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} />

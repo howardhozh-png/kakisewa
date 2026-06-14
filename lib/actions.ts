@@ -2063,14 +2063,17 @@ export async function saveTenantPropertyRanking(
 ): Promise<{ ok: boolean }> {
   try {
     const { savePropertyPackRanking } = await import("@/lib/db");
-    const { agentUserId, tenantLabel } = await savePropertyPackRanking(packToken, rankings);
+    const { agentUserId, tenantLabel, tenantProfileId } = await savePropertyPackRanking(packToken, rankings);
 
     if (agentUserId) {
       const { sendPushToUser } = await import("@/lib/push");
+      const resultUrl = tenantProfileId
+        ? `/property-pack/${tenantProfileId}/results`
+        : "/directory?view=tenants";
       sendPushToUser(agentUserId, {
-        title: "Tenant shortlisted your property pack",
+        title: "Tenant ranked your property pack",
         body: `${tenantLabel ?? "A tenant"} ranked their preferred properties`,
-        url: "/directory?view=tenants",
+        url: resultUrl,
         tag: `proppackranked_${agentUserId}`,
       }).catch(() => {});
     }

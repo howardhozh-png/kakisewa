@@ -2856,17 +2856,83 @@ export async function getPropertyPackByToken(
   return { pack, leads };
 }
 
+export async function getLatestRankedPropertyPack(
+  tenantProfileId: string
+): Promise<{ pack: PropertyPack; leads: PropertyPackShareLead[] } | null> {
+  const supabase = await createClient();
+
+  // Get the most recent pack for this tenant that has at least one ranked item
+  const { data: packs } = await supabase
+    .from("property_packs")
+    .select("*")
+    .eq("tenant_profile_id", tenantProfileId)
+    .order("created_at", { ascending: false });
+
+  if (!packs || packs.length === 0) return null;
+
+  for (const packRow of packs as unknown as PropertyPack[]) {
+    const { data: leadsData } = await supabase
+      .from("property_pack_leads")
+      .select("*")
+      .eq("pack_id", packRow.id)
+      .order("tenant_rank", { ascending: true, nullsFirst: false });
+
+    const leads: PropertyPackShareLead[] = (leadsData ?? []).map((r: Record<string, unknown>) => ({
+      owner_lead_id:     r.owner_lead_id as string,
+      position:          r.position as number,
+      property_name:     r.property_name as string | null,
+      unit:              r.unit as string | null,
+      bedrooms:          r.bedrooms as number | null,
+      bathrooms:         r.bathrooms as number | null,
+      expected_rent:     r.expected_rent as number | null,
+      photo_urls:        (() => { try { return JSON.parse((r.photo_urls as string) ?? "[]") as string[]; } catch { return []; } })(),
+      cover_photo_index: r.cover_photo_index as number | null,
+      tenant_liked:      (r.tenant_liked as number) ?? 0,
+      tenant_rank:       r.tenant_rank as number | null,
+      tenant_note:       r.tenant_note as string | null,
+    }));
+
+    const hasRankings = leads.some(l => l.tenant_rank != null);
+    if (hasRankings) return { pack: packRow, leads };
+  }
+
+  // Return most recent pack even if unranked (so agent can see it was sent)
+  const fallbackPack = packs[0] as unknown as PropertyPack;
+  const { data: fallbackLeads } = await supabase
+    .from("property_pack_leads")
+    .select("*")
+    .eq("pack_id", fallbackPack.id)
+    .order("position", { ascending: true });
+
+  const leads: PropertyPackShareLead[] = (fallbackLeads ?? []).map((r: Record<string, unknown>) => ({
+    owner_lead_id:     r.owner_lead_id as string,
+    position:          r.position as number,
+    property_name:     r.property_name as string | null,
+    unit:              r.unit as string | null,
+    bedrooms:          r.bedrooms as number | null,
+    bathrooms:         r.bathrooms as number | null,
+    expected_rent:     r.expected_rent as number | null,
+    photo_urls:        (() => { try { return JSON.parse((r.photo_urls as string) ?? "[]") as string[]; } catch { return []; } })(),
+    cover_photo_index: r.cover_photo_index as number | null,
+    tenant_liked:      (r.tenant_liked as number) ?? 0,
+    tenant_rank:       r.tenant_rank as number | null,
+    tenant_note:       r.tenant_note as string | null,
+  }));
+
+  return { pack: fallbackPack, leads };
+}
+
 export async function savePropertyPackRanking(
   token: string,
   rankings: Array<{ owner_lead_id: string; rank: number; liked: number }>
-): Promise<{ agentUserId: string | null; tenantLabel: string | null }> {
+): Promise<{ agentUserId: string | null; tenantLabel: string | null; tenantProfileId: string | null }> {
   const svc = createServiceClient();
   const { data: packData } = await svc
     .from("property_packs")
-    .select("id, user_id, tenant_label")
+    .select("id, user_id, tenant_label, tenant_profile_id")
     .eq("share_token", token)
     .maybeSingle();
-  if (!packData) return { agentUserId: null, tenantLabel: null };
+  if (!packData) return { agentUserId: null, tenantLabel: null, tenantProfileId: null };
 
   const pack = packData as Record<string, unknown>;
   await Promise.all(
@@ -2877,5 +2943,9 @@ export async function savePropertyPackRanking(
         .eq("owner_lead_id", r.owner_lead_id)
     )
   );
-  return { agentUserId: pack.user_id as string | null, tenantLabel: pack.tenant_label as string | null };
+  return {
+    agentUserId:     pack.user_id as string | null,
+    tenantLabel:     pack.tenant_label as string | null,
+    tenantProfileId: pack.tenant_profile_id as string | null,
+  };
 }
