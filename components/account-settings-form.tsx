@@ -740,40 +740,93 @@ function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
 
 // ── WhatsApp Integration section ──────────────────────────────────────────────
 
+const STEPS = [
+  {
+    n: 1,
+    title: "Create a Meta Business account",
+    body: (
+      <>
+        <p style={{ color: "var(--kk-ink-mute)", fontSize: 12, lineHeight: 1.6 }}>
+          If you don&apos;t have one yet, go to{" "}
+          <a href="https://business.facebook.com" target="_blank" rel="noreferrer" style={{ color: "var(--kk-blue)" }}>business.facebook.com</a>{" "}
+          and create a free business account using your Facebook login.
+        </p>
+      </>
+    ),
+  },
+  {
+    n: 2,
+    title: "Add your WhatsApp Business number",
+    body: (
+      <>
+        <ol style={{ color: "var(--kk-ink-mute)", fontSize: 12, lineHeight: 1.7, paddingLeft: 16, listStyleType: "decimal", listStylePosition: "outside" }}>
+          <li>In Meta Business Manager, click <strong>WhatsApp</strong> in the left menu</li>
+          <li>Click <strong>WhatsApp Manager</strong> then <strong>Add phone number</strong></li>
+          <li>Enter and verify your business SIM card number</li>
+        </ol>
+        <p style={{ color: "var(--kk-amber)", fontSize: 11, marginTop: 6, fontWeight: 500 }}>
+          Important: this number cannot be used on the WhatsApp Business app at the same time. Use a dedicated business SIM.
+        </p>
+      </>
+    ),
+  },
+  {
+    n: 3,
+    title: "Copy your Phone Number ID",
+    body: (
+      <ol style={{ color: "var(--kk-ink-mute)", fontSize: 12, lineHeight: 1.7, paddingLeft: 16, listStyleType: "decimal", listStylePosition: "outside" }}>
+        <li>In WhatsApp Manager, click on your phone number</li>
+        <li>In the left menu click <strong>API Setup</strong></li>
+        <li>Copy the <strong>Phone number ID</strong> (a long number e.g. 1234567890123456)</li>
+      </ol>
+    ),
+  },
+  {
+    n: 4,
+    title: "Generate a permanent access token",
+    body: (
+      <ol style={{ color: "var(--kk-ink-mute)", fontSize: 12, lineHeight: 1.7, paddingLeft: 16, listStyleType: "decimal", listStylePosition: "outside" }}>
+        <li>Go to Meta Business Manager &rarr; <strong>Settings</strong> &rarr; <strong>System Users</strong></li>
+        <li>Click <strong>Add</strong>, name it anything (e.g. kakisewa), role: <strong>Admin</strong></li>
+        <li>Click <strong>Assign assets</strong> &rarr; Apps &rarr; select your Meta app &rarr; Full control &rarr; Save</li>
+        <li>Click <strong>Generate token</strong> &rarr; select your app &rarr; tick <strong>whatsapp_business_messaging</strong> &rarr; expiry: <strong>Never</strong> &rarr; Generate</li>
+        <li>Copy the long token that appears (starts with EAAZ... or EAABs...)</li>
+      </ol>
+    ),
+  },
+];
+
 function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
   const isConnected = !!agent.whatsapp_phone_number_id;
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [connectedNumber, setConnectedNumber] = useState(agent.whatsapp_number ?? null);
-
-  // Pre-load FB SDK on mount so FB.login() fires synchronously on click
-  // (avoids popup blocker — popups must open within the user gesture context)
-  useEffect(() => { loadFbSdk(); }, []);
+  const [phoneNumberId, setPhoneNumberId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [showSteps, setShowSteps] = useState(false);
 
   async function handleConnect() {
+    if (!phoneNumberId.trim() || !accessToken.trim()) {
+      toast.error("Enter both Phone Number ID and Access Token");
+      return;
+    }
     setConnecting(true);
     try {
-      await loadFbSdk(); // instant if already loaded
-      const code = await launchEmbeddedSignup();
-      if (!code) { setConnecting(false); return; }
-
       const res = await fetch("/api/whatsapp/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ phone_number_id: phoneNumberId.trim(), access_token: accessToken.trim() }),
       });
       const data = await res.json() as { ok: boolean; phoneNumber?: string; error?: string };
       if (data.ok && data.phoneNumber) {
         setConnectedNumber(data.phoneNumber);
         toast.success(`WhatsApp connected — ${data.phoneNumber}`);
-        // Reload so agent profile reflects connected state
         window.location.reload();
       } else {
-        toast.error(data.error ?? "Connection failed");
+        toast.error(data.error ?? "Connection failed — check your credentials and try again");
       }
-    } catch (err) {
-      console.error("[WA connect]", err);
-      toast.error("Could not connect WhatsApp");
+    } catch {
+      toast.error("Could not connect. Check your internet and try again.");
     } finally {
       setConnecting(false);
     }
@@ -796,12 +849,6 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
     ? new Date(agent.whatsapp_connected_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })
     : null;
 
-  // OAuth tokens from Meta expire after ~60 days — warn after 55 days
-  const tokenAgeDays = agent.whatsapp_connected_at
-    ? Math.floor((Date.now() - new Date(agent.whatsapp_connected_at).getTime()) / 86_400_000)
-    : 0;
-  const tokenNearExpiry = isConnected && tokenAgeDays >= 55;
-
   return (
     <section className="kk-section p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -810,16 +857,9 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
         {isConnected && <CheckCircle2 className="w-3.5 h-3.5 ml-auto" style={{ color: "#25D366" }} />}
       </div>
 
-      {/* Two-mode explanation — always visible */}
+      {/* Two-mode explanation */}
       <div className="space-y-3 mb-5">
-        <div
-          className="rounded-xl p-3.5"
-          style={{
-            background: isConnected ? "var(--kk-surface-2)" : "var(--kk-surface-2)",
-            border: `1.5px solid ${isConnected ? "var(--kk-line)" : "var(--kk-theme-dark)"}`,
-            opacity: isConnected ? 0.6 : 1,
-          }}
-        >
+        <div className="rounded-xl p-3.5" style={{ background: "var(--kk-surface-2)", border: `1.5px solid ${isConnected ? "var(--kk-line)" : "var(--kk-theme-dark)"}`, opacity: isConnected ? 0.6 : 1 }}>
           <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Personal WhatsApp (default)</p>
           <p className="text-[12px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
             Send messages via wa.me links as usual. Owners and tenants click the renewal link in your message to record their reply. Cards update automatically.
@@ -827,13 +867,7 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
           <p className="text-[11px] mt-1.5 font-medium" style={{ color: "var(--kk-ink-faint)" }}>No setup needed. Works today.</p>
         </div>
 
-        <div
-          className="rounded-xl p-3.5"
-          style={{
-            background: "var(--kk-surface-2)",
-            border: `1.5px solid ${isConnected ? "#25D366" : "var(--kk-line)"}`,
-          }}
-        >
+        <div className="rounded-xl p-3.5" style={{ background: "var(--kk-surface-2)", border: `1.5px solid ${isConnected ? "#25D366" : "var(--kk-line)"}` }}>
           <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>
             WhatsApp Business API
             <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#166534" }}>Auto</span>
@@ -855,104 +889,88 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
           {connectedSince && (
             <p className="text-[12px] mb-4" style={{ color: "var(--kk-ink-faint)" }}>Connected since {connectedSince}</p>
           )}
-          {tokenNearExpiry && (
-            <div
-              className="rounded-xl p-3 mb-4 flex items-start gap-2"
-              style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
-            >
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#B45309" }} />
-              <div>
-                <p className="text-[12px] font-semibold" style={{ color: "#92400E" }}>
-                  Connection expires soon
-                </p>
-                <p className="text-[11px] mt-0.5" style={{ color: "#B45309" }}>
-                  Connected {tokenAgeDays} days ago. WhatsApp auto-tracking stops at 60 days. Reconnect now to keep it working.
-                </p>
-                <button
-                  onClick={handleConnect}
-                  disabled={connecting}
-                  className="kk-pill flex items-center gap-2 mt-2"
-                  style={{ background: "#B45309", color: "#fff", fontSize: 11 }}
-                >
-                  {connecting && <Loader2 className="w-3 h-3 animate-spin" />}
-                  {connecting ? "Reconnecting…" : "Reconnect now"}
-                </button>
-              </div>
-            </div>
-          )}
           <button
             onClick={handleDisconnect}
             disabled={disconnecting}
             className="kk-pill flex items-center gap-2"
-            style={{
-              background: "var(--kk-surface-2)",
-              color: "var(--kk-ink-mute)",
-              border: "1px solid var(--kk-line)",
-            }}
+            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
           >
             {disconnecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             {disconnecting ? "Disconnecting…" : "Disconnect business number"}
           </button>
         </div>
       ) : (
-        <button
-          onClick={handleConnect}
-          disabled={connecting}
-          className="kk-pill flex items-center gap-2"
-          style={{ background: "var(--kk-ink)", color: "#fff" }}
-        >
-          {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          {connecting ? "Opening Meta…" : "Connect WhatsApp Business number"}
-        </button>
+        <div>
+          {/* Step-by-step guide toggle */}
+          <button
+            onClick={() => setShowSteps(v => !v)}
+            className="flex items-center gap-1.5 mb-4"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--kk-blue)", fontSize: 12, fontWeight: 600 }}
+          >
+            <Info className="w-3.5 h-3.5" />
+            {showSteps ? "Hide setup guide" : "How to get your credentials (4 steps)"}
+          </button>
+
+          {showSteps && (
+            <div className="space-y-3 mb-5">
+              {STEPS.map((step) => (
+                <div key={step.n} className="rounded-xl p-3.5" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--kk-ink)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {step.n}
+                    </span>
+                    <p className="text-[12px] font-semibold" style={{ color: "var(--kk-ink)" }}>{step.title}</p>
+                  </div>
+                  {step.body}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Credential inputs */}
+          <div className="space-y-3">
+            <div>
+              <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--kk-ink-mute)" }}>
+                Phone Number ID
+              </label>
+              <input
+                type="text"
+                value={phoneNumberId}
+                onChange={e => setPhoneNumberId(e.target.value)}
+                placeholder="e.g. 1234567890123456"
+                style={{ ...INPUT_STYLE, fontSize: 13 }}
+              />
+            </div>
+            <div>
+              <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--kk-ink-mute)" }}>
+                Access Token
+              </label>
+              <input
+                type="password"
+                value={accessToken}
+                onChange={e => setAccessToken(e.target.value)}
+                placeholder="EAABs… (paste your permanent token)"
+                style={{ ...INPUT_STYLE, fontSize: 13 }}
+              />
+            </div>
+            <button
+              onClick={handleConnect}
+              disabled={connecting || !phoneNumberId.trim() || !accessToken.trim()}
+              className="kk-pill flex items-center gap-2"
+              style={{
+                background: "var(--kk-ink)",
+                color: "#fff",
+                opacity: !phoneNumberId.trim() || !accessToken.trim() ? 0.4 : 1,
+              }}
+            >
+              {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {connecting ? "Verifying…" : "Connect WhatsApp Business"}
+            </button>
+          </div>
+        </div>
       )}
     </section>
   );
-}
-
-// Load the Facebook JS SDK once
-function loadFbSdk(): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve();
-    if ((window as unknown as Record<string, unknown>).FB) return resolve();
-    const script = document.createElement("script");
-    script.src = "https://connect.facebook.net/en_US/sdk.js";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => resolve();
-    document.head.appendChild(script);
-  });
-}
-
-declare global {
-  interface Window {
-    FB?: {
-      init(opts: Record<string, unknown>): void;
-      login(cb: (res: { authResponse?: { code?: string } }) => void, opts: Record<string, unknown>): void;
-    };
-    fbAsyncInit?: () => void;
-  }
-}
-
-// App ID is public (NEXT_PUBLIC_) — hardcoded fallback so missing Vercel env never silently breaks this
-const WA_APP_ID = process.env.NEXT_PUBLIC_WHATSAPP_APP_ID ?? "1525980849174656";
-
-function launchEmbeddedSignup(): Promise<string | null> {
-  return new Promise((resolve) => {
-    if (!window.FB) { resolve(null); return; }
-
-    window.FB.init({ appId: WA_APP_ID, autoLogAppEvents: true, xfbml: true, version: "v19.0" });
-    window.FB.login(
-      (response) => {
-        resolve(response.authResponse?.code ?? null);
-      },
-      {
-        scope: "whatsapp_business_messaging,whatsapp_business_management",
-        response_type: "code",
-        override_default_response_type: true,
-        extras: { feature: "whatsapp_embedded_signup", sessionInfoVersion: 2, setup: {} },
-      }
-    );
-  });
 }
 
 // ── Main form ─────────────────────────────────────────────────────────────────
