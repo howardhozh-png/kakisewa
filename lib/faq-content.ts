@@ -68,6 +68,14 @@ export const FAQ_SECTIONS: FaqSection[] = [
         q: "How do I import multiple listings at once?",
         a: "Tap the import button (top-right of the board). Upload a CSV with columns: owner_name, owner_phone, property_name, unit, expected_rent, bedrooms, bathrooms. Download the template from the import dialog if you are unsure of the format.",
       },
+      {
+        q: "What happens when I delete a listing card?",
+        a: "Deleted cards go to a 7-day recycle bin shown at the top of the My listing page as 'Deleted (N)'. They are not permanently gone — you can restore them or delete them permanently at any time from that panel. After 7 days they are automatically removed.",
+      },
+      {
+        q: "How do I restore a deleted card?",
+        a: "Tap 'Deleted (N)' at the top of the My listing page to expand the recycle bin. Each deleted card has a Restore button. Tap it to bring the card back into your active pipeline.",
+      },
     ],
   },
   {
@@ -98,6 +106,10 @@ export const FAQ_SECTIONS: FaqSection[] = [
         q: "How is commission calculated?",
         a: "By default, 1 month's rent equals 100% commission. You can override the percentage per deal in the tenancy card's edit dialog, or change your agency default under Settings > Goals > Commission %.",
       },
+      {
+        q: "What happens when I delete a tenancy card?",
+        a: "Deleted tenancies go to a 7-day recycle bin shown at the top of the Existing listing page as 'Deleted (N)'. You can restore them or permanently delete them from that panel. After 7 days they are automatically removed forever.",
+      },
     ],
   },
   {
@@ -119,6 +131,10 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         q: "Will I be notified when a target tenancy is about to end?",
         a: "Yes. kakisewa sends you a push or email notification 60 days before the competitor's tenancy ends. Make sure notifications are enabled in Settings > Notifications.",
+      },
+      {
+        q: "What happens when I delete a target listing card?",
+        a: "Deleted target cards go to a 7-day recycle bin shown at the top of the Target listing page as 'Deleted (N)'. You can restore them or permanently delete them from that panel. After 7 days they are automatically removed.",
       },
     ],
   },

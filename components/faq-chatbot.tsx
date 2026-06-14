@@ -4,6 +4,51 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) =>
+    p.startsWith("**") && p.endsWith("**")
+      ? <strong key={i}>{p.slice(2, -2)}</strong>
+      : p
+  );
+}
+
+function renderMessage(content: string): React.ReactNode {
+  const lines = content.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let listType: "ol" | "ul" | null = null;
+  let listItems: React.ReactNode[] = [];
+  let k = 0;
+
+  function flushList() {
+    if (!listItems.length) return;
+    nodes.push(
+      listType === "ol"
+        ? <ol key={k++} style={{ margin: "4px 0 4px 0", paddingLeft: 18, lineHeight: 1.55 }}>{listItems}</ol>
+        : <ul key={k++} style={{ margin: "4px 0 4px 0", paddingLeft: 18, lineHeight: 1.55 }}>{listItems}</ul>
+    );
+    listItems = [];
+    listType = null;
+  }
+
+  for (const line of lines) {
+    const ol = line.match(/^(\d+)\.\s+(.+)/);
+    const ul = line.match(/^[-*]\s+(.+)/);
+    if (ol) {
+      if (listType !== "ol") { flushList(); listType = "ol"; }
+      listItems.push(<li key={listItems.length} style={{ marginBottom: 2 }}>{renderInline(ol[2])}</li>);
+    } else if (ul) {
+      if (listType !== "ul") { flushList(); listType = "ul"; }
+      listItems.push(<li key={listItems.length} style={{ marginBottom: 2 }}>{renderInline(ul[1])}</li>);
+    } else {
+      flushList();
+      if (line.trim()) nodes.push(<p key={k++} style={{ margin: "2px 0" }}>{renderInline(line)}</p>);
+    }
+  }
+  flushList();
+  return nodes;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -258,7 +303,7 @@ export function FaqChatbot() {
                     wordBreak: "break-word",
                   }}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? renderMessage(m.content) : m.content}
                 </div>
               </div>
             ))}
