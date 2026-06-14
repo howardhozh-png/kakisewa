@@ -130,7 +130,7 @@ export function StatsSection({
       ? Math.round((stats.totalResponded / stats.totalUploaded) * 100)
       : 0;
 
-  const totalMyListings = stats.listedRentCount + stats.listedSaleCount;
+  const totalMyListings = stats.totalListedCount;
 
   const isCustomActive = customInput.trim() !== "" && !QUICK_RANGES.includes(range as (typeof QUICK_RANGES)[number]);
   const activeQuick = isCustomActive ? "" : range;
@@ -265,7 +265,7 @@ export function StatsSection({
 
         <Block
           overline="Target listing"
-          primaryNum={stats.targetTotalActiveCount}
+          primaryNum={stats.targetTotalCount}
           primaryLabel="competitor properties tracked"
           stats={[
             { label: "Watching", value: stats.targetWatchingCount },

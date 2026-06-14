@@ -1345,6 +1345,16 @@ export async function hardDeleteOwnerLead(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function bulkHardDeleteOwnerLeads(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const supabase = await createClient();
+  const CHUNK = 500;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const { error } = await supabase.from("owner_leads").delete().in("id", ids.slice(i, i + CHUNK));
+    if (error) throw error;
+  }
+}
+
 export async function softDeleteOwnerLeadForce(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("owner_leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
@@ -2599,6 +2609,7 @@ export type ExpandedDashboardStats = {
   totalContacted: number;
   totalResponded: number;
   // My Listing (snapshot)
+  totalListedCount: number;
   listedRentCount: number;
   listedRentAmount: number;
   listedSaleCount: number;
@@ -2621,6 +2632,7 @@ export type ExpandedDashboardStats = {
   targetExpiringCount: number;
   targetExpiringAmount: number;
   // Target Listing (fixed)
+  targetTotalCount: number;
   targetWatchingCount: number;
   targetExpiringIn60Count: number;
 };
@@ -2648,6 +2660,7 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     { count: totalUploaded },
     { count: totalContacted },
     { count: totalResponded },
+    { data: allListed },
     { data: listedRent },
     { data: listedSale },
     { data: repliedRent },
@@ -2660,10 +2673,13 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     { data: targetExpiring },
     { data: targetWatching },
     { data: targetExpiring60 },
+    { count: targetTotal },
   ] = await Promise.all([
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false"),
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
+    // All listed regardless of purpose — used for My Pipeline primary number
+    olD().eq("stage", "listed").or("is_competitor_target.is.null,is_competitor_target.eq.false"),
     olD().eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
     olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
@@ -2682,12 +2698,15 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).eq("stage", "watching"),
     // Competitors expiring within fixed 60-day window
     svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", sixtyDayEnd),
+    // Total competitor targets (all, regardless of stage or contract end)
+    svc.from("owner_leads").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_competitor_target", true).is("deleted_at", null),
   ]);
 
   return {
     totalUploaded: totalUploaded ?? 0,
     totalContacted: totalContacted ?? 0,
     totalResponded: totalResponded ?? 0,
+    totalListedCount: allListed?.length ?? 0,
     listedRentCount: listedRent?.length ?? 0,
     listedRentAmount: sumExpectedRent(listedRent),
     listedSaleCount: listedSale?.length ?? 0,
@@ -2702,6 +2721,7 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     existingExpiringAmount: sumAmount(existingExpiring),
     existingRenewingCount: existingRenewing?.length ?? 0,
     existingExpiringIn60Count: existingExpiring60?.length ?? 0,
+    targetTotalCount: targetTotal ?? 0,
     targetTotalActiveCount: targetActive?.length ?? 0,
     targetTotalActiveAmount: sumExpectedRent(targetActive),
     targetExpiringCount: targetExpiring?.length ?? 0,

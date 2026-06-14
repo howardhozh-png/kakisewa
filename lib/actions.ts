@@ -32,6 +32,7 @@ import {
   bulkSoftDeleteOwnerLeads,
   restoreOwnerLead,
   hardDeleteOwnerLead,
+  bulkHardDeleteOwnerLeads,
   restoreTenancy,
   hardDeleteTenancy,
   createTenantProfile,
@@ -243,6 +244,13 @@ export async function restoreOwnerLeadAction(id: string): Promise<void> {
 
 export async function hardDeleteOwnerLeadAction(id: string): Promise<void> {
   await hardDeleteOwnerLead(id);
+  invalidateCache();
+  revalidatePath("/potential-listing");
+  revalidatePath("/");
+}
+
+export async function bulkHardDeleteOwnerLeadsAction(ids: string[]): Promise<void> {
+  await bulkHardDeleteOwnerLeads(ids);
   invalidateCache();
   revalidatePath("/potential-listing");
   revalidatePath("/");

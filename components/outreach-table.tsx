@@ -43,7 +43,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
@@ -814,6 +814,8 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [bulkContacting, setBulkContacting] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkHardDeleteConfirm, setBulkHardDeleteConfirm] = useState(false);
+  const [bulkHardDeleting, setBulkHardDeleting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -999,6 +1001,20 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       router.refresh();
     } finally {
       setHardDeletingId(null);
+    }
+  }
+
+  async function handleBulkHardDelete() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkHardDeleting(true);
+    try {
+      await bulkHardDeleteOwnerLeadsAction(ids);
+      setSelectedIds(new Set());
+      setBulkHardDeleteConfirm(false);
+      router.refresh();
+    } finally {
+      setBulkHardDeleting(false);
     }
   }
 
@@ -1523,14 +1539,26 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
           {/* Delete selected */}
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
-          <button
-            type="button"
-            onClick={() => setBulkDeleteConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
-            style={{ background: "rgba(255,59,48,0.25)", color: "#FF6B6B" }}
-          >
-            Delete
-          </button>
+          {filter === "deleted" ? (
+            <button
+              type="button"
+              onClick={() => setBulkHardDeleteConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
+              style={{ background: "rgba(255,59,48,0.25)", color: "#FF6B6B" }}
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete permanently
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setBulkDeleteConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80"
+              style={{ background: "rgba(255,59,48,0.25)", color: "#FF6B6B" }}
+            >
+              Delete
+            </button>
+          )}
 
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
           <button
@@ -1605,6 +1633,40 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           </Dialog>
         );
       })()}
+
+      {/* Bulk permanent delete confirmation */}
+      <Dialog open={bulkHardDeleteConfirm} onOpenChange={setBulkHardDeleteConfirm}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete permanently?</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+              {selectedIds.size} lead{selectedIds.size !== 1 ? "s" : ""} will be permanently deleted. This cannot be undone.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setBulkHardDeleteConfirm(false)}
+              className="px-4 py-2 rounded-xl text-[13px] font-medium transition-opacity hover:opacity-70"
+              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={bulkHardDeleting}
+              onClick={handleBulkHardDelete}
+              className="px-4 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-50 flex items-center gap-1.5"
+              style={{ background: "#FF3B30", color: "#fff" }}
+            >
+              {bulkHardDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Delete forever
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Lead detail popup */}
       {selectedLead && (
