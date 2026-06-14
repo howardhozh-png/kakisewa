@@ -1,13 +1,20 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { fetchExpandedStats } from "./actions";
 import { MonthPickerPill } from "@/components/month-picker-pill";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ExpandedDashboardStats, CalendarEvent } from "@/lib/db";
 
-const QUICK_RANGES = ["3", "6", "12"] as const;
+const RANGE_OPTIONS = [
+  { value: "1w", label: "1w", months: 1 },
+  { value: "1m", label: "1m", months: 1 },
+  { value: "3m", label: "3m", months: 3 },
+  { value: "6m", label: "6m", months: 6 },
+  { value: "12m", label: "12m", months: 12 },
+  { value: "24m", label: "24m", months: 24 },
+] as const;
 
 function fmtTime(t: string | null): string | null {
   if (!t) return null;
@@ -99,44 +106,31 @@ export function StatsSection({
   initialStats: ExpandedDashboardStats;
   upcomingEvents: CalendarEvent[];
 }) {
-  const todayMonthValue = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const todayMonthValue = new Date().toISOString().slice(0, 7);
   const [startMonth, setStartMonth] = useState(todayMonthValue);
-  const [range, setRange] = useState("3");
-  const [customInput, setCustomInput] = useState("");
+  const [rangeKey, setRangeKey] = useState<string>("3m");
   const [stats, setStats] = useState(initialStats);
   const [isPending, startTransition] = useTransition();
-  const customRef = useRef<HTMLInputElement>(null);
 
-  function applyRange(val: string, month?: string) {
-    const n = parseInt(val, 10);
-    if (!n || n < 1) return;
-    setRange(val);
-    const sm = month ?? startMonth;
+  function getRangeMonths(key: string): number {
+    return RANGE_OPTIONS.find((o) => o.value === key)?.months ?? 3;
+  }
+
+  function refetch(months: number, month: string) {
     startTransition(async () => {
-      const fresh = await fetchExpandedStats(n, sm);
+      const fresh = await fetchExpandedStats(months, month);
       setStats(fresh);
     });
   }
 
   function handleMonthChange(month: string) {
     setStartMonth(month);
-    const n = parseInt(range, 10);
-    if (!n || n < 1) return;
-    startTransition(async () => {
-      const fresh = await fetchExpandedStats(n, month);
-      setStats(fresh);
-    });
+    refetch(getRangeMonths(rangeKey), month);
   }
 
-  function handleQuickRange(val: string) {
-    setCustomInput("");
-    applyRange(val);
-  }
-
-  function handleCustomCommit() {
-    const trimmed = customInput.trim();
-    if (!trimmed) return;
-    applyRange(trimmed);
+  function handleRangeChange(key: string) {
+    setRangeKey(key);
+    refetch(getRangeMonths(key), startMonth);
   }
 
   const respondedPct =
@@ -146,10 +140,6 @@ export function StatsSection({
 
   const totalMyListings = stats.totalListedCount;
 
-  const isCustomActive = customInput.trim() !== "" && !QUICK_RANGES.includes(range as (typeof QUICK_RANGES)[number]);
-  const activeQuick = isCustomActive ? "" : range;
-  const hasCustomValue = customInput.trim() !== "";
-
   const today = new Date().toISOString().slice(0, 10);
   const threeDaysOut = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
   const filteredEvents = upcomingEvents.filter(
@@ -158,90 +148,28 @@ export function StatsSection({
 
   return (
     <div style={{ opacity: isPending ? 0.5 : 1, transition: "opacity 0.15s ease" }}>
-      {/* Range pills */}
+      {/* Range controls */}
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <MonthPickerPill value={startMonth} onChange={handleMonthChange} />
-        <span style={{ width: 1, height: 18, background: "var(--kk-line)", flexShrink: 0 }} />
-        {QUICK_RANGES.map((r) => (
-          <button
-            key={r}
-            onClick={() => handleQuickRange(r)}
-            style={{
-              padding: "6px 18px",
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: "pointer",
-              border: "none",
-              background: activeQuick === r ? "var(--kk-ink)" : "var(--kk-line)",
-              color: activeQuick === r ? "#fff" : "var(--kk-ink-mute)",
-              transition: "background 0.15s ease, color 0.15s ease",
-            }}
+        <Select value={rangeKey} onValueChange={handleRangeChange}>
+          <SelectTrigger
+            className="text-[12px] font-medium gap-1 [&_svg]:size-3"
+            style={{ height: "auto", padding: "6px 10px", borderRadius: 12, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}
           >
-            {r}m
-          </button>
-        ))}
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            borderRadius: 999,
-            overflow: "hidden",
-            border: `1px solid ${isCustomActive ? "var(--kk-ink)" : "var(--kk-line)"}`,
-            background: isCustomActive ? "var(--kk-ink)" : "transparent",
-            transition: "border-color 0.15s ease, background 0.15s ease",
-          }}
-        >
-          <input
-            ref={customRef}
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={120}
-            placeholder="—"
-            value={customInput}
-            onChange={(e) => setCustomInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleCustomCommit(); }}
-            style={{
-              width: 52,
-              padding: "6px 0 6px 12px",
-              fontSize: 13,
-              fontWeight: 500,
-              border: "none",
-              background: "transparent",
-              color: isCustomActive ? "#fff" : "var(--kk-ink-mute)",
-              outline: "none",
-              MozAppearance: "textfield",
-            } as React.CSSProperties}
-          />
-          <span style={{ fontSize: 13, color: isCustomActive ? "rgba(255,255,255,0.7)" : "var(--kk-ink-faint)", paddingRight: hasCustomValue ? 0 : 12 }}>m</span>
-          {hasCustomValue && (
-            <button
-              onClick={handleCustomCommit}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 30,
-                height: "100%",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                color: isCustomActive ? "#fff" : "var(--kk-ink)",
-                padding: "0 8px 0 4px",
-              }}
-            >
-              <ArrowRight style={{ width: 14, height: 14 }} />
-            </button>
-          )}
-        </div>
+            <SelectValue>{rangeKey}</SelectValue>
+          </SelectTrigger>
+          <SelectContent align="start" className="min-w-[72px] text-[12px]">
+            {RANGE_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value} className="py-1.5 text-[12px]">{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* 4 blocks — 1 col mobile, 2 col sm+ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Block
-          overline="Potential pipeline"
+          overline="Potential listing"
           primaryNum={stats.totalUploaded}
           primaryLabel="owner contacts imported"
           stats={[
@@ -254,7 +182,7 @@ export function StatsSection({
         />
 
         <Block
-          overline="My pipeline"
+          overline="My listing"
           primaryNum={totalMyListings}
           primaryLabel="listings in progress"
           stats={[
@@ -267,7 +195,7 @@ export function StatsSection({
         />
 
         <Block
-          overline="Existing pipeline"
+          overline="Existing listing"
           primaryNum={stats.existingTotalActiveCount}
           primaryLabel="active tenancies"
           stats={[

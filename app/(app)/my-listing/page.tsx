@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads } from "@/lib/db";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { AddListingButton } from "@/components/add-listing-button";
@@ -39,7 +38,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
   const pipelineLeads = ownerLeads.filter((l) => {
     if (["own_stay", "archived", "imported"].includes(l.stage)) return false;
-    if (l.stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage === "active") return false;
+    if (l.stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage != null) return false;
     return true;
   });
 
@@ -54,11 +53,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
             Send your tenant pack and track every active listing.
           </p>
         </div>
-        <AddListingButton ownerLeads={ownerLeads} />
-      </header>
-
-      <Suspense fallback={null}>
-        <div className="mb-8 flex justify-end">
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <PageHelpButton
             variant="question"
             module={1}
@@ -70,8 +65,9 @@ export default async function TrackListingPage({ searchParams }: Props) {
               "Once matched with a tenant, the deal moves to Existing listing",
             ]}
           />
+          <AddListingButton ownerLeads={ownerLeads} />
         </div>
-      </Suspense>
+      </header>
 
       <DeletedOwnerLeadsPanel leads={deletedLeads} />
 

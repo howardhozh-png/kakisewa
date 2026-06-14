@@ -2680,7 +2680,7 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     { count: targetTotal },
   ] = await Promise.all([
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false"),
-    ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
+    ol().eq("stage", "imported").or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
     // All listed regardless of purpose — used for My Pipeline primary number
     olD().eq("stage", "listed").or("is_competitor_target.is.null,is_competitor_target.eq.false"),
