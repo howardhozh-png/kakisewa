@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { FAQ_CONTEXT } from "@/lib/faq-content";
 
 const SYSTEM_PROMPT = `You are a friendly support assistant for kakisewa, a Malaysian property agent management app.
@@ -29,29 +29,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply: "Please ask a question." });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
       reply: "Live chat is not available right now. Browse the FAQ page for answers, or email support@kakisewa.com.",
     });
   }
 
-  const openai = new OpenAI({ apiKey });
+  const client = new Anthropic({ apiKey });
 
   try {
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const messages = [
+      ...history.slice(-6).map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+      { role: "user" as const, content: message.trim() },
+    ];
+
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 300,
-      temperature: 0.3,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...history.slice(-6).map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: message.trim() },
-      ],
+      system: SYSTEM_PROMPT,
+      messages,
     });
+
     const reply =
-      res.choices[0]?.message?.content?.trim() ??
-      "I'm not sure about that. Please email support@kakisewa.com for help.";
+      res.content[0]?.type === "text"
+        ? res.content[0].text.trim()
+        : "I'm not sure about that. Please email support@kakisewa.com for help.";
+
     return NextResponse.json({ reply });
   } catch {
     return NextResponse.json({

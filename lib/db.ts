@@ -1345,6 +1345,26 @@ export async function hardDeleteOwnerLead(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function softDeleteOwnerLeadForce(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("owner_leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function getSoftDeletedMyListingLeads(): Promise<OwnerLead[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", false).order("deleted_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+}
+
+export async function getSoftDeletedTargetLeads(): Promise<OwnerLead[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", true).order("deleted_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
+}
+
 export async function purgeSoftDeletedLeads(): Promise<number> {
   const supabase = createServiceClient();
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();

@@ -28,6 +28,7 @@ import {
   updateOwnerLead,
   getOwnerLead,
   deleteOwnerLead,
+  softDeleteOwnerLeadForce,
   bulkSoftDeleteOwnerLeads,
   restoreOwnerLead,
   hardDeleteOwnerLead,
@@ -216,6 +217,13 @@ export async function removeOwnerLead(id: string) {
   await deleteOwnerLead(id);
   invalidateCache();
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/");
+}
+
+export async function removeOwnerLeadForce(id: string) {
+  await softDeleteOwnerLeadForce(id);
+  invalidateCache();
+  revalidatePath("/my-listing"); revalidatePath("/target-listing");
   revalidatePath("/");
 }
 

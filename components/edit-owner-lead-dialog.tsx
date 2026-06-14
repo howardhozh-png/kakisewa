@@ -6,7 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
-import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLead } from "@/lib/actions";
+import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce } from "@/lib/actions";
 import { normalizePhone, phoneError } from "@/lib/phone";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -102,16 +102,11 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
     if (!lead) return;
     startTransition(async () => {
       try {
-        await removeOwnerLead(lead.id);
+        await removeOwnerLeadForce(lead.id);
         onOpenChange(false);
         router.refresh();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "";
-        if (msg === "PROTECTED") {
-          toast.error("This lead has activity and cannot be deleted. Only cold contacts with no replies can be removed.");
-        } else {
-          toast.error("Could not delete lead");
-        }
+      } catch {
+        toast.error("Could not delete lead");
       }
     });
   }

@@ -1,9 +1,10 @@
 import { Suspense } from "react";
-import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
+import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads } from "@/lib/db";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { AddListingButton } from "@/components/add-listing-button";
 import { ActiveDealsEmptyState } from "@/components/active-deals-empty-state";
 import { PageHelpButton } from "@/components/page-help-button";
+import { DeletedOwnerLeadsPanel } from "@/components/deleted-owner-leads-panel";
 import type { OwnerLead } from "@/lib/types";
 
 const DEMO_LEAD: OwnerLead = {
@@ -29,9 +30,10 @@ interface Props {
 
 export default async function TrackListingPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const [ownerLeads, rankedLeadIds] = await Promise.all([
+  const [ownerLeads, rankedLeadIds, deletedLeads] = await Promise.all([
     getOwnerLeads(),
     getRankedLeadIds(),
+    getSoftDeletedMyListingLeads(),
   ]);
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
@@ -43,6 +45,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
+      <DeletedOwnerLeadsPanel leads={deletedLeads} />
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>

@@ -15,7 +15,7 @@ function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[], shareUrl: 
   const header = `Hi ${tenant.name}, here are some properties I've selected for you:\n\n`;
   const body = selected.map((l, i) => {
     const lines: string[] = [];
-    lines.push(`${i + 1}. ${l.property_name ?? "Property"}${l.unit ? ` – Unit ${l.unit}` : ""}`);
+    lines.push(`${i + 1}. ${l.property_name ?? "Property"}`);
     const details: string[] = [];
     if (l.bedrooms != null) details.push(`${l.bedrooms} bed`);
     if (l.bathrooms != null) details.push(`${l.bathrooms} bath`);
@@ -64,9 +64,6 @@ function PropertyCard({
         <p className="text-[14px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
           {lead.property_name ?? "—"}
         </p>
-        {lead.unit && (
-          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Unit {lead.unit}</p>
-        )}
         <div className="flex items-center gap-3 mt-2">
           {lead.bedrooms != null && (
             <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>

@@ -1,15 +1,20 @@
-import { getCompetitorLeads } from "@/lib/db";
+import { getCompetitorLeads, getSoftDeletedTargetLeads } from "@/lib/db";
 import { CompetitorBoard } from "@/components/competitor-board";
 import { AddCompetitorButton } from "@/components/add-competitor-button";
 import { PageHelpButton } from "@/components/page-help-button";
+import { DeletedOwnerLeadsPanel } from "@/components/deleted-owner-leads-panel";
 
 export const dynamic = "force-dynamic";
 
 export default async function TargetUnitsPage() {
-  const leads = await getCompetitorLeads();
+  const [leads, deletedLeads] = await Promise.all([
+    getCompetitorLeads(),
+    getSoftDeletedTargetLeads(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
+      <DeletedOwnerLeadsPanel leads={deletedLeads} />
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
