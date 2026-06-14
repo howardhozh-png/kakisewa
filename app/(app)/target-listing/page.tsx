@@ -14,7 +14,6 @@ export default async function TargetUnitsPage() {
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
-      <DeletedOwnerLeadsPanel leads={deletedLeads} />
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
@@ -39,6 +38,8 @@ export default async function TargetUnitsPage() {
           <AddCompetitorButton />
         </div>
       </header>
+
+      <DeletedOwnerLeadsPanel leads={deletedLeads} />
 
       <CompetitorBoard leads={leads} />
     </div>

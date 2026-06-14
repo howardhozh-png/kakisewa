@@ -404,7 +404,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                 type="button"
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold"
                 style={{ background: "#DC2626", color: "#fff" }}
-                onClick={() => startTransition(async () => { const { removeOwnerLeadForce } = await import("@/lib/actions"); await removeOwnerLeadForce(lead.id); onOpenChange(false); })}
+                onClick={() => startTransition(async () => { const { removeOwnerLeadForce } = await import("@/lib/actions"); await removeOwnerLeadForce(lead.id); onOpenChange(false); router.refresh(); })}
               >
                 <Trash2 className="w-3 h-3" />
                 Move to bin

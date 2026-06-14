@@ -45,7 +45,6 @@ export default async function TrackListingPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
-      <DeletedOwnerLeadsPanel leads={deletedLeads} />
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
@@ -57,6 +56,8 @@ export default async function TrackListingPage({ searchParams }: Props) {
         </div>
         <AddListingButton ownerLeads={ownerLeads} />
       </header>
+
+      <DeletedOwnerLeadsPanel leads={deletedLeads} />
 
       <Suspense fallback={null}>
         <div className="mb-8 flex justify-end">

@@ -1142,7 +1142,7 @@ export async function getOwnerLeads(): Promise<OwnerLead[]> {
 
 export async function getSoftDeletedOwnerLeads(): Promise<OwnerLead[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).order("deleted_at", { ascending: false });
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).order("deleted_at", { ascending: false }).range(0, 9999);
   if (error) throw error;
   return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
 }
@@ -1353,14 +1353,14 @@ export async function softDeleteOwnerLeadForce(id: string): Promise<void> {
 
 export async function getSoftDeletedMyListingLeads(): Promise<OwnerLead[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", false).order("deleted_at", { ascending: false });
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", false).order("deleted_at", { ascending: false }).range(0, 9999);
   if (error) throw error;
   return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
 }
 
 export async function getSoftDeletedTargetLeads(): Promise<OwnerLead[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", true).order("deleted_at", { ascending: false });
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", true).order("deleted_at", { ascending: false }).range(0, 9999);
   if (error) throw error;
   return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
 }
