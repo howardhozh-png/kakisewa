@@ -796,6 +796,12 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
     ? new Date(agent.whatsapp_connected_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })
     : null;
 
+  // OAuth tokens from Meta expire after ~60 days — warn after 55 days
+  const tokenAgeDays = agent.whatsapp_connected_at
+    ? Math.floor((Date.now() - new Date(agent.whatsapp_connected_at).getTime()) / 86_400_000)
+    : 0;
+  const tokenNearExpiry = isConnected && tokenAgeDays >= 55;
+
   return (
     <section className="kk-section p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -848,6 +854,31 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
           </p>
           {connectedSince && (
             <p className="text-[12px] mb-4" style={{ color: "var(--kk-ink-faint)" }}>Connected since {connectedSince}</p>
+          )}
+          {tokenNearExpiry && (
+            <div
+              className="rounded-xl p-3 mb-4 flex items-start gap-2"
+              style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
+            >
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#B45309" }} />
+              <div>
+                <p className="text-[12px] font-semibold" style={{ color: "#92400E" }}>
+                  Connection expires soon
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: "#B45309" }}>
+                  Connected {tokenAgeDays} days ago. WhatsApp auto-tracking stops at 60 days. Reconnect now to keep it working.
+                </p>
+                <button
+                  onClick={handleConnect}
+                  disabled={connecting}
+                  className="kk-pill flex items-center gap-2 mt-2"
+                  style={{ background: "#B45309", color: "#fff", fontSize: 11 }}
+                >
+                  {connecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                  {connecting ? "Reconnecting…" : "Reconnect now"}
+                </button>
+              </div>
+            </div>
           )}
           <button
             onClick={handleDisconnect}

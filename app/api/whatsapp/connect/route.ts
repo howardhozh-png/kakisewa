@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
   );
   const tokenData = await tokenRes.json() as Record<string, unknown>;
   if (!tokenRes.ok || !tokenData.access_token) {
+    const metaMsg = (tokenData?.error as Record<string,unknown>)?.message as string | undefined;
     console.error("[whatsapp/connect] token exchange failed", tokenData);
-    return NextResponse.json({ ok: false, error: "Failed to exchange code" }, { status: 502 });
+    return NextResponse.json({ ok: false, error: metaMsg ?? "Could not verify your Meta account. Please try again." }, { status: 502 });
   }
   const accessToken = tokenData.access_token as string;
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
   const wabaData = await wabaRes.json() as { data?: Array<{ id: string }> };
   const wabaId = wabaData.data?.[0]?.id;
   if (!wabaId) {
-    return NextResponse.json({ ok: false, error: "No WhatsApp Business Account found" }, { status: 502 });
+    return NextResponse.json({ ok: false, error: "No WhatsApp Business Account was found. Make sure you selected your Business account during setup, not a personal account." }, { status: 502 });
   }
 
   // 3. Get phone numbers for the WABA
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
   const phoneData = await phoneRes.json() as { data?: Array<{ id: string; display_phone_number: string }> };
   const phoneEntry = phoneData.data?.[0];
   if (!phoneEntry) {
-    return NextResponse.json({ ok: false, error: "No phone numbers found in WABA" }, { status: 502 });
+    return NextResponse.json({ ok: false, error: "Your WhatsApp Business Account has no registered phone numbers. Add a number in Meta Business Manager first." }, { status: 502 });
   }
 
   const phoneNumberId    = phoneEntry.id;
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
   const subData = await subRes.json() as Record<string, unknown>;
   if (!subRes.ok || !subData.success) {
     console.error("[whatsapp/connect] waba subscription failed", subData);
-    return NextResponse.json({ ok: false, error: "Failed to subscribe WABA to webhook" }, { status: 502 });
+    return NextResponse.json({ ok: false, error: "Connected to your account but could not enable auto-tracking. Contact support@kakisewa.com." }, { status: 502 });
   }
 
   // 5. Save to agent_profiles

@@ -128,12 +128,14 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
 
   const agentId = agentRow.id as string;
 
-  // Try matching to an owner_lead by owner_phone
+  const fromVariants = phoneVariants(fromNumber);
+
+  // Try matching to an owner_lead by owner_phone (all phone format variants)
   const { data: ownerLead } = await svc
     .from("owner_leads")
     .select("id, owner_name")
     .eq("user_id", agentId)
-    .eq("owner_phone", fromNumber)
+    .in("owner_phone", fromVariants)
     .is("deleted_at", null)
     .maybeSingle();
 
@@ -143,7 +145,7 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         .from("tenancies")
         .select("id, tenant_name")
         .eq("user_id", agentId)
-        .eq("tenant_phone", fromNumber)
+        .in("tenant_phone", fromVariants)
         .is("deleted_at", null)
         .maybeSingle()
     : { data: null };
@@ -266,4 +268,14 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
 // Strip leading + to normalise to E.164 without prefix (e.g. 60198765432)
 function normalizePhone(phone: string): string {
   return phone.replace(/^\+/, "").trim();
+}
+
+// Meta always sends full country code (60198765432).
+// Agents often save Malaysian numbers in local format (0198765432).
+// Return both variants so DB lookup succeeds either way.
+function phoneVariants(phone: string): string[] {
+  const v = [phone];
+  if (/^60\d{8,}$/.test(phone)) v.push("0" + phone.slice(2));
+  if (/^0\d{8,}$/.test(phone))  v.push("60" + phone.slice(1));
+  return v;
 }
