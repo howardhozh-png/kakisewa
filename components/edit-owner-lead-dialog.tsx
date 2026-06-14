@@ -410,7 +410,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   style={{ color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
                 >
                   <Building2 className="w-3 h-3" />
-                  Competitor rented
+                  Lost listing
                 </button>
               )}
               <button
@@ -420,7 +420,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                 style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
               >
                 <CalendarPlus className="w-3 h-3" />
-                Add to calendar
+                + Calendar
               </button>
               <button type="button" className="kk-pill kk-pill-ghost" onClick={() => onOpenChange(false)} disabled={pending}>Cancel</button>
               <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>

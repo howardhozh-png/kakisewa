@@ -548,7 +548,7 @@ function TenancyForm({
             style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
           >
             <CalendarPlus className="w-3 h-3" />
-            Add to calendar
+            + Calendar
           </button>
           <button type="button" className="kk-pill kk-pill-ghost" onClick={onClose} disabled={pending}>Cancel</button>
           <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
