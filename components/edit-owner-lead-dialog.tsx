@@ -222,14 +222,9 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
           {lead.stage === "matched" && tenantInfo && (
             <div className="rounded-xl p-3" style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.20)" }}>
               <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "#1F8B4C" }}>Rented to</p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>{tenantInfo.tenant_name}</p>
-                  <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{tenantInfo.tenant_phone}</p>
-                </div>
-                <a href={`/existing-listing?open=${tenantInfo.tenancy_id}`} className="text-[12px] font-medium px-3 py-1.5 rounded-full hover:opacity-80" style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C" }}>
-                  View tenancy →
-                </a>
+              <div>
+                <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>{tenantInfo.tenant_name}</p>
+                <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{tenantInfo.tenant_phone}</p>
               </div>
             </div>
           )}
