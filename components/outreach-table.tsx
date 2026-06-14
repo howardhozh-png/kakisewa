@@ -902,6 +902,12 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           const sa = getStatus(a), sb = getStatus(b);
           const order: Record<ContactStatus, number> = { unsent: 0, contacted: 1, listed: 2, rented: 3, declined: 4 };
           if (order[sa] !== order[sb]) return order[sa] - order[sb];
+          // Within "contacted": sort by last sent descending (most recent first)
+          if (sa === "contacted" && sb === "contacted") {
+            const ta = a.intake_sent_at ?? "";
+            const tb = b.intake_sent_at ?? "";
+            if (ta || tb) return tb.localeCompare(ta);
+          }
           return a.created_at.localeCompare(b.created_at);
         });
 
