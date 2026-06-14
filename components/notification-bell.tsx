@@ -4,19 +4,22 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Bell, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, BellRing, FileText, MessageSquare, Building2, Package } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
-const LS_READ_KEY = "kk_notif_read_ids";
 const LS_PUSH_KEY = "kk_push_subscribed";
 
-function getReadIds(): Set<string> {
+// Namespace read IDs by user so switching accounts doesn't bleed read state.
+function readKey(userId: string) { return `kk_notif_read_${userId}`; }
+
+function getReadIds(userId: string): Set<string> {
   if (typeof window === "undefined") return new Set();
-  try { return new Set(JSON.parse(localStorage.getItem(LS_READ_KEY) ?? "[]")); }
+  try { return new Set(JSON.parse(localStorage.getItem(readKey(userId)) ?? "[]")); }
   catch { return new Set(); }
 }
 
-function saveReadIds(ids: Set<string>) {
-  localStorage.setItem(LS_READ_KEY, JSON.stringify([...ids]));
+function saveReadIds(userId: string, ids: Set<string>) {
+  localStorage.setItem(readKey(userId), JSON.stringify([...ids]));
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -81,6 +84,7 @@ export function NotificationBell() {
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"all" | "unread">("all");
   const [loading, setLoading] = useState(true);
@@ -101,11 +105,18 @@ export function NotificationBell() {
     setPushGranted(
       localStorage.getItem(LS_PUSH_KEY) === "1" || Notification.permission === "granted",
     );
-    setReadIds(getReadIds());
 
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
+
+    // Get user ID to namespace localStorage read IDs per account
+    createClient().auth.getSession().then(({ data }) => {
+      const uid = data.session?.user.id ?? "";
+      setUserId(uid);
+      if (uid) setReadIds(getReadIds(uid));
+    });
+
     return () => window.removeEventListener("resize", check);
   }, []);
 
@@ -115,12 +126,12 @@ export function NotificationBell() {
       if (!res.ok) return;
       const { items: fetched } = (await res.json()) as { items: NotificationItem[] };
       setItems(fetched);
-      const ids = getReadIds();
+      const ids = userId ? getReadIds(userId) : new Set<string>();
       setBadge(fetched.filter((n) => !ids.has(n.id)).length);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
@@ -156,7 +167,7 @@ export function NotificationBell() {
   function markAllRead() {
     const all = new Set(items.map((i) => i.id));
     setReadIds(all);
-    saveReadIds(all);
+    if (userId) saveReadIds(userId, all);
     setBadge(0);
   }
 
@@ -164,7 +175,7 @@ export function NotificationBell() {
     const newIds = new Set(readIds);
     newIds.add(item.id);
     setReadIds(newIds);
-    saveReadIds(newIds);
+    if (userId) saveReadIds(userId, newIds);
     setBadge(items.filter((i) => !newIds.has(i.id)).length);
     setOpen(false);
     if (item.href) router.push(item.href);

@@ -2131,6 +2131,10 @@ export async function createCalendarEvent(input: {
   card_href?: string | null;
   tenancy_id?: string | null;
   owner_lead_id?: string | null;
+  owner_name?: string | null;
+  owner_phone?: string | null;
+  tenant_name?: string | null;
+  tenant_phone?: string | null;
 }): Promise<{ ok: boolean; id?: string; message?: string }> {
   "use server";
   const { createClient } = await import("@/lib/supabase/server");
@@ -2149,6 +2153,10 @@ export async function createCalendarEvent(input: {
       card_href: input.card_href || null,
       tenancy_id: input.tenancy_id || null,
       owner_lead_id: input.owner_lead_id || null,
+      owner_name: input.owner_name || null,
+      owner_phone: input.owner_phone || null,
+      tenant_name: input.tenant_name || null,
+      tenant_phone: input.tenant_phone || null,
     })
     .select("id")
     .single();
@@ -2162,6 +2170,10 @@ export async function updateCalendarEvent(id: string, input: {
   title: string;
   event_date: string;
   event_time: string | null;
+  owner_name?: string | null;
+  owner_phone?: string | null;
+  tenant_name?: string | null;
+  tenant_phone?: string | null;
 }): Promise<{ ok: boolean; message?: string }> {
   "use server";
   const { createClient } = await import("@/lib/supabase/server");
@@ -2172,6 +2184,10 @@ export async function updateCalendarEvent(id: string, input: {
       title: input.title.trim(),
       event_date: input.event_date,
       event_time: input.event_time || null,
+      owner_name: input.owner_name || null,
+      owner_phone: input.owner_phone || null,
+      tenant_name: input.tenant_name || null,
+      tenant_phone: input.tenant_phone || null,
     })
     .eq("id", id);
   if (error) return { ok: false, message: error.message };

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarDays, Loader2, X } from "lucide-react";
+import { CalendarDays, Loader2 } from "lucide-react";
 import { createCalendarEvent } from "@/lib/actions";
 import { toast } from "sonner";
 
@@ -35,6 +35,47 @@ function toISO(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function ContactField({ label, nameVal, phoneVal, onNameChange, onPhoneChange }: {
+  label: string;
+  nameVal: string;
+  phoneVal: string;
+  onNameChange: (v: string) => void;
+  onPhoneChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <p className="kk-overline mb-1.5">{label}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <input
+          value={nameVal}
+          onChange={(e) => onNameChange(e.target.value)}
+          placeholder="Name (optional)"
+          style={{
+            width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+            padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)",
+            background: "var(--kk-surface)", outline: "none", fontFamily: "inherit",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
+          onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
+        />
+        <input
+          value={phoneVal}
+          onChange={(e) => onPhoneChange(e.target.value)}
+          placeholder="Phone (optional)"
+          type="tel"
+          style={{
+            width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+            padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)",
+            background: "var(--kk-surface)", outline: "none", fontFamily: "inherit",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
+          onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,6 +86,10 @@ interface Props {
   cardHref?: string;
   tenancyId?: string;
   ownerLeadId?: string;
+  defaultOwnerName?: string;
+  defaultOwnerPhone?: string;
+  defaultTenantName?: string;
+  defaultTenantPhone?: string;
 }
 
 export function CalendarEventDialog({
@@ -56,12 +101,20 @@ export function CalendarEventDialog({
   cardHref,
   tenancyId,
   ownerLeadId,
+  defaultOwnerName = "",
+  defaultOwnerPhone = "",
+  defaultTenantName = "",
+  defaultTenantPhone = "",
 }: Props) {
   const [title, setTitle] = useState(defaultTitle);
   const [date, setDate] = useState<Date | undefined>(
     defaultDate ? new Date(defaultDate + "T00:00:00") : new Date()
   );
   const [timeLabel, setTimeLabel] = useState<string>("");
+  const [ownerName, setOwnerName] = useState(defaultOwnerName);
+  const [ownerPhone, setOwnerPhone] = useState(defaultOwnerPhone);
+  const [tenantName, setTenantName] = useState(defaultTenantName);
+  const [tenantPhone, setTenantPhone] = useState(defaultTenantPhone);
   const [showCal, setShowCal] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -70,6 +123,10 @@ export function CalendarEventDialog({
       setTitle(defaultTitle);
       setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
       setTimeLabel("");
+      setOwnerName(defaultOwnerName);
+      setOwnerPhone(defaultOwnerPhone);
+      setTenantName(defaultTenantName);
+      setTenantPhone(defaultTenantPhone);
       setShowCal(false);
     }
     onOpenChange(val);
@@ -87,6 +144,10 @@ export function CalendarEventDialog({
         card_href: cardHref || null,
         tenancy_id: tenancyId,
         owner_lead_id: ownerLeadId,
+        owner_name: ownerName.trim() || null,
+        owner_phone: ownerPhone.trim() || null,
+        tenant_name: tenantName.trim() || null,
+        tenant_phone: tenantPhone.trim() || null,
       });
       if (!res.ok) { toast.error(res.message ?? "Failed to save"); return; }
       toast.success("Event saved");
@@ -96,7 +157,7 @@ export function CalendarEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="bg-card border-border" style={{ maxWidth: 420, padding: 0 }}>
+      <DialogContent className="bg-card border-border" style={{ maxWidth: 460, padding: 0 }}>
         {/* Header */}
         <div style={{ padding: "20px 22px 16px", borderBottom: "1px solid var(--kk-line)" }}>
           <p className="kk-overline mb-1">New event</p>
@@ -109,7 +170,7 @@ export function CalendarEventDialog({
         </div>
 
         {/* Body */}
-        <div style={{ padding: "18px 22px" }}>
+        <div style={{ padding: "18px 22px", maxHeight: "70vh", overflowY: "auto" }}>
           {/* Title */}
           <p className="kk-overline mb-1.5">Event name</p>
           <input
@@ -191,6 +252,7 @@ export function CalendarEventDialog({
           {showCal && (
             <div style={{
               marginTop: 8,
+              marginBottom: 12,
               border: "1px solid var(--kk-line)",
               borderRadius: 12,
               overflow: "hidden",
@@ -203,6 +265,25 @@ export function CalendarEventDialog({
               />
             </div>
           )}
+
+          {/* Divider */}
+          <div style={{ height: 1, background: "var(--kk-line)", margin: "16px 0 14px" }} />
+
+          {/* Contact fields */}
+          <ContactField
+            label="Owner"
+            nameVal={ownerName}
+            phoneVal={ownerPhone}
+            onNameChange={setOwnerName}
+            onPhoneChange={setOwnerPhone}
+          />
+          <ContactField
+            label="Tenant"
+            nameVal={tenantName}
+            phoneVal={tenantPhone}
+            onNameChange={setTenantName}
+            onPhoneChange={setTenantPhone}
+          />
         </div>
 
         {/* Footer */}

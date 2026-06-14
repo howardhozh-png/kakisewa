@@ -4,6 +4,7 @@ import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { fetchExpandedStats } from "./actions";
+import { MonthPickerPill } from "@/components/month-picker-pill";
 import type { ExpandedDashboardStats, CalendarEvent } from "@/lib/db";
 
 const QUICK_RANGES = ["3", "6", "12"] as const;
@@ -98,18 +99,31 @@ export function StatsSection({
   initialStats: ExpandedDashboardStats;
   upcomingEvents: CalendarEvent[];
 }) {
+  const todayMonthValue = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const [startMonth, setStartMonth] = useState(todayMonthValue);
   const [range, setRange] = useState("3");
   const [customInput, setCustomInput] = useState("");
   const [stats, setStats] = useState(initialStats);
   const [isPending, startTransition] = useTransition();
   const customRef = useRef<HTMLInputElement>(null);
 
-  function applyRange(val: string) {
+  function applyRange(val: string, month?: string) {
     const n = parseInt(val, 10);
     if (!n || n < 1) return;
     setRange(val);
+    const sm = month ?? startMonth;
     startTransition(async () => {
-      const fresh = await fetchExpandedStats(n);
+      const fresh = await fetchExpandedStats(n, sm);
+      setStats(fresh);
+    });
+  }
+
+  function handleMonthChange(month: string) {
+    setStartMonth(month);
+    const n = parseInt(range, 10);
+    if (!n || n < 1) return;
+    startTransition(async () => {
+      const fresh = await fetchExpandedStats(n, month);
       setStats(fresh);
     });
   }
@@ -146,6 +160,8 @@ export function StatsSection({
     <div style={{ opacity: isPending ? 0.5 : 1, transition: "opacity 0.15s ease" }}>
       {/* Range pills */}
       <div className="flex items-center gap-2 flex-wrap mb-4">
+        <MonthPickerPill value={startMonth} onChange={handleMonthChange} />
+        <span style={{ width: 1, height: 18, background: "var(--kk-line)", flexShrink: 0 }} />
         {QUICK_RANGES.map((r) => (
           <button
             key={r}

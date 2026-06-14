@@ -129,27 +129,8 @@ export async function GET() {
     });
   }
 
-  // ── Tenants who said "no" — need replacement ──────────────────────────────
-  const { data: leaving } = await supabase
-    .from("tenancies")
-    .select("id, tenant_name, contract_end, property_name")
-    .eq("replied_tenant", "no")
-    .neq("lifecycle_stage", "closed")
-    .gte("contract_end", todayStr)
-    .limit(5);
-
-  for (const r of leaving ?? []) {
-    const row = r as { id: string; tenant_name: string; contract_end: string; property_name: string | null };
-    items.push({
-      id: `leaving_${row.id}`,
-      type: "tenant_leaving",
-      title: "Tenant not renewing",
-      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""} — find a replacement`,
-      href: `/existing-listing?highlight=${row.id}`,
-      createdAt: today.toISOString(),
-      priority: "high",
-    });
-  }
+  // tenant_leaving is intentionally removed — tenant_renewal already covers
+  // replied_tenant='no' with high priority. Having both caused duplicate entries.
 
   // ── Tenant submitted property preference form (last 30 days) ────────────────
   const { data: tenantIntakes } = await supabase
@@ -299,11 +280,25 @@ export async function GET() {
     });
   }
 
+  // Deduplicate: for renewal-type notifications on the same tenancy,
+  // keep only the most specific one. wa_reply > tenant_renewal.
+  // IDs follow the pattern: wa_reply_<uuid>, tenant_renewal_<uuid>, leaving_<uuid>
+  const waReplyTenancyIds = new Set(
+    items.filter((i) => i.type === "wa_reply").map((i) => i.id.replace(/^wa_reply_/, ""))
+  );
+  const deduped = items.filter((i) => {
+    if (i.type === "tenant_renewal") {
+      const tenancyId = i.id.replace(/^tenant_renewal_/, "");
+      return !waReplyTenancyIds.has(tenancyId);
+    }
+    return true;
+  });
+
   // Sort: high priority first, then by date desc
-  items.sort((a, b) => {
+  deduped.sort((a, b) => {
     if (a.priority !== b.priority) return a.priority === "high" ? -1 : 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  return NextResponse.json({ items, unreadCount: items.length });
+  return NextResponse.json({ items: deduped, unreadCount: deduped.length });
 }

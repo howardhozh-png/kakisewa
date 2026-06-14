@@ -865,10 +865,11 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
     })
   );
 
-  // Counts respect the active property filter
+  // Counts respect the active property filter. Exclude competitor targets so
+  // the "All" badge matches exactly what the visible rows show.
   const propertyFiltered = propertyFilter === "all" ? leads : leads.filter((l) => l.property_name === propertyFilter);
   const counts = {
-    all:       propertyFiltered.length,
+    all:       propertyFiltered.filter((l) => !l.is_competitor_target).length,
     unsent:    propertyFiltered.filter((l) => getStatus(l) === "unsent").length,
     contacted: propertyFiltered.filter((l) => getStatus(l) === "contacted").length,
     listed:    propertyFiltered.filter((l) => getStatus(l) === "listed").length,

@@ -204,7 +204,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
                 }}>
                   {dayNum}
                 </div>
-                <div>
+                <div style={{ flex: 1 }}>
                   <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>
                     {dayName}{isToday ? " · Today" : ""}
                   </p>
@@ -212,6 +212,18 @@ export function CalendarView({ events, weekStartISO }: Props) {
                     {date.toLocaleDateString("en-MY", { day: "numeric", month: "long" })}
                   </p>
                 </div>
+                <button
+                  onClick={() => { setAddDate(iso); setAddOpen(true); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "5px 12px", borderRadius: 999,
+                    fontSize: 12, fontWeight: 600,
+                    background: "var(--kk-blue)", color: "#fff",
+                    border: "none", cursor: "pointer", flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>+</span> Add
+                </button>
               </div>
               {dayEvents.length > 0 ? (
                 <div className="space-y-2 ml-12">
@@ -341,6 +353,10 @@ function EventDetailDialog({
   const [title, setTitle] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [timeLabel, setTimeLabel] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [tenantName, setTenantName] = useState("");
+  const [tenantPhone, setTenantPhone] = useState("");
   const [showCal, setShowCal] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -350,6 +366,10 @@ function EventDetailDialog({
       setTitle(event.title);
       setDate(new Date(event.event_date + "T00:00:00"));
       setTimeLabel(event.event_time ? to12h(event.event_time) : "");
+      setOwnerName(event.owner_name ?? "");
+      setOwnerPhone(event.owner_phone ?? "");
+      setTenantName(event.tenant_name ?? "");
+      setTenantPhone(event.tenant_phone ?? "");
       setShowCal(false);
       setConfirmDelete(false);
     }
@@ -365,6 +385,10 @@ function EventDetailDialog({
         title: title.trim(),
         event_date: toISO(date!),
         event_time: timeLabel ? to24h(timeLabel) : null,
+        owner_name: ownerName.trim() || null,
+        owner_phone: ownerPhone.trim() || null,
+        tenant_name: tenantName.trim() || null,
+        tenant_phone: tenantPhone.trim() || null,
       });
       if (!res.ok) { toast.error(res.message ?? "Failed to update"); return; }
       toast.success("Event updated");
@@ -373,9 +397,28 @@ function EventDetailDialog({
     });
   }
 
+  function ContactRow({ label, nameVal, phoneVal, onNameChange, onPhoneChange }: {
+    label: string; nameVal: string; phoneVal: string;
+    onNameChange: (v: string) => void; onPhoneChange: (v: string) => void;
+  }) {
+    return (
+      <div style={{ marginBottom: 12 }}>
+        <p className="kk-overline mb-1.5">{label}</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <input value={nameVal} onChange={(e) => onNameChange(e.target.value)} placeholder="Name (optional)"
+            style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
+          <input value={phoneVal} onChange={(e) => onPhoneChange(e.target.value)} placeholder="Phone (optional)" type="tel"
+            style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Dialog open={!!event} onOpenChange={(o) => { if (!o) { onClose(); setConfirmDelete(false); setShowCal(false); } }}>
-      <DialogContent className="bg-card border-border" style={{ maxWidth: 420, padding: 0 }}>
+      <DialogContent className="bg-card border-border" style={{ maxWidth: 460, padding: 0 }}>
         {/* Header */}
         <div style={{ padding: "20px 22px 16px", borderBottom: "1px solid var(--kk-line)" }}>
           <p className="kk-overline mb-1">Edit event</p>
@@ -385,7 +428,7 @@ function EventDetailDialog({
         </div>
 
         {/* Body */}
-        <div style={{ padding: "18px 22px" }}>
+        <div style={{ padding: "18px 22px", maxHeight: "70vh", overflowY: "auto" }}>
           <p className="kk-overline mb-1.5">Event name</p>
           <input
             value={title}
@@ -438,10 +481,14 @@ function EventDetailDialog({
           </div>
 
           {showCal && (
-            <div style={{ marginTop: 8, border: "1px solid var(--kk-line)", borderRadius: 12, overflow: "hidden", background: "var(--kk-surface)" }}>
+            <div style={{ marginTop: 8, marginBottom: 12, border: "1px solid var(--kk-line)", borderRadius: 12, overflow: "hidden", background: "var(--kk-surface)" }}>
               <Calendar mode="single" selected={date} onSelect={(d) => { setDate(d); setShowCal(false); }} />
             </div>
           )}
+
+          <div style={{ height: 1, background: "var(--kk-line)", margin: "16px 0 14px" }} />
+          <ContactRow label="Owner" nameVal={ownerName} phoneVal={ownerPhone} onNameChange={setOwnerName} onPhoneChange={setOwnerPhone} />
+          <ContactRow label="Tenant" nameVal={tenantName} phoneVal={tenantPhone} onNameChange={setTenantName} onPhoneChange={setTenantPhone} />
         </div>
 
         {/* Footer */}

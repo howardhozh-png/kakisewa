@@ -2637,13 +2637,17 @@ export type ExpandedDashboardStats = {
   targetExpiringIn60Count: number;
 };
 
-export async function getExpandedDashboardStats(rangeMonths: number): Promise<ExpandedDashboardStats> {
+export async function getExpandedDashboardStats(rangeMonths: number, startMonth?: string): Promise<ExpandedDashboardStats> {
   const userId = await getCurrentUserId();
   const svc = createServiceClient();
   const today = new Date().toISOString().slice(0, 10);
-  // "Today" pill = 60-day urgency window; other pills use months
-  const periodDays = rangeMonths === 0 ? 60 : rangeMonths * 30;
-  const periodEnd = new Date(Date.now() + periodDays * 86400000).toISOString().slice(0, 10);
+  // windowStart: start of the selected month (or today if not specified)
+  const windowStart = startMonth ? `${startMonth}-01` : today;
+  // Period end: add rangeMonths to windowStart using calendar months (not days)
+  const windowStartDate = new Date(`${windowStart}T00:00:00`);
+  const periodEndDate = new Date(windowStartDate);
+  periodEndDate.setMonth(periodEndDate.getMonth() + (rangeMonths === 0 ? 2 : rangeMonths));
+  const periodEnd = periodEndDate.toISOString().slice(0, 10);
   const sixtyDayEnd = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
 
   const sumExpectedRent = (rows: Array<{ expected_rent?: number | null }> | null) =>
@@ -2684,16 +2688,16 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
-    // Active = not closed, not deleted, not yet expired — matches what the existing-listing page shows
+    // Active = not closed, not deleted, not yet expired — always anchored to today
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today),
-    // Expiring within selected period
-    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", periodEnd),
+    // Expiring within selected window (start month → start month + N months)
+    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", windowStart).lte("contract_end", periodEnd),
     // Explicitly set to renewing lifecycle stage
     tn().eq("lifecycle_stage", "renewing"),
-    // Expiring within fixed 60-day window (not range-sensitive)
+    // Expiring within fixed 60-day window from today (not range-sensitive)
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", sixtyDayEnd),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
-    svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", periodEnd),
+    svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", windowStart).lte("competitor_contract_end", periodEnd),
     // Competitors in watching stage
     svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).eq("stage", "watching"),
     // Competitors expiring within fixed 60-day window
@@ -3008,6 +3012,10 @@ export interface CalendarEvent {
   event_time: string | null;
   tenancy_id: string | null;
   owner_lead_id: string | null;
+  owner_name: string | null;
+  owner_phone: string | null;
+  tenant_name: string | null;
+  tenant_phone: string | null;
   created_at: string;
 }
 
@@ -3015,7 +3023,7 @@ export async function getCalendarEventsForWeek(weekStart: string, weekEnd: strin
   const supabase = await createClient();
   const { data } = await supabase
     .from("calendar_events")
-    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, created_at")
+    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, owner_name, owner_phone, tenant_name, tenant_phone, created_at")
     .gte("event_date", weekStart)
     .lte("event_date", weekEnd)
     .order("event_date", { ascending: true })
@@ -3028,7 +3036,7 @@ export async function getUpcomingCalendarEvents(limit = 50): Promise<CalendarEve
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await supabase
     .from("calendar_events")
-    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, created_at")
+    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, owner_name, owner_phone, tenant_name, tenant_phone, created_at")
     .gte("event_date", today)
     .order("event_date", { ascending: true })
     .order("event_time", { ascending: true, nullsFirst: false })
