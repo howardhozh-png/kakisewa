@@ -633,12 +633,24 @@ html, body {
     min-height: 50vh;
     overflow-x: auto;
     overflow-y: hidden; /* visible+auto causes CSS spec to compute both as auto, creating unwanted scroll */
-    scrollbar-width: none; /* hide horizontal scrollbar on touch — swipe is enough */
+    scrollbar-width: thin;
+    scrollbar-color: var(--kk-ink-mute) transparent;
     /* Match desktop's padding-top so the balloon above Expiring column doesn't clip */
     padding-top: 60px;
     /* Reveal hint of next column so user knows it's scrollable */
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+  }
+  .kk-board-row::-webkit-scrollbar {
+    height: 6px;
+    display: block;
+  }
+  .kk-board-row::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .kk-board-row::-webkit-scrollbar-thumb {
+    background: var(--kk-ink-mute);
+    border-radius: 3px;
   }
   .kk-board-col {
     /* Slightly narrower on mobile so next column peeks into view */

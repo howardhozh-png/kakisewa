@@ -2009,6 +2009,7 @@ export async function updateCompetitorLeadAction(
     competitor_contract_duration_months?: number | null;
     competitor_contract_end?: string | null;
     agreement_url?: string | null;
+    cover_photo_index?: number;
   }
 ): Promise<{ ok: boolean }> {
   "use server";

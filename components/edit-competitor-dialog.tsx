@@ -119,12 +119,20 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
         competitor_contract_start: contractStart || null,
         competitor_contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : null,
         competitor_contract_end: contractEnd || null,
+        cover_photo_index: coverIndex,
       });
       if (!res.ok) { toast.error("Could not save"); return; }
       toast.success("Saved");
       setEditingOwner(false);
+      onOpenChange(false);
       router.refresh();
     });
+  }
+
+  async function handleSetCover(i: number) {
+    setCoverIndex(i);
+    await updateCompetitorLeadAction(lead.id, { cover_photo_index: i });
+    toast.success("Cover photo updated");
   }
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -342,7 +350,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                   )}
                   <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {i !== coverIndex && (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setCoverIndex(i); }} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }} title="Set as cover">
+                      <button type="button" onClick={(e) => { e.stopPropagation(); handleSetCover(i); }} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }} title="Set as cover">
                         <Star className="w-3 h-3 text-white" />
                       </button>
                     )}
