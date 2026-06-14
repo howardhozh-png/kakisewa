@@ -2612,11 +2612,17 @@ export type ExpandedDashboardStats = {
   existingTotalActiveAmount: number;
   existingExpiringCount: number;
   existingExpiringAmount: number;
+  // Existing Listing (fixed 60-day)
+  existingRenewingCount: number;
+  existingExpiringIn60Count: number;
   // Target Listing (range-sensitive)
   targetTotalActiveCount: number;
   targetTotalActiveAmount: number;
   targetExpiringCount: number;
   targetExpiringAmount: number;
+  // Target Listing (fixed)
+  targetWatchingCount: number;
+  targetExpiringIn60Count: number;
 };
 
 export async function getExpandedDashboardStats(rangeMonths: number): Promise<ExpandedDashboardStats> {
@@ -2626,6 +2632,7 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
   // "Today" pill = 60-day urgency window; other pills use months
   const periodDays = rangeMonths === 0 ? 60 : rangeMonths * 30;
   const periodEnd = new Date(Date.now() + periodDays * 86400000).toISOString().slice(0, 10);
+  const sixtyDayEnd = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
 
   const sumExpectedRent = (rows: Array<{ expected_rent?: number | null }> | null) =>
     (rows ?? []).reduce((s, r) => s + (r.expected_rent ?? 0), 0);
@@ -2647,8 +2654,12 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     { data: repliedSale },
     { data: existingActive },
     { data: existingExpiring },
+    { data: existingRenewing },
+    { data: existingExpiring60 },
     { data: targetActive },
     { data: targetExpiring },
+    { data: targetWatching },
+    { data: targetExpiring60 },
   ] = await Promise.all([
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false"),
     ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
@@ -2661,8 +2672,16 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today),
     // Expiring within selected period
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", periodEnd),
+    // Explicitly set to renewing lifecycle stage
+    tn().eq("lifecycle_stage", "renewing"),
+    // Expiring within fixed 60-day window (not range-sensitive)
+    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", sixtyDayEnd),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", periodEnd),
+    // Competitors in watching stage
+    svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).eq("stage", "watching"),
+    // Competitors expiring within fixed 60-day window
+    svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", sixtyDayEnd),
   ]);
 
   return {
@@ -2681,10 +2700,14 @@ export async function getExpandedDashboardStats(rangeMonths: number): Promise<Ex
     existingTotalActiveAmount: sumAmount(existingActive),
     existingExpiringCount: existingExpiring?.length ?? 0,
     existingExpiringAmount: sumAmount(existingExpiring),
+    existingRenewingCount: existingRenewing?.length ?? 0,
+    existingExpiringIn60Count: existingExpiring60?.length ?? 0,
     targetTotalActiveCount: targetActive?.length ?? 0,
     targetTotalActiveAmount: sumExpectedRent(targetActive),
     targetExpiringCount: targetExpiring?.length ?? 0,
     targetExpiringAmount: sumExpectedRent(targetExpiring),
+    targetWatchingCount: targetWatching?.length ?? 0,
+    targetExpiringIn60Count: targetExpiring60?.length ?? 0,
   };
 }
 
