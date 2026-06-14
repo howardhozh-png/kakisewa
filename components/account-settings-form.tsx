@@ -933,12 +933,14 @@ declare global {
   }
 }
 
+// App ID is public (NEXT_PUBLIC_) — hardcoded fallback so missing Vercel env never silently breaks this
+const WA_APP_ID = process.env.NEXT_PUBLIC_WHATSAPP_APP_ID ?? "1525980849174656";
+
 function launchEmbeddedSignup(): Promise<string | null> {
   return new Promise((resolve) => {
-    const appId = process.env.NEXT_PUBLIC_WHATSAPP_APP_ID;
-    if (!window.FB || !appId) { resolve(null); return; }
+    if (!window.FB) { resolve(null); return; }
 
-    window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: "v19.0" });
+    window.FB.init({ appId: WA_APP_ID, autoLogAppEvents: true, xfbml: true, version: "v19.0" });
     window.FB.login(
       (response) => {
         resolve(response.authResponse?.code ?? null);
