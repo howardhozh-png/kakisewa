@@ -6,7 +6,7 @@ import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import {
-  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2, Phone, Send,
+  Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2, Phone, Send, ExternalLink,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { format } from "date-fns";
@@ -94,7 +94,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
                   : { background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }
                 }
               >
-                {profile.intake_completed_at ? "Via form" : "Available"} · Added {format(new Date(profile.created_at), "d MMM yyyy")}
+                {profile.intake_completed_at ? "Submitted" : "Available"} · Added {format(new Date(profile.created_at), "d MMM yyyy")}
               </span>
             </div>
           </div>
@@ -106,81 +106,20 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
 
         <div className="flex flex-col gap-4 p-6 overflow-y-auto flex-1">
           {profile.intake_completed_at && (
-            <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--kk-purple-soft)" }}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-purple-ink)" }}>
-                Property preferences (submitted via form)
-              </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                {(profile.budget_min != null || profile.budget_max != null) && (
-                  <div className="col-span-2">
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Budget</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>
-                      {profile.budget_min != null && profile.budget_max != null
-                        ? `RM ${profile.budget_min.toLocaleString()} - RM ${profile.budget_max.toLocaleString()}`
-                        : profile.budget_max != null
-                          ? `Up to RM ${profile.budget_max.toLocaleString()}`
-                          : `From RM ${profile.budget_min!.toLocaleString()}`}
-                    </p>
-                  </div>
-                )}
-                {profile.bedrooms_pref != null && (
-                  <div>
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Bedrooms</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.bedrooms_pref} bedrooms</p>
-                  </div>
-                )}
-                {profile.preferred_move_in && (
-                  <div>
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Move-in</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.preferred_move_in}</p>
-                  </div>
-                )}
-                {profile.area_preference && (
-                  <div className="col-span-2">
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Area preference</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.area_preference}</p>
-                  </div>
-                )}
-                {profile.furnishing_preference && (
-                  <div>
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Furnishing</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.furnishing_preference}</p>
-                  </div>
-                )}
-                {profile.occupants != null && (
-                  <div>
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Occupants</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.occupants} person{profile.occupants !== 1 ? "s" : ""}</p>
-                  </div>
-                )}
-                {profile.monthly_income != null && (
-                  <div>
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Monthly income</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>RM {profile.monthly_income.toLocaleString()}</p>
-                  </div>
-                )}
-                {profile.age != null && (
-                  <div>
-                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Age</span>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.age} years old</p>
-                  </div>
-                )}
-                {(profile.pets != null || profile.smoking != null) && (
-                  <div className="col-span-2 flex gap-3">
-                    {profile.pets != null && (
-                      <span className="text-[12px] font-medium px-3 py-1 rounded-full" style={{ background: profile.pets ? "var(--kk-amber-soft)" : "var(--kk-surface-2)", color: profile.pets ? "#B45309" : "var(--kk-ink-mute)" }}>
-                        {profile.pets ? "Has pets" : "No pets"}
-                      </span>
-                    )}
-                    {profile.smoking != null && (
-                      <span className="text-[12px] font-medium px-3 py-1 rounded-full" style={{ background: profile.smoking ? "var(--kk-red-soft)" : "var(--kk-surface-2)", color: profile.smoking ? "var(--kk-red)" : "var(--kk-ink-mute)" }}>
-                        {profile.smoking ? "Smoker" : "Non-smoker"}
-                      </span>
-                    )}
-                  </div>
-                )}
+            <Link
+              href={`/tenant-profile/${profile.id}`}
+              onClick={onClose}
+              className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
+              style={{ background: "var(--kk-purple-soft)", textDecoration: "none" }}
+            >
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold" style={{ color: "var(--kk-purple-ink)" }}>View submitted property form</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>
+                  Budget, bedrooms, area, furnishing and more
+                </p>
               </div>
-            </div>
+              <ExternalLink className="w-4 h-4 shrink-0" style={{ color: "var(--kk-purple-ink)" }} />
+            </Link>
           )}
           <div>
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Name</label>
@@ -512,7 +451,7 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                           : { background: "var(--kk-green-soft)", color: "var(--kk-green-ink)" }
                         }
                       >
-                        {isViaForm ? "Via form" : "Available"}
+                        {isViaForm ? "Submitted" : "Available"}
                       </span>
                     </td>
                     <td className="px-4 py-3">

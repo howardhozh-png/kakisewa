@@ -2162,6 +2162,12 @@ export async function getAllTenantProfiles(): Promise<TenantProfile[]> {
   return _cachedAllTenantProfiles(userId);
 }
 
+export async function getTenantProfileFull(id: string): Promise<TenantProfile | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("tenant_profiles").select("*").eq("id", id).maybeSingle();
+  return (data as TenantProfile | null) ?? null;
+}
+
 export async function getTenantProfileByPhone(phone: string): Promise<TenantProfile | null> {
   const supabase = await createClient();
   const { data } = await supabase
