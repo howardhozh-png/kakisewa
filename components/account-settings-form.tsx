@@ -746,11 +746,14 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
   const [disconnecting, setDisconnecting] = useState(false);
   const [connectedNumber, setConnectedNumber] = useState(agent.whatsapp_number ?? null);
 
+  // Pre-load FB SDK on mount so FB.login() fires synchronously on click
+  // (avoids popup blocker — popups must open within the user gesture context)
+  useEffect(() => { loadFbSdk(); }, []);
+
   async function handleConnect() {
     setConnecting(true);
     try {
-      // Load Facebook SDK
-      await loadFbSdk();
+      await loadFbSdk(); // instant if already loaded
       const code = await launchEmbeddedSignup();
       if (!code) { setConnecting(false); return; }
 
@@ -912,7 +915,8 @@ function launchEmbeddedSignup(): Promise<string | null> {
       {
         scope: "whatsapp_business_messaging,whatsapp_business_management",
         response_type: "code",
-        extras: { feature: "whatsapp_embedded_signup", setup: {} },
+        override_default_response_type: true,
+        extras: { feature: "whatsapp_embedded_signup", sessionInfoVersion: 2, setup: {} },
       }
     );
   });
