@@ -174,6 +174,43 @@ export function expiryReminderEmail(p: {
   );
 }
 
+export function ownerRenewalEmail(p: {
+  ownerName: string;
+  tenantName: string;
+  propLabel: string;
+  continuing: boolean;
+  url: string;
+}): string {
+  const heading = p.continuing
+    ? `${p.ownerName} wants to renew`
+    : `${p.ownerName} is not renewing`;
+  const actionText = p.continuing
+    ? "Update the contract terms and prepare the renewal agreement."
+    : "Start listing this property to find a new tenant before the contract ends.";
+  return (
+    EMAIL_BASE +
+    `<h1 style="font-size:18px;font-weight:600;margin:0 0 12px">${heading}</h1>` +
+    detail(p.propLabel) +
+    detail(`Tenant: ${p.tenantName}`) +
+    `<div style="margin:20px 0">` + action(actionText) + `</div>` +
+    cta("Open in Existing listing", p.url) +
+    EMAIL_FOOTER
+  );
+}
+
+export function propertyPackRankedEmail(p: {
+  tenantName: string;
+  url: string;
+}): string {
+  return (
+    EMAIL_BASE +
+    `<h1 style="font-size:18px;font-weight:600;margin:0 0 12px">${p.tenantName} ranked your property pack</h1>` +
+    `<div style="margin:20px 0">` + action("See which properties they shortlisted and arrange viewings.") + `</div>` +
+    cta("View their ranking", p.url) +
+    EMAIL_FOOTER
+  );
+}
+
 export function packRankedEmail(p: {
   propLabel: string;
   url: string;

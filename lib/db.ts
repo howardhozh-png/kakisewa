@@ -2935,14 +2935,18 @@ export async function savePropertyPackRanking(
   if (!packData) return { agentUserId: null, tenantLabel: null, tenantProfileId: null };
 
   const pack = packData as Record<string, unknown>;
-  await Promise.all(
-    rankings.map(r =>
+  const now = new Date().toISOString();
+  await Promise.all([
+    ...rankings.map(r =>
       svc.from("property_pack_leads")
         .update({ tenant_rank: r.rank, tenant_liked: r.liked })
         .eq("pack_id", pack.id as string)
         .eq("owner_lead_id", r.owner_lead_id)
-    )
-  );
+    ),
+    svc.from("property_packs")
+      .update({ tenant_ranked_at: now })
+      .eq("id", pack.id as string),
+  ]);
   return {
     agentUserId:     pack.user_id as string | null,
     tenantLabel:     pack.tenant_label as string | null,

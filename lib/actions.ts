@@ -2067,15 +2067,22 @@ export async function saveTenantPropertyRanking(
 
     if (agentUserId) {
       const { sendPushToUser } = await import("@/lib/push");
+      const { sendAgentEmail, propertyPackRankedEmail } = await import("@/lib/email");
       const resultUrl = tenantProfileId
         ? `/property-pack/${tenantProfileId}/results`
         : "/directory?view=tenants";
+      const fullUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com"}${resultUrl}`;
       sendPushToUser(agentUserId, {
         title: "Tenant ranked your property pack",
         body: `${tenantLabel ?? "A tenant"} ranked their preferred properties`,
         url: resultUrl,
         tag: `proppackranked_${agentUserId}`,
       }).catch(() => {});
+      sendAgentEmail(
+        agentUserId,
+        `${tenantLabel ?? "A tenant"} ranked your property pack`,
+        propertyPackRankedEmail({ tenantName: tenantLabel ?? "A tenant", url: fullUrl })
+      ).catch(() => {});
     }
 
     return { ok: true };

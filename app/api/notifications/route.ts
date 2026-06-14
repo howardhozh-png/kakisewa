@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export interface NotificationItem {
   id: string;
-  type: "contract_expiry" | "tenant_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked" | "tenant_intake" | "tenant_renewal" | "wa_reply";
+  type: "contract_expiry" | "tenant_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked" | "tenant_intake" | "tenant_renewal" | "wa_reply" | "wa_reply_owner" | "property_available" | "property_pack_ranked";
   title: string;
   body: string;
   href?: string;
@@ -216,6 +216,86 @@ export async function GET() {
       href: `/existing-listing?highlight=${row.id}`,
       createdAt: row.last_wa_reply_at,
       priority: row.replied_tenant === "yes" ? "normal" : "high",
+    });
+  }
+
+  // ── Owner replied via WhatsApp (last 30 days) ─────────────────────────────────
+  const { data: waOwnerReplies } = await supabase
+    .from("owner_leads")
+    .select("id, owner_name, property_name, unit, last_wa_reply_at, replied_owner")
+    .not("last_wa_reply_at", "is", null)
+    .gte("last_wa_reply_at", since30d)
+    .in("replied_owner", ["yes", "no"])
+    .order("last_wa_reply_at", { ascending: false })
+    .limit(10);
+
+  for (const r of waOwnerReplies ?? []) {
+    const row = r as { id: string; owner_name: string; property_name: string | null; unit: string | null; last_wa_reply_at: string; replied_owner: string };
+    const propParts = [row.property_name, row.unit ? `Unit ${row.unit}` : null].filter(Boolean);
+    items.push({
+      id: `wa_owner_${row.id}`,
+      type: "wa_reply_owner",
+      title: row.replied_owner === "yes" ? "Owner wants to list (WhatsApp)" : "Owner not interested (WhatsApp)",
+      body: `${row.owner_name}${propParts.length ? ` · ${propParts.join(" · ")}` : ""}`,
+      href: `/potential-listing?highlight=${row.id}`,
+      createdAt: row.last_wa_reply_at,
+      priority: row.replied_owner === "yes" ? "normal" : "high",
+    });
+  }
+
+  // ── Properties becoming available within 60 days ──────────────────────────────
+  const { data: availableSoon } = await supabase
+    .from("owner_leads")
+    .select("id, owner_name, property_name, unit, available_from")
+    .not("available_from", "is", null)
+    .gte("available_from", todayStr)
+    .lte("available_from", in60)
+    .in("stage", ["wants_rent", "listed", "replied"])
+    .order("available_from", { ascending: true })
+    .limit(10);
+
+  for (const r of availableSoon ?? []) {
+    const row = r as { id: string; owner_name: string; property_name: string | null; unit: string | null; available_from: string };
+    const daysLeft = Math.ceil((new Date(row.available_from).getTime() - today.getTime()) / 86400000);
+    let label: string;
+    let bucket: string;
+    if (daysLeft <= 7) { bucket = "7d"; label = "7 days"; }
+    else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
+    else { bucket = "60d"; label = "2 months"; }
+    const propParts = [row.property_name, row.unit ? `Unit ${row.unit}` : null].filter(Boolean);
+    items.push({
+      id: `avail_${row.id}_${bucket}`,
+      type: "property_available",
+      title: `Property available in ${label}`,
+      body: `${propParts.join(" · ") || "Property"} · ${row.owner_name}`,
+      href: `/my-listing?highlight=${row.id}`,
+      createdAt: today.toISOString(),
+      priority: daysLeft <= 7 ? "high" : "normal",
+    });
+  }
+
+  // ── Tenant ranked property pack (last 30 days) ────────────────────────────────
+  const { data: tenantRankedPacks } = await supabase
+    .from("property_packs")
+    .select("id, tenant_profile_id, tenant_label, tenant_ranked_at")
+    .not("tenant_ranked_at", "is", null)
+    .gte("tenant_ranked_at", since30d)
+    .order("tenant_ranked_at", { ascending: false })
+    .limit(5);
+
+  for (const r of tenantRankedPacks ?? []) {
+    const row = r as unknown as { id: string; tenant_profile_id: string | null; tenant_label: string | null; tenant_ranked_at: string };
+    const href = row.tenant_profile_id
+      ? `/property-pack/${row.tenant_profile_id}/results`
+      : "/directory?view=tenants";
+    items.push({
+      id: `proppackranked_${row.id}`,
+      type: "property_pack_ranked",
+      title: "Tenant ranked your property pack",
+      body: row.tenant_label ?? "A tenant ranked their preferred properties",
+      href,
+      createdAt: row.tenant_ranked_at,
+      priority: "normal",
     });
   }
 

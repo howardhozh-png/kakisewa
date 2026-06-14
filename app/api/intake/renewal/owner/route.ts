@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getTenancyByOwnerRenewalToken, completeOwnerRenewalIntake } from "@/lib/db";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { sendPushToUser } from "@/lib/push";
+import { sendAgentEmail, ownerRenewalEmail } from "@/lib/email";
 
 const schema = z.object({
   token: z.string().min(1).max(200),
@@ -38,12 +39,24 @@ export async function POST(request: NextRequest) {
       const propParts = [tenancy.property_name].filter(Boolean);
       const propLabel = propParts.length ? propParts.join(" · ") : "your property";
       const ownerBody = `${propLabel} · ${tenancy.tenant_name} — view in Existing listing`;
+      const renewalUrl = `/existing-listing?highlight=${tenancy.id}`;
       sendPushToUser(tenancy.user_id, {
         title: continuing ? "Owner wants to renew" : "Owner not renewing",
         body: ownerBody,
-        url: `/existing-listing?highlight=${tenancy.id}`,
+        url: renewalUrl,
         tag: `ownerrenewal_${tenancy.id}`,
       }).catch(() => {});
+      sendAgentEmail(
+        tenancy.user_id,
+        continuing ? `${tenancy.property_name ?? "Property"} — owner wants to renew` : `${tenancy.property_name ?? "Property"} — owner not renewing`,
+        ownerRenewalEmail({
+          ownerName: tenancy.tenant_name ?? "Owner",
+          tenantName: tenancy.tenant_name ?? "",
+          propLabel: propLabel,
+          continuing,
+          url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com"}${renewalUrl}`,
+        })
+      ).catch(() => {});
     }
 
     return NextResponse.json({ ok: true });
