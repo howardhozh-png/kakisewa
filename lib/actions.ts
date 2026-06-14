@@ -2113,3 +2113,45 @@ export async function lostContractAction(
   return { ok: true };
 }
 
+// ─── Calendar events ──────────────────────────────────────────────────────────
+
+export async function createCalendarEvent(input: {
+  title: string;
+  event_date: string;
+  event_time: string | null;
+  tenancy_id?: string | null;
+  owner_lead_id?: string | null;
+}): Promise<{ ok: boolean; id?: string; message?: string }> {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { ok: false, message: "Not authenticated" };
+
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .insert({
+      user_id: session.user.id,
+      title: input.title.trim(),
+      event_date: input.event_date,
+      event_time: input.event_time || null,
+      tenancy_id: input.tenancy_id || null,
+      owner_lead_id: input.owner_lead_id || null,
+    })
+    .select("id")
+    .single();
+
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/calendar");
+  return { ok: true, id: (data as { id: string }).id };
+}
+
+export async function deleteCalendarEvent(id: string): Promise<{ ok: boolean }> {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  await supabase.from("calendar_events").delete().eq("id", id);
+  revalidatePath("/calendar");
+  return { ok: true };
+}
+

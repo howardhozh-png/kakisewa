@@ -19,6 +19,7 @@ import { AvailabilityTimeline } from "@/components/availability-timeline";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 
 type Stage = OwnerLead["stage"];
 
@@ -522,6 +523,34 @@ function CardPreview({ l }: { l: OwnerLead }) {
   );
 }
 
+function AddToCalendarButton({ l }: { l: OwnerLead }) {
+  const [open, setOpen] = useState(false);
+  const propLabel = [l.property_name, l.unit ? `Unit ${l.unit}` : null].filter(Boolean).join(" · ");
+  const defaultTitle = propLabel || l.owner_name;
+  const defaultDate = l.available_from ?? undefined;
+  return (
+    <>
+      <button
+        type="button"
+        data-card-action
+        onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold w-full justify-center transition-opacity hover:opacity-70"
+        style={{ background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.18)", color: "var(--kk-blue)" }}
+      >
+        + Add to calendar
+      </button>
+      <CalendarEventDialog
+        open={open}
+        onOpenChange={setOpen}
+        defaultTitle={defaultTitle}
+        defaultDate={defaultDate}
+        contextLabel={propLabel || l.owner_name}
+        ownerLeadId={l.id}
+      />
+    </>
+  );
+}
+
 function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
   const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
@@ -587,6 +616,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onComp
         </div>
       </div>
 
+      <AddToCalendarButton l={l} />
       <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onCompetitorRented={onCompetitorRented} />
     </>
   );

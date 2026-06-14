@@ -2953,3 +2953,40 @@ export async function savePropertyPackRanking(
     tenantProfileId: pack.tenant_profile_id as string | null,
   };
 }
+
+// ─── Calendar events ──────────────────────────────────────────────────────────
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  event_date: string;   // "YYYY-MM-DD"
+  event_time: string | null;
+  tenancy_id: string | null;
+  owner_lead_id: string | null;
+  created_at: string;
+}
+
+export async function getCalendarEventsForWeek(weekStart: string, weekEnd: string): Promise<CalendarEvent[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("calendar_events")
+    .select("id, title, event_date, event_time, tenancy_id, owner_lead_id, created_at")
+    .gte("event_date", weekStart)
+    .lte("event_date", weekEnd)
+    .order("event_date", { ascending: true })
+    .order("event_time", { ascending: true, nullsFirst: false });
+  return (data ?? []) as CalendarEvent[];
+}
+
+export async function getUpcomingCalendarEvents(limit = 50): Promise<CalendarEvent[]> {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await supabase
+    .from("calendar_events")
+    .select("id, title, event_date, event_time, tenancy_id, owner_lead_id, created_at")
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
+    .order("event_time", { ascending: true, nullsFirst: false })
+    .limit(limit);
+  return (data ?? []) as CalendarEvent[];
+}

@@ -21,6 +21,7 @@ const NAV = [
   { href: "/existing-listing",      label: "Existing listing",      matchPaths: ["/existing-listing", "/existing-contracts", "/tenancies"],        tourId: "tour-nav-contracts",   minPlan: null },
   { href: "/directory",          label: "Directory",          matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"],tourId: "tour-nav-directory",   minPlan: "platinum" as const },
   { href: "/performance",        label: "Performance",        matchPaths: ["/performance"],                                               tourId: "tour-nav-performance", minPlan: "elite" as const },
+  { href: "/calendar",           label: "My Calendar",        matchPaths: ["/calendar"],                                                  tourId: "tour-nav-calendar",    minPlan: null },
 ];
 
 const PLAN_RANK: Record<string, number> = { silver: 1, gold: 2, platinum: 3, elite: 4 };
