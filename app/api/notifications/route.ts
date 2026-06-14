@@ -42,7 +42,7 @@ export async function GET() {
       type: "owner_intake",
       title: "Owner filled in details",
       body: `${row.owner_name}${propLabel ? ` · ${propLabel}` : ""}`,
-      href: `/my-listing&highlight=${row.id}`,
+      href: `/my-listing?highlight=${row.id}`,
       createdAt: row.intake_completed_at,
       priority: "normal",
     });
@@ -86,7 +86,7 @@ export async function GET() {
       type: "owner_pack_ranked",
       title: "Owner ranked tenants in pack",
       body: row.property_label ?? "Tenant pack",
-      href: `/my-listing&highlight=${row.owner_lead_id}`,
+      href: `/matching/${row.owner_lead_id}`,
       createdAt: row.owner_ranked_at,
       priority: "normal",
     });
