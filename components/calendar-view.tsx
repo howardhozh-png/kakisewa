@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { deleteCalendarEvent } from "@/lib/actions";
-import { CalendarPlus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarPlus, Trash2, ChevronLeft, ChevronRight, ExternalLink, CalendarDays, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { CalendarEvent } from "@/lib/db";
 
@@ -45,6 +46,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
   const today = toISO(new Date());
   const [addOpen, setAddOpen] = useState(false);
   const [addDate, setAddDate] = useState<string | undefined>();
+  const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [deletingId, startDelete] = useTransition();
 
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -159,7 +161,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
 
               {/* Events */}
               {dayEvents.map((ev) => (
-                <EventPill key={ev.id} ev={ev} onDelete={handleDelete} />
+                <EventPill key={ev.id} ev={ev} onDelete={handleDelete} onClick={() => setDetailEvent(ev)} />
               ))}
 
               {/* Add slot */}
@@ -213,7 +215,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
               {dayEvents.length > 0 ? (
                 <div className="space-y-2 ml-12">
                   {dayEvents.map((ev) => (
-                    <EventPill key={ev.id} ev={ev} onDelete={handleDelete} />
+                    <EventPill key={ev.id} ev={ev} onDelete={handleDelete} onClick={() => setDetailEvent(ev)} />
                   ))}
                 </div>
               ) : (
@@ -243,17 +245,24 @@ export function CalendarView({ events, weekStartISO }: Props) {
         onOpenChange={setAddOpen}
         defaultDate={addDate}
       />
+
+      {/* Event detail popup */}
+      <EventDetailDialog
+        event={detailEvent}
+        onClose={() => setDetailEvent(null)}
+        onDelete={(id) => { setDetailEvent(null); handleDelete(id); }}
+      />
     </div>
   );
 }
 
-function EventPill({ ev, onDelete }: { ev: CalendarEvent; onDelete: (id: string) => void }) {
+function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id: string) => void; onClick: () => void }) {
   const [hover, setHover] = useState(false);
-
   const timeStr = ev.event_time ? formatTime(ev.event_time) : "All day";
 
   return (
     <div
+      onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -262,7 +271,7 @@ function EventPill({ ev, onDelete }: { ev: CalendarEvent; onDelete: (id: string)
         marginBottom: 5,
         background: "rgba(0,113,227,0.08)",
         color: "#004FAD",
-        cursor: "default",
+        cursor: "pointer",
         position: "relative",
         display: "flex",
         flexDirection: "column",
@@ -271,6 +280,9 @@ function EventPill({ ev, onDelete }: { ev: CalendarEvent; onDelete: (id: string)
     >
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", opacity: 0.75 }}>{timeStr}</div>
       <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}>{ev.title}</div>
+      {ev.subtitle && (
+        <div style={{ fontSize: 10, opacity: 0.7, lineHeight: 1.3, marginTop: 1 }}>{ev.subtitle}</div>
+      )}
       {hover && (
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(ev.id); }}
@@ -285,5 +297,96 @@ function EventPill({ ev, onDelete }: { ev: CalendarEvent; onDelete: (id: string)
         </button>
       )}
     </div>
+  );
+}
+
+function EventDetailDialog({
+  event, onClose, onDelete,
+}: {
+  event: CalendarEvent | null;
+  onClose: () => void;
+  onDelete: (id: string) => void;
+}) {
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  if (!event) return null;
+
+  const timeStr = event.event_time ? formatTime(event.event_time) : "All day";
+  const dateStr = new Date(event.event_date + "T00:00:00").toLocaleDateString("en-MY", {
+    weekday: "short", day: "numeric", month: "long", year: "numeric",
+  });
+
+  return (
+    <Dialog open={!!event} onOpenChange={(o) => { if (!o) { onClose(); setConfirmDelete(false); } }}>
+      <DialogContent className="bg-card border-border" style={{ maxWidth: 380, padding: 0 }}>
+        {/* Header */}
+        <div style={{ padding: "20px 22px 16px", borderBottom: "1px solid var(--kk-line)" }}>
+          <p className="kk-overline mb-1">Event</p>
+          <p className="text-[17px] font-semibold leading-snug" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
+            {event.title}
+          </p>
+          {event.subtitle && (
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{event.subtitle}</p>
+          )}
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex items-center gap-2.5">
+            <CalendarDays style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", flexShrink: 0 }} />
+            <span className="text-[13px]" style={{ color: "var(--kk-ink)" }}>{dateStr}</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Clock style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", flexShrink: 0 }} />
+            <span className="text-[13px]" style={{ color: "var(--kk-ink)" }}>{timeStr}</span>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "12px 22px 18px", borderTop: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8 }}>
+          {!confirmDelete ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-red-50"
+              style={{ color: "var(--kk-ink-faint)" }}
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onDelete(event.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium"
+              style={{ background: "var(--kk-red)", color: "#fff" }}
+            >
+              Confirm delete
+            </button>
+          )}
+          <div style={{ flex: 1 }} />
+          {event.card_href && (
+            <button
+              type="button"
+              onClick={() => { onClose(); router.push(event.card_href!); }}
+              className="kk-pill flex items-center gap-1.5"
+              style={{ background: "var(--kk-blue)", color: "#fff", fontSize: 12, padding: "7px 14px" }}
+            >
+              <ExternalLink className="w-3 h-3" />
+              Go to card
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="kk-pill kk-pill-ghost"
+            style={{ fontSize: 12 }}
+          >
+            Close
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

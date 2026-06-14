@@ -16,7 +16,6 @@ import { OwnerLeavingDialog } from "@/components/owner-leaving-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FilterSelect } from "@/components/filter-select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 import { toast } from "sonner";
 
 interface ColMeta {
@@ -566,35 +565,6 @@ function EmptyDrop({ col }: { col: ColMeta }) {
   );
 }
 
-// ─── Add to calendar button ───────────────────────────────────────────────────
-
-function TenancyCalendarButton({ t }: { t: Tenancy }) {
-  const [open, setOpen] = useState(false);
-  const propLabel = t.property_name ?? "";
-  const contextLabel = [t.tenant_name, propLabel].filter(Boolean).join(" · ");
-  const defaultTitle = contextLabel || t.tenant_name || "";
-  return (
-    <>
-      <button
-        type="button"
-        data-card-action
-        onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold w-full justify-center transition-opacity hover:opacity-70"
-        style={{ background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.18)", color: "var(--kk-blue)" }}
-      >
-        + Add to calendar
-      </button>
-      <CalendarEventDialog
-        open={open}
-        onOpenChange={setOpen}
-        defaultTitle={defaultTitle}
-        defaultDate={t.contract_end ?? undefined}
-        contextLabel={contextLabel}
-        tenancyId={t.id}
-      />
-    </>
-  );
-}
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
@@ -696,9 +666,6 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
 
       {/* WA reply status badge */}
       <WaStatusBadge t={t} />
-
-      {/* Add to calendar */}
-      <TenancyCalendarButton t={t} />
 
       {/* Actions */}
       {plan !== "silver" && <RentReminderAction t={t} today={today} />}

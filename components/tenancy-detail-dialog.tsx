@@ -6,9 +6,10 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, daysUntil } from "@/lib/types";
 import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
-import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone } from "lucide-react";
+import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, CalendarPlus } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
+import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 
 function parseAgreementUrls(url: string | null): string[] {
   if (!url) return [];
@@ -120,6 +121,7 @@ function TenancyForm({
     if (s && mo) return computeEnd(s, mo);
     return tenancy.contract_end ?? "";
   });
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Sync on tenancy change (different record opened)
   useEffect(() => {
@@ -539,6 +541,15 @@ function TenancyForm({
             Delete
           </button>
           <div className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setCalendarOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+            style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
+          >
+            <CalendarPlus className="w-3 h-3" />
+            Add to calendar
+          </button>
           <button type="button" className="kk-pill kk-pill-ghost" onClick={onClose} disabled={pending}>Cancel</button>
           <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
             {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
@@ -548,6 +559,16 @@ function TenancyForm({
       )}
 
       {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
+
+      <CalendarEventDialog
+        open={calendarOpen}
+        onOpenChange={setCalendarOpen}
+        defaultTitle={[tenancy.tenant_name, propertyName].filter(Boolean).join(" · ") || propertyName || ""}
+        subtitle={propertyName || undefined}
+        cardHref="/existing-listing"
+        contextLabel={[tenancy.tenant_name, propertyName].filter(Boolean).join(" · ") || undefined}
+        tenancyId={tenancy.id}
+      />
     </div>
   );
 }

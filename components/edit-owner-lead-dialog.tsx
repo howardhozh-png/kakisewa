@@ -8,10 +8,12 @@ import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce } from "@/lib/actions";
 import { normalizePhone, phoneError } from "@/lib/phone";
-import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone } from "lucide-react";
+import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, Building2, CalendarPlus } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { usePhotoUpload } from "@/hooks/use-photo-upload";
+import { CalendarEventDialog } from "@/components/calendar-event-dialog";
+import { CompetitorRentedDialog } from "@/components/competitor-rented-dialog";
 import { toast } from "sonner";
 
 interface Props {
@@ -47,6 +49,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [availableFrom, setAvailableFrom] = useState("");
   const [notes, setNotes] = useState("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [competitorRentedOpen, setCompetitorRentedOpen] = useState(false);
 
   // Reset fields when a new lead is opened
   useEffect(() => {
@@ -398,6 +402,26 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                 Delete
               </button>
               <div className="flex-1" />
+              {lead?.stage === "listed" && (
+                <button
+                  type="button"
+                  onClick={() => setCompetitorRentedOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-gray-100"
+                  style={{ color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+                >
+                  <Building2 className="w-3 h-3" />
+                  Competitor rented
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setCalendarOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+                style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
+              >
+                <CalendarPlus className="w-3 h-3" />
+                Add to calendar
+              </button>
               <button type="button" className="kk-pill kk-pill-ghost" onClick={() => onOpenChange(false)} disabled={pending}>Cancel</button>
               <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
                 {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
@@ -409,6 +433,25 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
           {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
         </div>
       </DialogContent>
+
+      {lead && (
+        <>
+          <CalendarEventDialog
+            open={calendarOpen}
+            onOpenChange={setCalendarOpen}
+            defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || ""}
+            subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
+            cardHref="/my-listing"
+            contextLabel={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || undefined}
+            ownerLeadId={lead.id}
+          />
+          <CompetitorRentedDialog
+            lead={lead}
+            open={competitorRentedOpen}
+            onOpenChange={setCompetitorRentedOpen}
+          />
+        </>
+      )}
     </Dialog>
   );
 }

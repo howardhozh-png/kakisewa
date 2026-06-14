@@ -41,6 +41,8 @@ interface Props {
   defaultTitle?: string;
   defaultDate?: string; // "YYYY-MM-DD"
   contextLabel?: string;
+  subtitle?: string;
+  cardHref?: string;
   tenancyId?: string;
   ownerLeadId?: string;
 }
@@ -50,6 +52,8 @@ export function CalendarEventDialog({
   defaultTitle = "",
   defaultDate,
   contextLabel,
+  subtitle,
+  cardHref,
   tenancyId,
   ownerLeadId,
 }: Props) {
@@ -79,6 +83,8 @@ export function CalendarEventDialog({
         title: title.trim(),
         event_date: toISO(date),
         event_time: timeLabel ? to24h(timeLabel) : null,
+        subtitle: subtitle || null,
+        card_href: cardHref || null,
         tenancy_id: tenancyId,
         owner_lead_id: ownerLeadId,
       });

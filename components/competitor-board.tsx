@@ -13,7 +13,6 @@ import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, C
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -538,9 +537,6 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
         </div>
       </div>
 
-      {/* Add to calendar */}
-      <CompetitorCalendarButton lead={lead} />
-
       {/* Actions — Expiring column */}
       {isExpiring && (
         <>
@@ -561,34 +557,6 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
   );
 }
 
-// ─── Add to calendar button ───────────────────────────────────────────────────
-
-function CompetitorCalendarButton({ lead }: { lead: OwnerLead }) {
-  const [open, setOpen] = useState(false);
-  const propLabel = [lead.property_name, lead.unit ? `Unit ${lead.unit}` : null].filter(Boolean).join(" · ");
-  const contextLabel = [propLabel, lead.owner_name].filter(Boolean).join(" · ");
-  return (
-    <>
-      <button
-        type="button"
-        data-card-action
-        onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold w-full justify-center transition-opacity hover:opacity-70"
-        style={{ background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.18)", color: "var(--kk-blue)" }}
-      >
-        + Add to calendar
-      </button>
-      <CalendarEventDialog
-        open={open}
-        onOpenChange={setOpen}
-        defaultTitle={propLabel || lead.owner_name || "Follow up"}
-        defaultDate={lead.competitor_contract_end ?? undefined}
-        contextLabel={contextLabel}
-        ownerLeadId={lead.id}
-      />
-    </>
-  );
-}
 
 // ─── Message owner action ─────────────────────────────────────────────────────
 

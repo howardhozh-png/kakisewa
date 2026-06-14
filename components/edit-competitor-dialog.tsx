@@ -6,7 +6,7 @@ import { updateCompetitorLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreement
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { OwnerLead } from "@/lib/types";
-import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star, FileText, Upload } from "lucide-react";
+import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star, FileText, Upload, CalendarPlus } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { compressImage } from "@/lib/compress-image";
@@ -14,6 +14,7 @@ import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { daysUntil } from "@/lib/types";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
+import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 
 function parseAgreementUrls(url: string | null): string[] {
   if (!url) return [];
@@ -80,6 +81,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
     if (s && mo) return computeEnd(s, mo);
     return lead.competitor_contract_end ?? "";
   });
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   function recomputeEnd(s: string, d: string) {
     if (!s || !d) return;
@@ -417,6 +419,15 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                 Delete
               </button>
               <div className="flex-1" />
+              <button
+                type="button"
+                onClick={() => setCalendarOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+                style={{ background: "rgba(0,113,227,0.07)", color: "var(--kk-blue)" }}
+              >
+                <CalendarPlus className="w-3 h-3" />
+                Add to calendar
+              </button>
               <button type="button" className="kk-pill kk-pill-ghost" onClick={() => onOpenChange(false)} disabled={pending}>Cancel</button>
               <button type="button" className="kk-pill kk-pill-primary" onClick={handleSave} disabled={pending}>
                 {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
@@ -433,6 +444,16 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
           </div>
         )}
       </DialogContent>
+
+      <CalendarEventDialog
+        open={calendarOpen}
+        onOpenChange={setCalendarOpen}
+        defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || "Follow up"}
+        subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
+        cardHref="/target-listing"
+        contextLabel={[propertyName, unit ? `Unit ${unit}` : null, lead.owner_name].filter(Boolean).join(" · ") || undefined}
+        ownerLeadId={lead.id}
+      />
     </Dialog>
   );
 }

@@ -2119,6 +2119,8 @@ export async function createCalendarEvent(input: {
   title: string;
   event_date: string;
   event_time: string | null;
+  subtitle?: string | null;
+  card_href?: string | null;
   tenancy_id?: string | null;
   owner_lead_id?: string | null;
 }): Promise<{ ok: boolean; id?: string; message?: string }> {
@@ -2135,6 +2137,8 @@ export async function createCalendarEvent(input: {
       title: input.title.trim(),
       event_date: input.event_date,
       event_time: input.event_time || null,
+      subtitle: input.subtitle || null,
+      card_href: input.card_href || null,
       tenancy_id: input.tenancy_id || null,
       owner_lead_id: input.owner_lead_id || null,
     })

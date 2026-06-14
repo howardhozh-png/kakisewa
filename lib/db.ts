@@ -2959,6 +2959,8 @@ export async function savePropertyPackRanking(
 export interface CalendarEvent {
   id: string;
   title: string;
+  subtitle: string | null;
+  card_href: string | null;
   event_date: string;   // "YYYY-MM-DD"
   event_time: string | null;
   tenancy_id: string | null;
@@ -2970,7 +2972,7 @@ export async function getCalendarEventsForWeek(weekStart: string, weekEnd: strin
   const supabase = await createClient();
   const { data } = await supabase
     .from("calendar_events")
-    .select("id, title, event_date, event_time, tenancy_id, owner_lead_id, created_at")
+    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, created_at")
     .gte("event_date", weekStart)
     .lte("event_date", weekEnd)
     .order("event_date", { ascending: true })
@@ -2983,7 +2985,7 @@ export async function getUpcomingCalendarEvents(limit = 50): Promise<CalendarEve
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await supabase
     .from("calendar_events")
-    .select("id, title, event_date, event_time, tenancy_id, owner_lead_id, created_at")
+    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, created_at")
     .gte("event_date", today)
     .order("event_date", { ascending: true })
     .order("event_time", { ascending: true, nullsFirst: false })
