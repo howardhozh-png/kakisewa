@@ -407,7 +407,7 @@ function EventDetailDialog({
                 type="button"
                 onClick={() => setShowCal((v) => !v)}
                 style={{
-                  width: "100%", border: showCal ? "1.5px solid var(--kk-blue)" : "1.5px solid var(--kk-line)",
+                  width: "100%", border: "1.5px solid var(--kk-line)",
                   borderRadius: 10, padding: "10px 13px", fontSize: 14,
                   color: date ? "var(--kk-ink)" : "var(--kk-ink-faint)",
                   background: "var(--kk-surface)", textAlign: "left", cursor: "pointer",
@@ -438,7 +438,7 @@ function EventDetailDialog({
           </div>
 
           {showCal && (
-            <div style={{ marginTop: 8, border: "1.5px solid var(--kk-blue)", borderRadius: 12, overflow: "hidden", background: "var(--kk-surface)" }}>
+            <div style={{ marginTop: 8, border: "1px solid var(--kk-line)", borderRadius: 12, overflow: "hidden", background: "var(--kk-surface)" }}>
               <Calendar mode="single" selected={date} onSelect={(d) => { setDate(d); setShowCal(false); }} />
             </div>
           )}

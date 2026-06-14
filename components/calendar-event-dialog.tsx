@@ -142,7 +142,7 @@ export function CalendarEventDialog({
                 onClick={() => setShowCal((v) => !v)}
                 style={{
                   width: "100%",
-                  border: showCal ? "1.5px solid var(--kk-blue)" : "1.5px solid var(--kk-line)",
+                  border: "1.5px solid var(--kk-line)",
                   borderRadius: 10,
                   padding: "10px 13px",
                   fontSize: 14,
@@ -191,7 +191,7 @@ export function CalendarEventDialog({
           {showCal && (
             <div style={{
               marginTop: 8,
-              border: "1.5px solid var(--kk-blue)",
+              border: "1px solid var(--kk-line)",
               borderRadius: 12,
               overflow: "hidden",
               background: "var(--kk-surface)",
