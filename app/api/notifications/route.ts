@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export interface NotificationItem {
   id: string;
-  type: "contract_expiry" | "tenant_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked";
+  type: "contract_expiry" | "tenant_leaving" | "owner_intake" | "owner_renewal" | "owner_pack_ranked" | "tenant_intake" | "tenant_renewal" | "wa_reply";
   title: string;
   body: string;
   href?: string;
@@ -148,6 +148,74 @@ export async function GET() {
       href: `/existing-listing?highlight=${row.id}`,
       createdAt: today.toISOString(),
       priority: "high",
+    });
+  }
+
+  // ── Tenant submitted property preference form (last 30 days) ────────────────
+  const { data: tenantIntakes } = await supabase
+    .from("tenant_profiles")
+    .select("id, name, intake_completed_at")
+    .not("intake_completed_at", "is", null)
+    .eq("source", "intake_form")
+    .gte("intake_completed_at", since30d)
+    .order("intake_completed_at", { ascending: false })
+    .limit(10);
+
+  for (const r of tenantIntakes ?? []) {
+    const row = r as { id: string; name: string; intake_completed_at: string };
+    items.push({
+      id: `tenant_intake_${row.id}`,
+      type: "tenant_intake",
+      title: "Tenant submitted property preferences",
+      body: row.name,
+      href: "/directory?view=tenants",
+      createdAt: row.intake_completed_at,
+      priority: "normal",
+    });
+  }
+
+  // ── Tenant answered renewal questionnaire (last 30 days) ─────────────────────
+  const { data: tenantRenewals } = await supabase
+    .from("tenancies")
+    .select("id, tenant_name, property_name, tenant_renewal_completed_at, replied_tenant")
+    .not("tenant_renewal_completed_at", "is", null)
+    .gte("tenant_renewal_completed_at", since30d)
+    .order("tenant_renewal_completed_at", { ascending: false })
+    .limit(10);
+
+  for (const r of tenantRenewals ?? []) {
+    const row = r as { id: string; tenant_name: string; property_name: string | null; tenant_renewal_completed_at: string; replied_tenant: string };
+    items.push({
+      id: `tenant_renewal_${row.id}`,
+      type: "tenant_renewal",
+      title: row.replied_tenant === "yes" ? "Renewal confirmed" : "Tenant not renewing",
+      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
+      href: `/existing-listing?highlight=${row.id}`,
+      createdAt: row.tenant_renewal_completed_at,
+      priority: row.replied_tenant === "yes" ? "normal" : "high",
+    });
+  }
+
+  // ── WhatsApp auto-tracked replies (last 30 days) ──────────────────────────────
+  const { data: waReplies } = await supabase
+    .from("tenancies")
+    .select("id, tenant_name, property_name, last_wa_reply_at, replied_tenant")
+    .not("last_wa_reply_at", "is", null)
+    .gte("last_wa_reply_at", since30d)
+    .in("replied_tenant", ["yes", "no"])
+    .order("last_wa_reply_at", { ascending: false })
+    .limit(10);
+
+  for (const r of waReplies ?? []) {
+    const row = r as { id: string; tenant_name: string; property_name: string | null; last_wa_reply_at: string; replied_tenant: string };
+    items.push({
+      id: `wa_reply_${row.id}`,
+      type: "wa_reply",
+      title: row.replied_tenant === "yes" ? "Renewal confirmed via WhatsApp" : "Not renewing (WhatsApp reply)",
+      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
+      href: `/existing-listing?highlight=${row.id}`,
+      createdAt: row.last_wa_reply_at,
+      priority: row.replied_tenant === "yes" ? "normal" : "high",
     });
   }
 

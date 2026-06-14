@@ -43,11 +43,15 @@ export async function sendAgentEmail(
   const email = userRes.data?.user?.email;
   if (!email) return;
 
-  await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from: FROM, to: [email], subject, html }),
   });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error("[email] Resend error", res.status, JSON.stringify(err));
+  }
 }
 
 // ── Pre-built email bodies for each event ─────────────────────────────────────
@@ -74,8 +78,8 @@ export function tenantProfileEmail(p: {
   return (
     EMAIL_BASE +
     `<h1 style="font-size:18px;font-weight:600;margin:0 0 12px">${p.tenantName} submitted their profile</h1>` +
-    `<div style="margin:20px 0">` + action("Review their profile and decide if they're a good fit.") + `</div>` +
-    cta("View in Existing listing", p.url) +
+    `<div style="margin:20px 0">` + action("Review their property preferences and match them to a suitable listing.") + `</div>` +
+    cta("View in Tenant directory", p.url) +
     EMAIL_FOOTER
   );
 }

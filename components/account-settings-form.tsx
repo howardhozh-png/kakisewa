@@ -1104,8 +1104,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
         </button>
       </section>
 
-      {/* ── WhatsApp Integration ── */}
-      <WhatsAppIntegrationSection agent={agent} />
+      {/* WhatsApp Business integration hidden — requires dedicated SIM separate from WhatsApp Business app; will re-enable when proper BSP/TP flow is ready */}
 
       {/* ── WhatsApp Templates ── */}
       <section id="templates" className="kk-section p-6" style={{ overflow: "visible" }}>

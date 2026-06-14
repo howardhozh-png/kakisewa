@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Bell, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, BellRing } from "lucide-react";
+import { Bell, UserX, X, ClipboardCheck, RefreshCw, Star, CalendarClock, BellRing, FileText, MessageSquare } from "lucide-react";
 import type { NotificationItem } from "@/app/api/notifications/route";
 
 const LS_READ_KEY = "kk_notif_read_ids";
@@ -46,6 +46,9 @@ const ICONS: Record<NotificationItem["type"], React.ComponentType<{ className?: 
   owner_intake:      ClipboardCheck,
   owner_renewal:     RefreshCw,
   owner_pack_ranked: Star,
+  tenant_intake:     FileText,
+  tenant_renewal:    RefreshCw,
+  wa_reply:          MessageSquare,
 };
 
 const TYPE_COLOR: Record<NotificationItem["type"], string> = {
@@ -54,6 +57,9 @@ const TYPE_COLOR: Record<NotificationItem["type"], string> = {
   owner_intake:      "#0A84FF",
   owner_renewal:     "#30D158",
   owner_pack_ranked: "#FF9F0A",
+  tenant_intake:     "#AF52DE",
+  tenant_renewal:    "#30D158",
+  wa_reply:          "#25D366",
 };
 
 function timeAgo(iso: string): string {
