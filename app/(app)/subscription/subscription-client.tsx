@@ -532,7 +532,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                 ["Total cards",           "70",       "200",       "700",       "2,000",              "header"],
                 ["My listing",            "40 cards", "100 cards", "300 cards", "800 cards",          "sub"],
                 ["Existing listing",      "20 cards", "60 cards",  "200 cards", "700 cards",          "sub"],
-                ["Target listing",        "10 cards", "40 cards",  "100 cards", "500 cards",          "sub"],
+                ["Lost listing",        "10 cards", "40 cards",  "100 cards", "500 cards",          "sub"],
                 ["Email notifications",   "Yes",      "Yes",       "Yes",       "Yes",                "normal"],
                 ["Push notifications",    "Yes",      "Yes",       "Yes",       "Yes",                "normal"],
                 ["Agent profile",         "—",        "—",         "Private",   "Public + searchable","normal"],

@@ -280,14 +280,14 @@ export function StatsSection({
         />
 
         <Block
-          overline="Target listing"
+          overline="Lost listing"
           primaryNum={stats.targetTotalCount}
           primaryLabel="competitor properties tracked"
           stats={[
             { label: "Watching", value: stats.targetWatchingCount },
             { label: "Expiring in 60 days", value: stats.targetExpiringIn60Count },
           ]}
-          href="/target-listing"
+          href="/lost-listing"
           bg="rgba(255,149,0,0.11)"
           color="#92400E"
         />

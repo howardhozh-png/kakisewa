@@ -1,4 +1,4 @@
-export default function TargetListingLoading() {
+export default function LostListingLoading() {
   const cols = [
     { label: 56, cards: 3 },
     { label: 68, cards: 2 },

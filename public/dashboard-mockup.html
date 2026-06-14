@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kakisewa Dashboard — Mockup v3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --kk-ink: #1D1D1F; --kk-ink-mute: #6E6E73; --kk-ink-faint: #86868B;
+      --kk-bg: #FBFBFD; --kk-surface: #FFFFFF; --kk-surface-2: #F5F5F7;
+      --kk-line: rgba(0,0,0,0.08);
+      --kk-blue: #0071E3; --kk-blue-soft: rgba(0,113,227,0.09);
+      --kk-green: #34C759; --kk-green-soft: rgba(52,199,89,0.11); --kk-green-ink: #1F8B4C;
+      --kk-amber: #FF9500; --kk-amber-soft: rgba(255,149,0,0.11);
+      --kk-red: #FF3B30; --kk-red-soft: rgba(255,59,48,0.09);
+      --kk-purple: #AF52DE; --kk-purple-soft: rgba(175,82,222,0.09); --kk-purple-ink: #6F2DA8;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--kk-bg); color: var(--kk-ink); -webkit-font-smoothing: antialiased; }
+
+    /* Nav */
+    .topnav {
+      position: sticky; top: 0; height: 56px;
+      background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--kk-line);
+      display: flex; align-items: center; padding: 0 20px; gap: 10px; z-index: 50;
+    }
+    .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--kk-blue); flex-shrink: 0; }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+
+    /* Page */
+    .page { max-width: 920px; margin: 0 auto; padding: 28px 16px 80px; }
+
+    /* Greeting row */
+    .top-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .greeting-name { font-family: 'DM Serif Display', serif; font-size: 34px; line-height: 1.08; letter-spacing: -0.01em; }
+    .greeting-sub { font-size: 13px; color: var(--kk-ink-mute); margin-top: 4px; }
+    .range-row { display: flex; gap: 6px; padding-bottom: 4px; }
+    .rpill { padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; }
+    .rpill.on  { background: var(--kk-ink); color: #fff; }
+    .rpill.off { background: var(--kk-line); color: var(--kk-ink-mute); }
+
+    /* ── 4-block grid ── */
+    .blocks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:540px){ .blocks { grid-template-columns: 1fr; } }
+
+    .block {
+      border-radius: 22px;
+      padding: 26px 24px 22px;
+      display: flex; flex-direction: column;
+      min-height: 220px;
+      cursor: pointer;
+      transition: transform .18s cubic-bezier(.32,.72,0,1), box-shadow .18s;
+      text-decoration: none; color: inherit;
+    }
+    .block:hover { transform: translateY(-3px) scale(1.012); box-shadow: 0 16px 40px -8px rgba(0,0,0,0.14); }
+
+    .block-potential { background: var(--kk-blue-soft); }
+    .block-my        { background: var(--kk-purple-soft); }
+    .block-existing  { background: var(--kk-green-soft); }
+    .block-target    { background: var(--kk-amber-soft); }
+
+    /* Block internals */
+    .block-overline {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+      opacity: 0.55; margin-bottom: 14px;
+    }
+    .block-primary { font-size: 48px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+    .block-primary-label { font-size: 13px; font-weight: 500; opacity: 0.6; margin-top: 4px; margin-bottom: 18px; }
+
+    .block-divider { height: 1px; background: currentColor; opacity: 0.10; margin-bottom: 14px; }
+
+    .block-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+    .block-stat-num { font-size: 22px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    .block-stat-label { font-size: 11px; font-weight: 500; opacity: 0.55; margin-top: 3px; }
+
+    /* Percentage bar inside a block */
+    .block-bar-wrap { margin-top: 14px; }
+    .block-bar-label { font-size: 11px; font-weight: 500; opacity: 0.55; margin-bottom: 6px; }
+    .block-bar-track { height: 5px; background: currentColor; opacity: 0.12; border-radius: 3px; overflow: visible; position: relative; }
+    .block-bar-fill { height: 5px; border-radius: 3px; position: absolute; top: 0; left: 0; }
+    .block-bar-pct { font-size: 12px; font-weight: 700; opacity: 0.7; margin-top: 5px; }
+
+    /* Spacer push */
+    .block-push { flex: 1; }
+
+    /* Arrow link */
+    .block-link { font-size: 12px; font-weight: 600; opacity: 0.5; margin-top: 16px; align-self: flex-end; }
+
+    /* ── Upcoming events ── */
+    .events-card {
+      background: var(--kk-surface);
+      border: 1px solid var(--kk-line);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px -2px rgba(0,0,0,0.06);
+      margin-top: 12px;
+    }
+    .events-header { padding: 14px 18px 12px; border-bottom: 1px solid var(--kk-line); display: flex; align-items: center; justify-content: space-between; }
+    .events-title { font-size: 13px; font-weight: 600; }
+    .events-link { font-size: 12px; font-weight: 500; color: var(--kk-blue); text-decoration: none; }
+
+    .events-list { display: flex; overflow-x: auto; padding: 14px 18px; gap: 10px; -webkit-overflow-scrolling: touch; }
+    .events-list::-webkit-scrollbar { display: none; }
+
+    .ev-pill {
+      flex-shrink: 0;
+      background: var(--kk-surface-2);
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-width: 170px; max-width: 200px;
+    }
+    .ev-pill.today { background: var(--kk-blue-soft); }
+    .ev-date { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--kk-ink-faint); margin-bottom: 6px; }
+    .ev-date.now { color: var(--kk-blue); }
+    .ev-title { font-size: 13px; font-weight: 600; color: var(--kk-ink); line-height: 1.3; }
+    .ev-sub { font-size: 11px; color: var(--kk-ink-mute); margin-top: 3px; }
+    .ev-time { font-size: 11px; font-weight: 600; color: var(--kk-blue); margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="logo-dot"></div>
+  <span class="logo-text">kakisewa</span>
+</nav>
+
+<div class="page">
+
+  <!-- Greeting + range -->
+  <div class="top-row">
+    <div>
+      <p class="greeting-name">Howard.</p>
+      <p class="greeting-sub">Sunday, 14 Jun 2026 — portfolio snapshot.</p>
+    </div>
+    <div class="range-row">
+      <button class="rpill on">3m</button>
+      <button class="rpill off">6m</button>
+      <button class="rpill off">12m</button>
+    </div>
+  </div>
+
+  <!-- 4 large section blocks -->
+  <div class="blocks">
+
+    <!-- Potential Pipeline -->
+    <div class="block block-potential" style="color:#0052A5">
+      <p class="block-overline">Potential pipeline</p>
+      <p class="block-primary">283</p>
+      <p class="block-primary-label">owner contacts imported</p>
+      <div class="block-divider"></div>
+      <div class="block-stats">
+        <div>
+          <p class="block-stat-num">173</p>
+          <p class="block-stat-label">Contacted</p>
+        </div>
+        <div>
+          <p class="block-stat-num">15%</p>
+          <p class="block-stat-label">Responded → Listed</p>
+        </div>
+      </div>
+      <div class="block-push"></div>
+      <p class="block-link">Outreach →</p>
+    </div>
+
+    <!-- My Pipeline -->
+    <div class="block block-my" style="color:#5B1E9C">
+      <p class="block-overline">My pipeline</p>
+      <p class="block-primary">10</p>
+      <p class="block-primary-label">listings in progress</p>
+      <div class="block-divider"></div>
+      <div class="block-stats">
+        <div>
+          <p class="block-stat-num">8</p>
+          <p class="block-stat-label">Listed for rent</p>
+        </div>
+        <div>
+          <p class="block-stat-num">2</p>
+          <p class="block-stat-label">Listed for sale</p>
+        </div>
+        <div>
+          <p class="block-stat-num">8</p>
+          <p class="block-stat-label">Rented / matched</p>
+        </div>
+      </div>
+      <div class="block-push"></div>
+      <p class="block-link">My Listing →</p>
+    </div>
+
+    <!-- Existing Pipeline -->
+    <div class="block block-existing" style="color:#166534">
+      <p class="block-overline">Existing pipeline</p>
+      <p class="block-primary">32</p>
+      <p class="block-primary-label">active tenancies</p>
+      <div class="block-divider"></div>
+      <div class="block-stats">
+        <div>
+          <p class="block-stat-num">16</p>
+          <p class="block-stat-label">Expiring in 60 days</p>
+        </div>
+        <div>
+          <p class="block-stat-num">8</p>
+          <p class="block-stat-label">Renewing</p>
+        </div>
+      </div>
+      <div class="block-push"></div>
+      <p class="block-link">Existing Listing →</p>
+    </div>
+
+    <!-- Target Listing -->
+    <div class="block block-target" style="color:#92400E">
+      <p class="block-overline">Target listing</p>
+      <p class="block-primary">24</p>
+      <p class="block-primary-label">competitor properties tracked</p>
+      <div class="block-divider"></div>
+      <div class="block-stats">
+        <div>
+          <p class="block-stat-num">8</p>
+          <p class="block-stat-label">Watching</p>
+        </div>
+        <div>
+          <p class="block-stat-num">8</p>
+          <p class="block-stat-label">Expiring in 60 days</p>
+        </div>
+        <div>
+          <p class="block-stat-num">8</p>
+          <p class="block-stat-label">Renewing with us</p>
+        </div>
+      </div>
+      <div class="block-push"></div>
+      <p class="block-link">Target Listing →</p>
+    </div>
+
+  </div>
+
+  <!-- Upcoming events — horizontal scroll pills -->
+  <div class="events-card">
+    <div class="events-header">
+      <span class="events-title">Upcoming — next 3 days</span>
+      <a href="#" class="events-link">My Calendar →</a>
+    </div>
+    <div class="events-list">
+
+      <div class="ev-pill today">
+        <p class="ev-date now">Today · 14 Jun</p>
+        <p class="ev-title">House viewing — Pavilion 12-A</p>
+        <p class="ev-sub">Pavilion Residences KL</p>
+        <p class="ev-time">10:00</p>
+      </div>
+
+      <div class="ev-pill today">
+        <p class="ev-date now">Today · 14 Jun</p>
+        <p class="ev-title">Renewal meeting — Sky Suites</p>
+        <p class="ev-sub">Sky Suites KLCC · 33A</p>
+        <p class="ev-time">14:00</p>
+      </div>
+
+      <div class="ev-pill today">
+        <p class="ev-date now">Today · 14 Jun</p>
+        <p class="ev-title">Call owner — Verve Suites</p>
+        <p class="ev-sub">Verve Suites Mont Kiara · 8A</p>
+        <p class="ev-time">16:30</p>
+      </div>
+
+      <div class="ev-pill">
+        <p class="ev-date">Mon · 15 Jun</p>
+        <p class="ev-title">Second viewing — KL Gateway</p>
+        <p class="ev-sub">KL Gateway Residences · 8B</p>
+        <p class="ev-time">11:00</p>
+      </div>
+
+      <div class="ev-pill">
+        <p class="ev-date">Mon · 15 Jun</p>
+        <p class="ev-title">Tenant follow-up — Laman Suria</p>
+        <p class="ev-sub">Laman Suria · 6A</p>
+        <p class="ev-time">15:00</p>
+      </div>
+
+      <div class="ev-pill">
+        <p class="ev-date">Tue · 16 Jun</p>
+        <p class="ev-title">Owner call — Mont Kiara Palma</p>
+        <p class="ev-sub">Mont Kiara Palma · 3-05</p>
+        <p class="ev-time">09:30</p>
+      </div>
+
+      <div class="ev-pill">
+        <p class="ev-date">Tue · 16 Jun</p>
+        <p class="ev-title">Meet owner — Pinang Laguna</p>
+        <p class="ev-sub">Pinang Laguna · 6B</p>
+        <p class="ev-time">14:30</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

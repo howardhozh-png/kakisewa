@@ -62,7 +62,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "What happens when a competitor rents a unit I was tracking?",
-        a: "Open the card and tap 'Competitor rented'. Enter the rental date and duration. The card moves to Target listing and kakisewa will remind you 60 days before that tenancy ends — so you can approach the owner again when the unit is coming vacant.",
+        a: "Open the card and tap 'Competitor rented'. Enter the rental date and duration. The card moves to Lost listing and kakisewa will remind you 60 days before that tenancy ends — so you can approach the owner again when the unit is coming vacant.",
       },
       {
         q: "How do I import multiple listings at once?",
@@ -113,16 +113,16 @@ export const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    id: "target-listing",
-    title: "Target listing",
+    id: "lost-listing",
+    title: "Lost listing",
     questions: [
       {
-        q: "What is Target listing?",
-        a: "Target listing tracks properties managed by a competitor where the current tenancy will end soon. When a competitor rents a unit you were tracking in My listing, the card moves here so you know when to approach the owner again.",
+        q: "What is Lost listing?",
+        a: "Lost listing tracks properties managed by a competitor where the current tenancy will end soon. When a competitor rents a unit you were tracking in My listing, the card moves here so you know when to approach the owner again.",
       },
       {
-        q: "How does a card move into Target listing?",
-        a: "From a My listing card, tap 'Competitor rented', enter the rental date and duration. The card moves to Target listing. kakisewa calculates the end date and will remind you 60 days before that tenancy finishes.",
+        q: "How does a card move into Lost listing?",
+        a: "From a My listing card, tap 'Competitor rented', enter the rental date and duration. The card moves to Lost listing. kakisewa calculates the end date and will remind you 60 days before that tenancy finishes.",
       },
       {
         q: "How do I move a target card back to My listing?",
@@ -134,7 +134,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "What happens when I delete a target listing card?",
-        a: "Deleted target cards go to a 7-day recycle bin shown at the top of the Target listing page as 'Deleted (N)'. You can restore them or permanently delete them from that panel. After 7 days they are automatically removed.",
+        a: "Deleted target cards go to a 7-day recycle bin shown at the top of the Lost listing page as 'Deleted (N)'. You can restore them or permanently delete them from that panel. After 7 days they are automatically removed.",
       },
     ],
   },
@@ -298,7 +298,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How many cards can I have on each plan?",
-        a: "Silver: 70 total (40 My listing + 20 Existing listing + 10 Target listing). Gold: 200 total (100 + 60 + 40). Platinum: 600 total (300 + 200 + 100). Elite: 2,000 total (800 + 700 + 500).",
+        a: "Silver: 70 total (40 My listing + 20 Existing listing + 10 Lost listing). Gold: 200 total (100 + 60 + 40). Platinum: 600 total (300 + 200 + 100). Elite: 2,000 total (800 + 700 + 500).",
       },
       {
         q: "What happens if I reach my card limit?",

@@ -125,7 +125,7 @@ Alternatively, for a much faster response you can use our protected kakisewa lin
   },
   {
     key: "competitor_expiry_owner",
-    label: "Target listing: Owner",
+    label: "Lost listing: Owner",
     description: "Sent to a competitor unit owner when their tenancy is expiring.",
     defaultBody:
 `Hi {{ownerName}}! {{agentLine}}The tenancy at *{{propertyName}}* is expiring {{expiryWhen}}. I'd love to help manage your property when the current tenancy ends.

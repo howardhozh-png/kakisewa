@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Calendar — kakisewa mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --kk-bg:           #FBFBFD;
+      --kk-surface:      #FFFFFF;
+      --kk-surface-2:    #F5F5F7;
+      --kk-ink:          #1D1D1F;
+      --kk-ink-soft:     #424245;
+      --kk-ink-mute:     #6E6E73;
+      --kk-ink-faint:    #86868B;
+      --kk-line:         rgba(0,0,0,0.08);
+      --kk-blue:         #0071E3;
+      --kk-green:        #34C759;
+      --kk-green-ink:    #1F8B4C;
+      --kk-red:          #FF3B30;
+      --kk-amber:        #FF9500;
+      --kk-purple:       #AF52DE;
+      --kk-accent:       #1D1D1F;
+      --radius-2xl:      18px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #e8e8ed;
+      color: var(--kk-ink);
+    }
+
+    .serif { font-family: 'DM Serif Display', serif; }
+
+    /* ── Label between frames ── */
+    .frame-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #86868B;
+      padding: 32px 0 10px 0;
+      text-align: center;
+    }
+
+    /* ── App frame ── */
+    .app-frame {
+      background: var(--kk-bg);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+    }
+
+    /* ── Top Nav ── */
+    .topnav {
+      height: 64px;
+      background: #fff;
+      border-bottom: 1px solid var(--kk-line);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 32px;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--kk-ink);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 18px; height: 18px; }
+    .logo-text { font-size: 20px; line-height: 1; }
+    .topnav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+    .nav-link {
+      padding: 6px 13px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--kk-ink-mute);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .nav-link.active {
+      background: var(--kk-ink);
+      color: #fff;
+    }
+    .topnav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+    .notif-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--kk-surface-2);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .notif-dot {
+      position: absolute;
+      top: 7px; right: 7px;
+      width: 7px; height: 7px;
+      background: var(--kk-red);
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    .avatar-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px 4px 4px;
+      border-radius: 20px;
+      background: var(--kk-surface-2);
+      border: 1px solid var(--kk-line);
+    }
+    .avatar-circle {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--kk-ink);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .avatar-initials { font-size: 13px; font-weight: 700; color: var(--kk-ink); }
+
+    /* ── Page body ── */
+    .page-body { background: var(--kk-bg); min-height: 600px; }
+
+    /* ── Page header bar ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+    }
+    .page-title-row { display: flex; align-items: baseline; gap: 10px; }
+    .page-title { font-size: 22px; font-weight: 700; color: var(--kk-ink); }
+    .page-subtitle { font-size: 13px; color: var(--kk-ink-mute); }
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .today-btn {
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--kk-line);
+      background: var(--kk-surface);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--kk-ink);
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .week-nav-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--kk-line);
+      background: var(--kk-surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--kk-ink-soft);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .week-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--kk-ink);
+      min-width: 142px;
+      text-align: center;
+    }
+
+    /* ── Calendar grid ── */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-top: 1px solid var(--kk-line);
+      margin: 0 16px 16px;
+      background: var(--kk-surface);
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+      border: 1px solid var(--kk-line);
+    }
+    .day-col {
+      border-right: 1px solid rgba(0,0,0,0.05);
+      padding: 12px 8px 12px;
+      min-height: 360px;
+    }
+    .day-col:last-child { border-right: none; }
+    .day-col.today { background: rgba(0,113,227,0.03); }
+
+    .day-head {
+      text-align: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .day-name {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--kk-ink-faint);
+      margin-bottom: 5px;
+    }
+    .day-num-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .day-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--kk-ink);
+    }
+    .day-col.today .day-num {
+      background: var(--kk-blue);
+      color: #fff;
+    }
+
+    /* ── Event pills ── */
+    .ev {
+      border-radius: 9px;
+      padding: 7px 9px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    .ev-time {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 2px;
+    }
+    .ev-title { font-size: 12px; font-weight: 600; line-height: 1.3; }
+    .ev-sub { font-size: 11px; margin-top: 2px; opacity: 0.7; font-weight: 400; }
+
+    .ev-blue   { background: #EAF2FE; color: #004FAD; }
+    .ev-green  { background: #E2F5EA; color: #1A6E3D; }
+    .ev-amber  { background: #FFF2D6; color: #8A5000; }
+    .ev-purple { background: #F3E8FC; color: #7030A8; }
+    .ev-red    { background: #FFECEA; color: #B81200; }
+
+    .add-slot {
+      margin-top: 8px;
+      padding: 5px 0;
+      text-align: center;
+      font-size: 11px;
+      color: var(--kk-ink-faint);
+      cursor: pointer;
+      border-radius: 7px;
+    }
+    .add-slot:hover { background: var(--kk-surface-2); color: var(--kk-blue); }
+
+    /* ── MOBILE FRAME ── */
+    .mobile-frame-wrap {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 0 32px;
+    }
+    .mobile-frame {
+      width: 390px;
+      flex-shrink: 0;
+      background: var(--kk-bg);
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+      border: 10px solid #1D1D1F;
+    }
+
+    /* Mobile calendar — agenda list view */
+    .m-header {
+      background: var(--kk-surface);
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--kk-line);
+    }
+    .m-title { font-size: 20px; font-weight: 700; color: var(--kk-ink); }
+    .m-week-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .m-week-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--kk-line);
+      background: var(--kk-surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      color: var(--kk-ink-soft);
+    }
+    .m-week-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--kk-ink);
+    }
+    .m-today-btn {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--kk-blue);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Mobile day strip */
+    .m-day-strip {
+      display: flex;
+      gap: 0;
+      padding: 10px 14px;
+      background: var(--kk-surface);
+      border-bottom: 1px solid var(--kk-line);
+      overflow-x: auto;
+    }
+    .m-day-chip {
+      flex-shrink: 0;
+      width: 46px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 0;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .m-day-chip.active { background: var(--kk-ink); }
+    .m-day-chip-name {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--kk-ink-faint);
+      margin-bottom: 4px;
+    }
+    .m-day-chip.active .m-day-chip-name { color: rgba(255,255,255,0.65); }
+    .m-day-chip-num {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--kk-ink);
+    }
+    .m-day-chip.active .m-day-chip-num { color: #fff; }
+    .m-day-chip.has-dot::after {
+      content: '';
+      display: block;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--kk-blue);
+      margin-top: 3px;
+    }
+    .m-day-chip.active.has-dot::after { background: rgba(255,255,255,0.6); }
+
+    /* Mobile event list */
+    .m-events { padding: 16px; }
+    .m-date-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--kk-ink-faint);
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+    .m-ev {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .m-ev-time {
+      width: 42px;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--kk-ink-mute);
+      padding-top: 7px;
+    }
+    .m-ev-card {
+      flex: 1;
+      border-radius: 12px;
+      padding: 9px 12px;
+    }
+    .m-ev-title { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .m-ev-sub { font-size: 12px; margin-top: 2px; opacity: 0.7; }
+
+    /* ── Dialog ── */
+    .dialog-frame-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 0 32px 32px;
+    }
+    .dialog-bg {
+      background: rgba(0,0,0,0.35);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      width: 100%;
+      max-width: 860px;
+      position: relative;
+    }
+    .dialog-behind {
+      position: absolute;
+      inset: 0;
+      background: var(--kk-bg);
+      filter: blur(3px);
+      border-radius: 20px;
+      overflow: hidden;
+      opacity: 0.6;
+    }
+    .dialog-box {
+      background: var(--kk-surface);
+      border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+      overflow: hidden;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+      border: 1px solid var(--kk-line);
+    }
+    .dialog-head {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--kk-line);
+    }
+    .dialog-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+    .dialog-title { font-size: 17px; font-weight: 700; color: var(--kk-ink); }
+    .dialog-close {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--kk-surface-2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--kk-ink-mute);
+    }
+    .dialog-sub { font-size: 12px; color: var(--kk-ink-mute); }
+    .dialog-body { padding: 20px 22px; }
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--kk-ink-faint);
+      margin-bottom: 6px;
+    }
+    .field-input {
+      width: 100%;
+      border: 1.5px solid rgba(0,0,0,0.14);
+      border-radius: 10px;
+      padding: 11px 13px;
+      font-size: 14px;
+      color: var(--kk-ink);
+      font-family: 'Inter', sans-serif;
+      background: var(--kk-surface);
+      margin-bottom: 16px;
+    }
+    .field-input.muted { color: var(--kk-ink-faint); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .two-col .field-input { margin-bottom: 0; }
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--kk-line);
+    }
+    .btn-cancel {
+      padding: 9px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--kk-line);
+      background: var(--kk-surface);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      color: var(--kk-ink);
+    }
+    .btn-save {
+      padding: 9px 20px;
+      border-radius: 20px;
+      border: none;
+      background: var(--kk-blue);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── card with button ── */
+    .cards-section {
+      padding: 0 32px 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .kk-card {
+      background: var(--kk-surface);
+      border-radius: var(--radius-2xl);
+      border: 1px solid var(--kk-line);
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--kk-line);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card-name { font-size: 14px; font-weight: 700; color: var(--kk-ink); margin-bottom: 2px; }
+    .card-sub { font-size: 12px; color: var(--kk-ink-mute); }
+    .badge {
+      font-size: 11px; font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge-green  { background: #E2F5EA; color: #1A6E3D; }
+    .badge-amber  { background: #FFF2D6; color: #8A5000; }
+    .badge-purple { background: #F3E8FC; color: #7030A8; }
+    .card-body { padding: 12px 16px; }
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--kk-ink-mute);
+      margin-bottom: 7px;
+    }
+    .card-row:last-child { margin-bottom: 0; }
+    .card-row span:last-child { font-weight: 600; color: var(--kk-ink); }
+    .card-actions {
+      display: flex;
+      gap: 7px;
+      padding: 11px 16px;
+      border-top: 1px solid var(--kk-line);
+      flex-wrap: wrap;
+    }
+    .act-btn {
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--kk-line);
+      background: var(--kk-surface);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--kk-ink);
+      font-family: 'Inter', sans-serif;
+    }
+    .act-btn.cal {
+      color: var(--kk-blue);
+      border-color: rgba(0,113,227,0.2);
+      background: rgba(0,113,227,0.05);
+    }
+
+    /* layout wrappers */
+    .desktop-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px 0;
+    }
+  </style>
+</head>
+<body style="padding: 32px 40px;">
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- DESKTOP — Calendar page inside app shell              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<p class="frame-label">Desktop — My Calendar page inside app shell</p>
+
+<div style="max-width:1160px; margin: 0 auto 0;">
+  <div class="app-frame">
+
+    <!-- Top Nav -->
+    <nav class="topnav">
+      <div class="topnav-logo">
+        <!-- logo icon -->
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <span class="serif logo-text">kakisewa</span>
+      </div>
+
+      <div class="topnav-links">
+        <a class="nav-link" href="#">Home</a>
+        <a class="nav-link" href="#">Outreach</a>
+        <a class="nav-link" href="#">Existing listing</a>
+        <a class="nav-link" href="#">Directory</a>
+        <a class="nav-link" href="#">Performance</a>
+        <a class="nav-link active" href="#">My Calendar</a>
+      </div>
+
+      <div class="topnav-right">
+        <div class="notif-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div class="notif-dot"></div>
+        </div>
+        <div class="avatar-btn">
+          <div class="avatar-circle">HZ</div>
+          <span class="avatar-initials">HZ</span>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#86868B" stroke-width="2" stroke-linecap="round"><path d="M2 4l4 4 4-4"/></svg>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page body -->
+    <div class="page-body">
+      <div class="page-header">
+        <div class="page-title-row">
+          <span class="page-title">My Calendar</span>
+          <span class="page-subtitle">June 2026</span>
+        </div>
+        <div class="week-nav">
+          <button class="today-btn">Today</button>
+          <button class="week-nav-btn">&#8249;</button>
+          <span class="week-label">9 – 15 Jun 2026</span>
+          <button class="week-nav-btn">&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Calendar grid -->
+      <div class="cal-grid">
+
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">Mon</div>
+            <div class="day-num-wrap"><div class="day-num">9</div></div>
+          </div>
+          <div class="ev ev-blue">
+            <div class="ev-time">10:00</div>
+            <div class="ev-title">House viewing</div>
+            <div class="ev-sub">Sri Petaling</div>
+          </div>
+          <div class="ev ev-green">
+            <div class="ev-time">14:00</div>
+            <div class="ev-title">Call Ahmad</div>
+            <div class="ev-sub">Ara Damansara</div>
+          </div>
+        </div>
+
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">Tue</div>
+            <div class="day-num-wrap"><div class="day-num">10</div></div>
+          </div>
+          <div class="ev ev-amber">
+            <div class="ev-time">09:00</div>
+            <div class="ev-title">Follow up owner</div>
+            <div class="ev-sub">Bangsar · Unit 12B</div>
+          </div>
+        </div>
+
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">Wed</div>
+            <div class="day-num-wrap"><div class="day-num">11</div></div>
+          </div>
+        </div>
+
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">Thu</div>
+            <div class="day-num-wrap"><div class="day-num">12</div></div>
+          </div>
+          <div class="ev ev-purple">
+            <div class="ev-time">11:00</div>
+            <div class="ev-title">Submit tenancy docs</div>
+          </div>
+          <div class="ev ev-red">
+            <div class="ev-time">All day</div>
+            <div class="ev-title">Contract expiring</div>
+            <div class="ev-sub">Priya · Cheras</div>
+          </div>
+        </div>
+
+        <div class="day-col today">
+          <div class="day-head">
+            <div class="day-name">Fri</div>
+            <div class="day-num-wrap"><div class="day-num">14</div></div>
+          </div>
+          <div class="ev ev-blue">
+            <div class="ev-time">15:00</div>
+            <div class="ev-title">House viewing 3pm</div>
+            <div class="ev-sub">Damansara Heights</div>
+          </div>
+          <div class="add-slot">+ Add event</div>
+        </div>
+
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">Sat</div>
+            <div class="day-num-wrap"><div class="day-num">15</div></div>
+          </div>
+          <div class="ev ev-green">
+            <div class="ev-time">All day</div>
+            <div class="ev-title">Property handover</div>
+            <div class="ev-sub">Siti · Subang Jaya</div>
+          </div>
+        </div>
+
+        <div class="day-col">
+          <div class="day-head">
+            <div class="day-name">Sun</div>
+            <div class="day-num-wrap"><div class="day-num">16</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /page-body -->
+  </div><!-- /app-frame -->
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- MOBILE                                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<p class="frame-label" style="padding-top:40px;">Mobile (390px) — Calendar + "Add to calendar" on card</p>
+
+<div class="mobile-frame-wrap">
+
+  <!-- Mobile calendar -->
+  <div class="mobile-frame">
+    <div class="m-header">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="m-title">My Calendar</div>
+        <button class="m-today-btn">Today</button>
+      </div>
+      <div class="m-week-nav">
+        <button class="m-week-btn">&#8249;</button>
+        <span class="m-week-label">9 – 15 Jun 2026</span>
+        <button class="m-week-btn">&#8250;</button>
+      </div>
+    </div>
+
+    <!-- Day strip -->
+    <div class="m-day-strip">
+      <div class="m-day-chip has-dot">
+        <span class="m-day-chip-name">Mon</span>
+        <span class="m-day-chip-num">9</span>
+      </div>
+      <div class="m-day-chip has-dot">
+        <span class="m-day-chip-name">Tue</span>
+        <span class="m-day-chip-num">10</span>
+      </div>
+      <div class="m-day-chip">
+        <span class="m-day-chip-name">Wed</span>
+        <span class="m-day-chip-num">11</span>
+      </div>
+      <div class="m-day-chip has-dot">
+        <span class="m-day-chip-name">Thu</span>
+        <span class="m-day-chip-num">12</span>
+      </div>
+      <div class="m-day-chip active has-dot">
+        <span class="m-day-chip-name">Fri</span>
+        <span class="m-day-chip-num">14</span>
+      </div>
+      <div class="m-day-chip has-dot">
+        <span class="m-day-chip-name">Sat</span>
+        <span class="m-day-chip-num">15</span>
+      </div>
+      <div class="m-day-chip">
+        <span class="m-day-chip-name">Sun</span>
+        <span class="m-day-chip-num">16</span>
+      </div>
+    </div>
+
+    <!-- Events for selected day (Fri 14) -->
+    <div class="m-events">
+      <div class="m-date-label">Friday, 14 Jun</div>
+      <div class="m-ev">
+        <div class="m-ev-time">3:00 PM</div>
+        <div class="m-ev-card ev-blue">
+          <div class="m-ev-title">House viewing 3pm</div>
+          <div class="m-ev-sub">Damansara Heights</div>
+        </div>
+      </div>
+
+      <div class="m-date-label" style="margin-top:14px;">Thursday, 12 Jun</div>
+      <div class="m-ev">
+        <div class="m-ev-time">11:00</div>
+        <div class="m-ev-card ev-purple">
+          <div class="m-ev-title">Submit tenancy docs</div>
+        </div>
+      </div>
+      <div class="m-ev">
+        <div class="m-ev-time">All day</div>
+        <div class="m-ev-card ev-red">
+          <div class="m-ev-title">Contract expiring</div>
+          <div class="m-ev-sub">Priya · Cheras</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile card with button -->
+  <div style="display:flex; flex-direction:column; gap:16px; width:370px;">
+
+    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#86868B; padding: 8px 0 4px;">
+      Card with "Add to calendar" button
+    </div>
+
+    <div class="kk-card">
+      <div class="card-head">
+        <div>
+          <div class="card-name">Ahmad Fauzi</div>
+          <div class="card-sub">Ara Damansara · Unit 7 · RM 1,800/mo</div>
+        </div>
+        <span class="badge badge-amber">Expiring 30d</span>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span>Contract ends</span><span>14 Jul 2026</span></div>
+        <div class="card-row"><span>Tenant replied</span><span>Pending</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn">Send renewal</button>
+        <button class="act-btn">Send WA</button>
+        <button class="act-btn cal">+ Add to calendar</button>
+      </div>
+    </div>
+
+    <div class="kk-card">
+      <div class="card-head">
+        <div>
+          <div class="card-name">Tan Wei Ming</div>
+          <div class="card-sub">Sri Petaling · Unit 3A · RM 2,200/mo</div>
+        </div>
+        <span class="badge badge-green">Listed</span>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span>Available from</span><span>1 Jul 2026</span></div>
+        <div class="card-row"><span>Commission</span><span>RM 2,200</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn">Send WA</button>
+        <button class="act-btn cal">+ Add to calendar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- ADD EVENT DIALOG                                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<p class="frame-label" style="padding-top:40px;">Dialog — "Add to calendar" after tapping the button</p>
+
+<div class="dialog-frame-wrap">
+  <div class="dialog-bg">
+    <!-- blurred background hint -->
+    <div class="dialog-behind">
+      <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:12px; opacity:0.4;">
+        <div style="background:#fff; border-radius:18px; height:120px;"></div>
+        <div style="background:#fff; border-radius:18px; height:120px;"></div>
+      </div>
+    </div>
+
+    <div class="dialog-box">
+      <div class="dialog-head">
+        <div class="dialog-head-row">
+          <span class="dialog-title">Add to calendar</span>
+          <div class="dialog-close">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+          </div>
+        </div>
+        <div class="dialog-sub">Ahmad Fauzi · Ara Damansara</div>
+      </div>
+      <div class="dialog-body">
+        <div class="field-label">Event name</div>
+        <input class="field-input" value="Renewal follow up call" readonly>
+
+        <div class="two-col">
+          <div>
+            <div class="field-label">Date</div>
+            <input class="field-input" value="14 Jul 2026" readonly>
+          </div>
+          <div>
+            <div class="field-label">Time (optional)</div>
+            <input class="field-input muted" value="Set time..." readonly>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn-cancel">Cancel</button>
+        <button class="btn-save">Save event</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

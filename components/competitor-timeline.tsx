@@ -68,7 +68,7 @@ export function CompetitorTimeline({ leads, onMonthClick, selectedMonth }: Props
             RM {totalRm.toLocaleString()}
           </p>
           <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
-            across all {leads.length} target listing{leads.length === 1 ? "" : "s"}
+            across all {leads.length} lost listing{leads.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">

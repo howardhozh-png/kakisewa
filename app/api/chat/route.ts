@@ -17,7 +17,7 @@ Synonym guide (treat these as the same):
 - "deleted card" = "recycle bin" = "deleted panel" = "where deleted cards go" — answer: they go to a 7-day recycle bin shown at the top of the relevant page
 - "My listing" = "My pipeline" = "pipeline board"
 - "Existing listing" = "existing contracts" = "tenancy tracker"
-- "Target listing" = "target units" = "competitor tracking"
+- "Lost listing" = "lost units" = "competitor tracking"
 
 If the answer is not covered in the FAQ, respond with exactly:
 "I don't have that information here. Please email us at support@kakisewa.com and we will help you out."

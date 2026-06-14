@@ -6,7 +6,7 @@ import { DeletedOwnerLeadsPanel } from "@/components/deleted-owner-leads-panel";
 
 export const dynamic = "force-dynamic";
 
-export default async function TargetUnitsPage({ searchParams }: { searchParams: Promise<{ highlight?: string }> }) {
+export default async function LostListingPage({ searchParams }: { searchParams: Promise<{ highlight?: string }> }) {
   const { highlight } = await searchParams;
   const [leads, deletedLeads] = await Promise.all([
     getCompetitorLeads(),
@@ -18,7 +18,7 @@ export default async function TargetUnitsPage({ searchParams }: { searchParams: 
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
-            Target listing
+            Lost listing
           </h1>
           <p className="mt-3 kk-body-sm max-w-2xl" style={{ color: "var(--kk-ink-mute)" }}>
             Track units rented by competitors. Reach out 60 days before renewal and win them over.

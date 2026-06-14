@@ -224,7 +224,7 @@ export async function removeOwnerLead(id: string) {
 export async function removeOwnerLeadForce(id: string) {
   await softDeleteOwnerLeadForce(id);
   invalidateCache();
-  revalidatePath("/my-listing"); revalidatePath("/target-listing");
+  revalidatePath("/my-listing"); revalidatePath("/lost-listing");
   revalidatePath("/");
 }
 
@@ -1957,7 +1957,7 @@ export async function markCompetitorRentedAction(
   invalidateCache();
   revalidatePath("/potential-listing");
   revalidatePath("/my-listing");
-  revalidatePath("/target-listing");
+  revalidatePath("/lost-listing");
   return { ok: true };
 }
 
@@ -1973,7 +1973,7 @@ export async function setCompetitorStageAction(
   "use server";
   await setCompetitorStage(id, stage);
   invalidateCache();
-  revalidatePath("/target-listing");
+  revalidatePath("/lost-listing");
   return { ok: true };
 }
 
@@ -1981,7 +1981,7 @@ export async function winCompetitorUnitAction(id: string): Promise<{ ok: boolean
   "use server";
   await winCompetitorUnit(id);
   invalidateCache();
-  revalidatePath("/target-listing");
+  revalidatePath("/lost-listing");
   revalidatePath("/my-listing");
   return { ok: true };
 }
@@ -1990,7 +1990,7 @@ export async function archiveCompetitorLeadAction(id: string): Promise<{ ok: boo
   "use server";
   await archiveCompetitorLead(id);
   invalidateCache();
-  revalidatePath("/target-listing");
+  revalidatePath("/lost-listing");
   return { ok: true };
 }
 
@@ -2014,7 +2014,7 @@ export async function updateCompetitorLeadAction(
   "use server";
   await updateOwnerLead(id, data);
   invalidateCache();
-  revalidatePath("/target-listing");
+  revalidatePath("/lost-listing");
   return { ok: true };
 }
 
@@ -2117,7 +2117,7 @@ export async function lostContractAction(
   }
   invalidateCache();
   revalidatePath("/existing-listing");
-  revalidatePath("/target-listing");
+  revalidatePath("/lost-listing");
   return { ok: true };
 }
 

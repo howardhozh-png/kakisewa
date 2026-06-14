@@ -282,8 +282,8 @@ function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id
         borderRadius: 9,
         padding: "7px 9px",
         marginBottom: 5,
-        background: "rgba(0,113,227,0.08)",
-        color: "#004FAD",
+        background: "var(--kk-theme-light)",
+        color: "var(--kk-theme-dark)",
         cursor: "pointer",
         position: "relative",
         display: "flex",
@@ -302,7 +302,7 @@ function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id
           style={{
             position: "absolute", top: 5, right: 5,
             background: "none", border: "none", cursor: "pointer",
-            color: "#004FAD", opacity: 0.55, padding: 2,
+            color: "var(--kk-theme-dark)", opacity: 0.55, padding: 2,
           }}
           title="Remove event"
         >

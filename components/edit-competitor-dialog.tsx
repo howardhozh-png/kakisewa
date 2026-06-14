@@ -196,7 +196,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <p className="kk-overline mb-2">Edit target listing</p>
+              <p className="kk-overline mb-2">Edit lost listing</p>
               {editingOwner ? (
                 <div className="space-y-1">
                   <input
@@ -454,7 +454,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
         onOpenChange={setCalendarOpen}
         defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || "Follow up"}
         subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
-        cardHref={`/target-listing?highlight=${lead.id}`}
+        cardHref={`/lost-listing?highlight=${lead.id}`}
         contextLabel={[propertyName, unit ? `Unit ${unit}` : null, lead.owner_name].filter(Boolean).join(" · ") || undefined}
         ownerLeadId={lead.id}
       />
