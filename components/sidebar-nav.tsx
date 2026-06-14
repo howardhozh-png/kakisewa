@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft, Target } from "lucide-react";
+import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft, Target, CalendarDays } from "lucide-react";
 
 const STORAGE_KEY = "kk_sidebar_pinned";
 const W_OPEN = 220;
@@ -20,8 +20,9 @@ const PIPELINE_ITEMS = [
 ] as const;
 
 const BOTTOM_ITEMS = [
-  { href: "/directory",   icon: BookOpen,  label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: null },
-  { href: "/performance", icon: BarChart2, label: "Performance", matchPaths: ["/performance"], minPlan: "elite" },
+  { href: "/calendar",    icon: CalendarDays, label: "My Calendar", matchPaths: ["/calendar"], minPlan: null },
+  { href: "/directory",   icon: BookOpen,    label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: null },
+  { href: "/performance", icon: BarChart2,   label: "Performance", matchPaths: ["/performance"], minPlan: "elite" },
 ] as const;
 
 const PLAN_RANK: Record<string, number> = { silver: 1, gold: 2, platinum: 3, elite: 4 };
