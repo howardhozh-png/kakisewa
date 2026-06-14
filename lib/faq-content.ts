@@ -24,7 +24,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I complete my agent profile?",
-        a: "Go to Settings > Account. Fill in your name, phone number, and REN/REA number. A complete profile unlocks your public agent directory listing (Platinum and Elite plans) so owners and tenants can find you.",
+        a: "Go to Settings > Account and fill in your details:\n1. Enter your name and phone number\n2. Add your REN/REA number\n3. Upload a profile photo (optional)\nA complete profile unlocks your public agent directory listing on Platinum and Elite plans.",
       },
       {
         q: "What is the trial period?",
@@ -50,11 +50,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I send a WhatsApp message to an owner?",
-        a: "Open the card and tap the WhatsApp icon. kakisewa opens WhatsApp Web (or your phone's WhatsApp) with a pre-filled message from your template. Tap Send inside WhatsApp to deliver it.",
+        a: "1. Open the listing card\n2. Tap the WhatsApp icon\n3. kakisewa opens WhatsApp with a pre-filled message from your template\n4. Tap Send inside WhatsApp to deliver it\nThe message is personalised automatically with the owner's name and property details.",
       },
       {
         q: "How do I send a property pack to an owner?",
-        a: "Open the listing card and tap 'Send property pack'. kakisewa generates a professional summary of the property and your agency details, then opens WhatsApp with a message for the owner.",
+        a: "1. Open the listing card in My listing\n2. Tap 'Send property pack'\n3. kakisewa generates a professional summary with your agency details\n4. WhatsApp opens with a pre-filled message ready to send to the owner\nThe owner receives a link to a professional web page showing your agency branding and property details.",
       },
       {
         q: "How do I track whether an owner has replied?",
@@ -170,15 +170,15 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I enable push notifications on iPhone?",
-        a: "Install kakisewa as a PWA first: open Safari, tap the Share button, then 'Add to Home Screen'. Open the app from your Home Screen, go to Settings > Notifications, and tap 'Enable push notifications'. iOS will ask for permission — tap Allow.",
+        a: "1. Open kakisewa in Safari\n2. Tap the Share button (box with arrow)\n3. Tap 'Add to Home Screen' and confirm\n4. Open the app from your Home Screen\n5. Go to Settings > Notifications and tap 'Enable push notifications'\n6. Tap Allow when iOS asks for permission",
       },
       {
         q: "How do I enable push notifications on Android?",
-        a: "Open kakisewa in Chrome, tap the three-dot menu, and select 'Add to Home Screen'. Open the installed app, go to Settings > Notifications, and tap 'Enable push notifications'. Android will ask for permission — tap Allow.",
+        a: "1. Open kakisewa in Chrome\n2. Tap the three-dot menu and select 'Add to Home Screen'\n3. Open the installed app from your Home Screen\n4. Go to Settings > Notifications and tap 'Enable push notifications'\n5. Tap Allow when Android asks for permission",
       },
       {
         q: "How do I enable push notifications on a desktop computer?",
-        a: "Open kakisewa in Chrome or Edge. Go to Settings > Notifications and tap 'Enable push notifications'. Your browser will ask for permission in the address bar — click Allow. Notifications will appear even when the browser tab is in the background.",
+        a: "1. Open kakisewa in Chrome or Edge\n2. Go to Settings > Notifications\n3. Tap 'Enable push notifications'\n4. Click Allow when your browser asks for permission in the address bar\nNotifications will appear even when the browser tab is in the background.",
       },
       {
         q: "What notifications will I receive?",
@@ -280,7 +280,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I set up WhatsApp Web?",
-        a: "Open web.whatsapp.com in your browser. On your phone, open WhatsApp > Settings > Linked Devices > Link a Device. Scan the QR code shown in the browser. Once linked, kakisewa's WhatsApp buttons will open directly in the linked session.",
+        a: "1. Open web.whatsapp.com in your browser\n2. On your phone, open WhatsApp > Settings > Linked Devices > Link a Device\n3. Scan the QR code shown in the browser\nOnce linked, kakisewa's WhatsApp buttons will open directly in the linked session.",
       },
       {
         q: "Can kakisewa send WhatsApp messages automatically?",
@@ -306,7 +306,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I upgrade my plan?",
-        a: "Go to Subscription and tap 'Upgrade'. Choose your plan and billing cycle (monthly or annual). You will be taken to the Stripe payment page. Once payment is confirmed, your new limits apply immediately.",
+        a: "1. Go to the Subscription page\n2. Tap 'Upgrade' and choose your plan and billing cycle (monthly or annual)\n3. Complete payment on the Stripe page\nYour new limits apply immediately once payment is confirmed.",
       },
       {
         q: "How do I access my billing details or cancel?",

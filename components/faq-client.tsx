@@ -4,6 +4,35 @@ import { useState, useMemo } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { FAQ_SECTIONS } from "@/lib/faq-content";
 
+function renderFaqAnswer(text: string): React.ReactNode {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let listItems: React.ReactNode[] = [];
+  let k = 0;
+
+  function flushList() {
+    if (!listItems.length) return;
+    nodes.push(
+      <ol key={k++} style={{ margin: "8px 0", paddingLeft: 20, listStyleType: "decimal", listStylePosition: "outside", lineHeight: 1.65 }}>
+        {listItems}
+      </ol>
+    );
+    listItems = [];
+  }
+
+  for (const line of lines) {
+    const ol = line.match(/^(\d+)\.\s+(.+)/);
+    if (ol) {
+      listItems.push(<li key={listItems.length} style={{ marginBottom: 3, color: "var(--kk-ink-mute)", fontSize: 13 }}>{ol[2]}</li>);
+    } else {
+      flushList();
+      if (line.trim()) nodes.push(<p key={k++} style={{ margin: "4px 0", fontSize: 13, lineHeight: 1.65, color: "var(--kk-ink-mute)" }}>{line}</p>);
+    }
+  }
+  flushList();
+  return nodes;
+}
+
 export function FaqClient() {
   const [search, setSearch] = useState("");
 
@@ -108,9 +137,9 @@ export function FaqClient() {
                         style={{ color: "var(--kk-ink-faint)" }}
                       />
                     </summary>
-                    <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-                      {faq.a}
-                    </p>
+                    <div className="mt-3">
+                      {renderFaqAnswer(faq.a)}
+                    </div>
                   </details>
                 ))}
               </div>

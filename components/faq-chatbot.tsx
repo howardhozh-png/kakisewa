@@ -24,8 +24,8 @@ function renderMessage(content: string): React.ReactNode {
     if (!listItems.length) return;
     nodes.push(
       listType === "ol"
-        ? <ol key={k++} style={{ margin: "4px 0 4px 0", paddingLeft: 18, lineHeight: 1.55 }}>{listItems}</ol>
-        : <ul key={k++} style={{ margin: "4px 0 4px 0", paddingLeft: 18, lineHeight: 1.55 }}>{listItems}</ul>
+        ? <ol key={k++} style={{ margin: "6px 0", paddingLeft: 20, listStyleType: "decimal", listStylePosition: "outside", lineHeight: 1.6 }}>{listItems}</ol>
+        : <ul key={k++} style={{ margin: "6px 0", paddingLeft: 20, listStyleType: "disc", listStylePosition: "outside", lineHeight: 1.6 }}>{listItems}</ul>
     );
     listItems = [];
     listType = null;
@@ -379,6 +379,37 @@ export function FaqChatbot() {
             >
               <Send size={15} color="#fff" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Orbit animation keyframes */}
+      <style>{`
+        @keyframes kk-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes kk-counter { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(-360deg); } }
+      `}</style>
+
+      {/* Orbiting "Ask me" label — only when closed */}
+      {!open && (
+        <div style={{ position: "fixed", bottom: 72, right: 20, width: 48, height: 48, pointerEvents: "none", zIndex: 9998 }}>
+          <div style={{ position: "absolute", inset: -26, animation: "kk-orbit 7s linear infinite" }}>
+            <span style={{
+              position: "absolute",
+              top: 0,
+              left: "50%",
+              animation: "kk-counter 7s linear infinite",
+              fontSize: 10,
+              fontWeight: 700,
+              color: "#0071E3",
+              letterSpacing: "0.07em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              background: "#fff",
+              padding: "2px 7px",
+              borderRadius: 20,
+              boxShadow: "0 1px 6px rgba(0,113,227,0.2)",
+              border: "1px solid rgba(0,113,227,0.18)",
+            }}>Ask me</span>
           </div>
         </div>
       )}
