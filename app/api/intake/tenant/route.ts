@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
     await completeTenantIntake(token, extracted, session.agent_id);
 
     const tenantName = extracted.name ?? session.name ?? "New tenant";
-    const deepLink = "/existing-listing";
+    const deepLink = "/directory?view=tenants";
     sendPushToUser(session.agent_id, {
       title: "Tenant profile submitted",
-      body: `${tenantName} — view and assess in Existing listing`,
+      body: `${tenantName} submitted their property preferences`,
       url: deepLink,
       tag: `tenant_intake_${token}`,
     }).catch(() => {});

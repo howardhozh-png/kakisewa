@@ -105,6 +105,83 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         </div>
 
         <div className="flex flex-col gap-4 p-6 overflow-y-auto flex-1">
+          {profile.intake_completed_at && (
+            <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "var(--kk-purple-soft)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--kk-purple-ink)" }}>
+                Property preferences (submitted via form)
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {(profile.budget_min != null || profile.budget_max != null) && (
+                  <div className="col-span-2">
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Budget</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>
+                      {profile.budget_min != null && profile.budget_max != null
+                        ? `RM ${profile.budget_min.toLocaleString()} - RM ${profile.budget_max.toLocaleString()}`
+                        : profile.budget_max != null
+                          ? `Up to RM ${profile.budget_max.toLocaleString()}`
+                          : `From RM ${profile.budget_min!.toLocaleString()}`}
+                    </p>
+                  </div>
+                )}
+                {profile.bedrooms_pref != null && (
+                  <div>
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Bedrooms</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.bedrooms_pref} bedrooms</p>
+                  </div>
+                )}
+                {profile.preferred_move_in && (
+                  <div>
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Move-in</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.preferred_move_in}</p>
+                  </div>
+                )}
+                {profile.area_preference && (
+                  <div className="col-span-2">
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Area preference</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.area_preference}</p>
+                  </div>
+                )}
+                {profile.furnishing_preference && (
+                  <div>
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Furnishing</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.furnishing_preference}</p>
+                  </div>
+                )}
+                {profile.occupants != null && (
+                  <div>
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Occupants</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.occupants} person{profile.occupants !== 1 ? "s" : ""}</p>
+                  </div>
+                )}
+                {profile.monthly_income != null && (
+                  <div>
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Monthly income</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>RM {profile.monthly_income.toLocaleString()}</p>
+                  </div>
+                )}
+                {profile.age != null && (
+                  <div>
+                    <span className="text-[11px]" style={{ color: "var(--kk-purple-ink)", opacity: 0.7 }}>Age</span>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-purple-ink)" }}>{profile.age} years old</p>
+                  </div>
+                )}
+                {(profile.pets != null || profile.smoking != null) && (
+                  <div className="col-span-2 flex gap-3">
+                    {profile.pets != null && (
+                      <span className="text-[12px] font-medium px-3 py-1 rounded-full" style={{ background: profile.pets ? "var(--kk-amber-soft)" : "var(--kk-surface-2)", color: profile.pets ? "#B45309" : "var(--kk-ink-mute)" }}>
+                        {profile.pets ? "Has pets" : "No pets"}
+                      </span>
+                    )}
+                    {profile.smoking != null && (
+                      <span className="text-[12px] font-medium px-3 py-1 rounded-full" style={{ background: profile.smoking ? "var(--kk-red-soft)" : "var(--kk-surface-2)", color: profile.smoking ? "var(--kk-red)" : "var(--kk-ink-mute)" }}>
+                        {profile.smoking ? "Smoker" : "Non-smoker"}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           <div>
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Name</label>
             <input className={inputCls} style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} />
