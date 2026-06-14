@@ -296,7 +296,7 @@ const _cachedAllActiveTenants = unstable_cache(
 const _cachedCompetitorLeads = unstable_cache(
   async (userId: string): Promise<OwnerLead[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).eq("is_competitor_target", true).order("competitor_contract_end", { ascending: true });
+    const { data, error } = await svc.from("owner_leads").select("*").eq("user_id", userId).eq("is_competitor_target", true).is("deleted_at", null).order("competitor_contract_end", { ascending: true });
     if (error) throw error;
     return (data ?? []).map((r: unknown) => parseOwnerLead(r as Record<string, unknown>));
   },
@@ -1360,7 +1360,7 @@ export async function getSoftDeletedMyListingLeads(): Promise<OwnerLead[]> {
 
 export async function getSoftDeletedTargetLeads(): Promise<OwnerLead[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_managed", true).order("deleted_at", { ascending: false }).range(0, 9999);
+  const { data, error } = await supabase.from("owner_leads").select("*").not("deleted_at", "is", null).eq("is_competitor_target", true).order("deleted_at", { ascending: false }).range(0, 9999);
   if (error) throw error;
   return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
 }
@@ -1629,7 +1629,7 @@ export async function getCompetitorLeads(): Promise<OwnerLead[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("owner_leads").select("*").eq("is_competitor_target", true).order("competitor_contract_end", { ascending: true });
+    const { data, error } = await supabase.from("owner_leads").select("*").eq("is_competitor_target", true).is("deleted_at", null).order("competitor_contract_end", { ascending: true });
     if (error) throw error;
     return (data ?? []).map(r => parseOwnerLead(r as Record<string, unknown>));
   }
