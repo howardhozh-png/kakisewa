@@ -137,6 +137,7 @@ export interface OwnerLead {
   last_wa_reply_at?: string | null;
   last_wa_reply_text?: string | null;
   wa_status?: "pending" | "replied" | "no_response" | null;
+  last_outreach_at?: string | null;
   created_at: string;
 }
 

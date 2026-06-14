@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getOwnerLeads, getSoftDeletedOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { AddOutreachButton } from "@/components/add-outreach-button";
@@ -25,14 +24,7 @@ export default async function MessageOwnersPage() {
             Track every owner from first message to listing in one place.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <AddOutreachButton ownerLeads={ownerLeads} />
-          <UploadOwnerCsvDialog />
-        </div>
-      </header>
-
-      <Suspense fallback={null}>
-        <div className="mb-8 flex justify-end">
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <PageHelpButton
             variant="question"
             module={0}
@@ -44,8 +36,10 @@ export default async function MessageOwnersPage() {
               "Move interested owners to My listing and send them a tenant pack",
             ]}
           />
+          <AddOutreachButton ownerLeads={ownerLeads} />
+          <UploadOwnerCsvDialog />
         </div>
-      </Suspense>
+      </header>
 
       {ownerLeads.length === 0 && deletedLeads.length === 0 ? <OutreachEmptyState /> : <OutreachTable leads={ownerLeads} deletedLeads={deletedLeads} />}
     </div>

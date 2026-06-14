@@ -59,6 +59,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 type Filter = "all" | "unsent" | "contacted" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
+type SentDateFilter = "all" | "today" | "this_week" | "this_month" | "older_30" | "never";
 type ContactStatus = "listed" | "rented" | "contacted" | "unsent" | "declined";
 
 function getStatus(lead: OwnerLead): ContactStatus {
@@ -807,6 +808,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [purposeFilter, setPurposeFilter] = useState<PurposeFilter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
+  const [sentDateFilter, setSentDateFilter] = useState<SentDateFilter>("all");
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -824,7 +826,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [hardDeletingId, setHardDeletingId] = useState<string | null>(null);
   const [hardDeleteConfirmId, setHardDeleteConfirmId] = useState<string | null>(null);
 
-  useEffect(() => { setSelectedIds(new Set()); }, [filter, purposeFilter, propertyFilter, search]);
+  useEffect(() => { setSelectedIds(new Set()); }, [filter, purposeFilter, propertyFilter, sentDateFilter, search]);
 
   useEffect(() => {
     if (!exportOpen) return;
@@ -894,6 +896,20 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           else if (filter === "contacted") { if (s !== "contacted") return false; }
           if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
           if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
+          if (sentDateFilter !== "all") {
+            const sent = l.last_outreach_at ?? l.intake_sent_at ?? null;
+            if (sentDateFilter === "never") { if (sent) return false; }
+            else {
+              if (!sent) return false;
+              const sentMs = new Date(sent).getTime();
+              const now = Date.now();
+              const dayMs = 86400000;
+              if (sentDateFilter === "today"      && (now - sentMs) > dayMs)       return false;
+              if (sentDateFilter === "this_week"  && (now - sentMs) > 7 * dayMs)   return false;
+              if (sentDateFilter === "this_month" && (now - sentMs) > 30 * dayMs)  return false;
+              if (sentDateFilter === "older_30"   && (now - sentMs) <= 30 * dayMs) return false;
+            }
+          }
           if (searchLower) {
             const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
               .map((v) => (v ?? "").toLowerCase()).join(" ");
@@ -1170,6 +1186,21 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             { value: "sell", label: "For Sale" },
           ]}
           minWidth={140}
+        />
+
+        {/* Last sent date filter */}
+        <FilterSelect
+          value={sentDateFilter}
+          onChange={(v) => setSentDateFilter(v as SentDateFilter)}
+          options={[
+            { value: "all",        label: "Any sent date" },
+            { value: "today",      label: "Sent today" },
+            { value: "this_week",  label: "Sent this week" },
+            { value: "this_month", label: "Sent this month" },
+            { value: "older_30",   label: "Sent >30 days ago" },
+            { value: "never",      label: "Never sent" },
+          ]}
+          minWidth={160}
         />
 
       </div>

@@ -1880,10 +1880,9 @@ export async function setAccountTier(tier: Tier): Promise<void> {
 
 export async function incrementOwnerOutreachCount(id: string): Promise<void> {
   const supabase = await createClient();
-  // Supabase doesn't have increment shorthand — read then write
   const { data } = await supabase.from("owner_leads").select("outreach_count").eq("id", id).single();
   const cur = ((data as Record<string, unknown> | null)?.outreach_count as number | null) ?? 0;
-  await supabase.from("owner_leads").update({ outreach_count: cur + 1 }).eq("id", id);
+  await supabase.from("owner_leads").update({ outreach_count: cur + 1, last_outreach_at: new Date().toISOString() }).eq("id", id);
 }
 
 // ─── Owner intake ─────────────────────────────────────────────────────────────
