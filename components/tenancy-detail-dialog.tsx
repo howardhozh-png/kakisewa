@@ -565,7 +565,7 @@ function TenancyForm({
         onOpenChange={setCalendarOpen}
         defaultTitle={[tenancy.tenant_name, propertyName].filter(Boolean).join(" · ") || propertyName || ""}
         subtitle={propertyName || undefined}
-        cardHref="/existing-listing"
+        cardHref={`/existing-listing?highlight=${tenancy.id}`}
         contextLabel={[tenancy.tenant_name, propertyName].filter(Boolean).join(" · ") || undefined}
         tenancyId={tenancy.id}
       />

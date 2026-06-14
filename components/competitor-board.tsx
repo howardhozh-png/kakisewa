@@ -84,9 +84,10 @@ function formatDate(iso: string): string {
 
 interface Props {
   leads: OwnerLead[];
+  highlightId?: string;
 }
 
-export function CompetitorBoard({ leads }: Props) {
+export function CompetitorBoard({ leads, highlightId }: Props) {
   const router = useRouter();
   const today = useMemo(() => new Date(), []);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -100,6 +101,23 @@ export function CompetitorBoard({ leads }: Props) {
 
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const timer = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      setTimeout(() => {
+        const el2 = document.querySelector<HTMLElement>(`[data-card-id="${highlightId}"]`);
+        if (el2) {
+          el2.classList.add("kk-flash-green");
+          setTimeout(() => el2.classList.remove("kk-flash-green"), 2100);
+        }
+      }, 400);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

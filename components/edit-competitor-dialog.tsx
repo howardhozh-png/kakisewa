@@ -450,7 +450,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
         onOpenChange={setCalendarOpen}
         defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || "Follow up"}
         subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
-        cardHref="/target-listing"
+        cardHref={`/target-listing?highlight=${lead.id}`}
         contextLabel={[propertyName, unit ? `Unit ${unit}` : null, lead.owner_name].filter(Boolean).join(" · ") || undefined}
         ownerLeadId={lead.id}
       />

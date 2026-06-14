@@ -6,7 +6,8 @@ import { DeletedOwnerLeadsPanel } from "@/components/deleted-owner-leads-panel";
 
 export const dynamic = "force-dynamic";
 
-export default async function TargetUnitsPage() {
+export default async function TargetUnitsPage({ searchParams }: { searchParams: Promise<{ highlight?: string }> }) {
+  const { highlight } = await searchParams;
   const [leads, deletedLeads] = await Promise.all([
     getCompetitorLeads(),
     getSoftDeletedTargetLeads(),
@@ -41,7 +42,7 @@ export default async function TargetUnitsPage() {
 
       <DeletedOwnerLeadsPanel leads={deletedLeads} />
 
-      <CompetitorBoard leads={leads} />
+      <CompetitorBoard leads={leads} highlightId={highlight} />
     </div>
   );
 }

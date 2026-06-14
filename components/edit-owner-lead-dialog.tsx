@@ -441,7 +441,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             onOpenChange={setCalendarOpen}
             defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || ""}
             subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
-            cardHref="/my-listing"
+            cardHref={`/my-listing?highlight=${lead.id}`}
             contextLabel={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || undefined}
             ownerLeadId={lead.id}
           />
