@@ -47,7 +47,7 @@ export function DeletedOwnerLeadsPanel({ leads }: { leads: OwnerLead[] }) {
   }
 
   return (
-    <div className="mb-6 mx-auto max-w-[1440px]">
+    <div className="mt-6 mx-auto max-w-[1440px]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

@@ -285,9 +285,6 @@ function PropertyCard({ lead, rankNumber, isDragging, onLike }: {
             <p className="text-[15px] font-semibold leading-tight" style={{ color: "#1C1C1E" }}>
               {lead.property_name ?? "Property"}
             </p>
-            {lead.unit && (
-              <p className="text-[12px] mt-0.5" style={{ color: "#6C6C70" }}>Unit {lead.unit}</p>
-            )}
           </div>
           {/* Like button */}
           <button
@@ -374,7 +371,6 @@ function CardOverlay({ lead, rankNumber, width }: { lead: PropertyPackShareLead;
       </div>
       <div className="px-4 py-3">
         <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>{lead.property_name ?? "Property"}</p>
-        {lead.unit && <p className="text-[12px]" style={{ color: "#6C6C70" }}>Unit {lead.unit}</p>}
       </div>
     </div>
   );

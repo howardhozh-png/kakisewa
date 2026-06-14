@@ -64,6 +64,9 @@ function PropertyCard({
         <p className="text-[14px] font-semibold leading-snug" style={{ color: "var(--kk-ink)" }}>
           {lead.property_name ?? "—"}
         </p>
+        {lead.unit && (
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Unit {lead.unit}</p>
+        )}
         <div className="flex items-center gap-3 mt-2">
           {lead.bedrooms != null && (
             <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>

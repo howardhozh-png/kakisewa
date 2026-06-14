@@ -57,8 +57,6 @@ export default async function TrackListingPage({ searchParams }: Props) {
         <AddListingButton ownerLeads={ownerLeads} />
       </header>
 
-      <DeletedOwnerLeadsPanel leads={deletedLeads} />
-
       <Suspense fallback={null}>
         <div className="mb-8 flex justify-end">
           <PageHelpButton
@@ -74,6 +72,8 @@ export default async function TrackListingPage({ searchParams }: Props) {
           />
         </div>
       </Suspense>
+
+      <DeletedOwnerLeadsPanel leads={deletedLeads} />
 
       {pipelineLeads.length === 0 ? (
         <>
