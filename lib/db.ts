@@ -468,6 +468,7 @@ export async function createTenancy(
       contract_start: data.contract_start ?? null,
       contract_end: data.contract_end ?? null,
       contract_duration_months: data.contract_duration_months ?? null,
+      lifecycle_stage: data.lifecycle_stage ?? null,
       owner_lead_id: data.owner_lead_id ?? null,
     });
   if (error) throw error;
