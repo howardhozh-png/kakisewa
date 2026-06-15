@@ -70,6 +70,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setPhoneErr(null);
       setAvailableFrom(lead.available_from ?? "");
       setNotes(lead.notes ?? "");
+      setConfirmDelete(false);
     }
   }, [lead?.id, open]);
 
@@ -240,13 +241,13 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Property name" value={propertyName} onChange={setPropertyName} placeholder="e.g. Residensi Mutiara" full />
+            <Field label="Property name" value={propertyName} onChange={setPropertyName} placeholder="e.g. Residensi Mutiara" full required />
             <Field label="Unit" value={unit} onChange={setUnit} placeholder="e.g. A-12" />
-            <Field label="Expected rent (RM/mo)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 1,800" money />
-            <BedroomPicker value={bedrooms} onChange={setBedrooms} />
-            <Field label="Bathrooms" value={bathrooms} onChange={(v) => setBathrooms(String(Math.max(0, Number(v))))} placeholder="e.g. 2" type="number" />
+            <Field label="Expected rent (RM/mo)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 1,800" money required />
+            <BedroomPicker value={bedrooms} onChange={setBedrooms} required />
+            <Field label="Bathrooms" value={bathrooms} onChange={(v) => setBathrooms(String(Math.max(0, Number(v))))} placeholder="e.g. 2" type="number" required />
             <Field label="Parking" value={parking} onChange={setParking} placeholder="e.g. A142" />
-            <Field label={lead.stage === "listed" ? "Available from *" : "Available from"} value={availableFrom} onChange={setAvailableFrom} type="date" full highlight={lead.stage === "listed" && !availableFrom} />
+            <Field label="Available from" value={availableFrom} onChange={setAvailableFrom} type="date" full required highlight={lead.stage === "listed" && !availableFrom} />
           </div>
 
           {/* Rent / Sale purpose — multi-select */}
@@ -380,7 +381,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
 
           {confirmDelete ? (
             <div className="flex items-center gap-2 pt-1 rounded-xl px-3 py-2" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
-              <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Delete this lead permanently?</p>
+              <p className="flex-1 text-[12px] font-medium" style={{ color: "#DC2626" }}>Move to trash? You can restore it later.</p>
               <button type="button" className="kk-pill kk-pill-ghost text-[12px]" onClick={() => setConfirmDelete(false)} disabled={pending}>Cancel</button>
               <button type="button" onClick={handleDelete} disabled={pending}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
@@ -472,8 +473,8 @@ export function getDocumentName(url: string): string {
   return part.replace(/^\d{13}-/, '') || 'Document';
 }
 
-function Field({ label, value, onChange, placeholder, type = "text", full, money, highlight }: {
-  label: string; value: string; onChange: (s: string) => void; placeholder?: string; type?: string; full?: boolean; money?: boolean; highlight?: boolean;
+function Field({ label, value, onChange, placeholder, type = "text", full, money, highlight, required }: {
+  label: string; value: string; onChange: (s: string) => void; placeholder?: string; type?: string; full?: boolean; money?: boolean; highlight?: boolean; required?: boolean;
 }) {
   const cls = "w-full text-[14px] px-3 py-2 rounded-xl";
   const sty = highlight
@@ -481,7 +482,9 @@ function Field({ label, value, onChange, placeholder, type = "text", full, money
     : { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
   return (
     <div className={`space-y-1.5 ${full ? "col-span-2" : ""}`}>
-      <label className="text-[13px] font-medium" style={{ color: highlight ? "#B45309" : "var(--kk-ink-soft)" }}>{label}</label>
+      <label className="text-[13px] font-medium" style={{ color: highlight ? "#B45309" : "var(--kk-ink-soft)" }}>
+        {label}{required && <span style={{ color: "var(--kk-red)" }}> *</span>}
+      </label>
       {money
         ? <MoneyInput value={value} onChange={onChange} placeholder={placeholder} className={cls} style={sty} />
         : type === "date"
@@ -501,10 +504,12 @@ const BEDROOM_OPTIONS = [
   { label: "5+", value: "5" },
 ];
 
-export function BedroomPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function BedroomPicker({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bedrooms</label>
+      <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
+        Bedrooms{required && <span style={{ color: "var(--kk-red)" }}> *</span>}
+      </label>
       <div className="flex gap-1 flex-wrap">
         {BEDROOM_OPTIONS.map((opt) => (
           <button
