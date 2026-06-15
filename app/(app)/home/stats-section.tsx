@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect, useCallback } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { fetchExpandedStats } from "./actions";
 import { MonthPickerPill } from "@/components/month-picker-pill";
@@ -16,6 +16,10 @@ const RANGE_OPTIONS = [
   { value: "24m", label: "24m", months: 24 },
 ] as const;
 
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
 function fmtTime(t: string | null): string | null {
   if (!t) return null;
   const [h, m] = t.split(":").map(Number);
@@ -24,17 +28,245 @@ function fmtTime(t: string | null): string | null {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function fmtEventDate(dateStr: string, today: string): string {
-  if (dateStr === today) return "Today";
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short" });
-}
-
 function fmtMonthLabel(ym: string): string {
   const [y, m] = ym.split("-").map(Number);
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${months[m - 1]} ${y}`;
 }
+
+function weekLabel(weekStart: string, weekEnd: string): string {
+  const s = new Date(weekStart + "T00:00:00");
+  const e = new Date(weekEnd + "T00:00:00");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const sm = months[s.getMonth()];
+  const em = months[e.getMonth()];
+  if (s.getMonth() === e.getMonth()) {
+    return `Week of ${sm} ${s.getDate()} - ${e.getDate()}`;
+  }
+  return `Week of ${sm} ${s.getDate()} - ${em} ${e.getDate()}`;
+}
+
+// Returns the 7 dates for Mon–Sun of the given weekStart
+function getWeekDates(weekStart: string): string[] {
+  const dates: string[] = [];
+  const base = new Date(weekStart + "T00:00:00");
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+function eventColor(ev: CalendarEvent): string {
+  const t = ev.title?.toLowerCase() ?? "";
+  if (t.includes("renewal") || t.includes("renew")) return "rgba(52,199,89,0.18)";
+  if (t.includes("sign") || t.includes("contract")) return "rgba(0,113,227,0.13)";
+  if (t.includes("view") || t.includes("inspect")) return "rgba(255,149,0,0.18)";
+  if (t.includes("expir") || t.includes("end") || t.includes("expired")) return "rgba(255,59,48,0.13)";
+  if (t.includes("reminder") || t.includes("deposit")) return "rgba(255,149,0,0.13)";
+  if (t.includes("call") || t.includes("follow")) return "rgba(52,199,89,0.13)";
+  return "rgba(110,110,115,0.10)";
+}
+
+// ── Donut ring SVG ─────────────────────────────────────────────────────────────
+
+function DonutRing({ pct, strokeColor, trackColor }: { pct: number; strokeColor: string; trackColor: string }) {
+  const r = 30;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(pct, 100) / 100);
+  return (
+    <svg width="76" height="76" viewBox="0 0 76 76" style={{ transform: "rotate(-90deg)", display: "block" }}>
+      <circle cx="38" cy="38" r={r} fill="none" stroke={trackColor} strokeWidth="7" />
+      <circle
+        cx="38" cy="38" r={r} fill="none"
+        stroke={strokeColor} strokeWidth="7"
+        strokeDasharray={circ} strokeDashoffset={offset}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// ── Weekly calendar ────────────────────────────────────────────────────────────
+
+function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: CalendarEvent[]; weekStart: string; weekEnd: string }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const weekDates = getWeekDates(weekStart);
+
+  const byDate: Record<string, CalendarEvent[]> = {};
+  for (const date of weekDates) byDate[date] = [];
+  for (const ev of weekEvents) {
+    if (byDate[ev.event_date]) byDate[ev.event_date].push(ev);
+  }
+
+  return (
+    <Link
+      href="/calendar"
+      style={{
+        display: "block",
+        textDecoration: "none",
+        background: "var(--kk-surface)",
+        border: "1px solid var(--kk-line)",
+        borderRadius: 18,
+        overflow: "hidden",
+        boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)",
+        marginBottom: 12,
+        cursor: "pointer",
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        padding: "14px 18px",
+        borderBottom: "1px solid var(--kk-line)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>
+          This week{" "}
+          <span style={{ fontWeight: 400, color: "var(--kk-ink-mute)" }}>
+            ({weekLabel(weekStart, weekEnd)})
+          </span>
+        </span>
+        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)" }}>
+          View full calendar →
+        </span>
+      </div>
+
+      {/* Desktop: 7-column grid */}
+      <div className="kk-week-desktop" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+        {weekDates.map((date, i) => {
+          const isToday = date === today;
+          const dayNum = new Date(date + "T00:00:00").getDate();
+          const events = byDate[date] ?? [];
+          const shown = events.slice(0, 3);
+          const extra = events.length - shown.length;
+
+          return (
+            <div
+              key={date}
+              style={{
+                borderRight: i < 6 ? "1px solid var(--kk-line)" : "none",
+                padding: "10px 8px 12px",
+                minHeight: 120,
+                background: isToday ? "rgba(0,113,227,0.04)" : "transparent",
+              }}
+            >
+              {/* Day header */}
+              <div style={{ textAlign: "center", marginBottom: 8 }}>
+                <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: isToday ? "var(--kk-blue)" : "var(--kk-ink-faint)", marginBottom: 4 }}>
+                  {DAY_LABELS[i]}
+                </p>
+                {isToday ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", background: "var(--kk-blue)", color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                    {dayNum}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>{dayNum}</span>
+                )}
+              </div>
+
+              {/* Events */}
+              {events.length === 0 ? (
+                <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", textAlign: "center" }}>–</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {shown.map((ev) => (
+                    <div
+                      key={ev.id}
+                      style={{
+                        background: eventColor(ev),
+                        borderRadius: 6,
+                        padding: "4px 6px",
+                      }}
+                    >
+                      <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {ev.title}
+                      </p>
+                      {ev.event_time && (
+                        <p style={{ fontSize: 9, color: "var(--kk-ink-mute)", marginTop: 2 }}>
+                          {fmtTime(ev.event_time)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                  {extra > 0 && (
+                    <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-blue)", textAlign: "center", marginTop: 2 }}>
+                      +{extra} more
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile: horizontal scroll chips */}
+      <div
+        className="kk-week-mobile"
+        style={{
+          display: "none",
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          padding: "12px 16px",
+          gap: 10,
+        }}
+      >
+        {weekDates.map((date, i) => {
+          const isToday = date === today;
+          const dayNum = new Date(date + "T00:00:00").getDate();
+          const events = byDate[date] ?? [];
+          const extra = Math.max(0, events.length - 2);
+          const shown = events.slice(0, 2);
+
+          return (
+            <div
+              key={date}
+              style={{
+                flexShrink: 0,
+                minWidth: 72,
+                background: isToday ? "rgba(0,113,227,0.08)" : "var(--kk-surface-2)",
+                borderRadius: 12,
+                padding: "10px 10px 10px",
+                border: isToday ? "1px solid rgba(0,113,227,0.25)" : "1px solid var(--kk-line)",
+              }}
+            >
+              <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: isToday ? "var(--kk-blue)" : "var(--kk-ink-faint)", marginBottom: 4 }}>
+                {DAY_LABELS[i]}
+              </p>
+              {isToday ? (
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "var(--kk-blue)", color: "#fff", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                  {dayNum}
+                </span>
+              ) : (
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--kk-ink)", marginBottom: 6 }}>{dayNum}</p>
+              )}
+              {events.length === 0 ? (
+                <p style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>–</p>
+              ) : (
+                <>
+                  {shown.map((ev) => (
+                    <p key={ev.id} style={{ fontSize: 10, fontWeight: 500, color: "var(--kk-ink)", lineHeight: 1.3, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 60 }}>
+                      {ev.title}
+                    </p>
+                  ))}
+                  {extra > 0 && (
+                    <p style={{ fontSize: 9, fontWeight: 600, color: "var(--kk-blue)" }}>+{extra} more</p>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Link>
+  );
+}
+
+// ── Stat card with donut ───────────────────────────────────────────────────────
 
 interface BlockStat {
   label: string;
@@ -48,7 +280,11 @@ function Block({
   stats,
   href,
   bg,
-  color,
+  bannerColor,
+  inkColor,
+  trackAlpha,
+  donutPct,
+  donutLabel,
 }: {
   overline: string;
   primaryNum: number;
@@ -56,7 +292,11 @@ function Block({
   stats: BlockStat[];
   href: string;
   bg: string;
-  color: string;
+  bannerColor: string;
+  inkColor: string;
+  trackAlpha: string;
+  donutPct: number;
+  donutLabel: string;
 }) {
   return (
     <Link
@@ -68,19 +308,12 @@ function Block({
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        minHeight: 210,
         cursor: "pointer",
         transition: "transform 0.18s cubic-bezier(.32,.72,0,1), box-shadow 0.18s",
       }}
     >
-      {/* Header banner */}
-      <div style={{
-        background: color,
-        padding: "13px 20px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}>
+      {/* Banner */}
+      <div style={{ background: bannerColor, padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "rgba(255,255,255,0.88)", margin: 0 }}>
           {overline}
         </p>
@@ -88,21 +321,39 @@ function Block({
       </div>
 
       {/* Body */}
-      <div style={{ background: bg, color, padding: "20px 24px 22px", flex: 1, display: "flex", flexDirection: "column" }}>
-        <p style={{ fontSize: 48, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
-          {primaryNum.toLocaleString()}
-        </p>
-        <p style={{ fontSize: 13, fontWeight: 500, opacity: 0.6, marginTop: 4, marginBottom: 18 }}>
-          {primaryLabel}
-        </p>
-        <div style={{ height: 1, background: "currentColor", opacity: 0.10, marginBottom: 14 }} />
+      <div style={{ background: bg, color: inkColor, padding: "18px 20px 20px", flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Top: number + donut */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: inkColor }}>
+              {primaryNum.toLocaleString()}
+            </p>
+            <p style={{ fontSize: 12, fontWeight: 500, opacity: 0.65, marginTop: 5, color: inkColor }}>
+              {primaryLabel}
+            </p>
+          </div>
+          <div style={{ position: "relative", width: 76, height: 76, flexShrink: 0 }}>
+            <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} />
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", lineHeight: 1 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
+              <span style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 3, maxWidth: 58, textAlign: "center", lineHeight: 1.2, color: inkColor }}>
+                {donutLabel}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: inkColor, opacity: 0.12, margin: "14px 0" }} />
+
+        {/* Sub-stats */}
         <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
           {stats.map((s) => (
             <div key={s.label}>
-              <p style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+              <p style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", color: inkColor }}>
                 {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
               </p>
-              <p style={{ fontSize: 11, fontWeight: 500, opacity: 0.55, marginTop: 3 }}>
+              <p style={{ fontSize: 11, fontWeight: 500, opacity: 0.55, marginTop: 3, color: inkColor }}>
                 {s.label}
               </p>
             </div>
@@ -113,89 +364,52 @@ function Block({
   );
 }
 
+// Export canvas helper (unchanged — kept for PDF/image export feature)
 async function buildExportCanvas(startMonth: string, rangeKey: string, gridEl: HTMLElement): Promise<HTMLCanvasElement> {
   const html2canvasModule = await import("html2canvas");
   const html2canvas = html2canvasModule.default;
-
-  // Snapshot the live rendered cards at 2x for crisp output
   const S = 2;
-  const cardsCanvas = await html2canvas(gridEl, {
-    scale: S,
-    backgroundColor: "#FBFBFD",
-    useCORS: true,
-    logging: false,
-  });
-
+  const cardsCanvas = await html2canvas(gridEl, { scale: S, backgroundColor: "#FBFBFD", useCORS: true, logging: false });
   const W = cardsCanvas.width;
-  const headerH = 88 * S;   // 88px logical → 176px canvas pixels
+  const headerH = 88 * S;
   const sepH = 1;
   const footerH = 26 * S;
   const H = headerH + sepH + cardsCanvas.height + footerH;
-
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-
-  // Background
   ctx.fillStyle = "#FBFBFD";
   ctx.fillRect(0, 0, W, H);
-
-  // Separator line between header and cards
   ctx.fillStyle = "rgba(0,0,0,0.07)";
   ctx.fillRect(0, headerH, W, sepH);
-
-  // Cards snapshot
   ctx.drawImage(cardsCanvas, 0, headerH + sepH);
-
-  // Footer
   ctx.fillStyle = "rgba(29,29,31,0.20)";
   ctx.font = `${11 * S}px Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   ctx.fillText("kakisewa.com  ·  Confidential", W / 2, headerH + sepH + cardsCanvas.height + footerH - 8 * S);
-
-  // ── Header logo ───────────────────────────────────────────────────────────
   const lx = 40 * S;
   const logoBaseY = Math.round(headerH * 0.52);
-
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-
-  // "k" in bold serif
   ctx.fillStyle = "#1D1D1F";
   ctx.font = `bold ${30 * S}px Georgia, 'DM Serif Display', serif`;
   const kW = ctx.measureText("k").width;
   ctx.fillText("k", lx, logoBaseY);
-
-  // "kakisewa" at same baseline
   ctx.font = `${24 * S}px Georgia, 'DM Serif Display', serif`;
   ctx.fillText("kakisewa", lx + kW + 8 * S, logoBaseY);
-
-  // "カキセワ" spaced out below kakisewa, muted
   ctx.fillStyle = "rgba(29,29,31,0.42)";
   ctx.font = `600 ${8 * S}px 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif`;
-  "カキセワ".split("").forEach((c, i) => {
-    ctx.fillText(c, lx + kW + 8 * S + i * 11 * S, logoBaseY + 14 * S);
-  });
-
-  // Snapshot period label
+  "カキセワ".split("").forEach((c, i) => { ctx.fillText(c, lx + kW + 8 * S + i * 11 * S, logoBaseY + 14 * S); });
   ctx.fillStyle = "rgba(29,29,31,0.30)";
   ctx.font = `${9 * S}px Arial, sans-serif`;
-  ctx.fillText(
-    `PROPERTY SNAPSHOT  ·  ${fmtMonthLabel(startMonth)}  ·  ${rangeKey} window`,
-    lx,
-    logoBaseY + 28 * S,
-  );
-
-  // Generated date (right)
+  ctx.fillText(`PROPERTY SNAPSHOT  ·  ${fmtMonthLabel(startMonth)}  ·  ${rangeKey} window`, lx, logoBaseY + 28 * S);
   const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
   ctx.fillStyle = "rgba(29,29,31,0.38)";
   ctx.font = `${11 * S}px Arial, sans-serif`;
   ctx.textAlign = "right";
   ctx.fillText(`Generated: ${date}`, W - 40 * S, logoBaseY);
-  ctx.textAlign = "left";
-
   return canvas;
 }
 
@@ -204,7 +418,6 @@ async function doExportPDF(startMonth: string, rangeKey: string, gridEl: HTMLEle
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
   const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
   const { jsPDF } = await import("jspdf");
-  // Fit to A4 landscape; derive height from canvas aspect ratio
   const pdfW = 297;
   const pdfH = Math.round((canvas.height / canvas.width) * pdfW);
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [pdfW, pdfH] });
@@ -221,12 +434,18 @@ async function doExportImage(startMonth: string, rangeKey: string, gridEl: HTMLE
   link.click();
 }
 
+// ── Main section ───────────────────────────────────────────────────────────────
+
 export function StatsSection({
   initialStats,
-  upcomingEvents,
+  weekEvents,
+  weekStart,
+  weekEnd,
 }: {
   initialStats: ExpandedDashboardStats;
-  upcomingEvents: CalendarEvent[];
+  weekEvents: CalendarEvent[];
+  weekStart: string;
+  weekEnd: string;
 }) {
   const todayMonthValue = new Date().toISOString().slice(0, 7);
   const [startMonth, setStartMonth] = useState(todayMonthValue);
@@ -234,25 +453,6 @@ export function StatsSection({
   const [stats, setStats] = useState(initialStats);
   const [isPending, startTransition] = useTransition();
   const gridRef = useRef<HTMLDivElement>(null);
-  const calScrollRef = useRef<HTMLDivElement>(null);
-  const [calThumb, setCalThumb] = useState({ left: 0, width: 0 });
-
-  const updateCalThumb = useCallback(() => {
-    const el = calScrollRef.current;
-    if (!el) return;
-    const track = el.clientWidth;
-    const content = el.scrollWidth;
-    if (content <= track) { setCalThumb({ left: 0, width: 0 }); return; }
-    const thumbW = Math.max(36, (track / content) * track);
-    const thumbL = (el.scrollLeft / (content - track)) * (track - thumbW);
-    setCalThumb({ left: thumbL, width: thumbW });
-  }, []);
-
-  useEffect(() => {
-    updateCalThumb();
-    window.addEventListener("resize", updateCalThumb);
-    return () => window.removeEventListener("resize", updateCalThumb);
-  }, [updateCalThumb]);
 
   function getRangeMonths(key: string): number {
     return RANGE_OPTIONS.find((o) => o.value === key)?.months ?? 3;
@@ -276,22 +476,34 @@ export function StatsSection({
     refetch(getRangeMonths(key), startMonth);
   }
 
-  const contactedPct =
-    stats.totalUploaded > 0
-      ? Math.round((stats.totalContacted / stats.totalUploaded) * 100)
-      : 0;
+  // ── Donut percentages ──────────────────────────────────────────────────────
+  const contactedPct = stats.totalUploaded > 0
+    ? Math.round((stats.totalContacted / stats.totalUploaded) * 100)
+    : 0;
 
-  const totalMyListings = stats.totalListedCount;
+  // My Listing: % active tenancies expiring within selected window (becoming available)
+  const myAvailPct = stats.existingTotalActiveCount > 0
+    ? Math.round((stats.existingExpiringCount / stats.existingTotalActiveCount) * 100)
+    : 0;
 
-  const today = new Date().toISOString().slice(0, 10);
-  const threeDaysOut = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
-  const filteredEvents = upcomingEvents.filter(
-    (e) => e.event_date >= today && e.event_date <= threeDaysOut
-  );
+  // Existing: % expired + expiring in 60d out of (active + expired)
+  const existingTotal = stats.existingTotalActiveCount + stats.existingExpiredCount;
+  const existingAtRiskPct = existingTotal > 0
+    ? Math.round(((stats.existingExpiringIn60Count + stats.existingExpiredCount) / existingTotal) * 100)
+    : 0;
+
+  // Target: % expiring in 60d out of total
+  const targetAtRiskPct = stats.targetTotalCount > 0
+    ? Math.round((stats.targetExpiringIn60Count / stats.targetTotalCount) * 100)
+    : 0;
 
   return (
     <div style={{ opacity: isPending ? 0.5 : 1, transition: "opacity 0.15s ease" }}>
-      {/* Range controls */}
+
+      {/* Weekly calendar */}
+      <WeeklyCalendar weekEvents={weekEvents} weekStart={weekStart} weekEnd={weekEnd} />
+
+      {/* Range controls — after calendar */}
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <MonthPickerPill value={startMonth} onChange={handleMonthChange} />
         <Select value={rangeKey} onValueChange={handleRangeChange}>
@@ -307,105 +519,9 @@ export function StatsSection({
             ))}
           </SelectContent>
         </Select>
-
       </div>
 
-      {/* Upcoming events strip */}
-      {filteredEvents.length > 0 && (
-        <Link
-          href="/calendar"
-          className="group hover:-translate-y-1 hover:shadow-lg"
-          style={{
-            display: "block",
-            textDecoration: "none",
-            background: "var(--kk-surface)",
-            border: "1px solid var(--kk-line)",
-            borderRadius: 18,
-            overflow: "hidden",
-            boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)",
-            cursor: "pointer",
-            transition: "transform 0.18s cubic-bezier(.32,.72,0,1), box-shadow 0.18s",
-            marginBottom: 12,
-          }}
-        >
-          <div
-            style={{
-              padding: "14px 18px 12px",
-              borderBottom: "1px solid var(--kk-line)",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>
-              Upcoming — next 3 days
-            </span>
-          </div>
-          <div
-            ref={calScrollRef}
-            className="kk-cal-scroll"
-            onScroll={updateCalThumb}
-            style={{
-              display: "flex",
-              overflowX: "auto",
-              padding: "14px 18px 12px",
-              gap: 10,
-              WebkitOverflowScrolling: "touch",
-              scrollbarWidth: "none",
-            }}
-          >
-            {filteredEvents.map((ev) => {
-              const isToday = ev.event_date === today;
-              return (
-                <div
-                  key={ev.id}
-                  style={{
-                    flexShrink: 0,
-                    background: isToday ? "rgba(0,113,227,0.09)" : "#F5F5F7",
-                    borderRadius: 14,
-                    padding: "12px 14px",
-                    minWidth: 170,
-                    maxWidth: 200,
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.07em",
-                      color: isToday ? "var(--kk-blue)" : "var(--kk-ink-faint)",
-                      marginBottom: 6,
-                    }}
-                  >
-                    {fmtEventDate(ev.event_date, today)}
-                  </p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3 }}>
-                    {ev.title}
-                  </p>
-                  {ev.subtitle && (
-                    <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", marginTop: 3 }}>
-                      {ev.subtitle}
-                    </p>
-                  )}
-                  {ev.event_time && (
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-blue)", marginTop: 6 }}>
-                      {fmtTime(ev.event_time)}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {/* Custom always-visible scroll indicator */}
-          {calThumb.width > 0 && (
-            <div style={{ margin: "0 18px 14px", height: 4, borderRadius: 2, background: "var(--kk-surface-2)", position: "relative" }}>
-              <div style={{ position: "absolute", top: 0, left: calThumb.left, width: calThumb.width, height: 4, borderRadius: 2, background: "var(--kk-ink-faint)" }} />
-            </div>
-          )}
-        </Link>
-      )}
-
-      {/* 4 blocks — 1 col mobile, 2 col sm+ */}
+      {/* 4 stat cards — 1 col mobile, 2 col sm+ */}
       <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Block
           overline="Potential listing"
@@ -413,24 +529,32 @@ export function StatsSection({
           primaryLabel="owner contacts imported"
           stats={[
             { label: "Contacted", value: stats.totalContacted },
-            { label: "% Contacted", value: `${contactedPct}%` },
+            { label: "Not contacted", value: stats.totalUploaded - stats.totalContacted },
           ]}
           href="/potential-listing"
+          bannerColor="#1A4FA3"
           bg="rgba(0,113,227,0.09)"
-          color="#0052A5"
+          inkColor="#0A3880"
+          trackAlpha="rgba(10,56,128,0.15)"
+          donutPct={contactedPct}
+          donutLabel="contacted"
         />
 
         <Block
           overline="My listing"
-          primaryNum={totalMyListings}
+          primaryNum={stats.totalListedCount}
           primaryLabel="listings in progress"
           stats={[
-            { label: "Listed for rent", value: stats.listedRentCount },
-            { label: "Listed for sale", value: stats.listedSaleCount },
+            { label: "For rent", value: stats.listedRentCount },
+            { label: "For sale", value: stats.listedSaleCount },
           ]}
           href="/my-listing"
+          bannerColor="#4A1490"
           bg="rgba(175,82,222,0.09)"
-          color="#5B1E9C"
+          inkColor="#3A0E7A"
+          trackAlpha="rgba(58,14,122,0.15)"
+          donutPct={myAvailPct}
+          donutLabel="avail. in 3m"
         />
 
         <Block
@@ -438,29 +562,37 @@ export function StatsSection({
           primaryNum={stats.existingTotalActiveCount}
           primaryLabel="active tenancies"
           stats={[
-            { label: "Expiring in 60 days", value: stats.existingExpiringIn60Count },
+            { label: "Expiring in 60d", value: stats.existingExpiringIn60Count },
+            { label: "Already expired", value: stats.existingExpiredCount },
             { label: "Renewing", value: stats.existingRenewingCount },
-            { label: "Expired", value: stats.existingExpiredCount },
           ]}
           href="/existing-listing"
-          bg="rgba(52,199,89,0.11)"
-          color="#166534"
+          bannerColor="#1A6B35"
+          bg="rgba(52,199,89,0.09)"
+          inkColor="#145228"
+          trackAlpha="rgba(20,82,40,0.15)"
+          donutPct={existingAtRiskPct}
+          donutLabel="expiring / expired"
         />
 
         <Block
-          overline="Lost listing"
+          overline="Target listing"
           primaryNum={stats.targetTotalCount}
           primaryLabel="competitor properties tracked"
           stats={[
+            { label: "Expiring in 60d", value: stats.targetExpiringIn60Count },
+            { label: "Already expired", value: Math.max(0, stats.targetTotalCount - stats.targetTotalActiveCount) },
             { label: "Watching", value: stats.targetWatchingCount },
-            { label: "Expiring in 60 days", value: stats.targetExpiringIn60Count },
           ]}
           href="/lost-listing"
-          bg="rgba(255,149,0,0.11)"
-          color="#92400E"
+          bannerColor="#7A3800"
+          bg="rgba(255,149,0,0.09)"
+          inkColor="#5C2800"
+          trackAlpha="rgba(92,40,0,0.15)"
+          donutPct={targetAtRiskPct}
+          donutLabel="expiring / expired"
         />
       </div>
-
     </div>
   );
 }

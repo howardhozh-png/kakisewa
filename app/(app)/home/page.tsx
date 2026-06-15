@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
-import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getUpcomingCalendarEvents } from "@/lib/db";
+import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForWeek } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/db";
 import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 import { StatsSection } from "./stats-section";
@@ -185,12 +185,16 @@ function ActiveState({
   firstName,
   stats,
   expandedStats,
-  upcomingEvents,
+  weekEvents,
+  weekStart,
+  weekEnd,
 }: {
   firstName: string | null;
   stats: Stats;
   expandedStats: ExpandedStats;
-  upcomingEvents: CalendarEvent[];
+  weekEvents: CalendarEvent[];
+  weekStart: string;
+  weekEnd: string;
 }) {
   return (
     <>
@@ -206,7 +210,7 @@ function ActiveState({
         </p>
       </div>
 
-      <StatsSection initialStats={expandedStats} upcomingEvents={upcomingEvents} />
+      <StatsSection initialStats={expandedStats} weekEvents={weekEvents} weekStart={weekStart} weekEnd={weekEnd} />
     </>
   );
 }
@@ -214,11 +218,22 @@ function ActiveState({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [agent, stats, expandedStats, upcomingEvents] = await Promise.all([
+  // Compute Mon–Sun of current week
+  const now = new Date();
+  const dow = now.getDay();
+  const diffToMon = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMon);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const weekStart = monday.toISOString().slice(0, 10);
+  const weekEnd = sunday.toISOString().slice(0, 10);
+
+  const [agent, stats, expandedStats, weekEvents] = await Promise.all([
     getAgentProfile(),
     getHomeDashboardStats(),
     getExpandedDashboardStats(3),
-    getUpcomingCalendarEvents(20),
+    getCalendarEventsForWeek(weekStart, weekEnd),
   ]);
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
   const missingProfileFields = getMissingWhatsAppFields(agent);
@@ -232,7 +247,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 lg:py-16">
       {isSetupComplete ? (
-        <ActiveState firstName={firstName} stats={stats} expandedStats={expandedStats} upcomingEvents={upcomingEvents} />
+        <ActiveState firstName={firstName} stats={stats} expandedStats={expandedStats} weekEvents={weekEvents} weekStart={weekStart} weekEnd={weekEnd} />
       ) : (
         <SetupState
           firstName={firstName}

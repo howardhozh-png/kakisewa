@@ -1702,7 +1702,7 @@ export async function updateTenantProfileAction(
   try {
     await updateTenantProfile(id, data);
     invalidateCache();
-    revalidatePath("/tenants");
+    revalidatePath("/directory");
     return { ok: true };
   } catch (e) {
     return { ok: false, message: String(e) };

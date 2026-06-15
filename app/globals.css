@@ -387,6 +387,14 @@ html, body {
 /* ─── Calendar strip — hide native scrollbar (custom indicator rendered in JSX) ── */
 .kk-cal-scroll::-webkit-scrollbar { display: none; }
 
+/* ─── Weekly calendar responsive ── */
+.kk-week-mobile { display: none !important; }
+.kk-week-desktop { display: grid !important; }
+@media (max-width: 600px) {
+  .kk-week-mobile { display: flex !important; }
+  .kk-week-desktop { display: none !important; }
+}
+
 /* ─── Card-level CTA (wraps text, full width, fits inside narrow cards) ──── */
 .kk-card-cta {
   display: flex;

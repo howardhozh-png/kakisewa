@@ -97,7 +97,8 @@ export default async function NetworkPage({ searchParams }: Props) {
       name:       t.tenant_name,
       phone:      t.tenant_phone ?? null,
       created_at: new Date().toISOString(),
-    }));
+      _synthetic: true,
+    } as TenantProfile & { _synthetic: boolean }));
 
   const availableTenantProfiles = [
     ...tenantProfiles.filter((p) => !(p.phone && (activePhones.has(p.phone) || formerPhones.has(p.phone)))),

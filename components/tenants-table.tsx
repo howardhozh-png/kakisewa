@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -32,6 +33,8 @@ const TH = "px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wid
 // ── Profile detail + edit popup ───────────────────────────────────────
 function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: () => void }) {
   const today = new Date().toISOString().split("T")[0];
+  const router = useRouter();
+  const isSynthetic = !!(profile as TenantProfile & { _synthetic?: boolean })._synthetic;
   const [pending, startTransition]        = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName]                   = useState(profile.name);
@@ -63,7 +66,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         available_from: availableFrom || null,
         notes: notes || null,
       });
-      if (res.ok) { toast.success("Saved"); onClose(); }
+      if (res.ok) { toast.success("Saved"); router.refresh(); onClose(); }
       else toast.error("Could not save");
     });
   }
@@ -162,12 +165,16 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         </div>
 
         <div className="p-5 border-t space-y-2" style={{ borderColor: "var(--kk-line)" }}>
-          {confirmDelete ? (
+          {isSynthetic ? (
+            <p className="text-[12px] text-center py-1" style={{ color: "var(--kk-ink-mute)" }}>
+              This tenant is from a past tenancy. To edit, open from Existing listing.
+            </p>
+          ) : confirmDelete ? (
             <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--kk-red-bg)", border: "1px solid var(--kk-red-border)" }}>
               <p className="flex-1 text-[12px] font-medium" style={{ color: "var(--destructive)" }}>Delete this tenant permanently?</p>
               <button onClick={() => setConfirmDelete(false)} className="text-[12px] font-medium px-3 py-1.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
               <button disabled={pending}
-                onClick={() => startTransition(async () => { await removeTenantProfile(profile.id); onClose(); })}
+                onClick={() => startTransition(async () => { await removeTenantProfile(profile.id); router.refresh(); onClose(); })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
                 style={{ background: "var(--destructive)", color: "#fff" }}>
                 {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
