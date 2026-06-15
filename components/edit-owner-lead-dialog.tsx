@@ -68,7 +68,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setParking(lead.parking ?? "");
       setListingPurpose(lead.listing_purpose ?? null);
       setPhoneErr(null);
-      setAvailableFrom(lead.available_from ?? new Date().toISOString().split("T")[0]);
+      setAvailableFrom(lead.available_from ?? "");
       setNotes(lead.notes ?? "");
     }
   }, [lead?.id, open]);
