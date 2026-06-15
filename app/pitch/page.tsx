@@ -3,18 +3,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 /* ── Tokens ── */
-const BG    = "#08080F";
-const SURF  = "#141418";
-const INK   = "#FFFFFF";
-const MUTE  = "#98989F";
-const DIM   = "#38383A";
-const BLUE  = "#2997FF";
-const GREEN = "#30D158";
-const RED   = "#FF453A";
+const BG    = "#FBFBFD";   // kk-bg
+const SURF  = "#F5F5F7";   // Apple light grey
+const INK   = "#1D1D1F";   // kk-ink
+const MUTE  = "#6E6E73";   // kk-ink-mute
+const DIM   = "#D2D2D7";   // light border
+const BLUE  = "#0071E3";   // kk-blue
+const GREEN = "#34C759";   // kk-green
+const RED   = "#FF3B30";   // kk-red
 const SANS  = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
 
 const gText = {
-  background: "linear-gradient(160deg,#FFFFFF 20%,rgba(255,255,255,0.52) 100%)",
+  background: "linear-gradient(160deg,#1D1D1F 25%,#6E6E73 100%)",
   WebkitBackgroundClip: "text" as const,
   WebkitTextFillColor: "transparent" as const,
   backgroundClip: "text" as const,
@@ -138,13 +138,13 @@ function S4() {
         <div style={{ flex: "1 1 200px", padding: "clamp(20px,2.5vw,32px)", background: SURF, borderRadius: 18, border: `1px solid ${DIM}` }}>
           <p style={{ fontFamily: SANS, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, color: DIM, margin: "0 0 14px 0", letterSpacing: "-0.03em" }}>Hunter</p>
           {["Chase new clients every day", "Pay per listing on ad portals", "Exhausting. Never guaranteed."].map(t => (
-            <p key={t} style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: DIM, margin: "0 0 6px 0", lineHeight: 1.5, textDecoration: "line-through" }}>{t}</p>
+            <p key={t} style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: MUTE, margin: "0 0 6px 0", lineHeight: 1.5, textDecoration: "line-through" }}>{t}</p>
           ))}
         </div>
-        <div style={{ flex: "1 1 200px", padding: "clamp(20px,2.5vw,32px)", background: "rgba(48,209,88,0.07)", borderRadius: 18, border: "1px solid rgba(48,209,88,0.22)" }}>
-          <p style={{ fontFamily: SANS, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, color: GREEN, margin: "0 0 14px 0", letterSpacing: "-0.03em" }}>Farmer</p>
+        <div style={{ flex: "1 1 200px", padding: "clamp(20px,2.5vw,32px)", background: "rgba(52,199,89,0.07)", borderRadius: 18, border: "1px solid rgba(52,199,89,0.25)" }}>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, color: "#1F8B4C", margin: "0 0 14px 0", letterSpacing: "-0.03em" }}>Farmer</p>
           {["Nurture existing tenants", "Harvest renewals every season", "Same clients. Compounding income."].map((t, i) => (
-            <p key={t} style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: i === 2 ? GREEN : MUTE, fontWeight: i === 2 ? 700 : 400, margin: "0 0 6px 0", lineHeight: 1.5 }}>{t}</p>
+            <p key={t} style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: i === 2 ? "#1F8B4C" : MUTE, fontWeight: i === 2 ? 700 : 400, margin: "0 0 6px 0", lineHeight: 1.5 }}>{t}</p>
           ))}
         </div>
       </div>
@@ -270,7 +270,7 @@ function S9() {
           onClick={e => e.stopPropagation()}
           href="https://www.kakisewa.com"
           target="_blank" rel="noopener noreferrer"
-          style={{ display: "block", width: "100%", background: BLUE, color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "clamp(14px,1.4vw,17px)", padding: "clamp(12px,1.5vw,16px)", borderRadius: 12, textAlign: "center", textDecoration: "none" }}
+          style={{ display: "block", width: "100%", background: BLUE, color: "#FFFFFF", fontFamily: SANS, fontWeight: 700, fontSize: "clamp(14px,1.4vw,17px)", padding: "clamp(12px,1.5vw,16px)", borderRadius: 12, textAlign: "center", textDecoration: "none" }}
         >
           Start free trial
         </a>
@@ -282,8 +282,8 @@ function S9() {
 /* ── S10 CTA ── */
 function S10() {
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "clamp(44px,6vw,88px) clamp(44px,8vw,120px)", paddingBottom: "clamp(64px,8vw,96px)", boxSizing: "border-box", position: "relative", background: "#06060E" }}>
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%,rgba(41,151,255,0.18) 0%,transparent 65%)", pointerEvents: "none" }} />
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "clamp(44px,6vw,88px) clamp(44px,8vw,120px)", paddingBottom: "clamp(64px,8vw,96px)", boxSizing: "border-box", position: "relative", background: "#EEF4FF" }}>
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%,rgba(0,113,227,0.09) 0%,transparent 65%)", pointerEvents: "none" }} />
       <div style={{ position: "relative", zIndex: 1 }}>
         <OL>The Ask</OL>
         <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(36px,6.5vw,88px)", letterSpacing: "-0.04em", lineHeight: 1.04, margin: "0 0 clamp(16px,2.5vw,32px) 0", ...gText }}>
@@ -295,7 +295,7 @@ function S10() {
         <a
           onClick={e => e.stopPropagation()}
           href="mailto:howard@kakisewa.com"
-          style={{ display: "inline-block", background: BLUE, color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "clamp(14px,1.4vw,17px)", padding: "clamp(12px,1.5vw,16px) clamp(28px,3.5vw,48px)", borderRadius: 100, textDecoration: "none" }}
+          style={{ display: "inline-block", background: BLUE, color: "#FFFFFF", fontFamily: SANS, fontWeight: 700, fontSize: "clamp(14px,1.4vw,17px)", padding: "clamp(12px,1.5vw,16px) clamp(28px,3.5vw,48px)", borderRadius: 100, textDecoration: "none" }}
         >
           Get in touch
         </a>
@@ -417,14 +417,14 @@ export default function PitchDeck() {
               willChange: "transform",
             }}
           >
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.05)" }} />
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(0,0,0,0.06)" }} />
             <div
               key={i === current ? `a-${rev}` : `i-${i}`}
               style={{ width: "100%", height: "100%", animation: i === current ? "kk-rise 0.5s cubic-bezier(0.16,1,0.3,1) 0.12s both" : "none" }}
             >
               {s.el}
             </div>
-            <div style={{ position: "absolute", top: "clamp(24px,3vw,38px)", right: "clamp(24px,3vw,38px)", fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.07em", color: "rgba(255,255,255,0.18)", pointerEvents: "none" }}>
+            <div style={{ position: "absolute", top: "clamp(24px,3vw,38px)", right: "clamp(24px,3vw,38px)", fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.07em", color: "rgba(0,0,0,0.2)", pointerEvents: "none" }}>
               {String(i + 1).padStart(2, "0")}&thinsp;/&thinsp;{String(TOTAL).padStart(2, "0")}
             </div>
           </div>
@@ -438,13 +438,13 @@ export default function PitchDeck() {
             <button
               key={i}
               onClick={e => { e.stopPropagation(); go(i); }}
-              style={{ width: i === current ? 24 : 7, height: 7, borderRadius: 4, border: "none", padding: 0, cursor: "pointer", flexShrink: 0, background: i === current ? INK : "rgba(255,255,255,0.18)", transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1),background 0.3s" }}
+              style={{ width: i === current ? 24 : 7, height: 7, borderRadius: 4, border: "none", padding: 0, cursor: "pointer", flexShrink: 0, background: i === current ? INK : "rgba(0,0,0,0.15)", transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1),background 0.3s" }}
             />
           ))}
         </div>
 
         {current === 0 && (
-          <div style={{ position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.18)", zIndex: 30, userSelect: "none", animation: "kk-rise 0.5s ease 2.2s both" }}>
+          <div style={{ position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.2)", zIndex: 30, userSelect: "none", animation: "kk-rise 0.5s ease 2.2s both" }}>
             arrows &nbsp;·&nbsp; swipe &nbsp;·&nbsp; click
           </div>
         )}
