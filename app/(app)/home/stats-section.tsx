@@ -71,15 +71,16 @@ function eventColor(ev: CalendarEvent): string {
 
 // ── Donut ring SVG ─────────────────────────────────────────────────────────────
 
-function DonutRing({ pct, strokeColor, trackColor }: { pct: number; strokeColor: string; trackColor: string }) {
-  const r = 30;
+function DonutRing({ pct, strokeColor, trackColor, size = 76 }: { pct: number; strokeColor: string; trackColor: string; size?: number }) {
+  const cx = size / 2;
+  const r = cx - 7;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - Math.min(pct, 100) / 100);
   return (
-    <svg width="76" height="76" viewBox="0 0 76 76" style={{ transform: "rotate(-90deg)", display: "block" }}>
-      <circle cx="38" cy="38" r={r} fill="none" stroke={trackColor} strokeWidth="7" />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)", display: "block" }}>
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={trackColor} strokeWidth="7" />
       <circle
-        cx="38" cy="38" r={r} fill="none"
+        cx={cx} cy={cx} r={r} fill="none"
         stroke={strokeColor} strokeWidth="7"
         strokeDasharray={circ} strokeDashoffset={offset}
         strokeLinecap="round"
@@ -321,43 +322,38 @@ function Block({
       </div>
 
       {/* Body */}
-      <div style={{ background: bg, color: inkColor, padding: "18px 20px 20px", flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Top: number + donut */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: inkColor }}>
-              {primaryNum.toLocaleString()}
-            </p>
-            <p style={{ fontSize: 12, fontWeight: 500, opacity: 0.65, marginTop: 5, color: inkColor }}>
-              {primaryLabel}
-            </p>
-          </div>
-          <div style={{ position: "relative", width: 76, height: 76, flexShrink: 0 }}>
-            <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} />
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", lineHeight: 1 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
-              <span style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 3, maxWidth: 58, textAlign: "center", lineHeight: 1.2, color: inkColor }}>
-                {donutLabel}
-              </span>
-            </div>
+      <div style={{ background: bg, color: inkColor, padding: "18px 20px 20px", flex: 1, position: "relative", overflow: "hidden", minHeight: 160 }}>
+        {/* Donut — large, anchored right, spans full height */}
+        <div style={{ position: "absolute", right: -10, top: "50%", transform: "translateY(-50%)", width: 140, height: 140, flexShrink: 0 }}>
+          <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} size={140} />
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", lineHeight: 1 }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
+            <span style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 4, maxWidth: 68, textAlign: "center", lineHeight: 1.3, color: inkColor }}>
+              {donutLabel}
+            </span>
           </div>
         </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: inkColor, opacity: 0.12, margin: "14px 0" }} />
-
-        {/* Sub-stats */}
-        <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-          {stats.map((s) => (
-            <div key={s.label}>
-              <p style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", color: inkColor }}>
-                {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
-              </p>
-              <p style={{ fontSize: 11, fontWeight: 500, opacity: 0.55, marginTop: 3, color: inkColor }}>
-                {s.label}
-              </p>
-            </div>
-          ))}
+        {/* Left: number + label + sub-stats */}
+        <div style={{ paddingRight: 110 }}>
+          <p style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: inkColor }}>
+            {primaryNum.toLocaleString()}
+          </p>
+          <p style={{ fontSize: 12, fontWeight: 500, opacity: 0.65, marginTop: 5, marginBottom: 18, color: inkColor }}>
+            {primaryLabel}
+          </p>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            {stats.map((s) => (
+              <div key={s.label}>
+                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", color: inkColor }}>
+                  {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
+                </p>
+                <p style={{ fontSize: 11, fontWeight: 500, opacity: 0.55, marginTop: 3, color: inkColor }}>
+                  {s.label}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </Link>
