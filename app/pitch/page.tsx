@@ -2,367 +2,335 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const SERIF = '"DM Serif Display", Georgia, serif';
-const SANS  = 'Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-const BLUE  = "#0071E3";
-const INK   = "#1D1D1F";
-const MUTE  = "#6E6E73";
-const FAINT = "#B0B0B5";
-const WHITE = "#FFFFFF";
+const SERIF    = '"DM Serif Display", Georgia, serif';
+const SANS     = 'Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+const BG       = "#FBFBFD";   // kk-bg
+const INK      = "#1D1D1F";   // kk-ink
+const MUTE     = "#6E6E73";   // kk-ink-mute
+const DIM      = "#B0B0B5";   // kk-ink-faint-ish
+const BLUE     = "#0071E3";   // kk-blue
+const GREEN    = "#34C759";   // kk-green
+const GREEN_INK = "#1F8B4C"; // kk-green-ink
+const RED      = "#FF3B30";   // kk-red
 
-/* ─── Micro-components ─── */
-
-// Short blue rule — sits above every overline on content slides
-function Rule() {
-  return <div style={{ width: 28, height: 2, background: BLUE, marginBottom: 14, flexShrink: 0 }} />;
-}
-
-// Overline label
-function OL({ light }: { light?: boolean }) {
-  return (fn: (t: string) => React.ReactNode) => (text: string) => (
-    <span style={{
-      fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em",
-      textTransform: "uppercase", color: light ? "rgba(255,255,255,0.45)" : BLUE,
-      display: "block", marginBottom: 20,
-    }}>
-      {text}
-    </span>
+/* ─── Shared layout helpers ─── */
+function OL({ children }: { children: string }) {
+  return (
+    <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, margin: "0 0 28px 0" }}>
+      {children}
+    </p>
   );
 }
 
-// Slide number — top-right corner
-function Num({ n, total, light }: { n: number; total: number; light?: boolean }) {
+function SL({ children, center }: { children: React.ReactNode; center?: boolean }) {
   return (
     <div style={{
-      position: "absolute", top: 28, right: 36,
-      fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
-      color: light ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)",
-    }}>
-      {String(n).padStart(2, "0")}&thinsp;/&thinsp;{String(total).padStart(2, "0")}
-    </div>
-  );
-}
-
-// Standard left-aligned content wrapper
-function SL({ children, valign = "center" }: { children: React.ReactNode; valign?: "center" | "top" }) {
-  return (
-    <div style={{
-      width: "100%", height: "100%", position: "relative",
+      width: "100%", height: "100%",
       display: "flex", flexDirection: "column",
-      justifyContent: valign === "center" ? "center" : "flex-start",
-      padding: "clamp(48px, 7vw, 96px) clamp(56px, 9vw, 148px)",
-      boxSizing: "border-box",
+      justifyContent: "center",
+      alignItems: center ? "center" : "flex-start",
+      textAlign: center ? "center" : "left",
+      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
     }}>
       {children}
     </div>
   );
 }
 
-// Body text
-const bdy = (light?: boolean): React.CSSProperties => ({
-  fontFamily: SANS, fontSize: "clamp(14px, 1.35vw, 17px)", lineHeight: 1.75,
-  color: light ? "rgba(255,255,255,0.6)" : MUTE, margin: 0,
-});
-
-// Headline
-const hdl = (light?: boolean, size = "clamp(32px, 4.5vw, 60px)"): React.CSSProperties => ({
-  fontFamily: SERIF, fontSize: size, fontWeight: 400, lineHeight: 1.12,
-  color: light ? WHITE : INK, margin: "0 0 24px 0",
-});
-
 /* ─── Slides ─── */
 
-// 1 — Cover (dark)
+// 1 — Cover
 function S1() {
   return (
     <div style={{
       width: "100%", height: "100%", position: "relative",
-      display: "flex", flexDirection: "column",
-      justifyContent: "flex-end",
-      padding: "clamp(48px, 7vw, 96px) clamp(56px, 9vw, 148px)",
-      boxSizing: "border-box",
+      display: "flex", flexDirection: "column", justifyContent: "flex-end",
+      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
     }}>
-      {/* Top wordmark */}
-      <div style={{ position: "absolute", top: 36, left: 56, fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
+      <div style={{ position: "absolute", top: "clamp(28px,3vw,40px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: DIM }}>
         kakisewa
       </div>
-      {/* Big horizontal rule */}
-      <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 48 }} />
-      <h1 style={{ fontFamily: SERIF, fontSize: "clamp(48px, 7.5vw, 92px)", fontWeight: 400, lineHeight: 1.06, color: WHITE, margin: "0 0 28px 0", maxWidth: 720 }}>
+      <div style={{ width: 48, height: 2, background: BLUE, marginBottom: 40, flexShrink: 0 }} />
+      <h1 style={{ fontFamily: SERIF, fontSize: "clamp(52px,8.5vw,108px)", fontWeight: 400, lineHeight: 1.04, color: INK, margin: "0 0 28px 0", maxWidth: 760 }}>
         Your income<br />is leaking.
       </h1>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(16px, 1.5vw, 19px)", color: "rgba(255,255,255,0.42)", margin: "0 0 0 0", maxWidth: 480 }}>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(17px,1.7vw,22px)", color: MUTE, margin: 0, maxWidth: 460 }}>
         You just haven&apos;t noticed yet.
       </p>
     </div>
   );
 }
 
-// 2 — The Wrong Race (white)
+// 2 — The Problem
 function S2() {
+  const items = [
+    { label: "WA Blasters",  desc: "Send fast. Not at the right time." },
+    { label: "ERPs & CRMs",  desc: "Built for agencies. Not for agents." },
+    { label: "Ad Portals",   desc: "Spend more every month. Earn the same." },
+  ];
   return (
     <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>What most tools get wrong</span>
-      <h2 style={hdl()}>Everyone&apos;s racing to send<br />the first WhatsApp.</h2>
-      <p style={bdy()}>
-        WATI. WA Send. Raion. Bulk senders. These tools save your time — and they&apos;re good at it.<br /><br />
-        But saving time is not the same as making money.<br /><br />
-        <strong style={{ color: INK, fontWeight: 600 }}>Sending fast doesn&apos;t mean sending at the right moment.</strong> Timing is the difference between keeping a client for life and losing them to an agent who called one week before you did.
-      </p>
-    </SL>
-  );
-}
-
-// 3 — Built for the Boss (white)
-function S3() {
-  return (
-    <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>The CRM problem</span>
-      <h2 style={hdl()}>Your CRM was built<br />for your boss. Not for you.</h2>
-      <p style={bdy()}>
-        ERPs track revenue for accounting. Managers get dashboards. The company gets reports.<br /><br />
-        You get a shared spreadsheet. And a prayer.<br /><br />
-        <strong style={{ color: INK, fontWeight: 600 }}>No system was ever designed for the individual agent</strong> managing 60–90 listings on their own — with their own clients, their own renewal timelines, their own income on the line.
-      </p>
-    </SL>
-  );
-}
-
-// 4 — Ad Spend Trap (white, split layout)
-function S4() {
-  return (
-    <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>The portal treadmill</span>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "clamp(32px, 6vw, 80px)", flexWrap: "wrap" }}>
-        <div style={{ flex: "0 0 auto" }}>
-          <span style={{ fontFamily: SERIF, fontSize: "clamp(56px, 8.5vw, 104px)", fontWeight: 400, color: BLUE, lineHeight: 1, display: "block" }}>RM5,000</span>
-          <span style={{ fontFamily: SANS, fontSize: "clamp(13px, 1.2vw, 15px)", color: MUTE }}>per month, just to stay visible</span>
-        </div>
-        <div style={{ flex: "1 1 280px", paddingTop: 8 }}>
-          <p style={bdy()}>
-            iProperty credits. PropertyGuru boosts. Rankings that reset every month. The cost keeps climbing — and when you stop paying, you disappear.<br /><br />
-            You can always spend more.<br />
-            <strong style={{ color: INK, fontWeight: 600 }}>But where does it end?</strong>
-          </p>
-        </div>
-      </div>
-    </SL>
-  );
-}
-
-// 5 — Hunters vs Farmers (white)
-function S5() {
-  return (
-    <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>A different way to think</span>
-      <h2 style={hdl()}>Hunters chase.<br />Farmers harvest.</h2>
-      <p style={bdy()}>
-        A hunter goes out every day chasing new prey. Exhausting. Expensive. Never guaranteed.<br /><br />
-        A farmer plants a tree, tends it, and harvests fruit every season — from the same land, year after year.<br /><br />
-        <strong style={{ color: INK, fontWeight: 600 }}>Your existing tenants are the tree. The renewal commission is the fruit.</strong><br /><br />
-        Most agents keep buying fruit at the market and never notice the orchard they&apos;re sitting on.
-      </p>
-    </SL>
-  );
-}
-
-// 6 — One Problem (white, centered big statement)
-function S6() {
-  return (
-    <div style={{
-      width: "100%", height: "100%", position: "relative",
-      display: "flex", flexDirection: "column", justifyContent: "center",
-      padding: "clamp(48px, 7vw, 96px) clamp(56px, 9vw, 148px)",
-      boxSizing: "border-box",
-    }}>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>What kakisewa does</span>
-      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(32px, 4.8vw, 62px)", fontWeight: 400, lineHeight: 1.12, color: INK, margin: "0 0 32px 0", maxWidth: 760 }}>
-        Get the money you&apos;re supposed to get —<br />but forgot to ask for.
+      <OL>The Problem</OL>
+      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(36px,5vw,66px)", fontWeight: 400, lineHeight: 1.1, color: INK, margin: "0 0 52px 0", maxWidth: 680 }}>
+        Every tool today<br />solves the wrong problem.
       </h2>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {["Know when every lease expires", "Be there first", "Every time"].map((t, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {i > 0 && <div style={{ width: 4, height: 4, borderRadius: "50%", background: FAINT, flexShrink: 0 }} />}
-            <span style={{ fontFamily: SANS, fontSize: "clamp(13px, 1.2vw, 15px)", color: i === 2 ? BLUE : INK, fontWeight: i === 2 ? 700 : 400 }}>{t}</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px,2.5vw,28px)" }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "clamp(16px,2vw,24px)" }}>
+            <span style={{ fontFamily: SANS, fontSize: "clamp(15px,1.5vw,18px)", fontWeight: 700, color: RED, lineHeight: 1.5, flexShrink: 0 }}>✕</span>
+            <span style={{ fontFamily: SANS, fontSize: "clamp(16px,1.6vw,20px)", lineHeight: 1.5 }}>
+              <strong style={{ color: INK, fontWeight: 600 }}>{item.label}</strong>
+              <span style={{ color: MUTE }}> — {item.desc}</span>
+            </span>
           </div>
         ))}
       </div>
-    </div>
+    </SL>
   );
 }
 
-// 7 — Origin Story (white)
+// 3 — The Number (hero stat)
+function S3() {
+  return (
+    <SL>
+      <OL>The Number</OL>
+      <div style={{ fontFamily: SERIF, fontSize: "clamp(60px,11vw,140px)", fontWeight: 400, color: INK, lineHeight: 0.92, margin: "0 0 32px 0" }}>
+        RM288,000
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(16px,1.7vw,21px)", color: MUTE, margin: "0 0 32px 0", maxWidth: 520, lineHeight: 1.6 }}>
+        In renewal commissions available to you. Every year.<br />
+        <strong style={{ color: INK }}>Most agents capture less than 20% of it.</strong>
+      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: RED, flexShrink: 0 }} />
+        <span style={{ fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", color: MUTE }}>
+          RM230,000+ walking out the door. Not because you&apos;re lazy. Because nothing reminded you.
+        </span>
+      </div>
+    </SL>
+  );
+}
+
+// 4 — Hunter vs Farmer
+function S4() {
+  return (
+    <SL>
+      <OL>A Different Way to Think</OL>
+      <div style={{ display: "flex", gap: "clamp(24px,5vw,72px)", flexWrap: "wrap", alignItems: "flex-start" }}>
+        <div style={{ flex: "1 1 220px" }}>
+          <p style={{ fontFamily: SERIF, fontSize: "clamp(28px,3.8vw,50px)", fontWeight: 400, color: DIM, margin: "0 0 24px 0" }}>Hunter</p>
+          {[
+            "Chase new clients every day",
+            "Pay per listing on ad portals",
+            "Exhausting. Never guaranteed.",
+          ].map((t, i) => (
+            <p key={i} style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: DIM, margin: "0 0 10px 0", lineHeight: 1.5 }}>{t}</p>
+          ))}
+        </div>
+        <div style={{ width: 1, background: "rgba(0,0,0,0.08)", minHeight: 160, alignSelf: "stretch", flexShrink: 0 }} />
+        <div style={{ flex: "1 1 220px" }}>
+          <p style={{ fontFamily: SERIF, fontSize: "clamp(28px,3.8vw,50px)", fontWeight: 400, color: INK, margin: "0 0 24px 0" }}>Farmer</p>
+          {[
+            "Nurture existing tenants",
+            "Harvest renewals every season",
+            "Same clients. Compounding income.",
+          ].map((t, i) => (
+            <p key={i} style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: i === 2 ? BLUE : INK, fontWeight: i === 2 ? 600 : 400, margin: "0 0 10px 0", lineHeight: 1.5 }}>{t}</p>
+          ))}
+        </div>
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(28px,4vw,48px) 0 0 0" }}>
+        Your existing tenants are the tree. The renewal commission is the fruit. Most agents never harvest it.
+      </p>
+    </SL>
+  );
+}
+
+// 5 — Solution (centered)
+function S5() {
+  return (
+    <SL center>
+      <OL>One Job</OL>
+      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(40px,6.5vw,82px)", fontWeight: 400, lineHeight: 1.07, color: INK, margin: "0 0 24px 0" }}>
+        Know when every<br />lease expires.
+      </h2>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(18px,1.9vw,25px)", fontWeight: 600, color: BLUE, margin: "0 0 6px 0" }}>Be there first.</p>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(18px,1.9vw,25px)", fontWeight: 600, color: BLUE, margin: "0 0 56px 0" }}>Every time.</p>
+      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: DIM }}>kakisewa</p>
+    </SL>
+  );
+}
+
+// 6 — Origin (quote style)
+function S6() {
+  return (
+    <SL>
+      <OL>How This Started</OL>
+      <p style={{ fontFamily: SERIF, fontSize: "clamp(26px,3.6vw,46px)", fontWeight: 400, lineHeight: 1.28, color: INK, margin: "0 0 40px 0", maxWidth: 740 }}>
+        &ldquo;My cousin had 9 Excel files.<br />
+        None of them told him<br />
+        when a lease was about to expire.&rdquo;
+      </p>
+      <div style={{ width: 40, height: 1, background: "rgba(0,0,0,0.1)", marginBottom: 32 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {[
+          "Built him a dashboard.",
+          "Then a date alert — red at 60 days.",
+          "Then I realised every agent had the same problem.",
+        ].map((t, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 18 }}>
+            <span style={{ fontFamily: SANS, fontSize: "clamp(11px,1vw,13px)", fontWeight: 700, color: BLUE, flexShrink: 0, lineHeight: 1.7, letterSpacing: "0.04em" }}>0{i + 1}</span>
+            <span style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, lineHeight: 1.6 }}>{t}</span>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(24px,3vw,36px) 0 0 0" }}>
+        That became kakisewa. What you see today is v1 of 99.
+      </p>
+    </SL>
+  );
+}
+
+// 7 — The Math (bar chart) — uses block layout so bar stretches full width
 function S7() {
   return (
-    <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>How this started</span>
-      <h2 style={hdl()}>9 Excel files.<br />Multiple tabs.<br />Multiple columns.</h2>
-      <p style={bdy()}>
-        I watched my cousin manage his entire property portfolio from a maze of spreadsheets. I built him a dashboard. Then a date alert that turned red at 60 days. Then I realised agents weren&apos;t even tracking expiry dates — because no tool made it easy.<br /><br />
-        So I kept building. That became kakisewa.<br /><br />
-        <span style={{ color: FAINT, fontSize: "clamp(12px, 1.1vw, 14px)" }}>What you see today is v1. We are building v99 with you.</span>
-      </p>
-    </SL>
-  );
-}
-
-// 8 — The Math (BLUE background — max impact)
-function S8() {
-  return (
     <div style={{
-      width: "100%", height: "100%", position: "relative",
+      width: "100%", height: "100%",
       display: "flex", flexDirection: "column", justifyContent: "center",
-      padding: "clamp(48px, 7vw, 96px) clamp(56px, 9vw, 148px)",
-      boxSizing: "border-box", background: BLUE,
+      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
     }}>
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 20 }}>The math</span>
-
-      <p style={{ fontFamily: SANS, fontSize: "clamp(13px, 1.2vw, 15px)", color: "rgba(255,255,255,0.55)", margin: "0 0 24px 0" }}>
-        Agent earning RM20–30k/month &rarr; <strong style={{ color: WHITE }}>60–90 active listings minimum</strong>
+      <OL>The Math</OL>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, margin: "0 0 10px 0", lineHeight: 1.5 }}>
+        Agent earning RM20–30k/month &rarr; <strong style={{ color: INK }}>90 active listings minimum</strong>
       </p>
-
-      <div style={{ display: "flex", alignItems: "baseline", gap: "clamp(12px, 2vw, 28px)", flexWrap: "wrap", marginBottom: 12 }}>
-        <span style={{ fontFamily: SERIF, fontSize: "clamp(56px, 9vw, 108px)", fontWeight: 400, color: WHITE, lineHeight: 1 }}>RM180k</span>
-        <span style={{ fontFamily: SERIF, fontSize: "clamp(28px, 4.5vw, 56px)", fontWeight: 400, color: "rgba(255,255,255,0.4)", lineHeight: 1 }}>– RM360k</span>
-      </div>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(13px, 1.2vw, 15px)", color: "rgba(255,255,255,0.55)", margin: "0 0 40px 0" }}>
-        in renewal commissions available to you, every single year
+      <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, margin: "0 0 36px 0" }}>
+        90 &times; RM3,000 avg commission =&nbsp;
+        <span style={{ fontFamily: SERIF, fontSize: "clamp(22px,2.6vw,34px)", color: INK }}>RM270,000/year</span>
       </p>
-
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.18)", paddingTop: 28 }}>
-        <p style={{ fontFamily: SANS, fontSize: "clamp(15px, 1.5vw, 19px)", color: WHITE, fontWeight: 600, margin: "0 0 8px 0" }}>
-          Most agents capture less than 20% of that.
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: "clamp(14px, 1.3vw, 16px)", color: "rgba(255,255,255,0.65)", margin: 0 }}>
-          That&apos;s <strong style={{ color: WHITE }}>RM144,000 – RM288,000</strong> walking out the door. Every. Single. Year.<br />
-          <span style={{ fontSize: "clamp(12px, 1.1vw, 14px)", color: "rgba(255,255,255,0.4)" }}>Not because agents are lazy. Because no one reminded them.</span>
-        </p>
+      {/* Bar — gradient on a single full-width div, no inner flex needed */}
+      <div style={{
+        height: "clamp(40px,5vw,56px)", borderRadius: 8, position: "relative", marginBottom: 12,
+        background: `linear-gradient(to right, ${GREEN} 20%, ${RED} 20%)`,
+      }}>
+        <span style={{ position: "absolute", left: "10%", top: "50%", transform: "translate(-50%,-50%)", fontFamily: SANS, fontSize: "clamp(10px,1vw,13px)", fontWeight: 700, color: "#003D15", whiteSpace: "nowrap" }}>20%</span>
+        <span style={{ position: "absolute", left: "60%", top: "50%", transform: "translate(-50%,-50%)", fontFamily: SANS, fontSize: "clamp(10px,1vw,13px)", fontWeight: 700, color: "#FFFFFF", whiteSpace: "nowrap" }}>80%</span>
       </div>
+      {/* Labels row */}
+      <div style={{ display: "flex" }}>
+        <div style={{ width: "20%", paddingRight: 12 }}>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", fontWeight: 700, color: GREEN_INK, margin: "0 0 2px 0" }}>RM54,000</p>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", color: MUTE, margin: 0 }}>Captured</p>
+        </div>
+        <div style={{ width: "80%", paddingLeft: "clamp(8px,1.5vw,20px)" }}>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", fontWeight: 700, color: RED, margin: "0 0 2px 0" }}>RM216,000</p>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", color: MUTE, margin: 0 }}>Missed every year</p>
+        </div>
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(20px,3vw,32px) 0 0 0", maxWidth: 580 }}>
+        Not because you&apos;re lazy. Because nothing reminded you when to reach out.
+      </p>
     </div>
   );
 }
 
-// 9 — Data Security (white)
-function S9() {
+// 8 — Security
+function S8() {
   return (
     <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>On your data</span>
-      <h2 style={hdl()}>Even I can&apos;t read<br />your passcode.</h2>
-      <p style={bdy()}>
-        Every agent&apos;s data is isolated at the database level using Row Level Security — not just by policy, but mathematically. Passwords are hashed with bcrypt. Irreversible by design.<br /><br />
-        <em style={{ color: "#424245" }}>One day I needed to fix an agent&apos;s passcode. Even as the builder of this system, I got nothing. I had to tell them to reset it themselves. That is not a limitation. That is the design.</em><br /><br />
-        <span style={{ color: FAINT, fontSize: "clamp(12px, 1.1vw, 14px)" }}>Can I access your data? Yes — but only with your explicit consent. Same way your bank sees your balance. Not your PIN.</span>
-      </p>
+      <OL>Your Data</OL>
+      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(36px,5vw,66px)", fontWeight: 400, lineHeight: 1.1, color: INK, margin: "0 0 48px 0", maxWidth: 640 }}>
+        Even I can&apos;t read<br />your passcode.
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px,2vw,22px)" }}>
+        {[
+          "Row Level Security — every agent's data is isolated at database level. Mathematically, not by policy.",
+          "Passwords hashed with bcrypt. Irreversible by design.",
+          "I once tried to fix an agent's passcode myself. Even I got nothing. That's the design.",
+        ].map((t, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: BLUE, flexShrink: 0, marginTop: "clamp(6px,0.7vw,8px)" }} />
+            <span style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, lineHeight: 1.65 }}>{t}</span>
+          </div>
+        ))}
+      </div>
     </SL>
   );
 }
 
-// 10 — Pricing (white, centred)
-function S10() {
+// 9 — Pricing (centered)
+function S9() {
   return (
-    <div style={{
-      width: "100%", height: "100%", position: "relative",
-      display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center",
-      padding: "clamp(48px, 7vw, 96px) clamp(56px, 9vw, 148px)", boxSizing: "border-box",
-    }}>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>The math is simple</span>
-      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(32px, 4.8vw, 62px)", fontWeight: 400, lineHeight: 1.12, color: INK, margin: "0 0 16px 0" }}>
+    <SL center>
+      <OL>Pricing</OL>
+      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(36px,5.5vw,70px)", fontWeight: 400, lineHeight: 1.1, color: INK, margin: "0 0 20px 0", maxWidth: 700 }}>
         One renewal pays for kakisewa<br />for the entire year.
       </h2>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(16px, 1.6vw, 20px)", color: MUTE, margin: "0 0 48px 0" }}>
-        And you probably have 60–90 of them.
+      <p style={{ fontFamily: SANS, fontSize: "clamp(17px,1.7vw,22px)", color: MUTE, margin: "0 0 52px 0" }}>
+        You probably have 90 of them.
       </p>
       <a
         href="/sign-up"
         onClick={e => e.stopPropagation()}
         style={{
-          display: "inline-block", background: BLUE, color: WHITE,
-          fontFamily: SANS, fontSize: "clamp(13px, 1.2vw, 15px)", fontWeight: 600,
-          padding: "14px 40px", borderRadius: 100, textDecoration: "none", letterSpacing: "-0.01em",
+          display: "inline-block", background: BLUE, color: "#FFFFFF",
+          fontFamily: SANS, fontSize: "clamp(14px,1.3vw,16px)", fontWeight: 600,
+          padding: "15px 48px", borderRadius: 100, textDecoration: "none", letterSpacing: "-0.01em",
         }}
       >
         Start free trial
       </a>
-    </div>
-  );
-}
-
-// 11 — v1 of 99 (white)
-function S11() {
-  return (
-    <SL>
-      <Rule />
-      <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, display: "block", marginBottom: 20 }}>What is coming</span>
-      <h2 style={hdl()}>What you see today<br />is version 1.</h2>
-      <p style={bdy()}>
-        kakisewa started as a dashboard. It became a date alert. Then a full pipeline. Then WhatsApp tracking. Then tenant packs. Then property packs. Then a competitor board for lost listings.<br /><br />
-        <strong style={{ color: INK, fontWeight: 600 }}>Every feature came from an agent asking &ldquo;can it also do this?&rdquo;</strong><br /><br />
-        We are nowhere near done. What you see today is v1 of 99. We are building the next 98 with the agents who use it.
-      </p>
     </SL>
   );
 }
 
-// 12 — CTA (dark, mirroring cover)
-function S12() {
+// 10 — CTA
+function S10() {
   return (
     <div style={{
       width: "100%", height: "100%", position: "relative",
       display: "flex", flexDirection: "column", justifyContent: "flex-end",
-      padding: "clamp(48px, 7vw, 96px) clamp(56px, 9vw, 148px)",
-      boxSizing: "border-box",
+      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
     }}>
-      <div style={{ position: "absolute", top: 36, left: 56, fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
+      <div style={{ position: "absolute", top: "clamp(28px,3vw,40px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: DIM }}>
         kakisewa
       </div>
-      <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.1)", marginBottom: 48 }} />
-      <h1 style={{ fontFamily: SERIF, fontSize: "clamp(44px, 7vw, 84px)", fontWeight: 400, lineHeight: 1.06, color: WHITE, margin: "0 0 20px 0", maxWidth: 660 }}>
+      <div style={{ width: 48, height: 2, background: BLUE, marginBottom: 40, flexShrink: 0 }} />
+      <h1 style={{ fontFamily: SERIF, fontSize: "clamp(44px,7.5vw,88px)", fontWeight: 400, lineHeight: 1.06, color: INK, margin: "0 0 20px 0", maxWidth: 680 }}>
         Your renewal clock<br />is ticking.
       </h1>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(15px, 1.5vw, 18px)", color: "rgba(255,255,255,0.42)", margin: "0 0 40px 0" }}>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(15px,1.6vw,20px)", color: MUTE, margin: "0 0 44px 0" }}>
         How many of your listings expire in the next 90 days?
       </p>
-      <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "clamp(16px,2.5vw,28px)", flexWrap: "wrap" }}>
         <a
           href="https://kakisewa.com/sign-up"
           onClick={e => e.stopPropagation()}
           style={{
-            display: "inline-block", background: WHITE, color: INK,
-            fontFamily: SANS, fontSize: "clamp(13px, 1.2vw, 15px)", fontWeight: 600,
-            padding: "14px 40px", borderRadius: 100, textDecoration: "none",
+            display: "inline-block", background: BLUE, color: "#FFFFFF",
+            fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", fontWeight: 700,
+            padding: "15px 48px", borderRadius: 100, textDecoration: "none",
           }}
         >
           Start free trial
         </a>
-        <span style={{ fontFamily: SANS, fontSize: 13, color: "rgba(255,255,255,0.25)" }}>kakisewa.com</span>
+        <span style={{ fontFamily: SANS, fontSize: 13, color: DIM }}>kakisewa.com</span>
       </div>
     </div>
   );
 }
 
 /* ─── Slide registry ─── */
-// dark = true → #1D1D1F bg; dark = false → #FFFFFF bg; blue slide handled inline (S8)
-const SLIDES: { id: string; dark: boolean; el: React.ReactNode }[] = [
-  { id: "cover",   dark: true,  el: <S1 /> },
-  { id: "race",    dark: false, el: <S2 /> },
-  { id: "boss",    dark: false, el: <S3 /> },
-  { id: "ads",     dark: false, el: <S4 /> },
-  { id: "farmer",  dark: false, el: <S5 /> },
-  { id: "problem", dark: false, el: <S6 /> },
-  { id: "origin",  dark: false, el: <S7 /> },
-  { id: "math",    dark: true,  el: <S8 /> }, // has its own blue bg
-  { id: "data",    dark: false, el: <S9 /> },
-  { id: "pricing", dark: false, el: <S10 /> },
-  { id: "v1",      dark: false, el: <S11 /> },
-  { id: "cta",     dark: true,  el: <S12 /> },
+const SLIDES: { id: string; el: React.ReactNode }[] = [
+  { id: "cover",    el: <S1 /> },
+  { id: "problem",  el: <S2 /> },
+  { id: "number",   el: <S3 /> },
+  { id: "reframe",  el: <S4 /> },
+  { id: "solution", el: <S5 /> },
+  { id: "origin",   el: <S6 /> },
+  { id: "math",     el: <S7 /> },
+  { id: "security", el: <S8 /> },
+  { id: "pricing",  el: <S9 /> },
+  { id: "cta",      el: <S10 /> },
 ];
 
 const TOTAL = SLIDES.length;
@@ -374,36 +342,36 @@ export default function PitchDeck() {
   const txRef = useRef(0);
   const tyRef = useRef(0);
 
-  const go  = useCallback((i: number) => { if (i < 0 || i >= TOTAL) return; setCurrent(i); setRev(k => k + 1); }, []);
+  const go  = useCallback((i: number) => {
+    if (i < 0 || i >= TOTAL) return;
+    setCurrent(i);
+    setRev(k => k + 1);
+  }, []);
   const fwd = useCallback(() => go(current + 1), [go, current]);
-  const bk  = useCallback(() => go(current - 1), [go, current]);
+  const bk  = useCallback(() => go(current - 1),  [go, current]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (["ArrowRight", "ArrowDown", " "].includes(e.key)) { e.preventDefault(); fwd(); }
-      if (["ArrowLeft",  "ArrowUp"        ].includes(e.key)) { e.preventDefault(); bk();  }
+      if (["ArrowLeft", "ArrowUp"].includes(e.key))          { e.preventDefault(); bk();  }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [fwd, bk]);
 
-  const slide = SLIDES[current];
-  // Dot color logic: math slide (index 7) has blue bg → use white dots
-  const dotLight = slide.dark || current === 7;
-
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
+        html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; background: ${BG}; }
         @keyframes kk-rise {
-          from { opacity: 0; transform: translateY(18px); }
+          from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}} />
 
       <div
-        style={{ width: "100vw", height: "100dvh", overflow: "hidden", position: "relative", fontFamily: SANS }}
+        style={{ width: "100vw", height: "100dvh", overflow: "hidden", position: "relative", fontFamily: SANS, background: BG }}
         onTouchStart={e => { txRef.current = e.touches[0].clientX; tyRef.current = e.touches[0].clientY; }}
         onTouchEnd={e => {
           const dx = txRef.current - e.changedTouches[0].clientX;
@@ -418,33 +386,29 @@ export default function PitchDeck() {
             aria-hidden={i !== current}
             style={{
               position: "absolute", inset: 0,
-              // S8 (math) sets its own bg via inline style; others use dark/white
-              background: i === 7 ? BLUE : s.dark ? INK : WHITE,
+              background: BG,
               transform: `translateX(${(i - current) * 100}%)`,
-              transition: "transform 0.52s cubic-bezier(0.86, 0, 0.07, 1)",
+              transition: "transform 0.5s cubic-bezier(0.86, 0, 0.07, 1)",
               willChange: "transform",
             }}
           >
-            {/* Subtle top border on white slides */}
-            {!s.dark && i !== 7 && (
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(0,0,0,0.06)" }} />
-            )}
+            {/* Top border */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(0,0,0,0.06)" }} />
             {/* Content with entrance animation */}
             <div
               key={i === current ? `a-${rev}` : `i-${i}`}
               style={{
                 width: "100%", height: "100%",
-                animation: i === current ? "kk-rise 0.55s cubic-bezier(0.16,1,0.3,1) 0.15s both" : "none",
+                animation: i === current ? "kk-rise 0.5s cubic-bezier(0.16,1,0.3,1) 0.12s both" : "none",
               }}
             >
               {s.el}
             </div>
-            {/* Slide number per-slide */}
+            {/* Slide counter */}
             <div style={{
-              position: "absolute", top: 28, right: 36,
-              fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
-              color: (s.dark || i === 7) ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.14)",
-              pointerEvents: "none",
+              position: "absolute", top: "clamp(28px,3vw,40px)", right: "clamp(28px,3vw,40px)",
+              fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.07em",
+              color: "rgba(0,0,0,0.18)", pointerEvents: "none",
             }}>
               {String(i + 1).padStart(2, "0")}&thinsp;/&thinsp;{String(TOTAL).padStart(2, "0")}
             </div>
@@ -452,12 +416,12 @@ export default function PitchDeck() {
         ))}
 
         {/* ── Click zones ── */}
-        <div onClick={bk}  style={{ position: "absolute", left: 0,  top: 0, width: "18%", height: "82%", zIndex: 10, cursor: current > 0           ? "w-resize" : "default" }} />
-        <div onClick={fwd} style={{ position: "absolute", right: 0, top: 0, width: "82%", height: "82%", zIndex: 10, cursor: current < TOTAL - 1    ? "e-resize" : "default" }} />
+        <div onClick={bk}  style={{ position: "absolute", left: 0,  top: 0, width: "18%", height: "88%", zIndex: 10, cursor: current > 0        ? "w-resize" : "default" }} />
+        <div onClick={fwd} style={{ position: "absolute", right: 0, top: 0, width: "82%", height: "88%", zIndex: 10, cursor: current < TOTAL - 1 ? "e-resize" : "default" }} />
 
         {/* ── Dot navigation ── */}
         <div style={{
-          position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "50%", transform: "translateX(-50%)",
           display: "flex", gap: 7, alignItems: "center", zIndex: 30,
         }}>
           {SLIDES.map((_, i) => (
@@ -467,22 +431,20 @@ export default function PitchDeck() {
               style={{
                 width: i === current ? 24 : 7, height: 7, borderRadius: 4,
                 border: "none", padding: 0, cursor: "pointer", flexShrink: 0,
-                background: dotLight
-                  ? (i === current ? WHITE          : "rgba(255,255,255,0.22)")
-                  : (i === current ? INK             : "rgba(0,0,0,0.15)"),
+                background: i === current ? INK : "rgba(0,0,0,0.15)",
                 transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s",
               }}
             />
           ))}
         </div>
 
-        {/* ── Hint on slide 1 only ── */}
+        {/* ── Hint on cover only ── */}
         {current === 0 && (
           <div style={{
-            position: "absolute", bottom: 26, left: 56,
+            position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "clamp(40px,4vw,56px)",
             fontFamily: SANS, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
-            color: "rgba(255,255,255,0.14)", zIndex: 30, userSelect: "none",
-            animation: "kk-rise 0.5s ease 2s both",
+            color: "rgba(0,0,0,0.2)", zIndex: 30, userSelect: "none",
+            animation: "kk-rise 0.5s ease 2.2s both",
           }}>
             ← → arrows &nbsp;·&nbsp; swipe &nbsp;·&nbsp; click
           </div>
