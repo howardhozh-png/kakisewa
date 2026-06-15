@@ -95,16 +95,45 @@ export default async function AdminPage() {
   // Paginate through all auth users (handles >1000 agents)
   const emailById: Record<string, string> = {};
   const createdById: Record<string, string> = {};
+  const lastLoginById: Record<string, string> = {};
   let page = 1;
   while (true) {
     const { data: { users: batch } } = await supabase.auth.admin.listUsers({ perPage: 1000, page });
     if (!batch || batch.length === 0) break;
-    batch.forEach((u: { id: string; email?: string; created_at: string }) => {
+    batch.forEach((u: { id: string; email?: string; created_at: string; last_sign_in_at?: string }) => {
       if (u.email) emailById[u.id] = u.email;
       if (u.created_at) createdById[u.id] = u.created_at;
+      if (u.last_sign_in_at) lastLoginById[u.id] = u.last_sign_in_at;
     });
     if (batch.length < 1000) break;
     page++;
+  }
+
+  // Engagement counts per agent
+  const [{ data: allLeads }, { data: allTenancies }, { data: allFeedbackCounts }] = await Promise.all([
+    supabase.from("owner_leads").select("user_id, stage, wa_status").is("deleted_at", null),
+    supabase.from("tenancies").select("user_id").is("deleted_at", null),
+    supabase.from("feedback").select("agent_id"),
+  ]);
+
+  const leadsByUser: Record<string, { total: number; outreached: number; myListing: number }> = {};
+  for (const l of allLeads ?? []) {
+    if (!l.user_id) continue;
+    const b = leadsByUser[l.user_id] ?? { total: 0, outreached: 0, myListing: 0 };
+    b.total++;
+    if (l.wa_status != null) b.outreached++;
+    if (["wants_rent", "listed", "matched"].includes(l.stage)) b.myListing++;
+    leadsByUser[l.user_id] = b;
+  }
+  const tenanciesByUser: Record<string, number> = {};
+  for (const t of allTenancies ?? []) {
+    if (!t.user_id) continue;
+    tenanciesByUser[t.user_id] = (tenanciesByUser[t.user_id] ?? 0) + 1;
+  }
+  const feedbackByUser: Record<string, number> = {};
+  for (const f of allFeedbackCounts ?? []) {
+    if (!f.agent_id) continue;
+    feedbackByUser[f.agent_id] = (feedbackByUser[f.agent_id] ?? 0) + 1;
   }
 
   const agents = (profiles ?? []).map((p: {
@@ -114,6 +143,10 @@ export default async function AdminPage() {
   }) => {
     const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at) : null;
     const trialDaysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - nowTs.getTime()) / 86400000) : null;
+    const lastLogin = lastLoginById[p.id] ?? null;
+    const daysInactive = lastLogin
+      ? Math.floor((nowTs.getTime() - new Date(lastLogin).getTime()) / 86400000)
+      : null;
     return {
       id: p.id,
       name: p.name,
@@ -125,6 +158,13 @@ export default async function AdminPage() {
       subscription_plan: p.subscription_plan,
       trial_days_left: trialDaysLeft,
       joined_at: createdById[p.id] ?? p.created_at,
+      last_login_at: lastLogin,
+      days_inactive: daysInactive,
+      potential_listing_count: leadsByUser[p.id]?.total ?? 0,
+      outreaches_sent: leadsByUser[p.id]?.outreached ?? 0,
+      my_listing_count: leadsByUser[p.id]?.myListing ?? 0,
+      existing_listing_count: tenanciesByUser[p.id] ?? 0,
+      feedback_count: feedbackByUser[p.id] ?? 0,
     };
   });
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2, ChevronUp, ChevronDown, Search, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { adminResetMyAccount } from "@/lib/actions";
 
@@ -47,6 +47,13 @@ interface AgentRow {
   subscription_plan: string | null;
   trial_days_left: number | null;
   joined_at: string;
+  last_login_at: string | null;
+  days_inactive: number | null;
+  potential_listing_count: number;
+  outreaches_sent: number;
+  my_listing_count: number;
+  existing_listing_count: number;
+  feedback_count: number;
 }
 
 interface InviteRow {
@@ -93,6 +100,239 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
   platinum: { bg: "rgba(11,31,74,0.12)",    color: "#0b1f4a" },
   elite:    { bg: "rgba(107,61,30,0.12)",   color: "#6b3d1e" },
 };
+
+type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "potential_listing_count" | "outreaches_sent" | "my_listing_count" | "existing_listing_count" | "feedback_count";
+
+function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: "asc" | "desc" }) {
+  if (col !== sortCol) return <ChevronUp className="w-3 h-3 opacity-20" />;
+  return sortDir === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />;
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "Never";
+  return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function InactiveBadge({ days }: { days: number | null }) {
+  if (days === null) return <span style={{ color: "var(--kk-ink-faint)", fontSize: 12 }}>Never</span>;
+  const color = days <= 6 ? "#1F8B4C" : days <= 13 ? "#92400E" : "#DC2626";
+  const bg = days <= 6 ? "rgba(52,199,89,0.10)" : days <= 13 ? "rgba(255,149,0,0.12)" : "rgba(220,38,38,0.10)";
+  return (
+    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums" style={{ background: bg, color }}>
+      {days === 0 ? "Today" : `${days}d ago`}
+    </span>
+  );
+}
+
+function NumCell({ value }: { value: number }) {
+  return (
+    <span className="tabular-nums text-[13px]" style={{ color: value === 0 ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: value > 0 ? 600 : 400 }}>
+      {value === 0 ? "—" : value}
+    </span>
+  );
+}
+
+function AgentsTable({ agents }: { agents: AgentRow[] }) {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [activityFilter, setActivityFilter] = useState("all");
+  const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  function toggleSort(col: SortCol) {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  }
+
+  const filtered = useMemo(() => {
+    let rows = agents;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
+    }
+    if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
+    if (activityFilter === "active") rows = rows.filter(a => a.days_inactive !== null && a.days_inactive <= 6);
+    else if (activityFilter === "risk") rows = rows.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13);
+    else if (activityFilter === "inactive") rows = rows.filter(a => a.days_inactive !== null && a.days_inactive >= 14);
+    else if (activityFilter === "never") rows = rows.filter(a => a.days_inactive === null);
+
+    return [...rows].sort((a, b) => {
+      let av: number | string = 0, bv: number | string = 0;
+      if (sortCol === "name") { av = (a.name ?? "").toLowerCase(); bv = (b.name ?? "").toLowerCase(); }
+      else if (sortCol === "joined_at") { av = a.joined_at; bv = b.joined_at; }
+      else if (sortCol === "last_login_at") { av = a.last_login_at ?? ""; bv = b.last_login_at ?? ""; }
+      else if (sortCol === "days_inactive") { av = a.days_inactive ?? 9999; bv = b.days_inactive ?? 9999; }
+      else if (sortCol === "potential_listing_count") { av = a.potential_listing_count; bv = b.potential_listing_count; }
+      else if (sortCol === "outreaches_sent") { av = a.outreaches_sent; bv = b.outreaches_sent; }
+      else if (sortCol === "my_listing_count") { av = a.my_listing_count; bv = b.my_listing_count; }
+      else if (sortCol === "existing_listing_count") { av = a.existing_listing_count; bv = b.existing_listing_count; }
+      else if (sortCol === "feedback_count") { av = a.feedback_count; bv = b.feedback_count; }
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [agents, search, statusFilter, activityFilter, sortCol, sortDir]);
+
+  function exportCsv() {
+    const rows = [
+      ["Name", "Email", "Phone", "Agency", "REN", "Status", "Plan", "Joined", "Last Login", "Days Inactive", "Potential Listing", "Outreaches Sent", "My Listing", "Existing Listing", "Feedback"].join(","),
+      ...filtered.map(a => [
+        a.name ?? "", a.email ?? "", a.phone ?? "", a.agency ?? "",
+        a.ren_number ?? "", a.subscription_status ?? "", a.subscription_plan ?? "",
+        fmtDate(a.joined_at), fmtDate(a.last_login_at),
+        a.days_inactive ?? "Never",
+        a.potential_listing_count, a.outreaches_sent, a.my_listing_count, a.existing_listing_count, a.feedback_count,
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
+    ];
+    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const el = document.createElement("a"); el.href = URL.createObjectURL(blob); el.download = `agents-${Date.now()}.csv`; el.click();
+  }
+
+  const Th = ({ col, label, right }: { col: SortCol; label: string; right?: boolean }) => (
+    <th
+      onClick={() => toggleSort(col)}
+      className="select-none cursor-pointer whitespace-nowrap px-4 py-3 text-left"
+      style={{ fontSize: 11, fontWeight: 600, color: sortCol === col ? "var(--kk-ink)" : "var(--kk-ink-mute)", textAlign: right ? "right" : "left", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label} <SortIcon col={col} sortCol={sortCol} sortDir={sortDir} />
+      </span>
+    </th>
+  );
+
+  return (
+    <div>
+      {/* Filter bar */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--kk-ink-faint)" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name, email, agency..."
+            className="w-full pl-8 pr-8 py-2 rounded-xl outline-none text-[12px]"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--kk-ink-faint)" }}>
+              <XIcon className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+        >
+          <option value="all">All statuses</option>
+          <option value="beta">Beta</option>
+          <option value="beta_frozen">Frozen</option>
+          <option value="trial">Trial</option>
+          <option value="active">Paid</option>
+          <option value="expired">Expired</option>
+        </select>
+        <select
+          value={activityFilter}
+          onChange={e => setActivityFilter(e.target.value)}
+          className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+        >
+          <option value="all">All activity</option>
+          <option value="active">Active (last 7 days)</option>
+          <option value="risk">At risk (7-13 days)</option>
+          <option value="inactive">Inactive (14+ days)</option>
+          <option value="never">Never logged in</option>
+        </select>
+        <span className="text-[12px] ml-1" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            onClick={() => { const emails = filtered.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${filtered.filter(a => a.email).length} emails copied`); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+          >
+            <Copy className="w-3.5 h-3.5" /> Copy emails
+          </button>
+          <button
+            onClick={exportCsv}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+          >
+            <ExternalLink className="w-3.5 h-3.5" /> Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+            <thead>
+              <tr>
+                <Th col="name" label="Agent" />
+                <th className="px-4 py-3 text-left whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>Status</th>
+                <Th col="joined_at" label="Joined" />
+                <Th col="last_login_at" label="Last Login" />
+                <Th col="days_inactive" label="Inactive" />
+                <Th col="potential_listing_count" label="Potential Listing" right />
+                <Th col="outreaches_sent" label="Outreaches Sent" right />
+                <Th col="my_listing_count" label="My Listing" right />
+                <Th col="existing_listing_count" label="Existing Listing" right />
+                <Th col="feedback_count" label="Feedback" right />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="px-4 py-8 text-center" style={{ fontSize: 13, color: "var(--kk-ink-faint)", background: "var(--kk-surface)" }}>
+                    No agents match the current filters.
+                  </td>
+                </tr>
+              )}
+              {filtered.map((a, i) => {
+                const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? { bg: "rgba(0,0,0,0.06)", color: "var(--kk-ink-mute)", label: "—" };
+                const planStyle = a.subscription_plan ? PLAN_STYLE[a.subscription_plan] : null;
+                const trialLabel = a.subscription_status === "trial" && a.trial_days_left !== null
+                  ? (a.trial_days_left > 0 ? ` · ${a.trial_days_left}d left` : " · Expired") : "";
+                const rowBg = i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)";
+                const border = "1px solid var(--kk-line)";
+                return (
+                  <tr key={a.id} style={{ background: rowBg, borderTop: border }}>
+                    <td className="px-4 py-3" style={{ minWidth: 180 }}>
+                      <p className="font-semibold text-[13px] leading-tight" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
+                      {a.agency && <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.agency}</p>}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statusStyle.bg, color: statusStyle.color }}>
+                          {statusStyle.label}{trialLabel}
+                        </span>
+                        {planStyle && a.subscription_plan && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize" style={{ background: planStyle.bg, color: planStyle.color }}>
+                            {a.subscription_plan}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{fmtDate(a.joined_at)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{fmtDate(a.last_login_at)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap"><InactiveBadge days={a.days_inactive} /></td>
+                    <td className="px-4 py-3 text-right"><NumCell value={a.potential_listing_count} /></td>
+                    <td className="px-4 py-3 text-right"><NumCell value={a.outreaches_sent} /></td>
+                    <td className="px-4 py-3 text-right"><NumCell value={a.my_listing_count} /></td>
+                    <td className="px-4 py-3 text-right"><NumCell value={a.existing_listing_count} /></td>
+                    <td className="px-4 py-3 text-right"><NumCell value={a.feedback_count} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents, invites: initialInvites, waitlist }: {
   funnel: Funnel; links: Link[]; feedback: FeedbackRow[]; agents: AgentRow[];
@@ -379,84 +619,7 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
         </div>
       )}
 
-      {tab === "agents" && (
-        <div>
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <button
-              onClick={() => {
-                const emails = agents.filter(a => a.email).map(a => a.email).join(", ");
-                navigator.clipboard.writeText(emails);
-                toast.success(`${agents.filter(a => a.email).length} emails copied`);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
-              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-            >
-              <Copy className="w-3.5 h-3.5" /> Copy all emails
-            </button>
-            <button
-              onClick={() => {
-                const rows = [
-                  ["Name", "Email", "Phone", "Agency", "REN", "Status", "Plan", "Joined"].join(","),
-                  ...agents.map(a => [
-                    a.name ?? "", a.email ?? "", a.phone ?? "", a.agency ?? "",
-                    a.ren_number ?? "", a.subscription_status ?? "", a.subscription_plan ?? "",
-                    new Date(a.joined_at).toLocaleDateString("en-MY"),
-                  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
-                ];
-                const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a"); a.href = url; a.download = `agents-${Date.now()}.csv`; a.click();
-                URL.revokeObjectURL(url);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
-              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> Export CSV
-            </button>
-          </div>
-          <div className="space-y-2">
-          {agents.length === 0 && (
-            <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No agents yet.</p>
-          )}
-          {agents.map(a => {
-            const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? { bg: "rgba(0,0,0,0.06)", color: "var(--kk-ink-mute)", label: "—" };
-            const planStyle = a.subscription_plan ? PLAN_STYLE[a.subscription_plan] : null;
-            const joinDate = new Date(a.joined_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-            const trialLabel = a.subscription_status === "trial" && a.trial_days_left !== null
-              ? (a.trial_days_left > 0 ? `${a.trial_days_left}d left` : "Expired") : null;
-            return (
-              <div key={a.id} className="rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                <div className="flex-1 min-w-[140px]">
-                  <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {a.ren_number && (
-                    <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
-                      {a.ren_number}
-                    </span>
-                  )}
-                  {a.agency && (
-                    <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{a.agency}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statusStyle.bg, color: statusStyle.color }}>
-                    {statusStyle.label}{trialLabel ? ` · ${trialLabel}` : ""}
-                  </span>
-                  {planStyle && a.subscription_plan && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize" style={{ background: planStyle.bg, color: planStyle.color }}>
-                      {a.subscription_plan}
-                    </span>
-                  )}
-                  <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{joinDate}</span>
-                </div>
-              </div>
-            );
-          })}
-          </div>
-        </div>
-      )}
+      {tab === "agents" && <AgentsTable agents={agents} />}
 
       {tab === "funnel" && <>
       {/* User Funnel */}
