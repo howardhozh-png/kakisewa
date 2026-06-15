@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { fetchExpandedStats } from "./actions";
@@ -114,189 +114,112 @@ function Block({
   );
 }
 
-function buildExportCanvas(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string): HTMLCanvasElement {
-  // A4 landscape ratio: 297:210 × 7 = 2079:1470 — rounded to 2100×1485
-  const W = 2100, H = 1485;
+async function buildExportCanvas(startMonth: string, rangeKey: string, gridEl: HTMLElement): Promise<HTMLCanvasElement> {
+  const html2canvasModule = await import("html2canvas");
+  const html2canvas = html2canvasModule.default;
+
+  // Snapshot the live rendered cards at 2x for crisp output
+  const S = 2;
+  const cardsCanvas = await html2canvas(gridEl, {
+    scale: S,
+    backgroundColor: "#FBFBFD",
+    useCORS: true,
+    logging: false,
+  });
+
+  const W = cardsCanvas.width;
+  const headerH = 88 * S;   // 88px logical → 176px canvas pixels
+  const sepH = 1;
+  const footerH = 26 * S;
+  const H = headerH + sepH + cardsCanvas.height + footerH;
+
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-  const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-  const contactedPct = stats.totalUploaded > 0 ? Math.round((stats.totalContacted / stats.totalUploaded) * 100) : 0;
 
-  // ── Background ────────────────────────────────────────────────────────────
+  // Background
   ctx.fillStyle = "#FBFBFD";
   ctx.fillRect(0, 0, W, H);
 
-  // ── Header (dark strip) ───────────────────────────────────────────────────
-  ctx.fillStyle = "#1D1D1F";
-  ctx.fillRect(0, 0, W, 178);
+  // Separator line between header and cards
+  ctx.fillStyle = "rgba(0,0,0,0.07)";
+  ctx.fillRect(0, headerH, W, sepH);
 
-  // Logo: white rounded box with "k" inside
-  const lx = 60, ly = 50, ls = 62, lr = 13;
-  ctx.fillStyle = "#FFFFFF";
-  roundRect(ctx, lx, ly, ls, ls, [lr, lr, lr, lr]);
-  ctx.fillStyle = "#1D1D1F";
-  ctx.font = "bold 38px Georgia, serif";
+  // Cards snapshot
+  ctx.drawImage(cardsCanvas, 0, headerH + sepH);
+
+  // Footer
+  ctx.fillStyle = "rgba(29,29,31,0.20)";
+  ctx.font = `${11 * S}px Arial, sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText("k", lx + ls / 2, ly + 44);
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("kakisewa.com  ·  Confidential", W / 2, headerH + sepH + cardsCanvas.height + footerH - 8 * S);
+
+  // ── Header logo ───────────────────────────────────────────────────────────
+  const lx = 40 * S;
+  const logoBaseY = Math.round(headerH * 0.52);
+
   ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
 
-  // Brand name
-  ctx.fillStyle = "rgba(255,255,255,0.95)";
-  ctx.font = "600 32px Arial, sans-serif";
-  ctx.fillText("kakisewa", lx + ls + 16, ly + 42);
+  // "k" in bold serif
+  ctx.fillStyle = "#1D1D1F";
+  ctx.font = `bold ${30 * S}px Georgia, 'DM Serif Display', serif`;
+  const kW = ctx.measureText("k").width;
+  ctx.fillText("k", lx, logoBaseY);
 
-  // Subtitle row
-  ctx.fillStyle = "rgba(255,255,255,0.40)";
-  ctx.font = "14px Arial, sans-serif";
-  ctx.fillText(`PROPERTY SNAPSHOT  ·  ${fmtMonthLabel(startMonth)}  ·  ${rangeKey} window`, lx, ly + ls + 24);
+  // "kakisewa" at same baseline
+  ctx.font = `${24 * S}px Georgia, 'DM Serif Display', serif`;
+  ctx.fillText("kakisewa", lx + kW + 8 * S, logoBaseY);
 
-  // Generated date (right-aligned)
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.font = "16px Arial, sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText(`Generated: ${date}`, W - 60, ly + 42);
-  ctx.textAlign = "left";
-
-  // ── Cards (2×2 grid) ──────────────────────────────────────────────────────
-  const pad = 60, gap = 32;
-  const cW = (W - pad * 2 - gap) / 2;
-  const cTop = 210;
-  const cH = (H - cTop - pad - gap) / 2;
-  const banH = 76;
-
-  const sections = [
-    {
-      title: "POTENTIAL LISTING", color: "#0052A5", bg: "#E6F0FF",
-      primary: { num: stats.totalUploaded.toLocaleString(), label: "owner contacts imported" },
-      stats: [
-        { value: stats.totalContacted.toLocaleString(), label: "Contacted" },
-        { value: `${contactedPct}%`, label: "% Contacted" },
-      ],
-    },
-    {
-      title: "MY LISTING", color: "#5B1E9C", bg: "#F2EBFF",
-      primary: { num: stats.totalListedCount.toLocaleString(), label: "listings in progress" },
-      stats: [
-        { value: stats.listedRentCount.toLocaleString(), label: "Listed for rent" },
-        { value: stats.listedSaleCount.toLocaleString(), label: "Listed for sale" },
-      ],
-    },
-    {
-      title: "EXISTING LISTING", color: "#166534", bg: "#E6FAEC",
-      primary: { num: stats.existingTotalActiveCount.toLocaleString(), label: "active tenancies" },
-      stats: [
-        { value: stats.existingExpiringIn60Count.toLocaleString(), label: "Expiring in 60 days" },
-        { value: stats.existingRenewingCount.toLocaleString(), label: "Renewing" },
-        { value: stats.existingExpiredCount.toLocaleString(), label: "Expired" },
-      ],
-    },
-    {
-      title: "LOST LISTING", color: "#92400E", bg: "#FFF4E6",
-      primary: { num: stats.targetTotalCount.toLocaleString(), label: "competitor properties tracked" },
-      stats: [
-        { value: stats.targetWatchingCount.toLocaleString(), label: "Watching" },
-        { value: stats.targetExpiringIn60Count.toLocaleString(), label: "Expiring in 60 days" },
-      ],
-    },
-  ];
-
-  sections.forEach((s, i) => {
-    const col = i % 2, row = Math.floor(i / 2);
-    const cx = pad + col * (cW + gap);
-    const cy = cTop + row * (cH + gap);
-
-    // Banner (top-rounded)
-    ctx.fillStyle = s.color;
-    roundRect(ctx, cx, cy, cW, banH, [22, 22, 0, 0]);
-    ctx.fillStyle = "rgba(255,255,255,0.88)";
-    ctx.font = "bold 22px Arial, sans-serif";
-    ctx.fillText(s.title, cx + 30, cy + banH / 2 + 9);
-
-    // Body (bottom-rounded)
-    ctx.fillStyle = s.bg;
-    roundRect(ctx, cx, cy + banH, cW, cH - banH, [0, 0, 22, 22]);
-
-    // Primary number
-    ctx.fillStyle = s.color;
-    ctx.font = "bold 108px Arial, sans-serif";
-    ctx.fillText(s.primary.num, cx + 30, cy + banH + 118);
-
-    // Primary label
-    ctx.font = "26px Arial, sans-serif";
-    ctx.globalAlpha = 0.58;
-    ctx.fillText(s.primary.label, cx + 30, cy + banH + 162);
-    ctx.globalAlpha = 1;
-
-    // Divider
-    ctx.strokeStyle = s.color;
-    ctx.globalAlpha = 0.10;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx + 30, cy + banH + 194);
-    ctx.lineTo(cx + cW - 30, cy + banH + 194);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Sub-stats (side by side)
-    const nCols = s.stats.length;
-    const sColW = (cW - 60) / nCols;
-    s.stats.forEach((st, si) => {
-      const sx = cx + 30 + si * sColW;
-      ctx.fillStyle = s.color;
-      ctx.font = "bold 54px Arial, sans-serif";
-      ctx.fillText(st.value, sx, cy + banH + 262);
-      ctx.font = "20px Arial, sans-serif";
-      ctx.globalAlpha = 0.55;
-      ctx.fillText(st.label, sx, cy + banH + 298);
-      ctx.globalAlpha = 1;
-    });
+  // "カキセワ" spaced out below kakisewa, muted
+  ctx.fillStyle = "rgba(29,29,31,0.42)";
+  ctx.font = `600 ${8 * S}px 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif`;
+  "カキセワ".split("").forEach((c, i) => {
+    ctx.fillText(c, lx + kW + 8 * S + i * 11 * S, logoBaseY + 14 * S);
   });
 
-  // ── Footer ────────────────────────────────────────────────────────────────
-  ctx.fillStyle = "rgba(0,0,0,0.20)";
-  ctx.font = "15px Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("kakisewa.com  ·  Confidential", W / 2, H - 20);
+  // Snapshot period label
+  ctx.fillStyle = "rgba(29,29,31,0.30)";
+  ctx.font = `${9 * S}px Arial, sans-serif`;
+  ctx.fillText(
+    `PROPERTY SNAPSHOT  ·  ${fmtMonthLabel(startMonth)}  ·  ${rangeKey} window`,
+    lx,
+    logoBaseY + 28 * S,
+  );
+
+  // Generated date (right)
+  const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
+  ctx.fillStyle = "rgba(29,29,31,0.38)";
+  ctx.font = `${11 * S}px Arial, sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText(`Generated: ${date}`, W - 40 * S, logoBaseY);
   ctx.textAlign = "left";
 
   return canvas;
 }
 
-async function doExportPDF(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string) {
-  const canvas = buildExportCanvas(stats, startMonth, rangeKey);
+async function doExportPDF(startMonth: string, rangeKey: string, gridEl: HTMLElement) {
+  const canvas = await buildExportCanvas(startMonth, rangeKey, gridEl);
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
   const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
   const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  // A4 landscape: 297 × 210 mm
-  doc.addImage(imgData, "JPEG", 0, 0, 297, 210);
+  // Fit to A4 landscape; derive height from canvas aspect ratio
+  const pdfW = 297;
+  const pdfH = Math.round((canvas.height / canvas.width) * pdfW);
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [pdfW, pdfH] });
+  doc.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
   doc.save(`kakisewa-snapshot-${date.replace(/ /g, "-")}.pdf`);
 }
 
-function doExportImage(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string) {
-  const canvas = buildExportCanvas(stats, startMonth, rangeKey);
+async function doExportImage(startMonth: string, rangeKey: string, gridEl: HTMLElement) {
+  const canvas = await buildExportCanvas(startMonth, rangeKey, gridEl);
   const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
   const link = document.createElement("a");
   link.download = `kakisewa-snapshot-${date.replace(/ /g, "-")}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, radii: [number, number, number, number]) {
-  ctx.beginPath();
-  ctx.moveTo(x + radii[0], y);
-  ctx.lineTo(x + w - radii[1], y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + radii[1]);
-  ctx.lineTo(x + w, y + h - radii[2]);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - radii[2], y + h);
-  ctx.lineTo(x + radii[3], y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - radii[3]);
-  ctx.lineTo(x, y + radii[0]);
-  ctx.quadraticCurveTo(x, y, x + radii[0], y);
-  ctx.closePath();
-  ctx.fill();
 }
 
 export function StatsSection({
@@ -313,6 +236,7 @@ export function StatsSection({
   const [isPending, startTransition] = useTransition();
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   function getRangeMonths(key: string): number {
     return RANGE_OPTIONS.find((o) => o.value === key)?.months ?? 3;
@@ -337,13 +261,14 @@ export function StatsSection({
   }
 
   async function handleExport(type: "pdf" | "image") {
+    if (!gridRef.current) return;
     setExportOpen(false);
     setExporting(true);
     try {
       if (type === "pdf") {
-        await doExportPDF(stats, startMonth, rangeKey);
+        await doExportPDF(startMonth, rangeKey, gridRef.current);
       } else {
-        doExportImage(stats, startMonth, rangeKey);
+        await doExportImage(startMonth, rangeKey, gridRef.current);
       }
     } finally {
       setExporting(false);
@@ -431,7 +356,7 @@ export function StatsSection({
       </div>
 
       {/* 4 blocks — 1 col mobile, 2 col sm+ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Block
           overline="Potential listing"
           primaryNum={stats.totalUploaded}
@@ -488,13 +413,19 @@ export function StatsSection({
 
       {/* Upcoming events strip */}
       {filteredEvents.length > 0 && (
-        <div
+        <Link
+          href="/calendar"
+          className="group hover:-translate-y-1 hover:shadow-lg"
           style={{
+            display: "block",
+            textDecoration: "none",
             background: "var(--kk-surface)",
             border: "1px solid var(--kk-line)",
             borderRadius: 18,
             overflow: "hidden",
             boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)",
+            cursor: "pointer",
+            transition: "transform 0.18s cubic-bezier(.32,.72,0,1), box-shadow 0.18s",
           }}
         >
           <div
@@ -503,18 +434,11 @@ export function StatsSection({
               borderBottom: "1px solid var(--kk-line)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
             }}
           >
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>
               Upcoming — next 3 days
             </span>
-            <Link
-              href="/calendar"
-              style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)", textDecoration: "none" }}
-            >
-              My Calendar →
-            </Link>
           </div>
           <div
             style={{
@@ -568,7 +492,7 @@ export function StatsSection({
               );
             })}
           </div>
-        </div>
+        </Link>
       )}
     </div>
   );
