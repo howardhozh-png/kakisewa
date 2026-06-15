@@ -322,12 +322,15 @@ export function StatsSection({
             </span>
           </div>
           <div
+            className="kk-cal-scroll"
             style={{
               display: "flex",
               overflowX: "auto",
-              padding: "14px 18px",
+              padding: "14px 18px 10px",
               gap: 10,
               WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "thin",
+              scrollbarColor: "var(--kk-line) transparent",
             }}
           >
             {filteredEvents.map((ev) => {
