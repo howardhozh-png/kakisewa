@@ -388,11 +388,11 @@ html, body {
 .kk-cal-scroll::-webkit-scrollbar { display: none; }
 
 /* ─── Weekly calendar responsive ── */
-.kk-week-mobile { display: none !important; }
-.kk-week-desktop { display: flex !important; }
+.kk-week-mobile { display: none; }
+.kk-week-desktop { display: flex; }
 @media (max-width: 600px) {
-  .kk-week-mobile { display: flex !important; }
-  .kk-week-desktop { display: none !important; }
+  .kk-week-mobile { display: flex; }
+  .kk-week-desktop { display: none; }
 }
 
 /* ─── Card-level CTA (wraps text, full width, fits inside narrow cards) ──── */

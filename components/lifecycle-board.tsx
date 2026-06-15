@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FilterSelect } from "@/components/filter-select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { DateInput } from "@/components/ui/date-input";
 
 interface ColMeta {
   stage: LifecycleStage | "expired";
@@ -1192,10 +1193,9 @@ function LostContractDialog({ t, open, onClose }: { t: Tenancy; open: boolean; o
             <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--kk-ink-mute)" }}>
               Competitor contract end date <span style={{ color: "var(--kk-ink-faint)" }}>(optional)</span>
             </p>
-            <input
-              type="date"
+            <DateInput
               value={competitorEnd}
-              onChange={(e) => setCompetitorEnd(e.target.value)}
+              onChange={setCompetitorEnd}
               className="w-full rounded-xl px-3 py-2 text-[13px] outline-none"
               style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
             />
