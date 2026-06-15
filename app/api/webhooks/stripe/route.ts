@@ -69,8 +69,11 @@ export async function POST(req: NextRequest) {
     const priceId = sub.items.data[0]?.price.id ?? "";
     const status = sub.status === "active" ? "active"
       : sub.status === "canceled" ? "cancelled"
-      : sub.status === "past_due" ? "expired"
-      : sub.status;
+      : sub.status === "trialing" ? "trial"
+      // past_due, unpaid, incomplete, incomplete_expired, paused — none of these mean
+      // they're currently paying, so default to expired instead of passing the raw
+      // Stripe string through (an unrecognized status would silently bypass every gate)
+      : "expired";
     if (userId) {
       await admin.from("agent_profiles").update({
         stripe_subscription_id: sub.id,
