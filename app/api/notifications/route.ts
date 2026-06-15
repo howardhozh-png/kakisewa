@@ -109,14 +109,19 @@ export async function GET() {
     let bucket: string;
     let label: string;
     let priority: "high" | "normal";
+    let bucketDays: number;
 
     if (daysLeft <= 7) {
-      bucket = "7d"; label = "7 days"; priority = "high";
+      bucket = "7d"; label = "7 days"; priority = "high"; bucketDays = 7;
     } else if (daysLeft <= 30) {
-      bucket = "30d"; label = "1 month"; priority = "normal";
+      bucket = "30d"; label = "1 month"; priority = "normal"; bucketDays = 30;
     } else {
-      bucket = "60d"; label = "2 months"; priority = "normal";
+      bucket = "60d"; label = "2 months"; priority = "normal"; bucketDays = 60;
     }
+
+    // Timestamp = when this milestone first became relevant (contract_end - bucketDays).
+    // This makes "1d ago" / "3d ago" meaningful rather than always showing "Just now".
+    const milestoneAt = new Date(new Date(row.contract_end).getTime() - bucketDays * 86400000).toISOString();
 
     items.push({
       id: `exp_${row.id}_${bucket}`,
@@ -124,7 +129,7 @@ export async function GET() {
       title: `Contract expiring — ${label} left`,
       body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
       href: `/existing-listing?highlight=${row.id}`,
-      createdAt: today.toISOString(),
+      createdAt: milestoneAt,
       priority,
     });
   }
@@ -224,36 +229,8 @@ export async function GET() {
     });
   }
 
-  // ── Properties becoming available within 60 days ──────────────────────────────
-  const { data: availableSoon } = await supabase
-    .from("owner_leads")
-    .select("id, owner_name, property_name, unit, available_from")
-    .not("available_from", "is", null)
-    .gte("available_from", todayStr)
-    .lte("available_from", in60)
-    .in("stage", ["wants_rent", "listed", "replied"])
-    .order("available_from", { ascending: true })
-    .limit(10);
-
-  for (const r of availableSoon ?? []) {
-    const row = r as { id: string; owner_name: string; property_name: string | null; unit: string | null; available_from: string };
-    const daysLeft = Math.ceil((new Date(row.available_from).getTime() - today.getTime()) / 86400000);
-    let label: string;
-    let bucket: string;
-    if (daysLeft <= 7) { bucket = "7d"; label = "7 days"; }
-    else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
-    else { bucket = "60d"; label = "2 months"; }
-    const propParts = [row.property_name, row.unit ? `Unit ${row.unit}` : null].filter(Boolean);
-    items.push({
-      id: `avail_${row.id}_${bucket}`,
-      type: "property_available",
-      title: `Property available in ${label}`,
-      body: `${propParts.join(" · ") || "Property"} · ${row.owner_name}`,
-      href: `/my-listing?highlight=${row.id}`,
-      createdAt: today.toISOString(),
-      priority: daysLeft <= 7 ? "high" : "normal",
-    });
-  }
+  // Property available notifications removed — creates noise without value.
+  // Agents want to be notified when owners reply, not when availability dates approach.
 
   // ── Tenant ranked property pack (last 30 days) ────────────────────────────────
   const { data: tenantRankedPacks } = await supabase

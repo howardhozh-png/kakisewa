@@ -73,11 +73,17 @@ const TYPE_COLOR: Record<NotificationItem["type"], string> = {
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return "Just now";
-  if (h < 24) return `${h}h ago`;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  if (d < 7) return `${d}d`;
+  const w = Math.floor(d / 7);
+  if (w < 5) return `${w}w`;
+  const mo = Math.floor(d / 30);
+  return `${mo}mo`;
 }
 
 export function NotificationBell() {
