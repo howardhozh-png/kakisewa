@@ -319,6 +319,85 @@ function S10() {
   );
 }
 
+// 11 — Founder (last slide)
+function S11() {
+  const clients = ["Petronas", "TSMC", "Cebu Pacific", "Alibaba", "Maybank", "Mondelez", "Asahi"];
+  return (
+    <div style={{
+      width: "100%", height: "100%",
+      display: "flex", flexDirection: "column", justifyContent: "center",
+      padding: "clamp(40px,6vw,80px) clamp(48px,9vw,148px)", boxSizing: "border-box",
+    }}>
+      <OL>The Founder</OL>
+      <div style={{ display: "flex", gap: "clamp(28px,5vw,72px)", flexWrap: "wrap", alignItems: "flex-start" }}>
+
+        {/* Left — photo + bio */}
+        <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 14 }}>
+          <div style={{
+            width: "clamp(88px,9vw,120px)", height: "clamp(88px,9vw,120px)",
+            borderRadius: "50%", overflow: "hidden",
+            border: "2px solid rgba(0,0,0,0.09)", background: "#F5F5F7", flexShrink: 0,
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/howard-profile.png" alt="Howard Ho" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+          </div>
+          <div>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(15px,1.5vw,18px)", fontWeight: 700, color: INK, margin: "0 0 3px 0" }}>Howard Ho</p>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: "0 0 10px 0" }}>Founder, kakisewa</p>
+            <a
+              href="https://www.linkedin.com/in/howardhozh/"
+              onClick={e => e.stopPropagation()}
+              target="_blank" rel="noopener noreferrer"
+              style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: "#0A66C2", textDecoration: "none", letterSpacing: "0.04em" }}
+            >
+              LinkedIn →
+            </a>
+          </div>
+        </div>
+
+        {/* Right — experience */}
+        <div style={{ flex: "1 1 260px", display: "flex", flexDirection: "column", gap: "clamp(22px,3vw,32px)" }}>
+
+          {/* Bain */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 900, letterSpacing: "0.06em", color: "#FFFFFF", background: "#CC0000", padding: "4px 10px", borderRadius: 4 }}>
+                BAIN &amp; COMPANY
+              </span>
+              <span style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE }}>Business Consultant</span>
+            </div>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: "0 0 12px 0", lineHeight: 1.5 }}>
+              Consulted for global enterprises across Asia Pacific, ANZ &amp; the Middle East.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {clients.map(c => (
+                <span key={c} style={{
+                  fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", fontWeight: 600, color: INK,
+                  border: "1px solid rgba(0,0,0,0.14)", borderRadius: 4, padding: "3px 10px", whiteSpace: "nowrap",
+                }}>{c}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Tarro */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 900, letterSpacing: "0.06em", color: "#FFFFFF", background: "#1A1A2E", padding: "4px 10px", borderRadius: 4 }}>
+                TARRO
+              </span>
+              <span style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE }}>Product &amp; Team Lead</span>
+            </div>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: 0, lineHeight: 1.6 }}>
+              Joined a Y Combinator startup serving 100k+ restaurant operators. Built product tools for real users and built cross-functional teams from the ground up.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Slide registry ─── */
 const SLIDES: { id: string; el: React.ReactNode }[] = [
   { id: "cover",    el: <S1 /> },
@@ -331,6 +410,7 @@ const SLIDES: { id: string; el: React.ReactNode }[] = [
   { id: "security", el: <S8 /> },
   { id: "pricing",  el: <S9 /> },
   { id: "cta",      el: <S10 /> },
+  { id: "founder",  el: <S11 /> },
 ];
 
 const TOTAL = SLIDES.length;
