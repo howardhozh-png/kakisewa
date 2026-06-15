@@ -41,7 +41,12 @@ export default async function MessageOwnersPage() {
         </div>
       </header>
 
-      {ownerLeads.length === 0 && deletedLeads.length === 0 ? <OutreachEmptyState /> : <OutreachTable leads={ownerLeads} deletedLeads={deletedLeads} />}
+      {(() => {
+    const activeLeads = ownerLeads.filter((l) => l.stage !== "archived");
+    return activeLeads.length === 0 && deletedLeads.length === 0
+      ? <OutreachEmptyState />
+      : <OutreachTable leads={activeLeads} deletedLeads={deletedLeads} />;
+  })()}
     </div>
   );
 }
