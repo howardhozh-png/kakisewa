@@ -109,13 +109,14 @@ export default async function AdminPage() {
     page++;
   }
 
-  // Engagement counts per agent
+  // Engagement data per agent — fetch with created_at for time-window filtering
   const [{ data: allLeads }, { data: allTenancies }, { data: allFeedbackCounts }] = await Promise.all([
-    supabase.from("owner_leads").select("user_id, stage, wa_status").is("deleted_at", null),
-    supabase.from("tenancies").select("user_id").is("deleted_at", null),
-    supabase.from("feedback").select("agent_id"),
+    supabase.from("owner_leads").select("user_id, stage, wa_status, created_at, last_outreach_at").is("deleted_at", null),
+    supabase.from("tenancies").select("user_id, created_at").is("deleted_at", null),
+    supabase.from("feedback").select("agent_id, created_at"),
   ]);
 
+  // All-time counts (for default view)
   const leadsByUser: Record<string, { total: number; outreached: number; myListing: number }> = {};
   for (const l of allLeads ?? []) {
     if (!l.user_id) continue;
@@ -135,6 +136,17 @@ export default async function AdminPage() {
     if (!f.agent_id) continue;
     feedbackByUser[f.agent_id] = (feedbackByUser[f.agent_id] ?? 0) + 1;
   }
+
+  // Raw timestamped records — passed to client for time-window recomputation
+  const rawLeads = (allLeads ?? []).map((l: { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null }) => ({
+    user_id: l.user_id, stage: l.stage, wa_status: l.wa_status, created_at: l.created_at, last_outreach_at: l.last_outreach_at,
+  }));
+  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string }) => ({
+    user_id: t.user_id, created_at: t.created_at,
+  }));
+  const rawFeedback = (allFeedbackCounts ?? []).map((f: { agent_id: string; created_at: string }) => ({
+    agent_id: f.agent_id, created_at: f.created_at,
+  }));
 
   const agents = (profiles ?? []).map((p: {
     id: string; name: string | null; phone: string | null; agency: string | null;
@@ -168,5 +180,5 @@ export default async function AdminPage() {
     };
   });
 
-  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} />;
+  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />;
 }

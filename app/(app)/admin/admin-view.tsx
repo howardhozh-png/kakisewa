@@ -101,6 +101,33 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
   elite:    { bg: "rgba(107,61,30,0.12)",   color: "#6b3d1e" },
 };
 
+interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; }
+interface RawTenancy { user_id: string; created_at: string; }
+interface RawFeedbackItem { agent_id: string; created_at: string; }
+
+const TIME_OPTIONS = [
+  { value: "all",  label: "All time" },
+  { value: "7d",   label: "Past 7 days" },
+  { value: "14d",  label: "Past 14 days" },
+  { value: "1m",   label: "Past 1 month" },
+  { value: "2m",   label: "Past 2 months" },
+  { value: "3m",   label: "Past 3 months" },
+  { value: "6m",   label: "Past 6 months" },
+] as const;
+type TimeWindow = typeof TIME_OPTIONS[number]["value"];
+
+function windowStart(w: TimeWindow): Date | null {
+  if (w === "all") return null;
+  const now = new Date();
+  if (w === "7d")  return new Date(now.getTime() - 7  * 86400000);
+  if (w === "14d") return new Date(now.getTime() - 14 * 86400000);
+  if (w === "1m")  return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  if (w === "2m")  return new Date(now.getFullYear(), now.getMonth() - 2, now.getDate());
+  if (w === "3m")  return new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+  if (w === "6m")  return new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+  return null;
+}
+
 type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "potential_listing_count" | "outreaches_sent" | "my_listing_count" | "existing_listing_count" | "feedback_count";
 
 function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: "asc" | "desc" }) {
@@ -132,10 +159,16 @@ function NumCell({ value }: { value: number }) {
   );
 }
 
-function AgentsTable({ agents }: { agents: AgentRow[] }) {
+function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
+  agents: AgentRow[];
+  rawLeads: RawLead[];
+  rawTenancies: RawTenancy[];
+  rawFeedback: RawFeedbackItem[];
+}) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activityFilter, setActivityFilter] = useState("all");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("all");
   const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -144,8 +177,56 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
     else { setSortCol(col); setSortDir("asc"); }
   }
 
+  // Recompute per-agent counts for the selected time window
+  const windowedCounts = useMemo(() => {
+    const cutoff = windowStart(timeWindow);
+    if (!cutoff) return null; // "all time" — use precomputed from AgentRow
+
+    const counts: Record<string, { potential: number; outreached: number; myListing: number; tenancies: number; feedback: number }> = {};
+    const init = () => ({ potential: 0, outreached: 0, myListing: 0, tenancies: 0, feedback: 0 });
+
+    for (const l of rawLeads) {
+      if (!l.user_id || new Date(l.created_at) < cutoff) continue;
+      const c = counts[l.user_id] ?? init();
+      c.potential++;
+      if (["wants_rent", "listed", "matched"].includes(l.stage)) c.myListing++;
+      counts[l.user_id] = c;
+    }
+    // Outreaches: use last_outreach_at within window
+    for (const l of rawLeads) {
+      if (!l.user_id || !l.last_outreach_at) continue;
+      if (new Date(l.last_outreach_at) < cutoff) continue;
+      const c = counts[l.user_id] ?? init();
+      c.outreached++;
+      counts[l.user_id] = c;
+    }
+    for (const t of rawTenancies) {
+      if (!t.user_id || new Date(t.created_at) < cutoff) continue;
+      const c = counts[t.user_id] ?? init();
+      c.tenancies++;
+      counts[t.user_id] = c;
+    }
+    for (const f of rawFeedback) {
+      if (!f.agent_id || new Date(f.created_at) < cutoff) continue;
+      const c = counts[f.agent_id] ?? init();
+      c.feedback++;
+      counts[f.agent_id] = c;
+    }
+    return counts;
+  }, [timeWindow, rawLeads, rawTenancies, rawFeedback]);
+
+  // Merge windowed counts into agents for sorting/display
+  const agentsWithCounts = useMemo(() => agents.map(a => ({
+    ...a,
+    potential_listing_count: windowedCounts ? (windowedCounts[a.id]?.potential ?? 0) : a.potential_listing_count,
+    outreaches_sent:         windowedCounts ? (windowedCounts[a.id]?.outreached ?? 0) : a.outreaches_sent,
+    my_listing_count:        windowedCounts ? (windowedCounts[a.id]?.myListing ?? 0) : a.my_listing_count,
+    existing_listing_count:  windowedCounts ? (windowedCounts[a.id]?.tenancies ?? 0) : a.existing_listing_count,
+    feedback_count:          windowedCounts ? (windowedCounts[a.id]?.feedback ?? 0) : a.feedback_count,
+  })), [agents, windowedCounts]);
+
   const filtered = useMemo(() => {
-    let rows = agents;
+    let rows = agentsWithCounts;
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
@@ -171,10 +252,12 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
-  }, [agents, search, statusFilter, activityFilter, sortCol, sortDir]);
+  }, [agentsWithCounts, search, statusFilter, activityFilter, sortCol, sortDir]);
 
   function exportCsv() {
+    const windowLabel = TIME_OPTIONS.find(o => o.value === timeWindow)?.label ?? "All time";
     const rows = [
+      [`# Activity window: ${windowLabel}`],
       ["Name", "Email", "Phone", "Agency", "REN", "Status", "Plan", "Joined", "Last Login", "Days Inactive", "Potential Listing", "Outreaches Sent", "My Listing", "Existing Listing", "Feedback"].join(","),
       ...filtered.map(a => [
         a.name ?? "", a.email ?? "", a.phone ?? "", a.agency ?? "",
@@ -199,6 +282,9 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
       </span>
     </th>
   );
+
+  const isFiltered = timeWindow !== "all";
+  const windowLabel = TIME_OPTIONS.find(o => o.value === timeWindow)?.label;
 
   return (
     <div>
@@ -244,7 +330,15 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
           <option value="inactive">Inactive (14+ days)</option>
           <option value="never">Never logged in</option>
         </select>
-        <span className="text-[12px] ml-1" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
+        <select
+          value={timeWindow}
+          onChange={e => setTimeWindow(e.target.value as TimeWindow)}
+          className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium"
+          style={{ background: isFiltered ? "rgba(0,113,227,0.08)" : "var(--kk-surface-2)", border: isFiltered ? "1px solid rgba(0,113,227,0.3)" : "1px solid var(--kk-line)", color: isFiltered ? "var(--kk-blue)" : "var(--kk-ink)", fontWeight: isFiltered ? 700 : 500 }}
+        >
+          {TIME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
         <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() => { const emails = filtered.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${filtered.filter(a => a.email).length} emails copied`); }}
@@ -262,6 +356,15 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
           </button>
         </div>
       </div>
+
+      {/* Time window banner */}
+      {isFiltered && (
+        <div className="mb-3 px-4 py-2 rounded-xl flex items-center gap-2" style={{ background: "rgba(0,113,227,0.07)", border: "1px solid rgba(0,113,227,0.18)" }}>
+          <span className="text-[12px] font-semibold" style={{ color: "var(--kk-blue)" }}>Showing activity: {windowLabel}</span>
+          <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>— counts reflect records created in this window only</span>
+          <button onClick={() => setTimeWindow("all")} className="ml-auto text-[11px] font-semibold hover:opacity-70 transition-opacity" style={{ color: "var(--kk-blue)" }}>Clear</button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
@@ -295,9 +398,8 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
                 const trialLabel = a.subscription_status === "trial" && a.trial_days_left !== null
                   ? (a.trial_days_left > 0 ? ` · ${a.trial_days_left}d left` : " · Expired") : "";
                 const rowBg = i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)";
-                const border = "1px solid var(--kk-line)";
                 return (
-                  <tr key={a.id} style={{ background: rowBg, borderTop: border }}>
+                  <tr key={a.id} style={{ background: rowBg, borderTop: "1px solid var(--kk-line)" }}>
                     <td className="px-4 py-3" style={{ minWidth: 180 }}>
                       <p className="font-semibold text-[13px] leading-tight" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
                       <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
@@ -334,9 +436,10 @@ function AgentsTable({ agents }: { agents: AgentRow[] }) {
   );
 }
 
-export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents, invites: initialInvites, waitlist }: {
+export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents, invites: initialInvites, waitlist, rawLeads, rawTenancies, rawFeedback }: {
   funnel: Funnel; links: Link[]; feedback: FeedbackRow[]; agents: AgentRow[];
   invites: InviteRow[]; waitlist: WaitlistRow[];
+  rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
 }) {
   const [tab, setTab] = useState<"funnel" | "feedback" | "agents" | "invites" | "waitlist">("funnel");
   const [links, setLinks] = useState<Link[]>(initialLinks);
@@ -619,7 +722,7 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
         </div>
       )}
 
-      {tab === "agents" && <AgentsTable agents={agents} />}
+      {tab === "agents" && <AgentsTable agents={agents} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />}
 
       {tab === "funnel" && <>
       {/* User Funnel */}
