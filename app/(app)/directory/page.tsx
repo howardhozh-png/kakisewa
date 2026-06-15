@@ -89,21 +89,27 @@ export default async function NetworkPage({ searchParams }: Props) {
   const activePhones = new Set(currentTenants.map((t) => t.tenant_phone).filter(Boolean) as string[]);
   const formerPhones  = new Set(formerTenants.map((t)  => t.tenant_phone).filter(Boolean) as string[]);
 
-  // Former tenants re-enter the available pool; synthesise minimal TenantProfile objects for them
-  const formerAsProfiles: TenantProfile[] = formerTenants
-    .filter(t => !activePhones.has(t.tenant_phone ?? ""))
-    .map(t => ({
-      id:         t.tenancy_id,
-      name:       t.tenant_name,
-      phone:      t.tenant_phone ?? null,
-      created_at: new Date().toISOString(),
-      _synthetic: true,
-    } as TenantProfile & { _synthetic: boolean }));
+  // Build a phone → real profile map for fast lookup
+  const profileByPhone = new Map(tenantProfiles.filter(p => p.phone).map(p => [p.phone!, p]));
 
-  const availableTenantProfiles = [
-    ...tenantProfiles.filter((p) => !(p.phone && (activePhones.has(p.phone) || formerPhones.has(p.phone)))),
-    ...formerAsProfiles,
-  ];
+  // Former tenants re-enter the available pool.
+  // Prefer their real tenant_profiles row (created when the tenancy was added);
+  // skip entirely if they already appear via tenantProfiles (phone match).
+  const formerProfilePhones = new Set<string>();
+  const formerAsProfiles: TenantProfile[] = [];
+  for (const t of formerTenants) {
+    if (activePhones.has(t.tenant_phone ?? "")) continue;
+    const real = t.tenant_phone ? profileByPhone.get(t.tenant_phone) : null;
+    if (real) {
+      // Real profile exists — it will already appear in tenantProfiles; skip duplicate
+      formerProfilePhones.add(t.tenant_phone!);
+    }
+    // No real profile (tenancy predates auto-create) — skip rather than show broken synthetic
+  }
+
+  const availableTenantProfiles = tenantProfiles.filter(
+    (p) => !(p.phone && activePhones.has(p.phone))
+  );
 
   const allTenantsCount = availableTenantProfiles.length + currentTenants.length;
 

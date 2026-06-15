@@ -189,9 +189,16 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     await (await import("@/lib/db")).updateTenancy(newTenancy.id, { agreement_url: agreementUrl });
   }
 
+  // Auto-create a tenant profile so the tenant appears in the directory
+  const tenantNameVal = formData.get("tenant_name") as string | null;
+  const tenantPhoneVal = formData.get("tenant_phone") as string | null;
+  if (tenantNameVal?.trim()) {
+    await (await import("@/lib/db")).ensureTenantProfile(tenantNameVal, tenantPhoneVal);
+  }
+
   invalidateCache();
   revalidatePath("/existing-listing");
-  revalidatePath("/tenants");
+  revalidatePath("/directory");
   revalidatePath("/");
   return { ok: true, id: newTenancy.id };
 }
@@ -1034,9 +1041,15 @@ export async function convertLeadToTenancy(
 
     await updateOwnerLead(ownerLeadId, { stage: "matched", is_managed: true });
 
+    // Auto-create a tenant profile so the tenant appears in the directory
+    if (data.tenant_name?.trim()) {
+      await (await import("@/lib/db")).ensureTenantProfile(data.tenant_name, data.tenant_phone ?? null);
+    }
+
     invalidateCache();
     revalidatePath("/potential-listing"); revalidatePath("/my-listing");
     revalidatePath("/existing-listing");
+    revalidatePath("/directory");
     revalidatePath("/");
     return { ok: true, message: "Tenancy created and lead marked as Matched." };
   } catch (e) {

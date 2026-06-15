@@ -1433,6 +1433,36 @@ export async function createTenantProfile(
   return fresh as TenantProfile;
 }
 
+// Upsert a minimal tenant_profiles row when a tenancy is created.
+// Skips if a profile with the same phone already exists — never overwrites.
+export async function ensureTenantProfile(name: string, phone: string | null): Promise<void> {
+  if (!name?.trim()) return;
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
+  if (!user) return;
+
+  if (phone?.trim()) {
+    const { data: existing } = await supabase
+      .from("tenant_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("phone", phone.trim())
+      .maybeSingle();
+    if (existing) return;
+  }
+
+  const id = `tp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  await supabase.from("tenant_profiles").insert({
+    id,
+    user_id: user.id,
+    name: name.trim(),
+    phone: phone?.trim() ?? null,
+    pets: 0,
+    smoking: 0,
+  });
+}
+
 export async function getLifetimeCommissionStats(): Promise<{
   dealCount: number;
   totalEarned: number;
