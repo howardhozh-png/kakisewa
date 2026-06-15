@@ -166,14 +166,14 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
         <div className="p-5 border-t space-y-2" style={{ borderColor: "var(--kk-line)" }}>
           {confirmDelete ? (
             <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "var(--kk-red-bg)", border: "1px solid var(--kk-red-border)" }}>
-              <p className="flex-1 text-[12px] font-medium" style={{ color: "var(--destructive)" }}>Delete this tenant permanently?</p>
+              <p className="flex-1 text-[12px] font-medium" style={{ color: "var(--destructive)" }}>Moved to bin — auto-deleted after 7 days</p>
               <button onClick={() => setConfirmDelete(false)} className="text-[12px] font-medium px-3 py-1.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
               <button disabled={pending}
                 onClick={() => startTransition(async () => { await removeTenantProfile(profile.id); router.refresh(); onClose(); })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
                 style={{ background: "var(--destructive)", color: "#fff" }}>
                 {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                {pending ? "Deleting…" : "Yes, delete"}
+                {pending ? "Moving…" : "Move to bin"}
               </button>
             </div>
           ) : (
