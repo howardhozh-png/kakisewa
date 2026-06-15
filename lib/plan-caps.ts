@@ -21,14 +21,16 @@ export type ProfileRow = { subscription_plan?: string | null; subscription_statu
 
 export function effectivePlan(p: ProfileRow | null): string {
   if (!p) return "silver";
-  if (p.subscription_status === "beta") return "elite_trial";
-  if (p.subscription_status === "trial") return "elite_trial";
+  if (p.subscription_status === "beta") return "elite";
+  if (p.subscription_status === "trial") return "elite";
   if (p.subscription_status === "active") return p.subscription_plan ?? "silver";
+  // beta_frozen, expired, cancelled — locked out, not silver-tier
+  if (p.subscription_status === "beta_frozen" || p.subscription_status === "expired" || p.subscription_status === "cancelled") return "frozen";
   return "silver";
 }
 
 export const PLAN_RANK: Record<string, number> = {
-  silver: 1, gold: 2, platinum: 3, elite: 4, elite_trial: 4,
+  silver: 1, gold: 2, platinum: 3, elite: 4,
 };
 
 export function planAllows(plan: string, min: "gold" | "platinum" | "elite"): boolean {
@@ -37,29 +39,29 @@ export function planAllows(plan: string, min: "gold" | "platinum" | "elite"): bo
 
 // Existing pipeline (tenancies)
 export const TENANCY_CAP: Record<string, number> = {
-  elite_trial: Infinity,
-  silver:      20,
-  gold:        60,
-  platinum:    200,
-  elite:       700,
+  frozen:   0,
+  silver:   20,
+  gold:     60,
+  platinum: 200,
+  elite:    700,
 };
 
 // My pipeline (owner_leads, not competitor targets)
 export const LEAD_CAP: Record<string, number> = {
-  elite_trial: Infinity,
-  silver:      40,
-  gold:        100,
-  platinum:    300,
-  elite:       800,
+  frozen:   0,
+  silver:   40,
+  gold:     100,
+  platinum: 300,
+  elite:    800,
 };
 
 // Target pipeline (competitor leads)
 export const TARGET_CAP: Record<string, number> = {
-  elite_trial: Infinity,
-  silver:      10,
-  gold:        40,
-  platinum:    100,
-  elite:       500,
+  frozen:   0,
+  silver:   10,
+  gold:     40,
+  platinum: 100,
+  elite:    500,
 };
 
 const NEXT_TIER_TENANCY: Record<string, { id: PlanId; cap: number | null }> = {
