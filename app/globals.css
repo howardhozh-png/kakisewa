@@ -389,7 +389,7 @@ html, body {
 
 /* ─── Weekly calendar responsive ── */
 .kk-week-mobile { display: none !important; }
-.kk-week-desktop { display: grid !important; }
+.kk-week-desktop { display: flex !important; }
 @media (max-width: 600px) {
   .kk-week-mobile { display: flex !important; }
   .kk-week-desktop { display: none !important; }
