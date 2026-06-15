@@ -114,219 +114,170 @@ function Block({
   );
 }
 
-async function doExportPDF(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string) {
-  const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const W = 210, pad = 18;
-  const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-  const respondedPct = stats.totalUploaded > 0 ? Math.round((stats.totalResponded / stats.totalUploaded) * 100) : 0;
-
-  // Header
-  doc.setFillColor(29, 29, 31);
-  doc.rect(0, 0, W, 40, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(255, 255, 255);
-  doc.text("KakiSewa", pad, 18);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(180, 180, 180);
-  doc.text(`Property Snapshot Report`, pad, 26);
-  doc.text(`${fmtMonthLabel(startMonth)} · ${rangeKey} window`, pad, 32);
-  doc.setTextColor(255, 255, 255);
-  doc.text(`Generated: ${date}`, W - pad, 32, { align: "right" });
-
-  const sections = [
-    {
-      title: "POTENTIAL LISTING",
-      color: [0, 82, 165] as [number, number, number],
-      bg: [230, 240, 255] as [number, number, number],
-      rows: [
-        { label: "Owner contacts imported", value: stats.totalUploaded.toLocaleString() },
-        { label: "Contacted", value: stats.totalContacted.toLocaleString() },
-        { label: "Responded / Listed", value: `${respondedPct}%` },
-      ],
-    },
-    {
-      title: "MY LISTING",
-      color: [91, 30, 156] as [number, number, number],
-      bg: [242, 235, 255] as [number, number, number],
-      rows: [
-        { label: "Listings in progress", value: stats.totalListedCount.toLocaleString() },
-        { label: "Listed for rent", value: stats.listedRentCount.toLocaleString() },
-        { label: "Listed for sale", value: stats.listedSaleCount.toLocaleString() },
-      ],
-    },
-    {
-      title: "EXISTING LISTING",
-      color: [22, 101, 52] as [number, number, number],
-      bg: [230, 250, 236] as [number, number, number],
-      rows: [
-        { label: "Active tenancies", value: stats.existingTotalActiveCount.toLocaleString() },
-        { label: "Expiring in 60 days", value: stats.existingExpiringIn60Count.toLocaleString() },
-        { label: "Renewing", value: stats.existingRenewingCount.toLocaleString() },
-      ],
-    },
-    {
-      title: "LOST LISTING",
-      color: [146, 64, 14] as [number, number, number],
-      bg: [255, 244, 230] as [number, number, number],
-      rows: [
-        { label: "Competitor properties tracked", value: stats.targetTotalCount.toLocaleString() },
-        { label: "Watching", value: stats.targetWatchingCount.toLocaleString() },
-        { label: "Expiring in 60 days", value: stats.targetExpiringIn60Count.toLocaleString() },
-      ],
-    },
-  ];
-
-  const colW = (W - pad * 2 - 6) / 2;
-  let y = 52;
-
-  sections.forEach((s, i) => {
-    const x = pad + (i % 2) * (colW + 6);
-    if (i === 2) y += 68;
-
-    // Banner
-    doc.setFillColor(...s.color);
-    doc.roundedRect(x, y, colW, 11, 2, 2, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(255, 255, 255);
-    doc.text(s.title, x + 5, y + 7.5);
-
-    // Body
-    doc.setFillColor(...s.bg);
-    doc.roundedRect(x, y + 11, colW, 56, 2, 2, "F");
-    doc.setTextColor(...s.color);
-    s.rows.forEach((row, ri) => {
-      const ry = y + 22 + ri * 17;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text(row.value, x + 5, ry);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...s.color);
-      doc.text(row.label, x + 5, ry + 5.5);
-    });
-  });
-
-  // Footer
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(160, 160, 160);
-  doc.text("kakisewa.com · Confidential", W / 2, 290, { align: "center" });
-
-  doc.save(`kakisewa-snapshot-${date.replace(/ /g, "-")}.pdf`);
-}
-
-function doExportImage(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string) {
+function buildExportCanvas(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string): HTMLCanvasElement {
+  // A4 landscape ratio: 297:210 × 7 = 2079:1470 — rounded to 2100×1485
+  const W = 2100, H = 1485;
   const canvas = document.createElement("canvas");
-  canvas.width = 1200;
-  canvas.height = 660;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-  const respondedPct = stats.totalUploaded > 0 ? Math.round((stats.totalResponded / stats.totalUploaded) * 100) : 0;
+  const contactedPct = stats.totalUploaded > 0 ? Math.round((stats.totalContacted / stats.totalUploaded) * 100) : 0;
 
-  // Background
+  // ── Background ────────────────────────────────────────────────────────────
   ctx.fillStyle = "#FBFBFD";
-  ctx.fillRect(0, 0, 1200, 660);
+  ctx.fillRect(0, 0, W, H);
 
-  // Top bar
+  // ── Header (dark strip) ───────────────────────────────────────────────────
   ctx.fillStyle = "#1D1D1F";
-  ctx.fillRect(0, 0, 1200, 76);
+  ctx.fillRect(0, 0, W, 178);
+
+  // Logo: white rounded box with "k" inside
+  const lx = 60, ly = 50, ls = 62, lr = 13;
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 26px Arial, sans-serif";
-  ctx.fillText("KakiSewa", 40, 30);
-  ctx.font = "14px Arial, sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText(`Property Snapshot · ${fmtMonthLabel(startMonth)} · ${rangeKey}`, 40, 52);
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.font = "13px Arial, sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText(`Generated: ${date}`, 1160, 52);
+  roundRect(ctx, lx, ly, ls, ls, [lr, lr, lr, lr]);
+  ctx.fillStyle = "#1D1D1F";
+  ctx.font = "bold 38px Georgia, serif";
+  ctx.textAlign = "center";
+  ctx.fillText("k", lx + ls / 2, ly + 44);
   ctx.textAlign = "left";
+
+  // Brand name
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.font = "600 32px Arial, sans-serif";
+  ctx.fillText("kakisewa", lx + ls + 16, ly + 42);
+
+  // Subtitle row
+  ctx.fillStyle = "rgba(255,255,255,0.40)";
+  ctx.font = "14px Arial, sans-serif";
+  ctx.fillText(`PROPERTY SNAPSHOT  ·  ${fmtMonthLabel(startMonth)}  ·  ${rangeKey} window`, lx, ly + ls + 24);
+
+  // Generated date (right-aligned)
+  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.font = "16px Arial, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(`Generated: ${date}`, W - 60, ly + 42);
+  ctx.textAlign = "left";
+
+  // ── Cards (2×2 grid) ──────────────────────────────────────────────────────
+  const pad = 60, gap = 32;
+  const cW = (W - pad * 2 - gap) / 2;
+  const cTop = 210;
+  const cH = (H - cTop - pad - gap) / 2;
+  const banH = 76;
 
   const sections = [
     {
-      title: "POTENTIAL LISTING",
-      color: "#0052A5",
-      bg: "#E6F0FF",
-      rows: [
-        { label: "Owner contacts imported", value: stats.totalUploaded.toLocaleString() },
-        { label: "Contacted", value: stats.totalContacted.toLocaleString() },
-        { label: "Responded / Listed", value: `${respondedPct}%` },
+      title: "POTENTIAL LISTING", color: "#0052A5", bg: "#E6F0FF",
+      primary: { num: stats.totalUploaded.toLocaleString(), label: "owner contacts imported" },
+      stats: [
+        { value: stats.totalContacted.toLocaleString(), label: "Contacted" },
+        { value: `${contactedPct}%`, label: "% Contacted" },
       ],
     },
     {
-      title: "MY LISTING",
-      color: "#5B1E9C",
-      bg: "#F2EBFF",
-      rows: [
-        { label: "Listings in progress", value: stats.totalListedCount.toLocaleString() },
-        { label: "Listed for rent", value: stats.listedRentCount.toLocaleString() },
-        { label: "Listed for sale", value: stats.listedSaleCount.toLocaleString() },
+      title: "MY LISTING", color: "#5B1E9C", bg: "#F2EBFF",
+      primary: { num: stats.totalListedCount.toLocaleString(), label: "listings in progress" },
+      stats: [
+        { value: stats.listedRentCount.toLocaleString(), label: "Listed for rent" },
+        { value: stats.listedSaleCount.toLocaleString(), label: "Listed for sale" },
       ],
     },
     {
-      title: "EXISTING LISTING",
-      color: "#166534",
-      bg: "#E6FAEC",
-      rows: [
-        { label: "Active tenancies", value: stats.existingTotalActiveCount.toLocaleString() },
-        { label: "Expiring in 60 days", value: stats.existingExpiringIn60Count.toLocaleString() },
-        { label: "Renewing", value: stats.existingRenewingCount.toLocaleString() },
+      title: "EXISTING LISTING", color: "#166534", bg: "#E6FAEC",
+      primary: { num: stats.existingTotalActiveCount.toLocaleString(), label: "active tenancies" },
+      stats: [
+        { value: stats.existingExpiringIn60Count.toLocaleString(), label: "Expiring in 60 days" },
+        { value: stats.existingRenewingCount.toLocaleString(), label: "Renewing" },
+        { value: stats.existingExpiredCount.toLocaleString(), label: "Expired" },
       ],
     },
     {
-      title: "LOST LISTING",
-      color: "#92400E",
-      bg: "#FFF4E6",
-      rows: [
-        { label: "Competitor properties tracked", value: stats.targetTotalCount.toLocaleString() },
-        { label: "Watching", value: stats.targetWatchingCount.toLocaleString() },
-        { label: "Expiring in 60 days", value: stats.targetExpiringIn60Count.toLocaleString() },
+      title: "LOST LISTING", color: "#92400E", bg: "#FFF4E6",
+      primary: { num: stats.targetTotalCount.toLocaleString(), label: "competitor properties tracked" },
+      stats: [
+        { value: stats.targetWatchingCount.toLocaleString(), label: "Watching" },
+        { value: stats.targetExpiringIn60Count.toLocaleString(), label: "Expiring in 60 days" },
       ],
     },
   ];
 
-  const cW = 540, cH = 238, pad = 40, gap = 20, bannerH = 44;
-
   sections.forEach((s, i) => {
-    const x = pad + (i % 2) * (cW + gap);
-    const y = 100 + Math.floor(i / 2) * (cH + gap);
+    const col = i % 2, row = Math.floor(i / 2);
+    const cx = pad + col * (cW + gap);
+    const cy = cTop + row * (cH + gap);
 
-    // Banner
+    // Banner (top-rounded)
     ctx.fillStyle = s.color;
-    roundRect(ctx, x, y, cW, bannerH, [12, 12, 0, 0]);
+    roundRect(ctx, cx, cy, cW, banH, [22, 22, 0, 0]);
     ctx.fillStyle = "rgba(255,255,255,0.88)";
-    ctx.font = "bold 11px Arial, sans-serif";
-    ctx.letterSpacing = "1px";
-    ctx.fillText(s.title, x + 20, y + 27);
+    ctx.font = "bold 22px Arial, sans-serif";
+    ctx.fillText(s.title, cx + 30, cy + banH / 2 + 9);
 
-    // Body
+    // Body (bottom-rounded)
     ctx.fillStyle = s.bg;
-    roundRect(ctx, x, y + bannerH, cW, cH - bannerH, [0, 0, 12, 12]);
+    roundRect(ctx, cx, cy + banH, cW, cH - banH, [0, 0, 22, 22]);
 
-    s.rows.forEach((row, ri) => {
-      const ry = y + bannerH + 28 + ri * 58;
+    // Primary number
+    ctx.fillStyle = s.color;
+    ctx.font = "bold 108px Arial, sans-serif";
+    ctx.fillText(s.primary.num, cx + 30, cy + banH + 118);
+
+    // Primary label
+    ctx.font = "26px Arial, sans-serif";
+    ctx.globalAlpha = 0.58;
+    ctx.fillText(s.primary.label, cx + 30, cy + banH + 162);
+    ctx.globalAlpha = 1;
+
+    // Divider
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = 0.10;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + 30, cy + banH + 194);
+    ctx.lineTo(cx + cW - 30, cy + banH + 194);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Sub-stats (side by side)
+    const nCols = s.stats.length;
+    const sColW = (cW - 60) / nCols;
+    s.stats.forEach((st, si) => {
+      const sx = cx + 30 + si * sColW;
       ctx.fillStyle = s.color;
-      ctx.font = "bold 36px Arial, sans-serif";
-      ctx.fillText(row.value, x + 20, ry + 36);
-      ctx.font = "13px Arial, sans-serif";
-      ctx.fillStyle = s.color;
-      ctx.globalAlpha = 0.65;
-      ctx.fillText(row.label, x + 20, ry + 54);
+      ctx.font = "bold 54px Arial, sans-serif";
+      ctx.fillText(st.value, sx, cy + banH + 262);
+      ctx.font = "20px Arial, sans-serif";
+      ctx.globalAlpha = 0.55;
+      ctx.fillText(st.label, sx, cy + banH + 298);
       ctx.globalAlpha = 1;
     });
   });
 
-  // Footer
-  ctx.fillStyle = "#9CA3AF";
-  ctx.font = "11px Arial, sans-serif";
+  // ── Footer ────────────────────────────────────────────────────────────────
+  ctx.fillStyle = "rgba(0,0,0,0.20)";
+  ctx.font = "15px Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("kakisewa.com · Confidential", 600, 645);
+  ctx.fillText("kakisewa.com  ·  Confidential", W / 2, H - 20);
   ctx.textAlign = "left";
 
+  return canvas;
+}
+
+async function doExportPDF(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string) {
+  const canvas = buildExportCanvas(stats, startMonth, rangeKey);
+  const imgData = canvas.toDataURL("image/jpeg", 0.95);
+  const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  // A4 landscape: 297 × 210 mm
+  doc.addImage(imgData, "JPEG", 0, 0, 297, 210);
+  doc.save(`kakisewa-snapshot-${date.replace(/ /g, "-")}.pdf`);
+}
+
+function doExportImage(stats: ExpandedDashboardStats, startMonth: string, rangeKey: string) {
+  const canvas = buildExportCanvas(stats, startMonth, rangeKey);
+  const date = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
   const link = document.createElement("a");
   link.download = `kakisewa-snapshot-${date.replace(/ /g, "-")}.png`;
   link.href = canvas.toDataURL("image/png");
@@ -379,7 +330,8 @@ export function StatsSection({
     refetch(getRangeMonths(rangeKey), month);
   }
 
-  function handleRangeChange(key: string) {
+  function handleRangeChange(key: string | null) {
+    if (!key) return;
     setRangeKey(key);
     refetch(getRangeMonths(key), startMonth);
   }
