@@ -1,6 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ArrowRight, Snowflake } from "lucide-react";
+
+const ALLOWED_PATHS = ["/home", "/subscription", "/faq", "/support"];
 
 const PLANS = [
   { name: "Silver",   price: 69,  desc: "Start building your pipeline and renewal tracking." },
@@ -10,6 +13,9 @@ const PLANS = [
 ];
 
 export function BetaFrozenGate() {
+  const pathname = usePathname();
+  if (ALLOWED_PATHS.includes(pathname) || pathname.startsWith("/settings")) return null;
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center p-6"
@@ -27,10 +33,10 @@ export function BetaFrozenGate() {
         </div>
 
         <h2 className="serif mb-2" style={{ fontSize: "1.6rem", lineHeight: 1.15, letterSpacing: "-0.022em", color: "var(--kk-ink)" }}>
-          Your beta period has ended.
+          Your account has been paused.
         </h2>
         <p className="mb-6" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.65 }}>
-          We&apos;re reviewing your feedback and making improvements. Your data is safe. Subscribe now to keep your access.
+          Your data is safe. You can still view your homepage, account settings, and help & support. Subscribe now to restore full access.
         </p>
 
         <div className="flex flex-col gap-2 mb-6">

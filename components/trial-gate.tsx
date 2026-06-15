@@ -1,6 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ArrowRight, Lock } from "lucide-react";
+
+const ALLOWED_PATHS = ["/home", "/subscription", "/faq", "/support"];
 
 const PLANS = [
   { name: "Silver",   price: 69,  desc: "Start building your pipeline and renewal tracking." },
@@ -10,6 +13,9 @@ const PLANS = [
 ];
 
 export function TrialGate() {
+  const pathname = usePathname();
+  if (ALLOWED_PATHS.includes(pathname) || pathname.startsWith("/settings")) return null;
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center p-6"
@@ -30,7 +36,7 @@ export function TrialGate() {
           Your trial period has ended.
         </h2>
         <p className="mb-6" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.65 }}>
-          Your data is safe and waiting for you. Subscribe to pick up exactly where you left off.
+          Your data is safe. You can still view your homepage, account settings, and help & support. Subscribe to pick up exactly where you left off.
         </p>
 
         <div className="flex flex-col gap-2 mb-6">
