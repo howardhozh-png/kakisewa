@@ -9,7 +9,7 @@ import { FilterSelect } from "@/components/filter-select";
 import { CompetitorTimeline } from "@/components/competitor-timeline";
 import { EditCompetitorDialog } from "@/components/edit-competitor-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, ChevronDown, Loader2, XCircle, Search, X } from "lucide-react";
+import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, ChevronDown, Loader2, XCircle, Search, X, Bed, Bath } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -527,11 +527,18 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
               ? <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {lead.expected_rent.toLocaleString()}/mo</span>
               : <span style={{ color: "var(--kk-ink-faint)" }}>Rent unknown</span>}
             {(lead.bedrooms != null || lead.bathrooms != null) && (
-              <span style={{ color: "var(--kk-ink-faint)" }}>
+              <span className="inline-flex items-center gap-1" style={{ color: "var(--kk-ink-faint)" }}>
                 {" · "}
-                {lead.bedrooms != null ? (lead.bedrooms === 0 ? "Studio" : `${lead.bedrooms}bd`) : ""}
-                {lead.bedrooms != null && lead.bathrooms != null ? " " : ""}
-                {lead.bathrooms != null ? `${lead.bathrooms}ba` : ""}
+                {lead.bedrooms != null && (
+                  <span className="inline-flex items-center gap-0.5">
+                    <Bed style={{ width: 10, height: 10, display: "inline" }} />{lead.bedrooms === 0 ? "Studio" : lead.bedrooms}
+                  </span>
+                )}
+                {lead.bathrooms != null && (
+                  <span className="inline-flex items-center gap-0.5">
+                    <Bath style={{ width: 10, height: 10, display: "inline" }} />{lead.bathrooms}
+                  </span>
+                )}
               </span>
             )}
           </p>

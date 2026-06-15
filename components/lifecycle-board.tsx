@@ -6,7 +6,7 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Poin
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon, Bed, Bath } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -636,11 +636,18 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
             {unitLabel && <span style={{ color: "var(--kk-ink-soft)" }}>{unitLabel} · </span>}
             <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.amount.toLocaleString()}/mo</span>
             {(t.property?.bedrooms != null || t.property?.bathrooms != null) && (
-              <span style={{ color: "var(--kk-ink-faint)" }}>
+              <span className="inline-flex items-center gap-1" style={{ color: "var(--kk-ink-faint)" }}>
                 {" · "}
-                {t.property.bedrooms != null ? `${t.property.bedrooms}bd` : ""}
-                {t.property.bedrooms != null && t.property.bathrooms != null ? " " : ""}
-                {t.property.bathrooms != null ? `${t.property.bathrooms}ba` : ""}
+                {t.property.bedrooms != null && (
+                  <span className="inline-flex items-center gap-0.5">
+                    <Bed style={{ width: 10, height: 10, display: "inline" }} />{t.property.bedrooms === 0 ? "Studio" : t.property.bedrooms}
+                  </span>
+                )}
+                {t.property.bathrooms != null && (
+                  <span className="inline-flex items-center gap-0.5">
+                    <Bath style={{ width: 10, height: 10, display: "inline" }} />{t.property.bathrooms}
+                  </span>
+                )}
               </span>
             )}
           </p>
