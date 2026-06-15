@@ -32,6 +32,8 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/sample-pack")) return true
   // Agent public profile pages — shared with property owners who aren't logged in
   if (pathname.startsWith("/agent/")) return true
+  // Pitch deck — public shareable link, no auth required
+  if (pathname.startsWith("/pitch")) return true
   // OG image and favicon — must be publicly accessible for WhatsApp/social previews
   if (pathname === "/opengraph-image" || pathname === "/icon") return true
   // PWA assets — must be accessible without auth for install prompts, crawlers, iOS icon fetching
