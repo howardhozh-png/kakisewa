@@ -167,6 +167,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     last_receipt_url: null,
     lhdn_status: "none",
     status: "Pending",
+    lifecycle_stage: "active",
     contract_start: contractStart,
     contract_end: contractEnd,
     contract_duration_months: durationMonths,

@@ -127,35 +127,32 @@ const _cachedTenancies = unstable_cache(
   { tags: ["kk-tenancies"], revalidate: 60 }
 );
 
-const _cachedLifecycleTenancies = unstable_cache(
-  async (userId: string): Promise<Tenancy[]> => {
-    const svc = createServiceClient();
-    // PostgREST max_rows=1000; paginate in case user has many tenancies
-    const PAGE = 1000;
-    const all: Tenancy[] = [];
-    let from = 0;
-    while (true) {
-      const { data, error } = await svc
-        .from("tenancies")
-        .select(TENANCY_SELECT)
-        .eq("user_id", userId)
-        .is("deleted_at", null)
-        .not("contract_end", "is", null)
-        .neq("lifecycle_stage", "closed")
-        .order("contract_end", { ascending: true })
-        .order("id", { ascending: true })
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      const batch = (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
-      all.push(...batch);
-      if (batch.length < PAGE) break;
-      from += PAGE;
-    }
-    return all;
-  },
-  ["kk-lifecycle-tenancies"],
-  { tags: ["kk-tenancies"], revalidate: 60 }
-);
+// Not wrapped in unstable_cache — all callers use force-dynamic pages so
+// per-request caching adds no value, and revalidateTag is unreliable in Next.js 16.
+async function _cachedLifecycleTenancies(userId: string): Promise<Tenancy[]> {
+  const svc = createServiceClient();
+  const PAGE = 1000;
+  const all: Tenancy[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await svc
+      .from("tenancies")
+      .select(TENANCY_SELECT)
+      .eq("user_id", userId)
+      .is("deleted_at", null)
+      .not("contract_end", "is", null)
+      .neq("lifecycle_stage", "closed")
+      .order("contract_end", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    const batch = (data ?? []).map((r: unknown) => toTenancy(r as Record<string, unknown>));
+    all.push(...batch);
+    if (batch.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
 
 // Not wrapped in unstable_cache — result can exceed 2MB for large accounts,
 // and all callers use force-dynamic pages so per-request caching adds no value.
