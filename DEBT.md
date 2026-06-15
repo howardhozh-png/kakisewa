@@ -1,10 +1,10 @@
 # Technical Debt Backlog
 
-Last audited: 2026-06-09
+Last audited: 2026-06-15
 
 ## Tier 2 — Needs decision before touching
 
-- **Native `type="date"` inputs in styled dialogs** — iOS renders native picker, overrides styles. Files: `convert-to-tenancy-dialog.tsx:105`, `edit-owner-lead-dialog.tsx:242`, `ui/date-input.tsx:74`. Fix: Popover + react-day-picker (same as `date-range-filter.tsx`).
+- **Native `type="date"` inputs in styled dialogs** — iOS renders native picker, overrides styles. `convert-to-tenancy-dialog.tsx` and `edit-owner-lead-dialog.tsx` already route through `DateInput`. Remaining: `ui/date-input.tsx:74` itself uses a hidden native input as the picker trigger (intentional). No remaining raw date inputs outside of `DateInput`. ✓ Resolved for now.
 - **Hardcoded colours in `components/intake-chat.tsx`** — intentional Apple/iMessage palette, centralized in `const C = {}`. Do not change without a deliberate design review.
 - **4 parallel date picker implementations** — `date-input.tsx` (native), `date-range-filter.tsx` (best, react-day-picker), `intake-chat.tsx` (inline card), `month-picker-pill.tsx` (month popover). Fix: standardise on `date-range-filter.tsx` pattern.
 - **13+ dialogs with no shared wrapper** — each reinvents backdrop, close button, button row. Fix: `components/ui/app-dialog.tsx` shared shell.
@@ -18,6 +18,12 @@ Last audited: 2026-06-09
 - **Sidebar CSS tokens** (`--sidebar`, `--sidebar-foreground`) duplicate `--card` and `--primary` — could use `var()` references.
 - **`--kk-*-soft` opacity** (0.10/0.12) scattered — no single `--kk-soft-opacity` token.
 - **`router.refresh()` over-reliance (~77 instances)** — full page refresh after every mutation instead of optimistic updates. Fix when migrating to React 19 `useOptimistic`.
+
+## Tier 2 (new — 2026-06-15)
+
+- **Duplicate confirm-delete pattern** — 6 files independently manage `[confirmDelete, setConfirmDelete]` + inline confirm UI: `tenants-table`, `edit-competitor-dialog`, `tenancy-detail-dialog`, `edit-owner-lead-dialog`, `calendar-view`, `outreach-table`. Copy is now standardized. Extract to `<ConfirmDeleteBar />` in `components/ui/`.
+- **Hardcoded `#25D366` (WhatsApp green)** — appears in `tenants-table.tsx:502,566` and others. Add `--kk-whatsapp: #25D366` to `globals.css` and reference it.
+- **Highest-density hardcoded hex files** — `intake-chat.tsx` (palette object `C`) and `property-pack-share-viewer.tsx` (30+ instances) are the worst offenders for migration to CSS vars.
 
 ## Completed ✓
 
@@ -41,3 +47,4 @@ Last audited: 2026-06-09
 - SW cache kk-v4 → kk-v5 (push notification handlers)
 - SW cache kk-v5 → kk-v6 (stale module fix after dialog renames)
 - File rename protocol added to GUIDELINES.md to prevent recurrence
+- **2026-06-15 debt run:** Removed 4x `!important` from `.kk-week-*` in `globals.css`; replaced raw `<input type="date">` in `lifecycle-board.tsx:1196` with `DateInput`.
