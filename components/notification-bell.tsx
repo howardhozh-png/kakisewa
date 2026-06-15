@@ -81,7 +81,7 @@ function timeAgo(iso: string): string {
   const d = Math.floor(h / 24);
   if (d < 7) return `${d}d`;
   const w = Math.floor(d / 7);
-  if (w < 5) return `${w}w`;
+  if (w < 4) return `${w}w`;
   const mo = Math.floor(d / 30);
   return `${mo}mo`;
 }
