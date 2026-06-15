@@ -51,19 +51,19 @@ export async function GET() {
   // ── Owner filled in renewal form (last 30 days) ──────────────────────────
   const { data: recentRenewals } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, property_name, owner_renewal_completed_at, replied_owner")
+    .select("id, tenant_name, owner_renewal_completed_at, replied_owner")
     .not("owner_renewal_completed_at", "is", null)
     .gte("owner_renewal_completed_at", since30d)
     .order("owner_renewal_completed_at", { ascending: false })
     .limit(10);
 
   for (const r of recentRenewals ?? []) {
-    const row = r as { id: string; tenant_name: string; property_name: string | null; owner_renewal_completed_at: string; replied_owner: string };
+    const row = r as { id: string; tenant_name: string; owner_renewal_completed_at: string; replied_owner: string };
     items.push({
       id: `ownerrenewal_${row.id}`,
       type: "owner_renewal",
       title: row.replied_owner === "yes" ? "Owner wants to renew!" : "Owner not renewing",
-      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
+      body: row.tenant_name,
       href: `/existing-listing?highlight=${row.id}`,
       createdAt: row.owner_renewal_completed_at,
       priority: row.replied_owner === "yes" ? "normal" : "high",
