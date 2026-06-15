@@ -1722,6 +1722,39 @@ export async function updateTenantProfileAction(
   }
 }
 
+// Updates name + phone on a tenancy record AND syncs the linked tenant_profiles row (by old phone)
+export async function updateRentedTenantAction(
+  tenancyId: string,
+  oldPhone: string | null,
+  name: string,
+  phone: string
+): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const { updateTenancy } = await import("@/lib/db");
+    await updateTenancy(tenancyId, { tenant_name: name, tenant_phone: phone || null });
+
+    // Sync the tenant_profiles row that matches the old phone
+    if (oldPhone?.trim()) {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data: profile } = await supabase
+        .from("tenant_profiles")
+        .select("id")
+        .eq("phone", oldPhone.trim())
+        .maybeSingle();
+      if (profile) {
+        await supabase.from("tenant_profiles").update({ name, phone: phone || null }).eq("id", profile.id);
+      }
+    }
+
+    revalidatePath("/directory");
+    revalidatePath("/existing-listing");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: String(e) };
+  }
+}
+
 function stageLabel(s: ActionStage): string {
   return ({
     owing: "Owing",

@@ -71,17 +71,19 @@ function eventColor(ev: CalendarEvent): string {
 
 // ── Donut ring SVG ─────────────────────────────────────────────────────────────
 
+const DONUT_SW = 14;
+
 function DonutRing({ pct, strokeColor, trackColor, size = 76 }: { pct: number; strokeColor: string; trackColor: string; size?: number }) {
   const cx = size / 2;
-  const r = cx - 7;
+  const r = cx - DONUT_SW;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - Math.min(pct, 100) / 100);
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)", display: "block" }}>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={trackColor} strokeWidth="7" />
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={trackColor} strokeWidth={DONUT_SW} />
       <circle
         cx={cx} cy={cx} r={r} fill="none"
-        stroke={strokeColor} strokeWidth="7"
+        stroke={strokeColor} strokeWidth={DONUT_SW}
         strokeDasharray={circ} strokeDashoffset={offset}
         strokeLinecap="round"
       />
@@ -323,19 +325,19 @@ function Block({
 
       {/* Body */}
       <div style={{ background: bg, color: inkColor, padding: "18px 20px 20px", flex: 1, position: "relative", overflow: "hidden", minHeight: 160 }}>
-        {/* Donut — large, anchored right, spans full height */}
-        <div style={{ position: "absolute", right: -10, top: "50%", transform: "translateY(-50%)", width: 140, height: 140, flexShrink: 0 }}>
-          <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} size={140} />
+        {/* Donut — large, anchored right, vertically centered, fully within bounds */}
+        <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 116, height: 116, flexShrink: 0 }}>
+          <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} size={116} />
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", lineHeight: 1 }}>
-            <span style={{ fontSize: 18, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
-            <span style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 4, maxWidth: 68, textAlign: "center", lineHeight: 1.3, color: inkColor }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
+            <span style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 4, maxWidth: 64, textAlign: "center", lineHeight: 1.3, color: inkColor }}>
               {donutLabel}
             </span>
           </div>
         </div>
 
         {/* Left: number + label + sub-stats */}
-        <div style={{ paddingRight: 110 }}>
+        <div style={{ paddingRight: 108 }}>
           <p style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: inkColor }}>
             {primaryNum.toLocaleString()}
           </p>

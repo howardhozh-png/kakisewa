@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { format } from "date-fns";
-import { updateTenantProfileAction, removeTenantProfile } from "@/lib/actions";
+import { updateTenantProfileAction, removeTenantProfile, updateRentedTenantAction } from "@/lib/actions";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
 import { AddTenantButton } from "@/components/add-tenant-button";
@@ -211,7 +211,23 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
 
 // ── Rented tenant detail popup ────────────────────────────────────────
 function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => void }) {
+  const router = useRouter();
   const title = t.unit ? `${t.property_name ?? ""} ${t.unit}`.trim() : t.property_name ?? "Property";
+  const [pending, startTransition] = useTransition();
+  const [name, setName] = useState(t.tenant_name);
+  const [phone, setPhone] = useState(t.tenant_phone ?? "");
+
+  const inputCls = "w-full rounded-xl px-3 py-2 text-[13px] outline-none";
+  const inputStyle = { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
+  const labelCls = "block text-[10px] font-semibold uppercase tracking-widest mb-1";
+
+  function handleSave() {
+    startTransition(async () => {
+      const res = await updateRentedTenantAction(t.tenancy_id, t.tenant_phone ?? null, name.trim(), phone.trim());
+      if (res.ok) { toast.success("Saved"); router.refresh(); onClose(); }
+      else toast.error(res.message ?? "Could not save");
+    });
+  }
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -226,14 +242,15 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="kk-card w-full max-w-md flex flex-col" style={{ maxHeight: "90vh", overflow: "hidden" }}>
+        {/* Header */}
         <div className="flex items-start justify-between gap-3 p-6 border-b" style={{ borderColor: "var(--kk-line)" }}>
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-[15px] font-semibold"
               style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
-              {t.tenant_name.charAt(0).toUpperCase()}
+              {name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <h2 className="kk-h3" style={{ color: "var(--kk-ink)" }}>{t.tenant_name}</h2>
+              <h2 className="kk-h3" style={{ color: "var(--kk-ink)" }}>{name || t.tenant_name}</h2>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block mt-1"
                 style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
                 Rented
@@ -246,7 +263,9 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
           </button>
         </div>
 
-        <div className="p-6 flex flex-col gap-3 overflow-y-auto flex-1">
+        {/* Body */}
+        <div className="p-5 flex flex-col gap-3 overflow-y-auto flex-1">
+          {/* Property — read only */}
           <div className="flex items-center gap-2 rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
             <Home className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-mute)" }} />
             <div className="min-w-0">
@@ -254,44 +273,40 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
               <p className="text-[13px] font-semibold truncate" style={{ color: "var(--kk-ink)" }}>{title}</p>
             </div>
           </div>
-          {t.tenant_phone && (
-            <div className="flex items-center gap-2 rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-              <User className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-mute)" }} />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>Phone</p>
-                <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>{t.tenant_phone}</p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <a
-                  href={`https://wa.me/${t.tenant_phone.replace(/\D/g, "").replace(/^0/, "60")}`}
-                  target="_blank" rel="noopener"
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: "var(--kk-surface-2)", color: "#25D366" }}
-                  aria-label="WhatsApp"
-                >
-                  <WhatsAppIcon className="w-4 h-4" />
-                </a>
-                <a
-                  href={`tel:${t.tenant_phone}`}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                  aria-label="Call"
-                >
-                  <Phone className="w-4 h-4" />
-                </a>
-              </div>
+
+          {/* Editable fields */}
+          <div>
+            <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Name</label>
+            <input className={inputCls} style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Phone</label>
+            <div className="flex items-center gap-2">
+              <input className={inputCls} style={{ ...inputStyle, flex: 1 }} value={phone} onChange={(e) => setPhone(e.target.value)} />
+              {phone && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <a href={`https://wa.me/${phone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: "var(--kk-surface-2)", color: "#25D366" }}>
+                    <WhatsAppIcon className="w-4 h-4" />
+                  </a>
+                  <a href={`tel:${phone}`} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                    <Phone className="w-4 h-4" />
+                  </a>
+                </div>
+              )}
             </div>
-          )}
+          </div>
           {t.expected_rent != null && (
-            <div className="flex items-center gap-2 rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-              <div>
-                <p className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>Monthly rent</p>
-                <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.expected_rent.toLocaleString()}</p>
-              </div>
+            <div className="rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <p className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>Monthly rent</p>
+              <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>RM {t.expected_rent.toLocaleString()}</p>
             </div>
           )}
         </div>
 
+        {/* Footer */}
         <div className="p-5 border-t space-y-2" style={{ borderColor: "var(--kk-line)" }}>
           <Link
             href={`/property-pack/${t.tenancy_id}`}
@@ -302,8 +317,17 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
             <Send className="w-4 h-4" />
             Send property pack
           </Link>
+          <button
+            onClick={handleSave}
+            disabled={pending}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
+            style={{ background: "var(--kk-ink)", color: "#fff" }}
+          >
+            {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save changes
+          </button>
           <Link
-            href={`/existing-listing?open=${t.tenancy_id}`}
+            href={`/existing-listing?open=${t.tenancy_id}&highlight=${t.tenancy_id}`}
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[14px] font-semibold"
             style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)", textDecoration: "none" }}
