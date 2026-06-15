@@ -5,7 +5,7 @@ import Link from "next/link";
 import { OwnerLead } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
-import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search, User, Building2 } from "lucide-react";
+import { Megaphone, ArrowRight, Users, X as XIcon, CheckCircle2, Loader2, Search, User, Building2, Bed, Bath } from "lucide-react";
 import { updateOwnerLeadDetails } from "@/lib/actions";
 import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
@@ -197,13 +197,19 @@ export function MatchesView({ listed, tenantsByLeadId = {}, activeTenants = [] }
                       )}
                       {/* Row 4: beds · baths · tenant */}
                       {(l.bedrooms != null || l.bathrooms != null || tenantInfo) && (
-                        <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>
-                          {[
-                            l.bedrooms != null ? (l.bedrooms === 0 ? "Studio" : `${l.bedrooms}bd`) : null,
-                            l.bathrooms != null ? `${l.bathrooms}ba` : null,
-                            tenantInfo ? `Tenant: ${tenantInfo.tenant_name}` : null,
-                          ].filter(Boolean).join(" · ")}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap" style={{ color: "var(--kk-ink-faint)" }}>
+                          {l.bedrooms != null && (
+                            l.bedrooms === 0
+                              ? <span className="text-[10px]">Studio</span>
+                              : <span className="flex items-center gap-0.5 text-[10px]"><Bed className="w-3 h-3" />{l.bedrooms}</span>
+                          )}
+                          {l.bathrooms != null && (
+                            <span className="flex items-center gap-0.5 text-[10px]"><Bath className="w-3 h-3" />{l.bathrooms}</span>
+                          )}
+                          {tenantInfo && (
+                            <span className="text-[10px]">Tenant: {tenantInfo.tenant_name}</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

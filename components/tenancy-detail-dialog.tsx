@@ -98,8 +98,9 @@ function TenancyForm({
   const [bedrooms, setBedrooms] = useState(tenancy.property?.bedrooms != null ? String(tenancy.property.bedrooms) : "");
   const [bathrooms, setBathrooms] = useState(tenancy.property?.bathrooms != null ? String(tenancy.property.bathrooms) : "");
 
-  // Property name (always editable)
+  // Property name and unit (always editable)
   const [propertyName, setPropertyName] = useState(tenancy.property_name ?? "");
+  const [unit, setUnit] = useState(tenancy.property?.unit ?? "");
 
   // Basic info fields — prefer proposed values from owner form if available
   const [tenantName, setTenantName] = useState(tenancy.tenant_name ?? "");
@@ -132,6 +133,7 @@ function TenancyForm({
     setOwnerPhone(tenancy.property?.owner_phone ?? "");
     setEditingOwner(false);
     setPropertyName(tenancy.property_name ?? "");
+    setUnit(tenancy.property?.unit ?? "");
     setBedrooms(tenancy.property?.bedrooms != null ? String(tenancy.property.bedrooms) : "");
     setBathrooms(tenancy.property?.bathrooms != null ? String(tenancy.property.bathrooms) : "");
     setTenantName(tenancy.tenant_name ?? "");
@@ -221,6 +223,9 @@ function TenancyForm({
         }
         if (propertyName !== (tenancy.property_name ?? "")) {
           ownerUpdates.property_name = propertyName || undefined;
+        }
+        if (unit !== (tenancy.property?.unit ?? "")) {
+          ownerUpdates.unit = unit || undefined;
         }
         const bedroomsNum = bedrooms ? parseInt(bedrooms, 10) : null;
         const bathroomsNum = bathrooms ? parseInt(bathrooms, 10) : null;
@@ -337,16 +342,26 @@ function TenancyForm({
         </button>
       </div>
 
-      {/* Property name (editable) */}
-      <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)" }}>
-        <Building2 className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+      {/* Property name + unit (editable) */}
+      <div className="flex gap-2">
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl flex-1 min-w-0" style={{ background: "var(--kk-surface-2)" }}>
+          <Building2 className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+          <input
+            type="text"
+            value={propertyName}
+            onChange={(e) => setPropertyName(e.target.value)}
+            placeholder="Property name"
+            className="flex-1 min-w-0 text-[13px] font-medium bg-transparent outline-none"
+            style={{ color: "var(--kk-ink)" }}
+          />
+        </div>
         <input
           type="text"
-          value={propertyName}
-          onChange={(e) => setPropertyName(e.target.value)}
-          placeholder="Property name"
-          className="flex-1 min-w-0 text-[13px] font-medium bg-transparent outline-none"
-          style={{ color: "var(--kk-ink)" }}
+          value={unit}
+          onChange={(e) => setUnit(e.target.value)}
+          placeholder="Unit"
+          className="text-[13px] px-3 py-2 rounded-xl outline-none"
+          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", width: 80, flexShrink: 0 }}
         />
       </div>
 

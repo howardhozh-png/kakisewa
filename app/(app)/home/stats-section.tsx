@@ -291,62 +291,6 @@ export function StatsSection({
 
       </div>
 
-      {/* 4 blocks — 1 col mobile, 2 col sm+ */}
-      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-        <Block
-          overline="Potential listing"
-          primaryNum={stats.totalUploaded}
-          primaryLabel="owner contacts imported"
-          stats={[
-            { label: "Contacted", value: stats.totalContacted },
-            { label: "% Contacted", value: `${contactedPct}%` },
-          ]}
-          href="/potential-listing"
-          bg="rgba(0,113,227,0.09)"
-          color="#0052A5"
-        />
-
-        <Block
-          overline="My listing"
-          primaryNum={totalMyListings}
-          primaryLabel="listings in progress"
-          stats={[
-            { label: "Listed for rent", value: stats.listedRentCount },
-            { label: "Listed for sale", value: stats.listedSaleCount },
-          ]}
-          href="/my-listing"
-          bg="rgba(175,82,222,0.09)"
-          color="#5B1E9C"
-        />
-
-        <Block
-          overline="Existing listing"
-          primaryNum={stats.existingTotalActiveCount}
-          primaryLabel="active tenancies"
-          stats={[
-            { label: "Expiring in 60 days", value: stats.existingExpiringIn60Count },
-            { label: "Renewing", value: stats.existingRenewingCount },
-            { label: "Expired", value: stats.existingExpiredCount },
-          ]}
-          href="/existing-listing"
-          bg="rgba(52,199,89,0.11)"
-          color="#166534"
-        />
-
-        <Block
-          overline="Lost listing"
-          primaryNum={stats.targetTotalCount}
-          primaryLabel="competitor properties tracked"
-          stats={[
-            { label: "Watching", value: stats.targetWatchingCount },
-            { label: "Expiring in 60 days", value: stats.targetExpiringIn60Count },
-          ]}
-          href="/lost-listing"
-          bg="rgba(255,149,0,0.11)"
-          color="#92400E"
-        />
-      </div>
-
       {/* Upcoming events strip */}
       {filteredEvents.length > 0 && (
         <Link
@@ -362,6 +306,7 @@ export function StatsSection({
             boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)",
             cursor: "pointer",
             transition: "transform 0.18s cubic-bezier(.32,.72,0,1), box-shadow 0.18s",
+            marginBottom: 12,
           }}
         >
           <div
@@ -430,6 +375,63 @@ export function StatsSection({
           </div>
         </Link>
       )}
+
+      {/* 4 blocks — 1 col mobile, 2 col sm+ */}
+      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <Block
+          overline="Potential listing"
+          primaryNum={stats.totalUploaded}
+          primaryLabel="owner contacts imported"
+          stats={[
+            { label: "Contacted", value: stats.totalContacted },
+            { label: "% Contacted", value: `${contactedPct}%` },
+          ]}
+          href="/potential-listing"
+          bg="rgba(0,113,227,0.09)"
+          color="#0052A5"
+        />
+
+        <Block
+          overline="My listing"
+          primaryNum={totalMyListings}
+          primaryLabel="listings in progress"
+          stats={[
+            { label: "Listed for rent", value: stats.listedRentCount },
+            { label: "Listed for sale", value: stats.listedSaleCount },
+          ]}
+          href="/my-listing"
+          bg="rgba(175,82,222,0.09)"
+          color="#5B1E9C"
+        />
+
+        <Block
+          overline="Existing listing"
+          primaryNum={stats.existingTotalActiveCount}
+          primaryLabel="active tenancies"
+          stats={[
+            { label: "Expiring in 60 days", value: stats.existingExpiringIn60Count },
+            { label: "Renewing", value: stats.existingRenewingCount },
+            { label: "Expired", value: stats.existingExpiredCount },
+          ]}
+          href="/existing-listing"
+          bg="rgba(52,199,89,0.11)"
+          color="#166534"
+        />
+
+        <Block
+          overline="Lost listing"
+          primaryNum={stats.targetTotalCount}
+          primaryLabel="competitor properties tracked"
+          stats={[
+            { label: "Watching", value: stats.targetWatchingCount },
+            { label: "Expiring in 60 days", value: stats.targetExpiringIn60Count },
+          ]}
+          href="/lost-listing"
+          bg="rgba(255,149,0,0.11)"
+          color="#92400E"
+        />
+      </div>
+
     </div>
   );
 }
