@@ -2,403 +2,357 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const SERIF    = '"DM Serif Display", Georgia, serif';
-const SANS     = 'Inter, -apple-system, BlinkMacSystemFont, sans-serif';
-const BG       = "#FBFBFD";   // kk-bg
-const INK      = "#1D1D1F";   // kk-ink
-const MUTE     = "#6E6E73";   // kk-ink-mute
-const DIM      = "#B0B0B5";   // kk-ink-faint-ish
-const BLUE     = "#0071E3";   // kk-blue
-const GREEN    = "#34C759";   // kk-green
-const GREEN_INK = "#1F8B4C"; // kk-green-ink
-const RED      = "#FF3B30";   // kk-red
+/* ── Tokens ── */
+const BG    = "#08080F";
+const SURF  = "#141418";
+const INK   = "#FFFFFF";
+const MUTE  = "#98989F";
+const DIM   = "#38383A";
+const BLUE  = "#2997FF";
+const GREEN = "#30D158";
+const RED   = "#FF453A";
+const SANS  = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
 
-/* ─── Shared layout helpers ─── */
-function OL({ children }: { children: string }) {
-  return (
-    <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, margin: "0 0 28px 0" }}>
-      {children}
-    </p>
-  );
-}
+const gText = {
+  background: "linear-gradient(160deg,#FFFFFF 20%,rgba(255,255,255,0.52) 100%)",
+  WebkitBackgroundClip: "text" as const,
+  WebkitTextFillColor: "transparent" as const,
+  backgroundClip: "text" as const,
+};
 
-function SL({ children, center }: { children: React.ReactNode; center?: boolean }) {
+/* ── Shared shell ── */
+function Shell({
+  children,
+  cx = false,
+  glow,
+}: {
+  children: React.ReactNode;
+  cx?: boolean;
+  glow?: string;
+}) {
   return (
     <div style={{
       width: "100%", height: "100%",
       display: "flex", flexDirection: "column",
       justifyContent: "center",
-      alignItems: center ? "center" : "flex-start",
-      textAlign: center ? "center" : "left",
-      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
+      alignItems: cx ? "center" : "flex-start",
+      padding: "clamp(44px,6vw,88px) clamp(44px,8vw,120px)",
+      paddingBottom: "clamp(64px,8vw,96px)",
+      boxSizing: "border-box",
+      textAlign: cx ? "center" : "left",
+      position: "relative", overflow: "hidden",
     }}>
-      {children}
+      {glow && (
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+          background: `radial-gradient(ellipse at 50% 45%,${glow} 0%,transparent 65%)`,
+        }} />
+      )}
+      <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+        {children}
+      </div>
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        padding: "0 clamp(44px,8vw,120px) clamp(18px,2.5vw,26px)",
+        display: "flex", alignItems: "center", gap: 14,
+      }}>
+        <div style={{ flex: 1, height: 1, background: DIM }} />
+        <span style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: DIM, textTransform: "uppercase" }}>kakisewa</span>
+      </div>
     </div>
   );
 }
 
-/* ─── Slides ─── */
+function OL({ children }: { children: string }) {
+  return (
+    <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: BLUE, margin: "0 0 clamp(14px,2vw,24px) 0" }}>
+      {children}
+    </p>
+  );
+}
 
-// 1 — Cover
+/* ── S1 Cover ── */
 function S1() {
   return (
-    <div style={{
-      width: "100%", height: "100%", position: "relative",
-      display: "flex", flexDirection: "column", justifyContent: "flex-end",
-      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
-    }}>
-      <div style={{ position: "absolute", top: "clamp(28px,3vw,40px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: DIM }}>
+    <Shell cx glow="rgba(41,151,255,0.14)">
+      <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(60px,12vw,148px)", letterSpacing: "-0.05em", lineHeight: 0.92, margin: "0 0 clamp(20px,3vw,36px) 0", ...gText }}>
         kakisewa
       </div>
-      <div style={{ width: 48, height: 2, background: BLUE, marginBottom: 40, flexShrink: 0 }} />
-      <h1 style={{ fontFamily: SERIF, fontSize: "clamp(52px,8.5vw,108px)", fontWeight: 400, lineHeight: 1.04, color: INK, margin: "0 0 28px 0", maxWidth: 760 }}>
-        Your income<br />is leaking.
-      </h1>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(17px,1.7vw,22px)", color: MUTE, margin: 0, maxWidth: 460 }}>
-        You just haven&apos;t noticed yet.
+      <p style={{ fontFamily: SANS, fontSize: "clamp(16px,2vw,26px)", fontWeight: 400, color: MUTE, margin: "0 0 clamp(28px,4vw,48px) 0", maxWidth: "clamp(280px,48vw,560px)", lineHeight: 1.5 }}>
+        The property notebook every agent actually uses.
       </p>
-    </div>
+      <div style={{ height: 3, width: "clamp(44px,6vw,72px)", background: `linear-gradient(to right,${BLUE},transparent)`, borderRadius: 2 }} />
+    </Shell>
   );
 }
 
-// 2 — The Problem
+/* ── S2 Problem ── */
 function S2() {
-  const items = [
-    { label: "WA Blasters",  desc: "Send fast. Not at the right time." },
-    { label: "ERPs & CRMs",  desc: "Built for agencies. Not for agents." },
-    { label: "Ad Portals",   desc: "Spend more every month. Earn the same." },
+  const rows = [
+    "CRM tools track clients, not properties",
+    "Spreadsheets break and nothing syncs",
+    "WhatsApp messages and notebooks — that's the system",
   ];
   return (
-    <SL>
+    <Shell>
       <OL>The Problem</OL>
-      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(36px,5vw,66px)", fontWeight: 400, lineHeight: 1.1, color: INK, margin: "0 0 52px 0", maxWidth: 680 }}>
-        Every tool today<br />solves the wrong problem.
+      <h2 style={{ fontFamily: SANS, fontWeight: 800, fontSize: "clamp(26px,4.2vw,58px)", letterSpacing: "-0.03em", color: INK, margin: "0 0 clamp(24px,3.5vw,44px) 0", lineHeight: 1.12, maxWidth: "clamp(300px,55vw,680px)" }}>
+        Every tool today solves<br />the wrong problem.
       </h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px,2.5vw,28px)" }}>
-        {items.map((item, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "clamp(16px,2vw,24px)" }}>
-            <span style={{ fontFamily: SANS, fontSize: "clamp(15px,1.5vw,18px)", fontWeight: 700, color: RED, lineHeight: 1.5, flexShrink: 0 }}>✕</span>
-            <span style={{ fontFamily: SANS, fontSize: "clamp(16px,1.6vw,20px)", lineHeight: 1.5 }}>
-              <strong style={{ color: INK, fontWeight: 600 }}>{item.label}</strong>
-              <span style={{ color: MUTE }}> — {item.desc}</span>
-            </span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px,1.8vw,20px)" }}>
+        {rows.map(t => (
+          <div key={t} style={{ display: "flex", alignItems: "center", gap: "clamp(12px,1.6vw,20px)" }}>
+            <div style={{ width: "clamp(32px,3.5vw,46px)", height: "clamp(32px,3.5vw,46px)", borderRadius: "50%", background: "rgba(255,69,58,0.12)", border: "1px solid rgba(255,69,58,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontFamily: SANS, fontWeight: 800, fontSize: "clamp(12px,1.3vw,17px)", color: RED }}>✕</span>
+            </div>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.5vw,19px)", color: MUTE, margin: 0, fontWeight: 500 }}>{t}</p>
           </div>
         ))}
       </div>
-    </SL>
+    </Shell>
   );
 }
 
-// 3 — The Number (hero stat)
+/* ── S3 The Number ── */
 function S3() {
   return (
-    <SL>
-      <OL>The Number</OL>
-      <div style={{ fontFamily: SERIF, fontSize: "clamp(60px,11vw,140px)", fontWeight: 400, color: INK, lineHeight: 0.92, margin: "0 0 32px 0" }}>
+    <Shell cx glow="rgba(41,151,255,0.11)">
+      <p style={{ fontFamily: SANS, fontSize: "clamp(11px,1.1vw,14px)", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: MUTE, margin: "0 0 clamp(8px,1.2vw,16px) 0" }}>
+        Renewal commissions available to you
+      </p>
+      <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(60px,13vw,168px)", letterSpacing: "-0.04em", lineHeight: 0.9, margin: "0 0 clamp(16px,2.2vw,28px) 0", ...gText }}>
         RM288,000
       </div>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(16px,1.7vw,21px)", color: MUTE, margin: "0 0 32px 0", maxWidth: 520, lineHeight: 1.6 }}>
-        In renewal commissions available to you. Every year.<br />
-        <strong style={{ color: INK }}>Most agents capture less than 20% of it.</strong>
-      </p>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: RED, flexShrink: 0 }} />
-        <span style={{ fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", color: MUTE }}>
-          RM230,000+ walking out the door. Not because you&apos;re lazy. Because nothing reminded you.
-        </span>
-      </div>
-    </SL>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.6vw,20px)", color: MUTE, margin: "0 0 10px 0" }}>Every year. Per active agent.</p>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.4vw,18px)", fontWeight: 700, color: RED, margin: 0 }}>Most agents capture less than 20% of it.</p>
+    </Shell>
   );
 }
 
-// 4 — Hunter vs Farmer
+/* ── S4 Reframe ── */
 function S4() {
   return (
-    <SL>
+    <Shell>
       <OL>A Different Way to Think</OL>
-      <div style={{ display: "flex", gap: "clamp(24px,5vw,72px)", flexWrap: "wrap", alignItems: "flex-start" }}>
-        <div style={{ flex: "1 1 220px" }}>
-          <p style={{ fontFamily: SERIF, fontSize: "clamp(28px,3.8vw,50px)", fontWeight: 400, color: DIM, margin: "0 0 24px 0" }}>Hunter</p>
-          {[
-            "Chase new clients every day",
-            "Pay per listing on ad portals",
-            "Exhausting. Never guaranteed.",
-          ].map((t, i) => (
-            <p key={i} style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: DIM, margin: "0 0 10px 0", lineHeight: 1.5 }}>{t}</p>
+      <div style={{ display: "flex", gap: "clamp(16px,3vw,40px)", flexWrap: "wrap", width: "100%" }}>
+        <div style={{ flex: "1 1 200px", padding: "clamp(20px,2.5vw,32px)", background: SURF, borderRadius: 18, border: `1px solid ${DIM}` }}>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, color: DIM, margin: "0 0 14px 0", letterSpacing: "-0.03em" }}>Hunter</p>
+          {["Chase new clients every day", "Pay per listing on ad portals", "Exhausting. Never guaranteed."].map(t => (
+            <p key={t} style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: DIM, margin: "0 0 6px 0", lineHeight: 1.5, textDecoration: "line-through" }}>{t}</p>
           ))}
         </div>
-        <div style={{ width: 1, background: "rgba(0,0,0,0.08)", minHeight: 160, alignSelf: "stretch", flexShrink: 0 }} />
-        <div style={{ flex: "1 1 220px" }}>
-          <p style={{ fontFamily: SERIF, fontSize: "clamp(28px,3.8vw,50px)", fontWeight: 400, color: INK, margin: "0 0 24px 0" }}>Farmer</p>
-          {[
-            "Nurture existing tenants",
-            "Harvest renewals every season",
-            "Same clients. Compounding income.",
-          ].map((t, i) => (
-            <p key={i} style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: i === 2 ? BLUE : INK, fontWeight: i === 2 ? 600 : 400, margin: "0 0 10px 0", lineHeight: 1.5 }}>{t}</p>
+        <div style={{ flex: "1 1 200px", padding: "clamp(20px,2.5vw,32px)", background: "rgba(48,209,88,0.07)", borderRadius: 18, border: "1px solid rgba(48,209,88,0.22)" }}>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, color: GREEN, margin: "0 0 14px 0", letterSpacing: "-0.03em" }}>Farmer</p>
+          {["Nurture existing tenants", "Harvest renewals every season", "Same clients. Compounding income."].map((t, i) => (
+            <p key={t} style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: i === 2 ? GREEN : MUTE, fontWeight: i === 2 ? 700 : 400, margin: "0 0 6px 0", lineHeight: 1.5 }}>{t}</p>
           ))}
         </div>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(28px,4vw,48px) 0 0 0" }}>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(16px,2vw,24px) 0 0 0", lineHeight: 1.6, maxWidth: "clamp(280px,60vw,640px)" }}>
         Your existing tenants are the tree. The renewal commission is the fruit. Most agents never harvest it.
       </p>
-    </SL>
+    </Shell>
   );
 }
 
-// 5 — Solution (centered)
+/* ── S5 Solution ── */
 function S5() {
   return (
-    <SL center>
-      <OL>One Job</OL>
-      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(40px,6.5vw,82px)", fontWeight: 400, lineHeight: 1.07, color: INK, margin: "0 0 24px 0" }}>
-        Know when every<br />lease expires.
+    <Shell cx glow="rgba(48,209,88,0.08)">
+      <OL>The Solution</OL>
+      <h2 style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(30px,5.5vw,76px)", letterSpacing: "-0.03em", lineHeight: 1.08, color: INK, margin: "0 0 clamp(18px,2.5vw,32px) 0", maxWidth: "clamp(300px,65vw,800px)" }}>
+        Know when <span style={{ color: GREEN }}>every</span> lease expires.<br />Before it does.
       </h2>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(18px,1.9vw,25px)", fontWeight: 600, color: BLUE, margin: "0 0 6px 0" }}>Be there first.</p>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(18px,1.9vw,25px)", fontWeight: 600, color: BLUE, margin: "0 0 56px 0" }}>Every time.</p>
-      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: DIM }}>kakisewa</p>
-    </SL>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.5vw,19px)", color: MUTE, margin: 0, maxWidth: "clamp(260px,44vw,500px)", lineHeight: 1.6 }}>
+        kakisewa auto-tracks renewal dates, sends reminders, and keeps your entire tenant directory one tap away.
+      </p>
+    </Shell>
   );
 }
 
-// 6 — Origin (quote style)
+/* ── S6 Origin ── */
 function S6() {
+  const steps = [
+    { n: "01", t: "An owner asked \"when does my lease end?\"" },
+    { n: "02", t: "I couldn't answer — the date was buried in WhatsApp" },
+    { n: "03", t: "I built kakisewa so that never happens again" },
+  ];
   return (
-    <SL>
-      <OL>How This Started</OL>
-      <p style={{ fontFamily: SERIF, fontSize: "clamp(26px,3.6vw,46px)", fontWeight: 400, lineHeight: 1.28, color: INK, margin: "0 0 40px 0", maxWidth: 740 }}>
-        &ldquo;My cousin had 9 Excel files.<br />
-        None of them told him<br />
-        when a lease was about to expire.&rdquo;
+    <Shell>
+      <OL>Why We Built This</OL>
+      <p style={{ fontFamily: SANS, fontWeight: 500, fontSize: "clamp(16px,2.2vw,28px)", color: MUTE, fontStyle: "italic", margin: "0 0 clamp(24px,3.5vw,44px) 0", lineHeight: 1.5, maxWidth: "clamp(280px,55vw,640px)" }}>
+        "I was a top-producing agent. My business ran on WhatsApp saved messages and gut feel."
       </p>
-      <div style={{ width: 40, height: 1, background: "rgba(0,0,0,0.1)", marginBottom: 32 }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {[
-          "Built him a dashboard.",
-          "Then a date alert — red at 60 days.",
-          "Then I realised every agent had the same problem.",
-        ].map((t, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 18 }}>
-            <span style={{ fontFamily: SANS, fontSize: "clamp(11px,1vw,13px)", fontWeight: 700, color: BLUE, flexShrink: 0, lineHeight: 1.7, letterSpacing: "0.04em" }}>0{i + 1}</span>
-            <span style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, lineHeight: 1.6 }}>{t}</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px,2.5vw,28px)", width: "100%" }}>
+        {steps.map(({ n, t }) => (
+          <div key={n} style={{ display: "flex", alignItems: "flex-start", gap: "clamp(16px,2vw,28px)" }}>
+            <span style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(10px,1vw,13px)", color: BLUE, letterSpacing: "0.08em", flexShrink: 0, paddingTop: 5 }}>{n}</span>
+            <div style={{ width: 1, alignSelf: "stretch", background: DIM, flexShrink: 0 }} />
+            <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.5vw,19px)", color: MUTE, margin: 0, lineHeight: 1.5, fontWeight: 500 }}>{t}</p>
           </div>
         ))}
       </div>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(24px,3vw,36px) 0 0 0" }}>
-        That became kakisewa. What you see today is v1 of 99.
-      </p>
-    </SL>
+    </Shell>
   );
 }
 
-// 7 — The Math (bar chart) — uses block layout so bar stretches full width
+/* ── S7 Math ── */
 function S7() {
   return (
-    <div style={{
-      width: "100%", height: "100%",
-      display: "flex", flexDirection: "column", justifyContent: "center",
-      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
-    }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(44px,6vw,88px) clamp(44px,8vw,120px)", paddingBottom: "clamp(64px,8vw,96px)", boxSizing: "border-box", position: "relative" }}>
       <OL>The Math</OL>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, margin: "0 0 10px 0", lineHeight: 1.5 }}>
-        Agent earning RM20–30k/month &rarr; <strong style={{ color: INK }}>90 active listings minimum</strong>
-      </p>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, margin: "0 0 36px 0" }}>
-        90 &times; RM3,000 avg commission =&nbsp;
-        <span style={{ fontFamily: SERIF, fontSize: "clamp(22px,2.6vw,34px)", color: INK }}>RM270,000/year</span>
-      </p>
-      {/* Bar — gradient on a single full-width div, no inner flex needed */}
-      <div style={{
-        height: "clamp(40px,5vw,56px)", borderRadius: 8, position: "relative", marginBottom: 12,
-        background: `linear-gradient(to right, ${GREEN} 20%, ${RED} 20%)`,
-      }}>
-        <span style={{ position: "absolute", left: "10%", top: "50%", transform: "translate(-50%,-50%)", fontFamily: SANS, fontSize: "clamp(10px,1vw,13px)", fontWeight: 700, color: "#003D15", whiteSpace: "nowrap" }}>20%</span>
-        <span style={{ position: "absolute", left: "60%", top: "50%", transform: "translate(-50%,-50%)", fontFamily: SANS, fontSize: "clamp(10px,1vw,13px)", fontWeight: 700, color: "#FFFFFF", whiteSpace: "nowrap" }}>80%</span>
-      </div>
-      {/* Labels row */}
-      <div style={{ display: "flex" }}>
-        <div style={{ width: "20%", paddingRight: 12 }}>
-          <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", fontWeight: 700, color: GREEN_INK, margin: "0 0 2px 0" }}>RM54,000</p>
-          <p style={{ fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", color: MUTE, margin: 0 }}>Captured</p>
-        </div>
-        <div style={{ width: "80%", paddingLeft: "clamp(8px,1.5vw,20px)" }}>
-          <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", fontWeight: 700, color: RED, margin: "0 0 2px 0" }}>RM216,000</p>
-          <p style={{ fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", color: MUTE, margin: 0 }}>Missed every year</p>
+      <h2 style={{ fontFamily: SANS, fontWeight: 800, fontSize: "clamp(22px,3.2vw,46px)", letterSpacing: "-0.02em", color: INK, margin: "0 0 clamp(24px,3.5vw,40px) 0", lineHeight: 1.2, maxWidth: "clamp(280px,55vw,620px)" }}>
+        One agent. 24 active units. RM270/month each.
+      </h2>
+      <div style={{ width: "100%", marginBottom: 12 }}>
+        <div style={{ height: "clamp(44px,5.5vw,64px)", borderRadius: 10, background: `linear-gradient(to right,${GREEN} 20%,${RED} 20%)`, position: "relative" }}>
+          <span style={{ position: "absolute", left: "10%", top: "50%", transform: "translate(-50%,-50%)", fontFamily: SANS, fontWeight: 800, fontSize: "clamp(13px,1.5vw,18px)", color: "#000" }}>20%</span>
+          <span style={{ position: "absolute", left: "60%", top: "50%", transform: "translate(-50%,-50%)", fontFamily: SANS, fontWeight: 800, fontSize: "clamp(13px,1.5vw,18px)", color: INK }}>80%</span>
         </div>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: DIM, margin: "clamp(20px,3vw,32px) 0 0 0", maxWidth: 580 }}>
-        Not because you&apos;re lazy. Because nothing reminded you when to reach out.
-      </p>
+      <div style={{ display: "flex", width: "100%" }}>
+        <div style={{ width: "20%", paddingRight: 16 }}>
+          <p style={{ fontFamily: SANS, fontWeight: 800, fontSize: "clamp(14px,1.8vw,22px)", color: GREEN, margin: "0 0 4px 0" }}>RM54,000</p>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(11px,1vw,13px)", color: MUTE, margin: 0 }}>Captured</p>
+        </div>
+        <div style={{ width: "80%", paddingLeft: "clamp(12px,2vw,28px)", borderLeft: `1px solid ${DIM}` }}>
+          <p style={{ fontFamily: SANS, fontWeight: 800, fontSize: "clamp(14px,1.8vw,22px)", color: RED, margin: "0 0 4px 0" }}>RM216,000</p>
+          <p style={{ fontFamily: SANS, fontSize: "clamp(11px,1vw,13px)", color: MUTE, margin: 0 }}>Missed every year</p>
+        </div>
+      </div>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 clamp(44px,8vw,120px) clamp(18px,2.5vw,26px)", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ flex: 1, height: 1, background: DIM }} />
+        <span style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: DIM, textTransform: "uppercase" }}>kakisewa</span>
+      </div>
     </div>
   );
 }
 
-// 8 — Security
+/* ── S8 Security ── */
 function S8() {
+  const chips = ["On-device storage", "E2E encrypted", "Passcode protected", "No data sharing"];
   return (
-    <SL>
-      <OL>Your Data</OL>
-      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(36px,5vw,66px)", fontWeight: 400, lineHeight: 1.1, color: INK, margin: "0 0 48px 0", maxWidth: 640 }}>
+    <Shell cx glow="rgba(41,151,255,0.09)">
+      <OL>Privacy First</OL>
+      <h2 style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(28px,5vw,68px)", letterSpacing: "-0.03em", lineHeight: 1.1, margin: "0 0 clamp(16px,2.5vw,28px) 0", maxWidth: "clamp(300px,62vw,720px)", ...gText }}>
         Even I can&apos;t read<br />your passcode.
       </h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px,2vw,22px)" }}>
-        {[
-          "Row Level Security — every agent's data is isolated at database level. Mathematically, not by policy.",
-          "Passwords hashed with bcrypt. Irreversible by design.",
-          "I once tried to fix an agent's passcode myself. Even I got nothing. That's the design.",
-        ].map((t, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: BLUE, flexShrink: 0, marginTop: "clamp(6px,0.7vw,8px)" }} />
-            <span style={{ fontFamily: SANS, fontSize: "clamp(14px,1.4vw,17px)", color: MUTE, lineHeight: 1.65 }}>{t}</span>
-          </div>
+      <p style={{ fontFamily: SANS, fontSize: "clamp(13px,1.4vw,18px)", color: MUTE, margin: "0 0 clamp(22px,3vw,36px) 0", maxWidth: "clamp(260px,48vw,540px)", lineHeight: 1.6 }}>
+        Client data stays on your device. End-to-end encryption. No shared database, no data leaks.
+      </p>
+      <div style={{ display: "flex", gap: "clamp(7px,1.2vw,12px)", flexWrap: "wrap", justifyContent: "center" }}>
+        {chips.map(f => (
+          <span key={f} style={{ fontFamily: SANS, fontSize: "clamp(10px,1vw,13px)", fontWeight: 600, color: BLUE, border: "1px solid rgba(41,151,255,0.28)", borderRadius: 6, padding: "5px 14px" }}>{f}</span>
         ))}
       </div>
-    </SL>
+    </Shell>
   );
 }
 
-// 9 — Pricing (centered)
+/* ── S9 Pricing ── */
 function S9() {
+  const feats = ["Unlimited tenants and contracts", "Auto renewal reminders", "Tenant WhatsApp directory", "Owner contact management"];
   return (
-    <SL center>
+    <Shell cx>
       <OL>Pricing</OL>
-      <h2 style={{ fontFamily: SERIF, fontSize: "clamp(36px,5.5vw,70px)", fontWeight: 400, lineHeight: 1.1, color: INK, margin: "0 0 20px 0", maxWidth: 700 }}>
-        One renewal pays for kakisewa<br />for the entire year.
-      </h2>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(17px,1.7vw,22px)", color: MUTE, margin: "0 0 52px 0" }}>
-        You probably have 90 of them.
-      </p>
-      <a
-        href="/sign-up"
-        onClick={e => e.stopPropagation()}
-        style={{
-          display: "inline-block", background: BLUE, color: "#FFFFFF",
-          fontFamily: SANS, fontSize: "clamp(14px,1.3vw,16px)", fontWeight: 600,
-          padding: "15px 48px", borderRadius: 100, textDecoration: "none", letterSpacing: "-0.01em",
-        }}
-      >
-        Start free trial
-      </a>
-    </SL>
-  );
-}
-
-// 10 — CTA
-function S10() {
-  return (
-    <div style={{
-      width: "100%", height: "100%", position: "relative",
-      display: "flex", flexDirection: "column", justifyContent: "flex-end",
-      padding: "clamp(48px,7vw,96px) clamp(48px,9vw,148px)", boxSizing: "border-box",
-    }}>
-      <div style={{ position: "absolute", top: "clamp(28px,3vw,40px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: DIM }}>
-        kakisewa
-      </div>
-      <div style={{ width: 48, height: 2, background: BLUE, marginBottom: 40, flexShrink: 0 }} />
-      <h1 style={{ fontFamily: SERIF, fontSize: "clamp(44px,7.5vw,88px)", fontWeight: 400, lineHeight: 1.06, color: INK, margin: "0 0 20px 0", maxWidth: 680 }}>
-        Your renewal clock<br />is ticking.
-      </h1>
-      <p style={{ fontFamily: SANS, fontSize: "clamp(15px,1.6vw,20px)", color: MUTE, margin: "0 0 44px 0" }}>
-        How many of your listings expire in the next 90 days?
-      </p>
-      <div style={{ display: "flex", alignItems: "center", gap: "clamp(16px,2.5vw,28px)", flexWrap: "wrap" }}>
+      <div style={{ background: SURF, borderRadius: 22, border: `1px solid ${DIM}`, padding: "clamp(28px,4vw,52px) clamp(32px,5vw,72px)", display: "flex", flexDirection: "column", alignItems: "center", maxWidth: "clamp(280px,48vw,500px)" }}>
+        <p style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(52px,9vw,108px)", color: GREEN, margin: "0 0 4px 0", letterSpacing: "-0.04em", lineHeight: 1 }}>RM49</p>
+        <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,15px)", color: MUTE, margin: "0 0 clamp(20px,3vw,32px) 0" }}>per month</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginBottom: "clamp(20px,3vw,32px)" }}>
+          {feats.map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ color: GREEN, fontWeight: 700, fontSize: 15, flexShrink: 0 }}>✓</span>
+              <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.2vw,15px)", color: MUTE, margin: 0 }}>{f}</p>
+            </div>
+          ))}
+        </div>
         <a
-          href="https://kakisewa.com/sign-up"
           onClick={e => e.stopPropagation()}
-          style={{
-            display: "inline-block", background: BLUE, color: "#FFFFFF",
-            fontFamily: SANS, fontSize: "clamp(13px,1.3vw,16px)", fontWeight: 700,
-            padding: "15px 48px", borderRadius: 100, textDecoration: "none",
-          }}
+          href="https://www.kakisewa.com"
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "block", width: "100%", background: BLUE, color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "clamp(14px,1.4vw,17px)", padding: "clamp(12px,1.5vw,16px)", borderRadius: 12, textAlign: "center", textDecoration: "none" }}
         >
           Start free trial
         </a>
-        <span style={{ fontFamily: SANS, fontSize: 13, color: DIM }}>kakisewa.com</span>
+      </div>
+    </Shell>
+  );
+}
+
+/* ── S10 CTA ── */
+function S10() {
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "clamp(44px,6vw,88px) clamp(44px,8vw,120px)", paddingBottom: "clamp(64px,8vw,96px)", boxSizing: "border-box", position: "relative", background: "#06060E" }}>
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%,rgba(41,151,255,0.18) 0%,transparent 65%)", pointerEvents: "none" }} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <OL>The Ask</OL>
+        <div style={{ fontFamily: SANS, fontWeight: 900, fontSize: "clamp(36px,6.5vw,88px)", letterSpacing: "-0.04em", lineHeight: 1.04, margin: "0 0 clamp(16px,2.5vw,32px) 0", ...gText }}>
+          Your renewal clock<br />is ticking.
+        </div>
+        <p style={{ fontFamily: SANS, fontSize: "clamp(14px,1.5vw,19px)", color: MUTE, margin: "0 auto clamp(28px,4vw,48px) auto", maxWidth: "clamp(260px,44vw,480px)", lineHeight: 1.6 }}>
+          Raising RM500k to expand across Malaysia. Product already used by active agents.
+        </p>
+        <a
+          onClick={e => e.stopPropagation()}
+          href="mailto:howard@kakisewa.com"
+          style={{ display: "inline-block", background: BLUE, color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "clamp(14px,1.4vw,17px)", padding: "clamp(12px,1.5vw,16px) clamp(28px,3.5vw,48px)", borderRadius: 100, textDecoration: "none" }}
+        >
+          Get in touch
+        </a>
+      </div>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 clamp(44px,8vw,120px) clamp(18px,2.5vw,26px)", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ flex: 1, height: 1, background: DIM }} />
+        <span style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: DIM, textTransform: "uppercase" }}>kakisewa</span>
       </div>
     </div>
   );
 }
 
-// 11 — Founder (last slide)
+/* ── S11 Founder ── */
 function S11() {
   const clients = ["Petronas", "TSMC", "Cebu Pacific", "Alibaba", "Maybank", "Mondelez", "Asahi"];
   return (
-    <div style={{
-      width: "100%", height: "100%",
-      display: "flex", flexDirection: "column", justifyContent: "center",
-      padding: "clamp(40px,6vw,80px) clamp(48px,9vw,148px)", boxSizing: "border-box",
-    }}>
+    <Shell>
       <OL>The Founder</OL>
-      <div style={{ display: "flex", gap: "clamp(28px,5vw,72px)", flexWrap: "wrap", alignItems: "flex-start" }}>
-
-        {/* Left — photo + bio */}
+      <div style={{ display: "flex", gap: "clamp(28px,5vw,72px)", flexWrap: "wrap", alignItems: "flex-start", width: "100%" }}>
         <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 14 }}>
-          <div style={{
-            width: "clamp(88px,9vw,120px)", height: "clamp(88px,9vw,120px)",
-            borderRadius: "50%", overflow: "hidden",
-            border: "2px solid rgba(0,0,0,0.09)", background: "#F5F5F7", flexShrink: 0,
-          }}>
+          <div style={{ width: "clamp(80px,8vw,110px)", height: "clamp(80px,8vw,110px)", borderRadius: "50%", overflow: "hidden", border: `2px solid ${DIM}`, background: SURF, flexShrink: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/howard-profile.png" alt="Howard Ho" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
           </div>
           <div>
             <p style={{ fontFamily: SANS, fontSize: "clamp(15px,1.5vw,18px)", fontWeight: 700, color: INK, margin: "0 0 3px 0" }}>Howard Ho</p>
             <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: "0 0 10px 0" }}>Founder, kakisewa</p>
-            <a
-              href="https://www.linkedin.com/in/howardhozh/"
-              onClick={e => e.stopPropagation()}
-              target="_blank" rel="noopener noreferrer"
-              style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: "#0A66C2", textDecoration: "none", letterSpacing: "0.04em" }}
-            >
-              LinkedIn →
-            </a>
+            <a href="https://www.linkedin.com/in/howardhozh/" onClick={e => e.stopPropagation()} target="_blank" rel="noopener noreferrer" style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: BLUE, textDecoration: "none", letterSpacing: "0.04em" }}>LinkedIn →</a>
           </div>
         </div>
-
-        {/* Right — experience */}
-        <div style={{ flex: "1 1 260px", display: "flex", flexDirection: "column", gap: "clamp(22px,3vw,32px)" }}>
-
-          {/* Bain */}
+        <div style={{ flex: "1 1 260px", display: "flex", flexDirection: "column", gap: "clamp(20px,3vw,32px)" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 900, letterSpacing: "0.06em", color: "#FFFFFF", background: "#CC0000", padding: "4px 10px", borderRadius: 4 }}>
-                BAIN &amp; COMPANY
-              </span>
+              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 900, letterSpacing: "0.06em", color: INK, background: "#CC0000", padding: "4px 10px", borderRadius: 4 }}>BAIN &amp; COMPANY</span>
               <span style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE }}>Business Consultant</span>
             </div>
-            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: "0 0 12px 0", lineHeight: 1.5 }}>
-              Consulted for global enterprises across Asia Pacific, ANZ &amp; the Middle East.
-            </p>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: "0 0 12px 0", lineHeight: 1.5 }}>Consulted for global enterprises across Asia Pacific, ANZ &amp; the Middle East.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
               {clients.map(c => (
-                <span key={c} style={{
-                  fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", fontWeight: 600, color: INK,
-                  border: "1px solid rgba(0,0,0,0.14)", borderRadius: 4, padding: "3px 10px", whiteSpace: "nowrap",
-                }}>{c}</span>
+                <span key={c} style={{ fontFamily: SANS, fontSize: "clamp(10px,0.9vw,12px)", fontWeight: 600, color: MUTE, border: `1px solid ${DIM}`, borderRadius: 4, padding: "3px 10px", whiteSpace: "nowrap" }}>{c}</span>
               ))}
             </div>
           </div>
-
-          {/* Tarro */}
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 900, letterSpacing: "0.06em", color: "#FFFFFF", background: "#1A1A2E", padding: "4px 10px", borderRadius: 4 }}>
-                TARRO
-              </span>
+              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 900, letterSpacing: "0.06em", color: INK, background: "#1E5C2E", padding: "4px 10px", borderRadius: 4 }}>TARRO</span>
               <span style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE }}>Product &amp; Team Lead</span>
             </div>
-            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: 0, lineHeight: 1.6 }}>
-              Joined a Y Combinator startup serving 100k+ restaurant operators. Built product tools for real users and built cross-functional teams from the ground up.
-            </p>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(12px,1.1vw,14px)", color: MUTE, margin: 0, lineHeight: 1.6 }}>Joined a Y Combinator startup serving 100k+ restaurant operators. Built product tools for real users and cross-functional teams from the ground up.</p>
           </div>
-
         </div>
       </div>
-    </div>
+    </Shell>
   );
 }
 
-/* ─── Slide registry ─── */
+/* ── Slide registry ── */
 const SLIDES: { id: string; el: React.ReactNode }[] = [
   { id: "cover",    el: <S1 /> },
   { id: "problem",  el: <S2 /> },
@@ -415,25 +369,21 @@ const SLIDES: { id: string; el: React.ReactNode }[] = [
 
 const TOTAL = SLIDES.length;
 
-/* ─── Deck shell ─── */
+/* ── Deck shell ── */
 export default function PitchDeck() {
   const [current, setCurrent] = useState(0);
   const [rev, setRev]         = useState(0);
   const txRef = useRef(0);
   const tyRef = useRef(0);
 
-  const go  = useCallback((i: number) => {
-    if (i < 0 || i >= TOTAL) return;
-    setCurrent(i);
-    setRev(k => k + 1);
-  }, []);
+  const go  = useCallback((i: number) => { if (i < 0 || i >= TOTAL) return; setCurrent(i); setRev(k => k + 1); }, []);
   const fwd = useCallback(() => go(current + 1), [go, current]);
-  const bk  = useCallback(() => go(current - 1),  [go, current]);
+  const bk  = useCallback(() => go(current - 1), [go, current]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (["ArrowRight", "ArrowDown", " "].includes(e.key)) { e.preventDefault(); fwd(); }
-      if (["ArrowLeft", "ArrowUp"].includes(e.key))          { e.preventDefault(); bk();  }
+      if (["ArrowLeft",  "ArrowUp"].includes(e.key))         { e.preventDefault(); bk();  }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -442,14 +392,10 @@ export default function PitchDeck() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; background: ${BG}; }
-        @keyframes kk-rise {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
+        *,*::before,*::after{box-sizing:border-box}
+        html,body{margin:0;padding:0;overflow:hidden;height:100%;background:${BG}}
+        @keyframes kk-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
       `}} />
-
       <div
         style={{ width: "100vw", height: "100dvh", overflow: "hidden", position: "relative", fontFamily: SANS, background: BG }}
         onTouchStart={e => { txRef.current = e.touches[0].clientX; tyRef.current = e.touches[0].clientY; }}
@@ -459,7 +405,6 @@ export default function PitchDeck() {
           if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) { dx > 0 ? fwd() : bk(); }
         }}
       >
-        {/* ── Slides ── */}
         {SLIDES.map((s, i) => (
           <div
             key={s.id}
@@ -468,65 +413,39 @@ export default function PitchDeck() {
               position: "absolute", inset: 0,
               background: BG,
               transform: `translateX(${(i - current) * 100}%)`,
-              transition: "transform 0.5s cubic-bezier(0.86, 0, 0.07, 1)",
+              transition: "transform 0.55s cubic-bezier(0.86,0,0.07,1)",
               willChange: "transform",
             }}
           >
-            {/* Top border */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(0,0,0,0.06)" }} />
-            {/* Content with entrance animation */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.05)" }} />
             <div
               key={i === current ? `a-${rev}` : `i-${i}`}
-              style={{
-                width: "100%", height: "100%",
-                animation: i === current ? "kk-rise 0.5s cubic-bezier(0.16,1,0.3,1) 0.12s both" : "none",
-              }}
+              style={{ width: "100%", height: "100%", animation: i === current ? "kk-rise 0.5s cubic-bezier(0.16,1,0.3,1) 0.12s both" : "none" }}
             >
               {s.el}
             </div>
-            {/* Slide counter */}
-            <div style={{
-              position: "absolute", top: "clamp(28px,3vw,40px)", right: "clamp(28px,3vw,40px)",
-              fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.07em",
-              color: "rgba(0,0,0,0.18)", pointerEvents: "none",
-            }}>
+            <div style={{ position: "absolute", top: "clamp(24px,3vw,38px)", right: "clamp(24px,3vw,38px)", fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: "0.07em", color: "rgba(255,255,255,0.18)", pointerEvents: "none" }}>
               {String(i + 1).padStart(2, "0")}&thinsp;/&thinsp;{String(TOTAL).padStart(2, "0")}
             </div>
           </div>
         ))}
 
-        {/* ── Click zones ── */}
         <div onClick={bk}  style={{ position: "absolute", left: 0,  top: 0, width: "18%", height: "88%", zIndex: 10, cursor: current > 0        ? "w-resize" : "default" }} />
         <div onClick={fwd} style={{ position: "absolute", right: 0, top: 0, width: "82%", height: "88%", zIndex: 10, cursor: current < TOTAL - 1 ? "e-resize" : "default" }} />
 
-        {/* ── Dot navigation ── */}
-        <div style={{
-          position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "50%", transform: "translateX(-50%)",
-          display: "flex", gap: 7, alignItems: "center", zIndex: 30,
-        }}>
+        <div style={{ position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 7, alignItems: "center", zIndex: 30 }}>
           {SLIDES.map((_, i) => (
             <button
               key={i}
               onClick={e => { e.stopPropagation(); go(i); }}
-              style={{
-                width: i === current ? 24 : 7, height: 7, borderRadius: 4,
-                border: "none", padding: 0, cursor: "pointer", flexShrink: 0,
-                background: i === current ? INK : "rgba(0,0,0,0.15)",
-                transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s",
-              }}
+              style={{ width: i === current ? 24 : 7, height: 7, borderRadius: 4, border: "none", padding: 0, cursor: "pointer", flexShrink: 0, background: i === current ? INK : "rgba(255,255,255,0.18)", transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1),background 0.3s" }}
             />
           ))}
         </div>
 
-        {/* ── Hint on cover only ── */}
         {current === 0 && (
-          <div style={{
-            position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "clamp(40px,4vw,56px)",
-            fontFamily: SANS, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
-            color: "rgba(0,0,0,0.2)", zIndex: 30, userSelect: "none",
-            animation: "kk-rise 0.5s ease 2.2s both",
-          }}>
-            ← → arrows &nbsp;·&nbsp; swipe &nbsp;·&nbsp; click
+          <div style={{ position: "absolute", bottom: "clamp(18px,2.5vw,28px)", left: "clamp(40px,4vw,56px)", fontFamily: SANS, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.18)", zIndex: 30, userSelect: "none", animation: "kk-rise 0.5s ease 2.2s both" }}>
+            arrows &nbsp;·&nbsp; swipe &nbsp;·&nbsp; click
           </div>
         )}
       </div>
