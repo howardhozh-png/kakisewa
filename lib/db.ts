@@ -2625,6 +2625,7 @@ export type ExpandedDashboardStats = {
   // Existing Listing (fixed 60-day)
   existingRenewingCount: number;
   existingExpiringIn60Count: number;
+  existingExpiredCount: number;
   // Target Listing (range-sensitive)
   targetTotalActiveCount: number;
   targetTotalActiveAmount: number;
@@ -2672,6 +2673,7 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     { data: existingExpiring },
     { data: existingRenewing },
     { data: existingExpiring60 },
+    { count: existingExpired },
     { data: targetActive },
     { data: targetExpiring },
     { data: targetWatching },
@@ -2695,6 +2697,8 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     tn().eq("lifecycle_stage", "renewing"),
     // Expiring within fixed 60-day window from today (not range-sensitive)
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", sixtyDayEnd),
+    // Already expired (contract_end < today, not yet closed)
+    svc.from("tenancies").select("id", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").lt("contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", windowStart).lte("competitor_contract_end", periodEnd),
     // Competitors in watching stage
@@ -2724,6 +2728,7 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     existingExpiringAmount: sumAmount(existingExpiring),
     existingRenewingCount: existingRenewing?.length ?? 0,
     existingExpiringIn60Count: existingExpiring60?.length ?? 0,
+    existingExpiredCount: existingExpired ?? 0,
     targetTotalCount: targetTotal ?? 0,
     targetTotalActiveCount: targetActive?.length ?? 0,
     targetTotalActiveAmount: sumExpectedRent(targetActive),

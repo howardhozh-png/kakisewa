@@ -398,9 +398,9 @@ export function StatsSection({
     }
   }
 
-  const respondedPct =
+  const contactedPct =
     stats.totalUploaded > 0
-      ? Math.round((stats.totalResponded / stats.totalUploaded) * 100)
+      ? Math.round((stats.totalContacted / stats.totalUploaded) * 100)
       : 0;
 
   const totalMyListings = stats.totalListedCount;
@@ -486,7 +486,7 @@ export function StatsSection({
           primaryLabel="owner contacts imported"
           stats={[
             { label: "Contacted", value: stats.totalContacted },
-            { label: "Responded / Listed", value: `${respondedPct}%` },
+            { label: "% Contacted", value: `${contactedPct}%` },
           ]}
           href="/potential-listing"
           bg="rgba(0,113,227,0.09)"
@@ -513,6 +513,7 @@ export function StatsSection({
           stats={[
             { label: "Expiring in 60 days", value: stats.existingExpiringIn60Count },
             { label: "Renewing", value: stats.existingRenewingCount },
+            { label: "Expired", value: stats.existingExpiredCount },
           ]}
           href="/existing-listing"
           bg="rgba(52,199,89,0.11)"

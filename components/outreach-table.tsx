@@ -56,10 +56,11 @@ import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type Filter = "all" | "unsent" | "contacted" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
-type SentDateFilter = "all" | "today" | "this_week" | "this_month" | "older_30" | "never";
+type SentDateFilter = { mode: "month" | "day"; value: string } | null;
 type ContactStatus = "listed" | "rented" | "contacted" | "unsent" | "declined";
 
 function getStatus(lead: OwnerLead): ContactStatus {
@@ -808,7 +809,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [purposeFilter, setPurposeFilter] = useState<PurposeFilter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
-  const [sentDateFilter, setSentDateFilter] = useState<SentDateFilter>("all");
+  const [sentDateFilter, setSentDateFilter] = useState<SentDateFilter>(null);
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -896,19 +897,11 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           else if (filter === "contacted") { if (s !== "contacted") return false; }
           if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
           if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
-          if (sentDateFilter !== "all") {
+          if (sentDateFilter) {
             const sent = l.last_outreach_at ?? l.intake_sent_at ?? null;
-            if (sentDateFilter === "never") { if (sent) return false; }
-            else {
-              if (!sent) return false;
-              const sentMs = new Date(sent).getTime();
-              const now = Date.now();
-              const dayMs = 86400000;
-              if (sentDateFilter === "today"      && (now - sentMs) > dayMs)       return false;
-              if (sentDateFilter === "this_week"  && (now - sentMs) > 7 * dayMs)   return false;
-              if (sentDateFilter === "this_month" && (now - sentMs) > 30 * dayMs)  return false;
-              if (sentDateFilter === "older_30"   && (now - sentMs) <= 30 * dayMs) return false;
-            }
+            if (!sent) return false;
+            const len = sentDateFilter.mode === "month" ? 7 : 10;
+            if (sent.slice(0, len) !== sentDateFilter.value) return false;
           }
           if (searchLower) {
             const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
@@ -1189,19 +1182,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
         />
 
         {/* Last sent date filter */}
-        <FilterSelect
-          value={sentDateFilter}
-          onChange={(v) => setSentDateFilter(v as SentDateFilter)}
-          options={[
-            { value: "all",        label: "Any sent date" },
-            { value: "today",      label: "Sent today" },
-            { value: "this_week",  label: "Sent this week" },
-            { value: "this_month", label: "Sent this month" },
-            { value: "older_30",   label: "Sent >30 days ago" },
-            { value: "never",      label: "Never sent" },
-          ]}
-          minWidth={160}
-        />
+        <SentDatePickerFilter value={sentDateFilter} onChange={setSentDateFilter} />
 
       </div>
 
@@ -1726,6 +1707,129 @@ const STAT_COLS: { key: keyof PropertyStats[string]; label: string }[] = [
   { key: "rented",    label: "Rented"    },
   { key: "declined",  label: "Declined"  },
 ];
+
+const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function SentDatePickerFilter({ value, onChange }: { value: SentDateFilter; onChange: (v: SentDateFilter) => void }) {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"month" | "day">("month");
+  const now = new Date();
+  const [navYear, setNavYear] = useState(now.getFullYear());
+  const [navMonth, setNavMonth] = useState(now.getMonth() + 1);
+
+  const label = value
+    ? value.mode === "month"
+      ? `${MONTHS_SHORT[Number(value.value.slice(5, 7)) - 1]} ${value.value.slice(0, 4)}`
+      : new Date(value.value + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })
+    : "Last sent";
+
+  const daysInMonth = new Date(navYear, navMonth, 0).getDate();
+  const firstDayOfWeek = new Date(navYear, navMonth - 1, 1).getDay();
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    padding: "4px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: active ? 600 : 400,
+    background: active ? "var(--kk-ink)" : "transparent", color: active ? "#fff" : "var(--kk-ink)",
+  });
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="shrink-0"
+          style={{
+            display: "flex", alignItems: "center", gap: 4,
+            padding: "6px 12px", borderRadius: 9999, fontSize: 13, fontWeight: 500,
+            border: `1px solid ${value ? "var(--kk-ink)" : "var(--kk-line)"}`,
+            background: value ? "var(--kk-ink)" : "var(--kk-surface-2)",
+            color: value ? "#fff" : "var(--kk-ink-mute)", cursor: "pointer", whiteSpace: "nowrap",
+          }}
+        >
+          {label}
+          {value && (
+            <span
+              onClick={(e) => { e.stopPropagation(); onChange(null); setOpen(false); }}
+              style={{ marginLeft: 2, fontSize: 14, lineHeight: 1, opacity: 0.7 }}
+            >×</span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" sideOffset={6} className="p-3 w-[220px]"
+        style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 14, boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}>
+
+        {/* Mode toggle */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 12, background: "var(--kk-surface-2)", borderRadius: 8, padding: 3 }}>
+          {(["month", "day"] as const).map((m) => (
+            <button key={m} type="button" onClick={() => setMode(m)}
+              style={{ flex: 1, padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
+                background: mode === m ? "var(--kk-surface)" : "transparent",
+                color: mode === m ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                boxShadow: mode === m ? "0 1px 3px rgba(0,0,0,0.10)" : "none" }}>
+              {m === "month" ? "By month" : "By day"}
+            </button>
+          ))}
+        </div>
+
+        {/* Year nav */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <button type="button" onClick={() => setNavYear(y => y - 1)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--kk-ink)", padding: "0 6px" }}>‹</button>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)" }}>{navYear}</span>
+          <button type="button" onClick={() => setNavYear(y => y + 1)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--kk-ink)", padding: "0 6px" }}>›</button>
+        </div>
+
+        {mode === "month" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
+            {MONTHS_SHORT.map((name, i) => {
+              const mv = `${navYear}-${String(i + 1).padStart(2, "0")}`;
+              const sel = value?.mode === "month" && value.value === mv;
+              return (
+                <button key={i} type="button" onClick={() => { onChange({ mode: "month", value: mv }); setOpen(false); }}
+                  style={pillStyle(sel)}>{name}</button>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            {/* Month nav */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <button type="button" onClick={() => { if (navMonth === 1) { setNavMonth(12); setNavYear(y => y - 1); } else setNavMonth(m => m - 1); }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "var(--kk-ink)", padding: "0 4px" }}>‹</button>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink)" }}>{MONTHS_SHORT[navMonth - 1]}</span>
+              <button type="button" onClick={() => { if (navMonth === 12) { setNavMonth(1); setNavYear(y => y + 1); } else setNavMonth(m => m + 1); }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "var(--kk-ink)", padding: "0 4px" }}>›</button>
+            </div>
+            {/* Day grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+              {["S","M","T","W","T","F","S"].map((d, i) => (
+                <span key={i} style={{ textAlign: "center", fontSize: 9, fontWeight: 600, color: "var(--kk-ink-faint)", paddingBottom: 2 }}>{d}</span>
+              ))}
+              {Array.from({ length: firstDayOfWeek }).map((_, i) => <span key={`e${i}`} />)}
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+                const dv = `${navYear}-${String(navMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const sel = value?.mode === "day" && value.value === dv;
+                return (
+                  <button key={day} type="button" onClick={() => { onChange({ mode: "day", value: dv }); setOpen(false); }}
+                    style={{ padding: "3px 0", borderRadius: 5, border: "none", cursor: "pointer", fontSize: 11, fontWeight: sel ? 700 : 400,
+                      background: sel ? "var(--kk-ink)" : "transparent", color: sel ? "#fff" : "var(--kk-ink)", textAlign: "center" }}>
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {value && (
+          <button type="button" onClick={() => { onChange(null); setOpen(false); }}
+            style={{ marginTop: 10, width: "100%", padding: "6px 0", borderRadius: 8, border: "1px solid var(--kk-line)",
+              background: "none", fontSize: 12, color: "var(--kk-ink-mute)", cursor: "pointer" }}>
+            Clear filter
+          </button>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function PropertyPopover({
   value,
