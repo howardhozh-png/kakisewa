@@ -58,16 +58,6 @@ function getWeekDates(weekStart: string): string[] {
   return dates;
 }
 
-function eventColor(ev: CalendarEvent): string {
-  const t = ev.title?.toLowerCase() ?? "";
-  if (t.includes("renewal") || t.includes("renew")) return "rgba(52,199,89,0.18)";
-  if (t.includes("sign") || t.includes("contract")) return "rgba(0,113,227,0.13)";
-  if (t.includes("view") || t.includes("inspect")) return "rgba(255,149,0,0.18)";
-  if (t.includes("expir") || t.includes("end") || t.includes("expired")) return "rgba(255,59,48,0.13)";
-  if (t.includes("reminder") || t.includes("deposit")) return "rgba(255,149,0,0.13)";
-  if (t.includes("call") || t.includes("follow")) return "rgba(52,199,89,0.13)";
-  return "rgba(110,110,115,0.10)";
-}
 
 // ── Donut ring SVG ─────────────────────────────────────────────────────────────
 
@@ -187,7 +177,7 @@ function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: Calend
                     <div
                       key={ev.id}
                       style={{
-                        background: eventColor(ev),
+                        background: "var(--kk-surface-2)",
                         borderRadius: 6,
                         padding: "4px 6px",
                       }}
