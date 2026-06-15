@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { fetchExpandedStats } from "./actions";
 import { MonthPickerPill } from "@/components/month-picker-pill";
@@ -234,6 +234,25 @@ export function StatsSection({
   const [stats, setStats] = useState(initialStats);
   const [isPending, startTransition] = useTransition();
   const gridRef = useRef<HTMLDivElement>(null);
+  const calScrollRef = useRef<HTMLDivElement>(null);
+  const [calThumb, setCalThumb] = useState({ left: 0, width: 0 });
+
+  const updateCalThumb = useCallback(() => {
+    const el = calScrollRef.current;
+    if (!el) return;
+    const track = el.clientWidth;
+    const content = el.scrollWidth;
+    if (content <= track) { setCalThumb({ left: 0, width: 0 }); return; }
+    const thumbW = Math.max(36, (track / content) * track);
+    const thumbL = (el.scrollLeft / (content - track)) * (track - thumbW);
+    setCalThumb({ left: thumbL, width: thumbW });
+  }, []);
+
+  useEffect(() => {
+    updateCalThumb();
+    window.addEventListener("resize", updateCalThumb);
+    return () => window.removeEventListener("resize", updateCalThumb);
+  }, [updateCalThumb]);
 
   function getRangeMonths(key: string): number {
     return RANGE_OPTIONS.find((o) => o.value === key)?.months ?? 3;
@@ -322,15 +341,16 @@ export function StatsSection({
             </span>
           </div>
           <div
+            ref={calScrollRef}
             className="kk-cal-scroll"
+            onScroll={updateCalThumb}
             style={{
               display: "flex",
               overflowX: "auto",
-              padding: "14px 18px 10px",
+              padding: "14px 18px 12px",
               gap: 10,
               WebkitOverflowScrolling: "touch",
-              scrollbarWidth: "thin",
-              scrollbarColor: "var(--kk-ink-faint) var(--kk-surface-2)",
+              scrollbarWidth: "none",
             }}
           >
             {filteredEvents.map((ev) => {
@@ -376,6 +396,12 @@ export function StatsSection({
               );
             })}
           </div>
+          {/* Custom always-visible scroll indicator */}
+          {calThumb.width > 0 && (
+            <div style={{ margin: "0 18px 14px", height: 4, borderRadius: 2, background: "var(--kk-surface-2)", position: "relative" }}>
+              <div style={{ position: "absolute", top: 0, left: calThumb.left, width: calThumb.width, height: 4, borderRadius: 2, background: "var(--kk-ink-faint)" }} />
+            </div>
+          )}
         </Link>
       )}
 
