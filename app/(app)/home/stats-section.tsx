@@ -96,6 +96,7 @@ function DonutRing({ pct, strokeColor, trackColor, size = 76 }: { pct: number; s
 function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: CalendarEvent[]; weekStart: string; weekEnd: string }) {
   const today = new Date().toISOString().slice(0, 10);
   const weekDates = getWeekDates(weekStart);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 
   const byDate: Record<string, CalendarEvent[]> = {};
   for (const date of weekDates) byDate[date] = [];
@@ -137,10 +138,11 @@ function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: Calend
         </span>
       </div>
 
-      {/* Desktop: 7-column grid */}
-      <div className="kk-week-desktop" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+      {/* Desktop: 7-column flex (hover-expand per column) */}
+      <div className="kk-week-desktop" style={{ display: "flex" }}>
         {weekDates.map((date, i) => {
           const isToday = date === today;
+          const isHovered = hoveredDay === i;
           const dayNum = new Date(date + "T00:00:00").getDate();
           const events = byDate[date] ?? [];
           const shown = events.slice(0, 3);
@@ -149,11 +151,17 @@ function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: Calend
           return (
             <div
               key={date}
+              onMouseEnter={() => setHoveredDay(i)}
+              onMouseLeave={() => setHoveredDay(null)}
               style={{
+                flex: isHovered ? 2 : 1,
+                transition: "flex 0.22s cubic-bezier(.32,.72,0,1)",
                 borderRight: i < 6 ? "1px solid var(--kk-line)" : "none",
                 padding: "10px 8px 12px",
                 minHeight: 120,
-                background: isToday ? "rgba(0,113,227,0.04)" : "transparent",
+                minWidth: 0,
+                overflow: "hidden",
+                background: isToday ? "rgba(0,113,227,0.04)" : isHovered ? "rgba(0,0,0,0.015)" : "transparent",
               }}
             >
               {/* Day header */}
@@ -184,7 +192,7 @@ function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: Calend
                         padding: "4px 6px",
                       }}
                     >
-                      <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3, whiteSpace: isHovered ? "normal" : "nowrap", overflow: "hidden", textOverflow: isHovered ? "unset" : "ellipsis" }}>
                         {ev.title}
                       </p>
                       {ev.event_time && (
