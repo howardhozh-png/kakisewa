@@ -384,10 +384,10 @@ html, body {
 .kk-board-shell[data-dragging] .kk-board-row { scroll-snap-type: none; }
 .kk-board-shell[data-dragging] .kk-board-col { transition: none; }
 
-/* ─── Calendar strip scrollbar — visible thin bar ───────────────────────── */
-.kk-cal-scroll::-webkit-scrollbar { height: 4px; }
-.kk-cal-scroll::-webkit-scrollbar-track { background: transparent; }
-.kk-cal-scroll::-webkit-scrollbar-thumb { background: var(--kk-line); border-radius: 2px; }
+/* ─── Calendar strip scrollbar — always-visible bar ─────────────────────── */
+.kk-cal-scroll::-webkit-scrollbar { height: 5px; }
+.kk-cal-scroll::-webkit-scrollbar-track { background: var(--kk-surface-2); border-radius: 3px; }
+.kk-cal-scroll::-webkit-scrollbar-thumb { background: var(--kk-ink-faint); border-radius: 3px; }
 
 /* ─── Card-level CTA (wraps text, full width, fits inside narrow cards) ──── */
 .kk-card-cta {

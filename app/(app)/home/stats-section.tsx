@@ -330,7 +330,7 @@ export function StatsSection({
               gap: 10,
               WebkitOverflowScrolling: "touch",
               scrollbarWidth: "thin",
-              scrollbarColor: "var(--kk-line) transparent",
+              scrollbarColor: "var(--kk-ink-faint) var(--kk-surface-2)",
             }}
           >
             {filteredEvents.map((ev) => {
