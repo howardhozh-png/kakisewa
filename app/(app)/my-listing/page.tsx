@@ -86,7 +86,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
         </>
       ) : (
         <OwnerPipelineBoard
-          leads={ownerLeads}
+          leads={pipelineLeads}
           openLeadId={open}
           highlightId={highlight}
           tenantsByLeadId={tenantsByLeadId}
