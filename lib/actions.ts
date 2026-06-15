@@ -116,7 +116,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
       bedrooms: bedroomsRaw !== "" && bedroomsRaw != null ? parseInt(bedroomsRaw, 10) : undefined,
       bathrooms: bathroomsRaw !== "" && bathroomsRaw != null ? parseInt(bathroomsRaw, 10) : undefined,
       parking: parkingRaw ?? undefined,
-      stage: "matched",
+      stage: "archived",
       is_managed: true,
       photo_urls: [],
     } as Parameters<typeof createOwnerLead>[0]);
@@ -209,7 +209,7 @@ export async function removeTenancy(id: string) {
     const tenancy = await getTenancy(id);
     if (tenancy?.owner_lead_id) {
       const lead = await getOwnerLead(tenancy.owner_lead_id);
-      if (lead && lead.stage === "matched") {
+      if (lead && (lead.stage === "matched" || lead.stage === "archived")) {
         await deleteOwnerLead(tenancy.owner_lead_id);
       }
     }

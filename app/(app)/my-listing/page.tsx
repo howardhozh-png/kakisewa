@@ -38,7 +38,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
   const pipelineLeads = ownerLeads.filter((l) => {
     if (["own_stay", "archived", "imported"].includes(l.stage)) return false;
-    if (l.stage === "matched" && tenantsByLeadId[l.id] != null) return false;
+    if (l.stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage != null) return false;
     return true;
   });
 
@@ -86,7 +86,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
         </>
       ) : (
         <OwnerPipelineBoard
-          leads={pipelineLeads}
+          leads={ownerLeads}
           openLeadId={open}
           highlightId={highlight}
           tenantsByLeadId={tenantsByLeadId}
