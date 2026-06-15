@@ -2,7 +2,6 @@
 
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
-import { Download } from "lucide-react";
 import { fetchExpandedStats } from "./actions";
 import { MonthPickerPill } from "@/components/month-picker-pill";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -234,8 +233,6 @@ export function StatsSection({
   const [rangeKey, setRangeKey] = useState<string>("3m");
   const [stats, setStats] = useState(initialStats);
   const [isPending, startTransition] = useTransition();
-  const [exportOpen, setExportOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
   function getRangeMonths(key: string): number {
@@ -258,21 +255,6 @@ export function StatsSection({
     if (!key) return;
     setRangeKey(key);
     refetch(getRangeMonths(key), startMonth);
-  }
-
-  async function handleExport(type: "pdf" | "image") {
-    if (!gridRef.current) return;
-    setExportOpen(false);
-    setExporting(true);
-    try {
-      if (type === "pdf") {
-        await doExportPDF(startMonth, rangeKey, gridRef.current);
-      } else {
-        await doExportImage(startMonth, rangeKey, gridRef.current);
-      }
-    } finally {
-      setExporting(false);
-    }
   }
 
   const contactedPct =
@@ -307,52 +289,6 @@ export function StatsSection({
           </SelectContent>
         </Select>
 
-        {/* Export button */}
-        <div style={{ position: "relative", marginLeft: "auto" }}>
-          <button
-            type="button"
-            onClick={() => setExportOpen((o) => !o)}
-            disabled={exporting}
-            style={{
-              display: "flex", alignItems: "center", gap: 5,
-              fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 12,
-              border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)",
-              color: "var(--kk-ink)", cursor: "pointer", whiteSpace: "nowrap",
-              opacity: exporting ? 0.5 : 1,
-            }}
-          >
-            <Download style={{ width: 11, height: 11 }} />
-            {exporting ? "Exporting…" : "Export"}
-          </button>
-          {exportOpen && (
-            <div
-              style={{
-                position: "absolute", top: "calc(100% + 6px)", right: 0,
-                background: "var(--kk-surface)", border: "1px solid var(--kk-line)",
-                borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-                zIndex: 50, overflow: "hidden", minWidth: 130,
-              }}
-            >
-              {(["pdf", "image"] as const).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleExport(type)}
-                  style={{
-                    display: "block", width: "100%", textAlign: "left",
-                    padding: "10px 14px", fontSize: 13, fontWeight: 500,
-                    color: "var(--kk-ink)", background: "none", border: "none",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--kk-surface-2)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-                >
-                  {type === "pdf" ? "Download PDF" : "Download Image"}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* 4 blocks — 1 col mobile, 2 col sm+ */}
