@@ -378,6 +378,12 @@ html, body {
   gap: 10px;
 }
 
+/* ─── Drag state — suppress scroll-snap and transitions to eliminate mobile jitter ─── */
+/* These are top-level (not inside @media) so Lightning CSS keeps them.                 */
+/* The [data-dragging] attribute selector wins over the @media scroll-snap rule.        */
+.kk-board-shell[data-dragging] .kk-board-row { scroll-snap-type: none; }
+.kk-board-shell[data-dragging] .kk-board-col { transition: none; }
+
 /* ─── Card-level CTA (wraps text, full width, fits inside narrow cards) ──── */
 .kk-card-cta {
   display: flex;

@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getAgentProfile } from "@/lib/db";
 import { SubscriptionClient } from "./subscription-client";
 
@@ -8,6 +9,7 @@ export default async function SubscriptionPage() {
   const agent = await getAgentProfile();
   const hdrs = await headers();
   const isAdmin = hdrs.get("x-is-admin") === "true";
+  if (!isAdmin) redirect("/home");
 
   const status = (agent.subscription_status ?? null) as string | null;
   const trialEndsAt = agent.trial_ends_at ? new Date(agent.trial_ends_at) : null;

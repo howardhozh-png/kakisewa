@@ -287,7 +287,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         onDragEnd={(e) => { setActiveLead(null); handleDragEnd(e); }}
         onDragCancel={() => { setDraggingId(null); setActiveLead(null); }}
       >
-        <div className="kk-board-shell -mx-3 lg:-mx-5">
+        <div className="kk-board-shell -mx-3 lg:-mx-5" data-dragging={draggingId ? true : undefined}>
           <div className="kk-board-row px-3 lg:px-5">
           {(() => {
             return COLUMNS.map((col) => {
