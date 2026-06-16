@@ -23,6 +23,7 @@ interface Funnel {
   expired: number;
   active: number;
   unset: number;
+  elite: number;
 }
 
 interface FeedbackRow {
@@ -394,7 +395,10 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
               )}
               {filtered.map((a, i) => {
                 const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? { bg: "rgba(0,0,0,0.06)", color: "var(--kk-ink-mute)", label: "—" };
-                const planStyle = a.subscription_plan ? PLAN_STYLE[a.subscription_plan] : null;
+                // Beta/trial agents get full Elite feature access while their trial runs, even with no subscription_plan stored yet
+                const effectivePlan = a.subscription_plan
+                  ?? (a.subscription_status === "beta" || a.subscription_status === "trial" ? "elite" : null);
+                const planStyle = effectivePlan ? PLAN_STYLE[effectivePlan] : null;
                 const trialLabel = a.subscription_status === "trial" && a.trial_days_left !== null
                   ? (a.trial_days_left > 0 ? ` · ${a.trial_days_left}d left` : " · Expired") : "";
                 const rowBg = i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)";
@@ -410,9 +414,9 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
                         <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statusStyle.bg, color: statusStyle.color }}>
                           {statusStyle.label}{trialLabel}
                         </span>
-                        {planStyle && a.subscription_plan && (
+                        {planStyle && effectivePlan && (
                           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize" style={{ background: planStyle.bg, color: planStyle.color }}>
-                            {a.subscription_plan}
+                            {effectivePlan}
                           </span>
                         )}
                       </div>
@@ -514,6 +518,7 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
     { label: "Expired",           value: funnel.expired,      color: "#DC2626" },
     { label: "Paid subscribers",  value: funnel.active,       color: "#0071E3" },
     { label: "Legacy (no status)",value: funnel.unset,        color: "var(--kk-ink-faint)" },
+    { label: "Elite access",      value: funnel.elite,        color: "#6b3d1e" },
   ];
 
   async function toggleResolved(id: string, current: boolean) {

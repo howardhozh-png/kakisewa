@@ -41,6 +41,11 @@ export default async function AdminPage() {
     unset: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
       !p.subscription_status
     ).length,
+    // Elite access = paid Elite subscribers + active beta/trial agents (who get full Elite features while their trial runs)
+    elite: (profiles ?? []).filter((p: { subscription_status: string | null; subscription_plan: string | null; trial_ends_at: string | null }) =>
+      (p.subscription_status === "active" && p.subscription_plan === "elite") ||
+      ((p.subscription_status === "beta" || p.subscription_status === "trial") && p.trial_ends_at && new Date(p.trial_ends_at) > nowTs)
+    ).length,
   };
 
   // Ref links with click counts
