@@ -686,40 +686,47 @@ export async function getLifecycleTenancies(): Promise<Tenancy[]> {
 }
 
 export async function countOwnerLeads(): Promise<number> {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("owner_leads")
-    .select("*", { count: "exact", head: true });
+  let q = supabase.from("owner_leads").select("*", { count: "exact", head: true });
+  if (userId) q = q.eq("user_id", userId);
+  const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
 }
 
 export async function countLifecycleTenancies(): Promise<number> {
   const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
-  const { count, error } = await supabase
+  let q = supabase
     .from("tenancies")
     .select("*", { count: "exact", head: true })
     .is("deleted_at", null)
     .not("contract_end", "is", null)
     .gte("contract_end", earliest);
+  if (userId) q = q.eq("user_id", userId);
+  const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
 }
 
 export async function countTenantProfiles(): Promise<number> {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
-  const { count, error } = await supabase
-    .from("tenant_profiles")
-    .select("*", { count: "exact", head: true });
+  let q = supabase.from("tenant_profiles").select("*", { count: "exact", head: true });
+  if (userId) q = q.eq("user_id", userId);
+  const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
 }
 
 export async function countPropertySupports(since?: Date): Promise<number> {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
   let q = supabase.from("property_supports").select("*", { count: "exact", head: true });
   if (since) q = q.gte("created_at", since.toISOString());
+  if (userId) q = q.eq("user_id", userId);
   const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;

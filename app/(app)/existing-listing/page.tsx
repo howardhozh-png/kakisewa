@@ -78,19 +78,6 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
               <p className="kk-body-sm mb-6 leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
                 Bring in what you already manage. We'll track every expiry and alert you 60 days before renewal time.
               </p>
-              <div className="w-full rounded-2xl px-5 py-4 mb-6 text-left" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-                <p className="text-[12px] font-semibold mb-3" style={{ color: "var(--kk-ink-soft)" }}>
-                  Make sure these fields are filled in:
-                </p>
-                <ul className="space-y-2">
-                  {["Property name", "Unit number", "Owner contact", "Contract start date", "Duration (we default to 1 year if blank)"].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--kk-amber)" }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <div className="flex items-center gap-3">
                 <AddTenancyDialog ownerLeads={ownerLeads} />
                 <UploadTenancyCsvDialog />

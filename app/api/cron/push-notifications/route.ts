@@ -30,19 +30,19 @@ export async function GET(req: NextRequest) {
   // Only for users who have at least one push subscription
   const { data: expiring } = await supabase
     .from("tenancies")
-    .select("id, user_id, tenant_name, property_name, contract_end, lifecycle_stage, replied_tenant, owner_lead_id")
+    .select("id, user_id, tenant_name, contract_end, lifecycle_stage, replied_tenant, owner_lead_id")
     .not("contract_end", "is", null)
     .not("user_id", "is", null)
     .gte("contract_end", todayStr)
     .lte("contract_end", in60)
     .neq("lifecycle_stage", "closed");
 
-  // Batch-fetch units from owner_leads
+  // Batch-fetch unit + property name from owner_leads
   const expiringLeadIds = [...new Set((expiring ?? []).map((r: { owner_lead_id: string | null }) => r.owner_lead_id).filter(Boolean))] as string[];
   const { data: expiringOlUnits } = expiringLeadIds.length
-    ? await supabase.from("owner_leads").select("id, unit").in("id", expiringLeadIds)
-    : { data: [] as { id: string; unit: string | null }[] };
-  const unitByExpLeadId = Object.fromEntries((expiringOlUnits ?? []).map((ol: { id: string; unit: string | null }) => [ol.id, ol.unit]));
+    ? await supabase.from("owner_leads").select("id, unit, property_name").in("id", expiringLeadIds)
+    : { data: [] as { id: string; unit: string | null; property_name: string | null }[] };
+  const unitByExpLeadId = Object.fromEntries((expiringOlUnits ?? []).map((ol: { id: string; unit: string | null; property_name: string | null }) => [ol.id, ol]));
 
   for (const row of expiring ?? []) {
     const daysLeft = Math.ceil(
@@ -80,8 +80,9 @@ export async function GET(req: NextRequest) {
 
     if (!count || count === 0) { skipped++; continue; }
 
-    const unit = row.owner_lead_id ? (unitByExpLeadId[row.owner_lead_id] ?? null) : null;
-    const propParts = [row.property_name, unit ? `Unit ${unit}` : null].filter(Boolean);
+    const expLead = row.owner_lead_id ? unitByExpLeadId[row.owner_lead_id] : null;
+    const unit = expLead?.unit ?? null;
+    const propParts = [expLead?.property_name, unit ? `Unit ${unit}` : null].filter(Boolean);
     const propLabel = propParts.length ? propParts.join(" · ") : "your property";
     const result = await sendPushToUser(row.user_id, {
       title: `Contract expiring in ${label}`,
@@ -104,18 +105,18 @@ export async function GET(req: NextRequest) {
   // ── Tenant not renewing — one-time push per tenancy ───────────────────────
   const { data: leaving } = await supabase
     .from("tenancies")
-    .select("id, user_id, tenant_name, property_name, contract_end, owner_lead_id")
+    .select("id, user_id, tenant_name, contract_end, owner_lead_id")
     .eq("replied_tenant", "no")
     .neq("lifecycle_stage", "closed")
     .not("user_id", "is", null)
     .gte("contract_end", todayStr);
 
-  // Batch-fetch units for leaving tenants
+  // Batch-fetch unit + property name for leaving tenants
   const leavingLeadIds = [...new Set((leaving ?? []).map((r: { owner_lead_id: string | null }) => r.owner_lead_id).filter(Boolean))] as string[];
   const { data: leavingOlUnits } = leavingLeadIds.length
-    ? await supabase.from("owner_leads").select("id, unit").in("id", leavingLeadIds)
-    : { data: [] as { id: string; unit: string | null }[] };
-  const unitByLeavingLeadId = Object.fromEntries((leavingOlUnits ?? []).map((ol: { id: string; unit: string | null }) => [ol.id, ol.unit]));
+    ? await supabase.from("owner_leads").select("id, unit, property_name").in("id", leavingLeadIds)
+    : { data: [] as { id: string; unit: string | null; property_name: string | null }[] };
+  const unitByLeavingLeadId = Object.fromEntries((leavingOlUnits ?? []).map((ol: { id: string; unit: string | null; property_name: string | null }) => [ol.id, ol]));
 
   for (const row of leaving ?? []) {
     const notifKey = `leaving_${row.id}`;
@@ -137,8 +138,9 @@ export async function GET(req: NextRequest) {
 
     if (!count || count === 0) { skipped++; continue; }
 
-    const lUnit = row.owner_lead_id ? (unitByLeavingLeadId[row.owner_lead_id] ?? null) : null;
-    const lPropParts = [row.property_name, lUnit ? `Unit ${lUnit}` : null].filter(Boolean);
+    const leavingLead = row.owner_lead_id ? unitByLeavingLeadId[row.owner_lead_id] : null;
+    const lUnit = leavingLead?.unit ?? null;
+    const lPropParts = [leavingLead?.property_name, lUnit ? `Unit ${lUnit}` : null].filter(Boolean);
     const lPropLabel = lPropParts.length ? lPropParts.join(" · ") : "your property";
     const result = await sendPushToUser(row.user_id, {
       title: "Tenant not renewing",

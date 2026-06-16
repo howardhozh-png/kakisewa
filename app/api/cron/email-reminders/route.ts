@@ -46,16 +46,16 @@ export async function GET(req: NextRequest) {
     // ── Contract expiry reminders ─────────────────────────────────────────────
     const { data: expiring } = await supabase
       .from("tenancies")
-      .select("id, user_id, tenant_name, property_name, amount, contract_end, replied_tenant, owner_lead_id")
+      .select("id, user_id, tenant_name, amount, contract_end, replied_tenant, owner_lead_id")
       .eq("contract_end", targetStr)
       .neq("lifecycle_stage", "closed");
 
-    // Batch-fetch units from owner_leads for this window
+    // Batch-fetch unit + property name from owner_leads for this window
     const expLeadIds = [...new Set((expiring ?? []).map((r: { owner_lead_id: string | null }) => r.owner_lead_id).filter(Boolean))] as string[];
     const { data: expOlUnits } = expLeadIds.length
-      ? await supabase.from("owner_leads").select("id, unit").in("id", expLeadIds)
-      : { data: [] as { id: string; unit: string | null }[] };
-    const expUnitMap = Object.fromEntries((expOlUnits ?? []).map((ol: { id: string; unit: string | null }) => [ol.id, ol.unit]));
+      ? await supabase.from("owner_leads").select("id, unit, property_name").in("id", expLeadIds)
+      : { data: [] as { id: string; unit: string | null; property_name: string | null }[] };
+    const expUnitMap = Object.fromEntries((expOlUnits ?? []).map((ol: { id: string; unit: string | null; property_name: string | null }) => [ol.id, ol]));
 
     for (const row of expiring ?? []) {
       const email = emailById[row.user_id];
@@ -73,8 +73,9 @@ export async function GET(req: NextRequest) {
 
       if ((count ?? 0) > 0) { skipped++; continue; }
 
-      const unit = row.owner_lead_id ? (expUnitMap[row.owner_lead_id] ?? null) : null;
-      const propParts = [row.property_name, unit ? `Unit ${unit}` : null].filter(Boolean);
+      const expLead = row.owner_lead_id ? expUnitMap[row.owner_lead_id] : null;
+      const unit = expLead?.unit ?? null;
+      const propParts = [expLead?.property_name, unit ? `Unit ${unit}` : null].filter(Boolean);
       const propLabel = propParts.join(" · ") || "your property";
       const rent = row.amount ? `RM ${Number(row.amount).toLocaleString()}/month` : null;
       const rentLine = rent ? `<p style="font-size:13px;color:#6C6C70;margin:0 0 20px">Current rent: ${rent}</p>` : "";
@@ -190,17 +191,17 @@ export async function GET(req: NextRequest) {
   // ── Tenant not renewing — one-time email ──────────────────────────────────
   const { data: leaving } = await supabase
     .from("tenancies")
-    .select("id, user_id, tenant_name, property_name, contract_end, owner_lead_id")
+    .select("id, user_id, tenant_name, contract_end, owner_lead_id")
     .eq("replied_tenant", "no")
     .neq("lifecycle_stage", "closed")
     .gte("contract_end", todayStr);
 
-  // Batch-fetch units for leaving tenants
+  // Batch-fetch unit + property name for leaving tenants
   const leavingLeadIds = [...new Set((leaving ?? []).map((r: { owner_lead_id: string | null }) => r.owner_lead_id).filter(Boolean))] as string[];
   const { data: leavingOlUnits } = leavingLeadIds.length
-    ? await supabase.from("owner_leads").select("id, unit").in("id", leavingLeadIds)
-    : { data: [] as { id: string; unit: string | null }[] };
-  const leavingUnitMap = Object.fromEntries((leavingOlUnits ?? []).map((ol: { id: string; unit: string | null }) => [ol.id, ol.unit]));
+    ? await supabase.from("owner_leads").select("id, unit, property_name").in("id", leavingLeadIds)
+    : { data: [] as { id: string; unit: string | null; property_name: string | null }[] };
+  const leavingUnitMap = Object.fromEntries((leavingOlUnits ?? []).map((ol: { id: string; unit: string | null; property_name: string | null }) => [ol.id, ol]));
 
   for (const row of leaving ?? []) {
     const email = emailById[row.user_id];
@@ -216,8 +217,9 @@ export async function GET(req: NextRequest) {
 
     if ((count ?? 0) > 0) { skipped++; continue; }
 
-    const lUnit = row.owner_lead_id ? (leavingUnitMap[row.owner_lead_id] ?? null) : null;
-    const lPropParts = [row.property_name, lUnit ? `Unit ${lUnit}` : null].filter(Boolean);
+    const leavingLead = row.owner_lead_id ? leavingUnitMap[row.owner_lead_id] : null;
+    const lUnit = leavingLead?.unit ?? null;
+    const lPropParts = [leavingLead?.property_name, lUnit ? `Unit ${lUnit}` : null].filter(Boolean);
     const propLabel = lPropParts.join(" · ") || "your property";
 
     await fetch("https://api.resend.com/emails", {

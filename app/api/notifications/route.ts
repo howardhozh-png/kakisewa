@@ -13,10 +13,16 @@ export interface NotificationItem {
   priority: "high" | "normal";
 }
 
+function extractPropertyName(ownerLeads: unknown): string | null {
+  const lead = Array.isArray(ownerLeads) ? ownerLeads[0] : ownerLeads;
+  return (lead as { property_name: string | null } | null)?.property_name ?? null;
+}
+
 export async function GET() {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return NextResponse.json({ items: [], unreadCount: 0 });
+  const userId = session.user.id;
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -29,6 +35,7 @@ export async function GET() {
   const { data: recentIntakes } = await supabase
     .from("owner_leads")
     .select("id, owner_name, property_name, unit, intake_completed_at")
+    .eq("user_id", userId)
     .not("intake_completed_at", "is", null)
     .gte("intake_completed_at", since30d)
     .order("intake_completed_at", { ascending: false })
@@ -52,6 +59,7 @@ export async function GET() {
   const { data: recentRenewals } = await supabase
     .from("tenancies")
     .select("id, tenant_name, owner_renewal_completed_at, replied_owner")
+    .eq("user_id", userId)
     .not("owner_renewal_completed_at", "is", null)
     .gte("owner_renewal_completed_at", since30d)
     .order("owner_renewal_completed_at", { ascending: false })
@@ -74,6 +82,7 @@ export async function GET() {
   const { data: rankedPacks } = await supabase
     .from("match_packs")
     .select("id, owner_lead_id, property_label, owner_ranked_at")
+    .eq("user_id", userId)
     .not("owner_ranked_at", "is", null)
     .gte("owner_ranked_at", since30d)
     .order("owner_ranked_at", { ascending: false })
@@ -95,7 +104,8 @@ export async function GET() {
   // ── Contracts expiring within 60 days — 60d / 30d / 7d milestones ────────
   const { data: expiring } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, contract_end, property_name, lifecycle_stage")
+    .select("id, tenant_name, contract_end, lifecycle_stage, owner_leads!owner_lead_id(property_name)")
+    .eq("user_id", userId)
     .not("contract_end", "is", null)
     .gte("contract_end", todayStr)
     .lte("contract_end", in60)
@@ -103,7 +113,8 @@ export async function GET() {
     .limit(30);
 
   for (const r of expiring ?? []) {
-    const row = r as { id: string; tenant_name: string; contract_end: string; property_name: string | null };
+    const row = r as { id: string; tenant_name: string; contract_end: string; owner_leads: unknown };
+    const propertyName = extractPropertyName(row.owner_leads);
     const daysLeft = Math.ceil((new Date(row.contract_end).getTime() - today.getTime()) / 86400000);
 
     let bucket: string;
@@ -127,7 +138,7 @@ export async function GET() {
       id: `exp_${row.id}_${bucket}`,
       type: "contract_expiry",
       title: `Contract expiring — ${label} left`,
-      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
+      body: `${row.tenant_name}${propertyName ? ` · ${propertyName}` : ""}`,
       href: `/existing-listing?highlight=${row.id}`,
       createdAt: milestoneAt,
       priority,
@@ -141,6 +152,7 @@ export async function GET() {
   const { data: tenantIntakes } = await supabase
     .from("tenant_profiles")
     .select("id, name, intake_completed_at")
+    .eq("user_id", userId)
     .not("intake_completed_at", "is", null)
     .eq("source", "intake_form")
     .gte("intake_completed_at", since30d)
@@ -163,19 +175,21 @@ export async function GET() {
   // ── Tenant answered renewal questionnaire (last 30 days) ─────────────────────
   const { data: tenantRenewals } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, property_name, tenant_renewal_completed_at, replied_tenant")
+    .select("id, tenant_name, tenant_renewal_completed_at, replied_tenant, owner_leads!owner_lead_id(property_name)")
+    .eq("user_id", userId)
     .not("tenant_renewal_completed_at", "is", null)
     .gte("tenant_renewal_completed_at", since30d)
     .order("tenant_renewal_completed_at", { ascending: false })
     .limit(10);
 
   for (const r of tenantRenewals ?? []) {
-    const row = r as { id: string; tenant_name: string; property_name: string | null; tenant_renewal_completed_at: string; replied_tenant: string };
+    const row = r as { id: string; tenant_name: string; tenant_renewal_completed_at: string; replied_tenant: string; owner_leads: unknown };
+    const propertyName = extractPropertyName(row.owner_leads);
     items.push({
       id: `tenant_renewal_${row.id}`,
       type: "tenant_renewal",
       title: row.replied_tenant === "yes" ? "Renewal confirmed" : "Tenant not renewing",
-      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
+      body: `${row.tenant_name}${propertyName ? ` · ${propertyName}` : ""}`,
       href: `/existing-listing?highlight=${row.id}`,
       createdAt: row.tenant_renewal_completed_at,
       priority: row.replied_tenant === "yes" ? "normal" : "high",
@@ -185,7 +199,8 @@ export async function GET() {
   // ── WhatsApp auto-tracked replies (last 30 days) ──────────────────────────────
   const { data: waReplies } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, property_name, last_wa_reply_at, replied_tenant")
+    .select("id, tenant_name, last_wa_reply_at, replied_tenant, owner_leads!owner_lead_id(property_name)")
+    .eq("user_id", userId)
     .not("last_wa_reply_at", "is", null)
     .gte("last_wa_reply_at", since30d)
     .in("replied_tenant", ["yes", "no"])
@@ -193,12 +208,13 @@ export async function GET() {
     .limit(10);
 
   for (const r of waReplies ?? []) {
-    const row = r as { id: string; tenant_name: string; property_name: string | null; last_wa_reply_at: string; replied_tenant: string };
+    const row = r as { id: string; tenant_name: string; last_wa_reply_at: string; replied_tenant: string; owner_leads: unknown };
+    const propertyName = extractPropertyName(row.owner_leads);
     items.push({
       id: `wa_reply_${row.id}`,
       type: "wa_reply",
       title: row.replied_tenant === "yes" ? "Renewal confirmed via WhatsApp" : "Not renewing (WhatsApp reply)",
-      body: `${row.tenant_name}${row.property_name ? ` · ${row.property_name}` : ""}`,
+      body: `${row.tenant_name}${propertyName ? ` · ${propertyName}` : ""}`,
       href: `/existing-listing?highlight=${row.id}`,
       createdAt: row.last_wa_reply_at,
       priority: row.replied_tenant === "yes" ? "normal" : "high",
@@ -209,6 +225,7 @@ export async function GET() {
   const { data: waOwnerReplies } = await supabase
     .from("owner_leads")
     .select("id, owner_name, property_name, unit, last_wa_reply_at, replied_owner")
+    .eq("user_id", userId)
     .not("last_wa_reply_at", "is", null)
     .gte("last_wa_reply_at", since30d)
     .in("replied_owner", ["yes", "no"])
@@ -236,6 +253,7 @@ export async function GET() {
   const { data: tenantRankedPacks } = await supabase
     .from("property_packs")
     .select("id, tenant_profile_id, tenant_label, tenant_ranked_at")
+    .eq("user_id", userId)
     .not("tenant_ranked_at", "is", null)
     .gte("tenant_ranked_at", since30d)
     .order("tenant_ranked_at", { ascending: false })

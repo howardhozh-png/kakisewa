@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
       const { data: expiringContracts } = await supabase
         .from("tenancies")
-        .select("id, tenant_name, tenant_phone, amount, contract_end, property_name, tenant_renewal_token")
+        .select("id, tenant_name, tenant_phone, amount, contract_end, tenant_renewal_token, owner_leads!owner_lead_id(property_name)")
         .eq("user_id", userId)
         .eq("contract_end", targetStr)
         .neq("lifecycle_stage", "closed");
@@ -78,7 +78,8 @@ export async function GET(req: NextRequest) {
 
         const tenantName = contract.tenant_name as string;
         const tenantPhone = contract.tenant_phone as string;
-        const propertyName = (contract.property_name as string | null) ?? "your property";
+        const ownerLead = contract.owner_leads as { property_name: string | null } | null;
+        const propertyName = ownerLead?.property_name ?? "your property";
         const expiryWhen = daysBefore === 60 ? "in 2 months" : daysBefore === 30 ? "in 1 month" : "in 7 days";
 
         // Get or create tenant renewal token

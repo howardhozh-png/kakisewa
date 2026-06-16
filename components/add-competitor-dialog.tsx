@@ -170,7 +170,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
 
           {/* Property name */}
           <div className="space-y-1.5">
-            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Property name *</label>
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Property name<span style={{ color: "var(--kk-red)" }}> *</span></label>
             <input value={form.property_name} onChange={e => set("property_name", e.target.value)} placeholder="e.g. Residensi Mutiara" className={field} style={fs} />
           </div>
 
@@ -228,11 +228,11 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
           {/* Contract dates */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rented on *</label>
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rented on<span style={{ color: "var(--kk-red)" }}> *</span></label>
               <DateInput value={form.rented_on} onChange={iso => set("rented_on", iso)} className={field} style={fs} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months) *</label>
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months)<span style={{ color: "var(--kk-red)" }}> *</span></label>
               <input type="number" value={form.duration} min="1" max="36" onChange={e => set("duration", e.target.value)} className={field} style={fs} />
             </div>
           </div>

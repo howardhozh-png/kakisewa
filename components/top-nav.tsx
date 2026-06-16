@@ -711,31 +711,6 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
     };
   }, []);
 
-  // After the first-time onboarding demo closes, redirect to billing — beta/trial users only
-  useEffect(() => {
-    function onDemoFirstClose() {
-      if (agent.subscription_status !== "beta" && agent.subscription_status !== "trial") return;
-      setTimeout(() => router.push("/subscription"), 400);
-    }
-    document.addEventListener("kk:demo-first-close", onDemoFirstClose);
-    return () => document.removeEventListener("kk:demo-first-close", onDemoFirstClose);
-  }, [router, agent.subscription_status]);
-
-  // On every login during beta/trial, nudge to subscription once per session
-  useEffect(() => {
-    if (isAdmin) return;
-    if (agent.subscription_status !== "beta" && agent.subscription_status !== "trial") return;
-    const SESSION_KEY = "kk_sub_shown";
-    if (sessionStorage.getItem(SESSION_KEY)) return;
-    sessionStorage.setItem(SESSION_KEY, "1");
-    // Delay so we don't clash with the demo modal on first login
-    const demoSeen = localStorage.getItem("kk_demo_seen_v1");
-    const delay = demoSeen ? 800 : 4000;
-    const t = setTimeout(() => router.push("/subscription"), delay);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function pickTheme(t: Theme) {
     setThemeKey(t.key);
     applyTheme(t);
