@@ -102,7 +102,7 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
   elite:    { bg: "rgba(107,61,30,0.12)",   color: "#6b3d1e" },
 };
 
-interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; }
+interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null; }
 interface RawTenancy { user_id: string; created_at: string; }
 interface RawFeedbackItem { agent_id: string; created_at: string; }
 
@@ -189,7 +189,7 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
     for (const l of rawLeads) {
       if (!l.user_id || new Date(l.created_at) < cutoff) continue;
       const c = counts[l.user_id] ?? init();
-      c.potential++;
+      if (!l.is_competitor_target) c.potential++;
       if (["wants_rent", "listed", "matched"].includes(l.stage)) c.myListing++;
       counts[l.user_id] = c;
     }

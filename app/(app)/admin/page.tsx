@@ -112,19 +112,41 @@ export default async function AdminPage() {
     page++;
   }
 
-  // Engagement data per agent — fetch with created_at for time-window filtering
-  const [{ data: allLeads }, { data: allTenancies }, { data: allFeedbackCounts }] = await Promise.all([
-    supabase.from("owner_leads").select("user_id, stage, wa_status, created_at, last_outreach_at").is("deleted_at", null),
-    supabase.from("tenancies").select("user_id, created_at").is("deleted_at", null),
-    supabase.from("feedback").select("agent_id, created_at"),
+  // Engagement data per agent — fetch with created_at for time-window filtering.
+  // PostgREST caps a single request at 1000 rows, and owner_leads/tenancies are both
+  // well past that, so each table is paginated the same way listUsers() is above.
+  async function fetchAllRows<T>(table: string, columns: string, isNullFilter?: { col: string }): Promise<T[]> {
+    const rows: T[] = [];
+    let from = 0;
+    const batchSize = 1000;
+    while (true) {
+      let query = supabase.from(table).select(columns).range(from, from + batchSize - 1);
+      if (isNullFilter) query = query.is(isNullFilter.col, null);
+      const { data } = await query;
+      if (!data || data.length === 0) break;
+      rows.push(...(data as T[]));
+      if (data.length < batchSize) break;
+      from += batchSize;
+    }
+    return rows;
+  }
+
+  const [allLeads, allTenancies, allFeedbackCounts] = await Promise.all([
+    fetchAllRows<{ user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }>(
+      "owner_leads", "user_id, stage, wa_status, created_at, last_outreach_at, is_competitor_target", { col: "deleted_at" }
+    ),
+    fetchAllRows<{ user_id: string; created_at: string }>("tenancies", "user_id, created_at", { col: "deleted_at" }),
+    fetchAllRows<{ agent_id: string; created_at: string }>("feedback", "agent_id, created_at"),
   ]);
 
-  // All-time counts (for default view)
+  // All-time counts (for default view). "Potential listing" mirrors the homepage's
+  // totalUploaded definition (lib/db.ts getExpandedDashboardStats) by excluding
+  // competitor-tracking entries, so the two numbers tie.
   const leadsByUser: Record<string, { total: number; outreached: number; myListing: number }> = {};
   for (const l of allLeads ?? []) {
     if (!l.user_id) continue;
     const b = leadsByUser[l.user_id] ?? { total: 0, outreached: 0, myListing: 0 };
-    b.total++;
+    if (!l.is_competitor_target) b.total++;
     if (l.wa_status != null) b.outreached++;
     if (["wants_rent", "listed", "matched"].includes(l.stage)) b.myListing++;
     leadsByUser[l.user_id] = b;
@@ -141,8 +163,8 @@ export default async function AdminPage() {
   }
 
   // Raw timestamped records — passed to client for time-window recomputation
-  const rawLeads = (allLeads ?? []).map((l: { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null }) => ({
-    user_id: l.user_id, stage: l.stage, wa_status: l.wa_status, created_at: l.created_at, last_outreach_at: l.last_outreach_at,
+  const rawLeads = (allLeads ?? []).map((l: { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }) => ({
+    user_id: l.user_id, stage: l.stage, wa_status: l.wa_status, created_at: l.created_at, last_outreach_at: l.last_outreach_at, is_competitor_target: l.is_competitor_target,
   }));
   const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string }) => ({
     user_id: t.user_id, created_at: t.created_at,
