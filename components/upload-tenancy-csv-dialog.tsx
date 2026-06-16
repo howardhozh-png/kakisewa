@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, AlertCircle, CheckCircle2, FileSpreadsheet, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Upload, AlertCircle, CheckCircle2, FileSpreadsheet, ChevronLeft, ChevronRight, X, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -619,6 +619,16 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                 <input ref={fileRef} type="file" accept=".csv,.xls,.xlsx" className="hidden"
                   onChange={async (e) => { const f = e.target.files?.[0]; if (f) await handleFile(f); e.target.value = ""; }}
                 />
+
+                <div
+                  className="rounded-xl px-3.5 py-3 flex items-start gap-2"
+                  style={{ background: "var(--kk-amber-soft)", color: "#B45309" }}
+                >
+                  <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="text-[12px] leading-relaxed">
+                    Tip: if this is your first time uploading this file, try just 10 rows first to confirm the columns map correctly before uploading the rest.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 px-6 py-4">

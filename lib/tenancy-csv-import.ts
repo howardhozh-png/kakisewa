@@ -4,6 +4,7 @@
 
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { isInternationalPhone } from "@/lib/phone";
 
 // ─── Canonical field names ────────────────────────────────────────────────────
 
@@ -144,6 +145,7 @@ function normaliseHeader(h: string): CanonicalField | null {
 // ─── Value normalisers ────────────────────────────────────────────────────────
 
 export function normalisePhone(raw: string): string {
+  if (isInternationalPhone(raw)) return "+" + raw.replace(/[\s\-().+]/g, "");
   const digits = raw.replace(/[^\d]/g, "");
   if (digits.startsWith("60") && digits.length >= 10 && digits.length <= 12) return digits;
   if (digits.startsWith("0") && digits.length >= 9 && digits.length <= 11) return "6" + digits;

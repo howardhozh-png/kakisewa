@@ -262,7 +262,11 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
                 className={field}
                 style={{ ...fs, border: phoneErr ? "1px solid var(--kk-red)" : fs.border }}
               />
-              {phoneErr && <p className="text-[11px]" style={{ color: "var(--kk-red)" }}>{phoneErr}</p>}
+              {phoneErr ? (
+                <p className="text-[11px]" style={{ color: "var(--kk-red)" }}>{phoneErr}</p>
+              ) : (
+                <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+              )}
             </div>
           </div>
 

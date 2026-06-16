@@ -20,16 +20,14 @@ export default async function AdminPage() {
     total: (profiles ?? []).length,
     beta: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "beta" &&
-      p.trial_ends_at &&
-      new Date(p.trial_ends_at) > nowTs
+      (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs)
     ).length,
     beta_frozen: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
       p.subscription_status === "beta_frozen"
     ).length,
     trial: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "trial" &&
-      p.trial_ends_at &&
-      new Date(p.trial_ends_at) > nowTs
+      (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs)
     ).length,
     expired: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "expired" ||
@@ -44,7 +42,7 @@ export default async function AdminPage() {
     // Elite access = paid Elite subscribers + active beta/trial agents (who get full Elite features while their trial runs)
     elite: (profiles ?? []).filter((p: { subscription_status: string | null; subscription_plan: string | null; trial_ends_at: string | null }) =>
       (p.subscription_status === "active" && p.subscription_plan === "elite") ||
-      ((p.subscription_status === "beta" || p.subscription_status === "trial") && p.trial_ends_at && new Date(p.trial_ends_at) > nowTs)
+      ((p.subscription_status === "beta" || p.subscription_status === "trial") && (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs))
     ).length,
   };
 

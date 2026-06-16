@@ -7,7 +7,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, daysUntil } from "@/lib/types";
 import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, CalendarPlus } from "lucide-react";
-import { normalizePhone } from "@/lib/phone";
+import { normalizePhone, toE164Display } from "@/lib/phone";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 
@@ -296,6 +296,7 @@ function TenancyForm({
                 className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
                 style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
               />
+              <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
             </div>
           ) : (
             <div>
@@ -321,7 +322,7 @@ function TenancyForm({
                   <a href={`https://wa.me/${(ownerPhone || tenancy.tenant_phone || "").replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
-                  <a href={`tel:+${ownerPhone || tenancy.tenant_phone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                  <a href={`tel:${toE164Display(ownerPhone || tenancy.tenant_phone || "")}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
                     <Phone className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -377,12 +378,13 @@ function TenancyForm({
                 <a href={`https://wa.me/${tenantPhone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
                   <WhatsAppIcon className="w-4 h-4" />
                 </a>
-                <a href={`tel:+${tenantPhone}`} className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                <a href={`tel:${toE164Display(tenantPhone)}`} className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
                   <Phone className="w-4 h-4" />
                 </a>
               </>
             )}
           </div>
+          <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
         </div>
         <Field label="Monthly rent (RM)" value={amount} onChange={setAmount} placeholder="e.g. 1,500" money />
         <div /> {/* spacer so rent stays left */}

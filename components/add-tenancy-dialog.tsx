@@ -315,7 +315,11 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
               <SectionLabel>Owner</SectionLabel>
               <div className="grid grid-cols-2 gap-3">
                 <div><FieldLabel required>Owner name</FieldLabel><TextInput value={ownerName} onChange={setOwnerName} placeholder="e.g. Encik Ahmad" /></div>
-                <div><FieldLabel required>Phone</FieldLabel><TextInput type="tel" value={ownerPhone} onChange={setOwnerPhone} onBlur={(v) => setOwnerPhone(normalizePhone(v))} placeholder="601XXXXXXXX" /></div>
+                <div>
+                  <FieldLabel required>Phone</FieldLabel>
+                  <TextInput type="tel" value={ownerPhone} onChange={setOwnerPhone} onBlur={(v) => setOwnerPhone(normalizePhone(v))} placeholder="601XXXXXXXX" />
+                  <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                </div>
               </div>
             </div>
 
@@ -327,6 +331,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                 <div>
                   <FieldLabel>WhatsApp number</FieldLabel>
                   <TextInput type="tel" value={tenantPhone} onChange={setTenantPhone} onBlur={(v) => setTenantPhone(normalizePhone(v))} placeholder="601XXXXXXXX" />
+                  <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                 </div>
               </div>
             </div>

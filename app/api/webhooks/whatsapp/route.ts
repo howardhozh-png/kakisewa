@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendPushToUser } from "@/lib/push";
 import { classifyWaReply } from "@/lib/ai-classify";
 import { sendAgentEmail, waReplyTenantEmail, waReplyOwnerEmail } from "@/lib/email";
+import { normalizePhone } from "@/lib/phone";
 
 // ─── GET — Meta webhook verification handshake ────────────────────────────────
 
@@ -266,11 +267,6 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
   } else {
     console.warn("[whatsapp/webhook] unmatched number", fromNumber, "for agent", agentId);
   }
-}
-
-// Strip leading + to normalise to E.164 without prefix (e.g. 60198765432)
-function normalizePhone(phone: string): string {
-  return phone.replace(/^\+/, "").trim();
 }
 
 // Meta always sends full country code (60198765432).

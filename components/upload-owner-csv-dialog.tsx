@@ -10,7 +10,7 @@ import {
   detectColumns, refreshMappingFlags, parseOwnerAddress, parseSpreadsheetRows,
   type ColumnMapping,
 } from "@/lib/csv-import";
-import { Upload, FileText, AlertCircle, CheckCircle2, X, Download, ArrowRight, ChevronLeft } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle2, X, Download, ArrowRight, ChevronLeft, Lightbulb } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { toast } from "sonner";
 
@@ -288,6 +288,16 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
                     className="hidden"
                     onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   />
+                </div>
+
+                <div
+                  className="rounded-xl px-3.5 py-3 flex items-start gap-2"
+                  style={{ background: "var(--kk-amber-soft)", color: "#B45309" }}
+                >
+                  <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="text-[12px] leading-relaxed">
+                    Tip: if this is your first time uploading this file, try just 10 rows first to confirm the columns map correctly before uploading the rest.
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-1">

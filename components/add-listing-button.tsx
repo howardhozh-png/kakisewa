@@ -242,7 +242,11 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                       onChange={(v) => setForm((f) => ({ ...f, owner_phone: v }))}
                       onBlur={(v) => setForm((f) => ({ ...f, owner_phone: normalizePhone(v) }))}
                       placeholder="e.g. 0123456789" />
-                    {phoneError(form.owner_phone) && <p className="text-[11px] mt-1" style={{ color: "#FF3B30" }}>{phoneError(form.owner_phone)}</p>}
+                    {phoneError(form.owner_phone) ? (
+                      <p className="text-[11px] mt-1" style={{ color: "#FF3B30" }}>{phoneError(form.owner_phone)}</p>
+                    ) : (
+                      <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                    )}
                   </div>
                 </div>
               </div>

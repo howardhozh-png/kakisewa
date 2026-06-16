@@ -202,7 +202,11 @@ export function AddTenantButton() {
                     className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                     style={{ background: "var(--kk-surface-2)", border: phoneErr ? "1px solid var(--kk-red)" : "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
                   />
-                  {phoneErr && <p className="text-[11px] mt-1" style={{ color: "var(--kk-red)" }}>{phoneErr}</p>}
+                  {phoneErr ? (
+                    <p className="text-[11px] mt-1" style={{ color: "var(--kk-red)" }}>{phoneErr}</p>
+                  ) : (
+                    <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-mute)" }}>

@@ -43,6 +43,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
+import { toE164Display } from "@/lib/phone";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -429,7 +430,7 @@ function LeadPopup({
                   <a href={`https://wa.me/${(form.owner_phone ?? "").replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
-                  <a href={`tel:+${form.owner_phone}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                  <a href={`tel:${toE164Display(form.owner_phone)}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
                     <Phone className="w-3.5 h-3.5" />
                   </a>
                 </>
@@ -1443,7 +1444,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                               </button>
                               {lead.owner_phone && (
                                 <a
-                                  href={`tel:+${lead.owner_phone}`}
+                                  href={`tel:${toE164Display(lead.owner_phone)}`}
                                   onClick={(e) => e.stopPropagation()}
                                   className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
                                   style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}

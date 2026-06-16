@@ -7,7 +7,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce } from "@/lib/actions";
-import { normalizePhone, phoneError } from "@/lib/phone";
+import { normalizePhone, phoneError, toE164Display } from "@/lib/phone";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, Building2, CalendarPlus } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { PhotoLightbox } from "@/components/photo-lightbox";
@@ -177,7 +177,11 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                     className="w-full text-[12px] mt-1 bg-transparent outline-none border-b pb-0.5"
                     style={{ color: "var(--kk-ink-faint)", borderColor: phoneErr ? "#FF3B30" : "var(--kk-line)" }}
                   />
-                  {phoneErr && <p className="text-[11px] mt-0.5" style={{ color: "#FF3B30" }}>{phoneErr}</p>}
+                  {phoneErr ? (
+                    <p className="text-[11px] mt-0.5" style={{ color: "#FF3B30" }}>{phoneErr}</p>
+                  ) : (
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -197,11 +201,11 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   </div>
                   {ownerPhone ? (
                     <div className="flex items-center gap-0.5 mt-1">
-                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{ownerPhone}</p>
+                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(ownerPhone)}</p>
                       <a href={`https://wa.me/${ownerPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
                         <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
-                      <a href={`tel:+${ownerPhone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                      <a href={`tel:${toE164Display(ownerPhone)}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
                         <Phone className="w-3.5 h-3.5" />
                       </a>
                     </div>
@@ -225,7 +229,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
               <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "#1F8B4C" }}>Rented to</p>
               <div>
                 <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>{tenantInfo.tenant_name}</p>
-                <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{tenantInfo.tenant_phone}</p>
+                <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(tenantInfo.tenant_phone)}</p>
               </div>
             </div>
           )}

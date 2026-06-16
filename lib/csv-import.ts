@@ -1,6 +1,8 @@
 // CSV header normalisation + row validation for owner-list imports.
 // Tolerant to common variations (Name, owner_name, Owner Name, etc).
 
+import { isInternationalPhone } from "@/lib/phone";
+
 const HEADER_ALIASES: Record<string, keyof CanonicalRow> = {
   // owner name
   "name":             "owner_name",
@@ -297,11 +299,12 @@ export function canonicalise(raw: Record<string, string>, rowNumber: number): Im
     }
   }
 
+  const wasInternational = isInternationalPhone(out.owner_phone);
   normalisePhone(out);
 
   if (!out.owner_name)  errors.push("Missing owner name");
   if (!out.owner_phone) errors.push("Missing phone number");
-  else if (out.owner_phone.length < 10 || out.owner_phone.length > 13) {
+  else if (!wasInternational && (out.owner_phone.length < 10 || out.owner_phone.length > 13)) {
     errors.push(`Phone "${out.owner_phone}" looks malformed`);
   }
 
@@ -325,6 +328,7 @@ export function canonicaliseWithMapping(
 
   out.owner_name = col("owner_name");
   out.owner_phone = col("owner_phone");
+  const wasInternational = isInternationalPhone(out.owner_phone);
   normalisePhone(out);
 
   const rawAddress = col("address");
@@ -368,7 +372,7 @@ export function canonicaliseWithMapping(
 
   if (!out.owner_name)  errors.push("Missing owner name");
   if (!out.owner_phone) errors.push("Missing phone number");
-  else if (out.owner_phone.length < 10 || out.owner_phone.length > 13) {
+  else if (!wasInternational && (out.owner_phone.length < 10 || out.owner_phone.length > 13)) {
     errors.push(`Phone "${out.owner_phone}" looks malformed`);
   }
 
@@ -377,6 +381,10 @@ export function canonicaliseWithMapping(
 
 function normalisePhone(out: CanonicalRow) {
   if (!out.owner_phone) return;
+  if (isInternationalPhone(out.owner_phone)) {
+    out.owner_phone = "+" + out.owner_phone.replace(/[\s\-().+]/g, "");
+    return;
+  }
   const digits = out.owner_phone.replace(/[^\d]/g, "");
   out.owner_phone =
     digits.startsWith("60") ? digits :               // already international

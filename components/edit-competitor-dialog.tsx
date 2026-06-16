@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { OwnerLead } from "@/lib/types";
 import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star, FileText, Upload, CalendarPlus } from "lucide-react";
-import { normalizePhone } from "@/lib/phone";
+import { normalizePhone, toE164Display } from "@/lib/phone";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -225,6 +225,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                     className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
                   />
+                  <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                 </div>
               ) : (
                 <div>
@@ -238,11 +239,11 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                   </div>
                   {ownerPhone ? (
                     <div className="flex items-center gap-0.5 mt-1">
-                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>+{ownerPhone}</p>
+                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(ownerPhone)}</p>
                       <a href={`https://wa.me/${ownerPhone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
                         <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
-                      <a href={`tel:+${ownerPhone}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                      <a href={`tel:${toE164Display(ownerPhone)}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
                         <Phone className="w-3.5 h-3.5" />
                       </a>
                     </div>
