@@ -332,6 +332,16 @@ export function computeContractBucket(t: Tenancy, today: Date): ContractBucket {
   return "active";
 }
 
+// Date-only "today" pinned to Malaysia time, so the value is identical
+// whether computed on the server (UTC) or a client browser (UTC+8) — using
+// runtime-local `new Date()` instead causes a hydration mismatch for several
+// hours every day, since the calendar date differs between those timezones.
+export function getBusinessToday(): Date {
+  const parts = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const [y, m, d] = parts.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export function daysUntil(endDateIso: string, today: Date): number {
   const [y, m, d] = endDateIso.split("-").map(Number);
   const end = new Date(y, m - 1, d);

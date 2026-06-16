@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil } from "@/lib/types";
+import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil, getBusinessToday } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
 import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon, Bed, Bath } from "lucide-react";
@@ -53,7 +53,7 @@ interface Props {
 }
 
 export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "platinum" }: Props) {
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => getBusinessToday(), []);
   const router = useRouter();
   const [openTenancy, setOpenTenancy] = useState<Tenancy | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
