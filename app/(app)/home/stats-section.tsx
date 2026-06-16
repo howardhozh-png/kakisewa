@@ -182,7 +182,7 @@ function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: Calend
                         padding: "4px 6px",
                       }}
                     >
-                      <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3, whiteSpace: isHovered ? "normal" : "nowrap", overflow: "hidden", textOverflow: isHovered ? "unset" : "ellipsis" }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {ev.title}
                       </p>
                       {ev.event_time && (
