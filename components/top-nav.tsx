@@ -257,7 +257,7 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
           </div>
           <div>
             <p className="kk-overline mb-1.5">REN number</p>
-            <input type="text" value={ren} onChange={(e) => setRen(e.target.value)} placeholder="e.g. REN07128" style={INPUT_STYLE} />
+            <input type="text" value={ren} onChange={(e) => setRen(e.target.value)} placeholder="e.g. REN07128 or PEA1234" style={INPUT_STYLE} />
             <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Appended to your name in outreach messages. Leave blank if you don&apos;t have one.</p>
           </div>
         </div>

@@ -6,14 +6,17 @@ export async function GET(req: NextRequest) {
   const ren = req.nextUrl.searchParams.get("ren")?.trim() ?? "";
   if (!ren) return NextResponse.json({ valid: false, error: "Missing REN" }, { status: 400 });
 
-  // Accept "REN12345", "REN 12345", "12345" — strip prefix and spaces
-  const numeric = ren.replace(/^REN\s*/i, "").trim();
+  // Accept "REN12345", "PEA12345", "REN 12345", "12345" — strip prefix and spaces
+  const prefixMatch = ren.match(/^(REN|PEA)\s*/i);
+  const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : "REN";
+  const numeric = ren.replace(/^(REN|PEA)\s*/i, "").trim();
   if (!numeric || !/^\d+$/.test(numeric)) {
-    return NextResponse.json({ valid: false, error: "REN must be numeric (e.g. REN07128)" });
+    return NextResponse.json({ valid: false, error: "Registration number must be numeric (e.g. REN07128 or PEA1234)" });
   }
 
   try {
-    const url = `https://bis.lpeph.gov.my/search?category=negotiator&registration_no=${encodeURIComponent(numeric)}`;
+    const category = prefix === "PEA" ? "agent" : "negotiator";
+    const url = `https://bis.lpeph.gov.my/search?category=${category}&registration_no=${encodeURIComponent(numeric)}`;
     const res = await fetch(url, {
       headers: {
         "X-Inertia": "true",

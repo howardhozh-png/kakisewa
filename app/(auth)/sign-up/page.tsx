@@ -239,7 +239,7 @@ function SignUpForm() {
             <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>REN number <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400 }}>(optional)</span></Label>
             <Input
               type="text" value={waitlistRen} onChange={e => setWaitlistRen(e.target.value)}
-              placeholder="e.g. REN07128"
+              placeholder="e.g. REN07128 or PEA1234"
               className={sharedInputCls} style={sharedInputStyle}
             />
           </div>

@@ -1082,7 +1082,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           </div>
           <div>
             <p className="kk-overline mb-1.5">REN number</p>
-            <input type="text" value={renNumber} onChange={(e) => setRenNumber(e.target.value)} placeholder="e.g. REN12345" style={INPUT_STYLE} />
+            <input type="text" value={renNumber} onChange={(e) => setRenNumber(e.target.value)} placeholder="e.g. REN12345 or PEA1234" style={INPUT_STYLE} />
             <p className="text-[11px] mt-1.5" style={{ color: "var(--kk-ink-faint)" }}>
               Appended to your name in outreach messages — e.g. &ldquo;Ahmad (REN12345)&rdquo;.
             </p>

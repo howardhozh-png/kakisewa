@@ -25,10 +25,10 @@ export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
   const firstName = agentName?.split(" ")[0] ?? "there";
 
   async function validateRen(value: string) {
-    const numeric = value.replace(/^REN\s*/i, "").trim();
+    const numeric = value.replace(/^(REN|PEA)\s*/i, "").trim();
     if (!numeric || !/^\d+$/.test(numeric)) {
       setRenStatus("invalid");
-      setRenHint("Format: REN followed by numbers, e.g. REN07128");
+      setRenHint("Format: REN or PEA followed by numbers, e.g. REN07128 or PEA1234");
       setRenLppehName(null);
       setRenConfirmed(false);
       return;
@@ -133,7 +133,7 @@ export function ProfileSetupDialog({ needsSetup, agentName }: Props) {
               value={ren}
               onChange={e => { setRen(e.target.value); setRenStatus("idle"); setRenHint(null); }}
               onBlur={e => { onBlur(e); if (e.target.value.trim()) validateRen(e.target.value.trim()); }}
-              placeholder="RENxxxxx"
+              placeholder="RENxxxxx or PEAxxxx"
               className={inputCls}
               style={{
                 ...inputStyle,
