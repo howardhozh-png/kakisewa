@@ -400,7 +400,7 @@ ${credentialsBlock}
       <a href="https://www.kakisewa.com/sign-in"
         style="display:inline-block;background:#34C759;color:#fff;font-size:14px;font-weight:600;
                padding:13px 28px;border-radius:12px;text-decoration:none;letter-spacing:-0.01em;">
-        Login now →
+        Login now
       </a>
 
       <!-- Trial badge -->
