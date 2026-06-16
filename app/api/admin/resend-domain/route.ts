@@ -18,6 +18,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(await r.json());
   }
 
+  if (action === "get") {
+    const domainId = req.nextUrl.searchParams.get("domainId");
+    if (!domainId) return NextResponse.json({ error: "domainId required" }, { status: 400 });
+    const r = await fetch(`https://api.resend.com/domains/${domainId}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    return NextResponse.json(await r.json());
+  }
+
   if (action === "disable-tracking") {
     const domainId = req.nextUrl.searchParams.get("domainId");
     if (!domainId) return NextResponse.json({ error: "domainId required" }, { status: 400 });
