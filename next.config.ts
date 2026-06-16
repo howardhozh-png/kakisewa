@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
+  },
   async rewrites() {
     return [
       // Serve the new kakisewa icon for all direct /favicon.ico requests (Google, browsers)

@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
@@ -497,7 +498,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
           style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
         >
           {photo
-            ? <img src={photo} alt="" className="w-full h-full object-cover" />
+            ? <Image src={photo} alt="" width={64} height={64} className="w-full h-full object-cover" />
             : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />
           }
         </div>
@@ -535,7 +536,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onComp
           style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
         >
           {photo
-            ? <img src={photo} alt="" className="w-full h-full object-cover" loading="lazy" />
+            ? <Image src={photo} alt="" width={64} height={64} className="w-full h-full object-cover" loading="lazy" />
             : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />
           }
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead, CompetitorStage, daysUntil } from "@/lib/types";
 import { setCompetitorStageAction, winCompetitorUnitAction, buildCompetitorOwnerPing } from "@/lib/actions";
@@ -435,7 +436,7 @@ function CardPreview({ lead }: { lead: OwnerLead }) {
         <div className="w-[64px] h-[64px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
           style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
           {photo
-            ? <img src={photo} alt="" className="w-full h-full object-cover" />
+            ? <Image src={photo} alt="" width={64} height={64} className="w-full h-full object-cover" />
             : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />}
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
@@ -504,7 +505,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
         <div className="w-[64px] h-[64px] rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
           style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
           {photo
-            ? <img src={photo} alt="" className="w-full h-full object-cover" loading="lazy" />
+            ? <Image src={photo} alt="" width={64} height={64} className="w-full h-full object-cover" loading="lazy" />
             : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />}
         </div>
 

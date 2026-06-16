@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil, getBusinessToday } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction, bulkRemoveTenancies } from "@/lib/actions";
@@ -748,7 +749,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
           style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
         >
           {photo
-            ? <img src={photo} alt="" className="w-full h-full object-cover" loading="lazy" />
+            ? <Image src={photo} alt="" width={64} height={64} className="w-full h-full object-cover" loading="lazy" />
             : <Home className="w-5 h-5" style={{ color: "var(--kk-ink-faint)" }} />
           }
         </div>
