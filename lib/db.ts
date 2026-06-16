@@ -376,8 +376,17 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
       <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
         <td style="font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:700;color:#1D1D1F;line-height:1;padding-right:10px;vertical-align:middle;">k</td>
         <td style="vertical-align:middle;">
-          <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;letter-spacing:-0.02em;line-height:1;">kakisewa</div>
-          <div style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;letter-spacing:0.1em;margin-top:4px;">カキセワ</div>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">ka</td>
+            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">ki</td>
+            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">se</td>
+            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">wa</td>
+          </tr><tr>
+            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">カ</td>
+            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">キ</td>
+            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">セ</td>
+            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">ワ</td>
+          </tr></table>
         </td>
       </tr></table>
     </div>
@@ -387,30 +396,11 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
       <h1 style="font-size:24px;font-weight:700;color:#1C1C1E;letter-spacing:-0.02em;margin:0 0 10px;">Hey ${firstName}, you're in.</h1>
       <p style="font-size:14px;color:#48484A;line-height:1.65;margin:0 0 24px;">${heroCopy}</p>
 ${credentialsBlock}
-      <!-- Steps -->
-      <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">
-        <p style="font-size:10px;font-weight:700;color:#8E8E93;letter-spacing:0.07em;text-transform:uppercase;margin:0 0 14px;">Get started in 3 steps</p>
-        <div style="font-size:13px;color:#1C1C1E;line-height:1;">
-          <div style="margin-bottom:10px;display:flex;align-items:baseline;gap:10px;">
-            <span style="font-family:'Courier New',monospace;background:#E5E5EA;padding:2px 7px;border-radius:5px;font-size:10px;color:#8E8E93;flex-shrink:0;">01</span>
-            <span>Add a property and set your commission rate</span>
-          </div>
-          <div style="margin-bottom:10px;display:flex;align-items:baseline;gap:10px;">
-            <span style="font-family:'Courier New',monospace;background:#E5E5EA;padding:2px 7px;border-radius:5px;font-size:10px;color:#8E8E93;flex-shrink:0;">02</span>
-            <span>Create your first tenancy card</span>
-          </div>
-          <div style="display:flex;align-items:baseline;gap:10px;">
-            <span style="font-family:'Courier New',monospace;background:#E5E5EA;padding:2px 7px;border-radius:5px;font-size:10px;color:#8E8E93;flex-shrink:0;">03</span>
-            <span>Send a tenant pack to a landlord</span>
-          </div>
-        </div>
-      </div>
-
       <!-- CTA -->
       <a href="https://www.kakisewa.com/sign-in"
         style="display:inline-block;background:#34C759;color:#fff;font-size:14px;font-weight:600;
                padding:13px 28px;border-radius:12px;text-decoration:none;letter-spacing:-0.01em;">
-        Open dashboard →
+        Login now →
       </a>
 
       <!-- Trial badge -->
