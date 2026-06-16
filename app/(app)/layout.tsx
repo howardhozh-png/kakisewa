@@ -7,6 +7,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { TrialCardNudge } from "@/components/trial-card-nudge";
 import { TrialGate } from "@/components/trial-gate";
 import { BetaFrozenGate } from "@/components/beta-frozen-gate";
+import { CancelledGate } from "@/components/cancelled-gate";
 import { TrialDowngradeNotice } from "@/components/trial-downgrade-notice";
 import { SessionGuard } from "@/components/session-guard";
 import { FaqChatbot } from "@/components/faq-chatbot";
@@ -44,9 +45,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     status === "expired" ||
     (status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 0)
   );
-  const showTrialBanner = !isTrialExpired && !isBetaFrozen && (status === "beta" || status === "trial") && trialDaysLeft !== null && trialDaysLeft <= 7;
-  // Show card nudge 8-30 days before trial ends (distinct from the urgent 7-day banner)
+  const isCancelled = !isAdmin && status === "cancelled";
+  const showTrialBanner = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
+  // Show card nudge 8-30 days before trial ends (distinct from the urgent 7-day banner);
+  // escalates to a red/urgent style once 15 days or fewer remain
   const showCardNudge = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft > 7 && trialDaysLeft <= 30 && !agent.stripe_subscription_id;
+  const cardNudgeUrgent = trialDaysLeft !== null && trialDaysLeft <= 15;
   const trialStartedAt = trialStart ?? null;
   const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 0;
   const isNewAgent = status === "beta" || status === "trial" || daysSinceSignup <= 14;
@@ -79,8 +83,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Top bar — sticky, extends left to cover sidebar rail */}
         <div className="kk-top-bar sticky top-0 z-50">
-          {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} />}
-          {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={status === "beta"} />}
+          {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} urgent={cardNudgeUrgent} />}
+          {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={false} />}
           <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs />
           <PwaInstallBanner />
         </div>
@@ -111,6 +115,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Toaster richColors position="top-right" closeButton />
       {isBetaFrozen && <BetaFrozenGate />}
       {isTrialExpired && <TrialGate />}
+      {isCancelled && <CancelledGate />}
       <FeedbackButton />
       <FaqChatbot />
       <SessionGuard />

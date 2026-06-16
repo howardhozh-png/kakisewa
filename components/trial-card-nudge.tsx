@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, ShieldCheck } from "lucide-react";
 
-export function TrialCardNudge({ daysLeft }: { daysLeft: number }) {
+export function TrialCardNudge({ daysLeft, urgent }: { daysLeft: number; urgent?: boolean }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function TrialCardNudge({ daysLeft }: { daysLeft: number }) {
     <div
       className="flex items-center justify-between gap-3 px-4 py-2"
       style={{
-        background: "var(--kk-amber, #FF9500)",
+        background: urgent ? "var(--kk-red, #FF3B30)" : "var(--kk-amber, #FF9500)",
         color: "#fff",
         fontSize: "var(--kk-sm)",
       }}
@@ -33,7 +33,7 @@ export function TrialCardNudge({ daysLeft }: { daysLeft: number }) {
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <ShieldCheck className="w-4 h-4 shrink-0" />
         <span className="truncate">
-          {daysLeft} days left on your trial. Save a card now and you won&apos;t be charged until trial ends.{" "}
+          {daysLeft} days left on your trial. {urgent ? "Save a card now before access is paused." : "Save a card now and you won't be charged until trial ends."}{" "}
           <Link
             href="/subscription"
             className="underline font-semibold opacity-90 hover:opacity-100 transition-opacity"
