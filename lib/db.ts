@@ -512,6 +512,21 @@ export async function deleteTenancy(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function bulkSoftDeleteTenancies(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  // Process in chunks of 500 to stay within PostgREST URL length limits
+  const CHUNK = 500;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const { error } = await supabase
+      .from("tenancies")
+      .update({ deleted_at: now })
+      .in("id", ids.slice(i, i + CHUNK));
+    if (error) throw error;
+  }
+}
+
 export async function restoreTenancy(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("tenancies").update({ deleted_at: null }).eq("id", id);

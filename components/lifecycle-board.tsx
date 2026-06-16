@@ -4,9 +4,9 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil, getBusinessToday } from "@/lib/types";
-import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction } from "@/lib/actions";
+import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction, bulkRemoveTenancies } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
-import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon, Bed, Bath } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle, CircleDashed, Check, Banknote, Lock, ChevronDown, MessageCircle, Loader2, ShieldAlert, User, Home, Calendar, Search, X as XIcon, Bed, Bath, ListChecks, Square, CheckSquare, Trash2 } from "lucide-react";
 import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
@@ -69,6 +69,35 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [lostTenancy, setLostTenancy] = useState<Tenancy | null>(null);
   const [pendingMove, setPendingMove] = useState<{ t: Tenancy; target: LifecycleStage } | null>(null);
   const [capBlocked, setCapBlocked] = useState(false);
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, startBulkDelete] = useTransition();
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    setConfirmBulkDelete(false);
+    startBulkDelete(async () => {
+      setLocal((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+      await bulkRemoveTenancies(ids);
+      exitSelectMode();
+      router.refresh();
+    });
+  }
 
   const [local, setLocal] = useState<Tenancy[]>(tenancies);
   useEffect(() => { setLocal(tenancies); }, [tenancies]);
@@ -267,7 +296,50 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
             options={propertyOptions}
             minWidth={160}
           />
+          <button
+            type="button"
+            onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            className="shrink-0 flex items-center gap-1.5 rounded-full text-[13px] font-medium"
+            style={{
+              padding: "6px 14px",
+              background: selectMode ? "var(--kk-ink)" : "var(--kk-surface-2)",
+              color: selectMode ? "#fff" : "var(--kk-ink-mute)",
+              border: "1px solid var(--kk-line)",
+            }}
+          >
+            <ListChecks className="w-3.5 h-3.5" />
+            {selectMode ? "Done" : "Select"}
+          </button>
         </div>
+
+        {selectMode && (
+          <div
+            className="flex items-center gap-2.5 mb-4 rounded-xl px-3 py-2"
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}
+          >
+            <p className="flex-1 text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>
+              {selectedIds.size === 0 ? "Tap cards to select" : `${selectedIds.size} selected`}
+            </p>
+            <button
+              type="button"
+              onClick={exitSelectMode}
+              disabled={bulkDeleting}
+              className="kk-pill kk-pill-ghost text-[12px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={selectedIds.size === 0 || bulkDeleting}
+              onClick={() => setConfirmBulkDelete(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+              style={{ background: "#DC2626", color: "#fff", opacity: selectedIds.size === 0 ? 0.5 : 1 }}
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete {selectedIds.size > 0 ? selectedIds.size : ""}
+            </button>
+          </div>
+        )}
 
         <div className="kk-board-shell -mx-3 lg:-mx-5">
           <div className="kk-board-row px-3 lg:px-5" style={{ overflowY: 'hidden', scrollbarWidth: 'none' } as React.CSSProperties}>
@@ -289,6 +361,9 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
                       onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
                       onShowLostContract={() => setLostTenancy(t)}
                       onMoveToStage={handleMoveToStage}
+                      selectMode={selectMode}
+                      selected={selectedIds.has(t.id)}
+                      onToggleSelect={() => toggleSelect(t.id)}
                     />
                   ))
               }
@@ -315,6 +390,9 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
                     onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
                     onShowLostContract={() => setLostTenancy(t)}
                     onMoveToStage={handleMoveToStage}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(t.id)}
+                    onToggleSelect={() => toggleSelect(t.id)}
                   />
                 ))
               );
@@ -471,6 +549,46 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Bulk delete confirmation */}
+      {confirmBulkDelete && (
+        <Dialog open onOpenChange={(v) => { if (!v) setConfirmBulkDelete(false); }}>
+          <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
+                  <Trash2 className="w-5 h-5" style={{ color: "#DC2626" }} />
+                </div>
+                <div>
+                  <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>
+                    Delete {selectedIds.size} {selectedIds.size === 1 ? "contract" : "contracts"}?
+                  </p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>
+                    Moved to bin — auto-deleted after 7 days
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmBulkDelete(false)}
+                  className="flex-1 kk-pill kk-pill-ghost text-[13px] py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                  className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
+                  style={{ background: "#DC2626", color: "#fff", opacity: bulkDeleting ? 0.7 : 1 }}
+                >
+                  {bulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Move to bin
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
@@ -569,7 +687,7 @@ function EmptyDrop({ col }: { col: ColMeta }) {
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
-function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onShowLostContract, onMoveToStage }: {
+function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onShowLostContract, onMoveToStage, selectMode, selected, onToggleSelect }: {
   t: Tenancy; col: ColMeta; today: Date; plan: string; isDragging: boolean;
   onOpen: () => void;
   onShowCommission: () => void;
@@ -577,8 +695,11 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
   onShowOwnerLeaving: () => void;
   onShowLostContract: () => void;
   onMoveToStage: (id: string, stage: LifecycleStage) => void;
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
-  const { attributes, listeners, setNodeRef } = useDraggable({ id: t.id });
+  const { attributes, listeners, setNodeRef } = useDraggable({ id: t.id, disabled: selectMode });
   const isHeadsupLike = col.stage === "headsup" || col.stage === "expired";
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
@@ -603,13 +724,23 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       data-card-id={t.id}
       {...attributes}
       {...listeners}
-      style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
+      style={{ ...cardStyle, position: "relative", ...(selectMode && selected ? { outline: "2px solid var(--kk-blue)", outlineOffset: -1 } : {}) }}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 ${selectMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"} touch-none select-none`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action], [data-chip]")) return;
+        if (selectMode) { onToggleSelect?.(); return; }
         onOpen();
       }}
     >
+      {selectMode && (
+        <div
+          className="absolute flex items-center justify-center"
+          style={{ top: 8, right: 8, zIndex: 1, color: selected ? "var(--kk-blue)" : "var(--kk-ink-faint)", background: "#fff", borderRadius: 6 }}
+        >
+          {selected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+        </div>
+      )}
+
       {/* Compact horizontal: photo + info */}
       <div className="flex gap-2.5">
         <div

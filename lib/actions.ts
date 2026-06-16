@@ -18,6 +18,7 @@ import {
   createTenancy,
   updateTenancy,
   deleteTenancy,
+  bulkSoftDeleteTenancies,
   getTenancy,
   logWhatsApp,
   getAgentProfile,
@@ -216,6 +217,27 @@ export async function removeTenancy(id: string) {
     }
   } catch { /* non-critical */ }
   await deleteTenancy(id);
+  invalidateCache();
+  revalidatePath("/existing-listing");
+  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/");
+}
+
+export async function bulkRemoveTenancies(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  // Also delete linked owner_leads sitting in the Rented column, mirroring removeTenancy
+  await Promise.all(ids.map(async (id) => {
+    try {
+      const tenancy = await getTenancy(id);
+      if (tenancy?.owner_lead_id) {
+        const lead = await getOwnerLead(tenancy.owner_lead_id);
+        if (lead && (lead.stage === "matched" || lead.stage === "archived")) {
+          await deleteOwnerLead(tenancy.owner_lead_id);
+        }
+      }
+    } catch { /* non-critical */ }
+  }));
+  await bulkSoftDeleteTenancies(ids);
   invalidateCache();
   revalidatePath("/existing-listing");
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
