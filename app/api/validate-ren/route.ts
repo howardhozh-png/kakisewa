@@ -6,16 +6,16 @@ export async function GET(req: NextRequest) {
   const ren = req.nextUrl.searchParams.get("ren")?.trim() ?? "";
   if (!ren) return NextResponse.json({ valid: false, error: "Missing REN" }, { status: 400 });
 
-  // Accept "REN12345", "PEA12345", "REN 12345", "12345" — strip prefix and spaces
-  const prefixMatch = ren.match(/^(REN|PEA)\s*/i);
+  // Accept "REN12345", "PEA12345", "REA12345", "REN 12345", "12345" — strip prefix and spaces
+  const prefixMatch = ren.match(/^(REN|PEA|REA)\s*/i);
   const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : "REN";
-  const numeric = ren.replace(/^(REN|PEA)\s*/i, "").trim();
+  const numeric = ren.replace(/^(REN|PEA|REA)\s*/i, "").trim();
   if (!numeric || !/^\d+$/.test(numeric)) {
-    return NextResponse.json({ valid: false, error: "Registration number must be numeric (e.g. REN07128 or PEA1234)" });
+    return NextResponse.json({ valid: false, error: "Registration number must be numeric (e.g. REN07128, PEA1234, or REA1234)" });
   }
 
   try {
-    const category = prefix === "PEA" ? "agent" : "negotiator";
+    const category = prefix === "REN" ? "negotiator" : "agent";
     const url = `https://bis.lpeph.gov.my/search?category=${category}&registration_no=${encodeURIComponent(numeric)}`;
     const res = await fetch(url, {
       headers: {
