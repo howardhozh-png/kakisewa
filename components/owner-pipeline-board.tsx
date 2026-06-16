@@ -112,7 +112,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 25 } }),
   );
 
   // Unique property names + counts for the dropdown

@@ -122,7 +122,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 25 } }),
   );
 
   const propertyOptions = useMemo(() => {
