@@ -581,12 +581,14 @@ function PushSetupSection() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
     setPushGranted(
-      localStorage.getItem(LS_PUSH_KEY) === "1" || Notification.permission === "granted"
+      localStorage.getItem(LS_PUSH_KEY) === "1" ||
+        (typeof Notification !== "undefined" && Notification.permission === "granted")
     );
-    setBlocked(Notification.permission === "denied");
+    setBlocked(typeof Notification !== "undefined" && Notification.permission === "denied");
   }, []);
 
   async function handleEnable() {
+    if (typeof Notification === "undefined") return;
     setEnabling(true);
     setBlocked(false);
     try {

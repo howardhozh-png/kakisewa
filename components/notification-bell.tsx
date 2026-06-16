@@ -109,7 +109,8 @@ export function NotificationBell() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
     setPushGranted(
-      localStorage.getItem(LS_PUSH_KEY) === "1" || Notification.permission === "granted",
+      localStorage.getItem(LS_PUSH_KEY) === "1" ||
+        (typeof Notification !== "undefined" && Notification.permission === "granted"),
     );
 
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -168,7 +169,8 @@ export function NotificationBell() {
 
   const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
   const tabItems = tab === "unread" ? items.filter((i) => !readIds.has(i.id)) : items;
-  const showPushPrompt = isStandalone && !pushGranted && Notification.permission !== "denied";
+  const showPushPrompt =
+    isStandalone && !pushGranted && typeof Notification !== "undefined" && Notification.permission !== "denied";
 
   function markAllRead() {
     const all = new Set(items.map((i) => i.id));
@@ -188,6 +190,7 @@ export function NotificationBell() {
   }
 
   async function enablePush() {
+    if (typeof Notification === "undefined") return;
     setPushEnabling(true);
     try {
       const permission = await Notification.requestPermission();
