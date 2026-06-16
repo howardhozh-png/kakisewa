@@ -41,12 +41,17 @@ export default function ResetPasswordPage() {
     if (!/^\d{8}$/.test(password)) { setError("Passcode must be exactly 8 digits."); return }
     if (password !== confirm) { setError("Passcodes don't match."); return }
     setLoading(true)
-    const { error: err } = await createClient().auth.updateUser({ password })
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    await createClient().auth.signOut()
-    setDone(true)
-    setTimeout(() => router.push("/sign-in"), 3000)
+    try {
+      const { error: err } = await createClient().auth.updateUser({ password })
+      setLoading(false)
+      if (err) { setError(err.message); return }
+      await createClient().auth.signOut()
+      setDone(true)
+      setTimeout(() => router.push("/sign-in"), 3000)
+    } catch {
+      setError("Something went wrong. Please try again.")
+      setLoading(false)
+    }
   }
 
   return (

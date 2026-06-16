@@ -71,54 +71,63 @@ function SignUpForm() {
     if (!/^\d{8}$/.test(form.passcode)) { setError("Passcode must be exactly 8 digits."); return }
     setLoading(true)
 
-    // Check invite before creating any auth account
-    if (!isAdmin) {
-      const res = await fetch("/api/auth/check-invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
-      })
-      const { invited } = await res.json()
-      if (!invited) {
-        setWaitlistEmail(form.email.trim().toLowerCase())
-        setLoading(false)
-        setView("waitlist")
-        return
+    try {
+      // Check invite before creating any auth account
+      if (!isAdmin) {
+        const res = await fetch("/api/auth/check-invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
+        })
+        const { invited } = await res.json()
+        if (!invited) {
+          setWaitlistEmail(form.email.trim().toLowerCase())
+          setLoading(false)
+          setView("waitlist")
+          return
+        }
       }
-    }
 
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.passcode,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: {
-          is_admin: isAdmin,
-          referral_slug: refSlug,
+      const supabase = createClient()
+      const { error: err } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.passcode,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            is_admin: isAdmin,
+            referral_slug: refSlug,
+          },
         },
-      },
-    })
-    if (err) { setError(err.message); setLoading(false); return }
-    ph?.capture("user_signed_up", { email: form.email, referral_slug: refSlug })
-    setLoading(false)
-    setView("email_sent")
+      })
+      if (err) { setError(err.message); setLoading(false); return }
+      ph?.capture("user_signed_up", { email: form.email, referral_slug: refSlug })
+      setLoading(false)
+      setView("email_sent")
+    } catch {
+      setError("Something went wrong. Please try again.")
+      setLoading(false)
+    }
   }
 
   async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault()
     setWaitlistLoading(true)
-    await fetch("/api/auth/waitlist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: waitlistEmail,
-        ren_number: waitlistRen.trim() || undefined,
-        expected_spend: waitlistSpend || undefined,
-      }),
-    })
-    setWaitlistLoading(false)
-    setView("waitlist_done")
+    try {
+      await fetch("/api/auth/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: waitlistEmail,
+          ren_number: waitlistRen.trim() || undefined,
+          expected_spend: waitlistSpend || undefined,
+        }),
+      })
+      setWaitlistLoading(false)
+      setView("waitlist_done")
+    } catch {
+      setWaitlistLoading(false)
+    }
   }
 
   function handleNotInvited(email: string) {

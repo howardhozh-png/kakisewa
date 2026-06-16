@@ -332,7 +332,7 @@ const _cachedManagedLeads = unstable_cache(
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
 
-export async function sendWelcomeEmail(email: string, firstName: string, isBeta = false): Promise<void> {
+export async function sendWelcomeEmail(email: string, firstName: string, isBeta = false, passcode?: string): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
 
@@ -346,6 +346,16 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
 
   const badgeLabel = isBeta ? "BETA ACCESS" : "TRIAL ACTIVE";
   const badgeSub = isBeta ? "14 days free · Elite plan" : "61 days free · No card needed yet";
+
+  const credentialsBlock = passcode ? `
+      <!-- Login details -->
+      <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">
+        <p style="font-size:10px;font-weight:700;color:#8E8E93;letter-spacing:0.07em;text-transform:uppercase;margin:0 0 12px;">Your login details</p>
+        <div style="font-size:14px;color:#1C1C1E;line-height:1.9;">
+          <div><span style="color:#8E8E93;">ID:</span> ${email}</div>
+          <div><span style="color:#8E8E93;">Passcode:</span> <span style="font-family:'Courier New',monospace;letter-spacing:0.04em;">${passcode}</span></div>
+        </div>
+      </div>` : "";
 
   await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -362,15 +372,21 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
   <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 2px 24px rgba(0,0,0,0.09);">
 
     <!-- Header -->
-    <div style="background:#0A0A0F;padding:26px 32px 22px;">
-      <span style="font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.03em;">kaki<span style="color:#34C759">sewa</span></span>
+    <div style="background:#fff;padding:28px 32px 20px;border-bottom:1px solid #F2F2F7;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:700;color:#1D1D1F;line-height:1;padding-right:10px;vertical-align:middle;">k</td>
+        <td style="vertical-align:middle;">
+          <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;letter-spacing:-0.02em;line-height:1;">kakisewa</div>
+          <div style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;letter-spacing:0.1em;margin-top:4px;">カキセワ</div>
+        </td>
+      </tr></table>
     </div>
 
     <!-- Body -->
     <div style="padding:28px 32px 32px;">
       <h1 style="font-size:24px;font-weight:700;color:#1C1C1E;letter-spacing:-0.02em;margin:0 0 10px;">Hey ${firstName}, you're in.</h1>
       <p style="font-size:14px;color:#48484A;line-height:1.65;margin:0 0 24px;">${heroCopy}</p>
-
+${credentialsBlock}
       <!-- Steps -->
       <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">
         <p style="font-size:10px;font-weight:700;color:#8E8E93;letter-spacing:0.07em;text-transform:uppercase;margin:0 0 14px;">Get started in 3 steps</p>
@@ -391,15 +407,15 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
       </div>
 
       <!-- CTA -->
-      <a href="https://www.kakisewa.com/home"
-        style="display:inline-block;background:#1C1C1E;color:#fff;font-size:14px;font-weight:600;
+      <a href="https://www.kakisewa.com/sign-in"
+        style="display:inline-block;background:#34C759;color:#fff;font-size:14px;font-weight:600;
                padding:13px 28px;border-radius:12px;text-decoration:none;letter-spacing:-0.01em;">
         Open dashboard →
       </a>
 
       <!-- Trial badge -->
       <div style="margin-top:20px;padding:11px 16px;border-radius:10px;border:1px solid #E5E5EA;display:inline-block;">
-        <span style="font-family:'Courier New',monospace;font-size:11px;color:#34C759;font-weight:700;">${badgeLabel}</span>
+        <span style="font-family:'Courier New',monospace;font-size:11px;color:#1F8B4C;font-weight:700;">${badgeLabel}</span>
         <span style="font-size:12px;color:#8E8E93;margin-left:8px;">${badgeSub}</span>
       </div>
     </div>

@@ -40,16 +40,21 @@ function SignInForm() {
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password: passcode })
+    try {
+      const supabase = createClient()
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password: passcode })
 
-    if (err) {
-      setError(err.message)
+      if (err) {
+        setError(err.message)
+        setLoading(false)
+        return
+      }
+
+      window.location.href = "/home"
+    } catch {
+      setError("Something went wrong. Please try again.")
       setLoading(false)
-      return
     }
-
-    window.location.href = "/home"
   }
 
   return (
