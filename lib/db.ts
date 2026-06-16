@@ -348,7 +348,6 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
   const badgeSub = isBeta ? "14 days free · Elite plan" : "61 days free · No card needed yet";
 
   const credentialsBlock = passcode ? `
-      <!-- Login details -->
       <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">
         <p style="font-size:10px;font-weight:700;color:#8E8E93;letter-spacing:0.07em;text-transform:uppercase;margin:0 0 12px;">Your login details</p>
         <div style="font-size:14px;color:#1C1C1E;line-height:1.9;">
@@ -371,46 +370,21 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;max-width:520px;margin:0 auto;padding:32px 16px;">
   <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 2px 24px rgba(0,0,0,0.09);">
 
-    <!-- Header -->
     <div style="background:#fff;padding:28px 32px 20px;border-bottom:1px solid #F2F2F7;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:700;color:#1D1D1F;line-height:1;padding-right:10px;vertical-align:middle;">k</td>
-        <td style="vertical-align:middle;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">ka</td>
-            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">ki</td>
-            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">se</td>
-            <td style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:#1D1D1F;line-height:1;text-align:center;padding:0 1px;">wa</td>
-          </tr><tr>
-            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">カ</td>
-            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">キ</td>
-            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">セ</td>
-            <td style="font-size:9px;font-weight:600;color:#1D1D1F;opacity:0.45;text-align:center;padding-top:4px;">ワ</td>
-          </tr></table>
-        </td>
-      </tr></table>
+      <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;color:#1D1D1F;letter-spacing:-0.01em;">kakisewa</span>
     </div>
 
-    <!-- Body -->
     <div style="padding:28px 32px 32px;">
       <h1 style="font-size:24px;font-weight:700;color:#1C1C1E;letter-spacing:-0.02em;margin:0 0 10px;">Hey ${firstName}, you're in.</h1>
       <p style="font-size:14px;color:#48484A;line-height:1.65;margin:0 0 24px;">${heroCopy}</p>
 ${credentialsBlock}
-      <!-- CTA -->
-      <a href="https://www.kakisewa.com/sign-in"
-        style="display:inline-block;background:#34C759;color:#fff;font-size:14px;font-weight:600;
-               padding:13px 28px;border-radius:12px;text-decoration:none;letter-spacing:-0.01em;">
-        Login now
-      </a>
-
-      <!-- Trial badge -->
+      <a href="https://www.kakisewa.com/sign-in" style="display:inline-block;background:#34C759;color:#fff;font-size:14px;font-weight:600;padding:13px 28px;border-radius:12px;text-decoration:none;letter-spacing:-0.01em;">Login now</a>
       <div style="margin-top:20px;padding:11px 16px;border-radius:10px;border:1px solid #E5E5EA;display:inline-block;">
         <span style="font-family:'Courier New',monospace;font-size:11px;color:#1F8B4C;font-weight:700;">${badgeLabel}</span>
         <span style="font-size:12px;color:#8E8E93;margin-left:8px;">${badgeSub}</span>
       </div>
     </div>
 
-    <!-- Footer -->
     <div style="background:#F9F9FB;padding:14px 32px;border-top:1px solid #F2F2F7;">
       <p style="font-size:11px;color:#AEAEB2;margin:0;">Questions? Just reply — we read everything.</p>
     </div>
