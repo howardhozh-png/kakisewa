@@ -341,11 +341,11 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
     : `You're in — 2-month free trial started`;
 
   const heroCopy = isBeta
-    ? `You have been invited to kakisewa's exclusive beta program. Enjoy full Elite access for 6 months, completely free. Your feedback helps shape the product for Malaysian rental agents.`
+    ? `You have been invited to kakisewa's exclusive beta program. Enjoy full Elite access for 14 days, completely free. Your feedback helps shape the product for Malaysian rental agents.`
     : `Your 2-month free trial is live. kakisewa is built for Malaysian rental agents — track tenancies, send tenant packs, and never miss a renewal.`;
 
   const badgeLabel = isBeta ? "BETA ACCESS" : "TRIAL ACTIVE";
-  const badgeSub = isBeta ? "6 months free · Elite plan" : "61 days free · No card needed yet";
+  const badgeSub = isBeta ? "14 days free · Elite plan" : "61 days free · No card needed yet";
 
   await fetch("https://api.resend.com/emails", {
     method: "POST",

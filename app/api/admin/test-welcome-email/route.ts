@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
 
   const to = req.nextUrl.searchParams.get("to") ?? session.user.email!;
   const name = req.nextUrl.searchParams.get("name") ?? "Howard";
+  const isBeta = req.nextUrl.searchParams.get("beta") === "true";
 
-  await sendWelcomeEmail(to, name);
+  await sendWelcomeEmail(to, name, isBeta);
   return NextResponse.json({ ok: true, sent_to: to });
 }
