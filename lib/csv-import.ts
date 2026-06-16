@@ -194,6 +194,33 @@ export function detectColumns(
   return mapping;
 }
 
+// ─── AI-assisted column mapping ──────────────────────────────────────────────
+// Calls /api/import/map-columns for columns the local heuristics couldn't place.
+// Never throws — callers should treat any non-ok result as "keep manual mapping".
+
+export type AiMappingResult =
+  | { ok: true; mapping: Record<string, string>; confidence: "high" | "medium" | "low" }
+  | { ok: false };
+
+export async function fetchAiColumnMapping(
+  headers: string[],
+  rows: Record<string, string>[]
+): Promise<AiMappingResult> {
+  try {
+    const sampleRows = rows.slice(0, 5).map((r) => headers.map((h) => r[h] ?? ""));
+    const res = await fetch("/api/import/map-columns", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ headers, sampleRows }),
+    });
+    const data = await res.json();
+    if (!data.ok) return { ok: false };
+    return { ok: true, mapping: data.mapping, confidence: data.confidence };
+  } catch {
+    return { ok: false };
+  }
+}
+
 // Recompute the derived parse flags after user edits the mapping.
 export function refreshMappingFlags(m: ColumnMapping): ColumnMapping {
   // If address and property_name point to the same column AND unit is explicitly

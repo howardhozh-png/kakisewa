@@ -112,7 +112,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
   );
 
   // Unique property names + counts for the dropdown
@@ -596,6 +596,16 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onComp
 
 function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
+  const [pressing, setPressing] = useState(false);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function startPress() {
+    pressTimer.current = setTimeout(() => setPressing(true), 150);
+  }
+  function cancelPress() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    setPressing(false);
+  }
 
   const cardStyle: React.CSSProperties = {
     opacity: isDragging ? 0.2 : 1,
@@ -608,8 +618,11 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
       data-card-id={l.id}
       {...attributes}
       {...listeners}
+      onTouchStart={(e) => { listeners?.onTouchStart?.(e); startPress(); }}
+      onTouchEnd={(e) => { listeners?.onTouchEnd?.(e); cancelPress(); }}
+      onTouchCancel={(e) => { listeners?.onTouchCancel?.(e); cancelPress(); }}
       style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest("[data-card-action]")) return;

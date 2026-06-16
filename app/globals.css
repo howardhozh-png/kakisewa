@@ -246,6 +246,16 @@ html, body {
   animation: kk-flash-green 2s ease-out forwards;
 }
 
+/* Pre-drag wiggle on mobile — shows while a card is being held, before the 2s long-press activates drag */
+@keyframes kk-card-shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-1.5deg); }
+  75% { transform: rotate(1.5deg); }
+}
+.kk-card-shake {
+  animation: kk-card-shake 0.3s ease-in-out infinite;
+}
+
 /* Lightweight scale-pop for pills, tags, and standalone clickable buttons */
 .kk-scale-hover {
   transition: transform 160ms cubic-bezier(0.32,0.72,0,1), opacity 160ms ease;

@@ -19,6 +19,7 @@ import {
 import {
   detectColumns,
   parseOwnerAddress,
+  fetchAiColumnMapping,
 } from "@/lib/csv-import";
 
 // ─── Column display config (review grid) ─────────────────────────────────────
@@ -326,6 +327,8 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   const [importing, setImporting] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [aiState, setAiState] = useState<"idle" | "loading" | "done" | "skipped">("idle");
+  const [aiConfidence, setAiConfidence] = useState<"high" | "medium" | "low" | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
@@ -337,6 +340,34 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
     setDefaultDuration(12);
     setDefaultContractStart(null);
     setDragOver(false);
+    setAiState("idle");
+    setAiConfidence(null);
+  }, []);
+
+  // Fills only the gaps local heuristics couldn't place — never overwrites an
+  // already-detected or user-edited column. Runs in the background so the
+  // mapping step is usable immediately; failures silently keep manual mapping.
+  const runAiMapping = useCallback(async (headers: string[], rows: Record<string, string>[], current: TenancyColumnMapping) => {
+    if (current.contract_start && current.owner_name && current.owner_phone) { setAiState("skipped"); return; }
+    setAiState("loading");
+    const res = await fetchAiColumnMapping(headers, rows);
+    if (!res.ok) { setAiState("skipped"); return; }
+    setMapping((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev };
+      for (const [idxStr, field] of Object.entries(res.mapping)) {
+        const idx = Number(idxStr);
+        const header = headers[idx];
+        if (!header) continue;
+        if (!(DISPLAY_ORDER as readonly string[]).includes(field)) continue;
+        const key = field as TenancyMappingField;
+        if (next[key]) continue;
+        (next as Record<string, unknown>)[key] = header;
+      }
+      return refreshTenancyFlags(next);
+    });
+    setAiConfidence(res.confidence);
+    setAiState("done");
   }, []);
 
   function downloadSampleCsv() {
@@ -376,7 +407,8 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
     setRawData(result);
     setMapping(detected);
     setStep("map");
-  }, []);
+    runAiMapping(result.headers, result.allRows, detected);
+  }, [runAiMapping]);
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -709,6 +741,18 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                     </div>
                   );
                 })()}
+
+                {aiState === "loading" && (
+                  <p className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+                    <Lightbulb className="w-3.5 h-3.5" /> Checking unclear columns with AI…
+                  </p>
+                )}
+                {aiState === "done" && aiConfidence && (
+                  <p className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+                    <Lightbulb className="w-3.5 h-3.5" style={{ color: "var(--kk-blue)" }} />
+                    AI suggested the remaining columns ({aiConfidence} confidence). Double-check before importing.
+                  </p>
+                )}
 
                 <MappingTable
                   headers={rawData.headers}

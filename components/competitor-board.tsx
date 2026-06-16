@@ -122,7 +122,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
   );
 
   const propertyOptions = useMemo(() => {
@@ -472,6 +472,17 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
   onBackToWatching: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
+  const [pressing, setPressing] = useState(false);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function startPress() {
+    pressTimer.current = setTimeout(() => setPressing(true), 150);
+  }
+  function cancelPress() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    setPressing(false);
+  }
+
   const isExpiring = col.stage === "reach_out";
   const isRenewing = col.stage === "renewing";
 
@@ -493,8 +504,11 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
       data-card-id={lead.id}
       {...attributes}
       {...listeners}
+      onTouchStart={(e) => { listeners?.onTouchStart?.(e); startPress(); }}
+      onTouchEnd={(e) => { listeners?.onTouchEnd?.(e); cancelPress(); }}
+      onTouchCancel={(e) => { listeners?.onTouchCancel?.(e); cancelPress(); }}
       style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action]")) return;
         onOpen();

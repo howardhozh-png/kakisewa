@@ -8,7 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { importParsedOwnerLeads, type ImportResult } from "@/lib/actions";
 import {
   detectColumns, refreshMappingFlags, parseOwnerAddress, parseSpreadsheetRows,
-  type ColumnMapping,
+  fetchAiColumnMapping, type ColumnMapping,
 } from "@/lib/csv-import";
 import { Upload, FileText, AlertCircle, CheckCircle2, X, Download, ArrowRight, ChevronLeft, Lightbulb } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
@@ -33,6 +33,7 @@ const DISPLAY_FIELDS = [
   "owner_name", "owner_phone", "address",
   "property_name", "unit", "expected_rent", "bedrooms", "bathrooms", "notes",
 ] as const;
+const AI_MAPPABLE_FIELDS = DISPLAY_FIELDS;
 
 interface ParsedData {
   headers: string[];
@@ -48,6 +49,8 @@ export function UploadOwnerCsvDialog() {
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importProgress, setImportProgress] = useState<number | null>(null);
+  const [aiState, setAiState] = useState<"idle" | "loading" | "done" | "skipped">("idle");
+  const [aiConfidence, setAiConfidence] = useState<"high" | "medium" | "low" | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -57,6 +60,34 @@ export function UploadOwnerCsvDialog() {
     setMapping(null);
     setResult(null);
     setStep("pick");
+    setAiState("idle");
+    setAiConfidence(null);
+  }
+
+  // Fills only the gaps the local heuristics couldn't place — never overwrites
+  // an already-detected or user-edited column. Runs in the background so the
+  // mapping step is usable immediately; failures silently keep manual mapping.
+  async function runAiMapping(headers: string[], rows: Record<string, string>[], current: ColumnMapping) {
+    if (REQUIRED_FIELDS.every((f) => current[f])) { setAiState("skipped"); return; }
+    setAiState("loading");
+    const res = await fetchAiColumnMapping(headers, rows);
+    if (!res.ok) { setAiState("skipped"); return; }
+    setMapping((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev };
+      for (const [idxStr, field] of Object.entries(res.mapping)) {
+        const idx = Number(idxStr);
+        const header = headers[idx];
+        if (!header) continue;
+        if (!(AI_MAPPABLE_FIELDS as readonly string[]).includes(field)) continue;
+        const key = field as typeof AI_MAPPABLE_FIELDS[number];
+        if (next[key]) continue;
+        (next as Record<string, unknown>)[key] = header;
+      }
+      return refreshMappingFlags(next);
+    });
+    setAiConfidence(res.confidence);
+    setAiState("done");
   }
 
   function handleAnalyse() {
@@ -86,21 +117,23 @@ export function UploadOwnerCsvDialog() {
 
       // Merge saved column preferences: if a saved mapping's value exists in
       // the current file's headers, prefer it over the auto-detected value.
+      let merged: ColumnMapping;
       try {
         const saved = JSON.parse(localStorage.getItem("kk-csv-mapping") ?? "{}") as Partial<ColumnMapping>;
-        const merged = { ...detected };
+        const m = { ...detected };
         for (const [k, v] of Object.entries(saved)) {
           if (typeof v === "string" && headers.includes(v)) {
-            (merged as Record<string, unknown>)[k] = v;
+            (m as Record<string, unknown>)[k] = v;
           }
         }
-        setParsedData({ headers, rows, total: rows.length });
-        setMapping(refreshMappingFlags(merged));
+        merged = refreshMappingFlags(m);
       } catch {
-        setParsedData({ headers, rows, total: rows.length });
-        setMapping(detected);
+        merged = detected;
       }
+      setParsedData({ headers, rows, total: rows.length });
+      setMapping(merged);
       setStep("map");
+      runAiMapping(headers, rows, merged);
     };
 
     if (isExcel) {
@@ -319,6 +352,18 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
             {/* ── Step 2: Confirm mapping ── */}
             {step === "map" && mapping && parsedData && (
               <>
+                {aiState === "loading" && (
+                  <p className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+                    <Lightbulb className="w-3.5 h-3.5" /> Checking unclear columns with AI…
+                  </p>
+                )}
+                {aiState === "done" && aiConfidence && (
+                  <p className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--kk-ink-mute)" }}>
+                    <Lightbulb className="w-3.5 h-3.5" style={{ color: "var(--kk-blue)" }} />
+                    AI suggested the remaining columns ({aiConfidence} confidence). Double-check before importing.
+                  </p>
+                )}
+
                 <MappingTable
                   headers={parsedData.headers}
                   rows={parsedData.rows}

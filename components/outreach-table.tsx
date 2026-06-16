@@ -325,16 +325,29 @@ function LeadPopup({
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
+
+    const room = 10 - photos.length;
+    if (room <= 0) { toast.error("Maximum 10 photos reached"); return; }
+
+    const batch = files.slice(0, Math.min(5, room));
+    if (files.length > batch.length) {
+      toast.error(
+        room < files.length && room <= 5
+          ? `Only ${room} more photo${room === 1 ? "" : "s"} can be added (max 10)`
+          : "You can upload up to 5 photos at a time. Select more after this batch finishes."
+      );
+    }
+
     setUploadProgress(0);
     try {
       const newUrls: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const compressed = await compressImage(files[i]);
+      for (let i = 0; i < batch.length; i++) {
+        const compressed = await compressImage(batch[i]);
         const fd = new FormData();
         fd.append("leadId", lead.id);
         fd.append("file", compressed);
         const { ok, data } = await uploadWithProgress("/api/agent/photo", fd, (pct) => {
-          setUploadProgress(Math.round((i * 100 + pct) / files.length));
+          setUploadProgress(Math.round((i * 100 + pct) / batch.length));
         });
         if (ok && data.url) newUrls.push(data.url as string);
       }

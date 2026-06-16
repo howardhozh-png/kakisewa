@@ -35,14 +35,19 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
 
   const allDone = missions.every((m) => m.done);
   const doneCount = missions.filter((m) => m.done).length;
+  // Hard block: until the first mission (uploading an owner list) is done, the modal
+  // cannot be dismissed via X or backdrop click — only a mission CTA can close it.
+  const hardBlock = !hasLeads;
 
-  // Auto-open modal once per session on load (only if tasks are incomplete)
+  // Auto-open modal once per session on load (only if tasks are incomplete).
+  // While hardBlock is active, always force it open — there is no dismiss flag to check.
   useEffect(() => {
     if (!isNewAgent) return;
     if (allDone) return; // don't interrupt when everything is done
+    if (hardBlock) { setModalOpen(true); return; }
     const wasDismissed = sessionStorage.getItem(SESSION_KEY) === "1";
     if (!wasDismissed) setModalOpen(true);
-  }, [isNewAgent, allDone]);
+  }, [isNewAgent, allDone, hardBlock]);
 
   if (!isNewAgent) return null;
 
@@ -61,7 +66,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
   return (
     <>
       {/* Floating mission button — always visible bottom-left */}
-      {!modalOpen && (
+      {!modalOpen && !hardBlock && (
         <button
           onClick={() => setModalOpen(true)}
           className="fixed bottom-5 left-5 z-40 flex items-center gap-2 px-3.5 py-2 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
@@ -84,21 +89,23 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasTenants
         <div
           className="fixed inset-0 z-[500] flex items-center justify-center px-4"
           style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+          onClick={(e) => { if (hardBlock) return; if (e.target === e.currentTarget) setModalOpen(false); }}
         >
           <div
             className="relative w-full max-w-sm rounded-2xl p-6"
             style={{ background: "var(--kk-surface)", boxShadow: "0 24px 60px rgba(0,0,0,0.22)" }}
           >
-            {/* Close */}
-            <button
-              onClick={dismissSession}
-              className="absolute top-4 right-4 p-1.5 rounded-full transition-opacity hover:opacity-60"
-              style={{ color: "var(--kk-ink-mute)" }}
-              aria-label="Dismiss"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {/* Close — hidden while the first mission is incomplete, so new agents can't skip onboarding entirely */}
+            {!hardBlock && (
+              <button
+                onClick={dismissSession}
+                className="absolute top-4 right-4 p-1.5 rounded-full transition-opacity hover:opacity-60"
+                style={{ color: "var(--kk-ink-mute)" }}
+                aria-label="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
 
             {/* Header */}
             <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-accent)" }}>

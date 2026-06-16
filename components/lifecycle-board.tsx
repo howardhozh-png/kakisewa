@@ -149,7 +149,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
   );
 
   const propertyOptions = useMemo(() => {
@@ -701,6 +701,18 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
   onToggleSelect?: () => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: t.id, disabled: selectMode });
+  const [pressing, setPressing] = useState(false);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function startPress() {
+    if (selectMode) return;
+    pressTimer.current = setTimeout(() => setPressing(true), 150);
+  }
+  function cancelPress() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    setPressing(false);
+  }
+
   const isHeadsupLike = col.stage === "headsup" || col.stage === "expired";
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
@@ -725,8 +737,11 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       data-card-id={t.id}
       {...attributes}
       {...listeners}
+      onTouchStart={(e) => { listeners?.onTouchStart?.(e); startPress(); }}
+      onTouchEnd={(e) => { listeners?.onTouchEnd?.(e); cancelPress(); }}
+      onTouchCancel={(e) => { listeners?.onTouchCancel?.(e); cancelPress(); }}
       style={{ ...cardStyle, position: "relative", ...(selectMode && selected ? { outline: "2px solid var(--kk-blue)", outlineOffset: -1 } : {}) }}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} p-3 flex flex-col gap-2 ${selectMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"} touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 ${selectMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"} touch-none select-none`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action], [data-chip]")) return;
         if (selectMode) { onToggleSelect?.(); return; }

@@ -344,7 +344,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                     ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--kk-ink-faint)" }} />
                     : <ImagePlus className="w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
                   }
-                  <input ref={photoInputRef} type="file" accept="image/*" className="sr-only" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+                  <input ref={photoInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                 </label>
               )}
             </div>

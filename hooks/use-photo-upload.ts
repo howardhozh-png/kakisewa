@@ -21,16 +21,34 @@ export function usePhotoUpload(
   }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || photos.length >= 10) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    const room = 10 - photos.length;
+    if (room <= 0) { toast.error("Maximum 10 photos reached"); return; }
+
+    const batch = files.slice(0, Math.min(5, room));
+    if (files.length > batch.length) {
+      toast.error(
+        room < files.length && room <= 5
+          ? `Only ${room} more photo${room === 1 ? "" : "s"} can be added (max 10)`
+          : "You can upload up to 5 photos at a time. Select more after this batch finishes."
+      );
+    }
+
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload/document", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
-      const next = [...photos, data.url as string];
+      const uploaded: string[] = [];
+      for (const file of batch) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload/document", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) { toast.error(data.error ?? `Upload failed for ${file.name}`); continue; }
+        uploaded.push(data.url as string);
+      }
+      if (uploaded.length === 0) return;
+      const next = [...photos, ...uploaded];
       setPhotos(next);
       await saveOwnerLeadPhotos(leadId, next);
       onSaved?.({ photo_urls: next });
