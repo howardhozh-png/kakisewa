@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
 import { Megaphone, XCircle, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
@@ -111,7 +111,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   }, [highlightId]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
   );
 

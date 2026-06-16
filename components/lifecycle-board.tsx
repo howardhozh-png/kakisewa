@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil, getBusinessToday } from "@/lib/types";
 import { setLifecycleStage, buildExpiryPingOwner, buildExpiryPingTenant, lostContractAction, bulkRemoveTenancies } from "@/lib/actions";
 import { TenancyDetailDialog } from "@/components/tenancy-detail-dialog";
@@ -148,7 +148,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   }, [highlightId]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
   );
 

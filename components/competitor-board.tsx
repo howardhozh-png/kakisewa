@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead, CompetitorStage, daysUntil } from "@/lib/types";
 import { setCompetitorStageAction, winCompetitorUnitAction, buildCompetitorOwnerPing } from "@/lib/actions";
 import { FilterSelect } from "@/components/filter-select";
@@ -121,7 +121,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
   }, [highlightId]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 8 } }),
   );
 
