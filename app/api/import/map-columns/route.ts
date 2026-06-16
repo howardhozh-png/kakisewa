@@ -54,7 +54,8 @@ export async function POST(req: Request) {
       messages: [{ role: "user", content: JSON.stringify({ headers, sampleRows }) }],
     });
 
-    const text = res.content[0]?.type === "text" ? res.content[0].text.trim() : "";
+    const raw = res.content[0]?.type === "text" ? res.content[0].text.trim() : "";
+    const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
     const parsed = JSON.parse(text) as { mapping: Record<string, string>; confidence: "high" | "medium" | "low" };
 
     await svc.from("ai_mapping_usage").upsert(
