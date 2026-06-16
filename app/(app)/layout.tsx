@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { TopNav } from "@/components/top-nav";
 import { GreetingBar } from "@/components/greeting-bar";
 import { AccentProvider } from "@/components/accent-provider";
@@ -23,6 +24,7 @@ import { Suspense } from "react";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
+  if (agent.id === 0) redirect("/login");
   const trialStart = agent.trial_started_at ? new Date(agent.trial_started_at) : undefined;
   const [leadCount, contractCount, tenantCount, supportCount] = await Promise.all([
     countOwnerLeads().catch(() => null),

@@ -84,7 +84,13 @@ export async function middleware(request: NextRequest) {
   )
 
   // Use getUser() not getSession() — verifies token server-side
-  const { data: { user } } = await supabase.auth.getUser()
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (err) {
+    console.error("middleware getUser failed", err)
+  }
 
   const { pathname } = request.nextUrl
   const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/sign-in" || pathname === "/sign-up"

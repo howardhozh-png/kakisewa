@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 export default function AuthError({
   error,
@@ -9,7 +10,7 @@ export default function AuthError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => { console.error(error); }, [error]);
+  useEffect(() => { console.error(error); Sentry.captureException(error); }, [error]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">

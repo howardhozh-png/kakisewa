@@ -2,8 +2,7 @@
 
 import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
 import { Input } from "@/components/ui/input"
@@ -26,7 +25,6 @@ export default function SignInPage() {
 }
 
 function SignInForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const timedOut = searchParams.get("reason") === "timeout"
   const [email, setEmail] = useState("")
@@ -41,11 +39,15 @@ function SignInForm() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password: passcode })
+      const res = await fetch("/api/auth/sign-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, passcode }),
+      })
+      const data = await res.json().catch(() => ({}))
 
-      if (err) {
-        setError(err.message)
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "Something went wrong. Please try again.")
         setLoading(false)
         return
       }
