@@ -1,4 +1,4 @@
-import { getCompetitorLeads, getSoftDeletedTargetLeads } from "@/lib/db";
+import { getCompetitorLeads, getSoftDeletedTargetLeads, getOwnerLeads } from "@/lib/db";
 import { CompetitorBoard } from "@/components/competitor-board";
 import { AddCompetitorButton } from "@/components/add-competitor-button";
 import { PageHelpButton } from "@/components/page-help-button";
@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 
 export default async function LostListingPage({ searchParams }: { searchParams: Promise<{ highlight?: string }> }) {
   const { highlight } = await searchParams;
-  const [leads, deletedLeads] = await Promise.all([
+  const [leads, deletedLeads, ownerLeads] = await Promise.all([
     getCompetitorLeads(),
     getSoftDeletedTargetLeads(),
+    getOwnerLeads(),
   ]);
 
   return (
@@ -37,7 +38,7 @@ export default async function LostListingPage({ searchParams }: { searchParams: 
               "Each win is a new listing for you",
             ]}
           />
-          <AddCompetitorButton />
+          <AddCompetitorButton ownerLeads={ownerLeads} />
         </div>
       </header>
 
@@ -65,7 +66,7 @@ export default async function LostListingPage({ searchParams }: { searchParams: 
                 Add units you know are managed by other agents. We'll alert you 60 days before their contract ends so you can reach out first.
               </p>
               <div className="flex items-center gap-3">
-                <AddCompetitorButton />
+                <AddCompetitorButton ownerLeads={ownerLeads} />
               </div>
             </div>
             <p className="text-center text-[12px] mb-4" style={{ color: "var(--kk-ink-faint)" }}>

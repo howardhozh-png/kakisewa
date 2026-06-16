@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useMemo } from "react";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
@@ -10,6 +10,7 @@ import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { normalizePhone, phoneError } from "@/lib/phone";
+import type { OwnerLead } from "@/lib/types";
 
 const PHOTO_MAX = 10;
 
@@ -22,9 +23,10 @@ function serializeAgreementUrls(urls: string[]): string | null {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  ownerLeads?: OwnerLead[];
 }
 
-export function AddCompetitorDialog({ open, onOpenChange }: Props) {
+export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
@@ -36,6 +38,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
     duration: "12",
   });
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
+  const [showSugg, setShowSugg] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; preview: string }>>([]);
   const [agreementFiles, setAgreementFiles] = useState<Array<{ file: File; name: string }>>([]);
   const photoRef = useRef<HTMLInputElement>(null);
@@ -43,6 +46,23 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
 
   function set(field: keyof typeof form, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  const suggestions = useMemo(() => {
+    const q = form.property_name.trim().toLowerCase();
+    const seen = new Set<string>();
+    const base = q ? ownerLeads.filter((ol) => (ol.property_name ?? "").toLowerCase().includes(q)) : ownerLeads;
+    return base.filter((ol) => {
+      const key = (ol.property_name ?? "").toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 8);
+  }, [form.property_name, ownerLeads]);
+
+  function selectExisting(ol: OwnerLead) {
+    set("property_name", ol.property_name ?? "");
+    setShowSugg(false);
   }
 
   function handlePhoneBlur() {
@@ -131,6 +151,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
         toast.success("Target unit added");
         onOpenChange(false);
         setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
+        setShowSugg(false);
         photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
         setPhotoFiles([]); setAgreementFiles([]);
         router.refresh();
@@ -171,7 +192,27 @@ export function AddCompetitorDialog({ open, onOpenChange }: Props) {
           {/* Property name */}
           <div className="space-y-1.5">
             <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Property name<span style={{ color: "var(--kk-red)" }}> *</span></label>
-            <input value={form.property_name} onChange={e => set("property_name", e.target.value)} placeholder="e.g. Residensi Mutiara" className={field} style={fs} />
+            <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setShowSugg(false); }}>
+              <input
+                value={form.property_name}
+                onChange={e => { set("property_name", e.target.value); setShowSugg(true); }}
+                onFocus={() => setShowSugg(true)}
+                placeholder="e.g. Residensi Mutiara"
+                className={field}
+                style={fs}
+              />
+              {showSugg && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden"
+                  style={{ zIndex: 9999, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: 240, overflowY: "auto" }}>
+                  {suggestions.map((ol) => (
+                    <button key={ol.id} type="button" onMouseDown={(e) => { e.preventDefault(); selectExisting(ol); }}
+                      className="w-full text-left px-4 py-2.5 hover:opacity-70">
+                      <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{ol.property_name}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Unit + Rent */}
