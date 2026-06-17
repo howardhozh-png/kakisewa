@@ -1039,6 +1039,15 @@ export async function convertLeadToTenancy(
     const cap = await checkRenewalCardCap();
     if (!cap.allowed) return { ok: false, message: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
+    // Close stale tenancies first so the trigger recalculates has_active_tenancy = false.
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const svc = createServiceClient();
+    await svc.from("tenancies")
+      .update({ lifecycle_stage: "closed", status: "Closed" })
+      .eq("owner_lead_id", ownerLeadId)
+      .is("deleted_at", null)
+      .or("lifecycle_stage.is.null,lifecycle_stage.not.in.(closed,reserved)");
+
     await createTenancy({
       owner_lead_id: ownerLeadId,
       tenant_name: data.tenant_name,
