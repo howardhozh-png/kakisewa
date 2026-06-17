@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import React, { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
-import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce } from "@/lib/actions";
+import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce, updateMatchedTenancyDetails } from "@/lib/actions";
 import { normalizePhone, phoneError, toE164Display } from "@/lib/phone";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, Building2, CalendarPlus } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -21,7 +21,16 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: (updated: Partial<OwnerLead>) => void;
-  tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string } | null;
+  tenantInfo?: {
+    tenant_name: string;
+    tenant_phone: string;
+    tenancy_id: string;
+    lifecycle_stage?: string | null;
+    contract_start?: string | null;
+    contract_end?: string | null;
+    contract_duration_months?: number | null;
+    amount?: number;
+  } | null;
 }
 
 export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantInfo }: Props) {
@@ -52,6 +61,13 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [competitorRentedOpen, setCompetitorRentedOpen] = useState(false);
 
+  // Tenancy fields (only for matched/Rented cards)
+  const [tenantName, setTenantName] = useState("");
+  const [tenantPhone, setTenantPhone] = useState("");
+  const [tenancyAmount, setTenancyAmount] = useState("");
+  const [contractStart, setContractStart] = useState("");
+  const [contractDuration, setContractDuration] = useState("");
+
   // Reset fields when a new lead is opened
   useEffect(() => {
     if (lead) {
@@ -73,6 +89,16 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setConfirmDelete(false);
     }
   }, [lead?.id, open]);
+
+  useEffect(() => {
+    if (tenantInfo) {
+      setTenantName(tenantInfo.tenant_name ?? "");
+      setTenantPhone(tenantInfo.tenant_phone ?? "");
+      setTenancyAmount(tenantInfo.amount != null ? String(tenantInfo.amount) : "");
+      setContractStart(tenantInfo.contract_start ?? "");
+      setContractDuration(tenantInfo.contract_duration_months != null ? String(tenantInfo.contract_duration_months) : "");
+    }
+  }, [tenantInfo?.tenancy_id, open]);
 
   if (!lead) return null;
 
@@ -135,14 +161,24 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
     };
     startTransition(async () => {
       const res = await updateOwnerLeadDetails(lead.id, updates);
-      if (res.ok) {
-        onSaved?.(updates);
-        router.refresh();
-        toast.success("Lead updated");
-        onOpenChange(false);
-      } else {
-        toast.error(res.message ?? "Could not save");
+      if (!res.ok) { toast.error(res.message ?? "Could not save"); return; }
+
+      // Also save tenancy fields if lead is matched (Rented column)
+      if (lead.stage === "matched" && tenantInfo?.tenancy_id) {
+        const tenancyUpdates = {
+          tenant_name: tenantName || undefined,
+          tenant_phone: tenantPhone || undefined,
+          amount: tenancyAmount ? parseFloat(tenancyAmount) : undefined,
+          contract_start: contractStart || undefined,
+          contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : undefined,
+        };
+        await updateMatchedTenancyDetails(tenantInfo.tenancy_id, tenancyUpdates);
       }
+
+      onSaved?.(updates);
+      router.refresh();
+      toast.success("Lead updated");
+      onOpenChange(false);
     });
   }
 
@@ -225,11 +261,68 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
           </div>
 
           {lead.stage === "matched" && tenantInfo && (
-            <div className="rounded-xl p-3" style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.20)" }}>
-              <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "#1F8B4C" }}>Rented to</p>
-              <div>
-                <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>{tenantInfo.tenant_name}</p>
-                <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(tenantInfo.tenant_phone)}</p>
+            <div className="rounded-xl p-3 space-y-3" style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.20)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#1F8B4C" }}>Tenant details</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-0.5">
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Tenant name</label>
+                  <input
+                    type="text"
+                    value={tenantName}
+                    onChange={(e) => setTenantName(e.target.value)}
+                    className="w-full text-[13px] font-medium rounded-lg px-2.5 py-1.5 outline-none"
+                    style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Tenant phone</label>
+                  <input
+                    type="tel"
+                    value={tenantPhone}
+                    onChange={(e) => setTenantPhone(e.target.value)}
+                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
+                    style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Contract start</label>
+                  <input
+                    type="date"
+                    value={contractStart}
+                    onChange={(e) => setContractStart(e.target.value)}
+                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
+                    style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)", fontSize: 16 }}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Duration (months)</label>
+                  <input
+                    type="number"
+                    value={contractDuration}
+                    onChange={(e) => setContractDuration(e.target.value)}
+                    placeholder="12"
+                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
+                    style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
+                  />
+                </div>
+                <div className="space-y-0.5 col-span-2">
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Monthly rent (RM)</label>
+                  <MoneyInput
+                    value={tenancyAmount}
+                    onChange={setTenancyAmount}
+                    placeholder="e.g. 1,500"
+                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
+                    style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" } as React.CSSProperties}
+                  />
+                </div>
+                {tenantInfo.contract_end && (
+                  <p className="col-span-2 text-[11px]" style={{ color: "#1F8B4C" }}>
+                    Contract ends: {tenantInfo.contract_end}
+                    {contractDuration && contractStart
+                      ? ` (will recalculate from start + ${contractDuration} months on save)`
+                      : ""}
+                  </p>
+                )}
               </div>
             </div>
           )}

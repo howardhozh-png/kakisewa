@@ -514,6 +514,38 @@ export async function updateTenancyBasicInfo(
   }
 }
 
+export async function updateMatchedTenancyDetails(
+  tenancyId: string,
+  data: {
+    tenant_name?: string;
+    tenant_phone?: string;
+    amount?: number;
+    contract_start?: string;
+    contract_duration_months?: number;
+  }
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    const updates: Partial<Tenancy> = {};
+    if (data.tenant_name !== undefined) updates.tenant_name = data.tenant_name;
+    if (data.tenant_phone !== undefined) updates.tenant_phone = data.tenant_phone;
+    if (data.amount !== undefined) updates.amount = data.amount;
+    if (data.contract_start && data.contract_duration_months) {
+      const [y, m, d] = data.contract_start.split("-").map(Number);
+      const end = new Date(y, m - 1 + data.contract_duration_months, d);
+      updates.contract_start = data.contract_start;
+      updates.contract_end = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+      updates.contract_duration_months = data.contract_duration_months;
+    }
+    await updateTenancy(tenancyId, updates);
+    invalidateCache();
+    revalidatePath("/my-listing");
+    revalidatePath("/");
+    return { ok: true, message: "Tenancy updated." };
+  } catch {
+    return { ok: false, message: "Could not update tenancy." };
+  }
+}
+
 export async function markReminderSent(id: string) {
   await updateTenancy(id, { status: "Reminder Sent" });
   invalidateCache();
