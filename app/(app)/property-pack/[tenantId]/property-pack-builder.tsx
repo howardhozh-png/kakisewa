@@ -117,11 +117,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
     if (packUrl) setPackDirty(true);
   }
 
-  const tabLeads = activeTab === "all"
-    ? leads
-    : activeTab === "my_listing"
-    ? leads.filter(l => l.source === "my_listing" || l.source === "existing")
-    : leads.filter(l => l.source === activeTab);
+  const tabLeads = activeTab === "all" ? leads : leads.filter(l => l.source === activeTab);
 
   const filtered = tabLeads.filter(l => {
     if (!search.trim()) return true;
@@ -218,11 +214,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
           {/* Filter tabs */}
           <div className="flex gap-1.5 mb-4 flex-wrap">
             {TABS.map(tab => {
-              const count = tab.id === "all"
-                ? leads.length
-                : tab.id === "my_listing"
-                ? leads.filter(l => l.source === "my_listing" || l.source === "existing").length
-                : leads.filter(l => l.source === tab.id).length;
+              const count = tab.id === "all" ? leads.length : leads.filter(l => l.source === tab.id).length;
               const active = activeTab === tab.id;
               return (
                 <button

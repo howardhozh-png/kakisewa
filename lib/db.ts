@@ -2791,10 +2791,11 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
   const svc = createServiceClient();
 
   const OL_SELECT = "id, property_name, unit, bedrooms, bathrooms, photo_urls, cover_photo_index, expected_rent, listing_purpose";
-  const POTENTIAL_STAGES = ["imported", "replied", "wants_rent", "matched"];
+  const MY_LISTING_STAGES = ["listed", "wants_rent", "replied", "matched"];
+  const POTENTIAL_STAGES = ["imported"];
 
   const [existingRes, myListingRes, potentialRes, lostRes] = await Promise.all([
-    // Existing Listing — active non-closed tenancies, owner_lead not deleted
+    // Existing Listing — confirmed tenancies (non-closed, has contract_end), owner_lead not deleted
     svc.from("tenancies")
       .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id, deleted_at)`)
       .eq("owner_leads.user_id", userId)
@@ -2803,10 +2804,10 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
       .not("owner_lead_id", "is", null)
       .not("owner_leads.property_name", "is", null)
       .not("contract_end", "is", null),
-    // My Listing — stage="listed", not deleted, not competitor target
+    // My Listing — listed + rented (matched, commission not yet confirmed), not deleted, not competitor target
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
-      .eq("stage", "listed").is("deleted_at", null).neq("is_competitor_target", true),
-    // Potential Listing — early pipeline stages, not deleted, not competitor target
+      .in("stage", MY_LISTING_STAGES).is("deleted_at", null).neq("is_competitor_target", true),
+    // Potential Listing — early outreach stages, not deleted, not competitor target
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
       .in("stage", POTENTIAL_STAGES).is("deleted_at", null).neq("is_competitor_target", true),
     // Lost Listing — competitor-tracked properties (all 3 board columns), not deleted
