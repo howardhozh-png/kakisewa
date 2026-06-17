@@ -2696,7 +2696,7 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     { count: totalUploaded },
     { count: totalContacted },
     { count: totalResponded },
-    { data: allListed },
+    { count: totalListedRaw },
     { data: listedRent },
     { data: listedSale },
     { data: repliedRent },
@@ -2712,16 +2712,17 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     { data: targetExpiring60 },
     { count: targetTotal },
   ] = await Promise.all([
-    ol().or("is_competitor_target.is.null,is_competitor_target.eq.false"),
-    ol().eq("stage", "imported").or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
-    ol().or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
-    // All listed regardless of purpose — used for My Pipeline primary number
-    olD().eq("stage", "listed").or("is_competitor_target.is.null,is_competitor_target.eq.false"),
+    // Exclude soft-deleted rows so count matches what the Potential Listing page shows
+    ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false"),
+    ol().is("deleted_at", null).eq("stage", "imported").or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
+    ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
+    // All pipeline stages — matches My Listing board which shows listed/wants_rent/replied/matched
+    ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["listed","wants_rent","replied","matched"]),
     olD().eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
     olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
-    // Active = not closed, not deleted, not yet expired — always anchored to today
+    // Active = not closed, not yet expired — anchored to today
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today),
     // Expiring within selected window (start month → start month + N months)
     tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", windowStart).lte("contract_end", periodEnd),
@@ -2745,7 +2746,7 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     totalUploaded: totalUploaded ?? 0,
     totalContacted: totalContacted ?? 0,
     totalResponded: totalResponded ?? 0,
-    totalListedCount: allListed?.length ?? 0,
+    totalListedCount: totalListedRaw ?? 0,
     listedRentCount: listedRent?.length ?? 0,
     listedRentAmount: sumExpectedRent(listedRent),
     listedSaleCount: listedSale?.length ?? 0,

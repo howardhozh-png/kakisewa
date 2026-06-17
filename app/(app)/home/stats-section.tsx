@@ -555,7 +555,7 @@ export function StatsSection({
 
         <Block
           overline="Existing listing"
-          primaryNum={stats.existingTotalActiveCount}
+          primaryNum={stats.existingTotalActiveCount + stats.existingExpiredCount}
           primaryLabel="active tenancies"
           stats={[
             { label: "Expiring in 60d", value: stats.existingExpiringIn60Count },
