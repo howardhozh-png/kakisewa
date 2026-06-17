@@ -2792,7 +2792,6 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
 
   const OL_SELECT = "id, property_name, unit, bedrooms, bathrooms, photo_urls, cover_photo_index, expected_rent, listing_purpose";
   const POTENTIAL_STAGES = ["imported", "replied", "wants_rent", "matched"];
-  const LOST_STAGES = ["archived", "own_stay"];
 
   const [existingRes, myListingRes, potentialRes, lostRes] = await Promise.all([
     // Existing Listing — active non-closed tenancies, owner_lead not deleted
@@ -2810,9 +2809,9 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     // Potential Listing — early pipeline stages, not deleted, not competitor target
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
       .in("stage", POTENTIAL_STAGES).is("deleted_at", null).neq("is_competitor_target", true),
-    // Lost Listing — archived/own_stay, not deleted, not competitor target
+    // Lost Listing — competitor-tracked properties (all 3 board columns), not deleted
     svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
-      .in("stage", LOST_STAGES).is("deleted_at", null).neq("is_competitor_target", true),
+      .eq("is_competitor_target", true).is("deleted_at", null),
   ]);
 
   const toRow = (r: Record<string, unknown>, source: PropertyPackLead["source"]): PropertyPackLead => ({
