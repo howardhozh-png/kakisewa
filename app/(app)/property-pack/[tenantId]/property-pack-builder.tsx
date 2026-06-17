@@ -89,9 +89,20 @@ function PropertyCard({
   );
 }
 
+type TabId = "all" | "my_listing" | "potential" | "existing" | "lost";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "all",        label: "All" },
+  { id: "my_listing", label: "My listing" },
+  { id: "potential",  label: "Potential" },
+  { id: "existing",   label: "Existing" },
+  { id: "lost",       label: "Lost" },
+];
+
 export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: PropertyPackLead[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<TabId>("all");
   const [generating, setGenerating] = useState(false);
   const [packUrl, setPackUrl] = useState<string | null>(null);
   const [packDirty, setPackDirty] = useState(false);
@@ -106,7 +117,9 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
     if (packUrl) setPackDirty(true);
   }
 
-  const filtered = leads.filter(l => {
+  const tabLeads = activeTab === "all" ? leads : leads.filter(l => l.source === activeTab);
+
+  const filtered = tabLeads.filter(l => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -185,7 +198,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
                 className="text-[12px] font-semibold px-2.5 py-0.5 rounded-full"
                 style={{ background: "color-mix(in srgb, var(--kk-accent) 12%, var(--kk-surface))", color: "var(--kk-accent)" }}
               >
-                {selected.size} of {leads.length} selected
+                {selected.size} selected
               </span>
             )}
           </div>
@@ -198,6 +211,37 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         {/* Left: property cards */}
         <div>
+          {/* Filter tabs */}
+          <div className="flex gap-1.5 mb-4 flex-wrap">
+            {TABS.map(tab => {
+              const count = tab.id === "all" ? leads.length : leads.filter(l => l.source === tab.id).length;
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => { setActiveTab(tab.id); setSearch(""); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all"
+                  style={{
+                    background: active ? "var(--kk-ink)" : "var(--kk-surface)",
+                    color: active ? "#fff" : "var(--kk-ink-mute)",
+                    border: `1px solid ${active ? "var(--kk-ink)" : "var(--kk-line)"}`,
+                  }}
+                >
+                  {tab.label}
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                    style={{
+                      background: active ? "rgba(255,255,255,0.2)" : "var(--kk-line)",
+                      color: active ? "#fff" : "var(--kk-ink-faint)",
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           <div className="relative mb-5">
             <input
               type="text"
@@ -212,7 +256,11 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
           {filtered.length === 0 ? (
             <div className="py-16 text-center">
               <p className="text-[14px]" style={{ color: "var(--kk-ink-faint)" }}>
-                {leads.length === 0 ? "No listed properties yet. Add listings in My Listing." : "No properties match your search."}
+                {leads.length === 0
+                  ? "No properties yet. Add listings in Potential Listing or My Listing."
+                  : search.trim()
+                  ? "No properties match your search."
+                  : `No ${TABS.find(t => t.id === activeTab)?.label.toLowerCase() ?? ""} properties.`}
               </p>
             </div>
           ) : (

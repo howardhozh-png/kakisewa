@@ -2783,6 +2783,7 @@ export type PropertyPackLead = {
   cover_photo_index: number | null;
   expected_rent: number | null;
   listing_purpose: string | null;
+  source: "my_listing" | "potential" | "existing" | "lost";
 };
 
 export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[]> {
@@ -2790,23 +2791,31 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
   const svc = createServiceClient();
 
   const OL_SELECT = "id, property_name, unit, bedrooms, bathrooms, photo_urls, cover_photo_index, expected_rent, listing_purpose";
+  const POTENTIAL_STAGES = ["imported", "replied", "wants_rent", "matched"];
+  const LOST_STAGES = ["archived", "own_stay"];
 
-  const [listedRes, targetRes, tenancyRes] = await Promise.all([
-    // My Listing
-    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("stage", "listed"),
-    // Target Listing
-    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId).eq("is_competitor_target", true),
-    // Existing Listing — all non-closed tenancies with a contract end date
+  const [existingRes, myListingRes, potentialRes, lostRes] = await Promise.all([
+    // Existing Listing — active non-closed tenancies, owner_lead not deleted
     svc.from("tenancies")
-      .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id)`)
+      .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id, deleted_at)`)
       .eq("owner_leads.user_id", userId)
+      .is("owner_leads.deleted_at", null)
       .neq("lifecycle_stage", "closed")
       .not("owner_lead_id", "is", null)
       .not("owner_leads.property_name", "is", null)
       .not("contract_end", "is", null),
+    // My Listing — stage="listed", not deleted, not competitor target
+    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
+      .eq("stage", "listed").is("deleted_at", null).neq("is_competitor_target", true),
+    // Potential Listing — early pipeline stages, not deleted, not competitor target
+    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
+      .in("stage", POTENTIAL_STAGES).is("deleted_at", null).neq("is_competitor_target", true),
+    // Lost Listing — archived/own_stay, not deleted, not competitor target
+    svc.from("owner_leads").select(OL_SELECT).eq("user_id", userId)
+      .in("stage", LOST_STAGES).is("deleted_at", null).neq("is_competitor_target", true),
   ]);
 
-  const toRow = (r: Record<string, unknown>): PropertyPackLead => ({
+  const toRow = (r: Record<string, unknown>, source: PropertyPackLead["source"]): PropertyPackLead => ({
     id:                r.id as string,
     property_name:     r.property_name as string | null,
     unit:              r.unit as string | null,
@@ -2816,23 +2825,26 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     cover_photo_index: r.cover_photo_index as number | null,
     expected_rent:     r.expected_rent as number | null,
     listing_purpose:   r.listing_purpose as string | null,
+    source,
   });
 
+  // Dedup by id — priority: existing > my_listing > potential > lost
   const seen = new Set<string>();
   const results: PropertyPackLead[] = [];
 
-  for (const r of (listedRes.data ?? []) as Record<string, unknown>[]) {
-    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r)); }
-  }
-  for (const r of (targetRes.data ?? []) as Record<string, unknown>[]) {
-    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r)); }
-  }
-  for (const t of (tenancyRes.data ?? []) as Record<string, unknown>[]) {
+  for (const t of (existingRes.data ?? []) as Record<string, unknown>[]) {
     const ol = t.owner_leads as Record<string, unknown> | null;
-    if (!ol || !ol.id) continue;
-    const name = (ol.property_name as string | null) ?? "";
-    if (!name.trim()) continue;
-    if (!seen.has(ol.id as string)) { seen.add(ol.id as string); results.push(toRow(ol)); }
+    if (!ol || !ol.id || !(ol.property_name as string | null)?.trim()) continue;
+    if (!seen.has(ol.id as string)) { seen.add(ol.id as string); results.push(toRow(ol, "existing")); }
+  }
+  for (const r of (myListingRes.data ?? []) as Record<string, unknown>[]) {
+    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r, "my_listing")); }
+  }
+  for (const r of (potentialRes.data ?? []) as Record<string, unknown>[]) {
+    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r, "potential")); }
+  }
+  for (const r of (lostRes.data ?? []) as Record<string, unknown>[]) {
+    if (!seen.has(r.id as string)) { seen.add(r.id as string); results.push(toRow(r, "lost")); }
   }
 
   return results
