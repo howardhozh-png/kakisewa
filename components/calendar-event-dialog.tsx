@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarDays, Loader2 } from "lucide-react";
@@ -117,6 +117,22 @@ export function CalendarEventDialog({
   const [tenantPhone, setTenantPhone] = useState(defaultTenantPhone);
   const [showCal, setShowCal] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // Sync date (and other fields) whenever the dialog opens, so the clicked
+  // day's date is reflected rather than the stale initial state.
+  useEffect(() => {
+    if (open) {
+      setTitle(defaultTitle);
+      setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
+      setTimeLabel("");
+      setOwnerName(defaultOwnerName);
+      setOwnerPhone(defaultOwnerPhone);
+      setTenantName(defaultTenantName);
+      setTenantPhone(defaultTenantPhone);
+      setShowCal(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function handleOpen(val: boolean) {
     if (val) {
