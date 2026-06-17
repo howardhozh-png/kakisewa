@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
@@ -1157,16 +1158,29 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, 
   const [choice, setChoice] = useState<OutcomeChoice>("");
   const [confirming, setConfirming] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!dropdownOpen) return;
     function onDown(e: MouseEvent) {
-      if (!dropdownRef.current?.contains(e.target as Node)) setDropdownOpen(false);
+      const target = e.target as Node;
+      if (!buttonRef.current?.contains(target) && !dropdownMenuRef.current?.contains(target)) {
+        setDropdownOpen(false);
+      }
     }
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [dropdownOpen]);
+
+  function toggleDropdown() {
+    if (!dropdownOpen && buttonRef.current) {
+      const r = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({ top: r.bottom + 4, left: r.left });
+    }
+    setDropdownOpen(o => !o);
+  }
 
   function onSelectChange(val: OutcomeChoice) {
     setDropdownOpen(false);
@@ -1209,10 +1223,11 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, 
       >
         {/* Row 1: dropdown + proposed contract terms */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div ref={dropdownRef} className="relative shrink-0">
+          <div className="relative shrink-0">
             <button
+              ref={buttonRef}
               type="button"
-              onClick={() => setDropdownOpen((o) => !o)}
+              onClick={toggleDropdown}
               className="flex items-center gap-2 text-[12px] pl-3 pr-2.5 py-1.5 rounded-lg"
               style={{
                 background: "var(--kk-surface-2)",
@@ -1223,10 +1238,21 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, 
               {choice ? OUTCOME_META[choice].label : "What's next?"}
               <ChevronDown className="w-3 h-3 shrink-0 transition-transform" style={{ color: "var(--kk-ink-faint)", transform: dropdownOpen ? "rotate(180deg)" : "none" }} />
             </button>
-            {dropdownOpen && (
+            {dropdownOpen && dropdownPos && createPortal(
               <div
-                className="absolute left-0 top-full mt-1 z-50 rounded-xl overflow-hidden"
-                style={{ background: "#fff", border: "1px solid var(--kk-line)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160 }}
+                ref={dropdownMenuRef}
+                style={{
+                  position: "fixed",
+                  top: dropdownPos.top,
+                  left: dropdownPos.left,
+                  zIndex: 9999,
+                  background: "#fff",
+                  border: "1px solid var(--kk-line)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                  minWidth: 160,
+                  borderRadius: "0.75rem",
+                  overflow: "hidden",
+                }}
               >
                 {(["renew", "replace", "stop", "lost"] as const).map((val) => (
                   <button
@@ -1239,7 +1265,8 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, 
                     {OUTCOME_META[val].label}
                   </button>
                 ))}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
           {hasProposed && (
