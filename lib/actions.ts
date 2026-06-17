@@ -1059,7 +1059,7 @@ export async function convertLeadToTenancy(
       lifecycle_stage: "reserved",
     });
 
-    await updateOwnerLead(ownerLeadId, { stage: "matched", is_managed: true });
+    await updateOwnerLead(ownerLeadId, { stage: "matched", is_managed: true, available_from: isoStart });
 
     // Auto-create a tenant profile so the tenant appears in the directory
     if (data.tenant_name?.trim()) {
