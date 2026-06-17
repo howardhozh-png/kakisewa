@@ -148,7 +148,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (q && ![l.property_name, l.owner_name, l.unit].some(f => f?.toLowerCase().includes(q))) return false;
       if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
       if (purposeFilter && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
-      if (monthFilter && ["listed", "wants_rent", "replied"].includes(l.stage) && l.available_from?.slice(0, 7) !== monthFilter) return false;
+      if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
       if (ownerRespondedFilter && ["listed", "wants_rent", "replied"].includes(l.stage) && !rankedLeadIds.has(l.id)) return false;
       return true;
     });
