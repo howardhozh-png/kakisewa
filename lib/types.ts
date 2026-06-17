@@ -20,7 +20,8 @@ export type LifecycleStage =
   | "pending_payment"  // renewal/new contract signed, awaiting first month payment
   | "replacing"        // owner wants to keep listing, tenant leaving (hidden)
   | "ending"           // owner ending the listing (hidden)
-  | "closed";          // legacy/archive (no longer visible as a column)
+  | "closed"           // legacy/archive (no longer visible as a column)
+  | "reserved";        // tenant confirmed, commission pending — card stays in Rented until moved in
 
 export interface Tenancy {
   id: string;
@@ -132,6 +133,7 @@ export interface OwnerLead {
   competitor_contract_duration_months?: number | null;
   competitor_contract_end?: string | null;
   competitor_stage?: "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
+  has_active_tenancy?: boolean;
   deleted_at?: string | null;
   property_share_token?: string | null;
   last_wa_reply_at?: string | null;

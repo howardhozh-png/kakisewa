@@ -45,7 +45,7 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
     startTransition(async () => {
       const res = await convertLeadToTenancy(lead.id, data);
       if (res.ok) {
-        toast.success("Tenancy created and lead marked as Matched.");
+        toast.success("Tenant confirmed. Track commission in Rented.");
         onOpenChange(false);
         onConverted();
       } else if (res.message === "plan_cap_reached") {
@@ -79,7 +79,7 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="text-[18px] font-semibold tracking-tight">
-            Create tenancy for matched deal
+            Confirm tenant deal
           </DialogTitle>
         </DialogHeader>
         <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
@@ -118,7 +118,7 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
               disabled={pending}
               className="kk-pill kk-pill-primary"
             >
-              {pending ? "Creating…" : "Create tenancy"}
+              {pending ? "Saving…" : "Confirm tenant"}
             </button>
           </div>
         </form>

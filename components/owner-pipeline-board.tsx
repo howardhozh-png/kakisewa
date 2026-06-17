@@ -8,6 +8,7 @@ import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
+import { ConfirmMovedInDialog } from "@/components/confirm-moved-in-dialog";
 import { Megaphone, XCircle, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
@@ -43,11 +44,22 @@ const COLUMNS: ColMeta[] = [
 ];
 
 
+type TenantInfo = {
+  tenant_name: string;
+  tenant_phone: string;
+  tenancy_id: string;
+  lifecycle_stage: string | null;
+  contract_start: string | null;
+  contract_end: string | null;
+  contract_duration_months: number | null;
+  amount: number;
+};
+
 interface Props {
   leads: OwnerLead[];
   openLeadId?: string;
   highlightId?: string;
-  tenantsByLeadId?: Record<string, { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }>;
+  tenantsByLeadId?: Record<string, TenantInfo>;
   rankedLeadIds?: Set<string>;
 }
 
@@ -60,6 +72,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [editingLead, setEditingLead] = useState<OwnerLead | null>(null);
   const [matchingLead, setMatchingLead] = useState<OwnerLead | null>(null);
   const [commissionLead, setCommissionLead] = useState<{ lead: OwnerLead; tenancyId: string } | null>(null);
+  const [confirmedMovedIn, setConfirmedMovedIn] = useState<{ lead: OwnerLead; info: TenantInfo } | null>(null);
   const [competitorRentedLead, setCompetitorRentedLead] = useState<OwnerLead | null>(null);
 
   // Filter state
@@ -151,9 +164,8 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (l.stage === "imported") return;
       // wants_rent and replied both map to listed (owner responded → auto-listed)
       const stage = (l.stage === "wants_rent" || l.stage === "replied") ? "listed" : l.stage;
-      // Hide matched leads once any non-closed tenancy exists — they live in Existing Listing now
-      const tenancy = tenantsByLeadId[l.id];
-      if (stage === "matched" && tenancy && tenancy.lifecycle_stage !== "closed") return;
+      // Hide matched leads that have an active tenancy — they live in Existing Listing
+      if (l.has_active_tenancy) return;
       out[stage].push(l);
     });
     return out;
@@ -314,6 +326,8 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
                     tenantInfo={tenantsByLeadId[l.id]}
                     hasOwnerRanking={rankedLeadIds.has(l.id)}
                     onCommission={(tenancyId) => setCommissionLead({ lead: l, tenancyId })}
+                    onConfirmMovedIn={(info) => setConfirmedMovedIn({ lead: l, info })}
+                    onTenantConfirmed={() => setMatchingLead(l)}
                     onCompetitorRented={() => setCompetitorRentedLead(l)}
                   />
                 ))
@@ -381,6 +395,28 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           router.refresh();
         }}
       />
+
+      {confirmedMovedIn && (
+        <ConfirmMovedInDialog
+          open={!!confirmedMovedIn}
+          onOpenChange={(o) => !o && setConfirmedMovedIn(null)}
+          tenancyId={confirmedMovedIn.info.tenancy_id}
+          tenantName={confirmedMovedIn.info.tenant_name}
+          propertyLabel={
+            confirmedMovedIn.lead.unit
+              ? `${confirmedMovedIn.lead.property_name ?? "Property"}, Unit ${confirmedMovedIn.lead.unit}`
+              : (confirmedMovedIn.lead.property_name ?? "Property")
+          }
+          contractStart={confirmedMovedIn.info.contract_start}
+          contractEnd={confirmedMovedIn.info.contract_end}
+          contractDurationMonths={confirmedMovedIn.info.contract_duration_months}
+          amount={confirmedMovedIn.info.amount}
+          onConfirmed={() => {
+            setConfirmedMovedIn(null);
+            router.refresh();
+          }}
+        />
+      )}
 
       <CommissionConfirmDialog
         open={!!commissionLead}
@@ -529,7 +565,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
 }
 
 
-function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
+function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void }) {
   const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
@@ -594,12 +630,37 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onComp
         </div>
       </div>
 
-      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onCompetitorRented={onCompetitorRented} />
+      {col.stage === "matched" && tenantInfo && (
+        <div className="rounded-xl px-3 py-2 space-y-1" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+          <div className="flex items-center gap-1.5">
+            <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+            <span className="text-[12px] font-semibold truncate" style={{ color: "var(--kk-ink)" }}>{tenantInfo.tenant_name}</span>
+          </div>
+          {tenantInfo.contract_start && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
+              <span className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>
+                {fmtDate(tenantInfo.contract_start)}
+                {tenantInfo.contract_end ? ` — ${fmtDate(tenantInfo.contract_end)}` : ""}
+                {tenantInfo.contract_duration_months ? ` · ${tenantInfo.contract_duration_months}mo` : ""}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} />
     </>
   );
 }
 
-function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
+function fmtDate(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
+}
+
+function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void }) {
   const ph = usePostHog();
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
   const [pressing, setPressing] = useState(false);
@@ -638,12 +699,12 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
         onEdit();
       }}
     >
-      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onCompetitorRented={onCompetitorRented} />
+      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} />
     </div>
   );
 }
 
-function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; stage: Stage; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
+function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void }) {
   const [pending, startTransition] = useTransition();
   const ph = usePostHog();
   const router = useRouter();
@@ -757,6 +818,19 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
             <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           </Link>
         )}
+        <button
+          type="button"
+          data-card-action
+          onClick={(e) => { e.stopPropagation(); onTenantConfirmed(); }}
+          className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
+          style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.30)", color: "#1F8B4C" }}
+        >
+          <span className="flex items-start gap-1.5 min-w-0 flex-1">
+            <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>Tenant confirmed</span>
+          </span>
+          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+        </button>
         <Link
           href={`/matching/${l.id}`}
           data-card-action
@@ -773,14 +847,18 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
     );
   }
   if (stage === "matched") {
+    const isReserved = tenantInfo?.lifecycle_stage === "reserved";
     return (
       <button
         type="button"
         data-card-action
         onClick={(e) => {
           e.stopPropagation();
-          if (tenantInfo) { onCommission(tenantInfo.tenancy_id); }
-          else {
+          if (tenantInfo && isReserved) {
+            onConfirmMovedIn(tenantInfo);
+          } else if (tenantInfo) {
+            onCommission(tenantInfo.tenancy_id);
+          } else {
             startTransition(async () => {
               await setOwnerLeadStage(l.id, "archived");
               router.refresh();
@@ -792,8 +870,8 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
         className="kk-card-cta kk-card-cta-soft-green flex items-center justify-between w-full"
       >
         <span className="flex items-start gap-1.5 min-w-0 flex-1">
-          {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <Banknote className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
-          <span>Moved in</span>
+          {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+          <span>{isReserved ? "Confirm moved in" : "Moved in"}</span>
         </span>
         <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
       </button>

@@ -76,9 +76,9 @@ function getStatus(lead: OwnerLead): ContactStatus {
   return "unsent";
 }
 
-function getProtectingList(stage: string): string | null {
-  if (stage === "listed" || stage === "wants_rent" || stage === "replied") return "My Listing";
-  if (stage === "matched") return "Existing Listing";
+function getProtectingList(lead: OwnerLead): string | null {
+  if (lead.stage === "listed" || lead.stage === "wants_rent" || lead.stage === "replied") return "My Listing";
+  if (lead.stage === "matched") return lead.has_active_tenancy ? "Existing Listing" : "My Listing (Rented)";
   return null;
 }
 
@@ -654,7 +654,7 @@ function LeadPopup({
 
           {/* Delete — always shown */}
           {(() => {
-            const protectingList = getProtectingList(lead.stage);
+            const protectingList = getProtectingList(lead);
             if (!deleteConfirm) {
               return (
                 <button
@@ -1048,7 +1048,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
   async function handleBulkDelete() {
     const selectedLeads = visible.filter((l) => selectedIds.has(l.id));
-    const safeIds = selectedLeads.filter((l) => !getProtectingList(l.stage)).map((l) => l.id);
+    const safeIds = selectedLeads.filter((l) => !getProtectingList(l)).map((l) => l.id);
     if (safeIds.length === 0) { setBulkDeleteConfirm(false); return; }
     setBulkDeleting(true);
     try {
@@ -1606,9 +1606,9 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       {/* Bulk delete confirmation dialog */}
       {(() => {
         const selectedLeads = visible.filter((l) => selectedIds.has(l.id));
-        const safeLeads = selectedLeads.filter((l) => !getProtectingList(l.stage));
-        const protectedLeads = selectedLeads.filter((l) => getProtectingList(l.stage));
-        const protectedLists = [...new Set(protectedLeads.map((l) => getProtectingList(l.stage) as string))];
+        const safeLeads = selectedLeads.filter((l) => !getProtectingList(l));
+        const protectedLeads = selectedLeads.filter((l) => getProtectingList(l));
+        const protectedLists = [...new Set(protectedLeads.map((l) => getProtectingList(l) as string))];
         return (
           <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
             <DialogContent showCloseButton={false}>

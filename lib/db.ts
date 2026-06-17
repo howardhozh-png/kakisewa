@@ -141,7 +141,7 @@ async function _cachedLifecycleTenancies(userId: string): Promise<Tenancy[]> {
       .eq("user_id", userId)
       .is("deleted_at", null)
       .not("contract_end", "is", null)
-      .neq("lifecycle_stage", "closed")
+      .not("lifecycle_stage", "in", '("closed","reserved")')
       .order("contract_end", { ascending: true })
       .order("id", { ascending: true })
       .range(from, from + PAGE - 1);
@@ -660,7 +660,7 @@ export async function getLifecycleTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).neq("lifecycle_stage", "closed").order("contract_end", { ascending: true });
+    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).not("lifecycle_stage", "in", '("closed","reserved")').order("contract_end", { ascending: true });
     if (error) throw error;
     return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
   }
@@ -2390,17 +2390,28 @@ export async function getTenantForOwnerLead(ownerLeadId: string): Promise<{ tena
   return { tenancy_id: r.id as string, tenant_name: r.tenant_name as string, tenant_phone: r.tenant_phone as string };
 }
 
-export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<Record<string, { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }>> {
+export type TenantByLead = {
+  tenant_name: string;
+  tenant_phone: string;
+  tenancy_id: string;
+  lifecycle_stage: string | null;
+  contract_start: string | null;
+  contract_end: string | null;
+  contract_duration_months: number | null;
+  amount: number;
+};
+
+export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<Record<string, TenantByLead>> {
   if (ownerLeadIds.length === 0) return {};
   const supabase = await createClient();
   const { data } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, tenant_phone, owner_lead_id, lifecycle_stage")
+    .select("id, tenant_name, tenant_phone, owner_lead_id, lifecycle_stage, contract_start, contract_end, contract_duration_months, amount")
     .in("owner_lead_id", ownerLeadIds)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  const out: Record<string, { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }> = {};
+  const out: Record<string, TenantByLead> = {};
   for (const r of data ?? []) {
     const row = r as Record<string, unknown>;
     const olId = row.owner_lead_id as string;
@@ -2410,6 +2421,10 @@ export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<R
         tenant_name: row.tenant_name as string,
         tenant_phone: row.tenant_phone as string,
         lifecycle_stage: row.lifecycle_stage as string | null,
+        contract_start: row.contract_start as string | null,
+        contract_end: row.contract_end as string | null,
+        contract_duration_months: row.contract_duration_months as number | null,
+        amount: row.amount as number,
       };
     }
   }

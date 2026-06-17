@@ -206,13 +206,13 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
 }
 
 export async function removeTenancy(id: string) {
-  // Also delete the linked owner_lead (if it's in "matched" stage — it lives in the Rented column)
+  // Soft-delete the linked owner_lead if matched with no other active tenancies
   try {
     const tenancy = await getTenancy(id);
     if (tenancy?.owner_lead_id) {
       const lead = await getOwnerLead(tenancy.owner_lead_id);
-      if (lead && (lead.stage === "matched" || lead.stage === "archived")) {
-        await deleteOwnerLead(tenancy.owner_lead_id);
+      if (lead && lead.stage === "matched") {
+        await softDeleteOwnerLeadForce(tenancy.owner_lead_id);
       }
     }
   } catch { /* non-critical */ }
@@ -225,14 +225,13 @@ export async function removeTenancy(id: string) {
 
 export async function bulkRemoveTenancies(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  // Also delete linked owner_leads sitting in the Rented column, mirroring removeTenancy
   await Promise.all(ids.map(async (id) => {
     try {
       const tenancy = await getTenancy(id);
       if (tenancy?.owner_lead_id) {
         const lead = await getOwnerLead(tenancy.owner_lead_id);
-        if (lead && (lead.stage === "matched" || lead.stage === "archived")) {
-          await deleteOwnerLead(tenancy.owner_lead_id);
+        if (lead && lead.stage === "matched") {
+          await softDeleteOwnerLeadForce(tenancy.owner_lead_id);
         }
       }
     } catch { /* non-critical */ }
@@ -793,27 +792,11 @@ export async function moveTenantLeaving(
     const t = await getTenancy(tenancyId);
     if (!t) return { ok: false, message: "Tenancy not found." };
 
-    let bedrooms: number | null = null;
-    let bathrooms: number | null = null;
     if (t.owner_lead_id) {
-      const orig = await getOwnerLead(t.owner_lead_id);
-      if (orig) { bedrooms = orig.bedrooms ?? null; bathrooms = orig.bathrooms ?? null; }
-    }
-
-    if (t.property?.owner_name && t.property?.owner_phone) {
-      await createOwnerLead({
-        owner_name: t.property.owner_name,
-        owner_phone: t.property.owner_phone,
-        property_name: t.property_name ?? null,
-        unit: t.property.unit ?? null,
-        address: t.property.address ?? null,
-        expected_rent: data.expectedRent,
-        bedrooms,
-        bathrooms,
-        available_from: data.availableFrom,
-        notes: `Replacement listing — ${t.tenant_name} moving out by ${t.contract_end ?? ""}`,
-        source: "auto_replacing",
+      await updateOwnerLead(t.owner_lead_id, {
         stage: "listed",
+        expected_rent: data.expectedRent,
+        available_from: data.availableFrom,
       });
     }
 
@@ -822,7 +805,7 @@ export async function moveTenantLeaving(
     revalidatePath("/existing-listing");
     revalidatePath("/potential-listing"); revalidatePath("/my-listing");
     revalidatePath("/");
-    return { ok: true, message: "New listing created and tenancy archived." };
+    return { ok: true, message: "Listing reopened and tenancy archived." };
   } catch (e) {
     console.error(e);
     return { ok: false, message: "Could not process tenant leaving." };
@@ -834,18 +817,8 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     const t = await getTenancy(tenancyId);
     if (!t) return { ok: false, message: "Tenancy not found." };
 
-    if (t.property?.owner_name && t.property?.owner_phone) {
-      await createOwnerLead({
-        owner_name: t.property.owner_name,
-        owner_phone: t.property.owner_phone,
-        property_name: t.property_name ?? null,
-        unit: t.property.unit ?? null,
-        address: t.property.address ?? null,
-        expected_rent: null,
-        notes: `Owner keeping for own stay — ${t.tenant_name}'s contract ends ${t.contract_end ?? ""}`,
-        source: "manual",
-        stage: "own_stay",
-      });
+    if (t.owner_lead_id) {
+      await updateOwnerLead(t.owner_lead_id, { stage: "archived" });
     }
 
     // Look up by both phone AND name to avoid updating the wrong profile
@@ -879,7 +852,7 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     revalidatePath("/potential-listing"); revalidatePath("/my-listing");
     revalidatePath("/tenants");
     revalidatePath("/");
-    return { ok: true, message: "Owner lead created, tenant marked as seeking, tenancy archived." };
+    return { ok: true, message: "Lead archived, tenant marked as seeking, tenancy closed." };
   } catch (e) {
     console.error(e);
     return { ok: false, message: "Could not process owner leaving." };
@@ -1034,7 +1007,7 @@ export async function convertLeadToTenancy(
     const cap = await checkRenewalCardCap();
     if (!cap.allowed) return { ok: false, message: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
-    const signedTenancy = await createTenancy({
+    await createTenancy({
       owner_lead_id: ownerLeadId,
       tenant_name: data.tenant_name,
       tenant_phone: data.tenant_phone,
@@ -1051,15 +1024,7 @@ export async function convertLeadToTenancy(
       contract_duration_months: data.contract_duration_months,
       replied_tenant: "pending",
       replied_owner: "pending",
-    });
-
-    const agent = await getAgentProfile();
-    recordCommissionEvent({
-      tenancy_id: signedTenancy.id,
-      owner_lead_id: ownerLeadId,
-      type: "new_signing",
-      amount: Math.round(data.amount * (agent.commission_pct ?? 100) / 100),
-      earned_on: isoStart,
+      lifecycle_stage: "reserved",
     });
 
     await updateOwnerLead(ownerLeadId, { stage: "matched", is_managed: true });
@@ -1074,10 +1039,55 @@ export async function convertLeadToTenancy(
     revalidatePath("/existing-listing");
     revalidatePath("/directory");
     revalidatePath("/");
-    return { ok: true, message: "Tenancy created and lead marked as Matched." };
+    return { ok: true, message: "Tenant confirmed." };
   } catch (e) {
     console.error(e);
     return { ok: false, message: "Could not create tenancy." };
+  }
+}
+
+export async function confirmMovedIn(
+  tenancyId: string
+): Promise<{ ok: boolean; message?: string; cap_reached?: { current_plan: string; upgrade_to: string; current_cap: number; upgrade_cap: number | null } }> {
+  try {
+    const capCheck = await checkRenewalCardCap();
+    if (!capCheck.allowed) {
+      return {
+        ok: false,
+        message: "cap_reached",
+        cap_reached: {
+          current_plan: capCheck.current_plan,
+          upgrade_to: capCheck.upgrade_to,
+          current_cap: capCheck.current_cap,
+          upgrade_cap: capCheck.upgrade_cap ?? null,
+        },
+      };
+    }
+
+    const tenancy = await getTenancy(tenancyId);
+    if (!tenancy) return { ok: false, message: "Tenancy not found." };
+
+    const agent = await getAgentProfile();
+    if (tenancy.owner_lead_id) {
+      recordCommissionEvent({
+        tenancy_id: tenancyId,
+        owner_lead_id: tenancy.owner_lead_id,
+        type: "new_signing",
+        amount: Math.round(tenancy.amount * (agent.commission_pct ?? 100) / 100),
+        earned_on: tenancy.contract_start ?? new Date().toISOString().slice(0, 10),
+      });
+    }
+
+    await updateTenancy(tenancyId, { lifecycle_stage: "active" });
+    invalidateCache();
+    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/existing-listing");
+    revalidatePath("/performance");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (e) {
+    console.error(e);
+    return { ok: false, message: "Could not confirm move in." };
   }
 }
 

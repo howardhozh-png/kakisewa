@@ -172,7 +172,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const byStage = useMemo(() => {
     const out: Record<LifecycleStage, Tenancy[]> = {
       active: [], stalled: [], headsup: [], pinged: [], renewing: [],
-      pending_payment: [], replacing: [], ending: [], closed: [],
+      pending_payment: [], replacing: [], ending: [], closed: [], reserved: [],
     };
     const q = search.toLowerCase().trim();
     local
@@ -182,7 +182,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       .forEach((t) => {
         const stage = defaultLifecycleStage(t, today);
         if (!stage) return;
-        if (stage === "closed") return; // archived — fall off the board immediately
+        if (stage === "closed" || stage === "reserved") return; // archived or pending move-in — not shown here
         // All non-primary stages show in Expiring column so every card linked from home is reachable
         const bucket: LifecycleStage = (stage === "pinged" || stage === "stalled" || stage === "ending" || stage === "replacing") ? "headsup" : stage;
         if (bucket in out) out[bucket].push(t);
