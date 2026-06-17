@@ -1342,17 +1342,23 @@ export async function restoreOwnerLead(id: string): Promise<void> {
 }
 
 export async function hardDeleteOwnerLead(id: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("owner_leads").delete().eq("id", id);
+  const auth = await createClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const svc = createServiceClient();
+  const { error } = await svc.from("owner_leads").delete().eq("id", id).eq("user_id", user.id);
   if (error) throw error;
 }
 
 export async function bulkHardDeleteOwnerLeads(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  const supabase = await createClient();
+  const auth = await createClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const svc = createServiceClient();
   const CHUNK = 500;
   for (let i = 0; i < ids.length; i += CHUNK) {
-    const { error } = await supabase.from("owner_leads").delete().in("id", ids.slice(i, i + CHUNK));
+    const { error } = await svc.from("owner_leads").delete().in("id", ids.slice(i, i + CHUNK)).eq("user_id", user.id);
     if (error) throw error;
   }
 }
@@ -2716,22 +2722,22 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false"),
     ol().is("deleted_at", null).eq("stage", "imported").or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
     ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
-    // All pipeline stages — matches My Listing board which shows listed/wants_rent/replied/matched
-    ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["listed","wants_rent","replied","matched"]),
+    // My Listing board shows listed/wants_rent/replied only; matched moves to Existing Listing once tenancy exists
+    ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["listed","wants_rent","replied"]),
     olD().eq("stage", "listed").in("listing_purpose", ["rent", "both"]),
     olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
-    // Active = not closed, not yet expired — anchored to today
-    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today),
+    // Active = not closed, not yet expired — use neq (excludes NULL) to match board behaviour
+    tn().neq("lifecycle_stage", "closed").gte("contract_end", today),
     // Expiring within selected window (start month → start month + N months)
-    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", windowStart).lte("contract_end", periodEnd),
+    tn().neq("lifecycle_stage", "closed").gte("contract_end", windowStart).lte("contract_end", periodEnd),
     // Explicitly set to renewing lifecycle stage
     tn().eq("lifecycle_stage", "renewing"),
     // Expiring within fixed 60-day window from today (not range-sensitive)
-    tn().or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").gte("contract_end", today).lte("contract_end", sixtyDayEnd),
-    // Already expired (contract_end < today, not yet closed)
-    svc.from("tenancies").select("id", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).or("lifecycle_stage.is.null,lifecycle_stage.neq.closed").lt("contract_end", today),
+    tn().neq("lifecycle_stage", "closed").gte("contract_end", today).lte("contract_end", sixtyDayEnd),
+    // Already expired (contract_end < today, not yet closed) — neq excludes NULLs, matching board
+    svc.from("tenancies").select("id", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).neq("lifecycle_stage", "closed").lt("contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", windowStart).lte("competitor_contract_end", periodEnd),
     // Competitors in watching stage

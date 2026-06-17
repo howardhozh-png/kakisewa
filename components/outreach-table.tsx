@@ -1023,6 +1023,8 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       await hardDeleteOwnerLeadAction(id);
       setHardDeleteConfirmId(null);
       router.refresh();
+    } catch {
+      toast.error("Delete failed — please try again");
     } finally {
       setHardDeletingId(null);
     }
@@ -1037,6 +1039,8 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       setSelectedIds(new Set());
       setBulkHardDeleteConfirm(false);
       router.refresh();
+    } catch {
+      toast.error("Delete failed — please try again");
     } finally {
       setBulkHardDeleting(false);
     }
