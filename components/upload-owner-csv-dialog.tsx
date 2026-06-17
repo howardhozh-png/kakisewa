@@ -182,7 +182,7 @@ export function UploadOwnerCsvDialog() {
       setResult(res);
       setStep("result");
       if (res.ok) {
-        track(ph, "csv_imported", { rows: (rowsOverride ?? parsedData?.rows ?? []).length, type: "owner" });
+        track(ph, "csv_imported", { rows: (parsedData?.rows ?? []).length, type: "owner" });
         toast.success(res.message); router.refresh();
       }
       else toast.error(res.message);

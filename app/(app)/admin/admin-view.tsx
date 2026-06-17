@@ -36,6 +36,7 @@ interface AgentRow {
   my_listing_count: number; existing_listing_count: number;
   target_listing_count: number; renewal_wa_count: number;
   feedback_count: number; subscription_activated_at: string | null;
+  is_test_account: boolean;
 }
 interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
 interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
@@ -448,8 +449,26 @@ function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; s
   return sortDir === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />;
 }
 
-function AgentDetailPanel({ a }: { a: AgentRow & { segment: Segment; health: number } }) {
+function AgentDetailPanel({ a, onTestToggled }: { a: AgentRow & { segment: Segment; health: number }; onTestToggled: (id: string, val: boolean) => void }) {
   const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? null;
+  const [toggling, setToggling] = useState(false);
+
+  async function handleTestToggle() {
+    setToggling(true);
+    const res = await fetch("/api/admin/toggle-test-account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: a.id, is_test_account: !a.is_test_account }),
+    });
+    if (res.ok) {
+      onTestToggled(a.id, !a.is_test_account);
+      toast.success(a.is_test_account ? "Test tag removed" : "Marked as test account");
+    } else {
+      toast.error("Failed to update");
+    }
+    setToggling(false);
+  }
+
   return (
     <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4" style={{ background: "rgba(0,0,0,0.025)", borderTop: "1px solid var(--kk-line)" }}>
       <div>
@@ -502,23 +521,35 @@ function AgentDetailPanel({ a }: { a: AgentRow & { segment: Segment; health: num
           <a href={`https://us.posthog.com/persons?search=${encodeURIComponent(a.id)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ background: "rgba(240,100,30,0.08)", border: "1px solid rgba(240,100,30,0.2)", color: "#E05A1E" }}>
             <ExternalLink className="w-3 h-3" /> PostHog
           </a>
+          <button
+            onClick={handleTestToggle}
+            disabled={toggling}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50"
+            style={{ background: a.is_test_account ? "rgba(110,110,115,0.12)" : "rgba(110,110,115,0.08)", border: "1px solid rgba(110,110,115,0.25)", color: "#6E6E73" }}>
+            {a.is_test_account ? "Remove test tag" : "Mark as test"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment }: {
+function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, initialSegment }: {
   agents: AgentRow[];
   rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
   initialSegment: Segment | "all";
 }) {
+  const [agents, setAgents] = useState<AgentRow[]>(initialAgents);
   const [search, setSearch] = useState("");
   const [segFilter, setSegFilter] = useState<Segment | "all">(initialSegment);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  function handleTestToggled(id: string, val: boolean) {
+    setAgents(prev => prev.map(a => a.id === id ? { ...a, is_test_account: val } : a));
+  }
 
   function toggleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -546,7 +577,8 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
       rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
     }
     if (segFilter !== "all") rows = rows.filter(a => a.segment === segFilter);
-    if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
+    if (statusFilter === "test") rows = rows.filter(a => a.is_test_account);
+    else if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
     return [...rows].sort((a, b) => {
       let av: number | string = 0, bv: number | string = 0;
       if (sortCol === "name") { av = (a.name ?? "").toLowerCase(); bv = (b.name ?? "").toLowerCase(); }
@@ -648,6 +680,7 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
           <option value="trial">Trial</option>
           <option value="active">Paid</option>
           <option value="expired">Expired</option>
+          <option value="test">Test</option>
         </select>
         <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
         <div className="flex items-center gap-2 ml-auto">
@@ -735,7 +768,10 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
                             {(a.name ?? a.email ?? "?")[0].toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <p style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.3, color: "var(--kk-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name || "—"}</p>
+                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                              <p style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.3, color: "var(--kk-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name || "—"}</p>
+                              {a.is_test_account && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 4, background: "rgba(110,110,115,0.12)", color: "#6E6E73", letterSpacing: "0.04em", textTransform: "uppercase", flexShrink: 0 }}>Test</span>}
+                            </div>
                             <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email || "no email"}</p>
                             {a.agency && <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.agency}</p>}
                           </div>
@@ -765,7 +801,7 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
                     {isExpanded && (
                       <tr style={{ background: rowBg }}>
                         <td colSpan={10} style={{ padding: 0 }}>
-                          <AgentDetailPanel a={a} />
+                          <AgentDetailPanel a={a} onTestToggled={handleTestToggled} />
                         </td>
                       </tr>
                     )}
@@ -786,11 +822,14 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
   const [revenueView, setRevenueView] = useState<"confirmed" | "by_plan">("confirmed");
 
   const stats = useMemo(() => {
+    const realAgents = agents.filter(a => !a.is_test_account);
+    const testCount = agents.length - realAgents.length;
+
     // Confirmed paid = status strictly "active"
     const confirmedByPlan: Record<string, number> = {};
     let confirmedMrr = 0;
     const paidUsers: AgentRow[] = [];
-    for (const a of agents) {
+    for (const a of realAgents) {
       if (a.subscription_status === "active" && a.subscription_plan) {
         confirmedByPlan[a.subscription_plan] = (confirmedByPlan[a.subscription_plan] ?? 0) + 1;
         confirmedMrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
@@ -807,7 +846,7 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
     const byPlanAll: Record<string, number> = {};
     let potentialMrr = 0;
     const byPlanUsers: AgentRow[] = [];
-    for (const a of agents) {
+    for (const a of realAgents) {
       if (a.subscription_plan) {
         byPlanAll[a.subscription_plan] = (byPlanAll[a.subscription_plan] ?? 0) + 1;
         potentialMrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
@@ -823,10 +862,10 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
     });
 
     const totalPaid = agents.filter(a => a.subscription_status === "active").length;
-    const totalTrialBeta = agents.filter(a => a.subscription_status === "trial" || a.subscription_status === "beta").length;
-    const totalExpired = agents.filter(a => a.subscription_status === "expired").length;
+    const totalTrialBeta = realAgents.filter(a => a.subscription_status === "trial" || a.subscription_status === "beta").length;
+    const totalExpired = realAgents.filter(a => a.subscription_status === "expired").length;
 
-    const expiringTrials = agents
+    const expiringTrials = realAgents
       .filter(a => (a.subscription_status === "trial" || a.subscription_status === "beta") && a.trial_days_left !== null && a.trial_days_left >= 0)
       .sort((a, b) => (a.trial_days_left ?? 99) - (b.trial_days_left ?? 99));
 
@@ -834,7 +873,7 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
       ? Math.round((totalPaid / (totalPaid + totalExpired)) * 100)
       : null;
 
-    return { confirmedByPlan, confirmedMrr, byPlanAll, potentialMrr, paidUsers, byPlanUsers, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate };
+    return { confirmedByPlan, confirmedMrr, byPlanAll, potentialMrr, paidUsers, byPlanUsers, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate, testCount };
   }, [agents]);
 
   const isConfirmed = revenueView === "confirmed";
@@ -843,8 +882,9 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
 
   return (
     <div className="space-y-8">
-      {/* Toggle */}
-      <div className="flex items-center gap-1 p-1 rounded-xl self-start" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", width: "fit-content" }}>
+      {/* Toggle + test exclusion note */}
+      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", width: "fit-content" }}>
         {(["confirmed", "by_plan"] as const).map(v => (
           <button
             key={v}
@@ -858,6 +898,12 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
             {v === "confirmed" ? "Confirmed paid" : "By plan"}
           </button>
         ))}
+      </div>
+      {stats.testCount > 0 && (
+        <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+          {stats.testCount} test account{stats.testCount !== 1 ? "s" : ""} excluded
+        </p>
+      )}
       </div>
 
       {/* MRR breakdown */}
