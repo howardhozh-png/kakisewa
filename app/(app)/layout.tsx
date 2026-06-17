@@ -14,7 +14,7 @@ import { SessionGuard } from "@/components/session-guard";
 import { FaqChatbot } from "@/components/faq-chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports, countCalendarEvents } from "@/lib/db";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
@@ -26,9 +26,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const agent = await getAgentProfile();
   if (agent.id === 0) redirect("/login");
   const trialStart = agent.trial_started_at ? new Date(agent.trial_started_at) : undefined;
-  const [leadCount, contractCount, tenantCount, supportCount] = await Promise.all([
+  const [leadCount, contractCount, calendarEventCount, tenantCount, supportCount] = await Promise.all([
     countOwnerLeads().catch(() => null),
     countLifecycleTenancies().catch(() => null),
+    countCalendarEvents().catch(() => null),
     countTenantProfiles().catch(() => null),
     countPropertySupports(trialStart).catch(() => null),
   ]);
@@ -98,6 +99,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           isNewAgent={isNewAgent}
           hasLeads={(leadCount ?? 0) > 0}
           hasContracts={(contractCount ?? 0) > 0}
+          hasCalendarEvent={(calendarEventCount ?? 0) > 0}
           hasTenants={(tenantCount ?? 0) > 0}
           hasSupports={(supportCount ?? 0) > 0}
         />
