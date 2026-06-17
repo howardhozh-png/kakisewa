@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tenancy } from "@/lib/types";
 import { collectRenewalCommission } from "@/lib/actions";
 import { CheckCircle, Loader2, X } from "lucide-react";
 import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 
 interface Props {
   t: Tenancy;
@@ -27,6 +29,7 @@ function addYears(iso: string, years: number): string {
 
 export function RenewalCommissionDialog({ t, open, onClose }: Props) {
   const [pending, startTransition] = useTransition();
+  const ph = usePostHog();
 
   const defaultRent  = t.renewal_proposed_rent  ?? t.amount;
   const defaultStart = t.renewal_proposed_start  ?? t.contract_end ?? "";
@@ -58,6 +61,7 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
         commissionType,
       });
       if (res.ok) {
+        track(ph, "renewal_actioned", { action: "staying", tenancy_id: t.id });
         toast.success("Commission recorded. Tenancy restarted as Active.");
         onClose();
       } else {

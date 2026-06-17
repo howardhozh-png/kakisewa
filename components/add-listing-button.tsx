@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import { FileText as ListingIcon, Loader2, Camera, FileText, X } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
@@ -63,6 +65,7 @@ function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { va
 
 export function AddListingButton({ ownerLeads = [] }: Props) {
   const router = useRouter();
+  const ph = usePostHog();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Form>(EMPTY);
   const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; preview: string }>>([]);
@@ -135,6 +138,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         return;
       }
       if (!res.ok) { toast.error(res.message ?? "Could not save listing"); return; }
+      track(ph, "card_added", { type: "owner_lead", stage: "listed" });
 
       if (res.id && (photoFiles.length > 0 || agreementFiles.length > 0)) {
         setUploading(true);
@@ -147,7 +151,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
               const d = await r.json() as { ok?: boolean; url?: string };
               if (d.ok && d.url) urls.push(d.url);
             }
-            if (urls.length > 0) await saveOwnerLeadPhotos(res.id, urls);
+            if (urls.length > 0) { await saveOwnerLeadPhotos(res.id, urls); track(ph, "photo_uploaded", { count: urls.length, context: "listing" }); }
           }
           if (agreementFiles.length > 0) {
             const aUrls: string[] = [];

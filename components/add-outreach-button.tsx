@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import { Users, Loader2, ChevronDown, MessageCircle, PenLine, Camera, FileText, X } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
@@ -47,6 +49,7 @@ function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { va
 
 export function AddOutreachButton({ ownerLeads = [] }: Props) {
   const router = useRouter();
+  const ph = usePostHog();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -92,7 +95,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
         const d = await r.json() as { ok?: boolean; url?: string };
         if (d.ok && d.url) urls.push(d.url);
       }
-      if (urls.length > 0) await saveOwnerLeadPhotos(leadId, urls);
+      if (urls.length > 0) { await saveOwnerLeadPhotos(leadId, urls); track(ph, "photo_uploaded", { count: urls.length, context: "outreach" }); }
     }
     if (agreementFile) {
       const fd = new FormData(); fd.append("file", agreementFile.file);
@@ -126,6 +129,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
           return;
         }
         if (!res.ok) { toast.error(res.message ?? "Could not save"); return; }
+        track(ph, "card_added", { type: "owner_lead", method: "whatsapp" });
         if (res.id) {
           const link = await generateOwnerIntakeLink(res.id);
           if (link.ok) { window.open(link.waUrl, "_blank", "noopener,noreferrer"); toast.success("Lead saved. WhatsApp opened."); }
@@ -154,6 +158,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
         return;
       }
       if (!res.ok) { toast.error(res.message ?? "Could not save"); return; }
+      track(ph, "card_added", { type: "owner_lead", method: "manual" });
       if (res.id) { setUploading(true); try { await uploadFiles(res.id); } finally { setUploading(false); } }
       toast.success("Added to outreach");
       setManualOpen(false); resetManual(); router.refresh();

@@ -1,11 +1,13 @@
 "use client";
 
 import { useTransition } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tenancy } from "@/lib/types";
 import { moveOwnerLeaving } from "@/lib/actions";
 import { ArrowDownLeft, Loader2, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 
 interface Props {
   t: Tenancy;
@@ -15,11 +17,13 @@ interface Props {
 
 export function OwnerLeavingDialog({ t, open, onClose }: Props) {
   const [pending, startTransition] = useTransition();
+  const ph = usePostHog();
 
   function confirm() {
     startTransition(async () => {
       const res = await moveOwnerLeaving(t.id);
       if (res.ok) {
+        track(ph, "renewal_actioned", { action: "leaving", party: "owner", tenancy_id: t.id });
         toast.success("Owner lead created and tenant marked as seeking.");
         onClose(); // board-level onClose handles router.refresh()
       } else {

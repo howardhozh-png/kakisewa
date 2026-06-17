@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, AlertCircle, CheckCircle2, FileSpreadsheet, ChevronLeft, ChevronRight, X, Lightbulb } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
+import { Upload, AlertCircle, CheckCircle2, FileSpreadsheet, ChevronLeft, ChevronRight, X, Lightbulb, Sparkles, Undo2 } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   extractRawData,
@@ -317,6 +319,7 @@ interface Props {
 }
 
 export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
+  const ph = usePostHog();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("upload");
   const [rows, setRows] = useState<TenancyImportRow[]>([]);
@@ -538,6 +541,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
       const data = await res.json() as { imported: number };
       setImportedCount(data.imported);
       setStep("done");
+      track(ph, "csv_imported", { rows: rows.length, type: "tenancy" });
       onImported?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");

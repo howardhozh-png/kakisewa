@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tenancy, LifecycleStage, defaultLifecycleStage, daysUntil, getBusinessToday } from "@/lib/types";
@@ -56,6 +58,7 @@ interface Props {
 export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "platinum" }: Props) {
   const today = useMemo(() => getBusinessToday(), []);
   const router = useRouter();
+  const ph = usePostHog();
   const [openTenancy, setOpenTenancy] = useState<Tenancy | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingTenancy, setDraggingTenancy] = useState<Tenancy | null>(null);
@@ -222,10 +225,12 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   async function confirmMove() {
     if (!pendingMove) return;
     const { t, target } = pendingMove;
+    const fromStage = defaultLifecycleStage(t, today);
     setPendingMove(null);
     setLocal((prev) => prev.map((x) => (x.id === t.id ? optimisticApply(x, target) : x)));
     const res = await setLifecycleStage(t.id, target);
     if (res.ok) {
+      track(ph, "pipeline_card_moved", { from_col: fromStage, to_col: target, type: "tenancy" });
       router.refresh();
     } else {
       setLocal(tenancies);
@@ -700,6 +705,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
   selected?: boolean;
   onToggleSelect?: () => void;
 }) {
+  const ph = usePostHog();
   const { attributes, listeners, setNodeRef } = useDraggable({ id: t.id, disabled: selectMode });
   const [pressing, setPressing] = useState(false);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -745,6 +751,8 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action], [data-chip]")) return;
         if (selectMode) { onToggleSelect?.(); return; }
+        track(ph, "card_opened", { type: "tenancy", card_id: t.id, col: col.stage });
+        if (col.stage === "headsup") track(ph, "contract_expiry_viewed", { card_id: t.id });
         onOpen();
       }}
     >
@@ -1074,6 +1082,7 @@ const OUTCOME_META: Record<Exclude<OutcomeChoice, "">, {
 
 function HeadsupTenantAction({ t }: { t: Tenancy }) {
   const [pending, startTransition] = useTransition();
+  const ph = usePostHog();
 
   if (!t.tenant_phone) return null;
 
@@ -1081,7 +1090,7 @@ function HeadsupTenantAction({ t }: { t: Tenancy }) {
     e.stopPropagation();
     startTransition(async () => {
       const res = await buildExpiryPingTenant(t.id);
-      if (res) window.open(res.url, "_blank", "noopener");
+      if (res) { window.open(res.url, "_blank", "noopener"); track(ph, "whatsapp_sent", { type: "tenant", template: "renewal_expiry" }); }
     });
   }
 
@@ -1107,6 +1116,7 @@ function HeadsupTenantAction({ t }: { t: Tenancy }) {
 
 function HeadsupOwnerAction({ t }: { t: Tenancy }) {
   const [pending, startTransition] = useTransition();
+  const ph = usePostHog();
 
   if (!t.property?.owner_phone) return null;
 
@@ -1114,7 +1124,7 @@ function HeadsupOwnerAction({ t }: { t: Tenancy }) {
     e.stopPropagation();
     startTransition(async () => {
       const res = await buildExpiryPingOwner(t.id);
-      if (res) window.open(res.url, "_blank", "noopener");
+      if (res) { window.open(res.url, "_blank", "noopener"); track(ph, "whatsapp_sent", { type: "owner", template: "renewal_expiry" }); }
     });
   }
 

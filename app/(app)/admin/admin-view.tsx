@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2, ChevronUp, ChevronDown, Search, X as XIcon } from "lucide-react";
+import { Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2, ChevronUp, ChevronDown, Search, X as XIcon, Users, Activity, AlertCircle, TrendingUp, FileText, Home, ExternalLink as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { adminResetMyAccount } from "@/lib/actions";
 
@@ -103,8 +103,27 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null; }
-interface RawTenancy { user_id: string; created_at: string; }
+interface RawTenancy { user_id: string; created_at: string; contract_end: string | null; amount: number | null; }
 interface RawFeedbackItem { agent_id: string; created_at: string; }
+
+const MRR_BY_PLAN: Record<string, number> = {
+  gold: 119,
+  platinum: 179,
+  elite: 299,
+};
+
+function KpiCard({ label, value, sub, color, icon }: { label: string; value: string | number; sub?: string; color?: string; icon?: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl p-4 flex flex-col gap-1" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+      <div className="flex items-center gap-2 mb-1">
+        {icon && <span style={{ color: color ?? "var(--kk-ink-faint)" }}>{icon}</span>}
+        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.08em" }}>{label}</p>
+      </div>
+      <p className="tabular-nums font-bold" style={{ fontSize: "1.6rem", lineHeight: 1, color: color ?? "var(--kk-ink)" }}>{value}</p>
+      {sub && <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{sub}</p>}
+    </div>
+  );
+}
 
 const TIME_OPTIONS = [
   { value: "all",  label: "All time" },
@@ -383,6 +402,7 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
                 <Th col="my_listing_count" label="My Listing" right />
                 <Th col="existing_listing_count" label="Existing Listing" right />
                 <Th col="feedback_count" label="Feedback" right />
+                <th className="px-4 py-3 text-center whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", width: 48 }}>PH</th>
               </tr>
             </thead>
             <tbody>
@@ -429,6 +449,20 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
                     <td className="px-4 py-3 text-right"><NumCell value={a.my_listing_count} /></td>
                     <td className="px-4 py-3 text-right"><NumCell value={a.existing_listing_count} /></td>
                     <td className="px-4 py-3 text-right"><NumCell value={a.feedback_count} /></td>
+                    <td className="px-4 py-3 text-center">
+                      {a.email && (
+                        <a
+                          href={`https://us.posthog.com/persons?search=${encodeURIComponent(a.id)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="View in PostHog"
+                          className="inline-flex items-center justify-center w-6 h-6 rounded-lg transition-opacity hover:opacity-70"
+                          style={{ background: "rgba(240,100,30,0.10)", color: "#E05A1E" }}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -445,7 +479,44 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
   invites: InviteRow[]; waitlist: WaitlistRow[];
   rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
 }) {
-  const [tab, setTab] = useState<"funnel" | "feedback" | "agents" | "invites" | "waitlist">("funnel");
+  const [tab, setTab] = useState<"overview" | "funnel" | "feedback" | "agents" | "invites" | "waitlist">("overview");
+
+  // KPI computations
+  const kpi = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
+    const thirtyDaysMs = 30 * 86400000;
+    const sixtyDaysMs = 60 * 86400000;
+
+    const active7d = agents.filter(a => a.days_inactive !== null && a.days_inactive <= 6).length;
+    const ghostUsers = agents.filter(a => {
+      const joinedMs = now.getTime() - new Date(a.joined_at).getTime();
+      return joinedMs >= 7 * 86400000 && a.potential_listing_count === 0 && a.existing_listing_count === 0;
+    });
+
+    const mrr = agents.reduce((sum, a) => {
+      if (a.subscription_status !== "active" || !a.subscription_plan) return sum;
+      return sum + (MRR_BY_PLAN[a.subscription_plan] ?? 0);
+    }, 0);
+
+    const totalLeads = agents.reduce((s, a) => s + a.potential_listing_count, 0);
+    const totalContracts = agents.reduce((s, a) => s + a.existing_listing_count, 0);
+
+    const contractsExpiring30 = rawTenancies.filter(t => {
+      if (!t.contract_end) return false;
+      const ms = new Date(t.contract_end).getTime() - now.getTime();
+      return ms >= 0 && ms <= thirtyDaysMs;
+    });
+    const contractsExpiring60 = rawTenancies.filter(t => {
+      if (!t.contract_end) return false;
+      const ms = new Date(t.contract_end).getTime() - now.getTime();
+      return ms > thirtyDaysMs && ms <= sixtyDaysMs;
+    });
+
+    const recentlyActive = agents.filter(a => a.last_login_at && new Date(a.last_login_at) >= sevenDaysAgo);
+
+    return { active7d, ghostUsers, mrr, totalLeads, totalContracts, contractsExpiring30, contractsExpiring60, recentlyActive };
+  }, [agents, rawTenancies]);
   const [links, setLinks] = useState<Link[]>(initialLinks);
   const [feedback, setFeedback] = useState<FeedbackRow[]>(initialFeedback);
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites);
@@ -577,14 +648,14 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
 
   return (
     <div className="px-6 lg:px-12 py-10 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <h1 className="serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", letterSpacing: "-0.022em", color: "var(--kk-ink)" }}>
           Admin Dashboard
         </h1>
         <div className="flex gap-1 p-1 rounded-xl flex-wrap" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-          {(["funnel", "agents", "invites", "waitlist", "feedback"] as const).map(t => (
+          {(["overview", "funnel", "agents", "invites", "waitlist", "feedback"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all capitalize"
+              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all capitalize"
               style={{
                 background: tab === t ? "var(--kk-ink)" : "transparent",
                 color: tab === t ? "#fff" : "var(--kk-ink-mute)",
@@ -593,11 +664,121 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
                 : t === "agents" ? `Agents (${agents.length})`
                 : t === "invites" ? `Invites (${invites.length})`
                 : t === "waitlist" ? `Waitlist (${waitlist.length})`
+                : t === "overview" ? "Overview"
                 : "Funnel & Links"}
             </button>
           ))}
         </div>
       </div>
+
+      {/* KPI strip — always visible */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        <KpiCard label="Total users" value={funnel.total} icon={<Users className="w-3.5 h-3.5" />} />
+        <KpiCard label="Active 7d" value={kpi.active7d} sub={`${funnel.total > 0 ? Math.round((kpi.active7d / funnel.total) * 100) : 0}% of users`} color="var(--kk-green)" icon={<Activity className="w-3.5 h-3.5" />} />
+        <KpiCard label="Ghost users" value={kpi.ghostUsers.length} sub="Joined 7d+ no cards" color={kpi.ghostUsers.length > 0 ? "var(--kk-amber)" : "var(--kk-ink)"} icon={<AlertCircle className="w-3.5 h-3.5" />} />
+        <KpiCard label="Total leads" value={kpi.totalLeads} icon={<TrendingUp className="w-3.5 h-3.5" />} />
+        <KpiCard label="Contracts" value={kpi.totalContracts} icon={<FileText className="w-3.5 h-3.5" />} />
+        <KpiCard label="MRR est." value={`RM${kpi.mrr}`} sub={`${funnel.active} paid users`} color="var(--kk-blue)" icon={<Home className="w-3.5 h-3.5" />} />
+      </div>
+
+      {tab === "overview" && (
+        <div className="space-y-8">
+          {/* Ghost users */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <p className="kk-overline">Ghost users ({kpi.ghostUsers.length})</p>
+              {kpi.ghostUsers.length > 0 && (
+                <button
+                  onClick={() => { const emails = kpi.ghostUsers.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${kpi.ghostUsers.filter(a => a.email).length} emails copied`); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
+                  style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+                >
+                  <Copy className="w-3 h-3" /> Copy emails
+                </button>
+              )}
+            </div>
+            {kpi.ghostUsers.length === 0 ? (
+              <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                <p className="text-[13px] font-semibold" style={{ color: "var(--kk-green)" }}>No ghost users</p>
+                <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>Everyone who joined 7+ days ago has added at least one card.</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+                {kpi.ghostUsers.map((a, i) => {
+                  const daysSinceJoined = Math.floor((Date.now() - new Date(a.joined_at).getTime()) / 86400000);
+                  return (
+                    <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(255,149,0,0.10)", color: "#92400E" }}>
+                          Joined {daysSinceJoined}d ago
+                        </span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}>
+                          {STATUS_STYLE[a.subscription_status ?? ""]?.label ?? a.subscription_status ?? "—"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Contracts expiring */}
+          <section>
+            <p className="kk-overline mb-3">Contracts expiring soon</p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--kk-red)" }} />
+                  <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>Next 30 days</p>
+                  <span className="ml-auto tabular-nums font-bold text-[1.2rem]" style={{ color: "var(--kk-red)" }}>{kpi.contractsExpiring30.length}</span>
+                </div>
+                <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+                  {kpi.contractsExpiring30.length === 0 ? "No contracts expiring in the next 30 days." : `${kpi.contractsExpiring30.length} tenancy contract${kpi.contractsExpiring30.length !== 1 ? "s" : ""} need renewal attention.`}
+                </p>
+              </div>
+              <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--kk-amber)" }} />
+                  <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>31 to 60 days</p>
+                  <span className="ml-auto tabular-nums font-bold text-[1.2rem]" style={{ color: "#92400E" }}>{kpi.contractsExpiring60.length}</span>
+                </div>
+                <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+                  {kpi.contractsExpiring60.length === 0 ? "No contracts expiring in 31 to 60 days." : `${kpi.contractsExpiring60.length} contract${kpi.contractsExpiring60.length !== 1 ? "s" : ""} approaching renewal window.`}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* At-risk users */}
+          <section>
+            <p className="kk-overline mb-3">At risk ({agents.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13).length})</p>
+            <p className="text-[12px] mb-3" style={{ color: "var(--kk-ink-mute)" }}>Logged in 7 to 13 days ago. Worth a nudge before they go inactive.</p>
+            {agents.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13).length === 0 ? (
+              <div className="rounded-2xl px-5 py-4 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>No at-risk users right now.</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+                {agents.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13).slice(0, 10).map((a, i) => (
+                  <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                      <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                    </div>
+                    <InactiveBadge days={a.days_inactive} />
+                    <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{a.potential_listing_count + a.existing_listing_count} cards</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {tab === "invites" && (
         <div>

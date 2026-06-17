@@ -2,6 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -42,6 +44,7 @@ interface ParsedData {
 }
 
 export function UploadOwnerCsvDialog() {
+  const ph = usePostHog();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("pick");
   const [file, setFile] = useState<File | null>(null);
@@ -178,7 +181,10 @@ export function UploadOwnerCsvDialog() {
       setImportProgress(null);
       setResult(res);
       setStep("result");
-      if (res.ok) { toast.success(res.message); router.refresh(); }
+      if (res.ok) {
+        track(ph, "csv_imported", { rows: (rowsOverride ?? parsedData?.rows ?? []).length, type: "owner" });
+        toast.success(res.message); router.refresh();
+      }
       else toast.error(res.message);
     } catch {
       clearInterval(ticker);

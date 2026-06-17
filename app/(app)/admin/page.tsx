@@ -135,7 +135,7 @@ export default async function AdminPage() {
     fetchAllRows<{ user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }>(
       "owner_leads", "user_id, stage, wa_status, created_at, last_outreach_at, is_competitor_target", { col: "deleted_at" }
     ),
-    fetchAllRows<{ user_id: string; created_at: string }>("tenancies", "user_id, created_at", { col: "deleted_at" }),
+    fetchAllRows<{ user_id: string; created_at: string; contract_end: string | null; amount: number | null }>("tenancies", "user_id, created_at, contract_end, amount", { col: "deleted_at" }),
     fetchAllRows<{ agent_id: string; created_at: string }>("feedback", "agent_id, created_at"),
   ]);
 
@@ -166,8 +166,8 @@ export default async function AdminPage() {
   const rawLeads = (allLeads ?? []).map((l: { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }) => ({
     user_id: l.user_id, stage: l.stage, wa_status: l.wa_status, created_at: l.created_at, last_outreach_at: l.last_outreach_at, is_competitor_target: l.is_competitor_target,
   }));
-  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string }) => ({
-    user_id: t.user_id, created_at: t.created_at,
+  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string; contract_end: string | null; amount: number | null }) => ({
+    user_id: t.user_id, created_at: t.created_at, contract_end: t.contract_end ?? null, amount: t.amount ?? null,
   }));
   const rawFeedback = (allFeedbackCounts ?? []).map((f: { agent_id: string; created_at: string }) => ({
     agent_id: f.agent_id, created_at: f.created_at,

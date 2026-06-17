@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition, useMemo, useRef } from "react";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -42,6 +44,7 @@ function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { va
 }
 
 export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
+  const ph = usePostHog();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
@@ -188,6 +191,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
           setOpen(false);
           setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 20, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null, nearestExpiryDays: res.nearest_expiry_days ?? null });
         } else if (res.ok) {
+          track(ph, "card_added", { type: "tenancy" });
           reset(); setOpen(false); toast.success("Tenancy added.");
         } else {
           toast.error("Something went wrong. Please try again.");

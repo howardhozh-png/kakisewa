@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
@@ -51,6 +53,7 @@ interface Props {
 
 export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set() }: Props) {
   const router = useRouter();
+  const ph = usePostHog();
   const boardRef = useRef<HTMLDivElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeLead, setActiveLead] = useState<OwnerLead | null>(null);
@@ -185,6 +188,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
     const res = await setOwnerLeadStage(id, target);
     if (res.ok) {
+      track(ph, "pipeline_card_moved", { from_col: lead.stage, to_col: target, type: "owner_lead" });
       router.refresh();
     } else {
       setLocal(leads);
@@ -595,6 +599,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onComp
 }
 
 function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
+  const ph = usePostHog();
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
   const [pressing, setPressing] = useState(false);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -628,6 +633,7 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
         if (target.closest("[data-card-action]")) return;
         if (target.closest("[role='dialog']")) return;
         if (target.closest("[data-radix-popper-content-wrapper]")) return;
+        track(ph, "card_opened", { type: "owner_lead", card_id: l.id, col: col.stage });
         onEdit();
       }}
     >
@@ -638,6 +644,7 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
 
 function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCompetitorRented }: { l: OwnerLead; stage: Stage; tenantInfo?: { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onCompetitorRented: () => void }) {
   const [pending, startTransition] = useTransition();
+  const ph = usePostHog();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
@@ -648,6 +655,7 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCom
         const res = await sendOwnerOutreach(l.id, template);
         if (!res.ok) { toast.error(res.message); return; }
         window.open(res.url, "_blank", "noopener,noreferrer");
+        track(ph, "whatsapp_sent", { type: "owner", template });
         if (advanceTo) await setOwnerLeadStage(l.id, advanceTo);
         router.refresh();
         toast.success("Message ready in WhatsApp");

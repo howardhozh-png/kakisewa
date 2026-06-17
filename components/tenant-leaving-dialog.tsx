@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tenancy } from "@/lib/types";
 import { moveTenantLeaving } from "@/lib/actions";
 import { RefreshCw, Loader2, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { DateInput } from "@/components/ui/date-input";
+import { track } from "@/lib/analytics";
 
 interface Props {
   t: Tenancy;
@@ -16,6 +18,7 @@ interface Props {
 
 export function TenantLeavingDialog({ t, open, onClose }: Props) {
   const [pending, startTransition] = useTransition();
+  const ph = usePostHog();
   const [rent, setRent] = useState(String(t.renewal_proposed_rent ?? t.amount));
   const [availableFrom, setAvailableFrom] = useState(t.renewal_proposed_start ?? t.contract_end ?? "");
 
@@ -27,6 +30,7 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
         availableFrom: availableFrom || null,
       });
       if (res.ok) {
+        track(ph, "renewal_actioned", { action: "leaving", party: "tenant", tenancy_id: t.id });
         toast.success("New listing created in Make New Money.");
         onClose(); // board-level onClose handles router.refresh()
       } else {
