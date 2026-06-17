@@ -2397,6 +2397,7 @@ export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<R
     .from("tenancies")
     .select("id, tenant_name, tenant_phone, owner_lead_id, lifecycle_stage")
     .in("owner_lead_id", ownerLeadIds)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   const out: Record<string, { tenant_name: string; tenant_phone: string; tenancy_id: string; lifecycle_stage: string | null }> = {};
@@ -2805,6 +2806,7 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     // Existing Listing — confirmed tenancies (non-closed, has contract_end), owner_lead not deleted
     svc.from("tenancies")
       .select(`owner_leads!owner_lead_id!inner(${OL_SELECT}, user_id, deleted_at)`)
+      .is("deleted_at", null)
       .eq("owner_leads.user_id", userId)
       .is("owner_leads.deleted_at", null)
       .neq("lifecycle_stage", "closed")
