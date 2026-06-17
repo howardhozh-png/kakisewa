@@ -253,6 +253,61 @@ function SegmentDonut({ segments, total, onSelect }: {
   );
 }
 
+// ─── Vertical Funnel ─────────────────────────────────────────────────────────
+
+function VerticalFunnel({ steps, total }: {
+  steps: { label: string; value: number; color: string }[];
+  total: number;
+}) {
+  const W = 300;
+  const STEP_H = 64;
+  const GAP = 4;
+  const totalH = steps.length * STEP_H + (steps.length - 1) * GAP;
+  const fracs = steps.map(s => Math.max(0.10, s.value / total));
+
+  return (
+    <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+      <svg viewBox={`0 0 ${W} ${totalH}`} style={{ width: 200, flexShrink: 0 }} preserveAspectRatio="xMidYMid meet">
+        {steps.map((step, i) => {
+          const topFrac = i === 0 ? 1 : fracs[i - 1];
+          const botFrac = fracs[i];
+          const topW = topFrac * W;
+          const botW = botFrac * W;
+          const y = i * (STEP_H + GAP);
+          return (
+            <polygon
+              key={step.label}
+              points={`${(W - topW) / 2},${y} ${(W + topW) / 2},${y} ${(W + botW) / 2},${y + STEP_H} ${(W - botW) / 2},${y + STEP_H}`}
+              fill={step.color}
+              fillOpacity={0.82}
+            />
+          );
+        })}
+      </svg>
+
+      <div style={{ flex: 1 }}>
+        {steps.map((step, i) => {
+          const prevVal = i > 0 ? steps[i - 1].value : null;
+          const dropPct = prevVal != null && prevVal > 0 ? Math.round((step.value / prevVal) * 100) : null;
+          return (
+            <div key={step.label} style={{ height: STEP_H, marginTop: i > 0 ? GAP : 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span className="tabular-nums font-bold" style={{ fontSize: "1.6rem", lineHeight: 1, color: step.color }}>{step.value}</span>
+                {dropPct !== null && (
+                  <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: dropPct >= 60 ? "rgba(52,199,89,0.10)" : "rgba(220,38,38,0.08)", color: dropPct >= 60 ? "#1F8B4C" : "#DC2626" }}>
+                    {dropPct}%
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{step.label}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Health Tab ───────────────────────────────────────────────────────────────
 
 function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: {
@@ -324,29 +379,8 @@ function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: 
       {/* Activation funnel */}
       <section>
         <p className="kk-overline mb-4">Activation funnel</p>
-        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-          {funnelSteps.map((step, i) => {
-            const prev = i === 0 ? step.value : funnelSteps[i - 1].value;
-            const dropPct = prev > 0 ? Math.round((step.value / prev) * 100) : 0;
-            return (
-              <div key={step.label} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
-                <div style={{ width: 40, flexShrink: 0 }}>
-                  <p className="tabular-nums font-bold" style={{ fontSize: "1.4rem", color: step.color, lineHeight: 1 }}>{step.value}</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{step.label}</p>
-                    {i > 0 && (
-                      <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: dropPct >= 60 ? "rgba(52,199,89,0.10)" : "rgba(220,38,38,0.08)", color: dropPct >= 60 ? "#1F8B4C" : "#DC2626" }}>
-                        {dropPct}% of prev step
-                      </span>
-                    )}
-                  </div>
-                  <FunnelBar value={step.value} max={funnel.total || 1} color={step.color} />
-                </div>
-              </div>
-            );
-          })}
+        <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+          <VerticalFunnel steps={funnelSteps} total={funnel.total || 1} />
         </div>
       </section>
 
