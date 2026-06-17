@@ -9,10 +9,10 @@ import { OwnerLead } from "@/lib/types";
 
 interface Props {
   leads: OwnerLead[];
+  rentedLeads?: OwnerLead[];
   commissionPct?: number;
   onMonthClick?: (key: string) => void;
   selectedMonth?: string;
-  rentedCount?: number;
 }
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -22,7 +22,7 @@ function todayMonthValue() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick, selectedMonth, rentedCount }: Props) {
+export function AvailabilityTimeline({ leads, rentedLeads, commissionPct = 100, onMonthClick, selectedMonth }: Props) {
   const today = useMemo(() => new Date(), []);
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const [windowMonths, setWindowMonths] = useState(12);
@@ -57,13 +57,33 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
     return map;
   }, [leads, months, commissionPct]);
 
+  const rentedBuckets = useMemo(() => {
+    const map = new Map<string, number>();
+    months.forEach((m) => map.set(m.key, 0));
+    (rentedLeads ?? []).forEach((l) => {
+      const key = l.available_from ? l.available_from.slice(0, 7) : todayKey;
+      if (!map.has(key)) return;
+      map.set(key, (map.get(key) ?? 0) + 1);
+    });
+    return map;
+  }, [rentedLeads, months]);
+
   const noDateCount = leads.filter((l) => !l.available_from).length;
-  const maxListedCount = Math.max(0, ...Array.from(buckets.values()).map((b) => b.count));
-  const maxCount = Math.max(1, maxListedCount + (rentedCount ?? 0));
+  const maxCount = useMemo(() => {
+    let max = 1;
+    months.forEach((m) => {
+      const listed = buckets.get(m.key)?.count ?? 0;
+      const rented = rentedBuckets.get(m.key) ?? 0;
+      if (listed + rented > max) max = listed + rented;
+    });
+    return max;
+  }, [buckets, rentedBuckets, months]);
+
   const total = Array.from(buckets.values()).reduce(
     (acc, b) => ({ count: acc.count + b.count, potential: acc.potential + b.potential }),
     { count: 0, potential: 0 }
   );
+  const totalRented = (rentedLeads ?? []).length;
 
   return (
     <div>
@@ -77,8 +97,8 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
           </p>
           <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
             {total.count} propert{total.count === 1 ? "y" : "ies"} · {commissionPct}% commission
-            {rentedCount != null && rentedCount > 0 && (
-              <> · <span style={{ color: "var(--kk-green-ink)" }}>{rentedCount} rented</span></>
+            {totalRented > 0 && (
+              <> · <span style={{ color: "var(--kk-green-ink)" }}>{totalRented} rented</span></>
             )}
             <Hint text="You earn 1 full month's rent per successful placement." side="right" />
           </p>
@@ -104,46 +124,65 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${windowMonths}, minmax(36px, 1fr))`, gap: "0.5rem", minWidth: `${Math.max(windowMonths * 46, 300)}px` }}>
           {months.map((m) => {
             const b = buckets.get(m.key)!;
-            const listedHeightPct = (b.count / maxCount) * 100;
-            const rentedHeightPct = rentedCount ? (rentedCount / maxCount) * 100 : 0;
+            const rented = rentedBuckets.get(m.key) ?? 0;
+            const listedPct = (b.count / maxCount) * 100;
+            const rentedPct = (rented / maxCount) * 100;
             const isCurrent = m.key === todayKey;
             const isSelected = selectedMonth === m.key;
+            const hasAny = b.count > 0 || rented > 0;
             return (
               <div
                 key={m.key}
                 className="flex flex-col items-stretch gap-2 min-w-0"
-                title={`${m.label} ${m.year}: ${b.count} propert${b.count === 1 ? "y" : "ies"} · RM ${Math.round(b.potential).toLocaleString()} potential`}
+                title={`${m.label} ${m.year}: ${b.count} listed · ${rented} rented · RM ${Math.round(b.potential).toLocaleString()} potential`}
                 onClick={() => onMonthClick?.(m.key)}
                 style={{ cursor: onMonthClick ? "pointer" : "default" }}
               >
                 <div className="relative flex flex-col justify-end items-stretch" style={{ height: 90, paddingTop: 6, gap: 0 }}>
-                  {/* Rented segment — constant green on top */}
-                  {rentedCount ? (
+                  {/* Rented segment — green, on top */}
+                  {rented > 0 && (
                     <div
                       style={{
-                        height: `${rentedHeightPct}%`,
-                        background: isSelected ? "rgba(52,199,89,0.75)" : "rgba(52,199,89,0.45)",
-                        borderRadius: "4px 4px 0 0",
+                        height: `${rentedPct}%`,
+                        background: isSelected ? "rgba(52,199,89,0.75)" : "rgba(52,199,89,0.50)",
+                        borderRadius: b.count > 0 ? "4px 4px 0 0" : "4px 4px 0 0",
                         flexShrink: 0,
                       }}
                     />
-                  ) : null}
-                  {/* Listed segment */}
-                  <div
-                    style={{
-                      height: `${rentedCount ? listedHeightPct : (b.count > 0 ? Math.max(8, listedHeightPct) : 4)}%`,
-                      background: b.count > 0
-                        ? (isCurrent ? "rgba(0,0,0,0.18)" : isSelected ? "color-mix(in srgb, var(--kk-theme-dark) 90%, transparent)" : "color-mix(in srgb, var(--kk-theme-dark) 55%, transparent)")
-                        : isSelected ? "color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)" : "var(--kk-surface-2)",
-                      borderRadius: rentedCount ? 0 : "4px 4px 0 0",
-                      outline: isSelected ? "2px solid color-mix(in srgb, var(--kk-theme-dark) 70%, transparent)" : "none",
-                      outlineOffset: "2px",
-                      flexShrink: 0,
-                    }}
-                  />
+                  )}
+                  {/* Listed segment — grey/dark, below rented */}
+                  {b.count > 0 && (
+                    <div
+                      style={{
+                        height: `${Math.max(8, listedPct)}%`,
+                        background: isCurrent
+                          ? "rgba(0,0,0,0.18)"
+                          : isSelected
+                            ? "color-mix(in srgb, var(--kk-theme-dark) 90%, transparent)"
+                            : "color-mix(in srgb, var(--kk-theme-dark) 55%, transparent)",
+                        borderRadius: rented > 0 ? 0 : "4px 4px 0 0",
+                        outline: isSelected ? "2px solid color-mix(in srgb, var(--kk-theme-dark) 70%, transparent)" : "none",
+                        outlineOffset: "2px",
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  {/* Empty stub when nothing in this month */}
+                  {!hasAny && (
+                    <div
+                      style={{
+                        height: "4%",
+                        background: isSelected ? "color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)" : "var(--kk-surface-2)",
+                        borderRadius: "4px 4px 0 0",
+                        outline: isSelected ? "2px solid color-mix(in srgb, var(--kk-theme-dark) 70%, transparent)" : "none",
+                        outlineOffset: "2px",
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="text-center" style={{ height: 56 }}>
-                  <p className="text-[11px] font-semibold tabular-nums leading-none" style={{ color: b.count > 0 ? "var(--kk-ink)" : "var(--kk-ink-faint)" }}>
+                  <p className="text-[11px] font-semibold tabular-nums leading-none" style={{ color: hasAny ? "var(--kk-ink)" : "var(--kk-ink-faint)" }}>
                     {b.count}
                   </p>
                   <p className="text-[10px] mt-1 leading-none whitespace-nowrap" style={{ color: "var(--kk-ink-faint)" }}>

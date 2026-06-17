@@ -232,7 +232,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
           commissionPct={100}
           selectedMonth={monthFilter}
           onMonthClick={(key) => setMonthFilter((prev) => (prev === key ? "" : key))}
-          rentedCount={byStage.matched.length}
+          rentedLeads={byStage.matched}
         />
       </div>
 
