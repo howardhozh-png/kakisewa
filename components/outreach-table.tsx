@@ -6,6 +6,17 @@ import { useRouter } from "next/navigation";
 const WA_DAILY_KEY = "kk_wa_daily";
 const WA_CAP_KEY   = "kk_wa_cap";
 const WA_DEFAULT_CAP = 40;
+const PAGE_SIZE = 20;
+
+function getPageNumbers(page: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [1];
+  if (page > 3) pages.push("...");
+  for (let p = Math.max(2, page - 1); p <= Math.min(total - 1, page + 1); p++) pages.push(p);
+  if (page < total - 2) pages.push("...");
+  pages.push(total);
+  return pages;
+}
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -856,8 +867,10 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [hardDeletingId, setHardDeletingId] = useState<string | null>(null);
   const [hardDeleteConfirmId, setHardDeleteConfirmId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => { setSelectedIds(new Set()); }, [filter, purposeFilter, propertyFilter, sentDateFilter, search]);
+  useEffect(() => { setPage(1); }, [filter, purposeFilter, propertyFilter, sentDateFilter, search]);
 
   useEffect(() => {
     if (!exportOpen) return;
@@ -961,8 +974,13 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           return a.created_at.localeCompare(b.created_at);
         });
 
-  const allSelected = visible.length > 0 && visible.every((l) => selectedIds.has(l.id));
-  const someSelected = !allSelected && visible.some((l) => selectedIds.has(l.id));
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = visible.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const allPageSelected = paginated.length > 0 && paginated.every((l) => selectedIds.has(l.id));
+  const somePageSelected = !allPageSelected && paginated.some((l) => selectedIds.has(l.id));
+  const allMatchingSelected = visible.length > 0 && visible.every((l) => selectedIds.has(l.id));
 
   function toggleSelect(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -970,11 +988,15 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   }
 
   function toggleAll() {
-    if (allSelected) {
-      setSelectedIds((prev) => { const s = new Set(prev); visible.forEach((l) => s.delete(l.id)); return s; });
+    if (allPageSelected) {
+      setSelectedIds((prev) => { const s = new Set(prev); paginated.forEach((l) => s.delete(l.id)); return s; });
     } else {
-      setSelectedIds((prev) => { const s = new Set(prev); visible.forEach((l) => s.add(l.id)); return s; });
+      setSelectedIds((prev) => { const s = new Set(prev); paginated.forEach((l) => s.add(l.id)); return s; });
     }
+  }
+
+  function selectAllMatching() {
+    setSelectedIds(new Set(visible.map((l) => l.id)));
   }
 
   async function bulkMoveToDeclined() {
@@ -1257,8 +1279,38 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           </div>
         ) : (
           <>
+          {/* Select-all-matching banner */}
+          {allPageSelected && !allMatchingSelected && visible.length > PAGE_SIZE && (
+            <div style={{ padding: "8px 18px", background: "rgba(0,113,227,0.05)", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>
+                {selectedIds.size} owners on this page selected.
+              </span>
+              <button
+                type="button"
+                onClick={selectAllMatching}
+                style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-blue)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                Select all {visible.length} matching owners
+              </button>
+            </div>
+          )}
+          {allMatchingSelected && visible.length > PAGE_SIZE && (
+            <div style={{ padding: "8px 18px", background: "rgba(0,113,227,0.05)", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 13, color: "var(--kk-blue)", fontWeight: 500 }}>
+                All {visible.length} matching owners selected.
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink-mute)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
+
           {/* Fixed column header — sits above the scroll container */}
-          <div style={{ paddingRight: 8, background: "var(--kk-surface)", borderBottom: "1px solid var(--kk-line)" }}>
+          <div style={{ background: "var(--kk-surface)", borderBottom: "1px solid var(--kk-line)" }}>
             <table className="w-full" style={{ minWidth: 372, tableLayout: "fixed" }}>
               <thead>
                 <tr>
@@ -1266,8 +1318,8 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={allSelected}
-                        ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                        checked={allPageSelected}
+                        ref={(el) => { if (el) el.indeterminate = somePageSelected; }}
                         onChange={toggleAll}
                         className="w-3.5 h-3.5 cursor-pointer block"
                       />
@@ -1286,7 +1338,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </table>
           </div>
           {/* Scrollable body — scrollbar starts at first data row */}
-          <div style={{ maxHeight: "min(520px, calc(100vh - 360px))", overflowY: "auto", overflowX: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--kk-line-strong) transparent" }}>
+          <div style={{ overflowX: "auto" }}>
           <table className="w-full" style={{ minWidth: 380, tableLayout: "fixed" }}>
             {/* Hidden header establishes column widths to match the fixed header above */}
             <thead aria-hidden style={{ visibility: "hidden", height: 0, lineHeight: 0 }}>
@@ -1334,9 +1386,9 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                   </td>
                   <td className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ background: "var(--kk-surface)" }} />
                 </tr>
-              ) : visible.map((lead, i) => {
+              ) : paginated.map((lead, i) => {
                 const status = getStatus(lead);
-                const isLast = i === visible.length - 1;
+                const isLast = i === paginated.length - 1;
                 const isDeleted = filter === "deleted";
                 const isHardDeleteConfirming = hardDeleteConfirmId === lead.id;
                 return (
@@ -1531,11 +1583,48 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </tbody>
           </table>
           </div>
+
+          {/* Pagination footer */}
+          <div style={{ padding: "12px 18px", borderTop: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, color: "var(--kk-ink-mute)", flexShrink: 0 }}>
+              {visible.length === 0
+                ? "No owners"
+                : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, visible.length)} of ${visible.length} owner${visible.length !== 1 ? "s" : ""}${visible.length < totalLeads ? ` (filtered from ${totalLeads})` : ""}`
+              }
+            </span>
+            {totalPages > 1 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--kk-line)", background: "var(--kk-surface)", fontSize: 13, cursor: currentPage === 1 ? "default" : "pointer", color: currentPage === 1 ? "var(--kk-ink-faint)" : "var(--kk-ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >‹</button>
+                {getPageNumbers(currentPage, totalPages).map((p, i) =>
+                  p === "..." ? (
+                    <span key={`dots-${i}`} style={{ width: 30, textAlign: "center", fontSize: 13, color: "var(--kk-ink-faint)" }}>…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPage(p)}
+                      style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--kk-line)", fontSize: 13, fontWeight: p === currentPage ? 700 : 500, cursor: "pointer", background: p === currentPage ? "var(--kk-ink)" : "var(--kk-surface)", color: p === currentPage ? "#fff" : "var(--kk-ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >{p}</button>
+                  )
+                )}
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--kk-line)", background: "var(--kk-surface)", fontSize: 13, cursor: currentPage === totalPages ? "default" : "pointer", color: currentPage === totalPages ? "var(--kk-ink-faint)" : "var(--kk-ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >›</button>
+              </div>
+            )}
+          </div>
           </>
         )}
       </div>
 
-      {/* Deleted section */}
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div
