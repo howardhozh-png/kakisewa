@@ -34,12 +34,13 @@ interface AgentRow {
   last_login_at: string | null; days_inactive: number | null;
   potential_listing_count: number; outreaches_sent: number;
   my_listing_count: number; existing_listing_count: number;
+  target_listing_count: number; renewal_wa_count: number;
   feedback_count: number;
 }
 interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
 interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
 interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null; }
-interface RawTenancy { user_id: string; created_at: string; contract_end: string | null; amount: number | null; }
+interface RawTenancy { user_id: string; created_at: string; contract_end: string | null; amount: number | null; stage: string | null; }
 interface RawFeedbackItem { agent_id: string; created_at: string; }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -384,7 +385,7 @@ function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: 
 
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 
-type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "health" | "cards" | "feedback_count";
+type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "health" | "potential" | "listed" | "existing" | "target" | "msgs";
 
 function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: "asc" | "desc" }) {
   if (col !== sortCol) return <ChevronUp className="w-3 h-3 opacity-20" />;
@@ -421,9 +422,17 @@ function AgentDetailPanel({ a }: { a: AgentRow & { segment: Segment; health: num
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Cards</p>
         <div className="text-[12px] space-y-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-          <p>{a.potential_listing_count} potential · {a.outreaches_sent} outreached</p>
-          <p>{a.my_listing_count} listed · {a.existing_listing_count} contracts</p>
+          <p>{a.potential_listing_count} potential · {a.my_listing_count} listed</p>
+          <p>{a.existing_listing_count} existing · {a.target_listing_count} target</p>
           {a.feedback_count > 0 && <p>{a.feedback_count} feedback</p>}
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Messages sent</p>
+        <div className="text-[12px] space-y-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+          <p>{a.outreaches_sent} owner outreach WAs</p>
+          <p>{a.renewal_wa_count} renewal WAs (active threads)</p>
+          <p className="font-semibold" style={{ color: "var(--kk-ink)" }}>{a.outreaches_sent + a.renewal_wa_count} total</p>
         </div>
       </div>
       <div className="flex flex-col gap-2">
@@ -465,6 +474,7 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
     segment: computeSegment(a),
     health: computeHealthScore(a),
     totalCards: a.potential_listing_count + a.existing_listing_count,
+    totalMsgs: a.outreaches_sent + a.renewal_wa_count,
   })), [agents]);
 
   const segmentCounts = useMemo(() => {
@@ -488,8 +498,11 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
       else if (sortCol === "last_login_at") { av = a.last_login_at ?? ""; bv = b.last_login_at ?? ""; }
       else if (sortCol === "days_inactive") { av = a.days_inactive ?? 9999; bv = b.days_inactive ?? 9999; }
       else if (sortCol === "health") { av = a.health; bv = b.health; }
-      else if (sortCol === "cards") { av = a.totalCards; bv = b.totalCards; }
-      else if (sortCol === "feedback_count") { av = a.feedback_count; bv = b.feedback_count; }
+      else if (sortCol === "potential") { av = a.potential_listing_count; bv = b.potential_listing_count; }
+      else if (sortCol === "listed") { av = a.my_listing_count; bv = b.my_listing_count; }
+      else if (sortCol === "existing") { av = a.existing_listing_count; bv = b.existing_listing_count; }
+      else if (sortCol === "target") { av = a.target_listing_count; bv = b.target_listing_count; }
+      else if (sortCol === "msgs") { av = a.totalMsgs; bv = b.totalMsgs; }
       if (av < bv) return sortDir === "asc" ? -1 : 1;
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
@@ -498,22 +511,46 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
 
   function exportCsv() {
     const rows = [
-      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Login","Days Inactive","Potential","Outreaches","Listed","Contracts","Feedback"].join(","),
+      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Login","Days Inactive","Potential","Listed","Existing","Target","Owner WAs","Renewal WAs","Total Msgs"].join(","),
       ...filtered.map(a => [
         a.name ?? "", a.email ?? "", a.agency ?? "",
         a.subscription_status ?? "", a.subscription_plan ?? "", a.segment, a.health,
         fmtDate(a.joined_at), fmtDate(a.last_login_at), a.days_inactive ?? "Never",
-        a.potential_listing_count, a.outreaches_sent, a.my_listing_count, a.existing_listing_count, a.feedback_count,
+        a.potential_listing_count, a.my_listing_count, a.existing_listing_count, a.target_listing_count,
+        a.outreaches_sent, a.renewal_wa_count, a.totalMsgs,
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
     ];
     const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const el = document.createElement("a"); el.href = URL.createObjectURL(blob); el.download = `users-${Date.now()}.csv`; el.click();
   }
 
-  const Th = ({ col, label, right }: { col: SortCol; label: string; right?: boolean }) => (
-    <th onClick={() => toggleSort(col)} className="select-none cursor-pointer whitespace-nowrap px-4 py-3 text-left" style={{ fontSize: 11, fontWeight: 600, color: sortCol === col ? "var(--kk-ink)" : "var(--kk-ink-mute)", textAlign: right ? "right" : "left", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
-      <span className="inline-flex items-center gap-1">{label}<SortIcon col={col} sortCol={sortCol} sortDir={sortDir} /></span>
-    </th>
+  // sticky-compatible th — position:sticky requires border-collapse:separate
+  const TH_BASE: React.CSSProperties = {
+    fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)",
+    borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)",
+    position: "sticky", top: 0, zIndex: 20, whiteSpace: "nowrap",
+    padding: "10px 12px", textAlign: "left", userSelect: "none",
+  };
+  const TH_ACTIVE: React.CSSProperties = { ...TH_BASE, color: "var(--kk-ink)" };
+  const TH_RIGHT: React.CSSProperties = { ...TH_BASE, textAlign: "right" };
+  const TH_RIGHT_ACTIVE: React.CSSProperties = { ...TH_BASE, color: "var(--kk-ink)", textAlign: "right" };
+
+  const Th = ({ col, label, right }: { col: SortCol; label: string; right?: boolean }) => {
+    const active = sortCol === col;
+    const base = right ? (active ? TH_RIGHT_ACTIVE : TH_RIGHT) : (active ? TH_ACTIVE : TH_BASE);
+    return (
+      <th onClick={() => toggleSort(col)} style={{ ...base, cursor: "pointer" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+          {label}<SortIcon col={col} sortCol={sortCol} sortDir={sortDir} />
+        </span>
+      </th>
+    );
+  };
+
+  const NumCell = ({ val, muted }: { val: number; muted?: boolean }) => (
+    <td style={{ padding: "10px 12px", textAlign: "right", fontSize: 13, fontWeight: 600, color: val === 0 ? "var(--kk-ink-faint)" : muted ? "var(--kk-ink-mute)" : "var(--kk-ink)", whiteSpace: "nowrap", borderTop: "1px solid var(--kk-line)" }}>
+      {val === 0 ? <span style={{ opacity: 0.35 }}>—</span> : val}
+    </td>
   );
 
   return (
@@ -569,64 +606,109 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table — border-collapse:separate required for position:sticky on th/td */}
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
+        <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "70vh" }}>
+          <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 900 }}>
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", width: 4 }} />
-                <Th col="name" label="User" />
-                <Th col="joined_at" label="Joined" />
+                {/* Sticky corner: User col header */}
+                <th onClick={() => toggleSort("name")} style={{
+                  ...TH_BASE, color: sortCol === "name" ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                  position: "sticky", top: 0, left: 0, zIndex: 30,
+                  minWidth: 220, cursor: "pointer",
+                  boxShadow: "2px 0 4px rgba(0,0,0,0.06), inset 0 -1px 0 var(--kk-line)",
+                  borderBottom: "none",
+                }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    User <SortIcon col="name" sortCol={sortCol} sortDir={sortDir} />
+                  </span>
+                </th>
+                {/* Card columns */}
+                <th style={{ ...TH_BASE, textAlign: "right" }} title="Potential listings (owner leads, excl. competitor tracking)">
+                  Potl
+                </th>
+                <th style={{ ...TH_BASE, textAlign: "right" }} title="My listings (wants_rent / listed / matched stage)">
+                  Listed
+                </th>
+                <th style={{ ...TH_BASE, textAlign: "right" }} title="Existing contracts (tenancies)">
+                  Exist
+                </th>
+                <th style={{ ...TH_BASE, textAlign: "right" }} title="Competitor-tracking leads">
+                  Target
+                </th>
+                {/* Message columns */}
+                <th style={{ ...TH_BASE, textAlign: "right" }} title="WhatsApp messages sent to owner leads">
+                  Owner WA
+                </th>
+                <th style={{ ...TH_BASE, textAlign: "right" }} title="Renewal WA threads (tenancies in headsup / pinged / renewing)">
+                  Renewal WA
+                </th>
+                {/* Activity */}
                 <Th col="days_inactive" label="Inactive" />
                 <Th col="health" label="Health" right />
-                <Th col="cards" label="Cards" right />
-                <th className="px-4 py-3 text-left whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", width: 36 }} />
+                {/* Expand */}
+                <th style={{ ...TH_BASE, width: 36, padding: "10px 8px" }} />
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center" style={{ fontSize: 13, color: "var(--kk-ink-faint)", background: "var(--kk-surface)" }}>No users match the current filters.</td></tr>
+                <tr>
+                  <td colSpan={10} style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "var(--kk-ink-faint)", background: "var(--kk-surface)" }}>
+                    No users match the current filters.
+                  </td>
+                </tr>
               )}
               {filtered.map((a, i) => {
                 const seg = a.segment;
                 const meta = SEGMENT_META[seg];
                 const isExpanded = expandedId === a.id;
                 const rowBg = i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)";
+                const TD: React.CSSProperties = { borderTop: "1px solid var(--kk-line)", background: rowBg };
                 return (
                   <React.Fragment key={a.id}>
-                    <tr style={{ background: rowBg, borderTop: "1px solid var(--kk-line)", cursor: "pointer" }} onClick={() => setExpandedId(isExpanded ? null : a.id)}>
-                      {/* Segment bar */}
-                      <td style={{ padding: 0, width: 4 }}>
-                        <div style={{ width: 4, height: "100%", minHeight: 52, background: meta.border, borderRadius: "0 0 0 0" }} />
-                      </td>
-                      <td className="px-4 py-3" style={{ minWidth: 200 }}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold" style={{ background: meta.bg, color: meta.color }}>
+                    <tr style={{ cursor: "pointer" }} onClick={() => setExpandedId(isExpanded ? null : a.id)}>
+                      {/* Sticky User column — colored left border via box-shadow inset */}
+                      <td style={{
+                        ...TD, position: "sticky", left: 0, zIndex: 10,
+                        padding: "10px 12px", minWidth: 220,
+                        boxShadow: `inset 3px 0 0 0 ${meta.border}, 2px 0 4px rgba(0,0,0,0.06)`,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, background: meta.bg, color: meta.color }}>
                             {(a.name ?? a.email ?? "?")[0].toUpperCase()}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-[13px] leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
-                            {a.agency && <p className="text-[10px] truncate" style={{ color: "var(--kk-ink-faint)" }}>{a.agency}</p>}
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.3, color: "var(--kk-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name || "—"}</p>
+                            <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email || "no email"}</p>
+                            {a.agency && <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.agency}</p>}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{fmtDate(a.joined_at)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap"><InactiveBadge days={a.days_inactive} /></td>
-                      <td className="px-4 py-3" style={{ minWidth: 100 }}><HealthBar score={a.health} /></td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="tabular-nums text-[13px] font-semibold" style={{ color: a.totalCards === 0 ? "var(--kk-ink-faint)" : "var(--kk-ink)" }}>
-                          {a.totalCards === 0 ? "—" : a.totalCards}
-                        </span>
+                      {/* Card counts */}
+                      <NumCell val={a.potential_listing_count} />
+                      <NumCell val={a.my_listing_count} />
+                      <NumCell val={a.existing_listing_count} />
+                      <NumCell val={a.target_listing_count} muted />
+                      {/* Message counts */}
+                      <NumCell val={a.outreaches_sent} />
+                      <NumCell val={a.renewal_wa_count} />
+                      {/* Activity */}
+                      <td style={{ ...TD, padding: "10px 12px", whiteSpace: "nowrap" }}>
+                        <InactiveBadge days={a.days_inactive} />
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <Expand className="w-3.5 h-3.5 transition-transform" style={{ color: "var(--kk-ink-faint)", transform: isExpanded ? "rotate(180deg)" : "none" }} />
+                      {/* Health */}
+                      <td style={{ ...TD, padding: "10px 12px", minWidth: 100 }}>
+                        <HealthBar score={a.health} />
+                      </td>
+                      {/* Expand */}
+                      <td style={{ ...TD, padding: "10px 8px", textAlign: "center" }}>
+                        <Expand style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", transition: "transform 200ms", transform: isExpanded ? "rotate(180deg)" : "none", display: "inline-block" }} />
                       </td>
                     </tr>
                     {isExpanded && (
                       <tr style={{ background: rowBg }}>
-                        <td colSpan={7} style={{ padding: 0 }}>
+                        <td colSpan={10} style={{ padding: 0 }}>
                           <AgentDetailPanel a={a} />
                         </td>
                       </tr>

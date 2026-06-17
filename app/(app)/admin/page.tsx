@@ -135,26 +135,31 @@ export default async function AdminPage() {
     fetchAllRows<{ user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }>(
       "owner_leads", "user_id, stage, wa_status, created_at, last_outreach_at, is_competitor_target", { col: "deleted_at" }
     ),
-    fetchAllRows<{ user_id: string; created_at: string; contract_end: string | null; amount: number | null }>("tenancies", "user_id, created_at, contract_end, amount", { col: "deleted_at" }),
+    fetchAllRows<{ user_id: string; created_at: string; contract_end: string | null; amount: number | null; stage: string | null }>("tenancies", "user_id, created_at, contract_end, amount, stage", { col: "deleted_at" }),
     fetchAllRows<{ agent_id: string; created_at: string }>("feedback", "agent_id, created_at"),
   ]);
 
   // All-time counts (for default view). "Potential listing" mirrors the homepage's
   // totalUploaded definition (lib/db.ts getExpandedDashboardStats) by excluding
   // competitor-tracking entries, so the two numbers tie.
-  const leadsByUser: Record<string, { total: number; outreached: number; myListing: number }> = {};
+  const leadsByUser: Record<string, { total: number; outreached: number; myListing: number; target: number }> = {};
   for (const l of allLeads ?? []) {
     if (!l.user_id) continue;
-    const b = leadsByUser[l.user_id] ?? { total: 0, outreached: 0, myListing: 0 };
+    const b = leadsByUser[l.user_id] ?? { total: 0, outreached: 0, myListing: 0, target: 0 };
     if (!l.is_competitor_target) b.total++;
+    else b.target++;
     if (l.wa_status != null) b.outreached++;
     if (["wants_rent", "listed", "matched"].includes(l.stage)) b.myListing++;
     leadsByUser[l.user_id] = b;
   }
-  const tenanciesByUser: Record<string, number> = {};
+  const tenanciesByUser: Record<string, { count: number; renewalWa: number }> = {};
+  const RENEWAL_WA_STAGES = new Set(["headsup", "pinged", "renewing"]);
   for (const t of allTenancies ?? []) {
     if (!t.user_id) continue;
-    tenanciesByUser[t.user_id] = (tenanciesByUser[t.user_id] ?? 0) + 1;
+    const b = tenanciesByUser[t.user_id] ?? { count: 0, renewalWa: 0 };
+    b.count++;
+    if (t.stage && RENEWAL_WA_STAGES.has(t.stage)) b.renewalWa++;
+    tenanciesByUser[t.user_id] = b;
   }
   const feedbackByUser: Record<string, number> = {};
   for (const f of allFeedbackCounts ?? []) {
@@ -166,8 +171,8 @@ export default async function AdminPage() {
   const rawLeads = (allLeads ?? []).map((l: { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }) => ({
     user_id: l.user_id, stage: l.stage, wa_status: l.wa_status, created_at: l.created_at, last_outreach_at: l.last_outreach_at, is_competitor_target: l.is_competitor_target,
   }));
-  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string; contract_end: string | null; amount: number | null }) => ({
-    user_id: t.user_id, created_at: t.created_at, contract_end: t.contract_end ?? null, amount: t.amount ?? null,
+  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string; contract_end: string | null; amount: number | null; stage: string | null }) => ({
+    user_id: t.user_id, created_at: t.created_at, contract_end: t.contract_end ?? null, amount: t.amount ?? null, stage: t.stage ?? null,
   }));
   const rawFeedback = (allFeedbackCounts ?? []).map((f: { agent_id: string; created_at: string }) => ({
     agent_id: f.agent_id, created_at: f.created_at,
@@ -200,7 +205,9 @@ export default async function AdminPage() {
       potential_listing_count: leadsByUser[p.id]?.total ?? 0,
       outreaches_sent: leadsByUser[p.id]?.outreached ?? 0,
       my_listing_count: leadsByUser[p.id]?.myListing ?? 0,
-      existing_listing_count: tenanciesByUser[p.id] ?? 0,
+      target_listing_count: leadsByUser[p.id]?.target ?? 0,
+      existing_listing_count: tenanciesByUser[p.id]?.count ?? 0,
+      renewal_wa_count: tenanciesByUser[p.id]?.renewalWa ?? 0,
       feedback_count: feedbackByUser[p.id] ?? 0,
     };
   });
