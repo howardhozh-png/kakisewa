@@ -97,6 +97,22 @@ function relativeTime(iso: string | null | undefined): string {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
+const AVATAR_COLORS = ["#5856D6","#FF6B6B","#34AADC","#FF9500","#30B0C7","#1F8B4C","#C84B31","#7C3AED","#0071E3","#B36200"];
+
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function getAvatarColor(name: string | null | undefined): string {
+  if (!name) return "#AEAEB2";
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 function sentBg(n: number) {
   if (n >= 3) return { bg: "#FEE2E2", color: "#991B1B" };
   if (n === 2) return { bg: "#FFEDD5", color: "#9A3412" };
@@ -882,6 +898,14 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
     })
   );
 
+  // Stats row computations
+  const todayIso = todayStr();
+  const totalLeads = leads.filter((l) => !l.is_competitor_target).length;
+  const contacted = leads.filter((l) => (l.outreach_count ?? 0) > 0).length;
+  const contactedToday = leads.filter((l) => (l.last_outreach_at ?? l.intake_sent_at ?? "").slice(0, 10) === todayIso).length;
+  const replied = leads.filter((l) => l.wa_status === "replied").length;
+  const responseRate = contacted > 0 ? Math.round((replied / contacted) * 100) : 0;
+
   // Counts respect the active property filter. Exclude competitor targets so
   // the "All" badge matches exactly what the visible rows show.
   const propertyFiltered = propertyFilter === "all" ? leads : leads.filter((l) => l.property_name === propertyFilter);
@@ -1129,6 +1153,22 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
   return (
     <div>
+      {/* Stats row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {([
+          { label: "Total leads",      value: totalLeads,         sub: "Active owner contacts" },
+          { label: "Contacted",        value: contacted,          sub: "Sent at least once" },
+          { label: "Contacted today",  value: contactedToday,     sub: "Via WhatsApp" },
+          { label: "Response rate",    value: `${responseRate}%`, sub: contacted > 0 ? "WA replies received" : "No contacts yet" },
+        ] as const).map(({ label, value, sub }) => (
+          <div key={label} className="kk-section p-4 flex flex-col gap-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--kk-ink-faint)" }}>{label}</p>
+            <p className="text-[26px] font-bold tabular-nums leading-none" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em" }}>{value}</p>
+            <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Search bar */}
       <div className="relative mb-4">
         <Search
@@ -1269,7 +1309,10 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                     <input type="checkbox" disabled className="w-3.5 h-3.5 block" />
                   </td>
                   <td className="px-2 py-2 lg:py-3">
-                    <p className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>Ahmad Hassan</p>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "#AEAEB2" }}>AH</div>
+                      <p className="text-[12px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>Ahmad Hassan</p>
+                    </div>
                   </td>
                   <td className="px-2 py-2 lg:py-3">
                     <p className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-mute)" }}>0123456789</p>
@@ -1324,9 +1367,17 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
                     {/* Owner */}
                     <td className="px-2 py-2 lg:py-3 overflow-hidden">
-                      <p className="text-[11px] lg:text-[12px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>
-                        {lead.owner_name ?? "—"}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div
+                          className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ background: getAvatarColor(lead.owner_name) }}
+                        >
+                          {getInitials(lead.owner_name)}
+                        </div>
+                        <p className="text-[11px] lg:text-[12px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>
+                          {lead.owner_name ?? "—"}
+                        </p>
+                      </div>
                     </td>
 
                     {/* Number */}
@@ -1372,7 +1423,6 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                       <div className="flex flex-col items-start gap-1">
                         <StatusBadge lead={lead} />
                         <PurposeBadge purpose={lead.listing_purpose} />
-                        <OwnerLeadWaBadge lead={lead} />
                       </div>
                     </td>
 
