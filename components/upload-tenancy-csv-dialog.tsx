@@ -635,6 +635,13 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                   Download sample CSV
                 </button>
 
+                <div className="flex items-start gap-2.5 rounded-xl px-4 py-3" style={{ background: "rgba(255,149,0,0.08)", border: "1px solid rgba(255,149,0,0.25)" }}>
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--kk-amber)" }} />
+                  <p className="text-[12px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+                    Bulk upload works best with a clean spreadsheet — consistent column headers, one row per tenancy, no merged cells. If your data is messy, uploading one by one will save you more time.
+                  </p>
+                </div>
+
                 <div
                   onClick={() => fileRef.current?.click()}
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}

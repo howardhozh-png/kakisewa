@@ -35,7 +35,7 @@ interface AgentRow {
   potential_listing_count: number; outreaches_sent: number;
   my_listing_count: number; existing_listing_count: number;
   target_listing_count: number; renewal_wa_count: number;
-  feedback_count: number;
+  feedback_count: number; subscription_activated_at: string | null;
 }
 interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
 interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
@@ -177,6 +177,82 @@ function KpiCard({ label, value, sub, color, icon, trend }: {
   );
 }
 
+// ─── SVG Donut Chart ─────────────────────────────────────────────────────────
+
+function SegmentDonut({ segments, total, onSelect }: {
+  segments: Record<Segment, number>;
+  total: number;
+  onSelect: (s: Segment | "all") => void;
+}) {
+  const R = 70; const CX = 100; const CY = 100; const SW = 26;
+  const circ = 2 * Math.PI * R;
+  const GAP = total > 0 ? (3 / 360) * circ : 0;
+  const segs = (Object.keys(SEGMENT_META) as Segment[]).map(seg => ({
+    seg, meta: SEGMENT_META[seg], count: segments[seg] ?? 0,
+  })).filter(s => s.count > 0);
+
+  let offset = -circ / 4; // start from top
+  const arcs = segs.map(({ seg, meta, count }) => {
+    const arc = (count / total) * circ - GAP;
+    const thisOffset = offset;
+    offset += arc + GAP;
+    return { seg, meta, count, arc, offset: thisOffset };
+  });
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-6">
+      {/* Donut */}
+      <div className="relative shrink-0" style={{ width: 180, height: 180 }}>
+        <svg viewBox="0 0 200 200" style={{ width: 180, height: 180, display: "block" }}>
+          {/* Track */}
+          <circle cx={CX} cy={CY} r={R} fill="none" strokeWidth={SW} stroke="var(--kk-line)" />
+          {/* Arcs */}
+          {total === 0 ? (
+            <circle cx={CX} cy={CY} r={R} fill="none" strokeWidth={SW} stroke="var(--kk-line)" strokeDasharray={`${circ} 0`} />
+          ) : arcs.map(({ seg, meta, arc, offset: off }) => (
+            <circle key={seg} cx={CX} cy={CY} r={R} fill="none"
+              strokeWidth={SW} stroke={meta.border}
+              strokeDasharray={`${Math.max(0, arc)} ${circ}`}
+              strokeDashoffset={-off}
+              strokeLinecap="butt"
+              style={{ cursor: "pointer", transition: "opacity 150ms" }}
+              onClick={() => onSelect(seg)}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+            />
+          ))}
+        </svg>
+        {/* Center label */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <p className="tabular-nums font-bold" style={{ fontSize: "2rem", lineHeight: 1, color: "var(--kk-ink)" }}>{total}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.08em" }}>users</p>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-col gap-3 flex-1 w-full">
+        {(Object.keys(SEGMENT_META) as Segment[]).map(seg => {
+          const meta = SEGMENT_META[seg];
+          const count = segments[seg] ?? 0;
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          return (
+            <button key={seg} onClick={() => onSelect(seg)}
+              className="flex items-center gap-3 w-full text-left transition-opacity hover:opacity-70 active:scale-95">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: meta.border }} />
+              <span className="text-[13px] font-medium flex-1" style={{ color: "var(--kk-ink)" }}>{meta.label}</span>
+              <span className="tabular-nums text-[13px] font-bold" style={{ color: meta.color, minWidth: 28, textAlign: "right" }}>{count}</span>
+              <div className="w-20 rounded-full overflow-hidden" style={{ height: 4, background: "var(--kk-line)", flexShrink: 0 }}>
+                <div style={{ width: `${pct}%`, height: "100%", background: meta.border, borderRadius: 99 }} />
+              </div>
+              <span className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-faint)", minWidth: 28, textAlign: "right" }}>{pct}%</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Health Tab ───────────────────────────────────────────────────────────────
 
 function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: {
@@ -274,31 +350,11 @@ function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: 
         </div>
       </section>
 
-      {/* Segments */}
+      {/* Segments donut */}
       <section>
         <p className="kk-overline mb-4">User segments — click to filter</p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {(Object.keys(SEGMENT_META) as Segment[]).map(seg => {
-            const meta = SEGMENT_META[seg];
-            const count = metrics.segments[seg] ?? 0;
-            return (
-              <button
-                key={seg}
-                onClick={() => onSelectSegment(seg)}
-                className="rounded-2xl p-4 text-left transition-all hover:opacity-80 active:scale-95"
-                style={{ background: meta.bg, border: `1px solid ${meta.border}30` }}
-              >
-                <div className="flex items-center gap-1.5 mb-2" style={{ color: meta.color }}>
-                  {meta.icon}
-                  <span className="text-[11px] font-semibold uppercase tracking-wider">{meta.label}</span>
-                </div>
-                <p className="tabular-nums font-bold text-[1.6rem] leading-none" style={{ color: meta.color }}>{count}</p>
-                <p className="text-[10px] mt-1" style={{ color: meta.color, opacity: 0.7 }}>
-                  {funnel.total > 0 ? `${Math.round((count / funnel.total) * 100)}%` : "0%"} of users
-                </p>
-              </button>
-            );
-          })}
+        <div className="rounded-2xl p-6" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+          <SegmentDonut segments={metrics.segments as Record<Segment, number>} total={funnel.total} onSelect={onSelectSegment} />
         </div>
       </section>
 
@@ -727,14 +783,44 @@ function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment 
 // ─── Revenue Tab ──────────────────────────────────────────────────────────────
 
 function RevenueTab({ agents }: { agents: AgentRow[] }) {
+  const [revenueView, setRevenueView] = useState<"confirmed" | "by_plan">("confirmed");
+
   const stats = useMemo(() => {
-    const byPlan: Record<string, number> = {};
-    let mrr = 0;
+    // Confirmed paid = status strictly "active"
+    const confirmedByPlan: Record<string, number> = {};
+    let confirmedMrr = 0;
+    const paidUsers: AgentRow[] = [];
     for (const a of agents) {
-      if (a.subscription_status !== "active" || !a.subscription_plan) continue;
-      byPlan[a.subscription_plan] = (byPlan[a.subscription_plan] ?? 0) + 1;
-      mrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
+      if (a.subscription_status === "active" && a.subscription_plan) {
+        confirmedByPlan[a.subscription_plan] = (confirmedByPlan[a.subscription_plan] ?? 0) + 1;
+        confirmedMrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
+        paidUsers.push(a);
+      }
     }
+    paidUsers.sort((a, b) => {
+      const da = a.subscription_activated_at ? new Date(a.subscription_activated_at).getTime() : 0;
+      const db = b.subscription_activated_at ? new Date(b.subscription_activated_at).getTime() : 0;
+      return db - da;
+    });
+
+    // By plan = anyone with a plan name assigned, regardless of trial/beta/active
+    const byPlanAll: Record<string, number> = {};
+    let potentialMrr = 0;
+    const byPlanUsers: AgentRow[] = [];
+    for (const a of agents) {
+      if (a.subscription_plan) {
+        byPlanAll[a.subscription_plan] = (byPlanAll[a.subscription_plan] ?? 0) + 1;
+        potentialMrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
+        byPlanUsers.push(a);
+      }
+    }
+    byPlanUsers.sort((a, b) => {
+      const planOrder = ["elite", "platinum", "gold"];
+      const pa = planOrder.indexOf(a.subscription_plan ?? "");
+      const pb = planOrder.indexOf(b.subscription_plan ?? "");
+      if (pa !== pb) return pa - pb;
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    });
 
     const totalPaid = agents.filter(a => a.subscription_status === "active").length;
     const totalTrialBeta = agents.filter(a => a.subscription_status === "trial" || a.subscription_status === "beta").length;
@@ -748,18 +834,39 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
       ? Math.round((totalPaid / (totalPaid + totalExpired)) * 100)
       : null;
 
-    return { byPlan, mrr, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate };
+    return { confirmedByPlan, confirmedMrr, byPlanAll, potentialMrr, paidUsers, byPlanUsers, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate };
   }, [agents]);
+
+  const isConfirmed = revenueView === "confirmed";
+  const displayByPlan = isConfirmed ? stats.confirmedByPlan : stats.byPlanAll;
+  const displayMrr = isConfirmed ? stats.confirmedMrr : stats.potentialMrr;
 
   return (
     <div className="space-y-8">
+      {/* Toggle */}
+      <div className="flex items-center gap-1 p-1 rounded-xl self-start" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", width: "fit-content" }}>
+        {(["confirmed", "by_plan"] as const).map(v => (
+          <button
+            key={v}
+            onClick={() => setRevenueView(v)}
+            className="px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
+            style={{
+              background: revenueView === v ? "var(--kk-surface)" : "transparent",
+              color: revenueView === v ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+              boxShadow: revenueView === v ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+            }}>
+            {v === "confirmed" ? "Confirmed paid" : "By plan"}
+          </button>
+        ))}
+      </div>
+
       {/* MRR breakdown */}
       <section>
         <div className="flex items-baseline gap-4 mb-5">
           <div>
-            <p className="kk-overline mb-1">Monthly recurring revenue</p>
-            <p className="font-bold tabular-nums" style={{ fontSize: "2.2rem", lineHeight: 1, color: "var(--kk-blue)" }}>RM{stats.mrr.toLocaleString()}</p>
-            <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>ARR est. RM{(stats.mrr * 12).toLocaleString()}</p>
+            <p className="kk-overline mb-1">{isConfirmed ? "Monthly recurring revenue" : "Potential MRR (by plan)"}</p>
+            <p className="font-bold tabular-nums" style={{ fontSize: "2.2rem", lineHeight: 1, color: "var(--kk-blue)" }}>RM{displayMrr.toLocaleString()}</p>
+            <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>ARR est. RM{(displayMrr * 12).toLocaleString()}</p>
           </div>
           <div className="ml-auto flex gap-6 text-right">
             <div>
@@ -781,10 +888,10 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
 
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
           {["gold", "platinum", "elite"].map((plan, i) => {
-            const count = stats.byPlan[plan] ?? 0;
+            const count = displayByPlan[plan] ?? 0;
             const planMrr = count * (MRR_BY_PLAN[plan] ?? 0);
             const planMeta = PLAN_COLOR[plan];
-            const maxPlanMrr = Math.max(...["gold", "platinum", "elite"].map(p => (stats.byPlan[p] ?? 0) * (MRR_BY_PLAN[p] ?? 0)), 1);
+            const maxPlanMrr = Math.max(...["gold", "platinum", "elite"].map(p => (displayByPlan[p] ?? 0) * (MRR_BY_PLAN[p] ?? 0)), 1);
             return (
               <div key={plan} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
                 <div style={{ width: 72, flexShrink: 0 }}>
@@ -804,6 +911,96 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
           })}
         </div>
       </section>
+
+      {/* Confirmed paid: show paid subscribers list */}
+      {isConfirmed && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="kk-overline">Paid subscribers ({stats.paidUsers.length})</p>
+              <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Confirmed active subscriptions, newest first.</p>
+            </div>
+            {stats.paidUsers.length > 0 && (
+              <button
+                onClick={() => { const emails = stats.paidUsers.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success("Emails copied"); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
+                style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
+                <Copy className="w-3 h-3" /> Copy all emails
+              </button>
+            )}
+          </div>
+          {stats.paidUsers.length === 0 ? (
+            <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No confirmed paid subscribers yet.</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+              {stats.paidUsers.map((a, i) => {
+                const planMeta = PLAN_COLOR[a.subscription_plan ?? ""] ?? { bg: "rgba(110,110,115,0.10)", text: "#6E6E73" };
+                return (
+                  <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                      <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                    </div>
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0" style={{ background: planMeta.bg, color: planMeta.text }}>
+                      {PLAN_LABEL[a.subscription_plan ?? ""] ?? a.subscription_plan}
+                    </span>
+                    <div className="text-right shrink-0">
+                      <p className="text-[11px] font-semibold" style={{ color: "var(--kk-ink-mute)" }}>
+                        {a.subscription_activated_at ? `Since ${fmtDate(a.subscription_activated_at)}` : "No date recorded"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* By plan: show all users with a plan assigned */}
+      {!isConfirmed && (
+        <section>
+          <div className="mb-3">
+            <p className="kk-overline">All users with a plan ({stats.byPlanUsers.length})</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Includes trial, beta, and paid users who have a plan assigned.</p>
+          </div>
+          {stats.byPlanUsers.length === 0 ? (
+            <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No users with a plan assigned.</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+              {stats.byPlanUsers.map((a, i) => {
+                const planMeta = PLAN_COLOR[a.subscription_plan ?? ""] ?? { bg: "rgba(110,110,115,0.10)", text: "#6E6E73" };
+                const statusMeta = STATUS_STYLE[a.subscription_status ?? ""];
+                return (
+                  <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                      <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                    </div>
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0" style={{ background: planMeta.bg, color: planMeta.text }}>
+                      {PLAN_LABEL[a.subscription_plan ?? ""] ?? a.subscription_plan}
+                    </span>
+                    {statusMeta && (
+                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full shrink-0" style={{ background: statusMeta.bg, color: statusMeta.color }}>
+                        {statusMeta.label}
+                      </span>
+                    )}
+                    {a.subscription_activated_at && (
+                      <p className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-mute)" }}>
+                        Since {fmtDate(a.subscription_activated_at)}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Expiring trials — conversion window */}
       <section>

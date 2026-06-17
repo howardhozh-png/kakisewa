@@ -12,7 +12,7 @@ export default async function AdminPage() {
   // Funnel + agents: all agent profiles
   const { data: profiles } = await supabase
     .from("agent_profiles")
-    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, trial_ends_at, created_at, referral_slug")
+    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, trial_ends_at, subscription_activated_at, created_at, referral_slug")
     .order("created_at", { ascending: false });
 
   const nowTs = new Date();
@@ -135,7 +135,7 @@ export default async function AdminPage() {
     fetchAllRows<{ user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }>(
       "owner_leads", "user_id, stage, wa_status, created_at, last_outreach_at, is_competitor_target", { col: "deleted_at" }
     ),
-    fetchAllRows<{ user_id: string; created_at: string; contract_end: string | null; amount: number | null; stage: string | null }>("tenancies", "user_id, created_at, contract_end, amount, stage", { col: "deleted_at" }),
+    fetchAllRows<{ user_id: string; created_at: string; contract_end: string | null; amount: number | null; lifecycle_stage: string | null }>("tenancies", "user_id, created_at, contract_end, amount, lifecycle_stage", { col: "deleted_at" }),
     fetchAllRows<{ agent_id: string; created_at: string }>("feedback", "agent_id, created_at"),
   ]);
 
@@ -149,7 +149,7 @@ export default async function AdminPage() {
     if (!l.is_competitor_target) b.total++;
     else b.target++;
     if (l.wa_status != null) b.outreached++;
-    if (["wants_rent", "listed", "matched"].includes(l.stage)) b.myListing++;
+    if (l.stage === "listed" && !l.is_competitor_target) b.myListing++;
     leadsByUser[l.user_id] = b;
   }
   const tenanciesByUser: Record<string, { count: number; renewalWa: number }> = {};
@@ -158,7 +158,7 @@ export default async function AdminPage() {
     if (!t.user_id) continue;
     const b = tenanciesByUser[t.user_id] ?? { count: 0, renewalWa: 0 };
     b.count++;
-    if (t.stage && RENEWAL_WA_STAGES.has(t.stage)) b.renewalWa++;
+    if (t.lifecycle_stage && RENEWAL_WA_STAGES.has(t.lifecycle_stage)) b.renewalWa++;
     tenanciesByUser[t.user_id] = b;
   }
   const feedbackByUser: Record<string, number> = {};
@@ -171,8 +171,8 @@ export default async function AdminPage() {
   const rawLeads = (allLeads ?? []).map((l: { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null }) => ({
     user_id: l.user_id, stage: l.stage, wa_status: l.wa_status, created_at: l.created_at, last_outreach_at: l.last_outreach_at, is_competitor_target: l.is_competitor_target,
   }));
-  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string; contract_end: string | null; amount: number | null; stage: string | null }) => ({
-    user_id: t.user_id, created_at: t.created_at, contract_end: t.contract_end ?? null, amount: t.amount ?? null, stage: t.stage ?? null,
+  const rawTenancies = (allTenancies ?? []).map((t: { user_id: string; created_at: string; contract_end: string | null; amount: number | null; lifecycle_stage: string | null }) => ({
+    user_id: t.user_id, created_at: t.created_at, contract_end: t.contract_end ?? null, amount: t.amount ?? null, stage: t.lifecycle_stage ?? null,
   }));
   const rawFeedback = (allFeedbackCounts ?? []).map((f: { agent_id: string; created_at: string }) => ({
     agent_id: f.agent_id, created_at: f.created_at,
@@ -181,7 +181,7 @@ export default async function AdminPage() {
   const agents = (profiles ?? []).map((p: {
     id: string; name: string | null; phone: string | null; agency: string | null;
     ren_number: string | null; subscription_status: string | null; subscription_plan: string | null;
-    trial_ends_at: string | null; created_at: string;
+    trial_ends_at: string | null; subscription_activated_at: string | null; created_at: string;
   }) => {
     const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at) : null;
     const trialDaysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - nowTs.getTime()) / 86400000) : null;
@@ -199,6 +199,7 @@ export default async function AdminPage() {
       subscription_status: p.subscription_status,
       subscription_plan: p.subscription_plan,
       trial_days_left: trialDaysLeft,
+      subscription_activated_at: p.subscription_activated_at ?? null,
       joined_at: createdById[p.id] ?? p.created_at,
       last_login_at: lastLogin,
       days_inactive: daysInactive,
