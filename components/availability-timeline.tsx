@@ -12,6 +12,7 @@ interface Props {
   commissionPct?: number;
   onMonthClick?: (key: string) => void;
   selectedMonth?: string;
+  rentedCount?: number;
 }
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -21,7 +22,7 @@ function todayMonthValue() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick, selectedMonth }: Props) {
+export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick, selectedMonth, rentedCount }: Props) {
   const today = useMemo(() => new Date(), []);
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const [windowMonths, setWindowMonths] = useState(12);
@@ -75,6 +76,9 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
           </p>
           <p style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
             {total.count} propert{total.count === 1 ? "y" : "ies"} · {commissionPct}% commission
+            {rentedCount != null && rentedCount > 0 && (
+              <> · <span style={{ color: "var(--kk-green-ink)" }}>{rentedCount} rented</span></>
+            )}
             <Hint text="You earn 1 full month's rent per successful placement." side="right" />
           </p>
         </div>
