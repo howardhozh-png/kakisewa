@@ -558,8 +558,8 @@ export function StatsSection({
           primaryNum={stats.existingTotalActiveCount + stats.existingExpiredCount}
           primaryLabel="active tenancies"
           stats={[
-            { label: "Expiring in 60d", value: stats.existingExpiringIn60Count },
             { label: "Already expired", value: stats.existingExpiredCount },
+            { label: "Expiring in 60d", value: stats.existingExpiringIn60Count },
             { label: "Renewing", value: stats.existingRenewingCount },
           ]}
           href="/existing-listing"
