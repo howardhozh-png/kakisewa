@@ -151,8 +151,9 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (l.stage === "imported") return;
       // wants_rent and replied both map to listed (owner responded → auto-listed)
       const stage = (l.stage === "wants_rent" || l.stage === "replied") ? "listed" : l.stage;
-      // Hide matched leads whose tenancy commission has been collected (active lifecycle)
-      if (stage === "matched" && tenantsByLeadId[l.id]?.lifecycle_stage === "active") return;
+      // Hide matched leads once any non-closed tenancy exists — they live in Existing Listing now
+      const tenancy = tenantsByLeadId[l.id];
+      if (stage === "matched" && tenancy && tenancy.lifecycle_stage !== "closed") return;
       out[stage].push(l);
     });
     return out;
