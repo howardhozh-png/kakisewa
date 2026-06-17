@@ -1,76 +1,150 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2, ChevronUp, ChevronDown, Search, X as XIcon, Users, Activity, AlertCircle, TrendingUp, FileText, Home, ExternalLink as LinkIcon } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import {
+  Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2,
+  ChevronUp, ChevronDown, Search, X as XIcon, Users, Activity,
+  AlertCircle, TrendingUp, FileText, DollarSign, ArrowUpRight,
+  ArrowDownRight, Minus, ChevronDown as Expand, Clock, Zap, Ghost,
+  BarChart2, Link, MessageSquare, Mail, UserPlus, List,
+} from "lucide-react";
 import { toast } from "sonner";
 import { adminResetMyAccount } from "@/lib/actions";
 
-interface Link {
-  id: string;
-  slug: string;
-  label: string;
-  created_at: string;
-  sends: number;
-  clicks: number;
-  signups: number;
-}
+// ─── Types ───────────────────────────────────────────────────────────────────
 
+interface LinkRow {
+  id: string; slug: string; label: string; created_at: string;
+  sends: number; clicks: number; signups: number;
+}
 interface Funnel {
-  total: number;
-  beta: number;
-  beta_frozen: number;
-  trial: number;
-  expired: number;
-  active: number;
-  unset: number;
-  elite: number;
+  total: number; beta: number; beta_frozen: number; trial: number;
+  expired: number; active: number; unset: number; elite: number;
 }
-
 interface FeedbackRow {
-  id: string;
-  agent_name: string | null;
-  agent_email: string | null;
-  category: string;
-  message: string;
-  page_url: string | null;
-  resolved: boolean;
-  created_at: string;
+  id: string; agent_name: string | null; agent_email: string | null;
+  category: string; message: string; page_url: string | null;
+  resolved: boolean; created_at: string;
 }
-
 interface AgentRow {
-  id: string;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  agency: string | null;
-  ren_number: string | null;
-  subscription_status: string | null;
-  subscription_plan: string | null;
-  trial_days_left: number | null;
-  joined_at: string;
-  last_login_at: string | null;
-  days_inactive: number | null;
-  potential_listing_count: number;
-  outreaches_sent: number;
-  my_listing_count: number;
-  existing_listing_count: number;
+  id: string; name: string | null; email: string | null;
+  phone: string | null; agency: string | null; ren_number: string | null;
+  subscription_status: string | null; subscription_plan: string | null;
+  trial_days_left: number | null; joined_at: string;
+  last_login_at: string | null; days_inactive: number | null;
+  potential_listing_count: number; outreaches_sent: number;
+  my_listing_count: number; existing_listing_count: number;
   feedback_count: number;
 }
+interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
+interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
+interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null; }
+interface RawTenancy { user_id: string; created_at: string; contract_end: string | null; amount: number | null; }
+interface RawFeedbackItem { agent_id: string; created_at: string; }
 
-interface InviteRow {
-  id: string;
-  email: string;
-  invited_at: string;
-  used_at: string | null;
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const MRR_BY_PLAN: Record<string, number> = { gold: 119, platinum: 179, elite: 299 };
+const PLAN_LABEL: Record<string, string> = { gold: "Gold", platinum: "Platinum", elite: "Elite" };
+const PLAN_COLOR: Record<string, { text: string; bg: string; bar: string }> = {
+  gold:     { text: "#92400E", bg: "rgba(255,149,0,0.10)",   bar: "#FF9500" },
+  platinum: { text: "#0b1f4a", bg: "rgba(11,31,74,0.12)",    bar: "#334155" },
+  elite:    { text: "#6b3d1e", bg: "rgba(107,61,30,0.12)",   bar: "#92400E" },
+};
+const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  beta:        { bg: "rgba(139,92,246,0.10)",  color: "#6d28d9", label: "Beta" },
+  beta_frozen: { bg: "rgba(59,130,246,0.10)",  color: "#1d4ed8", label: "Frozen" },
+  trial:       { bg: "rgba(16,185,129,0.10)",  color: "#065F46", label: "Trial" },
+  expired:     { bg: "rgba(220,38,38,0.10)",   color: "#DC2626", label: "Expired" },
+  active:      { bg: "rgba(0,113,227,0.10)",   color: "#0071E3", label: "Paid" },
+};
+const CATEGORY_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  bug:        { bg: "rgba(220,38,38,0.10)",  color: "#DC2626", label: "Bug" },
+  suggestion: { bg: "rgba(234,179,8,0.12)",  color: "#A16207", label: "Suggestion" },
+  question:   { bg: "rgba(99,102,241,0.12)", color: "#4338CA", label: "Question" },
+};
+
+// ─── Segment + Health Score ──────────────────────────────────────────────────
+
+type Segment = "power" | "active" | "risk" | "ghost" | "new";
+
+const SEGMENT_META: Record<Segment, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
+  power:  { label: "Power",  color: "#1F8B4C", bg: "rgba(52,199,89,0.10)",   border: "#34C759", icon: <Zap className="w-3 h-3" /> },
+  active: { label: "Active", color: "#0071E3", bg: "rgba(0,113,227,0.10)",   border: "#0071E3", icon: <Activity className="w-3 h-3" /> },
+  risk:   { label: "At risk",color: "#92400E", bg: "rgba(255,149,0,0.10)",   border: "#FF9500", icon: <AlertCircle className="w-3 h-3" /> },
+  ghost:  { label: "Ghost",  color: "#6E6E73", bg: "rgba(110,110,115,0.10)", border: "#C7C7CC", icon: <Ghost className="w-3 h-3" /> },
+  new:    { label: "New",    color: "#6d28d9", bg: "rgba(139,92,246,0.10)",  border: "#8b5cf6", icon: <UserPlus className="w-3 h-3" /> },
+};
+
+function computeHealthScore(a: AgentRow): number {
+  let activity = 0;
+  if (a.days_inactive === null) activity = 0;
+  else if (a.days_inactive === 0) activity = 50;
+  else if (a.days_inactive <= 3) activity = 42;
+  else if (a.days_inactive <= 7) activity = 32;
+  else if (a.days_inactive <= 14) activity = 18;
+  else if (a.days_inactive <= 30) activity = 6;
+  const cardsScore = Math.min(40, (a.potential_listing_count + a.existing_listing_count) * 4);
+  const planScore = a.subscription_status === "active" ? 10
+    : (a.subscription_status === "beta" || a.subscription_status === "trial") ? 5 : 0;
+  return Math.min(100, activity + cardsScore + planScore);
 }
 
-interface WaitlistRow {
-  id: string;
-  name: string | null;
-  email: string;
-  ren_number: string | null;
-  expected_spend: string | null;
-  created_at: string;
+function computeSegment(a: AgentRow): Segment {
+  const joinedMs = Date.now() - new Date(a.joined_at).getTime();
+  const totalCards = a.potential_listing_count + a.existing_listing_count;
+  if (joinedMs >= 7 * 86400000 && totalCards === 0) return "ghost";
+  if (joinedMs < 7 * 86400000) return "new";
+  const score = computeHealthScore(a);
+  if (score >= 70) return "power";
+  if (score >= 35) return "active";
+  return "risk";
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "Never";
+  return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+}
+function fmtShort(iso: string | null): string {
+  if (!iso) return "Never";
+  return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short" });
+}
+
+function InactiveBadge({ days }: { days: number | null }) {
+  if (days === null) return <span style={{ color: "var(--kk-ink-faint)", fontSize: 11 }}>Never</span>;
+  const color = days <= 6 ? "#1F8B4C" : days <= 13 ? "#92400E" : "#DC2626";
+  const bg    = days <= 6 ? "rgba(52,199,89,0.10)" : days <= 13 ? "rgba(255,149,0,0.12)" : "rgba(220,38,38,0.10)";
+  return (
+    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums" style={{ background: bg, color }}>
+      {days === 0 ? "Today" : `${days}d ago`}
+    </span>
+  );
+}
+
+function HealthBar({ score }: { score: number }) {
+  const color = score >= 70 ? "#34C759" : score >= 35 ? "#0071E3" : score >= 15 ? "#FF9500" : "#C7C7CC";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 rounded-full overflow-hidden" style={{ height: 4, background: "var(--kk-line)" }}>
+        <div style={{ width: `${score}%`, height: "100%", background: color, borderRadius: 99, transition: "width 600ms ease" }} />
+      </div>
+      <span className="tabular-nums text-[11px] font-semibold shrink-0" style={{ color, minWidth: 28, textAlign: "right" }}>{score}</span>
+    </div>
+  );
+}
+
+function TrendPill({ now, prev }: { now: number; prev: number }) {
+  const delta = now - prev;
+  if (delta === 0) return <span className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>= flat</span>;
+  const up = delta > 0;
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold" style={{ color: up ? "#1F8B4C" : "#DC2626" }}>
+      {up ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+      {up ? "+" : ""}{delta} vs last wk
+    </span>
+  );
 }
 
 function FunnelBar({ value, max, color }: { value: number; max: number; color: string }) {
@@ -82,255 +156,399 @@ function FunnelBar({ value, max, color }: { value: number; max: number; color: s
   );
 }
 
-const CATEGORY_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  bug:        { bg: "rgba(220,38,38,0.10)",  color: "#DC2626", label: "🐛 Bug" },
-  suggestion: { bg: "rgba(234,179,8,0.12)",  color: "#A16207", label: "💡 Suggestion" },
-  question:   { bg: "rgba(99,102,241,0.12)", color: "#4338CA", label: "❓ Question" },
-};
+// ─── KPI Card ────────────────────────────────────────────────────────────────
 
-const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  beta:        { bg: "rgba(139,92,246,0.10)",  color: "#6d28d9", label: "Beta" },
-  beta_frozen: { bg: "rgba(59,130,246,0.10)",  color: "#1d4ed8", label: "Frozen" },
-  trial:       { bg: "rgba(16,185,129,0.10)",  color: "#065F46", label: "Trial" },
-  expired:     { bg: "rgba(220,38,38,0.10)",   color: "#DC2626", label: "Expired" },
-  active:      { bg: "rgba(0,113,227,0.10)",   color: "#0071E3", label: "Paid" },
-};
-
-const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
-  silver:   { bg: "rgba(107,114,128,0.12)", color: "#374151" },
-  platinum: { bg: "rgba(11,31,74,0.12)",    color: "#0b1f4a" },
-  elite:    { bg: "rgba(107,61,30,0.12)",   color: "#6b3d1e" },
-};
-
-interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null; }
-interface RawTenancy { user_id: string; created_at: string; contract_end: string | null; amount: number | null; }
-interface RawFeedbackItem { agent_id: string; created_at: string; }
-
-const MRR_BY_PLAN: Record<string, number> = {
-  gold: 119,
-  platinum: 179,
-  elite: 299,
-};
-
-function KpiCard({ label, value, sub, color, icon }: { label: string; value: string | number; sub?: string; color?: string; icon?: React.ReactNode }) {
+function KpiCard({ label, value, sub, color, icon, trend }: {
+  label: string; value: string | number; sub?: string;
+  color?: string; icon?: React.ReactNode;
+  trend?: { now: number; prev: number };
+}) {
   return (
     <div className="rounded-2xl p-4 flex flex-col gap-1" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-1.5 mb-0.5">
         {icon && <span style={{ color: color ?? "var(--kk-ink-faint)" }}>{icon}</span>}
         <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.08em" }}>{label}</p>
       </div>
-      <p className="tabular-nums font-bold" style={{ fontSize: "1.6rem", lineHeight: 1, color: color ?? "var(--kk-ink)" }}>{value}</p>
-      {sub && <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{sub}</p>}
+      <p className="tabular-nums font-bold" style={{ fontSize: "1.55rem", lineHeight: 1, color: color ?? "var(--kk-ink)" }}>{value}</p>
+      {sub && <p className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{sub}</p>}
+      {trend && <TrendPill now={trend.now} prev={trend.prev} />}
     </div>
   );
 }
 
-const TIME_OPTIONS = [
-  { value: "all",  label: "All time" },
-  { value: "7d",   label: "Past 7 days" },
-  { value: "14d",  label: "Past 14 days" },
-  { value: "1m",   label: "Past 1 month" },
-  { value: "2m",   label: "Past 2 months" },
-  { value: "3m",   label: "Past 3 months" },
-  { value: "6m",   label: "Past 6 months" },
-] as const;
-type TimeWindow = typeof TIME_OPTIONS[number]["value"];
+// ─── Health Tab ───────────────────────────────────────────────────────────────
 
-function windowStart(w: TimeWindow): Date | null {
-  if (w === "all") return null;
-  const now = new Date();
-  if (w === "7d")  return new Date(now.getTime() - 7  * 86400000);
-  if (w === "14d") return new Date(now.getTime() - 14 * 86400000);
-  if (w === "1m")  return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-  if (w === "2m")  return new Date(now.getFullYear(), now.getMonth() - 2, now.getDate());
-  if (w === "3m")  return new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-  if (w === "6m")  return new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-  return null;
+function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: {
+  agents: AgentRow[]; funnel: Funnel;
+  rawLeads: RawLead[]; rawTenancies: RawTenancy[];
+  onSelectSegment: (s: Segment | "all") => void;
+}) {
+  const now = Date.now();
+  const weekMs = 7 * 86400000;
+
+  const metrics = useMemo(() => {
+    const thisWeekCutoff = now - weekMs;
+    const lastWeekCutoff = now - 2 * weekMs;
+
+    const newSignupsThisWeek = agents.filter(a => new Date(a.joined_at).getTime() >= thisWeekCutoff).length;
+    const newSignupsLastWeek = agents.filter(a => {
+      const t = new Date(a.joined_at).getTime();
+      return t >= lastWeekCutoff && t < thisWeekCutoff;
+    }).length;
+
+    const leadsThisWeek = rawLeads.filter(l => l.user_id && new Date(l.created_at).getTime() >= thisWeekCutoff && !l.is_competitor_target).length;
+    const leadsLastWeek = rawLeads.filter(l => {
+      const t = new Date(l.created_at).getTime();
+      return l.user_id && t >= lastWeekCutoff && t < thisWeekCutoff && !l.is_competitor_target;
+    }).length;
+
+    const contractsThisWeek = rawTenancies.filter(t => new Date(t.created_at).getTime() >= thisWeekCutoff).length;
+    const contractsLastWeek = rawTenancies.filter(t => {
+      const ms = new Date(t.created_at).getTime();
+      return ms >= lastWeekCutoff && ms < thisWeekCutoff;
+    }).length;
+
+    const activatedCount = agents.filter(a => a.potential_listing_count + a.existing_listing_count > 0).length;
+    const active7d = agents.filter(a => a.days_inactive !== null && a.days_inactive <= 6).length;
+
+    const segments = agents.reduce((acc, a) => {
+      const seg = computeSegment(a);
+      acc[seg] = (acc[seg] ?? 0) + 1;
+      return acc;
+    }, {} as Record<Segment, number>);
+
+    const trialExpiringSoon = agents
+      .filter(a => (a.subscription_status === "trial" || a.subscription_status === "beta") && a.trial_days_left !== null && a.trial_days_left <= 14 && a.trial_days_left >= 0)
+      .sort((a, b) => (a.trial_days_left ?? 99) - (b.trial_days_left ?? 99));
+
+    const contractsExpiring30 = rawTenancies.filter(t => {
+      if (!t.contract_end) return false;
+      const ms = new Date(t.contract_end).getTime() - now;
+      return ms >= 0 && ms <= 30 * 86400000;
+    }).length;
+    const contractsExpiring60 = rawTenancies.filter(t => {
+      if (!t.contract_end) return false;
+      const ms = new Date(t.contract_end).getTime() - now;
+      return ms > 30 * 86400000 && ms <= 60 * 86400000;
+    }).length;
+
+    return { newSignupsThisWeek, newSignupsLastWeek, leadsThisWeek, leadsLastWeek, contractsThisWeek, contractsLastWeek, activatedCount, active7d, segments, trialExpiringSoon, contractsExpiring30, contractsExpiring60 };
+  }, [agents, rawLeads, rawTenancies]);
+
+  const funnelSteps = [
+    { label: "Signed up", value: funnel.total, color: "var(--kk-ink)" },
+    { label: "Added a card", value: metrics.activatedCount, color: "#0071E3" },
+    { label: "Active last 7d", value: metrics.active7d, color: "#34C759" },
+    { label: "Paying", value: funnel.active, color: "#FF9500" },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Activation funnel */}
+      <section>
+        <p className="kk-overline mb-4">Activation funnel</p>
+        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+          {funnelSteps.map((step, i) => {
+            const prev = i === 0 ? step.value : funnelSteps[i - 1].value;
+            const dropPct = prev > 0 ? Math.round((step.value / prev) * 100) : 0;
+            return (
+              <div key={step.label} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                <div style={{ width: 40, flexShrink: 0 }}>
+                  <p className="tabular-nums font-bold" style={{ fontSize: "1.4rem", color: step.color, lineHeight: 1 }}>{step.value}</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <p className="text-[13px] font-medium" style={{ color: "var(--kk-ink)" }}>{step.label}</p>
+                    {i > 0 && (
+                      <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: dropPct >= 60 ? "rgba(52,199,89,0.10)" : "rgba(220,38,38,0.08)", color: dropPct >= 60 ? "#1F8B4C" : "#DC2626" }}>
+                        {dropPct}% of prev step
+                      </span>
+                    )}
+                  </div>
+                  <FunnelBar value={step.value} max={funnel.total || 1} color={step.color} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Segments */}
+      <section>
+        <p className="kk-overline mb-4">User segments — click to filter</p>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {(Object.keys(SEGMENT_META) as Segment[]).map(seg => {
+            const meta = SEGMENT_META[seg];
+            const count = metrics.segments[seg] ?? 0;
+            return (
+              <button
+                key={seg}
+                onClick={() => onSelectSegment(seg)}
+                className="rounded-2xl p-4 text-left transition-all hover:opacity-80 active:scale-95"
+                style={{ background: meta.bg, border: `1px solid ${meta.border}30` }}
+              >
+                <div className="flex items-center gap-1.5 mb-2" style={{ color: meta.color }}>
+                  {meta.icon}
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">{meta.label}</span>
+                </div>
+                <p className="tabular-nums font-bold text-[1.6rem] leading-none" style={{ color: meta.color }}>{count}</p>
+                <p className="text-[10px] mt-1" style={{ color: meta.color, opacity: 0.7 }}>
+                  {funnel.total > 0 ? `${Math.round((count / funnel.total) * 100)}%` : "0%"} of users
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Weekly pulse */}
+      <section>
+        <p className="kk-overline mb-4">Weekly pulse</p>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.08em" }}>New signups</p>
+            <p className="tabular-nums font-bold" style={{ fontSize: "1.6rem", lineHeight: 1, color: "var(--kk-ink)" }}>{metrics.newSignupsThisWeek}</p>
+            <div className="mt-1"><TrendPill now={metrics.newSignupsThisWeek} prev={metrics.newSignupsLastWeek} /></div>
+          </div>
+          <div className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.08em" }}>New leads</p>
+            <p className="tabular-nums font-bold" style={{ fontSize: "1.6rem", lineHeight: 1, color: "var(--kk-ink)" }}>{metrics.leadsThisWeek}</p>
+            <div className="mt-1"><TrendPill now={metrics.leadsThisWeek} prev={metrics.leadsLastWeek} /></div>
+          </div>
+          <div className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--kk-ink-faint)", letterSpacing: "0.08em" }}>New contracts</p>
+            <p className="tabular-nums font-bold" style={{ fontSize: "1.6rem", lineHeight: 1, color: "var(--kk-ink)" }}>{metrics.contractsThisWeek}</p>
+            <div className="mt-1"><TrendPill now={metrics.contractsThisWeek} prev={metrics.contractsLastWeek} /></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trial expiry radar */}
+      {metrics.trialExpiringSoon.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <p className="kk-overline">Trial expiring soon ({metrics.trialExpiringSoon.length})</p>
+            <button
+              onClick={() => { const emails = metrics.trialExpiringSoon.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success("Emails copied"); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
+              style={{ background: "rgba(0,113,227,0.08)", border: "1px solid rgba(0,113,227,0.2)", color: "var(--kk-blue)" }}
+            >
+              <Copy className="w-3 h-3" /> Copy emails
+            </button>
+          </div>
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,149,0,0.3)" }}>
+            {metrics.trialExpiringSoon.map((a, i) => {
+              const days = a.trial_days_left ?? 0;
+              const urgent = days <= 3;
+              return (
+                <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "rgba(255,149,0,0.03)", borderTop: i > 0 ? "1px solid rgba(255,149,0,0.15)" : "none" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                    <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0" style={{ background: urgent ? "rgba(220,38,38,0.10)" : "rgba(255,149,0,0.10)", color: urgent ? "#DC2626" : "#92400E" }}>
+                    {days === 0 ? "Expires today" : `${days}d left`}
+                  </span>
+                  <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-mute)" }}>{a.potential_listing_count + a.existing_listing_count} cards</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Contracts expiring */}
+      <section>
+        <p className="kk-overline mb-3">Contracts expiring soon</p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[
+            { label: "Next 30 days", count: metrics.contractsExpiring30, color: "#DC2626", bg: "rgba(220,38,38,0.06)", dot: "var(--kk-red)" },
+            { label: "31 to 60 days", count: metrics.contractsExpiring60, color: "#92400E", bg: "rgba(255,149,0,0.06)", dot: "var(--kk-amber)" },
+          ].map(item => (
+            <div key={item.label} className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.dot }} />
+                <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{item.label}</p>
+                <span className="ml-auto tabular-nums font-bold text-[1.3rem] leading-none" style={{ color: item.color }}>{item.count}</span>
+              </div>
+              <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
+                {item.count === 0 ? "All clear." : `${item.count} tenancy contract${item.count !== 1 ? "s" : ""} need renewal attention.`}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
 
-type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "potential_listing_count" | "outreaches_sent" | "my_listing_count" | "existing_listing_count" | "feedback_count";
+// ─── Users Tab ────────────────────────────────────────────────────────────────
+
+type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "health" | "cards" | "feedback_count";
 
 function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: "asc" | "desc" }) {
   if (col !== sortCol) return <ChevronUp className="w-3 h-3 opacity-20" />;
   return sortDir === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />;
 }
 
-function fmtDate(iso: string | null): string {
-  if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function InactiveBadge({ days }: { days: number | null }) {
-  if (days === null) return <span style={{ color: "var(--kk-ink-faint)", fontSize: 12 }}>Never</span>;
-  const color = days <= 6 ? "#1F8B4C" : days <= 13 ? "#92400E" : "#DC2626";
-  const bg = days <= 6 ? "rgba(52,199,89,0.10)" : days <= 13 ? "rgba(255,149,0,0.12)" : "rgba(220,38,38,0.10)";
+function AgentDetailPanel({ a }: { a: AgentRow & { segment: Segment; health: number } }) {
+  const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? null;
   return (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums" style={{ background: bg, color }}>
-      {days === 0 ? "Today" : `${days}d ago`}
-    </span>
+    <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4" style={{ background: "rgba(0,0,0,0.025)", borderTop: "1px solid var(--kk-line)" }}>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Plan / Status</p>
+        <div className="flex flex-wrap gap-1">
+          {statusStyle && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statusStyle.bg, color: statusStyle.color }}>{statusStyle.label}</span>
+          )}
+          {a.subscription_plan && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize" style={{ background: PLAN_COLOR[a.subscription_plan]?.bg ?? "var(--kk-surface-2)", color: PLAN_COLOR[a.subscription_plan]?.text ?? "var(--kk-ink)" }}>{a.subscription_plan}</span>
+          )}
+          {(a.subscription_status === "trial" || a.subscription_status === "beta") && a.trial_days_left !== null && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: (a.trial_days_left ?? 99) <= 3 ? "rgba(220,38,38,0.10)" : "rgba(255,149,0,0.10)", color: (a.trial_days_left ?? 99) <= 3 ? "#DC2626" : "#92400E" }}>
+              {a.trial_days_left > 0 ? `${a.trial_days_left}d trial left` : "Trial expired"}
+            </span>
+          )}
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Activity</p>
+        <div className="text-[12px] space-y-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+          <p>Joined {fmtShort(a.joined_at)}</p>
+          <p>Last login {fmtShort(a.last_login_at)}</p>
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Cards</p>
+        <div className="text-[12px] space-y-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+          <p>{a.potential_listing_count} potential · {a.outreaches_sent} outreached</p>
+          <p>{a.my_listing_count} listed · {a.existing_listing_count} contracts</p>
+          {a.feedback_count > 0 && <p>{a.feedback_count} feedback</p>}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--kk-ink-faint)" }}>Actions</p>
+        <div className="flex gap-2 flex-wrap">
+          {a.email && (
+            <button onClick={() => { navigator.clipboard.writeText(a.email!); toast.success("Email copied"); }} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
+              <Mail className="w-3 h-3" /> Copy email
+            </button>
+          )}
+          <a href={`https://us.posthog.com/persons?search=${encodeURIComponent(a.id)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ background: "rgba(240,100,30,0.08)", border: "1px solid rgba(240,100,30,0.2)", color: "#E05A1E" }}>
+            <ExternalLink className="w-3 h-3" /> PostHog
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 
-function NumCell({ value }: { value: number }) {
-  return (
-    <span className="tabular-nums text-[13px]" style={{ color: value === 0 ? "var(--kk-ink-faint)" : "var(--kk-ink)", fontWeight: value > 0 ? 600 : 400 }}>
-      {value === 0 ? "—" : value}
-    </span>
-  );
-}
-
-function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
+function UsersTab({ agents, rawLeads, rawTenancies, rawFeedback, initialSegment }: {
   agents: AgentRow[];
-  rawLeads: RawLead[];
-  rawTenancies: RawTenancy[];
-  rawFeedback: RawFeedbackItem[];
+  rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
+  initialSegment: Segment | "all";
 }) {
   const [search, setSearch] = useState("");
+  const [segFilter, setSegFilter] = useState<Segment | "all">(initialSegment);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [activityFilter, setActivityFilter] = useState("all");
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>("all");
   const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function toggleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortCol(col); setSortDir("asc"); }
   }
 
-  // Recompute per-agent counts for the selected time window
-  const windowedCounts = useMemo(() => {
-    const cutoff = windowStart(timeWindow);
-    if (!cutoff) return null; // "all time" — use precomputed from AgentRow
-
-    const counts: Record<string, { potential: number; outreached: number; myListing: number; tenancies: number; feedback: number }> = {};
-    const init = () => ({ potential: 0, outreached: 0, myListing: 0, tenancies: 0, feedback: 0 });
-
-    for (const l of rawLeads) {
-      if (!l.user_id || new Date(l.created_at) < cutoff) continue;
-      const c = counts[l.user_id] ?? init();
-      if (!l.is_competitor_target) c.potential++;
-      if (["wants_rent", "listed", "matched"].includes(l.stage)) c.myListing++;
-      counts[l.user_id] = c;
-    }
-    // Outreaches: use last_outreach_at within window
-    for (const l of rawLeads) {
-      if (!l.user_id || !l.last_outreach_at) continue;
-      if (new Date(l.last_outreach_at) < cutoff) continue;
-      const c = counts[l.user_id] ?? init();
-      c.outreached++;
-      counts[l.user_id] = c;
-    }
-    for (const t of rawTenancies) {
-      if (!t.user_id || new Date(t.created_at) < cutoff) continue;
-      const c = counts[t.user_id] ?? init();
-      c.tenancies++;
-      counts[t.user_id] = c;
-    }
-    for (const f of rawFeedback) {
-      if (!f.agent_id || new Date(f.created_at) < cutoff) continue;
-      const c = counts[f.agent_id] ?? init();
-      c.feedback++;
-      counts[f.agent_id] = c;
-    }
-    return counts;
-  }, [timeWindow, rawLeads, rawTenancies, rawFeedback]);
-
-  // Merge windowed counts into agents for sorting/display
-  const agentsWithCounts = useMemo(() => agents.map(a => ({
+  const enriched = useMemo(() => agents.map(a => ({
     ...a,
-    potential_listing_count: windowedCounts ? (windowedCounts[a.id]?.potential ?? 0) : a.potential_listing_count,
-    outreaches_sent:         windowedCounts ? (windowedCounts[a.id]?.outreached ?? 0) : a.outreaches_sent,
-    my_listing_count:        windowedCounts ? (windowedCounts[a.id]?.myListing ?? 0) : a.my_listing_count,
-    existing_listing_count:  windowedCounts ? (windowedCounts[a.id]?.tenancies ?? 0) : a.existing_listing_count,
-    feedback_count:          windowedCounts ? (windowedCounts[a.id]?.feedback ?? 0) : a.feedback_count,
-  })), [agents, windowedCounts]);
+    segment: computeSegment(a),
+    health: computeHealthScore(a),
+    totalCards: a.potential_listing_count + a.existing_listing_count,
+  })), [agents]);
+
+  const segmentCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: agents.length };
+    for (const a of enriched) counts[a.segment] = (counts[a.segment] ?? 0) + 1;
+    return counts;
+  }, [enriched, agents.length]);
 
   const filtered = useMemo(() => {
-    let rows = agentsWithCounts;
+    let rows = enriched;
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
     }
+    if (segFilter !== "all") rows = rows.filter(a => a.segment === segFilter);
     if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
-    if (activityFilter === "active") rows = rows.filter(a => a.days_inactive !== null && a.days_inactive <= 6);
-    else if (activityFilter === "risk") rows = rows.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13);
-    else if (activityFilter === "inactive") rows = rows.filter(a => a.days_inactive !== null && a.days_inactive >= 14);
-    else if (activityFilter === "never") rows = rows.filter(a => a.days_inactive === null);
-
     return [...rows].sort((a, b) => {
       let av: number | string = 0, bv: number | string = 0;
       if (sortCol === "name") { av = (a.name ?? "").toLowerCase(); bv = (b.name ?? "").toLowerCase(); }
       else if (sortCol === "joined_at") { av = a.joined_at; bv = b.joined_at; }
       else if (sortCol === "last_login_at") { av = a.last_login_at ?? ""; bv = b.last_login_at ?? ""; }
       else if (sortCol === "days_inactive") { av = a.days_inactive ?? 9999; bv = b.days_inactive ?? 9999; }
-      else if (sortCol === "potential_listing_count") { av = a.potential_listing_count; bv = b.potential_listing_count; }
-      else if (sortCol === "outreaches_sent") { av = a.outreaches_sent; bv = b.outreaches_sent; }
-      else if (sortCol === "my_listing_count") { av = a.my_listing_count; bv = b.my_listing_count; }
-      else if (sortCol === "existing_listing_count") { av = a.existing_listing_count; bv = b.existing_listing_count; }
+      else if (sortCol === "health") { av = a.health; bv = b.health; }
+      else if (sortCol === "cards") { av = a.totalCards; bv = b.totalCards; }
       else if (sortCol === "feedback_count") { av = a.feedback_count; bv = b.feedback_count; }
       if (av < bv) return sortDir === "asc" ? -1 : 1;
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
-  }, [agentsWithCounts, search, statusFilter, activityFilter, sortCol, sortDir]);
+  }, [enriched, search, segFilter, statusFilter, sortCol, sortDir]);
 
   function exportCsv() {
-    const windowLabel = TIME_OPTIONS.find(o => o.value === timeWindow)?.label ?? "All time";
     const rows = [
-      [`# Activity window: ${windowLabel}`],
-      ["Name", "Email", "Phone", "Agency", "REN", "Status", "Plan", "Joined", "Last Login", "Days Inactive", "Potential Listing", "Outreaches Sent", "My Listing", "Existing Listing", "Feedback"].join(","),
+      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Login","Days Inactive","Potential","Outreaches","Listed","Contracts","Feedback"].join(","),
       ...filtered.map(a => [
-        a.name ?? "", a.email ?? "", a.phone ?? "", a.agency ?? "",
-        a.ren_number ?? "", a.subscription_status ?? "", a.subscription_plan ?? "",
-        fmtDate(a.joined_at), fmtDate(a.last_login_at),
-        a.days_inactive ?? "Never",
+        a.name ?? "", a.email ?? "", a.agency ?? "",
+        a.subscription_status ?? "", a.subscription_plan ?? "", a.segment, a.health,
+        fmtDate(a.joined_at), fmtDate(a.last_login_at), a.days_inactive ?? "Never",
         a.potential_listing_count, a.outreaches_sent, a.my_listing_count, a.existing_listing_count, a.feedback_count,
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
     ];
     const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const el = document.createElement("a"); el.href = URL.createObjectURL(blob); el.download = `agents-${Date.now()}.csv`; el.click();
+    const el = document.createElement("a"); el.href = URL.createObjectURL(blob); el.download = `users-${Date.now()}.csv`; el.click();
   }
 
   const Th = ({ col, label, right }: { col: SortCol; label: string; right?: boolean }) => (
-    <th
-      onClick={() => toggleSort(col)}
-      className="select-none cursor-pointer whitespace-nowrap px-4 py-3 text-left"
-      style={{ fontSize: 11, fontWeight: 600, color: sortCol === col ? "var(--kk-ink)" : "var(--kk-ink-mute)", textAlign: right ? "right" : "left", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}
-    >
-      <span className="inline-flex items-center gap-1">
-        {label} <SortIcon col={col} sortCol={sortCol} sortDir={sortDir} />
-      </span>
+    <th onClick={() => toggleSort(col)} className="select-none cursor-pointer whitespace-nowrap px-4 py-3 text-left" style={{ fontSize: 11, fontWeight: 600, color: sortCol === col ? "var(--kk-ink)" : "var(--kk-ink-mute)", textAlign: right ? "right" : "left", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>
+      <span className="inline-flex items-center gap-1">{label}<SortIcon col={col} sortCol={sortCol} sortDir={sortDir} /></span>
     </th>
   );
 
-  const isFiltered = timeWindow !== "all";
-  const windowLabel = TIME_OPTIONS.find(o => o.value === timeWindow)?.label;
-
   return (
     <div>
-      {/* Filter bar */}
+      {/* Segment chips */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {([["all", "All"], ...Object.keys(SEGMENT_META).map(s => [s, SEGMENT_META[s as Segment].label])] as [string, string][]).map(([seg, label]) => {
+          const active = segFilter === seg;
+          const meta = seg !== "all" ? SEGMENT_META[seg as Segment] : null;
+          return (
+            <button key={seg} onClick={() => setSegFilter(seg as Segment | "all")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all"
+              style={{
+                background: active ? (meta?.bg ?? "var(--kk-ink)") : "var(--kk-surface-2)",
+                border: active ? `1px solid ${meta?.border ?? "var(--kk-ink)"}40` : "1px solid var(--kk-line)",
+                color: active ? (meta?.color ?? "#fff") : "var(--kk-ink-mute)",
+              }}>
+              {meta?.icon}
+              {label}
+              <span className="ml-0.5 opacity-70">({segmentCounts[seg] ?? 0})</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filter + actions bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--kk-ink-faint)" }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search name, email, agency..."
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, agency..."
             className="w-full pl-8 pr-8 py-2 rounded-xl outline-none text-[12px]"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--kk-ink-faint)" }}>
-              <XIcon className="w-3 h-3" />
-            </button>
-          )}
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
+          {search && <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--kk-ink-faint)" }}><XIcon className="w-3 h-3" /></button>}
         </div>
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium"
-          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-        >
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
           <option value="all">All statuses</option>
           <option value="beta">Beta</option>
           <option value="beta_frozen">Frozen</option>
@@ -338,132 +556,82 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
           <option value="active">Paid</option>
           <option value="expired">Expired</option>
         </select>
-        <select
-          value={activityFilter}
-          onChange={e => setActivityFilter(e.target.value)}
-          className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium"
-          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-        >
-          <option value="all">All activity</option>
-          <option value="active">Active (last 7 days)</option>
-          <option value="risk">At risk (7-13 days)</option>
-          <option value="inactive">Inactive (14+ days)</option>
-          <option value="never">Never logged in</option>
-        </select>
-        <select
-          value={timeWindow}
-          onChange={e => setTimeWindow(e.target.value as TimeWindow)}
-          className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium"
-          style={{ background: isFiltered ? "rgba(0,113,227,0.08)" : "var(--kk-surface-2)", border: isFiltered ? "1px solid rgba(0,113,227,0.3)" : "1px solid var(--kk-line)", color: isFiltered ? "var(--kk-blue)" : "var(--kk-ink)", fontWeight: isFiltered ? 700 : 500 }}
-        >
-          {TIME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
         <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
         <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={() => { const emails = filtered.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${filtered.filter(a => a.email).length} emails copied`); }}
+          <button onClick={() => { const emails = filtered.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${filtered.filter(a => a.email).length} emails copied`); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-          >
+            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
             <Copy className="w-3.5 h-3.5" /> Copy emails
           </button>
-          <button
-            onClick={exportCsv}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
-            style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> Export CSV
+          <button onClick={exportCsv} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
+            <ExternalLink className="w-3.5 h-3.5" /> CSV
           </button>
         </div>
       </div>
 
-      {/* Time window banner */}
-      {isFiltered && (
-        <div className="mb-3 px-4 py-2 rounded-xl flex items-center gap-2" style={{ background: "rgba(0,113,227,0.07)", border: "1px solid rgba(0,113,227,0.18)" }}>
-          <span className="text-[12px] font-semibold" style={{ color: "var(--kk-blue)" }}>Showing activity: {windowLabel}</span>
-          <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>— counts reflect records created in this window only</span>
-          <button onClick={() => setTimeWindow("all")} className="ml-auto text-[11px] font-semibold hover:opacity-70 transition-opacity" style={{ color: "var(--kk-blue)" }}>Clear</button>
-        </div>
-      )}
-
       {/* Table */}
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
             <thead>
               <tr>
-                <Th col="name" label="Agent" />
-                <th className="px-4 py-3 text-left whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)" }}>Status</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", width: 4 }} />
+                <Th col="name" label="User" />
                 <Th col="joined_at" label="Joined" />
-                <Th col="last_login_at" label="Last Login" />
                 <Th col="days_inactive" label="Inactive" />
-                <Th col="potential_listing_count" label="Potential Listing" right />
-                <Th col="outreaches_sent" label="Outreaches Sent" right />
-                <Th col="my_listing_count" label="My Listing" right />
-                <Th col="existing_listing_count" label="Existing Listing" right />
-                <Th col="feedback_count" label="Feedback" right />
-                <th className="px-4 py-3 text-center whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", width: 48 }}>PH</th>
+                <Th col="health" label="Health" right />
+                <Th col="cards" label="Cards" right />
+                <th className="px-4 py-3 text-left whitespace-nowrap" style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", borderBottom: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", width: 36 }} />
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center" style={{ fontSize: 13, color: "var(--kk-ink-faint)", background: "var(--kk-surface)" }}>
-                    No agents match the current filters.
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center" style={{ fontSize: 13, color: "var(--kk-ink-faint)", background: "var(--kk-surface)" }}>No users match the current filters.</td></tr>
               )}
               {filtered.map((a, i) => {
-                const statusStyle = STATUS_STYLE[a.subscription_status ?? ""] ?? { bg: "rgba(0,0,0,0.06)", color: "var(--kk-ink-mute)", label: "—" };
-                // Beta/trial agents get full Elite feature access while their trial runs, even with no subscription_plan stored yet
-                const effectivePlan = a.subscription_plan
-                  ?? (a.subscription_status === "beta" || a.subscription_status === "trial" ? "elite" : null);
-                const planStyle = effectivePlan ? PLAN_STYLE[effectivePlan] : null;
-                const trialLabel = a.subscription_status === "trial" && a.trial_days_left !== null
-                  ? (a.trial_days_left > 0 ? ` · ${a.trial_days_left}d left` : " · Expired") : "";
+                const seg = a.segment;
+                const meta = SEGMENT_META[seg];
+                const isExpanded = expandedId === a.id;
                 const rowBg = i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)";
                 return (
-                  <tr key={a.id} style={{ background: rowBg, borderTop: "1px solid var(--kk-line)" }}>
-                    <td className="px-4 py-3" style={{ minWidth: 180 }}>
-                      <p className="font-semibold text-[13px] leading-tight" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
-                      {a.agency && <p className="text-[10px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.agency}</p>}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statusStyle.bg, color: statusStyle.color }}>
-                          {statusStyle.label}{trialLabel}
+                  <React.Fragment key={a.id}>
+                    <tr style={{ background: rowBg, borderTop: "1px solid var(--kk-line)", cursor: "pointer" }} onClick={() => setExpandedId(isExpanded ? null : a.id)}>
+                      {/* Segment bar */}
+                      <td style={{ padding: 0, width: 4 }}>
+                        <div style={{ width: 4, height: "100%", minHeight: 52, background: meta.border, borderRadius: "0 0 0 0" }} />
+                      </td>
+                      <td className="px-4 py-3" style={{ minWidth: 200 }}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold" style={{ background: meta.bg, color: meta.color }}>
+                            {(a.name ?? a.email ?? "?")[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[13px] leading-tight truncate" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                            <p className="text-[11px] truncate" style={{ color: "var(--kk-ink-faint)" }}>{a.email || "no email"}</p>
+                            {a.agency && <p className="text-[10px] truncate" style={{ color: "var(--kk-ink-faint)" }}>{a.agency}</p>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{fmtDate(a.joined_at)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap"><InactiveBadge days={a.days_inactive} /></td>
+                      <td className="px-4 py-3" style={{ minWidth: 100 }}><HealthBar score={a.health} /></td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="tabular-nums text-[13px] font-semibold" style={{ color: a.totalCards === 0 ? "var(--kk-ink-faint)" : "var(--kk-ink)" }}>
+                          {a.totalCards === 0 ? "—" : a.totalCards}
                         </span>
-                        {planStyle && effectivePlan && (
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize" style={{ background: planStyle.bg, color: planStyle.color }}>
-                            {effectivePlan}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{fmtDate(a.joined_at)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{fmtDate(a.last_login_at)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap"><InactiveBadge days={a.days_inactive} /></td>
-                    <td className="px-4 py-3 text-right"><NumCell value={a.potential_listing_count} /></td>
-                    <td className="px-4 py-3 text-right"><NumCell value={a.outreaches_sent} /></td>
-                    <td className="px-4 py-3 text-right"><NumCell value={a.my_listing_count} /></td>
-                    <td className="px-4 py-3 text-right"><NumCell value={a.existing_listing_count} /></td>
-                    <td className="px-4 py-3 text-right"><NumCell value={a.feedback_count} /></td>
-                    <td className="px-4 py-3 text-center">
-                      {a.email && (
-                        <a
-                          href={`https://us.posthog.com/persons?search=${encodeURIComponent(a.id)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="View in PostHog"
-                          className="inline-flex items-center justify-center w-6 h-6 rounded-lg transition-opacity hover:opacity-70"
-                          style={{ background: "rgba(240,100,30,0.10)", color: "#E05A1E" }}
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Expand className="w-3.5 h-3.5 transition-transform" style={{ color: "var(--kk-ink-faint)", transform: isExpanded ? "rotate(180deg)" : "none" }} />
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr style={{ background: rowBg }}>
+                        <td colSpan={7} style={{ padding: 0 }}>
+                          <AgentDetailPanel a={a} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -474,410 +642,290 @@ function AgentsTable({ agents, rawLeads, rawTenancies, rawFeedback }: {
   );
 }
 
-export function AdminView({ funnel, links: initialLinks, feedback: initialFeedback, agents, invites: initialInvites, waitlist, rawLeads, rawTenancies, rawFeedback }: {
-  funnel: Funnel; links: Link[]; feedback: FeedbackRow[]; agents: AgentRow[];
-  invites: InviteRow[]; waitlist: WaitlistRow[];
-  rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
+// ─── Revenue Tab ──────────────────────────────────────────────────────────────
+
+function RevenueTab({ agents }: { agents: AgentRow[] }) {
+  const stats = useMemo(() => {
+    const byPlan: Record<string, number> = {};
+    let mrr = 0;
+    for (const a of agents) {
+      if (a.subscription_status !== "active" || !a.subscription_plan) continue;
+      byPlan[a.subscription_plan] = (byPlan[a.subscription_plan] ?? 0) + 1;
+      mrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
+    }
+
+    const totalPaid = agents.filter(a => a.subscription_status === "active").length;
+    const totalTrialBeta = agents.filter(a => a.subscription_status === "trial" || a.subscription_status === "beta").length;
+    const totalExpired = agents.filter(a => a.subscription_status === "expired").length;
+
+    const expiringTrials = agents
+      .filter(a => (a.subscription_status === "trial" || a.subscription_status === "beta") && a.trial_days_left !== null && a.trial_days_left >= 0)
+      .sort((a, b) => (a.trial_days_left ?? 99) - (b.trial_days_left ?? 99));
+
+    const conversionRate = (totalPaid + totalExpired) > 0
+      ? Math.round((totalPaid / (totalPaid + totalExpired)) * 100)
+      : null;
+
+    return { byPlan, mrr, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate };
+  }, [agents]);
+
+  return (
+    <div className="space-y-8">
+      {/* MRR breakdown */}
+      <section>
+        <div className="flex items-baseline gap-4 mb-5">
+          <div>
+            <p className="kk-overline mb-1">Monthly recurring revenue</p>
+            <p className="font-bold tabular-nums" style={{ fontSize: "2.2rem", lineHeight: 1, color: "var(--kk-blue)" }}>RM{stats.mrr.toLocaleString()}</p>
+            <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>ARR est. RM{(stats.mrr * 12).toLocaleString()}</p>
+          </div>
+          <div className="ml-auto flex gap-6 text-right">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Paid</p>
+              <p className="tabular-nums font-bold text-[1.4rem]" style={{ color: "var(--kk-ink)" }}>{stats.totalPaid}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Trial/Beta</p>
+              <p className="tabular-nums font-bold text-[1.4rem]" style={{ color: "var(--kk-ink)" }}>{stats.totalTrialBeta}</p>
+            </div>
+            {stats.conversionRate !== null && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Conv. rate</p>
+                <p className="tabular-nums font-bold text-[1.4rem]" style={{ color: stats.conversionRate >= 30 ? "#1F8B4C" : "#92400E" }}>{stats.conversionRate}%</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+          {["gold", "platinum", "elite"].map((plan, i) => {
+            const count = stats.byPlan[plan] ?? 0;
+            const planMrr = count * (MRR_BY_PLAN[plan] ?? 0);
+            const planMeta = PLAN_COLOR[plan];
+            const maxPlanMrr = Math.max(...["gold", "platinum", "elite"].map(p => (stats.byPlan[p] ?? 0) * (MRR_BY_PLAN[p] ?? 0)), 1);
+            return (
+              <div key={plan} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                <div style={{ width: 72, flexShrink: 0 }}>
+                  <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: planMeta.bg, color: planMeta.text }}>{PLAN_LABEL[plan]}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{count} user{count !== 1 ? "s" : ""} × RM{MRR_BY_PLAN[plan]}/mo</p>
+                    <p className="tabular-nums font-bold text-[13px]" style={{ color: "var(--kk-ink)" }}>RM{planMrr.toLocaleString()}</p>
+                  </div>
+                  <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: "var(--kk-line)" }}>
+                    <div style={{ width: `${planMrr > 0 ? Math.max(4, Math.round((planMrr / maxPlanMrr) * 100)) : 0}%`, height: "100%", background: planMeta.bar, borderRadius: 99, transition: "width 600ms ease" }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Expiring trials — conversion window */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="kk-overline">Trial / beta users ({stats.expiringTrials.length})</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Sorted by trial expiry. These are your conversion opportunities.</p>
+          </div>
+          {stats.expiringTrials.length > 0 && (
+            <button
+              onClick={() => { const emails = stats.expiringTrials.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success("Emails copied"); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
+              <Copy className="w-3 h-3" /> Copy all emails
+            </button>
+          )}
+        </div>
+        {stats.expiringTrials.length === 0 ? (
+          <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No trial or beta users right now.</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+            {stats.expiringTrials.map((a, i) => {
+              const days = a.trial_days_left;
+              const urgent = days !== null && days <= 3;
+              const expired = days !== null && days < 0;
+              return (
+                <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                    <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email} · {a.potential_listing_count + a.existing_listing_count} cards</p>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0" style={{
+                    background: expired ? "rgba(110,110,115,0.10)" : urgent ? "rgba(220,38,38,0.10)" : "rgba(255,149,0,0.10)",
+                    color: expired ? "#6E6E73" : urgent ? "#DC2626" : "#92400E",
+                  }}>
+                    {expired ? `Expired ${Math.abs(days!)}d ago` : days === 0 ? "Expires today" : `${days}d left`}
+                  </span>
+                  <span className="text-[11px] font-semibold shrink-0" style={{ color: STATUS_STYLE[a.subscription_status ?? ""]?.color ?? "var(--kk-ink-mute)" }}>
+                    {STATUS_STYLE[a.subscription_status ?? ""]?.label ?? "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+// ─── Ops Tab ──────────────────────────────────────────────────────────────────
+
+function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initialInvites, waitlist, openFeedbackCount }: {
+  links: LinkRow[]; feedback: FeedbackRow[]; invites: InviteRow[]; waitlist: WaitlistRow[]; openFeedbackCount: number;
 }) {
-  const [tab, setTab] = useState<"overview" | "funnel" | "feedback" | "agents" | "invites" | "waitlist">("overview");
-
-  // KPI computations
-  const kpi = useMemo(() => {
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
-    const thirtyDaysMs = 30 * 86400000;
-    const sixtyDaysMs = 60 * 86400000;
-
-    const active7d = agents.filter(a => a.days_inactive !== null && a.days_inactive <= 6).length;
-    const ghostUsers = agents.filter(a => {
-      const joinedMs = now.getTime() - new Date(a.joined_at).getTime();
-      return joinedMs >= 7 * 86400000 && a.potential_listing_count === 0 && a.existing_listing_count === 0;
-    });
-
-    const mrr = agents.reduce((sum, a) => {
-      if (a.subscription_status !== "active" || !a.subscription_plan) return sum;
-      return sum + (MRR_BY_PLAN[a.subscription_plan] ?? 0);
-    }, 0);
-
-    const totalLeads = agents.reduce((s, a) => s + a.potential_listing_count, 0);
-    const totalContracts = agents.reduce((s, a) => s + a.existing_listing_count, 0);
-
-    const contractsExpiring30 = rawTenancies.filter(t => {
-      if (!t.contract_end) return false;
-      const ms = new Date(t.contract_end).getTime() - now.getTime();
-      return ms >= 0 && ms <= thirtyDaysMs;
-    });
-    const contractsExpiring60 = rawTenancies.filter(t => {
-      if (!t.contract_end) return false;
-      const ms = new Date(t.contract_end).getTime() - now.getTime();
-      return ms > thirtyDaysMs && ms <= sixtyDaysMs;
-    });
-
-    const recentlyActive = agents.filter(a => a.last_login_at && new Date(a.last_login_at) >= sevenDaysAgo);
-
-    return { active7d, ghostUsers, mrr, totalLeads, totalContracts, contractsExpiring30, contractsExpiring60, recentlyActive };
-  }, [agents, rawTenancies]);
-  const [links, setLinks] = useState<Link[]>(initialLinks);
+  const [sub, setSub] = useState<"links" | "feedback" | "invites" | "waitlist" | "dev">("links");
+  const [links, setLinks] = useState<LinkRow[]>(initialLinks);
   const [feedback, setFeedback] = useState<FeedbackRow[]>(initialFeedback);
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites);
-  const [newLabel, setNewLabel] = useState("");
-  const [newSlug, setNewSlug] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [newLabel, setNewLabel] = useState(""); const [newSlug, setNewSlug] = useState(""); const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [editingSends, setEditingSends] = useState<string | null>(null);
-  const [sendsInput, setSendsInput] = useState("");
+  const [editingSends, setEditingSends] = useState<string | null>(null); const [sendsInput, setSendsInput] = useState("");
   const [resetting, setResetting] = useState(false);
-  const [inviteInput, setInviteInput] = useState("");
-  const [addingInvites, setAddingInvites] = useState(false);
+  const [inviteInput, setInviteInput] = useState(""); const [addingInvites, setAddingInvites] = useState(false);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
 
-  function autoSlug(label: string) {
-    return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  }
+  const openFeedback = feedback.filter(f => !f.resolved);
+  const resolvedFeedback = feedback.filter(f => f.resolved);
+
+  function autoSlug(label: string) { return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
 
   async function handleCreate() {
     if (!newLabel.trim() || !newSlug.trim()) return;
     setCreating(true);
-    const res = await fetch("/api/admin/links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label: newLabel.trim(), slug: newSlug.trim() }),
-    });
-    if (res.ok) {
-      const link = await res.json();
-      setLinks(prev => [{ ...link, clicks: 0, signups: 0, sends: 0 }, ...prev]);
-      setNewLabel("");
-      setNewSlug("");
-      toast.success("Link created");
-    } else {
-      const body = await res.json().catch(() => ({}));
-      toast.error(body.error ?? "Failed to create link");
-    }
+    const res = await fetch("/api/admin/links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label: newLabel.trim(), slug: newSlug.trim() }) });
+    if (res.ok) { const link = await res.json(); setLinks(prev => [{ ...link, clicks: 0, signups: 0, sends: 0 }, ...prev]); setNewLabel(""); setNewSlug(""); toast.success("Link created"); }
+    else { const body = await res.json().catch(() => ({})); toast.error(body.error ?? "Failed"); }
     setCreating(false);
   }
 
   async function saveSends(id: string) {
-    const n = parseInt(sendsInput, 10);
-    if (isNaN(n) || n < 0) return;
-    const res = await fetch("/api/admin/links", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, sends_count: n }),
-    });
-    if (res.ok) {
-      setLinks(prev => prev.map(l => l.id === id ? { ...l, sends: n } : l));
-      toast.success("Sends updated");
-    } else {
-      toast.error("Failed to update");
-    }
+    const n = parseInt(sendsInput, 10); if (isNaN(n) || n < 0) return;
+    const res = await fetch("/api/admin/links", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, sends_count: n }) });
+    if (res.ok) { setLinks(prev => prev.map(l => l.id === id ? { ...l, sends: n } : l)); toast.success("Sends updated"); }
+    else toast.error("Failed to update");
     setEditingSends(null);
   }
 
   function copyLink(slug: string, id: string) {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     navigator.clipboard.writeText(`${origin}/api/r/${slug}`);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setCopiedId(id); setTimeout(() => setCopiedId(null), 2000);
   }
 
-  const maxTotal = funnel.total || 1;
-  const funnelStages = [
-    { label: "Total accounts",    value: funnel.total,        color: "var(--kk-ink)" },
-    { label: "Active beta",       value: funnel.beta,         color: "#8b5cf6" },
-    { label: "Beta frozen",       value: funnel.beta_frozen,  color: "#3b82f6" },
-    { label: "Active trial",      value: funnel.trial,        color: "var(--kk-green)" },
-    { label: "Expired",           value: funnel.expired,      color: "#DC2626" },
-    { label: "Paid subscribers",  value: funnel.active,       color: "#0071E3" },
-    { label: "Legacy (no status)",value: funnel.unset,        color: "var(--kk-ink-faint)" },
-    { label: "Elite access",      value: funnel.elite,        color: "#6b3d1e" },
-  ];
-
   async function toggleResolved(id: string, current: boolean) {
-    const res = await fetch("/api/admin/feedback", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, resolved: !current }),
-    });
-    if (res.ok) {
-      setFeedback(prev => prev.map(f => f.id === id ? { ...f, resolved: !current } : f));
-    } else {
-      toast.error("Failed to update");
-    }
+    const res = await fetch("/api/admin/feedback", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, resolved: !current }) });
+    if (res.ok) setFeedback(prev => prev.map(f => f.id === id ? { ...f, resolved: !current } : f));
+    else toast.error("Failed to update");
   }
 
   async function handleAddInvites() {
     const emails = inviteInput.split(/[\n,]+/).map(e => e.trim()).filter(e => e.includes("@"));
     if (emails.length === 0) return;
     setAddingInvites(true);
-    const res = await fetch("/api/admin/invites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emails }),
-    });
-    if (res.ok) {
-      const body = await res.json();
-      toast.success(`${body.added} invite${body.added !== 1 ? "s" : ""} added`);
-      setInviteInput("");
-      const fresh = await fetch("/api/admin/invites").then(r => r.json()).catch(() => invites);
-      setInvites(fresh);
-    } else {
-      const body = await res.json().catch(() => ({}));
-      toast.error(body.error ?? "Failed to add invites");
-    }
+    const res = await fetch("/api/admin/invites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ emails }) });
+    if (res.ok) { const body = await res.json(); toast.success(`${body.added} invite${body.added !== 1 ? "s" : ""} added`); setInviteInput(""); const fresh = await fetch("/api/admin/invites").then(r => r.json()).catch(() => invites); setInvites(fresh); }
+    else { const body = await res.json().catch(() => ({})); toast.error(body.error ?? "Failed"); }
     setAddingInvites(false);
   }
 
   async function handleRemoveInvite(email: string) {
     setRemovingEmail(email);
-    const res = await fetch("/api/admin/invites", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    if (res.ok) {
-      setInvites(prev => prev.filter(i => i.email !== email));
-      toast.success("Invite removed");
-    } else {
-      toast.error("Failed to remove");
-    }
+    const res = await fetch("/api/admin/invites", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    if (res.ok) { setInvites(prev => prev.filter(i => i.email !== email)); toast.success("Invite removed"); }
+    else toast.error("Failed to remove");
     setRemovingEmail(null);
   }
 
-  const openFeedback = feedback.filter(f => !f.resolved);
-  const resolvedFeedback = feedback.filter(f => f.resolved);
+  const subTabs: [typeof sub, string][] = [
+    ["links", `Links (${links.length})`],
+    ["feedback", `Feedback${openFeedbackCount ? ` (${openFeedbackCount})` : ""}`],
+    ["invites", `Invites (${invites.length})`],
+    ["waitlist", `Waitlist (${waitlist.length})`],
+    ["dev", "Dev Tools"],
+  ];
 
   return (
-    <div className="px-6 lg:px-12 py-10 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <h1 className="serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", letterSpacing: "-0.022em", color: "var(--kk-ink)" }}>
-          Admin Dashboard
-        </h1>
-        <div className="flex gap-1 p-1 rounded-xl flex-wrap" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
-          {(["overview", "funnel", "agents", "invites", "waitlist", "feedback"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all capitalize"
-              style={{
-                background: tab === t ? "var(--kk-ink)" : "transparent",
-                color: tab === t ? "#fff" : "var(--kk-ink-mute)",
-              }}>
-              {t === "feedback" ? `Feedback${openFeedback.length ? ` (${openFeedback.length})` : ""}`
-                : t === "agents" ? `Agents (${agents.length})`
-                : t === "invites" ? `Invites (${invites.length})`
-                : t === "waitlist" ? `Waitlist (${waitlist.length})`
-                : t === "overview" ? "Overview"
-                : "Funnel & Links"}
+    <div>
+      <div className="flex gap-1 p-1 rounded-xl mb-6 flex-wrap" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+        {subTabs.map(([id, label]) => (
+          <button key={id} onClick={() => setSub(id)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
+            style={{ background: sub === id ? "var(--kk-ink)" : "transparent", color: sub === id ? "#fff" : "var(--kk-ink-mute)" }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {sub === "links" && (
+        <div>
+          <div className="flex gap-2 mb-5 flex-wrap">
+            <input value={newLabel} onChange={e => { setNewLabel(e.target.value); setNewSlug(autoSlug(e.target.value)); }} placeholder="Label" className="flex-1 min-w-[160px] rounded-xl px-3.5 py-2.5 outline-none" style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }} />
+            <input value={newSlug} onChange={e => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="slug" className="w-32 rounded-xl px-3.5 py-2.5 outline-none font-mono" style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }} />
+            <button onClick={handleCreate} disabled={creating || !newLabel.trim() || !newSlug.trim()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold transition-opacity hover:opacity-85 disabled:opacity-40" style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-sm)" }}>
+              <Plus className="w-3.5 h-3.5" />{creating ? "Creating…" : "Create"}
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* KPI strip — always visible */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        <KpiCard label="Total users" value={funnel.total} icon={<Users className="w-3.5 h-3.5" />} />
-        <KpiCard label="Active 7d" value={kpi.active7d} sub={`${funnel.total > 0 ? Math.round((kpi.active7d / funnel.total) * 100) : 0}% of users`} color="var(--kk-green)" icon={<Activity className="w-3.5 h-3.5" />} />
-        <KpiCard label="Ghost users" value={kpi.ghostUsers.length} sub="Joined 7d+ no cards" color={kpi.ghostUsers.length > 0 ? "var(--kk-amber)" : "var(--kk-ink)"} icon={<AlertCircle className="w-3.5 h-3.5" />} />
-        <KpiCard label="Total leads" value={kpi.totalLeads} icon={<TrendingUp className="w-3.5 h-3.5" />} />
-        <KpiCard label="Contracts" value={kpi.totalContracts} icon={<FileText className="w-3.5 h-3.5" />} />
-        <KpiCard label="MRR est." value={`RM${kpi.mrr}`} sub={`${funnel.active} paid users`} color="var(--kk-blue)" icon={<Home className="w-3.5 h-3.5" />} />
-      </div>
-
-      {tab === "overview" && (
-        <div className="space-y-8">
-          {/* Ghost users */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <p className="kk-overline">Ghost users ({kpi.ghostUsers.length})</p>
-              {kpi.ghostUsers.length > 0 && (
-                <button
-                  onClick={() => { const emails = kpi.ghostUsers.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${kpi.ghostUsers.filter(a => a.email).length} emails copied`); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
-                  style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
-                >
-                  <Copy className="w-3 h-3" /> Copy emails
-                </button>
-              )}
-            </div>
-            {kpi.ghostUsers.length === 0 ? (
-              <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                <p className="text-[13px] font-semibold" style={{ color: "var(--kk-green)" }}>No ghost users</p>
-                <p className="text-[12px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>Everyone who joined 7+ days ago has added at least one card.</p>
-              </div>
-            ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-                {kpi.ghostUsers.map((a, i) => {
-                  const daysSinceJoined = Math.floor((Date.now() - new Date(a.joined_at).getTime()) / 86400000);
-                  return (
-                    <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+          </div>
+          {links.length === 0 ? <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No links yet.</p> : (
+            <div className="space-y-3">
+              {links.map(link => {
+                const clickRate = link.sends > 0 ? ((link.clicks / link.sends) * 100).toFixed(1) : "—";
+                const convRate = link.clicks > 0 ? ((link.signups / link.clicks) * 100).toFixed(1) : "—";
+                const maxVal = Math.max(link.sends, 1);
+                return (
+                  <div key={link.id} className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                    <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                      <div>
+                        <p className="font-semibold" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>{link.label}</p>
+                        <p className="font-mono mt-0.5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>/api/r/{link.slug}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(255,149,0,0.10)", color: "#92400E" }}>
-                          Joined {daysSinceJoined}d ago
-                        </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink-mute)" }}>
-                          {STATUS_STYLE[a.subscription_status ?? ""]?.label ?? a.subscription_status ?? "—"}
-                        </span>
+                        <button onClick={() => copyLink(link.slug, link.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-opacity hover:opacity-70" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", fontSize: "var(--kk-xs)", fontWeight: 500 }}>
+                          {copiedId === link.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}{copiedId === link.id ? "Copied" : "Copy"}
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* Contracts expiring */}
-          <section>
-            <p className="kk-overline mb-3">Contracts expiring soon</p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--kk-red)" }} />
-                  <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>Next 30 days</p>
-                  <span className="ml-auto tabular-nums font-bold text-[1.2rem]" style={{ color: "var(--kk-red)" }}>{kpi.contractsExpiring30.length}</span>
-                </div>
-                <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
-                  {kpi.contractsExpiring30.length === 0 ? "No contracts expiring in the next 30 days." : `${kpi.contractsExpiring30.length} tenancy contract${kpi.contractsExpiring30.length !== 1 ? "s" : ""} need renewal attention.`}
-                </p>
-              </div>
-              <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--kk-amber)" }} />
-                  <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>31 to 60 days</p>
-                  <span className="ml-auto tabular-nums font-bold text-[1.2rem]" style={{ color: "#92400E" }}>{kpi.contractsExpiring60.length}</span>
-                </div>
-                <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
-                  {kpi.contractsExpiring60.length === 0 ? "No contracts expiring in 31 to 60 days." : `${kpi.contractsExpiring60.length} contract${kpi.contractsExpiring60.length !== 1 ? "s" : ""} approaching renewal window.`}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* At-risk users */}
-          <section>
-            <p className="kk-overline mb-3">At risk ({agents.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13).length})</p>
-            <p className="text-[12px] mb-3" style={{ color: "var(--kk-ink-mute)" }}>Logged in 7 to 13 days ago. Worth a nudge before they go inactive.</p>
-            {agents.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13).length === 0 ? (
-              <div className="rounded-2xl px-5 py-4 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>No at-risk users right now.</p>
-              </div>
-            ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-                {agents.filter(a => a.days_inactive !== null && a.days_inactive >= 7 && a.days_inactive <= 13).slice(0, 10).map((a, i) => (
-                  <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                      <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      {[
+                        { label: "Sent", value: link.sends, color: "var(--kk-ink)", editable: true },
+                        { label: "Clicked", value: link.clicks, color: "#0071E3", rate: clickRate },
+                        { label: "Signed up", value: link.signups, color: "var(--kk-green)", rate: convRate },
+                      ].map(col => (
+                        <div key={col.label} className="rounded-xl p-3" style={{ background: "var(--kk-surface-2)" }}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>{col.label}</p>
+                            {col.editable ? (
+                              editingSends === link.id
+                                ? <div className="flex items-center gap-1"><input autoFocus value={sendsInput} onChange={e => setSendsInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") saveSends(link.id); if (e.key === "Escape") setEditingSends(null); }} className="w-14 text-right rounded px-1 outline-none" style={{ fontSize: "var(--kk-xs)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-surface)", color: "var(--kk-ink)" }} /><button onClick={() => saveSends(link.id)} style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", fontWeight: 600 }}>✓</button></div>
+                                : <button onClick={() => { setEditingSends(link.id); setSendsInput(String(link.sends)); }} className="opacity-50 hover:opacity-100 transition-opacity" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}><Edit2 className="w-2.5 h-2.5" /></button>
+                            ) : <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>{col.rate}%</p>}
+                          </div>
+                          <p className="tabular-nums font-bold" style={{ fontSize: "1.3rem", color: col.color, lineHeight: 1 }}>{col.value}</p>
+                          <FunnelBar value={col.value} max={maxVal} color={col.color} />
+                        </div>
+                      ))}
                     </div>
-                    <InactiveBadge days={a.days_inactive} />
-                    <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>{a.potential_listing_count + a.existing_listing_count} cards</span>
+                    <div className="flex items-center gap-1.5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
+                      <span>{link.sends > 0 ? `${link.sends} sent` : "No sends yet"}</span>
+                      <ChevronRight className="w-3 h-3" /><span>{link.clicks} clicked</span>
+                      <ChevronRight className="w-3 h-3" /><span>{link.signups} signed up</span>
+                      {link.sends > 0 && link.signups > 0 && <span style={{ marginLeft: 4, color: "var(--kk-green)", fontWeight: 600 }}>({((link.signups / link.sends) * 100).toFixed(1)}% end-to-end)</span>}
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      )}
-
-      {tab === "invites" && (
-        <div>
-          <p className="kk-overline mb-4">Invite List</p>
-          <div className="mb-5">
-            <textarea
-              value={inviteInput}
-              onChange={e => setInviteInput(e.target.value)}
-              placeholder={"Paste emails, one per line or comma-separated\nagent@era.com\nagent2@iqigroup.com"}
-              rows={4}
-              className="w-full rounded-xl px-3.5 py-2.5 outline-none font-mono resize-none mb-2"
-              style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
-            />
-            <button
-              onClick={handleAddInvites}
-              disabled={addingInvites || !inviteInput.trim()}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold transition-opacity hover:opacity-85 disabled:opacity-40"
-              style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-sm)" }}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {addingInvites ? "Adding…" : "Add invites"}
-            </button>
-          </div>
-          <div className="space-y-2">
-            {invites.length === 0 && (
-              <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No invites yet.</p>
-            )}
-            {invites.map(inv => {
-              const date = new Date(inv.invited_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-              return (
-                <div key={inv.id} className="rounded-2xl px-5 py-3 flex items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-mono text-[13px]" style={{ color: "var(--kk-ink)" }}>{inv.email}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Invited {date}</p>
-                  </div>
-                  {inv.used_at ? (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.10)", color: "#065F46" }}>
-                      Used
-                    </span>
-                  ) : (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(234,179,8,0.12)", color: "#A16207" }}>
-                      Pending
-                    </span>
-                  )}
-                  <button
-                    onClick={() => handleRemoveInvite(inv.email)}
-                    disabled={removingEmail === inv.email}
-                    className="text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40"
-                    style={{ color: "#DC2626" }}
-                  >
-                    {removingEmail === inv.email ? "Removing…" : "Remove"}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {tab === "waitlist" && (
-        <div>
-          <p className="kk-overline mb-4">Waitlist ({waitlist.length})</p>
-          {waitlist.length === 0 && (
-            <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No waitlist entries yet.</p>
+                );
+              })}
+            </div>
           )}
-          <div className="space-y-2">
-            {waitlist.map(w => {
-              const date = new Date(w.created_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-              return (
-                <div key={w.id} className="rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                  <div className="flex-1 min-w-[160px]">
-                    <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{w.name || "—"}</p>
-                    <p className="font-mono text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{w.email}</p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {w.ren_number && (
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
-                        {w.ren_number}
-                      </span>
-                    )}
-                    {w.expected_spend && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.12)", color: "#4338CA" }}>
-                        RM{w.expected_spend}/mo
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>{date}</span>
-                </div>
-              );
-            })}
-          </div>
         </div>
       )}
 
-      {tab === "feedback" && (
+      {sub === "feedback" && (
         <div className="space-y-3">
-          {feedback.length === 0 && (
-            <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No feedback yet.</p>
-          )}
+          {feedback.length === 0 && <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No feedback yet.</p>}
           {[...openFeedback, ...resolvedFeedback].map(f => {
             const cat = CATEGORY_STYLE[f.category] ?? CATEGORY_STYLE.question;
             const date = new Date(f.created_at).toLocaleDateString("en-MY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -885,18 +933,13 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
               <div key={f.id} className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", opacity: f.resolved ? 0.5 : 1 }}>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: cat.bg, color: cat.color }}>
-                      {cat.label}
-                    </span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: cat.bg, color: cat.color }}>{cat.label}</span>
                     <span className="text-[12px] font-medium" style={{ color: "var(--kk-ink)" }}>{f.agent_name || f.agent_email || "Unknown"}</span>
-                    {f.page_url && (
-                      <span className="text-[11px] font-mono" style={{ color: "var(--kk-ink-faint)" }}>{f.page_url}</span>
-                    )}
+                    {f.page_url && <span className="text-[11px] font-mono" style={{ color: "var(--kk-ink-faint)" }}>{f.page_url}</span>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{date}</span>
-                    <button onClick={() => toggleResolved(f.id, f.resolved)} title={f.resolved ? "Mark open" : "Mark resolved"}
-                      className="transition-opacity hover:opacity-70">
+                    <button onClick={() => toggleResolved(f.id, f.resolved)} title={f.resolved ? "Mark open" : "Mark resolved"} className="transition-opacity hover:opacity-70">
                       <CheckCircle2 className="w-4 h-4" style={{ color: f.resolved ? "var(--kk-green)" : "var(--kk-line-strong)" }} />
                     </button>
                   </div>
@@ -908,211 +951,151 @@ export function AdminView({ funnel, links: initialLinks, feedback: initialFeedba
         </div>
       )}
 
-      {tab === "agents" && <AgentsTable agents={agents} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />}
+      {sub === "invites" && (
+        <div>
+          <div className="mb-5">
+            <textarea value={inviteInput} onChange={e => setInviteInput(e.target.value)} placeholder={"Paste emails, one per line or comma-separated\nagent@era.com\nagent2@iqigroup.com"} rows={4} className="w-full rounded-xl px-3.5 py-2.5 outline-none font-mono resize-none mb-2" style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }} />
+            <button onClick={handleAddInvites} disabled={addingInvites || !inviteInput.trim()} className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold transition-opacity hover:opacity-85 disabled:opacity-40" style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-sm)" }}>
+              <Plus className="w-3.5 h-3.5" />{addingInvites ? "Adding…" : "Add invites"}
+            </button>
+          </div>
+          <div className="space-y-2">
+            {invites.length === 0 && <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No invites yet.</p>}
+            {invites.map(inv => (
+              <div key={inv.id} className="rounded-2xl px-5 py-3 flex items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-[13px]" style={{ color: "var(--kk-ink)" }}>{inv.email}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>Invited {fmtDate(inv.invited_at)}</p>
+                </div>
+                {inv.used_at ? <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.10)", color: "#065F46" }}>Used</span>
+                  : <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(234,179,8,0.12)", color: "#A16207" }}>Pending</span>}
+                <button onClick={() => handleRemoveInvite(inv.email)} disabled={removingEmail === inv.email} className="text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40" style={{ color: "#DC2626" }}>
+                  {removingEmail === inv.email ? "Removing…" : "Remove"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {tab === "funnel" && <>
-      {/* User Funnel */}
-      <section className="mb-12">
-        <p className="kk-overline mb-5">User Funnel</p>
-        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-          {funnelStages.map((s, i) => (
-            <div key={s.label} className="flex items-center gap-4 px-5 py-4" style={{ borderTop: i > 0 ? "1px solid var(--kk-line)" : "none", background: "var(--kk-surface)" }}>
-              <div style={{ width: 52, flexShrink: 0 }}>
-                <p className="tabular-nums font-bold" style={{ fontSize: "1.4rem", color: s.color, lineHeight: 1 }}>{s.value}</p>
+      {sub === "waitlist" && (
+        <div className="space-y-2">
+          {waitlist.length === 0 && <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No waitlist entries yet.</p>}
+          {waitlist.map(w => (
+            <div key={w.id} className="rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <div className="flex-1 min-w-[160px]">
+                <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{w.name || "—"}</p>
+                <p className="font-mono text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{w.email}</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="mb-1.5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>{s.label}</p>
-                <FunnelBar value={s.value} max={maxTotal} color={s.color} />
+              <div className="flex items-center gap-2 flex-wrap">
+                {w.ren_number && <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>{w.ren_number}</span>}
+                {w.expected_spend && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.12)", color: "#4338CA" }}>RM{w.expected_spend}/mo</span>}
               </div>
-              <div className="shrink-0" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", width: 36, textAlign: "right" }}>
-                {funnel.total > 0 ? `${Math.round((s.value / funnel.total) * 100)}%` : "—"}
-              </div>
+              <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>{fmtDate(w.created_at)}</span>
             </div>
           ))}
         </div>
-      </section>
+      )}
 
-      {/* Outreach Links with WhatsApp funnel */}
-      <section>
-        <p className="kk-overline mb-2">Outreach Links</p>
-        <p className="mb-5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
-          Share these links in WhatsApp batches. Update the Sent count manually after each send. Clicked and Signed Up are tracked automatically.
-        </p>
-
-        {/* Create new */}
-        <div className="flex gap-2 mb-5 flex-wrap">
-          <input
-            value={newLabel}
-            onChange={e => { setNewLabel(e.target.value); setNewSlug(autoSlug(e.target.value)); }}
-            placeholder="Label (e.g. CoAgent May batch)"
-            className="flex-1 min-w-[160px] rounded-xl px-3.5 py-2.5 outline-none"
-            style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
-          />
-          <input
-            value={newSlug}
-            onChange={e => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-            placeholder="slug"
-            className="w-36 rounded-xl px-3.5 py-2.5 outline-none font-mono"
-            style={{ fontSize: "var(--kk-sm)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-bg)", color: "var(--kk-ink)" }}
-          />
-          <button
-            onClick={handleCreate}
-            disabled={creating || !newLabel.trim() || !newSlug.trim()}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold transition-opacity hover:opacity-85 disabled:opacity-40"
-            style={{ background: "var(--kk-ink)", color: "#fff", fontSize: "var(--kk-sm)" }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {creating ? "Creating…" : "Create"}
-          </button>
-        </div>
-
-        {links.length === 0 ? (
-          <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No links yet. Create one above.</p>
-        ) : (
-          <div className="space-y-3">
-            {links.map((link) => {
-              const clickRate = link.sends > 0 ? ((link.clicks / link.sends) * 100).toFixed(1) : "—";
-              const convRate = link.clicks > 0 ? ((link.signups / link.clicks) * 100).toFixed(1) : "—";
-              const maxVal = Math.max(link.sends, 1);
-
-              return (
-                <div key={link.id} className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-                  {/* Header row */}
-                  <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-                    <div>
-                      <p className="font-semibold" style={{ fontSize: "var(--kk-body)", color: "var(--kk-ink)" }}>{link.label}</p>
-                      <p className="font-mono mt-0.5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>/api/r/{link.slug}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => copyLink(link.slug, link.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-opacity hover:opacity-70"
-                        style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", fontSize: "var(--kk-xs)", fontWeight: 500 }}
-                      >
-                        {copiedId === link.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                        {copiedId === link.id ? "Copied" : "Copy link"}
-                      </button>
-                      <a
-                        href={`/api/r/${link.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-opacity hover:opacity-70"
-                        style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", fontSize: "var(--kk-xs)", fontWeight: 500 }}
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Test
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Funnel bars */}
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {/* Sent */}
-                    <div className="rounded-xl p-3" style={{ background: "var(--kk-surface-2)" }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Sent</p>
-                        {editingSends === link.id ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              autoFocus
-                              value={sendsInput}
-                              onChange={e => setSendsInput(e.target.value)}
-                              onKeyDown={e => { if (e.key === "Enter") saveSends(link.id); if (e.key === "Escape") setEditingSends(null); }}
-                              className="w-16 text-right rounded px-1 outline-none"
-                              style={{ fontSize: "var(--kk-xs)", border: "1px solid var(--kk-line-strong)", background: "var(--kk-surface)", color: "var(--kk-ink)" }}
-                            />
-                            <button onClick={() => saveSends(link.id)} style={{ fontSize: "var(--kk-xs)", color: "var(--kk-green)", fontWeight: 600 }}>✓</button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => { setEditingSends(link.id); setSendsInput(String(link.sends)); }}
-                            className="flex items-center gap-0.5 opacity-50 hover:opacity-100 transition-opacity"
-                            style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)" }}
-                          >
-                            <Edit2 className="w-2.5 h-2.5" />
-                          </button>
-                        )}
-                      </div>
-                      <p className="tabular-nums font-bold" style={{ fontSize: "1.3rem", color: "var(--kk-ink)", lineHeight: 1 }}>{link.sends}</p>
-                      <FunnelBar value={link.sends} max={maxVal} color="var(--kk-ink)" />
-                    </div>
-
-                    {/* Clicked */}
-                    <div className="rounded-xl p-3" style={{ background: "var(--kk-surface-2)" }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Clicked</p>
-                        <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>{clickRate}%</p>
-                      </div>
-                      <p className="tabular-nums font-bold" style={{ fontSize: "1.3rem", color: "#0071E3", lineHeight: 1 }}>{link.clicks}</p>
-                      <FunnelBar value={link.clicks} max={maxVal} color="#0071E3" />
-                    </div>
-
-                    {/* Signed up */}
-                    <div className="rounded-xl p-3" style={{ background: "var(--kk-surface-2)" }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Signed up</p>
-                        <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>{convRate}%</p>
-                      </div>
-                      <p className="tabular-nums font-bold" style={{ fontSize: "1.3rem", color: "var(--kk-green)", lineHeight: 1 }}>{link.signups}</p>
-                      <FunnelBar value={link.signups} max={maxVal} color="var(--kk-green)" />
-                    </div>
-                  </div>
-
-                  {/* Flow arrow */}
-                  <div className="flex items-center gap-1.5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
-                    <span>{link.sends > 0 ? `${link.sends} sent` : "No sends yet"}</span>
-                    <ChevronRight className="w-3 h-3" />
-                    <span>{link.clicks} clicked</span>
-                    <ChevronRight className="w-3 h-3" />
-                    <span>{link.signups} signed up</span>
-                    {link.sends > 0 && link.signups > 0 && (
-                      <span style={{ marginLeft: 4, color: "var(--kk-green)", fontWeight: 600 }}>
-                        ({((link.signups / link.sends) * 100).toFixed(1)}% end-to-end)
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Dev Tools */}
-      <section className="mt-12 pt-8" style={{ borderTop: "1px solid var(--kk-line)" }}>
-        <p className="kk-overline mb-4">Dev Tools</p>
+      {sub === "dev" && (
         <div className="rounded-2xl p-5" style={{ background: "var(--kk-surface)", border: "1px solid #FECACA" }}>
           <p className="font-semibold text-[13px] mb-1" style={{ color: "#DC2626" }}>Reset my account to Day 1</p>
-          <p className="text-[12px] mb-4" style={{ color: "var(--kk-ink-mute)" }}>
-            Deletes all your leads, tenancies, tenant profiles, and properties. Resets streak and trial to fresh start. Cannot be undone.
-          </p>
-          <button
-            onClick={async () => {
-              if (!confirm("Delete all your data and reset to Day 1? This cannot be undone.")) return;
-              setResetting(true);
-              try {
-                const result = await adminResetMyAccount();
-                if (result.ok) {
-                  toast.success("Account reset. Reloading...");
-                  setTimeout(() => window.location.href = "/home", 1200);
-                } else {
-                  toast.error("Reset failed");
-                }
-              } catch {
-                toast.error("Reset failed");
-              } finally {
-                setResetting(false);
-              }
-            }}
-            disabled={resetting}
-            className="px-4 py-2 rounded-xl font-semibold text-[13px] transition-opacity hover:opacity-80 disabled:opacity-40"
-            style={{ background: "#DC2626", color: "#fff" }}
-          >
+          <p className="text-[12px] mb-4" style={{ color: "var(--kk-ink-mute)" }}>Deletes all your leads, tenancies, tenant profiles, and properties. Resets streak and trial to fresh start. Cannot be undone.</p>
+          <button onClick={async () => {
+            if (!confirm("Delete all your data and reset to Day 1? This cannot be undone.")) return;
+            setResetting(true);
+            try {
+              const result = await adminResetMyAccount();
+              if (result.ok) { toast.success("Account reset. Reloading..."); setTimeout(() => window.location.href = "/home", 1200); }
+              else toast.error("Reset failed");
+            } catch { toast.error("Reset failed"); } finally { setResetting(false); }
+          }} disabled={resetting} className="px-4 py-2 rounded-xl font-semibold text-[13px] transition-opacity hover:opacity-80 disabled:opacity-40" style={{ background: "#DC2626", color: "#fff" }}>
             {resetting ? "Resetting…" : "Reset my account"}
           </button>
         </div>
-      </section>
-      </>}
+      )}
+    </div>
+  );
+}
+
+// ─── Main AdminView ────────────────────────────────────────────────────────────
+
+export function AdminView({ funnel, links, feedback, agents, invites, waitlist, rawLeads, rawTenancies, rawFeedback }: {
+  funnel: Funnel; links: LinkRow[]; feedback: FeedbackRow[]; agents: AgentRow[];
+  invites: InviteRow[]; waitlist: WaitlistRow[];
+  rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
+}) {
+  const [tab, setTab] = useState<"health" | "users" | "revenue" | "ops">("health");
+  const [usersSegment, setUsersSegment] = useState<Segment | "all">("all");
+
+  const openFeedbackCount = feedback.filter(f => !f.resolved).length;
+
+  // Always-visible KPI strip
+  const kpi = useMemo(() => {
+    const now = Date.now();
+    const weekMs = 7 * 86400000;
+    const active7d = agents.filter(a => a.days_inactive !== null && a.days_inactive <= 6).length;
+    const activated = agents.filter(a => a.potential_listing_count + a.existing_listing_count > 0).length;
+    const mrr = agents.reduce((s, a) => s + (a.subscription_status === "active" && a.subscription_plan ? (MRR_BY_PLAN[a.subscription_plan] ?? 0) : 0), 0);
+    const thisWeekCutoff = now - weekMs;
+    const lastWeekCutoff = now - 2 * weekMs;
+    const signupsThisWeek = agents.filter(a => new Date(a.joined_at).getTime() >= thisWeekCutoff).length;
+    const signupsLastWeek = agents.filter(a => { const t = new Date(a.joined_at).getTime(); return t >= lastWeekCutoff && t < thisWeekCutoff; }).length;
+    const activationRate = funnel.total > 0 ? Math.round((activated / funnel.total) * 100) : 0;
+    return { active7d, mrr, signupsThisWeek, signupsLastWeek, activationRate, activated };
+  }, [agents, funnel]);
+
+  function handleSegmentClick(seg: Segment | "all") {
+    setUsersSegment(seg);
+    setTab("users");
+  }
+
+  const tabs: [typeof tab, string][] = [
+    ["health", "Health"],
+    ["users", `Users (${agents.length})`],
+    ["revenue", "Revenue"],
+    ["ops", `Ops${openFeedbackCount ? ` (${openFeedbackCount})` : ""}`],
+  ];
+
+  return (
+    <div className="px-6 lg:px-12 py-10 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <h1 className="serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", letterSpacing: "-0.022em", color: "var(--kk-ink)" }}>
+          Admin Dashboard
+        </h1>
+        <div className="flex gap-1 p-1 rounded-xl flex-wrap" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)" }}>
+          {tabs.map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)}
+              className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all"
+              style={{ background: tab === id ? "var(--kk-ink)" : "transparent", color: tab === id ? "#fff" : "var(--kk-ink-mute)" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPI strip — always visible */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        <KpiCard label="Total users" value={funnel.total} icon={<Users className="w-3.5 h-3.5" />} trend={{ now: kpi.signupsThisWeek, prev: kpi.signupsLastWeek }} />
+        <KpiCard label="Active 7d" value={kpi.active7d} sub={`${funnel.total > 0 ? Math.round((kpi.active7d / funnel.total) * 100) : 0}% of users`} color="var(--kk-green)" icon={<Activity className="w-3.5 h-3.5" />} />
+        <KpiCard label="Activated" value={`${kpi.activationRate}%`} sub={`${kpi.activated} added a card`} color="#0071E3" icon={<Zap className="w-3.5 h-3.5" />} />
+        <KpiCard label="Paid users" value={funnel.active} sub={`${funnel.trial + funnel.beta} in trial/beta`} icon={<DollarSign className="w-3.5 h-3.5" />} />
+        <KpiCard label="MRR est." value={`RM${kpi.mrr}`} sub={`ARR RM${kpi.mrr * 12}`} color="var(--kk-blue)" icon={<TrendingUp className="w-3.5 h-3.5" />} />
+        <KpiCard label="Feedback" value={openFeedbackCount} sub="open items" color={openFeedbackCount > 0 ? "var(--kk-amber)" : "var(--kk-ink)"} icon={<MessageSquare className="w-3.5 h-3.5" />} />
+      </div>
+
+      {/* Tab content */}
+      {tab === "health" && (
+        <HealthTab agents={agents} funnel={funnel} rawLeads={rawLeads} rawTenancies={rawTenancies} onSelectSegment={handleSegmentClick} />
+      )}
+      {tab === "users" && (
+        <UsersTab agents={agents} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} initialSegment={usersSegment} />
+      )}
+      {tab === "revenue" && <RevenueTab agents={agents} />}
+      {tab === "ops" && (
+        <OpsTab links={links} feedback={feedback} invites={invites} waitlist={waitlist} openFeedbackCount={openFeedbackCount} />
+      )}
     </div>
   );
 }
