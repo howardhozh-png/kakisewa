@@ -58,7 +58,8 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
   }, [leads, months, commissionPct]);
 
   const noDateCount = leads.filter((l) => !l.available_from).length;
-  const maxCount = Math.max(1, ...Array.from(buckets.values()).map((b) => b.count));
+  const maxListedCount = Math.max(0, ...Array.from(buckets.values()).map((b) => b.count));
+  const maxCount = Math.max(1, maxListedCount + (rentedCount ?? 0));
   const total = Array.from(buckets.values()).reduce(
     (acc, b) => ({ count: acc.count + b.count, potential: acc.potential + b.potential }),
     { count: 0, potential: 0 }
@@ -103,8 +104,10 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${windowMonths}, minmax(36px, 1fr))`, gap: "0.5rem", minWidth: `${Math.max(windowMonths * 46, 300)}px` }}>
           {months.map((m) => {
             const b = buckets.get(m.key)!;
-            const heightPct = (b.count / maxCount) * 100;
+            const listedHeightPct = (b.count / maxCount) * 100;
+            const rentedHeightPct = rentedCount ? (rentedCount / maxCount) * 100 : 0;
             const isCurrent = m.key === todayKey;
+            const isSelected = selectedMonth === m.key;
             return (
               <div
                 key={m.key}
@@ -113,16 +116,29 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
                 onClick={() => onMonthClick?.(m.key)}
                 style={{ cursor: onMonthClick ? "pointer" : "default" }}
               >
-                <div className="relative flex items-end" style={{ height: 90, paddingTop: 6 }}>
+                <div className="relative flex flex-col justify-end items-stretch" style={{ height: 90, paddingTop: 6, gap: 0 }}>
+                  {/* Rented segment — constant green on top */}
+                  {rentedCount ? (
+                    <div
+                      style={{
+                        height: `${rentedHeightPct}%`,
+                        background: isSelected ? "rgba(52,199,89,0.75)" : "rgba(52,199,89,0.45)",
+                        borderRadius: "4px 4px 0 0",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null}
+                  {/* Listed segment */}
                   <div
-                    className="w-full rounded-t-md"
                     style={{
-                      height: `${b.count > 0 ? Math.max(8, heightPct) : 4}%`,
+                      height: `${rentedCount ? listedHeightPct : (b.count > 0 ? Math.max(8, listedHeightPct) : 4)}%`,
                       background: b.count > 0
-                        ? (isCurrent ? "rgba(0,0,0,0.18)" : selectedMonth === m.key ? "color-mix(in srgb, var(--kk-theme-dark) 90%, transparent)" : "color-mix(in srgb, var(--kk-theme-dark) 55%, transparent)")
-                        : selectedMonth === m.key ? "color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)" : "var(--kk-surface-2)",
-                      outline: selectedMonth === m.key ? "2px solid color-mix(in srgb, var(--kk-theme-dark) 70%, transparent)" : "none",
+                        ? (isCurrent ? "rgba(0,0,0,0.18)" : isSelected ? "color-mix(in srgb, var(--kk-theme-dark) 90%, transparent)" : "color-mix(in srgb, var(--kk-theme-dark) 55%, transparent)")
+                        : isSelected ? "color-mix(in srgb, var(--kk-theme-dark) 30%, transparent)" : "var(--kk-surface-2)",
+                      borderRadius: rentedCount ? 0 : "4px 4px 0 0",
+                      outline: isSelected ? "2px solid color-mix(in srgb, var(--kk-theme-dark) 70%, transparent)" : "none",
                       outlineOffset: "2px",
+                      flexShrink: 0,
                     }}
                   />
                 </div>
