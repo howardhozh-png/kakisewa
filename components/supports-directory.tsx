@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useTransition, useMemo, useEffect } from "react";
-import { Star, Trash2, Share2, X, Check, Loader2, Search } from "lucide-react";
+import { Star, Trash2, X, Check, Loader2, Search, Phone } from "lucide-react";
 import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_ICONS } from "@/lib/types";
 import { savePropertySupport, toggleSupportStar, removeSupportContact } from "@/lib/actions";
-import { resolveTemplate, parseTemplateOverrides } from "@/lib/whatsapp-templates";
 import { toast } from "sonner";
 
 interface Props {
@@ -12,163 +11,271 @@ interface Props {
   whatsappTemplates?: string | null;
 }
 
-// ── Share via WhatsApp ────────────────────────────────────────────────────────
-function shareContact(c: PropertySupport, templateOverrides: ReturnType<typeof parseTemplateOverrides>) {
-  const phone = c.phone.replace(/\D/g, "");
-  const text = encodeURIComponent(
-    resolveTemplate("service_contact_share", templateOverrides, {
-      contactType:     SUPPORT_LABELS[c.type],
-      contactName:     c.name,
-      contactPhone:    phone,
-      contactAreaLine: c.area  ? `\nArea: ${c.area}`  : "",
-      contactNotesLine: c.notes ? `\nNote: ${c.notes}` : "",
-    })
-  );
-  window.open(`https://wa.me/?text=${text}`, "_blank", "noopener");
+// ── Avatar helpers ────────────────────────────────────────────────────────────
+const TYPE_COLORS: Record<SupportType, string> = {
+  aircon:          "#0071E3",
+  plumber:         "#32ADE6",
+  electrician:     "#FF9F0A",
+  cleaner:         "#30D158",
+  locksmith:       "#BF5AF2",
+  pest_control:    "#FF453A",
+  renovation:      "#FF6B35",
+  interior_design: "#FF375F",
+  wifi:            "#5E5CE6",
+  stamping:        "#98989D",
+  other:           "#636366",
+};
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-// ── Tooltip ───────────────────────────────────────────────────────────────────
-function Tip({ label, children }: { label: string; children: React.ReactNode }) {
+function Avatar({ name, type, size = 44, light = false }: { name: string; type: SupportType; size?: number; light?: boolean }) {
+  const bg = light ? "rgba(255,255,255,0.25)" : TYPE_COLORS[type];
+  const border = light ? "1.5px solid rgba(255,255,255,0.4)" : "none";
+  const color = light ? "white" : "white";
   return (
-    <div className="relative group/tip">
-      {children}
-      <div
-        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap pointer-events-none select-none z-50 opacity-0 group-hover/tip:opacity-100 transition-opacity duration-100"
-        style={{ background: "var(--kk-ink)", color: "#fff" }}
-      >
-        {label}
-      </div>
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: bg, border, color,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontWeight: 700, fontSize: size * 0.33, letterSpacing: "-0.5px",
+      flexShrink: 0,
+    }}>
+      {getInitials(name)}
     </div>
   );
 }
 
-// ── Contact card ──────────────────────────────────────────────────────────────
-function ContactCard({
-  contact,
-  onEdit,
-  onDelete,
-  onStar,
-  onShare,
-}: {
+// ── WhatsApp button ───────────────────────────────────────────────────────────
+function WaButton({ phone }: { phone: string }) {
+  const clean = phone.replace(/\D/g, "").replace(/^0/, "60");
+  return (
+    <a
+      href={`https://wa.me/${clean}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 6, background: "#25D366", color: "white",
+        borderRadius: 10, padding: "7px 12px",
+        fontSize: 12, fontWeight: 600, textDecoration: "none",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2 22l5.227-1.323C8.87 21.536 10.407 22 12 22c5.523 0 10-4.477 10-10S17.522 2 12 2z" fill="none" stroke="white" strokeWidth="1.5"/>
+      </svg>
+      WhatsApp
+    </a>
+  );
+}
+
+// ── Type chip ─────────────────────────────────────────────────────────────────
+function TypeChip({ type }: { type: SupportType }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "3px 8px", borderRadius: 6,
+      fontSize: 11, fontWeight: 600,
+      background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)",
+    }}>
+      {SUPPORT_ICONS[type]} {SUPPORT_LABELS[type]}
+    </span>
+  );
+}
+
+// ── Regular / Starred card ────────────────────────────────────────────────────
+function RegularCard({ contact, onEdit, onDelete, onStar }: {
   contact: PropertySupport;
   onEdit: (c: PropertySupport) => void;
   onDelete: (c: PropertySupport) => void;
   onStar: (c: PropertySupport) => void;
-  onShare: (c: PropertySupport) => void;
 }) {
-  const phone = contact.phone.replace(/\D/g, "");
-
-  const preferred = !!contact.starred;
+  const isStarred = !!contact.starred;
+  const isSeed = contact.source === "seed";
 
   return (
     <div
-      className="kk-card-hover p-4 flex items-start gap-3 group relative cursor-pointer"
-      onClick={() => onEdit(contact)}
       style={{
         background: "var(--kk-surface)",
-        border: preferred ? "2px solid rgba(217,119,6,0.40)" : "1px solid var(--kk-line)",
         borderRadius: 18,
-        boxShadow: preferred
-          ? "0 0 0 4px rgba(245,158,11,0.10), 0 4px 12px -2px rgba(0,0,0,0.07)"
-          : "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+        border: isStarred
+          ? "1.5px solid rgba(255,204,0,0.6)"
+          : "1px solid var(--kk-line)",
+        boxShadow: isStarred
+          ? "0 0 0 3px rgba(255,204,0,0.15), 0 4px 16px rgba(0,0,0,0.07)"
+          : "0 2px 8px rgba(0,0,0,0.05)",
+        overflow: "hidden",
       }}
     >
-      {/* Preferred badge — fades out on hover to reveal action buttons */}
-      {preferred && (
-        <span
-          className="absolute top-0 right-0 text-[10px] font-bold px-2.5 py-1 rounded-bl-2xl pointer-events-none group-hover:opacity-0 [@media(hover:none)]:opacity-0 transition-opacity duration-150"
-          style={{ background: "rgba(254,243,199,0.95)", color: "#92400E", zIndex: 10, border: "1px solid rgba(217,119,6,0.25)", borderTop: "none", borderRight: "none", borderTopRightRadius: 16 }}
-        >
-          ⭐ Preferred
-        </span>
-      )}
-
-      {/* Action buttons — absolute top-right, swap in on hover */}
-      <div
-        className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-150"
-        style={{ zIndex: 20 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Tip label={contact.starred ? "Unstar" : "Star"}>
+      <div style={{ padding: 14 }}>
+        {/* Top row */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <Avatar name={contact.name} type={contact.type} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1.3, marginBottom: 2 }}>
+              {contact.name}
+            </p>
+            {contact.contact_name ? (
+              <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", marginBottom: 6 }}>{contact.contact_name}</p>
+            ) : (
+              <p style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginBottom: 6, fontStyle: "italic" }}>No contact name</p>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <TypeChip type={contact.type} />
+              {contact.area && (
+                <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>📍 {contact.area}</span>
+              )}
+            </div>
+          </div>
+          {/* Star button */}
           <button
-            onClick={() => onStar(contact)}
-            className="kk-icon-btn w-7 h-7 rounded-full flex items-center justify-center"
+            onClick={(e) => { e.stopPropagation(); onStar(contact); }}
             style={{
-              background: contact.starred ? "rgba(245,158,11,0.15)" : "var(--kk-surface-2)",
-              color: contact.starred ? "#D97706" : "var(--kk-ink-faint)",
+              background: "none", border: "none", cursor: "pointer",
+              padding: 4, borderRadius: 8, fontSize: 18, lineHeight: 1,
+              flexShrink: 0, marginTop: -2,
             }}
           >
-            <Star className="w-3.5 h-3.5" style={{ fill: contact.starred ? "currentColor" : "none" }} />
+            {isStarred ? "⭐" : "☆"}
           </button>
-        </Tip>
-        <Tip label="Share via WhatsApp">
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: "1px solid var(--kk-line)", margin: "12px 0 10px" }} />
+
+        {/* Actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <WaButton phone={contact.phone} />
+          {/* Edit — available for all */}
           <button
-            onClick={() => onShare(contact)}
-            className="kk-icon-btn w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}
+            onClick={(e) => { e.stopPropagation(); onEdit(contact); }}
+            style={{
+              background: "var(--kk-surface-2)", border: "none", borderRadius: 10,
+              width: 32, height: 32, display: "flex", alignItems: "center",
+              justifyContent: "center", cursor: "pointer", flexShrink: 0,
+            }}
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--kk-ink-mute)" strokeWidth="2" strokeLinecap="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
           </button>
-        </Tip>
-        <Tip label="Delete">
-          <button
-            onClick={() => onDelete(contact)}
-            className="kk-icon-btn w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </Tip>
-      </div>
-
-      {/* Type icon — aligns with name since info starts with the name directly */}
-      <div
-        className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-[18px]"
-        style={{ background: preferred ? "rgba(245,158,11,0.12)" : "var(--kk-surface-2)" }}
-      >
-        {SUPPORT_ICONS[contact.type]}
-      </div>
-
-      {/* Info — pr-24 so text never runs under the button/badge area */}
-      <div className="flex-1 min-w-0 pr-24">
-        <p className="text-[14px] font-semibold leading-tight" style={{ color: "var(--kk-ink)" }}>
-          {contact.name}
-        </p>
-        <a
-          href={`https://wa.me/${phone.replace(/\D/g, "").replace(/^0/, "60")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[12px] font-medium hover:underline"
-          style={{ color: "var(--kk-accent)" }}
-        >
-          {contact.phone}
-        </a>
-
-        {contact.area && (
-          <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
-            📍 {contact.area}
-          </p>
-        )}
-        {contact.notes && (
-          <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-            {contact.notes}
-          </p>
-        )}
-
-        {contact.source === "seed" && (
-          <span
-            className="inline-block mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}
-          >
-            Suggested
-          </span>
-        )}
+          {/* Delete — only for custom contacts */}
+          {!isSeed && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(contact); }}
+              style={{
+                background: "var(--kk-surface-2)", border: "none", borderRadius: 10,
+                width: 32, height: 32, display: "flex", alignItems: "center",
+                justifyContent: "center", cursor: "pointer", flexShrink: 0,
+              }}
+            >
+              <Trash2 style={{ width: 14, height: 14, color: "var(--kk-red)" }} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Edit / Add panel ──────────────────────────────────────────────────────────
+// ── Recommended card (seed, unstarred) ───────────────────────────────────────
+function RecommendedCard({ contact, onStar }: {
+  contact: PropertySupport;
+  onStar: (c: PropertySupport) => void;
+}) {
+  return (
+    <div style={{
+      background: "var(--kk-surface)",
+      borderRadius: 18,
+      border: "1.5px solid #C5DCFF",
+      boxShadow: "0 6px 24px rgba(0,113,227,0.12)",
+      overflow: "hidden",
+    }}>
+      {/* Gradient header */}
+      <div style={{
+        background: "linear-gradient(135deg, #0060C7 0%, #0084FF 60%, #34AAFF 100%)",
+        padding: "14px 14px 16px",
+      }}>
+        {/* Recommended chip */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
+          borderRadius: 6, padding: "2px 8px",
+          fontSize: 10, fontWeight: 700, color: "white",
+          letterSpacing: "0.06em", textTransform: "uppercase",
+          marginBottom: 10,
+        }}>
+          ✦ Recommended
+        </div>
+
+        {/* Company + contact */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <Avatar name={contact.name} type={contact.type} size={44} light />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "white", lineHeight: 1.3, marginBottom: 2 }}>
+              {contact.name}
+            </p>
+            {contact.contact_name && (
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{contact.contact_name}</p>
+            )}
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onStar(contact); }}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              padding: 4, fontSize: 18, lineHeight: 1,
+              flexShrink: 0, marginTop: -2, color: "white",
+            }}
+          >
+            ☆
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: "12px 14px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+          <TypeChip type={contact.type} />
+          {contact.area && (
+            <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>📍 {contact.area}</span>
+          )}
+        </div>
+        <div style={{ borderTop: "1px solid var(--kk-line)", marginBottom: 10 }} />
+        <WaButton phone={contact.phone} />
+      </div>
+    </div>
+  );
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+function SectionHeader({ label, count, variant = "default" }: {
+  label: string; count: number; variant?: "default" | "starred" | "rec";
+}) {
+  const labelColor = variant === "starred" ? "#B8860B" : variant === "rec" ? "#0071E3" : "var(--kk-ink-mute)";
+  const countBg    = variant === "starred" ? "#FFF3E0" : variant === "rec" ? "#E8F2FF" : "var(--kk-surface-2)";
+  const countColor = variant === "starred" ? "#FF9500" : variant === "rec" ? "#0071E3" : "var(--kk-ink-faint)";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: labelColor }}>
+        {label}
+      </span>
+      <span style={{
+        background: countBg, color: countColor,
+        fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 20,
+      }}>
+        {count}
+      </span>
+    </div>
+  );
+}
+
+// ── Edit / Add form ───────────────────────────────────────────────────────────
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
   background: "var(--kk-surface-2)",
@@ -180,21 +287,18 @@ const INPUT_STYLE: React.CSSProperties = {
   outline: "none",
 };
 
-function ContactForm({
-  initial,
-  onClose,
-  onSaved,
-}: {
+function ContactForm({ initial, onClose, onSaved }: {
   initial?: PropertySupport | null;
   onClose: () => void;
   onSaved: (c: PropertySupport) => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [phone, setPhone] = useState(initial?.phone ?? "");
-  const [type, setType] = useState<SupportType>(initial?.type ?? "other");
-  const [area, setArea] = useState(initial?.area ?? "");
-  const [notes, setNotes] = useState(initial?.notes ?? "");
-  const [pending, startTransition] = useTransition();
+  const [name, setName]               = useState(initial?.name ?? "");
+  const [contactName, setContactName] = useState(initial?.contact_name ?? "");
+  const [phone, setPhone]             = useState(initial?.phone ?? "");
+  const [type, setType]               = useState<SupportType>(initial?.type ?? "other");
+  const [area, setArea]               = useState(initial?.area ?? "");
+  const [notes, setNotes]             = useState(initial?.notes ?? "");
+  const [pending, startTransition]    = useTransition();
 
   function submit() {
     if (!name.trim() || !phone.trim()) return;
@@ -202,6 +306,7 @@ function ContactForm({
       const res = await savePropertySupport({
         id: initial?.id,
         name: name.trim(),
+        contact_name: contactName.trim() || null,
         phone: phone.trim(),
         type,
         area: area.trim() || null,
@@ -212,7 +317,9 @@ function ContactForm({
         toast.success(initial ? "Contact updated" : "Contact added");
         onSaved({
           id: initial?.id ?? `sup_${Date.now()}`,
-          name: name.trim(), phone: phone.trim(), type,
+          name: name.trim(),
+          contact_name: contactName.trim() || null,
+          phone: phone.trim(), type,
           area: area.trim() || null, notes: notes.trim() || null,
           starred: initial?.starred ?? 0, source: initial?.source ?? "custom",
           created_at: initial?.created_at ?? new Date().toISOString(),
@@ -241,7 +348,7 @@ function ContactForm({
       >
         <div className="px-6 pt-6 pb-4 border-b flex items-center justify-between" style={{ borderColor: "var(--kk-line)" }}>
           <div>
-            <p className="kk-overline mb-0.5">Property supports</p>
+            <p className="kk-overline mb-0.5">Services directory</p>
             <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>
               {initial ? "Edit contact" : "Add contact"}
             </p>
@@ -258,7 +365,7 @@ function ContactForm({
         <div className="px-6 py-5 space-y-4">
           {/* Type */}
           <div>
-            <p className="kk-overline mb-2">Type</p>
+            <p className="kk-overline mb-2">Service type</p>
             <div className="flex flex-wrap gap-1.5">
               {SUPPORT_TYPES.map((t) => (
                 <button
@@ -277,8 +384,13 @@ function ContactForm({
           </div>
 
           <div>
-            <p className="kk-overline mb-1.5">Name</p>
+            <p className="kk-overline mb-1.5">Business / Company name</p>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ahmad Plumbing Services" style={INPUT_STYLE} />
+          </div>
+
+          <div>
+            <p className="kk-overline mb-1.5">Contact person <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
+            <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="e.g. Ahmad, Uncle Chong" style={INPUT_STYLE} />
           </div>
 
           <div>
@@ -312,7 +424,7 @@ function ContactForm({
             }}
           >
             {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-            {pending ? "Saving…" : initial ? "Save changes" : "Add contact"}
+            {pending ? "Saving..." : initial ? "Save changes" : "Add contact"}
           </button>
         </div>
       </div>
@@ -352,7 +464,7 @@ function DeleteConfirm({ contact, onCancel, onConfirmed }: {
       >
         <p className="text-[17px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Remove contact?</p>
         <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
-          <strong>{contact.name}</strong> will be removed from your directory. Suggested contacts can be re-added anytime.
+          <strong>{contact.name}</strong> will be removed from your directory.
         </p>
         <div className="flex gap-2">
           <button onClick={onCancel} className="flex-1 py-2.5 rounded-full text-[13px] font-semibold" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)" }}>
@@ -368,40 +480,41 @@ function DeleteConfirm({ contact, onCancel, onConfirmed }: {
 }
 
 // ── Main directory ────────────────────────────────────────────────────────────
-export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props) {
-  const templateOverrides = useMemo(() => parseTemplateOverrides(whatsappTemplates), [whatsappTemplates]);
-  const [contacts, setContacts] = useState<PropertySupport[]>(initialContacts);
-  const [search, setSearch] = useState("");
+export function SupportsDirectory({ initialContacts }: Props) {
+  const [contacts, setContacts]     = useState<PropertySupport[]>(initialContacts);
+  const [search, setSearch]         = useState("");
   const [filterType, setFilterType] = useState<SupportType | "all" | "starred">("all");
   const [editTarget, setEditTarget] = useState<PropertySupport | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<PropertySupport | null>(null);
-  const [, startTransition] = useTransition();
+  const [, startTransition]         = useTransition();
 
-  const filtered = useMemo(() => {
+  // Three sections: starred (any source), recommended (seed unstarred), yours (custom unstarred)
+  const { starred, recommended, yours } = useMemo(() => {
     const q = search.toLowerCase();
-    return contacts.filter((c) => {
-      if (filterType === "starred" && !c.starred) return false;
-      if (filterType !== "all" && filterType !== "starred" && c.type !== filterType) return false;
+    const matches = (c: PropertySupport) => {
       if (!q) return true;
       return (
         c.name.toLowerCase().includes(q) ||
+        (c.contact_name ?? "").toLowerCase().includes(q) ||
         (c.area ?? "").toLowerCase().includes(q) ||
         (c.notes ?? "").toLowerCase().includes(q) ||
         c.phone.includes(q)
       );
-    });
-  }, [contacts, search, filterType]);
+    };
+    const typeMatch = (c: PropertySupport) =>
+      filterType === "all" ||
+      filterType === "starred" ||
+      c.type === filterType;
 
-  // Group by type, starred first within each group
-  const grouped = useMemo(() => {
-    const order = SUPPORT_TYPES.filter((t) => filtered.some((c) => c.type === t));
-    return order.map((type) => ({
-      type,
-      items: filtered
-        .filter((c) => c.type === type)
-        .sort((a, b) => b.starred - a.starred),
-    }));
-  }, [filtered]);
+    const all = contacts.filter((c) => matches(c) && typeMatch(c));
+    const starredFilter = filterType === "starred";
+
+    const starred      = all.filter((c) => !!c.starred);
+    const recommended  = starredFilter ? [] : all.filter((c) => !c.starred && c.source === "seed");
+    const yours        = starredFilter ? [] : all.filter((c) => !c.starred && c.source !== "seed");
+
+    return { starred, recommended, yours };
+  }, [contacts, search, filterType]);
 
   function handleStar(c: PropertySupport) {
     const next = c.starred ? 0 : 1;
@@ -428,11 +541,12 @@ export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props)
     setDeleteTarget(null);
   }
 
-  const starredCount = contacts.filter((c) => c.starred).length;
+  const totalVisible = starred.length + recommended.length + yours.length;
+  const hasStarred   = contacts.some((c) => c.starred);
 
   return (
     <>
-      {/* Search + filter */}
+      {/* Search + filters */}
       <div className="flex flex-col gap-3 mb-5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
@@ -440,7 +554,7 @@ export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props)
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, area, or notes…"
+            placeholder="Search by name, person, or area..."
             className="w-full pl-9 pr-4 py-1.5 rounded-full text-[13px] outline-none"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
           />
@@ -448,24 +562,23 @@ export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props)
 
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {(["all", "starred", ...SUPPORT_TYPES] as const).map((t) => {
-            if (t !== "all" && t !== "starred") {
-              if (!contacts.some((c) => c.type === t)) return null;
-            }
-            if (t === "starred" && !contacts.some((c) => c.starred)) return null;
-            const isActive = filterType === t;
-            const label = t === "all" ? "All" : t === "starred" ? "⭐ Preferred" : `${SUPPORT_ICONS[t]} ${SUPPORT_LABELS[t]}`;
-            const isPreferred = t === "starred";
+            if (t !== "all" && t !== "starred" && !contacts.some((c) => c.type === t)) return null;
+            if (t === "starred" && !hasStarred) return null;
+            const isActive  = filterType === t;
+            const isStarPill = t === "starred";
+            const label = t === "all" ? "All" : t === "starred" ? "⭐ Starred" : `${SUPPORT_ICONS[t]} ${SUPPORT_LABELS[t]}`;
             return (
               <button
                 key={t}
                 onClick={() => setFilterType(isActive && t !== "all" ? "all" : t)}
                 className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium shrink-0"
                 style={{
-                  background: isPreferred && isActive ? "rgba(254,243,199,0.9)" : isPreferred ? "rgba(254,249,231,0.7)" : isActive ? "var(--kk-ink)" : "var(--kk-surface-2)",
-                  color: isPreferred ? "#92400E" : isActive ? "#fff" : "var(--kk-ink-mute)",
-                  border: isPreferred ? "1.5px solid rgba(217,119,6,0.35)" : "1px solid transparent",
-                  fontWeight: isPreferred ? 600 : undefined,
-                  boxShadow: isPreferred && isActive ? "0 0 0 3px rgba(245,158,11,0.12)" : undefined,
+                  background: isStarPill && isActive ? "rgba(254,243,199,0.9)"
+                    : isStarPill ? "rgba(254,249,231,0.7)"
+                    : isActive ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                  color: isStarPill ? "#92400E" : isActive ? "#fff" : "var(--kk-ink-mute)",
+                  border: isStarPill ? "1.5px solid rgba(217,119,6,0.35)" : "1px solid transparent",
+                  fontWeight: isStarPill ? 600 : undefined,
                 }}
               >
                 {label}
@@ -475,8 +588,8 @@ export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props)
         </div>
       </div>
 
-      {/* Grouped directory */}
-      {grouped.length === 0 ? (
+      {/* Empty state */}
+      {totalVisible === 0 ? (
         <div className="kk-section flex flex-col items-center justify-center py-20 gap-3 text-center">
           <p className="text-[17px] font-semibold" style={{ color: "var(--kk-ink)" }}>No contacts found</p>
           <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
@@ -485,29 +598,43 @@ export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props)
         </div>
       ) : (
         <div className="space-y-8">
-          {grouped.map(({ type, items }) => (
-            <section key={type}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[18px]">{SUPPORT_ICONS[type]}</span>
-                <p className="kk-overline">{SUPPORT_LABELS[type]}</p>
-                <span className="text-[11px] tabular-nums" style={{ color: "var(--kk-ink-faint)" }}>
-                  {items.length}
-                </span>
-              </div>
+
+          {/* ── Starred ── */}
+          {starred.length > 0 && (
+            <section>
+              <SectionHeader label="⭐ Starred" count={starred.length} variant="starred" />
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {items.map((c) => (
-                  <ContactCard
-                    key={c.id}
-                    contact={c}
-                    onEdit={setEditTarget}
-                    onDelete={setDeleteTarget}
-                    onStar={handleStar}
-                    onShare={(c) => shareContact(c, templateOverrides)}
-                  />
+                {starred.map((c) => (
+                  <RegularCard key={c.id} contact={c} onEdit={setEditTarget} onDelete={setDeleteTarget} onStar={handleStar} />
                 ))}
               </div>
             </section>
-          ))}
+          )}
+
+          {/* ── Recommended ── */}
+          {recommended.length > 0 && (
+            <section>
+              <SectionHeader label="✦ Recommended" count={recommended.length} variant="rec" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {recommended.map((c) => (
+                  <RecommendedCard key={c.id} contact={c} onStar={handleStar} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── Your contacts ── */}
+          {yours.length > 0 && (
+            <section>
+              <SectionHeader label="Your Contacts" count={yours.length} variant="default" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {yours.map((c) => (
+                  <RegularCard key={c.id} contact={c} onEdit={setEditTarget} onDelete={setDeleteTarget} onStar={handleStar} />
+                ))}
+              </div>
+            </section>
+          )}
+
         </div>
       )}
 

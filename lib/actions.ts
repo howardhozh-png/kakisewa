@@ -1990,6 +1990,7 @@ export async function markCommissionCollected(
 export async function savePropertySupport(data: {
   id?: string;
   name: string;
+  contact_name?: string | null;
   phone: string;
   type: SupportType;
   area?: string | null;
@@ -2000,13 +2001,15 @@ export async function savePropertySupport(data: {
   try {
     if (data.id) {
       updatePropertySupport(data.id, {
-        name: data.name, phone: data.phone, type: data.type,
+        name: data.name, contact_name: data.contact_name ?? null,
+        phone: data.phone, type: data.type,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred,
       });
     } else {
       createPropertySupport({
-        name: data.name, phone: data.phone, type: data.type,
+        name: data.name, contact_name: data.contact_name ?? null,
+        phone: data.phone, type: data.type,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred ?? 0,
       });

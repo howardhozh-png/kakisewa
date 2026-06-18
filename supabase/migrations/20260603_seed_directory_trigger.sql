@@ -6,32 +6,32 @@
 CREATE OR REPLACE FUNCTION seed_directory_contacts_for_user(p_user_id uuid)
 RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
-  INSERT INTO property_supports (id, user_id, name, phone, type, area, notes, starred, source, created_at)
+  INSERT INTO property_supports (id, user_id, name, contact_name, phone, type, area, notes, starred, source, created_at)
   VALUES
     -- Air-cond
-    (gen_random_uuid(), p_user_id, 'CoolMaster Aircon Services',    '60192861020', 'aircon',       'KL / PJ / Cheras',           'Service, repair, gas top-up. Call or WhatsApp.',             true,  'seed', now()),
-    (gen_random_uuid(), p_user_id, 'Sejuk Aircon Specialist',       '60163452278', 'aircon',       'Shah Alam / Subang',          'Daikin & Midea specialist. 7 days a week.',                  false, 'seed', now()),
+    (gen_random_uuid(), p_user_id, 'CoolMaster Aircon Services',  'Ahmad Fadzil',  '60192861020', 'aircon',       'KL / PJ / Cheras',           'Service, repair, gas top-up. Call or WhatsApp.',             true,  'seed', now()),
+    (gen_random_uuid(), p_user_id, 'Sejuk Aircon Specialist',     'Hafiz Rahman',  '60163452278', 'aircon',       'Shah Alam / Subang',          'Daikin & Midea specialist. 7 days a week.',                  false, 'seed', now()),
 
     -- Plumber
-    (gen_random_uuid(), p_user_id, 'Pakar Plumbing KL',             '60112038854', 'plumber',      'Klang Valley',               'Leaking pipes, water heater, clog clearing. Fast response.', true,  'seed', now()),
-    (gen_random_uuid(), p_user_id, 'Abang Plumber 24Hr',            '60177634412', 'plumber',      'KL / Ampang / Cheras',       '24-hour emergency. No call-out fee for regulars.',            false, 'seed', now()),
+    (gen_random_uuid(), p_user_id, 'Pakar Plumbing KL',           'Encik Razif',   '60112038854', 'plumber',      'Klang Valley',               'Leaking pipes, water heater, clog clearing. Fast response.', true,  'seed', now()),
+    (gen_random_uuid(), p_user_id, 'Abang Plumber 24Hr',          'Abang Johari',  '60177634412', 'plumber',      'KL / Ampang / Cheras',       '24-hour emergency. No call-out fee for regulars.',            false, 'seed', now()),
 
     -- Electrician
-    (gen_random_uuid(), p_user_id, 'Bright Wire Electrical',        '60123748190', 'electrician',  'Klang Valley',               'DB box, wiring, socket & switch. GST registered.',           true,  'seed', now()),
-    (gen_random_uuid(), p_user_id, 'Jurusan Elektrik PJ',           '60169021345', 'electrician',  'PJ / Subang / USJ',          'Residential & light commercial.',                            false, 'seed', now()),
+    (gen_random_uuid(), p_user_id, 'Bright Wire Electrical',      'Danny Lim',     '60123748190', 'electrician',  'Klang Valley',               'DB box, wiring, socket & switch. GST registered.',           true,  'seed', now()),
+    (gen_random_uuid(), p_user_id, 'Jurusan Elektrik PJ',         'Zamri Hassan',  '60169021345', 'electrician',  'PJ / Subang / USJ',          'Residential & light commercial.',                            false, 'seed', now()),
 
     -- Cleaner
-    (gen_random_uuid(), p_user_id, 'CleanStar Move-In Cleaning',    '60182341567', 'cleaner',      'Klang Valley',               'Move-in / move-out deep clean. Quote by unit size.',         true,  'seed', now()),
-    (gen_random_uuid(), p_user_id, 'Sparkle Home Cleaning',         '60163782290', 'cleaner',      'KL / Mont Kiara / Bangsar',  'Regular & one-time slots. Can start same week.',             false, 'seed', now()),
+    (gen_random_uuid(), p_user_id, 'CleanStar Move-In Cleaning',  'Sarah Tan',     '60182341567', 'cleaner',      'Klang Valley',               'Move-in / move-out deep clean. Quote by unit size.',         true,  'seed', now()),
+    (gen_random_uuid(), p_user_id, 'Sparkle Home Cleaning',       'Kak Rosnah',    '60163782290', 'cleaner',      'KL / Mont Kiara / Bangsar',  'Regular & one-time slots. Can start same week.',             false, 'seed', now()),
 
     -- Locksmith
-    (gen_random_uuid(), p_user_id, 'MasterKey Locksmith KL',        '60112745098', 'locksmith',    'KL / PJ',                    'Lock change, digital lock install, 24hr lockout.',           true,  'seed', now()),
+    (gen_random_uuid(), p_user_id, 'MasterKey Locksmith KL',      'Uncle Bobby',   '60112745098', 'locksmith',    'KL / PJ',                    'Lock change, digital lock install, 24hr lockout.',           true,  'seed', now()),
 
     -- Pest control
-    (gen_random_uuid(), p_user_id, 'GreenShield Pest Control',      '60199034421', 'pest_control', 'Klang Valley',               'Termites, cockroaches, rats. Certified & insured.',          false, 'seed', now()),
+    (gen_random_uuid(), p_user_id, 'GreenShield Pest Control',    'Mr. Rajan',     '60199034421', 'pest_control', 'Klang Valley',               'Termites, cockroaches, rats. Certified & insured.',          false, 'seed', now()),
 
     -- Renovation
-    (gen_random_uuid(), p_user_id, 'RenoMates KL',                  '60173890122', 'renovation',   'KL / PJ / Ampang',           'Minor works, repainting, tiling, carpentry. Free quote.',    false, 'seed', now())
+    (gen_random_uuid(), p_user_id, 'RenoMates KL',                'Tommy Ng',      '60173890122', 'renovation',   'KL / PJ / Ampang',           'Minor works, repainting, tiling, carpentry. Free quote.',    false, 'seed', now())
   ;
 END $$;
 

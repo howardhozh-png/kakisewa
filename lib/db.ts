@@ -205,7 +205,7 @@ const _cachedAllTenantProfiles = unstable_cache(
 const _cachedPropertySupports = unstable_cache(
   async (userId: string): Promise<PropertySupport[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("property_supports").select("id, name, phone, type, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
+    const { data, error } = await svc.from("property_supports").select("id, name, contact_name, phone, type, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("source", { ascending: false }).order("name", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PropertySupport[];
   },
@@ -2445,7 +2445,7 @@ export async function getPropertySupports(): Promise<PropertySupport[]> {
 }
 
 export async function createPropertySupport(data: {
-  name: string; phone: string; type: SupportType;
+  name: string; contact_name?: string | null; phone: string; type: SupportType;
   area?: string | null; notes?: string | null; starred?: number;
 }): Promise<PropertySupport> {
   const supabase = await createClient();
@@ -2456,6 +2456,7 @@ export async function createPropertySupport(data: {
     id,
     user_id: user!.id,
     name: data.name,
+    contact_name: data.contact_name ?? null,
     phone: data.phone,
     type: data.type,
     area: data.area ?? null,
@@ -2466,23 +2467,24 @@ export async function createPropertySupport(data: {
   if (error) throw error;
   const { data: fresh } = await supabase
     .from("property_supports")
-    .select("id, name, phone, type, area, notes, starred, source, created_at")
+    .select("id, name, contact_name, phone, type, area, notes, starred, source, created_at")
     .eq("id", id)
     .single();
   return fresh as PropertySupport;
 }
 
 export async function updatePropertySupport(id: string, data: Partial<{
-  name: string; phone: string; type: SupportType;
+  name: string; contact_name: string | null; phone: string; type: SupportType;
   area: string | null; notes: string | null; starred: number;
 }>): Promise<void> {
   const updates: Record<string, unknown> = {};
-  if (data.name    !== undefined) updates.name    = data.name;
-  if (data.phone   !== undefined) updates.phone   = data.phone;
-  if (data.type    !== undefined) updates.type    = data.type;
-  if (data.area    !== undefined) updates.area    = data.area;
-  if (data.notes   !== undefined) updates.notes   = data.notes;
-  if (data.starred !== undefined) updates.starred = data.starred;
+  if (data.name         !== undefined) updates.name         = data.name;
+  if (data.contact_name !== undefined) updates.contact_name = data.contact_name;
+  if (data.phone        !== undefined) updates.phone        = data.phone;
+  if (data.type         !== undefined) updates.type         = data.type;
+  if (data.area         !== undefined) updates.area         = data.area;
+  if (data.notes        !== undefined) updates.notes        = data.notes;
+  if (data.starred      !== undefined) updates.starred      = data.starred;
   if (Object.keys(updates).length === 0) return;
   const supabase = await createClient();
   await supabase.from("property_supports").update(updates).eq("id", id);

@@ -313,6 +313,7 @@ export const SUPPORT_ICONS: Record<SupportType, string> = {
 export interface PropertySupport {
   id: string;
   name: string;
+  contact_name: string | null;
   phone: string;
   type: SupportType;
   area: string | null;
