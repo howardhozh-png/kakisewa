@@ -182,11 +182,16 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-0 overflow-hidden max-h-[90vh] flex flex-col">
         <div className="overflow-y-auto p-6 space-y-4">
-          <div>
-            <p className="kk-overline mb-1">Add target unit</p>
-            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
-              Track a competitor unit. We'll remind you 60 days before their tenancy ends.
-            </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="kk-overline mb-1">Add target unit</p>
+              <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+                Track a competitor unit. We'll remind you 60 days before their tenancy ends.
+              </p>
+            </div>
+            <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-lg hover:opacity-70 shrink-0 mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Property name */}

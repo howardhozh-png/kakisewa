@@ -198,7 +198,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={() => { if (!busy) setOpen(false); }}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
           <div className="relative z-10 w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 overflow-y-auto max-h-[90dvh]"
             style={{ background: "var(--kk-surface)" }} onClick={(e) => e.stopPropagation()}>

@@ -24,9 +24,9 @@ const EMPTY_MANUAL: ManualForm = { property_name: "", unit: "", owner_name: "", 
 
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
-      <div className="relative z-10 w-full sm:max-w-sm" onClick={(e) => e.stopPropagation()}>
+      <div className="relative z-10 w-full sm:max-w-sm">
         {children}
       </div>
     </div>
@@ -249,7 +249,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
 
       {/* Manual add dialog */}
       {manualOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={() => { if (!busy) setManualOpen(false); }}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
           <div className="relative z-10 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 overflow-y-auto max-h-[90dvh]"
             style={{ background: "var(--kk-surface)" }} onClick={(e) => e.stopPropagation()}>

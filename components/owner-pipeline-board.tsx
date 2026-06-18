@@ -959,7 +959,7 @@ function BulkSendDialog({ leads, onClose }: { leads: OwnerLead[]; onClose: () =>
   const pct = rawBatch.length > 0 ? (todaysSentCount / rawBatch.length) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.50)" }} />
       <div
         className="relative z-10 w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl flex flex-col"

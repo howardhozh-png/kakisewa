@@ -1299,8 +1299,8 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, 
                     <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{t.property?.owner_name} · {t.property_name?.replace(/,?\s*Unit\s+[A-Za-z0-9-]+/i, "").trim()}</p>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
-                  <span style={{ fontSize: 14 }}>✕</span>
+                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }} className="p-1.5 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-mute)" }}>
+                  <XIcon className="w-4 h-4" />
                 </button>
               </div>
 

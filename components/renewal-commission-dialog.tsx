@@ -85,7 +85,7 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
                 <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{t.tenant_name} · {t.property_name}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-mute)" }}>
               <X className="w-4 h-4" />
             </button>
           </div>
