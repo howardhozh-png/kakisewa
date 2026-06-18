@@ -218,16 +218,17 @@ function ActiveState({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  // Compute Mon–Sun of current week
-  const now = new Date();
-  const dow = now.getDay();
+  // Compute Mon–Sun of current week in MYT (UTC+8) — Vercel runs in UTC so new Date() shows yesterday for Malaysians before 8 AM
+  const nowMYT = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const dow = nowMYT.getDay();
   const diffToMon = dow === 0 ? -6 : 1 - dow;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diffToMon);
+  const monday = new Date(nowMYT);
+  monday.setDate(nowMYT.getDate() + diffToMon);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  const weekStart = monday.toISOString().slice(0, 10);
-  const weekEnd = sunday.toISOString().slice(0, 10);
+  const weekStart = toISO(monday);
+  const weekEnd = toISO(sunday);
 
   const [agent, stats, expandedStats, weekEvents] = await Promise.all([
     getAgentProfile(),
