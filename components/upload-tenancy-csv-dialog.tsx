@@ -249,8 +249,8 @@ function MappingTable({
                   }}
                 >
                   <option value="__none__">(not in file)</option>
-                  {headers.map((h) => (
-                    <option key={h} value={h}>{h}</option>
+                  {headers.map((h, i) => (
+                    <option key={`${h}-${i}`} value={h}>{h}</option>
                   ))}
                 </select>
               )}

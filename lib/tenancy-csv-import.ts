@@ -338,24 +338,59 @@ export interface RawImportData {
   error?: string;
 }
 
-// Scans the first `maxScan` rows and returns the index of the row whose cells
-// best match the known column aliases. Handles Excel files where the table
-// starts at row 5 or later (report titles, blank rows, etc. above the header).
+// Scans the first `maxScan` rows and returns the index of the row that is
+// most likely the header. Uses alias matches as the primary signal, with
+// density (many non-empty cells), all-text content, and phone/date absence
+// as secondary signals. This handles files where the table starts at row 5+.
 function detectHeaderRow(rows: string[][], maxScan = 20): number {
-  let bestRow = 0;
-  let bestScore = 0;
   const limit = Math.min(maxScan, rows.length);
+
+  const nonEmptyCounts = rows
+    .slice(0, limit)
+    .map((r) => r.filter((c) => String(c ?? "").trim()).length);
+  const maxCells = Math.max(...nonEmptyCounts, 1);
+
+  let bestRow = 0;
+  let bestScore = -Infinity;
+
   for (let i = 0; i < limit; i++) {
     const cells = rows[i].map((c) => String(c ?? "").trim()).filter((c) => c);
     if (cells.length < 2) continue;
+
     let score = 0;
+
+    // Alias matches are the strongest signal
     for (const cell of cells) {
       const key = cell.toLowerCase();
       const keyNorm = key.replace(/[\s_\-/]+/g, " ");
-      if (ALIASES[key] || ALIASES[keyNorm]) score += 3;
+      if (ALIASES[key] || ALIASES[keyNorm]) score += 10;
     }
-    if (score > bestScore) { bestScore = score; bestRow = i; }
+
+    // Density bonus: header rows tend to fill most columns
+    if (cells.length >= maxCells * 0.75) score += 5;
+
+    // All-text bonus: header labels are rarely raw numbers or dates
+    const hasPhone = cells.some((c) =>
+      /^6?01\d{7,9}$/.test(c.replace(/[\s\-]/g, ""))
+    );
+    const hasDate = cells.some(
+      (c) =>
+        /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(c) ||
+        /^\d{4}-\d{2}-\d{2}$/.test(c)
+    );
+    if (!hasPhone && !hasDate) score += 3;
+    // Penalise rows with phone numbers or dates — those are data rows
+    if (hasPhone || hasDate) score -= 5;
+
+    // Slight preference for earlier rows (row 0 loses 0, row 5 loses 2.5)
+    score -= i * 0.5;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestRow = i;
+    }
   }
+
   return bestRow;
 }
 
@@ -378,14 +413,26 @@ export async function extractRawData(file: File): Promise<RawImportData> {
     let headers: string[] = [];
     let headerRowIndex = 0;
 
+    const buildHeaders = (fullRow: string[]) => {
+      const seen = new Set<string>();
+      return fullRow
+        .map((h) => String(h).trim())
+        .filter((h) => {
+          if (!h || seen.has(h)) return false;
+          seen.add(h);
+          return true;
+        });
+    };
+
     if (ext === "csv") {
       const text = await file.text();
       const parsed = Papa.parse<string[]>(text, { header: false, skipEmptyLines: true });
       const rawRows = parsed.data as string[][];
       if (rawRows.length === 0) return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: "The file is empty." };
       headerRowIndex = detectHeaderRow(rawRows);
-      headers = rawRows[headerRowIndex].map((h) => String(h).trim());
-      allRows = rawRowsToObjects(headers, rawRows.slice(headerRowIndex + 1));
+      const fullHeaderRow = rawRows[headerRowIndex].map((h) => String(h).trim());
+      headers = buildHeaders(fullHeaderRow);
+      allRows = rawRowsToObjects(fullHeaderRow, rawRows.slice(headerRowIndex + 1));
     } else if (ext === "xlsx" || ext === "xls") {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array", cellDates: false });
@@ -393,8 +440,9 @@ export async function extractRawData(file: File): Promise<RawImportData> {
       const rawRows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, raw: false, defval: "" }) as string[][];
       if (rawRows.length === 0) return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: "The file is empty." };
       headerRowIndex = detectHeaderRow(rawRows);
-      headers = rawRows[headerRowIndex].map((h) => String(h).trim());
-      allRows = rawRowsToObjects(headers, rawRows.slice(headerRowIndex + 1));
+      const fullHeaderRow = rawRows[headerRowIndex].map((h) => String(h).trim());
+      headers = buildHeaders(fullHeaderRow);
+      allRows = rawRowsToObjects(fullHeaderRow, rawRows.slice(headerRowIndex + 1));
     } else {
       return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: "Only CSV, XLS, and XLSX files are supported." };
     }
