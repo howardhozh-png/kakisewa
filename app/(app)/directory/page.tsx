@@ -88,6 +88,10 @@ export default async function NetworkPage({ searchParams }: Props) {
   // Exclude tenant profiles whose phone is already tied to an active tenancy (prevents double-listing)
   const activePhones = new Set(currentTenants.map((t) => t.tenant_phone).filter(Boolean) as string[]);
   const formerPhones  = new Set(formerTenants.map((t)  => t.tenant_phone).filter(Boolean) as string[]);
+  // Fallback: dedup by name (case-insensitive) when the profile has no phone
+  const activeTenantNames = new Set(
+    currentTenants.map((t) => t.tenant_name?.trim().toLowerCase()).filter(Boolean) as string[]
+  );
 
   // Build a phone → real profile map for fast lookup
   const profileByPhone = new Map(tenantProfiles.filter(p => p.phone).map(p => [p.phone!, p]));
@@ -107,9 +111,13 @@ export default async function NetworkPage({ searchParams }: Props) {
     // No real profile (tenancy predates auto-create) — skip rather than show broken synthetic
   }
 
-  const availableTenantProfiles = tenantProfiles.filter(
-    (p) => !(p.phone && activePhones.has(p.phone))
-  );
+  const availableTenantProfiles = tenantProfiles.filter((p) => {
+    if (p.phone && activePhones.has(p.phone)) return false;
+    // Profiles without a phone: dedup by name so the same person doesn't appear as both
+    // "Available" (tenant_profile) and "Rented" (active tenancy)
+    if (!p.phone && p.name && activeTenantNames.has(p.name.trim().toLowerCase())) return false;
+    return true;
+  });
 
   const allTenantsCount = availableTenantProfiles.length + currentTenants.length;
 

@@ -345,7 +345,7 @@ function TenancyForm({
 
       {/* Property name + unit (editable) */}
       <div className="flex gap-2">
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl flex-1 min-w-0" style={{ background: "var(--kk-surface-2)" }}>
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl min-w-0" style={{ background: "var(--kk-surface-2)", flex: 2 }}>
           <Building2 className="w-4 h-4 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
           <input
             type="text"
@@ -361,8 +361,8 @@ function TenancyForm({
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           placeholder="Unit"
-          className="text-[13px] px-3 py-2 rounded-xl outline-none"
-          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", width: 80, flexShrink: 0 }}
+          className="text-[13px] px-3 py-2 rounded-xl outline-none min-w-0"
+          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", flex: 3 }}
         />
       </div>
 
