@@ -362,7 +362,7 @@ function TenancyForm({
           onChange={(e) => setUnit(e.target.value)}
           placeholder="Unit"
           className="text-[13px] px-3 py-2 rounded-xl outline-none min-w-0"
-          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", flex: 3 }}
+          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", flex: 1 }}
         />
       </div>
 
