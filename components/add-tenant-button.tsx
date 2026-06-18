@@ -51,6 +51,13 @@ export function AddTenantButton() {
     return () => document.removeEventListener("mousedown", onOutside);
   }, []);
 
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && !pending) setDialogOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [dialogOpen, pending]);
+
   function handleViaWhatsApp() {
     setDropdownOpen(false);
     startTransition(async () => {
@@ -153,7 +160,6 @@ export function AddTenantButton() {
       {dialogOpen && (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-          onClick={() => { if (!pending) setDialogOpen(false); }}
         >
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
           <div
