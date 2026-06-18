@@ -234,12 +234,10 @@ function ContactForm({
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         className="w-full bg-white rounded-3xl shadow-2xl overflow-hidden"
         style={{ maxWidth: 460, border: "1px solid var(--kk-line)" }}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="px-6 pt-6 pb-4 border-b flex items-center justify-between" style={{ borderColor: "var(--kk-line)" }}>
           <div>
@@ -347,12 +345,10 @@ function DeleteConfirm({ contact, onCancel, onConfirmed }: {
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
       <div
         className="w-full bg-white rounded-3xl shadow-2xl p-6"
         style={{ maxWidth: 380, border: "1px solid var(--kk-line)" }}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         <p className="text-[17px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>Remove contact?</p>
         <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
