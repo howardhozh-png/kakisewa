@@ -47,11 +47,9 @@ export default async function TrackListingPage({ searchParams }: Props) {
   ]);
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
-  const pipelineLeads = ownerLeads.filter((l) => {
-    if (["own_stay", "archived", "imported"].includes(l.stage)) return false;
-    if (l.stage === "matched" && l.has_active_tenancy) return false;
-    return true;
-  });
+  const boardCardLeads = ownerLeads.filter((l) =>
+    l.stage === "listed" || (l.stage === "matched" && !l.has_active_tenancy)
+  );
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
@@ -82,7 +80,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
 
       <DeletedOwnerLeadsPanel leads={deletedLeads} />
 
-      {pipelineLeads.length === 0 ? (
+      {boardCardLeads.length === 0 ? (
         <div style={{ position: "relative" }}>
           <div style={{ filter: "blur(1px) saturate(0.55)", opacity: 0.82, pointerEvents: "none", userSelect: "none" }}>
             <OwnerPipelineBoard
