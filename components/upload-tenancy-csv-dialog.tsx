@@ -351,7 +351,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   // already-detected or user-edited column. Runs in the background so the
   // mapping step is usable immediately; failures silently keep manual mapping.
   const runAiMapping = useCallback(async (headers: string[], rows: Record<string, string>[], current: TenancyColumnMapping) => {
-    if (current.contract_start && current.owner_name && current.owner_phone) { setAiState("skipped"); return; }
+    if ((current.contract_end || current.contract_start) && current.owner_name && current.owner_phone) { setAiState("skipped"); return; }
     setAiState("loading");
     const res = await fetchAiColumnMapping(headers, rows);
     if (!res.ok) { setAiState("skipped"); return; }
@@ -470,7 +470,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
     if (mapping.contract_duration_months) colMap.contract_duration_months = mapping.contract_duration_months;
     if (mapping.due_day)                  colMap.due_day = mapping.due_day;
 
-    const newRows = buildRowsFromMapping(processedRows, colMap, defaultDuration);
+    const newRows = buildRowsFromMapping(processedRows, colMap, defaultDuration, rawData.headerRowIndex);
     if (newRows.length === 0) { toast.error("No data rows found."); return; }
 
     setRows(newRows);
@@ -507,7 +507,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
   async function handleImport() {
     const errorCount = rows.filter(rowHasCriticalErrors).length;
     if (errorCount > 0) {
-      toast.error(`${errorCount} row${errorCount > 1 ? "s are" : " is"} still missing a contract start date (highlighted in amber).`);
+      toast.error(`${errorCount} row${errorCount > 1 ? "s are" : " is"} still missing a contract end date (highlighted in amber).`);
       return;
     }
 
@@ -552,7 +552,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
 
   const missingCount = rows.filter(rowHasCriticalErrors).length;
   const totalWidth = COLUMNS.reduce((s, c) => s + c.width, 0) + 50;
-  const canProceed = !!(mapping?.contract_start) || !!defaultContractStart;
+  const canProceed = !!(mapping?.contract_end) || !!(mapping?.contract_start) || !!defaultContractStart;
 
   return (
     <>
@@ -622,7 +622,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
             <>
               <div className="px-6 pb-0 pt-1 space-y-5">
                 <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
-                  CSV, Excel or Google Sheets export. Contract start date is the only required column — everything else is optional.
+                  CSV, Excel or Google Sheets export. Contract end date is the only required column — start date is auto-calculated from end date if not provided.
                 </p>
 
                 <button
@@ -812,17 +812,17 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                 {missingCount > 0 ? (
                   <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#B45309" }}>
                     <AlertCircle size={13} />
-                    {missingCount} row{missingCount > 1 ? "s" : ""} missing contract start date (amber)
+                    {missingCount} row{missingCount > 1 ? "s" : ""} missing contract end date (amber)
                   </span>
                 ) : (
                   <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#15803D" }}>
                     <CheckCircle2 size={13} />
-                    All rows have a start date
+                    All rows have an end date
                   </span>
                 )}
                 <span style={{ fontSize: 11, color: "var(--kk-ink-mute)", marginLeft: "auto" }}>
                   <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#FFF3CD", border: "1px solid #F59E0B", marginRight: 4 }} />
-                  Missing start date
+                  Missing end date
                   <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#E8F4FD", border: "1px solid #93C5FD", marginRight: 4, marginLeft: 10 }} />
                   Auto-filled
                 </span>

@@ -24,9 +24,9 @@ export interface TenancyImportRow {
   _autoFilled: Set<string>;        // fields that were auto-computed
 }
 
-// Only contract_start is required — everything else is optional
+// Only contract_end is required — start is auto-derived from end - duration when missing
 export const CRITICAL_FIELDS: (keyof TenancyImportRow)[] = [
-  "contract_start",
+  "contract_end",
 ];
 
 // ─── Header aliases ───────────────────────────────────────────────────────────
@@ -283,9 +283,13 @@ function buildRow(
     if (!contract_duration_months) contract_duration_months = dur;
     autoFilled.add("contract_end");
     if (!durationRaw) autoFilled.add("contract_duration_months");
-  } else if (!contract_start && contract_end && contract_duration_months) {
-    contract_start = tenancyStartDate(contract_end, contract_duration_months);
+  } else if (!contract_start && contract_end) {
+    // contract_end is now the source of truth — back-calculate start
+    const dur = contract_duration_months ?? defaultDurationMonths;
+    contract_start = tenancyStartDate(contract_end, dur);
+    if (!contract_duration_months) contract_duration_months = dur;
     autoFilled.add("contract_start");
+    if (!durationRaw) autoFilled.add("contract_duration_months");
   } else if (contract_start && contract_end && !contract_duration_months) {
     contract_duration_months = monthsBetween(contract_start, contract_end);
     autoFilled.add("contract_duration_months");
@@ -330,7 +334,41 @@ export interface RawImportData {
   headers: string[];
   sampleRows: Record<string, string>[];
   allRows: Record<string, string>[];
+  headerRowIndex: number;
   error?: string;
+}
+
+// Scans the first `maxScan` rows and returns the index of the row whose cells
+// best match the known column aliases. Handles Excel files where the table
+// starts at row 5 or later (report titles, blank rows, etc. above the header).
+function detectHeaderRow(rows: string[][], maxScan = 20): number {
+  let bestRow = 0;
+  let bestScore = 0;
+  const limit = Math.min(maxScan, rows.length);
+  for (let i = 0; i < limit; i++) {
+    const cells = rows[i].map((c) => String(c ?? "").trim()).filter((c) => c);
+    if (cells.length < 2) continue;
+    let score = 0;
+    for (const cell of cells) {
+      const key = cell.toLowerCase();
+      const keyNorm = key.replace(/[\s_\-/]+/g, " ");
+      if (ALIASES[key] || ALIASES[keyNorm]) score += 3;
+    }
+    if (score > bestScore) { bestScore = score; bestRow = i; }
+  }
+  return bestRow;
+}
+
+function rawRowsToObjects(headerRow: string[], dataRows: string[][]): Record<string, string>[] {
+  return dataRows
+    .filter((r) => r.some((c) => String(c ?? "").trim()))
+    .map((row) => {
+      const out: Record<string, string> = {};
+      for (let j = 0; j < headerRow.length; j++) {
+        if (headerRow[j]) out[headerRow[j]] = String(row[j] ?? "").trim();
+      }
+      return out;
+    });
 }
 
 export async function extractRawData(file: File): Promise<RawImportData> {
@@ -338,44 +376,42 @@ export async function extractRawData(file: File): Promise<RawImportData> {
     const ext = file.name.split(".").pop()?.toLowerCase();
     let allRows: Record<string, string>[] = [];
     let headers: string[] = [];
+    let headerRowIndex = 0;
 
     if (ext === "csv") {
       const text = await file.text();
-      const result = Papa.parse<Record<string, string>>(text, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (h) => h.trim(),
-      });
-      headers = result.meta.fields ?? [];
-      allRows = result.data;
+      const parsed = Papa.parse<string[]>(text, { header: false, skipEmptyLines: true });
+      const rawRows = parsed.data as string[][];
+      if (rawRows.length === 0) return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: "The file is empty." };
+      headerRowIndex = detectHeaderRow(rawRows);
+      headers = rawRows[headerRowIndex].map((h) => String(h).trim());
+      allRows = rawRowsToObjects(headers, rawRows.slice(headerRowIndex + 1));
     } else if (ext === "xlsx" || ext === "xls") {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array", cellDates: false });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json<Record<string, string | number>>(ws, { raw: false, defval: "" });
-      if (data.length === 0) return { headers: [], sampleRows: [], allRows: [], error: "The file is empty." };
-      headers = Object.keys(data[0]).map((h) => String(h).trim());
-      allRows = data.map((row) => {
-        const out: Record<string, string> = {};
-        for (const [k, v] of Object.entries(row)) out[k.trim()] = String(v ?? "").trim();
-        return out;
-      });
+      const rawRows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, raw: false, defval: "" }) as string[][];
+      if (rawRows.length === 0) return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: "The file is empty." };
+      headerRowIndex = detectHeaderRow(rawRows);
+      headers = rawRows[headerRowIndex].map((h) => String(h).trim());
+      allRows = rawRowsToObjects(headers, rawRows.slice(headerRowIndex + 1));
     } else {
-      return { headers: [], sampleRows: [], allRows: [], error: "Only CSV, XLS, and XLSX files are supported." };
+      return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: "Only CSV, XLS, and XLSX files are supported." };
     }
 
-    return { headers, sampleRows: allRows.slice(0, 3), allRows };
+    return { headers, sampleRows: allRows.slice(0, 3), allRows, headerRowIndex };
   } catch (err) {
-    return { headers: [], sampleRows: [], allRows: [], error: err instanceof Error ? err.message : "Failed to parse file." };
+    return { headers: [], sampleRows: [], allRows: [], headerRowIndex: 0, error: err instanceof Error ? err.message : "Failed to parse file." };
   }
 }
 
 export function buildRowsFromMapping(
   allRows: Record<string, string>[],
   colMap: Partial<Record<CanonicalField, string>>,
-  defaultDurationMonths: number
+  defaultDurationMonths: number,
+  rowOffset = 0
 ): TenancyImportRow[] {
-  return allRows.map((raw, i) => buildRow(raw, colMap, i + 2, defaultDurationMonths));
+  return allRows.map((raw, i) => buildRow(raw, colMap, rowOffset + i + 2, defaultDurationMonths));
 }
 
 // ─── Public parse entrypoint ──────────────────────────────────────────────────
