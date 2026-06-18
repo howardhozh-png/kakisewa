@@ -548,6 +548,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             lead={lead}
             open={competitorRentedOpen}
             onOpenChange={setCompetitorRentedOpen}
+            onSuccess={() => onOpenChange(false)}
           />
         </>
       )}

@@ -48,7 +48,8 @@ export default async function TrackListingPage({ searchParams }: Props) {
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
   const boardCardLeads = ownerLeads.filter((l) =>
-    l.stage === "listed" || (l.stage === "matched" && !l.has_active_tenancy)
+    !l.is_competitor_target &&
+    (l.stage === "listed" || (l.stage === "matched" && !l.has_active_tenancy))
   );
 
   return (

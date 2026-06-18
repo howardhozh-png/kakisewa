@@ -1241,6 +1241,7 @@ function WhatsNext({ t, onMoveToStage, onShowTenantLeaving, onShowOwnerLeaving, 
             {dropdownOpen && dropdownPos && createPortal(
               <div
                 ref={dropdownMenuRef}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   position: "fixed",
                   top: dropdownPos.top,
@@ -1403,7 +1404,7 @@ function LostContractDialog({ t, open, onClose }: { t: Tenancy; open: boolean; o
               style={{ background: "#C62828", color: "#fff", opacity: pending ? 0.7 : 1 }}
             >
               {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-              Move to Target Listing
+              Move to Lost Listing
             </button>
           </div>
         </div>

@@ -13,9 +13,10 @@ interface Props {
   lead: OwnerLead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
+export function CompetitorRentedDialog({ lead, open, onOpenChange, onSuccess }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [rentedOn, setRentedOn] = useState(() => new Date().toISOString().slice(0, 10));
@@ -36,8 +37,9 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
     startTransition(async () => {
       const res = await markCompetitorRentedAction(lead.id, rentedOn, parseInt(duration, 10));
       if (res.ok) {
-        toast.success("Moved to Target Units — watching for renewal");
+        toast.success("Moved to Target Listing — watching for renewal");
         onOpenChange(false);
+        onSuccess?.();
         router.refresh();
       } else if (res.reason === "plan_cap_reached") {
         onOpenChange(false);
@@ -75,7 +77,7 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
               {lead.property_name ?? "This unit"}{lead.unit ? ` · ${lead.unit}` : ""}
             </h2>
             <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>
-              Card moves to Target Units. We'll remind you 60 days before their tenancy ends.
+              Card moves to Target Listing. We'll remind you 60 days before their tenancy ends.
             </p>
           </div>
 
@@ -121,7 +123,7 @@ export function CompetitorRentedDialog({ lead, open, onOpenChange }: Props) {
               className="kk-pill flex-1 font-semibold"
               style={{ background: "var(--kk-ink)", color: "#fff", opacity: pending || !rentedOn || !duration ? 0.5 : 1 }}
             >
-              {pending ? "Saving…" : "Move to Target Units"}
+              {pending ? "Saving…" : "Move to Target Listing"}
             </button>
           </div>
         </div>
