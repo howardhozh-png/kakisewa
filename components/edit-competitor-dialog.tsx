@@ -273,12 +273,12 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Expected rent (RM/mo)</label>
-              <input type="number" value={expectedRent} onChange={(e) => setExpectedRent(e.target.value)} placeholder="e.g. 2500" className={FIELD14_CLS} style={FIELD14_STY} />
+              <input type="number" value={expectedRent} onChange={(e) => setExpectedRent(e.target.value)} onWheel={(e) => e.currentTarget.blur()} placeholder="e.g. 2500" className={FIELD14_CLS} style={FIELD14_STY} />
             </div>
             <BedroomPicker value={bedrooms} onChange={setBedrooms} />
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bathrooms</label>
-              <input type="number" value={bathrooms} min="0" onChange={(e) => setBathrooms(e.target.value)} placeholder="e.g. 2" className={FIELD14_CLS} style={FIELD14_STY} />
+              <input type="number" value={bathrooms} min="0" onChange={(e) => setBathrooms(e.target.value)} onWheel={(e) => e.currentTarget.blur()} placeholder="e.g. 2" className={FIELD14_CLS} style={FIELD14_STY} />
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Parking</label>
@@ -317,6 +317,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                   type="number"
                   value={contractDuration}
                   onChange={(e) => { setContractDuration(e.target.value); recomputeEnd(contractStart, e.target.value); }}
+                  onWheel={(e) => e.currentTarget.blur()}
                   placeholder="12"
                   className="w-full text-[13px] px-3 py-2 rounded-xl"
                   style={FIELD_STY}

@@ -428,6 +428,7 @@ function TenancyForm({
               type="number"
               value={contractDuration}
               onChange={(e) => { setContractDuration(e.target.value); recomputeEnd(contractStart, e.target.value); }}
+              onWheel={(e) => e.currentTarget.blur()}
               placeholder="12"
               className="w-full text-[13px] px-3 py-2 rounded-xl"
               style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}

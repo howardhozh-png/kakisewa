@@ -1131,7 +1131,7 @@ function Field({ label, value, onChange, placeholder, type = "text", full, requi
       </label>
       {money
         ? <MoneyInput value={value} onChange={onChange} placeholder={placeholder} className={cls} style={sty} />
-        : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} style={sty} />
+        : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onWheel={type === "number" ? (e) => e.currentTarget.blur() : undefined} placeholder={placeholder} className={cls} style={sty} />
       }
     </div>
   );

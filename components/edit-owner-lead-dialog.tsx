@@ -300,6 +300,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                     type="number"
                     value={contractDuration}
                     onChange={(e) => setContractDuration(e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
                     placeholder="12"
                     className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
                     style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
@@ -587,7 +588,7 @@ function Field({ label, value, onChange, placeholder, type = "text", full, money
         ? <MoneyInput value={value} onChange={onChange} placeholder={placeholder} className={cls} style={sty} />
         : type === "date"
         ? <DateInput value={value} onChange={onChange} className={cls} style={sty} />
-        : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} style={sty} />
+        : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onWheel={type === "number" ? (e) => e.currentTarget.blur() : undefined} placeholder={placeholder} className={cls} style={sty} />
       }
     </div>
   );

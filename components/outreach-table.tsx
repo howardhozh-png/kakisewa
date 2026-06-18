@@ -504,13 +504,13 @@ function LeadPopup({
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Expected rent (RM/mo)</p>
-            <input type="number" value={form.expected_rent} onChange={(e) => set("expected_rent", e.target.value)} placeholder="e.g. 2500" style={{ ...FIELD_STYLE }} />
+            <input type="number" value={form.expected_rent} onChange={(e) => set("expected_rent", e.target.value)} onWheel={(e) => e.currentTarget.blur()} placeholder="e.g. 2500" style={{ ...FIELD_STYLE }} />
           </div>
           {/* Bedrooms (pill buttons) | Bathrooms */}
           <BedroomPicker value={form.bedrooms} onChange={(v) => { setForm((p) => ({ ...p, bedrooms: v })); setSaved(false); }} />
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Bathrooms</p>
-            <input type="number" min="0" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} placeholder="e.g. 2" style={{ ...FIELD_STYLE }} />
+            <input type="number" min="0" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} onWheel={(e) => e.currentTarget.blur()} placeholder="e.g. 2" style={{ ...FIELD_STYLE }} />
           </div>
           {/* Parking */}
           <div>

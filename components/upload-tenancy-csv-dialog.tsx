@@ -744,6 +744,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
                           <input
                             type="number" min={1} max={60} value={defaultDuration}
                             onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 12)}
+                            onWheel={(e) => e.currentTarget.blur()}
                             style={{ width: 44, padding: "2px 6px", border: `1px solid ${defaultContractStart ? "var(--kk-green)" : "#F59E0B"}`, borderRadius: 6, fontSize: 12, color: "var(--kk-ink)", background: defaultContractStart ? "var(--kk-green-soft)" : "#fff", textAlign: "center" }}
                           />
                           <span style={{ color: "var(--kk-ink-mute)" }}>months from start date</span>

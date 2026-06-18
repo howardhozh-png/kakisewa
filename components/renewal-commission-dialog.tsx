@@ -129,6 +129,7 @@ export function RenewalCommissionDialog({ t, open, onClose }: Props) {
                 type="number"
                 value={rentVal}
                 onChange={(e) => setRentVal(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
                 step={100}
                 min={0}
                 className="kk-input"

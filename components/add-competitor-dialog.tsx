@@ -228,7 +228,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rent (RM/mo)</label>
-              <input type="number" value={form.expected_rent} onChange={e => set("expected_rent", e.target.value)} placeholder="e.g. 1800" className={field} style={fs} />
+              <input type="number" value={form.expected_rent} onChange={e => set("expected_rent", e.target.value)} onWheel={e => e.currentTarget.blur()} placeholder="e.g. 1800" className={field} style={fs} />
             </div>
           </div>
 
@@ -239,7 +239,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Bathrooms</label>
-              <input type="number" value={form.bathrooms} min="0" onChange={e => set("bathrooms", String(Math.max(0, Number(e.target.value))))} placeholder="2" className={field} style={fs} />
+              <input type="number" value={form.bathrooms} min="0" onChange={e => set("bathrooms", String(Math.max(0, Number(e.target.value))))} onWheel={e => e.currentTarget.blur()} placeholder="2" className={field} style={fs} />
             </div>
           </div>
 
@@ -283,7 +283,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             </div>
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months)<span style={{ color: "var(--kk-red)" }}> *</span></label>
-              <input type="number" value={form.duration} min="1" max="36" onChange={e => set("duration", e.target.value)} className={field} style={fs} />
+              <input type="number" value={form.duration} min="1" max="36" onChange={e => set("duration", e.target.value)} onWheel={e => e.currentTarget.blur()} className={field} style={fs} />
             </div>
           </div>
 

@@ -37,7 +37,9 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 }
 function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; onBlur?: (v: string) => void; placeholder?: string; type?: string }) {
   return (
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined} placeholder={placeholder}
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined}
+      onWheel={type === "number" ? (e) => e.currentTarget.blur() : undefined}
+      placeholder={placeholder}
       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
   );

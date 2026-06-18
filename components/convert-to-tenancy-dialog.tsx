@@ -140,7 +140,7 @@ function Field({
       </Label>
       {type === "date"
         ? <DateInput value={defaultValue ?? ""} onChange={() => {}} name={name} required={required} className="h-9 w-full min-w-0 rounded-3xl border px-3 py-1 text-base outline-none md:text-sm bg-secondary border-border text-foreground" />
-        : <Input id={name} name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} className="bg-secondary border-border text-foreground placeholder:text-muted-foreground" />
+        : <Input id={name} name={name} type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} onWheel={type === "number" ? (e) => e.currentTarget.blur() : undefined} className="bg-secondary border-border text-foreground placeholder:text-muted-foreground" />
       }
     </div>
   );
