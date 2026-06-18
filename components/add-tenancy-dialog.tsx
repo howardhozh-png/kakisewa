@@ -65,6 +65,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
   // Contract
   const [contractStart, setContractStart] = useState("");
   const [durationMonths, setDurationMonths] = useState("");
+  const [contractEndDirect, setContractEndDirect] = useState(""); // manually entered end date; overrides formula
 
   // Owner
   const [ownerName, setOwnerName] = useState("");
@@ -80,22 +81,22 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
   const photoRef = useRef<HTMLInputElement>(null);
   const agreementRef = useRef<HTMLInputElement>(null);
 
-  const contractEnd = (() => {
+  const computedEnd = (() => {
     if (!contractStart || !durationMonths) return "";
     const [y, m, d] = contractStart.split("-").map(Number);
     const months = parseInt(durationMonths, 10);
     if (!months) return "";
     let end: Date;
     if (d === 1) {
-      // Starts on 1st: last day of the Nth month (e.g. June 1 + 12m = May 31 next year)
       end = new Date(y, m - 1 + months, 0);
     } else {
-      // Starts mid-month: anniversary date minus 1 day (e.g. June 17 + 12m = June 16 next year)
       const anniversary = new Date(y, m - 1 + months, d);
       end = new Date(anniversary.getTime() - 86400000);
     }
     return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
   })();
+  // End date: manual entry wins; falls back to formula
+  const contractEnd = contractEndDirect || computedEnd;
 
   const suggestions = useMemo(() => {
     const q = propertyName.trim().toLowerCase();
@@ -127,7 +128,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     setPropertyName(""); setUnit("");
     setAmount(""); setBedrooms(""); setBathrooms(""); setParking(""); setNotes("");
     setOwnerName(""); setOwnerPhone("");
-    setContractStart(""); setDurationMonths("");
+    setContractStart(""); setDurationMonths(""); setContractEndDirect("");
     photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
     setPhotoFiles([]); setAgreementFiles([]);
     setTenantName(""); setTenantPhone("");
@@ -140,8 +141,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     if (!ownerName.trim())     { toast.error("Owner name is required"); return; }
     if (!ownerPhone.trim())    { toast.error("Owner phone is required"); return; }
     if (!amount)               { toast.error("Monthly rent is required"); return; }
-    if (!contractStart)        { toast.error("Contract start date is required"); return; }
-    if (!durationMonths)       { toast.error("Duration is required"); return; }
+    if (!contractEnd)          { toast.error("Contract end date is required. Enter an end date directly, or fill in start date + duration."); return; }
 
     setUploading(true);
     startTransition(async () => {
@@ -154,8 +154,9 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
         fd.set("owner_phone", normalizePhone(ownerPhone.trim()));
         fd.set("amount", amount);
         fd.set("due_day", "1");
-        fd.set("contract_start", contractStart);
-        fd.set("contract_duration_months", durationMonths);
+        fd.set("contract_end_direct", contractEnd);
+        if (contractStart) fd.set("contract_start", contractStart);
+        if (durationMonths) fd.set("contract_duration_months", durationMonths);
         fd.set("tenant_name", tenantName.trim());
         fd.set("tenant_phone", normalizePhone(tenantPhone.trim()));
         if (bedrooms !== "") fd.set("bedrooms", bedrooms);
@@ -285,23 +286,41 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <FieldLabel required>Start date</FieldLabel>
+                    <FieldLabel required={!contractEndDirect}>Start date</FieldLabel>
                     <DateInput value={contractStart} onChange={setContractStart} name="contract_start"
                       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                   </div>
                   <div>
-                    <FieldLabel required>Duration (months)</FieldLabel>
+                    <FieldLabel required={!contractEndDirect}>Duration (months)</FieldLabel>
                     <TextInput value={durationMonths} onChange={setDurationMonths} placeholder="e.g. 12" type="number" />
                   </div>
                 </div>
-                {contractEnd && (
-                  <p className="text-[12px] px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
-                    Ends <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>
-                      {new Date(contractEnd + "T00:00:00").toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  </p>
-                )}
+                {/* End date — editable formula field; source of truth */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <label className="text-[11px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
+                      End date <span style={{ color: "var(--kk-red)" }}>*</span>
+                    </label>
+                    {computedEnd && !contractEndDirect && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}>auto-calculated</span>
+                    )}
+                    {contractEndDirect && (
+                      <button type="button" onClick={() => setContractEndDirect("")}
+                        className="text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-0.5 hover:opacity-70"
+                        style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}>
+                        <X className="w-2.5 h-2.5" /> clear
+                      </button>
+                    )}
+                  </div>
+                  <DateInput
+                    value={contractEnd}
+                    onChange={(v) => setContractEndDirect(v)}
+                    name="contract_end"
+                    className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
+                    style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: computedEnd && !contractEndDirect ? "var(--kk-ink-mute)" : "var(--kk-ink)" }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -366,7 +385,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
 
             {/* Agreement — up to 3 files */}
             <div>
-              <SectionLabel>Tenancy agreement <span className="normal-case font-normal">(optional, max 3 files)</span></SectionLabel>
+              <SectionLabel>Tenancy agreement <span className="normal-case font-normal">(optional, max 5 files)</span></SectionLabel>
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
                 <div className="px-3 py-2 space-y-1">
                   {agreementFiles.map((af, i) => (
@@ -380,7 +399,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                       </button>
                     </div>
                   ))}
-                  {agreementFiles.length < 3 && (
+                  {agreementFiles.length < 5 && (
                     <div className="py-2 flex flex-col items-center gap-1">
                       <button type="button" onClick={() => agreementRef.current?.click()}
                         className="flex items-center gap-2 text-[13px] hover:opacity-70"
@@ -394,7 +413,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
                 </div>
               </div>
               <input ref={agreementRef} type="file" className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) setAgreementFiles((prev) => [...prev, { file: f, name: f.name }].slice(0, 3)); if (agreementRef.current) agreementRef.current.value = ""; }} />
+                multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) setAgreementFiles((prev) => [...prev, ...files.map((f) => ({ file: f, name: f.name }))].slice(0, 5)); if (agreementRef.current) agreementRef.current.value = ""; }} />
             </div>
 
             <div className="flex gap-3 pt-2">

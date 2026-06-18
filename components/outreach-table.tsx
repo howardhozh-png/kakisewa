@@ -55,7 +55,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
 }
 import { OwnerLead } from "@/lib/types";
 import { toE164Display } from "@/lib/phone";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
@@ -274,6 +274,7 @@ function LeadPopup({
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
   const [agreementUrls, setAgreementUrls] = useState<string[]>(parseAgreementUrls(lead.agreement_url ?? null));
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
+  const [loggingContact, setLoggingContact] = useState(false);
   const agreementInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -356,13 +357,9 @@ function LeadPopup({
     const room = 10 - photos.length;
     if (room <= 0) { toast.error("Maximum 10 photos reached"); return; }
 
-    const batch = files.slice(0, Math.min(5, room));
+    const batch = files.slice(0, room);
     if (files.length > batch.length) {
-      toast.error(
-        room < files.length && room <= 5
-          ? `Only ${room} more photo${room === 1 ? "" : "s"} can be added (max 10)`
-          : "You can upload up to 5 photos at a time. Select more after this batch finishes."
-      );
+      toast.error(`Only ${room} more photo${room === 1 ? "" : "s"} can be added (max 10)`);
     }
 
     setUploadProgress(0);
@@ -400,18 +397,26 @@ function LeadPopup({
   }
 
   async function handleAgreementUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const room = 5 - agreementUrls.length;
+    const batch = files.slice(0, room);
     setUploadingAgreement(true);
     try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await fetch("/api/upload/document", { method: "POST", body: fd });
-      const data = await res.json() as { url?: string; error?: string };
-      if (!res.ok) { toast.error(data.error ?? "Upload failed"); return; }
-      const updated = [...agreementUrls, data.url as string];
-      setAgreementUrls(updated);
-      await saveOwnerLeadAgreementUrl(lead.id, serializeAgreementUrls(updated));
-      toast.success("Document saved");
+      const newUrls: string[] = [];
+      for (const file of batch) {
+        const fd = new FormData(); fd.append("file", file);
+        const res = await fetch("/api/upload/document", { method: "POST", body: fd });
+        const data = await res.json() as { url?: string; error?: string };
+        if (!res.ok) { toast.error(data.error ?? "Upload failed"); continue; }
+        if (data.url) newUrls.push(data.url);
+      }
+      if (newUrls.length > 0) {
+        const updated = [...agreementUrls, ...newUrls];
+        setAgreementUrls(updated);
+        await saveOwnerLeadAgreementUrl(lead.id, serializeAgreementUrls(updated));
+        toast.success(newUrls.length === 1 ? "Document saved" : `${newUrls.length} documents saved`);
+      }
     } catch { toast.error("Upload failed"); }
     finally { setUploadingAgreement(false); if (agreementInputRef.current) agreementInputRef.current.value = ""; }
   }
@@ -616,7 +621,7 @@ function LeadPopup({
         <div className="px-5 pb-4" style={{ borderTop: "1px solid var(--kk-line)" }}>
           <div className="flex items-center justify-between mt-4 mb-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--kk-ink-faint)" }}>Tenancy agreement</p>
-            <span className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>{agreementUrls.length}/3</span>
+            <span className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>{agreementUrls.length}/5</span>
           </div>
           <div className="space-y-1">
             {agreementUrls.map((url, i) => (
@@ -631,11 +636,11 @@ function LeadPopup({
                 </button>
               </div>
             ))}
-            {agreementUrls.length < 3 && (
+            {agreementUrls.length < 5 && (
               <label className="flex items-center gap-1.5 py-1 cursor-pointer" style={{ color: "var(--kk-ink-mute)" }}>
                 {uploadingAgreement ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                 <span className="text-[12px]">{agreementUrls.length === 0 ? "Upload document" : "Add document"}</span>
-                <input ref={agreementInputRef} type="file" className="hidden" onChange={handleAgreementUpload} disabled={uploadingAgreement} />
+                <input ref={agreementInputRef} type="file" className="hidden" multiple onChange={handleAgreementUpload} disabled={uploadingAgreement} />
               </label>
             )}
             <p className="text-[10px]" style={{ color: "var(--kk-ink-faint)" }}>PDF, image, or any file — max 20 MB</p>
@@ -678,6 +683,44 @@ function LeadPopup({
               Move to Listed
             </button>
           ) : null}
+
+          {/* Log manual contact */}
+          {!["matched", "own_stay", "archived"].includes(lead.stage) && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={loggingContact}
+                onClick={async () => {
+                  setLoggingContact(true);
+                  await logManualContactAction(lead.id, "call");
+                  router.refresh();
+                  toast.success("Call logged");
+                  setLoggingContact(false);
+                }}
+                className="flex-1 py-2 rounded-xl text-[13px] font-medium flex items-center justify-center gap-1.5 transition-opacity hover:opacity-70 disabled:opacity-40"
+                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+              >
+                {loggingContact ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Phone className="w-3.5 h-3.5" />}
+                Logged a call
+              </button>
+              <button
+                type="button"
+                disabled={loggingContact}
+                onClick={async () => {
+                  setLoggingContact(true);
+                  await logManualContactAction(lead.id, "text");
+                  router.refresh();
+                  toast.success("Text logged");
+                  setLoggingContact(false);
+                }}
+                className="flex-1 py-2 rounded-xl text-[13px] font-medium flex items-center justify-center gap-1.5 transition-opacity hover:opacity-70 disabled:opacity-40"
+                style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+              >
+                {loggingContact ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                Logged a text
+              </button>
+            </div>
+          )}
 
           {/* Delete — always shown */}
           {(() => {

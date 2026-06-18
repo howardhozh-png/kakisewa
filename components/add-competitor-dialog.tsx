@@ -344,7 +344,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
                     </button>
                   </div>
                 ))}
-                {agreementFiles.length < 3 && (
+                {agreementFiles.length < 5 && (
                   <div className="py-2 flex flex-col items-center gap-1">
                     <button type="button" onClick={() => agreementRef.current?.click()}
                       className="flex items-center gap-2 text-[13px] hover:opacity-70"
@@ -357,8 +357,8 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
                 )}
               </div>
             </div>
-            <input ref={agreementRef} type="file" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) setAgreementFiles((prev) => [...prev, { file: f, name: f.name }].slice(0, 3)); if (agreementRef.current) agreementRef.current.value = ""; }} />
+            <input ref={agreementRef} type="file" className="hidden" multiple
+              onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) setAgreementFiles((prev) => [...prev, ...files.map((f) => ({ file: f, name: f.name }))].slice(0, 5)); if (agreementRef.current) agreementRef.current.value = ""; }} />
           </div>
 
           <div className="flex gap-2 pt-1">

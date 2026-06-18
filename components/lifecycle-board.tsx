@@ -349,7 +349,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
         )}
 
         <div className="kk-board-shell -mx-3 lg:-mx-5">
-          <div className="kk-board-row px-3 lg:px-5" style={{ overflowY: 'hidden', scrollbarWidth: 'none' } as React.CSSProperties}>
+          <div className="kk-board-row px-3 lg:px-5" style={{ overflowY: 'hidden' } as React.CSSProperties}>
             {/* Expired column — always visible; auto-populated when contract_end < today */}
             <Column col={EXPIRED_COL} count={expiredCards.length} extraStyle={{ flex: 1, minWidth: 300 }}>
               {expiredCards.length === 0

@@ -354,8 +354,9 @@ html, body {
   overflow-y: hidden;
   padding-top: 64px;
   padding-bottom: 1rem;
-  /* Subtle scrollbar for horizontal */
+  /* Subtle scrollbar for horizontal — thin so users know they can scroll */
   scrollbar-width: thin;
+  scrollbar-color: var(--kk-ink-mute) transparent;
 }
 .kk-board-col {
   flex-shrink: 0;
