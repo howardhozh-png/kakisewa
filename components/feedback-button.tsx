@@ -52,7 +52,7 @@ export function FeedbackButton() {
     <>
       {/* Floating trigger — mobile: dismissible per page; desktop: always visible */}
       {!dismissed && (
-        <div className="fixed z-40 flex items-center gap-1 bottom-[130px] right-4 lg:bottom-5 lg:right-5">
+        <div className="fixed z-40 flex items-center gap-1 bottom-5 right-4 lg:right-5">
           <button
             onClick={handleOpen}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
