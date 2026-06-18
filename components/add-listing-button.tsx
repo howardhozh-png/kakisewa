@@ -174,6 +174,13 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
 
   const busy = pending || uploading;
 
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) { setOpen(false); reset(); } };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, busy]);
+
   return (
     <>
       <PlanCapDialog

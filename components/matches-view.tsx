@@ -451,7 +451,6 @@ function PropertyDetailDialog({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="kk-card w-full max-w-md flex flex-col" style={{ maxHeight: "90vh", overflow: "hidden" }}>
         <div className="flex items-start justify-between gap-3 p-6 border-b" style={{ borderColor: "var(--kk-line)" }}>

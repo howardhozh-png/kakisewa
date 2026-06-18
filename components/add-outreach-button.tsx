@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useMemo } from "react";
+import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
@@ -64,6 +64,17 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
   const dropRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const agreementRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!waOpen && !manualOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (waOpen && !pending && !uploading) setWaOpen(false);
+      if (manualOpen && !pending && !uploading) setManualOpen(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [waOpen, manualOpen, pending, uploading]);
 
   // Property autocomplete for manual form
   const [showSugg, setShowSugg] = useState(false);

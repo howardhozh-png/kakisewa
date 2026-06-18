@@ -77,7 +77,6 @@ export function AddSupportButton() {
         <div
           className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
-          onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}
         >
           <div
             className="w-full bg-white rounded-3xl shadow-2xl overflow-hidden"
