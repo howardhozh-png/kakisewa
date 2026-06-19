@@ -19,7 +19,7 @@ function getPageNumbers(page: number, total: number): (number | "...")[] {
 }
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
 }
 
 function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
@@ -939,10 +939,11 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const propertyNames = Array.from(
     new Set(leads.map((l) => l.property_name).filter(Boolean) as string[])
   ).sort();
+  const unnamedLeads = leads.filter((l) => !l.property_name && !l.is_competitor_target);
 
   // Per-property stat table for the popover (sorted by unsent desc = newest imports first)
-  const propertyStats = Object.fromEntries(
-    propertyNames.map((p) => {
+  const propertyStats = Object.fromEntries([
+    ...propertyNames.map((p) => {
       const pl = leads.filter((l) => l.property_name === p);
       return [p, {
         unsent:    pl.filter((l) => getStatus(l) === "unsent").length,
@@ -950,9 +951,19 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
         listed:    pl.filter((l) => getStatus(l) === "listed").length,
         rented:    pl.filter((l) => getStatus(l) === "rented").length,
         declined:  pl.filter((l) => getStatus(l) === "declined").length,
-      }];
-    })
-  );
+      }] as [string, PropertyStats[string]];
+    }),
+    ...(unnamedLeads.length > 0 ? [[
+      "__no_name__",
+      {
+        unsent:    unnamedLeads.filter((l) => getStatus(l) === "unsent").length,
+        contacted: unnamedLeads.filter((l) => getStatus(l) === "contacted").length,
+        listed:    unnamedLeads.filter((l) => getStatus(l) === "listed").length,
+        rented:    unnamedLeads.filter((l) => getStatus(l) === "rented").length,
+        declined:  unnamedLeads.filter((l) => getStatus(l) === "declined").length,
+      },
+    ] as [string, PropertyStats[string]]] : []),
+  ]);
 
   // Stats row computations
   const todayIso = todayStr();
@@ -964,7 +975,9 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
 
   // Counts respect the active property filter. Exclude competitor targets so
   // the "All" badge matches exactly what the visible rows show.
-  const propertyFiltered = propertyFilter === "all" ? leads : leads.filter((l) => l.property_name === propertyFilter);
+  const propertyFiltered = propertyFilter === "all" ? leads
+    : propertyFilter === "__no_name__" ? leads.filter((l) => !l.property_name)
+    : leads.filter((l) => l.property_name === propertyFilter);
   const counts = {
     all:       propertyFiltered.filter((l) => !l.is_competitor_target).length,
     unsent:    propertyFiltered.filter((l) => getStatus(l) === "unsent").length,
@@ -990,7 +1003,11 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           if (filter === "unsent")         { if (s !== "unsent")    return false; }
           else if (filter === "contacted") { if (s !== "contacted") return false; }
           if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
-          if (propertyFilter !== "all" && l.property_name !== propertyFilter) return false;
+          if (propertyFilter !== "all") {
+            const matchUnnamed = propertyFilter === "__no_name__" && !l.property_name;
+            const matchNamed = propertyFilter !== "__no_name__" && l.property_name === propertyFilter;
+            if (!matchUnnamed && !matchNamed) return false;
+          }
           if (sentDateFilter) {
             const sent = l.last_outreach_at ?? l.intake_sent_at ?? null;
             if (!sent) return false;
@@ -1267,7 +1284,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
       {/* Filter row — scrollable on mobile, wraps on desktop */}
       <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-0.5 lg:flex-wrap">
         {/* Property filter — popover table */}
-        {propertyNames.length > 0 && (
+        {(propertyNames.length > 0 || unnamedLeads.length > 0) && (
           <PropertyPopover
             value={propertyFilter}
             onChange={(v) => { setPropertyFilter(v); setFilter("all"); }}
@@ -2098,7 +2115,7 @@ function PropertyPopover({
           minWidth: 160,
         }}
       >
-        <span className="flex-1 text-left truncate">{value === "all" ? "All properties" : value}</span>
+        <span className="flex-1 text-left truncate">{value === "all" ? "All properties" : value === "__no_name__" ? "No property name" : value}</span>
         <ChevronDown className="w-3.5 h-3.5 shrink-0" style={{ opacity: 0.6 }} />
       </button>
 
@@ -2194,12 +2211,16 @@ function PropertyPopover({
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 group/row" style={{ overflow: "hidden" }}>
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p}</span>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setRenamingProp(p); setRenameValue(p); setTimeout(() => renameInputRef.current?.select(), 50); }}
-                          className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
-                          style={{ color: "var(--kk-ink-faint)" }}>
-                          <Pencil className="w-3 h-3" />
-                        </button>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, color: p === "__no_name__" ? "var(--kk-ink-mute)" : undefined, fontStyle: p === "__no_name__" ? "italic" : undefined }}>
+                          {p === "__no_name__" ? "No property name" : p}
+                        </span>
+                        {p !== "__no_name__" && (
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setRenamingProp(p); setRenameValue(p); setTimeout(() => renameInputRef.current?.select(), 50); }}
+                            className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                            style={{ color: "var(--kk-ink-faint)" }}>
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>

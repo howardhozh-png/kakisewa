@@ -828,7 +828,7 @@ export async function recordCommissionEvent(data: {
 }
 
 function gmt8Today(): string {
-  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
 }
 
 export async function recordLoginStreak(): Promise<number> {
@@ -848,7 +848,7 @@ export async function recordLoginStreak(): Promise<number> {
   const cur = (row.login_streak as number | null) ?? 0;
   if (row.last_login_date === today) return cur;
 
-  const yesterday = new Date(Date.now() - 86400000 + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const next = row.last_login_date === yesterday ? cur + 1 : 1;
   const longest = Math.max((row.longest_streak as number | null) ?? 0, next);
   await supabase

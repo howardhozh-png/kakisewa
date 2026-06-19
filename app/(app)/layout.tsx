@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ]);
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
-  const checkedInToday = agent.last_login_date === new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const checkedInToday = agent.last_login_date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
 
   const hdrs = await headers();
   const isAdmin = hdrs.get("x-is-admin") === "true";

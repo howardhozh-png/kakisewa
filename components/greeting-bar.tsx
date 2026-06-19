@@ -19,8 +19,7 @@ function formatDate(d: Date): string {
 }
 
 function todayKey(): string {
-  const d = new Date(Date.now() + 8 * 60 * 60 * 1000); // shift to GMT+8
-  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
 }
 
 const MESSAGES = [
