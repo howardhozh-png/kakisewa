@@ -59,7 +59,7 @@ import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContac
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, Search, Phone, Trash2, RotateCcw, Upload } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, SquarePen, Search, Phone, Trash2, RotateCcw, Upload } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -2266,13 +2266,13 @@ function PropertyPopover({
                           <button type="button" onClick={(e) => { e.stopPropagation(); setAssigningNoName(true); setAssignNoNameValue(""); setTimeout(() => assignNoNameInputRef.current?.focus(), 50); }}
                             className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
                             style={{ color: "var(--kk-blue)" }}>
-                            <Pencil className="w-3 h-3" />
+                            <SquarePen className="w-3 h-3" />
                           </button>
                         ) : (
                           <button type="button" onClick={(e) => { e.stopPropagation(); setRenamingProp(p); setRenameValue(p); setTimeout(() => renameInputRef.current?.select(), 50); }}
                             className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
                             style={{ color: "var(--kk-ink-faint)" }}>
-                            <Pencil className="w-3 h-3" />
+                            <SquarePen className="w-3 h-3" />
                           </button>
                         )}
                       </div>
