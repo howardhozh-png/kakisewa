@@ -296,6 +296,25 @@ export async function hardDeleteTenancyAction(id: string): Promise<void> {
   revalidatePath("/");
 }
 
+export async function assignPropertyNameAction(newName: string): Promise<{ ok: boolean; message?: string }> {
+  const trimmed = newName.trim();
+  if (!trimmed) return { ok: false, message: "Name cannot be empty" };
+  const userId = await getAgentId();
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("owner_leads")
+    .update({ property_name: trimmed })
+    .eq("user_id", userId)
+    .is("property_name", null);
+  if (error) return { ok: false, message: error.message };
+  invalidateCache();
+  revalidatePath("/potential-listing");
+  revalidatePath("/my-listing");
+  revalidatePath("/");
+  return { ok: true };
+}
+
 export async function renamePropertyGroupAction(oldName: string, newName: string): Promise<{ ok: boolean; message?: string }> {
   const trimmed = newName.trim();
   if (!trimmed) return { ok: false, message: "Name cannot be empty" };

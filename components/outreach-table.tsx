@@ -55,7 +55,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
 }
 import { OwnerLead } from "@/lib/types";
 import { toE164Display } from "@/lib/phone";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
@@ -2063,6 +2063,10 @@ function PropertyPopover({
   const [renamingProp, setRenamingProp] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [renamePending, startRenameTransition] = useTransition();
+  const [assigningNoName, setAssigningNoName] = useState(false);
+  const [assignNoNameValue, setAssignNoNameValue] = useState("");
+  const [assignNoNamePending, startAssignNoNameTransition] = useTransition();
+  const assignNoNameInputRef = useRef<HTMLInputElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -2098,6 +2102,23 @@ function PropertyPopover({
     acc[c.key] = rows.reduce((s, [, st]) => s + st[c.key], 0);
     return acc;
   }, {} as PropertyStats[string]);
+
+  function submitAssignNoName() {
+    const trimmed = assignNoNameValue.trim();
+    if (!trimmed) return;
+    startAssignNoNameTransition(async () => {
+      const res = await assignPropertyNameAction(trimmed);
+      if (res.ok) {
+        toast.success("Property name assigned");
+        setAssigningNoName(false);
+        setAssignNoNameValue("");
+        onChange("all");
+        router.refresh();
+      } else {
+        toast.error(res.message ?? "Could not assign");
+      }
+    });
+  }
 
   function pick(v: string) { onChange(v); setOpen(false); }
 
@@ -2170,10 +2191,10 @@ function PropertyPopover({
               {rows.map(([p, s], i) => (
                 <tr
                   key={p}
-                  onClick={() => { if (renamingProp !== p) pick(p); }}
-                  style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--kk-line)" : "none", cursor: renamingProp === p ? "default" : "pointer", background: value === p ? "rgba(0,113,227,0.06)" : undefined }}
-                  onMouseEnter={(e) => { if (renamingProp !== p) (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
-                  onMouseLeave={(e) => { if (renamingProp !== p) (e.currentTarget as HTMLElement).style.background = value === p ? "rgba(0,113,227,0.06)" : "transparent"; }}
+                  onClick={() => { if (renamingProp !== p && !(p === "__no_name__" && assigningNoName)) pick(p); }}
+                  style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--kk-line)" : "none", cursor: (renamingProp === p || (p === "__no_name__" && assigningNoName)) ? "default" : "pointer", background: value === p ? "rgba(0,113,227,0.06)" : undefined }}
+                  onMouseEnter={(e) => { if (renamingProp !== p && !(p === "__no_name__" && assigningNoName)) (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
+                  onMouseLeave={(e) => { if (renamingProp !== p && !(p === "__no_name__" && assigningNoName)) (e.currentTarget as HTMLElement).style.background = value === p ? "rgba(0,113,227,0.06)" : "transparent"; }}
                 >
                   <td className="px-4 py-1.5 text-[13px] font-medium" style={{ color: "var(--kk-ink)", maxWidth: 220 }}>
                     {renamingProp === p ? (
@@ -2209,12 +2230,45 @@ function PropertyPopover({
                           <X className="w-3 h-3" />
                         </button>
                       </div>
+                    ) : p === "__no_name__" && assigningNoName ? (
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          ref={assignNoNameInputRef}
+                          value={assignNoNameValue}
+                          onChange={(e) => setAssignNoNameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") { e.preventDefault(); submitAssignNoName(); }
+                            if (e.key === "Escape") { setAssigningNoName(false); setAssignNoNameValue(""); }
+                          }}
+                          placeholder="e.g. Residensi Highpark"
+                          className="flex-1 px-2 py-1 rounded-lg text-[13px] outline-none min-w-0"
+                          style={{ background: "var(--kk-surface-2)", border: "1.5px solid var(--kk-theme-dark)", color: "var(--kk-ink)", width: 180 }}
+                          disabled={assignNoNamePending}
+                          autoFocus
+                        />
+                        <button type="button" disabled={assignNoNamePending} onClick={(e) => { e.stopPropagation(); submitAssignNoName(); }}
+                          className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+                          style={{ background: "var(--kk-ink)", color: "#fff" }}>
+                          {assignNoNamePending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        </button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setAssigningNoName(false); setAssignNoNameValue(""); }}
+                          className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+                          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-1.5 group/row" style={{ overflow: "hidden" }}>
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, color: p === "__no_name__" ? "var(--kk-ink-mute)" : undefined, fontStyle: p === "__no_name__" ? "italic" : undefined }}>
                           {p === "__no_name__" ? "No property name" : p}
                         </span>
-                        {p !== "__no_name__" && (
+                        {p === "__no_name__" ? (
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setAssigningNoName(true); setAssignNoNameValue(""); setTimeout(() => assignNoNameInputRef.current?.focus(), 50); }}
+                            className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                            style={{ color: "var(--kk-blue)" }}>
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        ) : (
                           <button type="button" onClick={(e) => { e.stopPropagation(); setRenamingProp(p); setRenameValue(p); setTimeout(() => renameInputRef.current?.select(), 50); }}
                             className="w-5 h-5 rounded flex items-center justify-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
                             style={{ color: "var(--kk-ink-faint)" }}>
