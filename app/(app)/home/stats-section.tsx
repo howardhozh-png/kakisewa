@@ -53,7 +53,8 @@ function getWeekDates(weekStart: string): string[] {
   for (let i = 0; i < 7; i++) {
     const d = new Date(base);
     d.setDate(base.getDate() + i);
-    dates.push(d.toISOString().slice(0, 10));
+    // Use local getters (not toISOString) so UTC offset doesn't shift the calendar date
+    dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`);
   }
   return dates;
 }
@@ -84,8 +85,7 @@ function DonutRing({ pct, strokeColor, trackColor, size = 76 }: { pct: number; s
 // ── Weekly calendar ────────────────────────────────────────────────────────────
 
 function WeeklyCalendar({ weekEvents, weekStart, weekEnd }: { weekEvents: CalendarEvent[]; weekStart: string; weekEnd: string }) {
-  const _d = new Date();
-  const today = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, "0")}-${String(_d.getDate()).padStart(2, "0")}`;
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const weekDates = getWeekDates(weekStart);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 

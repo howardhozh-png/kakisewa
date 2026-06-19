@@ -218,15 +218,14 @@ function ActiveState({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  // Compute Mon–Sun of current week in MYT (UTC+8) — Vercel runs in UTC so new Date() shows yesterday for Malaysians before 8 AM
-  const nowMYT = new Date(Date.now() + 8 * 60 * 60 * 1000);
   const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const dow = nowMYT.getDay();
+  // Pin week start/end to MYT date regardless of server's local timezone
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const [ty, tm, td] = todayStr.split("-").map(Number);
+  const dow = new Date(ty, tm - 1, td).getDay();
   const diffToMon = dow === 0 ? -6 : 1 - dow;
-  const monday = new Date(nowMYT);
-  monday.setDate(nowMYT.getDate() + diffToMon);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
+  const monday = new Date(ty, tm - 1, td + diffToMon);
+  const sunday = new Date(ty, tm - 1, td + diffToMon + 6);
   const weekStart = toISO(monday);
   const weekEnd = toISO(sunday);
 

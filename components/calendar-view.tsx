@@ -44,7 +44,8 @@ interface Props {
 export function CalendarView({ events, weekStartISO }: Props) {
   const router = useRouter();
   const weekStart = new Date(weekStartISO + "T00:00:00");
-  const today = toISO(new Date());
+  // Pin today to MYT regardless of phone timezone so highlight matches server
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const [addOpen, setAddOpen] = useState(false);
   const [addDate, setAddDate] = useState<string | undefined>();
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
@@ -61,11 +62,13 @@ export function CalendarView({ events, weekStartISO }: Props) {
   }
 
   function goToday() {
-    const d = new Date();
-    const day = d.getDay();
+    const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+    const [y, m, d] = todayStr.split("-").map(Number);
+    const ref = new Date(y, m - 1, d);
+    const day = ref.getDay();
     const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    router.push(`/calendar?week=${toISO(d)}`);
+    ref.setDate(ref.getDate() + diff);
+    router.push(`/calendar?week=${toISO(ref)}`);
   }
 
   function handleDelete(id: string) {

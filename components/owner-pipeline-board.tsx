@@ -131,14 +131,18 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     useSensor(TouchSensor, { activationConstraint: { delay: 2000, tolerance: 25 } }),
   );
 
-  // Unique property names + counts for the dropdown
+  // Unique property names + counts for the dropdown (including unnamed leads)
   const propertyOptions = useMemo(() => {
     const counts: Record<string, number> = {};
+    let unnamedCount = 0;
     local.forEach((l) => {
-      if (!l.property_name || ["own_stay", "archived", "imported"].includes(l.stage)) return;
+      if (["own_stay", "archived", "imported"].includes(l.stage)) return;
+      if (!l.property_name) { unnamedCount++; return; }
       counts[l.property_name] = (counts[l.property_name] ?? 0) + 1;
     });
-    return Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+    const named = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+    if (unnamedCount > 0) named.push(["__no_name__", unnamedCount]);
+    return named;
   }, [local]);
 
   const filtered = useMemo(() => {
@@ -146,7 +150,11 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     return local.filter((l) => {
       if (l.is_competitor_target) return false;
       if (q && ![l.property_name, l.owner_name, l.unit].some(f => f?.toLowerCase().includes(q))) return false;
-      if (propertyFilter && (l.property_name ?? "") !== propertyFilter) return false;
+      if (propertyFilter) {
+        const matchUnnamed = propertyFilter === "__no_name__" && !l.property_name;
+        const matchNamed = propertyFilter !== "__no_name__" && (l.property_name ?? "") === propertyFilter;
+        if (!matchUnnamed && !matchNamed) return false;
+      }
       if (purposeFilter && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
       if (monthFilter && l.available_from?.slice(0, 7) !== monthFilter) return false;
       if (ownerRespondedFilter && ["listed", "wants_rent", "replied"].includes(l.stage) && !rankedLeadIds.has(l.id)) return false;
@@ -225,7 +233,11 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         <AvailabilityTimeline
           leads={local.filter((l) => {
             if (l.is_competitor_target) return false;
-            if (propertyFilter && l.property_name !== propertyFilter) return false;
+            if (propertyFilter) {
+              const matchUnnamed = propertyFilter === "__no_name__" && !l.property_name;
+              const matchNamed = propertyFilter !== "__no_name__" && l.property_name === propertyFilter;
+              if (!matchUnnamed && !matchNamed) return false;
+            }
             return l.stage === "listed" || l.stage === "wants_rent" || l.stage === "replied" || (l.stage === "matched" && !l.has_active_tenancy);
           })}
           commissionPct={100}
@@ -255,7 +267,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         <FilterSelect
           value={propertyFilter}
           onChange={setPropertyFilter}
-          options={[{ value: "", label: "All properties" }, ...propertyOptions.map(([p, count]) => ({ value: p, label: `${p} (${count})` }))]}
+          options={[{ value: "", label: "All properties" }, ...propertyOptions.map(([p, count]) => ({ value: p, label: p === "__no_name__" ? `No property name (${count})` : `${p} (${count})` }))]}
           minWidth={180}
         />
         <FilterSelect

@@ -10,9 +10,10 @@ interface Props {
 export default async function CalendarPage({ searchParams }: Props) {
   const { week } = await searchParams;
 
-  // week param is "YYYY-MM-DD" for Monday of the viewed week
-  // Use MYT (UTC+8) for "today" — Vercel runs in UTC so new Date() would show yesterday for Malaysians before 8 AM
-  const nowMYT = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  // Pin "today" to MYT date regardless of server's local timezone
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const [ty, tm, td] = todayStr.split("-").map(Number);
+  const nowMYT = new Date(ty, tm - 1, td);
   const weekStart = getWeekStart(week ? new Date(week + "T00:00:00") : nowMYT);
   const weekEnd   = new Date(weekStart.getTime() + 6 * 86400000);
 
