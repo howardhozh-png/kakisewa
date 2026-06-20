@@ -5,7 +5,7 @@ import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, checkTargetCapAction } from "@/lib/actions";
-import { CAP_WARN_THRESHOLD } from "@/lib/plan-caps";
+import { CAP_WARN_THRESHOLD } from "@/lib/cap-constants";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";

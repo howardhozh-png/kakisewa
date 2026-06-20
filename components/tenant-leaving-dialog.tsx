@@ -10,7 +10,7 @@ import { RefreshCw, Loader2, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { DateInput } from "@/components/ui/date-input";
 import { track } from "@/lib/analytics";
-import { CAP_WARN_THRESHOLD } from "@/lib/plan-caps";
+import { CAP_WARN_THRESHOLD } from "@/lib/cap-constants";
 
 type CapBlock = { currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null };
 

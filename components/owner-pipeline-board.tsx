@@ -9,7 +9,7 @@ import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, Mous
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
-import { CAP_WARN_THRESHOLD } from "@/lib/plan-caps";
+import { CAP_WARN_THRESHOLD } from "@/lib/cap-constants";
 import { ConfirmMovedInDialog } from "@/components/confirm-moved-in-dialog";
 import { Megaphone, XCircle, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";

@@ -4,8 +4,7 @@ import { createServiceClient } from "./supabase/service";
 export type PlanId = "silver" | "gold" | "platinum" | "elite";
 export type PipelineType = "existing" | "my_listing" | "target";
 
-// Soft-warning threshold: show amber nudge when this many slots remain
-export const CAP_WARN_THRESHOLD = 5;
+export { CAP_WARN_THRESHOLD } from "./cap-constants";
 
 export type CapCheckResult =
   | { allowed: true; current_count: number; current_cap: number; remaining: number; current_plan: string; upgrade_to: PlanId; upgrade_cap: number | null }
