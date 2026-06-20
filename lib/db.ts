@@ -1970,7 +1970,7 @@ export async function completeOwnerIntake(
     tenant_preferences?: string;
     photoUrls?: string[];
   }
-): Promise<void> {
+): Promise<{ capHit: boolean; remaining: number | undefined }> {
   const updates: Record<string, unknown> = {
     intake_completed_at: new Date().toISOString(),
   };
@@ -1983,17 +1983,37 @@ export async function completeOwnerIntake(
   if (data.photoUrls && data.photoUrls.length > 0) updates.photo_urls = data.photoUrls;
 
   const supabase = createServiceClient();
-  // Get current stage to conditionally advance
+  // Get current stage and user_id to conditionally advance
   const { data: lead } = await supabase
     .from("owner_leads")
-    .select("stage")
+    .select("stage, user_id")
     .eq("intake_token", token)
     .maybeSingle();
   const stage = (lead as Record<string, unknown> | null)?.stage as string | undefined;
+  const userId = (lead as Record<string, unknown> | null)?.user_id as string | undefined;
+
+  let capHit = false;
+  let remaining: number | undefined;
+
   if (stage && ["imported","replied","wants_rent"].includes(stage)) {
-    updates.stage = "listed";
+    // Check My Listing cap before advancing
+    if (userId) {
+      const { checkMyListingCapForUser } = await import("./plan-caps");
+      const capCheck = await checkMyListingCapForUser(userId);
+      if (capCheck.allowed) {
+        updates.stage = "listed";
+        remaining = capCheck.remaining - 1;
+      } else {
+        capHit = true;
+        remaining = 0;
+      }
+    } else {
+      updates.stage = "listed";
+    }
   }
+
   await supabase.from("owner_leads").update(updates).eq("intake_token", token);
+  return { capHit, remaining };
 }
 
 // ─── Tenant intake sessions ───────────────────────────────────────────────────

@@ -13,10 +13,10 @@ const TIER_PRICES: Record<string, number> = {
   gold: 99, platinum: 179, elite: 299,
 };
 
-const PIPELINE_LABELS: Record<PipelineType, { title: string; unit: string }> = {
-  existing:   { title: "You've reached your renewal limit",  unit: "renewal tracking cards" },
-  my_listing: { title: "You've reached your listing limit",  unit: "active listings" },
-  target:     { title: "You've reached your target limit",   unit: "target units" },
+const PIPELINE_LABELS: Record<PipelineType, { title: string; unit: string; context: string }> = {
+  existing:   { title: "Existing Listing is full",  unit: "contracts",       context: "Active contracts count toward this limit." },
+  my_listing: { title: "My Listing is full",        unit: "listings",        context: "Listed and Rented cards both count toward this limit." },
+  target:     { title: "Lost Listing is full",      unit: "target units",    context: "Competitor units you are tracking count toward this limit." },
 };
 
 interface Props {
@@ -27,18 +27,22 @@ interface Props {
   currentCap: number;
   upgradeToId: string;
   upgradeCap: number | null;
-  nearestExpiryDays: number | null;
+  nearestExpiryDays?: number | null;
+  remaining?: number;
+  trying?: number;
   onClose: () => void;
 }
 
 export function PlanCapDialog({
-  open, pipeline = "existing", currentPlan, currentCount, currentCap, upgradeToId, upgradeCap, nearestExpiryDays, onClose,
+  open, pipeline = "existing", currentPlan, currentCount, currentCap, upgradeToId, upgradeCap, nearestExpiryDays, remaining, trying, onClose,
 }: Props) {
   const planName    = TIER_NAMES[currentPlan] ?? currentPlan;
   const upgradeName = TIER_NAMES[upgradeToId] ?? upgradeToId;
   const upgradePrice = TIER_PRICES[upgradeToId];
-  const { title, unit } = PIPELINE_LABELS[pipeline];
+  const { title, unit, context } = PIPELINE_LABELS[pipeline];
   const upgradeCapLabel = upgradeCap !== null ? `up to ${upgradeCap} ${unit}` : `unlimited ${unit}`;
+
+  const isBulkPartial = trying !== undefined && remaining !== undefined && remaining > 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -52,19 +56,28 @@ export function PlanCapDialog({
             <Lock className="w-5 h-5" style={{ color: "var(--kk-ink-mute)" }} />
           </div>
 
-          <h2
-            className="text-[17px] font-semibold tracking-tight"
-            style={{ color: "var(--kk-ink)" }}
-          >
-            {title}
-          </h2>
+          <div>
+            <h2
+              className="text-[17px] font-semibold tracking-tight"
+              style={{ color: "var(--kk-ink)" }}
+            >
+              {title}
+            </h2>
+            {isBulkPartial && (
+              <p className="mt-1 text-[12px]" style={{ color: "var(--kk-amber)" }}>
+                You have {remaining} slot{remaining === 1 ? "" : "s"} left, trying to move {trying}
+              </p>
+            )}
+          </div>
 
           <p
             className="text-[13px] leading-relaxed"
-            style={{ color: "var(--kk-ink-mute)", maxWidth: "30ch" }}
+            style={{ color: "var(--kk-ink-mute)", maxWidth: "32ch" }}
           >
-            {planName} includes {currentCap} {unit}. You have {currentCount}/{currentCap} active.
-            {pipeline === "existing" && nearestExpiryDays !== null && (
+            {planName} includes {currentCap} {unit}. You have{" "}
+            <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>{currentCount}/{currentCap}</span> active.
+            {" "}{context}
+            {pipeline === "existing" && nearestExpiryDays !== null && nearestExpiryDays !== undefined && (
               <>
                 {" "}Your next renewal is due in{" "}
                 <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>

@@ -168,7 +168,11 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         } finally { setUploading(false); }
       }
 
-      toast.success("Listing added");
+      if (res.low_remaining) {
+        toast.warning(`Listing added. Only ${res.remaining} My Listing slot${res.remaining === 1 ? "" : "s"} remaining.`);
+      } else {
+        toast.success("Listing added");
+      }
       setOpen(false); reset();
       router.push(`/my-listing?highlight=${res.id}`);
     });

@@ -5,6 +5,7 @@ import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
 import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, checkTargetCapAction } from "@/lib/actions";
+import { CAP_WARN_THRESHOLD } from "@/lib/plan-caps";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
@@ -148,7 +149,12 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
           if (serialized) await saveOwnerLeadAgreementUrl(res.id, serialized);
         }
 
-        toast.success("Target unit added");
+        const slotsLeft = capCheck.remaining - 1;
+        if (slotsLeft <= CAP_WARN_THRESHOLD) {
+          toast.warning(`Target unit added. Only ${slotsLeft} Lost Listing slot${slotsLeft === 1 ? "" : "s"} remaining.`);
+        } else {
+          toast.success("Target unit added");
+        }
         onOpenChange(false);
         setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
         setShowSugg(false);

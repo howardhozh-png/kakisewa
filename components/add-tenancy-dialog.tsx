@@ -195,7 +195,12 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
           setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 20, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null, nearestExpiryDays: res.nearest_expiry_days ?? null });
         } else if (res.ok) {
           track(ph, "card_added", { type: "tenancy" });
-          reset(); setOpen(false); toast.success("Tenancy added.");
+          reset(); setOpen(false);
+          if (res.low_remaining) {
+            toast.warning(`Tenancy added. Only ${res.remaining} Existing Listing slot${res.remaining === 1 ? "" : "s"} remaining.`);
+          } else {
+            toast.success("Tenancy added.");
+          }
         } else {
           toast.error("Something went wrong. Please try again.");
         }
@@ -211,6 +216,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
     <>
       <PlanCapDialog
         open={!!capBlock}
+        pipeline="existing"
         currentPlan={capBlock?.currentPlan ?? "silver"}
         currentCount={capBlock?.currentCount ?? 0}
         currentCap={capBlock?.currentCap ?? 20}

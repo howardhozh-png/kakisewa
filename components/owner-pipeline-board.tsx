@@ -8,6 +8,8 @@ import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
+import { CAP_WARN_THRESHOLD } from "@/lib/plan-caps";
 import { ConfirmMovedInDialog } from "@/components/confirm-moved-in-dialog";
 import { Megaphone, XCircle, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -74,6 +76,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [commissionLead, setCommissionLead] = useState<{ lead: OwnerLead; tenancyId: string } | null>(null);
   const [confirmedMovedIn, setConfirmedMovedIn] = useState<{ lead: OwnerLead; info: TenantInfo } | null>(null);
   const [competitorRentedLead, setCompetitorRentedLead] = useState<OwnerLead | null>(null);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; remaining?: number; trying?: number } | null>(null);
 
   // Filter state
   const [search, setSearch] = useState("");
@@ -209,7 +212,13 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     const res = await setOwnerLeadStage(id, target);
     if (res.ok) {
       track(ph, "pipeline_card_moved", { from_col: lead.stage, to_col: target, type: "owner_lead" });
+      if (res.low_remaining && res.remaining !== undefined) {
+        toast.warning(`Only ${res.remaining} My Listing slot${res.remaining === 1 ? "" : "s"} remaining.`);
+      }
       router.refresh();
+    } else if (res.reason === "plan_cap_reached") {
+      setLocal((prev) => prev.map((l) => (l.id === id ? lead : l))); // roll back
+      setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 0, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
     } else {
       setLocal(leads);
       toast.error("Could not move card.");
@@ -340,6 +349,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
                     onConfirmMovedIn={(info) => setConfirmedMovedIn({ lead: l, info })}
                     onTenantConfirmed={() => setMatchingLead(l)}
                     onCompetitorRented={() => setCompetitorRentedLead(l)}
+                    onCapReached={(info) => setCapBlock(info)}
                   />
                 ))
               );
@@ -450,6 +460,19 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         lead={competitorRentedLead}
         open={!!competitorRentedLead}
         onOpenChange={(o) => !o && setCompetitorRentedLead(null)}
+      />
+
+      <PlanCapDialog
+        open={!!capBlock}
+        pipeline="my_listing"
+        currentPlan={capBlock?.currentPlan ?? "silver"}
+        currentCount={capBlock?.currentCount ?? 0}
+        currentCap={capBlock?.currentCap ?? 0}
+        upgradeToId={capBlock?.upgradeToId ?? "gold"}
+        upgradeCap={capBlock?.upgradeCap ?? null}
+        remaining={capBlock?.remaining}
+        trying={capBlock?.trying}
+        onClose={() => setCapBlock(null)}
       />
 
     </>
@@ -576,7 +599,8 @@ function CardPreview({ l }: { l: OwnerLead }) {
 }
 
 
-function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void }) {
+type CapBlockInfo = { currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; remaining?: number; trying?: number };
+function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void }) {
   const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
@@ -660,7 +684,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConf
         </div>
       )}
 
-      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} />
+      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} />
     </>
   );
 }
@@ -671,7 +695,7 @@ function fmtDate(iso: string): string {
   return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
 }
 
-function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void }) {
+function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void }) {
   const ph = usePostHog();
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
   const [pressing, setPressing] = useState(false);
@@ -710,12 +734,12 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
         onEdit();
       }}
     >
-      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} />
+      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} />
     </div>
   );
 }
 
-function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void }) {
+function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void }) {
   const [pending, startTransition] = useTransition();
   const ph = usePostHog();
   const router = useRouter();
@@ -729,7 +753,18 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCon
         if (!res.ok) { toast.error(res.message); return; }
         window.open(res.url, "_blank", "noopener,noreferrer");
         track(ph, "whatsapp_sent", { type: "owner", template });
-        if (advanceTo) await setOwnerLeadStage(l.id, advanceTo);
+        if (advanceTo) {
+          const stageRes = await setOwnerLeadStage(l.id, advanceTo);
+          if (!stageRes.ok && stageRes.reason === "plan_cap_reached") {
+            onCapReached({ currentPlan: stageRes.current_plan ?? "silver", currentCount: stageRes.current_count ?? 0, currentCap: stageRes.current_cap ?? 0, upgradeToId: stageRes.upgrade_to ?? "gold", upgradeCap: stageRes.upgrade_cap ?? null });
+            router.refresh();
+            toast.success("Message sent. Card stays in Potential Listing — My Listing is full.");
+            return;
+          }
+          if (stageRes.ok && stageRes.low_remaining && stageRes.remaining !== undefined) {
+            toast.warning(`Only ${stageRes.remaining} My Listing slot${stageRes.remaining === 1 ? "" : "s"} remaining.`);
+          }
+        }
         router.refresh();
         toast.success("Message ready in WhatsApp");
       });
@@ -740,7 +775,14 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCon
     const count = l.outreach_count ?? 0;
 
     async function moveToListed() {
-      await setOwnerLeadStage(l.id, "listed");
+      const res = await setOwnerLeadStage(l.id, "listed");
+      if (!res.ok && res.reason === "plan_cap_reached") {
+        onCapReached({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 0, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
+        return;
+      }
+      if (res.ok && res.low_remaining && res.remaining !== undefined) {
+        toast.warning(`Only ${res.remaining} My Listing slot${res.remaining === 1 ? "" : "s"} remaining.`);
+      }
       router.refresh();
       toast.success("Moved to Listed!");
     }

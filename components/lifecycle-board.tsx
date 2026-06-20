@@ -20,6 +20,7 @@ import { OwnerLeavingDialog } from "@/components/owner-leaving-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FilterSelect } from "@/components/filter-select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
 import { DateInput } from "@/components/ui/date-input";
 
@@ -73,6 +74,9 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [ownerLeavingTenancy, setOwnerLeavingTenancy] = useState<Tenancy | null>(null);
   const [lostTenancy, setLostTenancy] = useState<Tenancy | null>(null);
   const [pendingMove, setPendingMove] = useState<{ t: Tenancy; target: LifecycleStage } | null>(null);
+  const UPGRADE_FROM: Record<string, { id: string; cap: number | null }> = {
+    silver: { id: "gold", cap: 80 }, gold: { id: "platinum", cap: 200 }, platinum: { id: "elite", cap: null }, elite: { id: "elite", cap: null },
+  };
   const [capBlocked, setCapBlocked] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
@@ -475,54 +479,16 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       )}
 
       {/* Plan contract cap dialog */}
-      {capBlocked && (() => {
-        const NEXT_TIER: Record<string, { name: string; cap: number | null; price: number }> = {
-          silver:   { name: "Gold",     cap: 80,   price: 119 },
-          gold:     { name: "Platinum", cap: 200,  price: 179 },
-          platinum: { name: "Elite",    cap: null, price: 299 },
-        };
-        const next = NEXT_TIER[plan] ?? { name: "Elite", cap: null, price: 299 };
-        const TIER_NAMES: Record<string, string> = { silver: "Silver", gold: "Gold", platinum: "Platinum", elite: "Elite" };
-        return (
-          <Dialog open onOpenChange={(v) => { if (!v) setCapBlocked(false); }}>
-            <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
-                    <ShieldAlert className="w-5 h-5" style={{ color: "#DC2626" }} />
-                  </div>
-                  <div>
-                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Contract limit reached</p>
-                    <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>
-                      {TIER_NAMES[plan] ?? plan} plan · {activeCardCount}/{planCap} cards
-                    </p>
-                  </div>
-                </div>
-                <p className="text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-                  You&apos;ve reached your {planCap}-contract limit. You&apos;re managing a growing portfolio
-                  — upgrade to {next.name} for {next.cap !== null ? `up to ${next.cap} contracts` : "unlimited contracts"}.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCapBlocked(false)}
-                    className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold"
-                    style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
-                  >
-                    Got it
-                  </button>
-                  <a
-                    href="/subscription"
-                    className="flex-1 py-2.5 rounded-xl text-[13px] font-bold text-center"
-                    style={{ background: "var(--kk-ink)", color: "#fff" }}
-                  >
-                    Upgrade to {next.name}
-                  </a>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      })()}
+      <PlanCapDialog
+        open={capBlocked}
+        pipeline="existing"
+        currentPlan={plan}
+        currentCount={activeCardCount}
+        currentCap={isFinite(planCap) ? planCap : 0}
+        upgradeToId={UPGRADE_FROM[plan]?.id ?? "elite"}
+        upgradeCap={UPGRADE_FROM[plan]?.cap ?? null}
+        onClose={() => setCapBlocked(false)}
+      />
 
       {/* Drag-to-column confirmation */}
       {pendingMove && (

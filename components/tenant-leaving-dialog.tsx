@@ -3,12 +3,16 @@
 import { useState, useTransition } from "react";
 import { usePostHog } from "posthog-js/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { Tenancy } from "@/lib/types";
 import { moveTenantLeaving } from "@/lib/actions";
 import { RefreshCw, Loader2, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { DateInput } from "@/components/ui/date-input";
 import { track } from "@/lib/analytics";
+import { CAP_WARN_THRESHOLD } from "@/lib/plan-caps";
+
+type CapBlock = { currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null };
 
 interface Props {
   t: Tenancy;
@@ -21,6 +25,7 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
   const ph = usePostHog();
   const [rent, setRent] = useState(String(t.renewal_proposed_rent ?? t.amount));
   const [availableFrom, setAvailableFrom] = useState(t.renewal_proposed_start ?? t.contract_end ?? "");
+  const [capBlock, setCapBlock] = useState<CapBlock | null>(null);
 
   function confirm() {
     const expectedRent = parseFloat(rent) || t.amount;
@@ -31,8 +36,20 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
       });
       if (res.ok) {
         track(ph, "renewal_actioned", { action: "leaving", party: "tenant", tenancy_id: t.id });
-        toast.success("New listing created in Make New Money.");
-        onClose(); // board-level onClose handles router.refresh()
+        if (res.low_remaining) {
+          toast.warning(`Only ${res.remaining} My Listing slot${res.remaining === 1 ? "" : "s"} remaining.`);
+        } else {
+          toast.success("New listing created in My Listing.");
+        }
+        onClose();
+      } else if (res.reason === "plan_cap_reached") {
+        setCapBlock({
+          currentPlan: res.current_plan!,
+          currentCount: res.current_count!,
+          currentCap: res.current_cap!,
+          upgradeToId: res.upgrade_to!,
+          upgradeCap: res.upgrade_cap ?? null,
+        });
       } else {
         toast.error(res.message);
       }
@@ -40,6 +57,19 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
   }
 
   return (
+    <>
+    {capBlock && (
+      <PlanCapDialog
+        open={!!capBlock}
+        pipeline="my_listing"
+        currentPlan={capBlock.currentPlan}
+        currentCount={capBlock.currentCount}
+        currentCap={capBlock.currentCap}
+        upgradeToId={capBlock.upgradeToId}
+        upgradeCap={capBlock.upgradeCap}
+        onClose={() => setCapBlock(null)}
+      />
+    )}
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6">
         <div className="flex flex-col gap-5">
@@ -100,5 +130,6 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

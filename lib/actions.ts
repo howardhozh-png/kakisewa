@@ -13,7 +13,7 @@ function invalidateCache() {
   revalidateTag("kk-supports");
 }
 import { format } from "date-fns";
-import { checkRenewalCardCap, checkLeadCap, checkTargetCap } from "./plan-caps";
+import { checkRenewalCardCap, checkLeadCap, checkTargetCap, CAP_WARN_THRESHOLD } from "./plan-caps";
 import {
   createTenancy,
   updateTenancy,
@@ -89,7 +89,7 @@ function parseFlexDate(s: string): string | null {
 
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
+export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null; remaining?: number; low_remaining?: boolean }> {
   let ownerLeadId = (formData.get("owner_lead_id") as string) || null;
   const propertyNameFromForm = (formData.get("property_name") as string)?.trim() || null;
   const ownerNameFromForm    = (formData.get("owner_name") as string)?.trim() || "";
@@ -199,7 +199,9 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   revalidatePath("/existing-listing");
   revalidatePath("/directory");
   revalidatePath("/");
-  return { ok: true, id: newTenancy.id };
+  const capAfter = await checkRenewalCardCap();
+  const remaining = capAfter.allowed ? capAfter.remaining : 0;
+  return { ok: true, id: newTenancy.id, remaining, low_remaining: remaining <= CAP_WARN_THRESHOLD };
 }
 
 export async function removeTenancy(id: string) {
@@ -835,25 +837,50 @@ export async function collectRenewalCommission(
 export async function moveTenantLeaving(
   tenancyId: string,
   data: { expectedRent: number; availableFrom: string | null }
-): Promise<{ ok: boolean; message: string }> {
+): Promise<{ ok: boolean; message: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; remaining?: number; low_remaining?: boolean }> {
   try {
     const t = await getTenancy(tenancyId);
     if (!t) return { ok: false, message: "Tenancy not found." };
 
+    // Block the entire action if the agent is at their My Listing cap
     if (t.owner_lead_id) {
+      const capCheck = await checkLeadCap();
+      if (!capCheck.allowed) {
+        return {
+          ok: false,
+          message: "My Listing cap reached.",
+          reason: "plan_cap_reached",
+          current_plan: capCheck.current_plan,
+          current_count: capCheck.current_count,
+          current_cap: capCheck.current_cap,
+          upgrade_to: capCheck.upgrade_to,
+          upgrade_cap: capCheck.upgrade_cap,
+          remaining: 0,
+        };
+      }
       await updateOwnerLead(t.owner_lead_id, {
         stage: "listed",
         expected_rent: data.expectedRent,
         available_from: data.availableFrom,
       });
+      await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "tenant_leaving" });
+      invalidateCache();
+      revalidatePath("/existing-listing");
+      revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+      revalidatePath("/");
+      return {
+        ok: true,
+        message: "Listing reopened and tenancy archived.",
+        remaining: capCheck.remaining - 1,
+        low_remaining: (capCheck.remaining - 1) <= CAP_WARN_THRESHOLD,
+      };
     }
 
     await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "tenant_leaving" });
     invalidateCache();
     revalidatePath("/existing-listing");
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
     revalidatePath("/");
-    return { ok: true, message: "Listing reopened and tenancy archived." };
+    return { ok: true, message: "Tenancy archived." };
   } catch (e) {
     console.error(e);
     return { ok: false, message: "Could not process tenant leaving." };
@@ -1000,14 +1027,71 @@ export async function peekOwnerIntakeUrl(ownerLeadId: string): Promise<{ ok: boo
   return { ok: true, url: `${siteUrl}/o/${token}` };
 }
 
-export async function setOwnerLeadStage(id: string, stage: import("./types").OwnerLead["stage"]) {
+export async function setOwnerLeadStage(id: string, stage: import("./types").OwnerLead["stage"]): Promise<{ ok: boolean; message?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; remaining?: number; low_remaining?: boolean }> {
+  if (stage === "listed") {
+    const capCheck = await checkLeadCap();
+    if (!capCheck.allowed) {
+      return {
+        ok: false,
+        reason: "plan_cap_reached",
+        current_plan: capCheck.current_plan,
+        current_count: capCheck.current_count,
+        current_cap: capCheck.current_cap,
+        upgrade_to: capCheck.upgrade_to,
+        upgrade_cap: capCheck.upgrade_cap,
+        remaining: 0,
+      };
+    }
+    await updateOwnerLead(id, { stage });
+    invalidateCache();
+    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    const remaining = capCheck.remaining - 1;
+    return { ok: true, message: "Moved to Listed.", remaining, low_remaining: remaining <= CAP_WARN_THRESHOLD };
+  }
   await updateOwnerLead(id, { stage });
   invalidateCache();
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
   return { ok: true, message: `Moved to ${stage.replace("_", " ")}.` };
 }
 
-export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./types").OwnerLead["stage"]) {
+export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./types").OwnerLead["stage"]): Promise<{ ok: boolean; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; remaining?: number; low_remaining?: boolean; trying?: number }> {
+  if (stage === "listed") {
+    const capCheck = await checkLeadCap();
+    if (!capCheck.allowed) {
+      return {
+        ok: false,
+        reason: "plan_cap_reached",
+        current_plan: capCheck.current_plan,
+        current_count: capCheck.current_count,
+        current_cap: capCheck.current_cap,
+        upgrade_to: capCheck.upgrade_to,
+        upgrade_cap: capCheck.upgrade_cap,
+        remaining: 0,
+        trying: ids.length,
+      };
+    }
+    if (capCheck.remaining < ids.length) {
+      // Partial batch would exceed cap — block all (all-or-nothing)
+      return {
+        ok: false,
+        reason: "plan_cap_reached",
+        current_plan: capCheck.current_plan,
+        current_count: capCheck.current_count,
+        current_cap: capCheck.current_cap,
+        upgrade_to: capCheck.upgrade_to,
+        upgrade_cap: capCheck.upgrade_cap,
+        remaining: capCheck.remaining,
+        trying: ids.length,
+      };
+    }
+    for (const id of ids) {
+      await updateOwnerLead(id, { stage });
+    }
+    invalidateCache();
+    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    const remaining = capCheck.remaining - ids.length;
+    return { ok: true, remaining, low_remaining: remaining <= CAP_WARN_THRESHOLD };
+  }
   for (const id of ids) {
     await updateOwnerLead(id, { stage });
   }
@@ -1276,28 +1360,10 @@ export async function updateOwnerLeadDetails(
   data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
 ) {
   await updateOwnerLead(id, data);
-
-  // Auto-promote: if the lead is in "wants_rent" and now has all listing
-  // essentials (rent + beds + baths), advance it to "listed" automatically.
-  const all = await getOwnerLeads();
-  const lead = all.find((l) => l.id === id);
-  let promoted = false;
-  if (lead && lead.stage === "wants_rent"
-      && lead.expected_rent != null
-      && lead.bedrooms != null
-      && lead.bathrooms != null) {
-    await updateOwnerLead(id, { stage: "listed" });
-    promoted = true;
-  }
-
   invalidateCache();
   revalidatePath("/potential-listing"); revalidatePath("/my-listing");
   revalidatePath("/matching");
-  return {
-    ok: true,
-    promoted,
-    message: promoted ? "Details captured — moved to Listed." : "Details updated.",
-  };
+  return { ok: true, promoted: false, message: "Details updated." };
 }
 
 export async function sendOwnerOutreach(
@@ -1714,11 +1780,11 @@ export async function addOwnerLeadAction(data: {
   available_from?: string | null;
   listing_purpose?: "rent" | "sell" | "both" | null;
   stage?: "imported" | "listed";
-  skipLeadCap?: boolean;
-}): Promise<{ ok: boolean; id?: string; message?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; nearest_expiry_days?: number | null }> {
+}): Promise<{ ok: boolean; id?: string; message?: string; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null; remaining?: number; low_remaining?: boolean }> {
   const { createOwnerLead } = await import("@/lib/db");
   try {
-    if (!data.skipLeadCap) {
+    // Potential listing is unlimited — only gate when creating directly in "listed" (Add Listing on My Listing page)
+    if (data.stage === "listed") {
       const capCheck = await checkLeadCap();
       if (!capCheck.allowed) {
         return {
@@ -1729,7 +1795,7 @@ export async function addOwnerLeadAction(data: {
           current_cap: capCheck.current_cap,
           upgrade_to: capCheck.upgrade_to,
           upgrade_cap: capCheck.upgrade_cap,
-          nearest_expiry_days: null,
+          remaining: 0,
         };
       }
     }
@@ -1756,6 +1822,12 @@ export async function addOwnerLeadAction(data: {
     });
     invalidateCache();
     revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    if (data.stage === "listed") {
+      const capCheck = await checkLeadCap();
+      if (capCheck.allowed) {
+        return { ok: true, id: lead.id, remaining: capCheck.remaining, low_remaining: capCheck.remaining <= CAP_WARN_THRESHOLD };
+      }
+    }
     return { ok: true, id: lead.id };
   } catch (e) {
     return { ok: false, message: String(e) };
