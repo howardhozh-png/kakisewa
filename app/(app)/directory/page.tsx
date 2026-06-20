@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { TourSpotlight } from "@/components/tour-spotlight";
 import type { TenantProfile } from "@/lib/types";
 import { getListedOwnerLeads, getCompetitorLeads, getAllTenantProfiles, getTenantsForOwnerLeads, getAllActiveTenants, getLifecycleTenancies, getPropertySupports, getAgentProfile } from "@/lib/db";
 import { effectivePlan, planAllows } from "@/lib/plan-caps";
@@ -137,6 +138,25 @@ export default async function NetworkPage({ searchParams }: Props) {
         {view === "tenants" && <AddTenantButton />}
         {view === "contacts" && <AddSupportButton />}
       </header>
+
+      <Suspense fallback={null}>
+        <TourSpotlight
+          step="tenants"
+          stepNumber={4}
+          targetId="tour-add-tenant"
+          title="Save your first tenant profile"
+          body="Tap the highlighted button to add a tenant. Keep all their details in one place for renewals and handovers."
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <TourSpotlight
+          step="supports"
+          stepNumber={5}
+          targetId="tour-add-contact"
+          title="Save a support contact"
+          body="Tap the highlighted button to add your go-to plumber, electrician, or handyman for quick access."
+        />
+      </Suspense>
 
       <Suspense fallback={null}>
         <NetworkSubNav

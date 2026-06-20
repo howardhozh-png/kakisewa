@@ -65,6 +65,7 @@ export function AddSupportButton() {
   return (
     <>
       <button
+        id="tour-add-contact"
         onClick={() => setOpen(true)}
         className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"
         style={{ fontSize: "13px", fontWeight: 500, background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}

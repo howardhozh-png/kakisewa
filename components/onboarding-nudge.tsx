@@ -64,7 +64,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
       label: "Add your first tenant profile",
       description: "Keep tenant details in one place for smooth handovers and renewals.",
       cta: "Add tenant",
-      href: "/tenants",
+      href: "/directory?view=tenants",
       matchPaths: ["/tenants", "/tenant-profile", "/directory"],
       done: hasTenants,
     },
@@ -73,8 +73,8 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
       label: "Save a support contact",
       description: "Add your go-to plumber, electrician, or handyman for quick access.",
       cta: "Go to network",
-      href: "/network",
-      matchPaths: ["/network", "/database", "/supports"],
+      href: "/directory?view=contacts",
+      matchPaths: ["/network", "/database", "/supports", "/directory"],
       done: hasSupports,
     },
   ];
@@ -94,10 +94,11 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
     currentPageMission !== null &&
     currentPageMission.matchPaths.some((p) => pathname.startsWith(p));
 
-  // Auto-open modal on fresh load whenever steps are incomplete
+  // Auto-open modal on fresh load, but not while a tour spotlight is active
   useEffect(() => {
     if (!isNewAgent) return;
     if (allDone) return;
+    if (typeof window !== "undefined" && window.location.search.includes("tour=")) return;
     setModalOpen(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -109,9 +110,10 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
 
   if (!isNewAgent) return null;
 
-  function go(href: string) {
+  function go(m: Mission) {
     setModalOpen(false);
-    router.push(href);
+    const sep = m.href.includes("?") ? "&" : "?";
+    router.push(m.href + sep + "tour=" + m.id);
   }
 
   return (
@@ -307,7 +309,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
 
                     {isActive && (
                       <button
-                        onClick={() => go(m.href)}
+                        onClick={() => go(m)}
                         className="shrink-0 flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-80 mt-0.5"
                         style={{ background: "var(--kk-ink)", color: "#fff", whiteSpace: "nowrap", border: "none", cursor: "pointer" }}
                       >

@@ -114,6 +114,7 @@ export function AddTenantButton() {
     <>
       <div className="relative" ref={dropdownRef}>
         <button
+          id="tour-add-tenant"
           type="button"
           onClick={() => setDropdownOpen((v) => !v)}
           disabled={pending}

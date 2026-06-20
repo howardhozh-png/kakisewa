@@ -194,6 +194,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
       {/* Trigger */}
       <div className="relative" ref={dropRef}>
         <button
+          id="tour-add-lead"
           type="button"
           onClick={() => setDropdownOpen((v) => !v)}
           className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"

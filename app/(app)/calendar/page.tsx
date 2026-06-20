@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { getCalendarEventsForWeek } from "@/lib/db";
 import { CalendarView } from "@/components/calendar-view";
+import { TourSpotlight } from "@/components/tour-spotlight";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,15 @@ export default async function CalendarPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-10">
       <CalendarView events={events} weekStartISO={toISO(weekStart)} />
+      <Suspense fallback={null}>
+        <TourSpotlight
+          step="calendar"
+          stepNumber={3}
+          targetId="tour-add-event"
+          title="Schedule your first appointment"
+          body="Tap the highlighted button to add a viewing, meeting, or follow-up to your calendar."
+        />
+      </Suspense>
     </div>
   );
 }

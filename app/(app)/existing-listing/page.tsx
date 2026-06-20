@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getLifecycleTenancies, getOwnerLeads, getAgentProfile, getSoftDeletedTenancies } from "@/lib/db";
 import { effectivePlan } from "@/lib/plan-caps";
 import { LifecycleBoard } from "@/components/lifecycle-board";
@@ -5,6 +6,7 @@ import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
 import { UploadTenancyCsvDialog } from "@/components/upload-tenancy-csv-dialog";
 import { PageHelpButton } from "@/components/page-help-button";
 import { DeletedTenanciesPanel } from "@/components/deleted-tenancies-panel";
+import { TourSpotlight } from "@/components/tour-spotlight";
 import type { Tenancy, LifecycleStage } from "@/lib/types";
 
 const DEMO_PHOTOS = [
@@ -84,6 +86,16 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
       </header>
 
       <DeletedTenanciesPanel tenancies={deletedTenancies} />
+
+      <Suspense fallback={null}>
+        <TourSpotlight
+          step="contracts"
+          stepNumber={2}
+          targetId="tour-add-tenancy"
+          title="Track your first managed property"
+          body="Tap the highlighted button to add a tenancy. kakisewa alerts you 60 days before any contract expires."
+        />
+      </Suspense>
 
       {lifecycle.length === 0 ? (() => {
         const demo: Tenancy[] = [

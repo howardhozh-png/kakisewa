@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kakisewa — Onboarding Tour</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:#1D1D1F; --ink-mute:#6E6E73; --ink-soft:#8E8E93; --ink-faint:#AEAEB2;
+  --bg:#FBFBFD; --surface:#FFFFFF; --surface-2:#F5F5F7; --line:#E5E5EA;
+  --blue:#0071E3; --blue-soft:#EBF4FF;
+  --green:#34C759; --green-soft:#E8F8ED; --green-ink:#1F8B4C;
+  --amber:#FF9500; --amber-soft:#FFF4E5; --amber-ink:#8B5E00;
+  --red:#FF3B30;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--ink);
+  overflow: hidden;
+}
+
+/* ── App chrome ── */
+.shell { display: flex; height: 100vh; }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--line);
+  padding: 20px 12px; display: flex; flex-direction: column; gap: 2px;
+}
+.sidebar-logo {
+  font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--ink);
+  padding: 4px 12px 18px; border-bottom: 1px solid var(--line); margin-bottom: 8px;
+}
+.nav-item {
+  padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  color: var(--ink-mute); cursor: pointer; transition: all .12s;
+}
+.nav-item.active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+.main {
+  flex: 1; padding: 36px 36px 80px; overflow-y: auto; overflow-x: hidden;
+  position: relative;
+}
+
+/* ── Page sections ── */
+.page { display: none; animation: page-in .35s cubic-bezier(.22,1,.36,1) both; }
+.page.visible { display: block; }
+@keyframes page-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.page-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
+}
+.page-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: #2563EB; }
+.page-sub { font-size: 13px; color: var(--ink-mute); margin-top: 6px; line-height: 1.5; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+  border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; transition: all .15s; font-family: inherit; white-space: nowrap;
+}
+.btn-blue { background: var(--blue); color: #fff; box-shadow: 0 1px 4px rgba(0,113,227,.3); }
+.btn-blue:hover { background: #005ABE; }
+.btn-white {
+  background: #fff; color: var(--ink); border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.btn-ghost { background: transparent; color: var(--ink-mute); border: 1px solid var(--line); }
+
+/* ── Demo cards ── */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }
+.card {
+  background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+  padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.card-icon {
+  width: 38px; height: 38px; border-radius: 10px; font-size: 16px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.card-name { font-size: 13px; font-weight: 700; }
+.card-sub  { font-size: 11px; color: var(--ink-mute); margin-top: 1px; }
+.card-amount { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.card-amount small { font-size: 12px; font-weight: 500; color: var(--ink-mute); }
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
+}
+.badge-amber { background: var(--amber-soft); color: var(--amber-ink); }
+.badge-green { background: var(--green-soft); color: var(--green-ink); }
+.blurred { filter: blur(1.5px) saturate(.5); opacity: .75; pointer-events: none; user-select: none; }
+
+/* Calendar mock */
+.cal-grid {
+  background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+  overflow: hidden;
+}
+.cal-head { display: grid; grid-template-columns: repeat(7,1fr); border-bottom: 1px solid var(--line); }
+.cal-cell {
+  padding: 10px 12px; font-size: 11px; font-weight: 700; color: var(--ink-mute);
+  border-right: 1px solid var(--line);
+}
+.cal-cell:last-child { border-right: none; }
+.cal-cell.today { color: var(--blue); background: rgba(0,113,227,.03); }
+.cal-day-num {
+  font-size: 16px; display: block; margin-top: 2px; font-weight: 600; color: var(--ink);
+}
+.cal-day-num.today-dot {
+  background: var(--blue); color: #fff; border-radius: 50%;
+  width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+}
+.cal-body { display: grid; grid-template-columns: repeat(7,1fr); min-height: 160px; }
+.cal-col { border-right: 1px solid var(--line); padding: 8px; min-height: 160px; }
+.cal-col:last-child { border-right: none; }
+.cal-event {
+  border-radius: 6px; padding: 4px 7px; font-size: 11px; font-weight: 600; margin-bottom: 4px;
+  border-left: 3px solid; line-height: 1.3;
+}
+
+/* ── Floating Setup FAB ── */
+.setup-fab {
+  position: fixed; bottom: 20px; left: 20px; z-index: 50;
+  display: flex; align-items: center; gap: 7px; padding: 9px 16px;
+  border-radius: 99px; background: var(--ink); color: #fff;
+  font-size: 12px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.22);
+  cursor: pointer; border: none; font-family: inherit; transition: transform .12s;
+}
+.setup-fab:hover { transform: scale(1.04); }
+.fab-badge {
+  background: var(--blue); color: #fff; border-radius: 99px; font-size: 10px;
+  font-weight: 800; padding: 1px 6px; min-width: 18px; text-align: center;
+}
+
+/* ── Onboarding modal ── */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal {
+  background: var(--surface); border-radius: 20px; padding: 24px;
+  width: 100%; max-width: 360px; box-shadow: 0 24px 60px rgba(0,0,0,.22);
+  animation: modal-in .3s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes modal-in {
+  from { opacity:0; transform:translateY(12px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.modal-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--blue); margin-bottom:4px; }
+.modal-title { font-size:18px; font-weight:800; color:var(--ink); margin-bottom:4px; }
+.modal-sub { font-size:13px; color:var(--ink-mute); margin-bottom:18px; line-height:1.5; }
+.prog-bar { height:4px; background:var(--line); border-radius:99px; margin-bottom:18px; overflow:hidden; }
+.prog-fill { height:100%; background:var(--green); border-radius:99px; transition:width .4s ease; }
+.step-row {
+  display:flex; align-items:flex-start; gap:10px; padding:10px 12px;
+  border-radius:12px; border:1px solid transparent; margin-bottom:6px;
+}
+.step-row.done  { background:rgba(52,199,89,.06); border-color:rgba(52,199,89,.18); }
+.step-row.active { background:var(--surface-2); border-color:var(--line); }
+.step-row.locked { opacity:.4; }
+.step-circle {
+  width:28px; height:28px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; margin-top:1px;
+}
+.step-circle.done   { background:var(--green); color:#fff; }
+.step-circle.active { background:var(--ink); color:#fff; }
+.step-circle.locked { background:var(--line); color:var(--ink-mute); }
+.step-label { font-size:13px; font-weight:600; color:var(--ink); flex:1; line-height:1.35; }
+.step-label.done { color:var(--ink-mute); text-decoration:line-through; }
+.step-desc { font-size:12px; color:var(--ink-mute); margin-top:3px; line-height:1.5; }
+.step-cta {
+  flex-shrink:0; display:flex; align-items:center; gap:5px;
+  background:var(--ink); color:#fff; padding:5px 12px; border-radius:99px;
+  font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:inherit;
+  white-space:nowrap; margin-top:1px; transition:opacity .15s;
+}
+.step-cta:hover { opacity:.8; }
+.modal-hint { text-align:center; font-size:11px; color:var(--ink-faint); margin-top:14px; }
+
+/* ── Tour spotlight ── */
+.tour-ring {
+  position: fixed; border-radius: 12px; pointer-events: none; z-index: 601;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.52);
+  border: 2.5px solid rgba(0,113,227,.9);
+  animation: ring-pulse 2s ease-in-out infinite;
+  transition: all .25s cubic-bezier(.22,1,.36,1);
+}
+@keyframes ring-pulse {
+  0%,100% { box-shadow: 0 0 0 9999px rgba(0,0,0,.52), 0 0 0 4px rgba(0,113,227,.18); }
+  50%      { box-shadow: 0 0 0 9999px rgba(0,0,0,.52), 0 0 0 9px rgba(0,113,227,.08); }
+}
+.tour-tip {
+  position: fixed; z-index: 602; background: var(--surface); border-radius: 16px;
+  padding: 18px 20px; box-shadow: 0 16px 48px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.08);
+  border: 1px solid var(--line); width: 268px; pointer-events: auto;
+  animation: tip-in .3s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes tip-in {
+  from { opacity:0; transform:translateY(8px) scale(.96); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.tip-step  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--blue); margin-bottom:7px; }
+.tip-title { font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px; line-height:1.3; }
+.tip-body  { font-size:12px; color:var(--ink-mute); line-height:1.6; margin-bottom:14px; }
+.tip-footer { display:flex; align-items:center; justify-content:space-between; }
+.tip-skip { font-size:11px; color:var(--ink-faint); background:none; border:none; cursor:pointer; font-family:inherit; padding:0; }
+.tip-skip:hover { color:var(--ink-mute); }
+.tip-hint { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-mute); }
+.tip-dot {
+  width:8px; height:8px; border-radius:50%; flex-shrink:0;
+  background:rgba(0,113,227,.25); box-shadow:0 0 0 3px rgba(0,113,227,.35);
+  animation:dot-pulse 1.6s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+  0%,100% { box-shadow:0 0 0 3px rgba(0,113,227,.35); }
+  50%      { box-shadow:0 0 0 6px rgba(0,113,227,.1); }
+}
+.tour-arrow { position:absolute; width:14px; height:8px; }
+
+/* ── Step-complete flash ── */
+.step-flash {
+  position: fixed; inset: 0; z-index: 700; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.flash-pill {
+  background: var(--green); color: #fff; border-radius: 99px;
+  padding: 12px 24px; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 32px rgba(52,199,89,.35);
+  animation: flash-in-out 1.6s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes flash-in-out {
+  0%   { opacity:0; transform:translateY(16px) scale(.9); }
+  20%  { opacity:1; transform:translateY(0) scale(1); }
+  75%  { opacity:1; transform:translateY(0) scale(1); }
+  100% { opacity:0; transform:translateY(-10px) scale(.95); }
+}
+
+/* ── Add form dialog ── */
+.dialog-bg {
+  position: fixed; inset: 0; z-index: 800; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.dialog {
+  background: var(--surface); border-radius: 24px;
+  padding: 28px 24px 32px; width: 100%; max-width: 480px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,.22);
+  animation: sheet-up .32s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes sheet-up {
+  from { transform:translateY(20px) scale(.97); opacity:0; }
+  to   { transform:translateY(0)    scale(1);   opacity:1; }
+}
+.dialog-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px; }
+.dialog h2 { font-size:19px; font-weight:800; color:var(--ink); }
+.dialog p  { font-size:12px; color:var(--ink-mute); margin-top:3px; }
+.close-btn {
+  width:30px; height:30px; border-radius:50%; background:var(--surface-2);
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:14px; color:var(--ink-mute); flex-shrink:0; font-family:inherit;
+}
+.field-lbl { font-size:11px; font-weight:600; color:var(--ink-soft); margin-bottom:5px; display:block; }
+.field-inp {
+  width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+  background:var(--surface-2); font-size:13px; color:var(--ink); outline:none;
+  font-family:inherit; margin-bottom:14px; transition:border-color .12s;
+}
+.field-inp:focus { border-color:var(--blue); }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.dialog-footer { display:flex; gap:8px; margin-top:10px; }
+.btn-save {
+  flex:1; padding:13px; background:var(--blue); color:#fff; border-radius:12px;
+  font-size:14px; font-weight:700; border:none; cursor:pointer; font-family:inherit;
+  transition:background .12s;
+}
+.btn-save:hover { background:#005ABE; }
+.btn-cancel {
+  padding:13px 20px; background:var(--surface-2); color:var(--ink-mute);
+  border-radius:12px; font-size:14px; font-weight:600; border:none;
+  cursor:pointer; font-family:inherit;
+}
+
+/* ── All-done screen ── */
+.done-screen {
+  position: fixed; inset: 0; z-index: 900;
+  background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px; text-align: center;
+  animation: page-in .5s cubic-bezier(.22,1,.36,1) both;
+}
+.done-icon {
+  width: 80px; height: 80px; border-radius: 24px; background: var(--green-soft);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+  animation: done-bounce .6s cubic-bezier(.22,1,.36,1) .3s both;
+}
+@keyframes done-bounce {
+  from { transform:scale(.7); opacity:0; }
+  to   { transform:scale(1);  opacity:1; }
+}
+.done-screen h1 {
+  font-family:'DM Serif Display',serif; font-size:32px; color:var(--ink); margin-bottom:10px;
+}
+.done-screen p { font-size:15px; color:var(--ink-mute); max-width:340px; line-height:1.6; margin-bottom:32px; }
+.done-steps {
+  display: flex; gap: 8px; margin-bottom: 36px; justify-content: center; flex-wrap: wrap;
+}
+.done-step {
+  background: var(--green-soft); color: var(--green-ink); border-radius: 99px;
+  padding: 6px 14px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  animation: step-pop .4s cubic-bezier(.22,1,.36,1) both;
+}
+.done-step:nth-child(1) { animation-delay:.4s; }
+.done-step:nth-child(2) { animation-delay:.55s; }
+.done-step:nth-child(3) { animation-delay:.7s; }
+.done-step:nth-child(4) { animation-delay:.85s; }
+.done-step:nth-child(5) { animation-delay:1s; }
+@keyframes step-pop {
+  from { opacity:0; transform:scale(.8) translateY(8px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.btn-restart {
+  padding: 14px 32px; border-radius: 12px; background: var(--ink); color: #fff;
+  font-size: 15px; font-weight: 700; border: none; cursor: pointer; font-family: inherit;
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════════════ -->
+<div class="shell">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">kakisewa</div>
+    <div class="nav-item" id="nav-home">Home</div>
+    <div class="nav-item" id="nav-leads">Potential listing</div>
+    <div class="nav-item" id="nav-contracts">Existing listing</div>
+    <div class="nav-item" id="nav-calendar">Calendar</div>
+    <div class="nav-item" id="nav-tenants">Tenants</div>
+    <div class="nav-item" id="nav-network">Network</div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main" id="main">
+
+    <!-- Page 1: Potential listing -->
+    <div class="page" id="page-leads">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Potential listing</div>
+          <div class="page-sub">Track every owner from first message to listing in one place.</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px">?</button>
+          <button class="btn btn-white" id="btn-add-lead" onclick="openDialog('lead')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            Add to outreach
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <button class="btn btn-white" style="font-size:12px;padding:7px 14px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Upload file
+          </button>
+        </div>
+      </div>
+      <div class="cards-grid blurred">
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#EBF4FF">🏢</div><div><div class="card-name">Tan Sri Abdullah</div><div class="card-sub">D LATOUR, A-25-13</div></div></div><div style="font-size:12px;color:var(--ink-mute)">Added 3 days ago &bull; No reply yet</div></div>
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#F5F5FF">🏙️</div><div><div class="card-name">Lim Mei Ling</div><div class="card-sub">Citizen Residence, B-28</div></div></div><div style="font-size:12px;color:var(--ink-mute)">Added 7 days ago &bull; No reply yet</div></div>
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#FFF4E5">🌿</div><div><div class="card-name">Rajesh Kumar</div><div class="card-sub">Waltz, N-35-2</div></div></div><div style="font-size:12px;color:var(--ink-mute)">Added 12 days ago &bull; Replied</div></div>
+      </div>
+    </div>
+
+    <!-- Page 2: Existing listing -->
+    <div class="page" id="page-contracts">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Existing listing</div>
+          <div class="page-sub">Track every tenancy. Get alerted 60 days before any contract expires.</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px">?</button>
+          <button class="btn btn-white" id="btn-add-tenancy" onclick="openDialog('tenancy')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Add tenancy
+          </button>
+          <button class="btn btn-white" style="font-size:12px;padding:7px 14px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Upload file
+          </button>
+        </div>
+      </div>
+      <div class="cards-grid blurred">
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#EBF4FF">🏢</div><div><div class="card-name">Ahmad Fauzi Hassan</div><div class="card-sub">D LATOUR · A-25-13</div></div></div><div class="card-amount">RM 2,400 <small>/mo</small></div><span class="badge badge-amber">Expiring in 5 days</span></div>
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#F5F5FF">🏙️</div><div><div class="card-name">Tan Mei Lin</div><div class="card-sub">Citizen Residence · B-28</div></div></div><div class="card-amount">RM 1,900 <small>/mo</small></div><span class="badge badge-amber">Expiring in 12 days</span></div>
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#E8F8ED">🌿</div><div><div class="card-name">Rajesh Kumar</div><div class="card-sub">Waltz · N-35-2</div></div></div><div class="card-amount">RM 2,200 <small>/mo</small></div><span class="badge badge-green">Active</span></div>
+      </div>
+    </div>
+
+    <!-- Page 3: Calendar -->
+    <div class="page" id="page-calendar">
+      <div class="page-header" style="margin-bottom:20px">
+        <div class="page-title">My Calendar</div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" style="padding:7px 14px;font-size:13px">Today</button>
+          <button class="btn btn-ghost" style="padding:7px 10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <span style="font-size:13px;font-weight:600;min-width:140px;text-align:center;color:var(--ink)">16 – 22 Jun 2026</span>
+          <button class="btn btn-ghost" style="padding:7px 10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+          <button class="btn btn-blue" id="btn-add-event" onclick="openDialog('event')" style="padding:7px 16px;font-size:13px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4"/></svg>
+            Add event
+          </button>
+        </div>
+      </div>
+      <div class="cal-grid blurred">
+        <div class="cal-head">
+          <div class="cal-cell">MON<span class="cal-day-num">16</span></div>
+          <div class="cal-cell">TUE<span class="cal-day-num">17</span></div>
+          <div class="cal-cell today">WED<span class="cal-day-num today-dot">18</span></div>
+          <div class="cal-cell">THU<span class="cal-day-num">19</span></div>
+          <div class="cal-cell">FRI<span class="cal-day-num">20</span></div>
+          <div class="cal-cell">SAT<span class="cal-day-num">21</span></div>
+          <div class="cal-cell">SUN<span class="cal-day-num">22</span></div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-col"></div>
+          <div class="cal-col"><div class="cal-event" style="background:rgba(0,113,227,.08);border-color:var(--blue);color:var(--blue)">10:00 AM Viewing – D LATOUR</div></div>
+          <div class="cal-col"></div>
+          <div class="cal-col"></div>
+          <div class="cal-col"><div class="cal-event" style="background:rgba(52,199,89,.08);border-color:var(--green);color:var(--green-ink)">2:00 PM Contract signing</div></div>
+          <div class="cal-col"></div>
+          <div class="cal-col"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 4: Tenants -->
+    <div class="page" id="page-tenants">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tenants</div>
+          <div class="page-sub">Keep tenant details in one place for smooth handovers and renewals.</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px">?</button>
+          <button class="btn btn-blue" id="btn-add-tenant" onclick="openDialog('tenant')" style="font-size:13px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+            Add tenant
+          </button>
+        </div>
+      </div>
+      <div class="cards-grid blurred">
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#EBF4FF">👤</div><div><div class="card-name">Mohd Azri Rosli</div><div class="card-sub">+60 12-345 6789</div></div></div><div style="font-size:12px;color:var(--ink-mute)">D LATOUR A-5-10 &bull; RM 2,800/mo</div></div>
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#F5F5FF">👤</div><div><div class="card-name">Cheong Jia Qi</div><div class="card-sub">+60 16-234 5678</div></div></div><div style="font-size:12px;color:var(--ink-mute)">Greenfield A-02-08 &bull; RM 2,050/mo</div></div>
+      </div>
+    </div>
+
+    <!-- Page 5: Network -->
+    <div class="page" id="page-network">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Network</div>
+          <div class="page-sub">Your go-to plumbers, electricians, and handymen — one tap away.</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" style="font-size:12px;padding:7px 12px">?</button>
+          <button class="btn btn-blue" id="btn-add-contact" onclick="openDialog('contact')" style="font-size:13px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+            Add contact
+          </button>
+        </div>
+      </div>
+      <div class="cards-grid blurred">
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#FFF4E5">🔧</div><div><div class="card-name">Ah Chong Plumbing</div><div class="card-sub">Plumber</div></div></div><div style="font-size:12px;color:var(--ink-mute)">+60 11-234 5678 &bull; Selangor</div></div>
+        <div class="card"><div class="card-head"><div class="card-icon" style="background:#E8F8ED">⚡</div><div><div class="card-name">Kumar Electric</div><div class="card-sub">Electrician</div></div></div><div style="font-size:12px;color:var(--ink-mute)">+60 12-888 9999 &bull; KL</div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ── Floating Setup FAB ── -->
+<button class="setup-fab" id="setup-fab" onclick="openModal()">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>
+  Setup
+  <span class="fab-badge" id="fab-badge">0/5</span>
+</button>
+
+<!-- ── Onboarding modal (accessible from FAB) ── -->
+<div id="modal-bg" style="display:none" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- ── Tour elements ── -->
+<div class="tour-ring" id="tour-ring" style="display:none"></div>
+<div class="tour-tip"  id="tour-tip"  style="display:none">
+  <div class="tip-step"  id="tip-step"></div>
+  <div class="tip-title" id="tip-title"></div>
+  <div class="tip-body"  id="tip-body"></div>
+  <div class="tip-footer">
+    <button class="tip-skip" onclick="skipStep()">Skip this step</button>
+    <div class="tip-hint"><div class="tip-dot"></div><span id="tip-hint-text">Tap the button above</span></div>
+  </div>
+  <svg class="tour-arrow" id="tour-arrow" viewBox="0 0 14 8"><path id="arrow-path" fill="white"/></svg>
+</div>
+
+<!-- ── Add form dialog ── -->
+<div id="dialog-bg" style="display:none" class="dialog-bg">
+  <div class="dialog" id="dialog-box">
+    <div class="dialog-header">
+      <div>
+        <h2 id="dlg-title"></h2>
+        <p id="dlg-sub"></p>
+      </div>
+      <button class="close-btn" onclick="closeDialog()">✕</button>
+    </div>
+    <div id="dlg-fields"></div>
+    <div class="dialog-footer">
+      <button class="btn-cancel" onclick="closeDialog()">Cancel</button>
+      <button class="btn-save" id="dlg-save" onclick="saveStep()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Step-complete flash ── -->
+<div class="step-flash" id="step-flash" style="display:none">
+  <div class="flash-pill" id="flash-pill">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+    <span id="flash-text"></span>
+  </div>
+</div>
+
+<!-- ── All done screen ── -->
+<div class="done-screen" id="done-screen" style="display:none">
+  <div class="done-icon">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1F8B4C" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+  </div>
+  <h1>You're all set up!</h1>
+  <p>You've completed all 5 steps. kakisewa is now working for you — tracking leads, contracts, appointments, tenants, and your support network.</p>
+  <div class="done-steps">
+    <div class="done-step"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Owner lead added</div>
+    <div class="done-step"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Tenancy tracked</div>
+    <div class="done-step"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Appointment set</div>
+    <div class="done-step"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Tenant profile saved</div>
+    <div class="done-step"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Support contact saved</div>
+  </div>
+  <button class="btn-restart" onclick="restart()">Restart tour</button>
+</div>
+
+<!-- ════════════════════════════════════════════════ SCRIPT ════════ -->
+<script>
+const STEPS = [
+  {
+    id: 'leads',
+    page: 'page-leads',
+    nav: 'nav-leads',
+    btnId: 'btn-add-lead',
+    stepLabel: 'Step 1 of 5',
+    title: 'Add your first owner lead',
+    body: 'Tap the highlighted button to add an owner you want to approach for rental management.',
+    hintText: 'Tap the button to start',
+    flashText: 'Owner lead added!',
+    modalLabel: 'Upload your first potential listing',
+    modalDesc: 'Add the owners you want to approach for rental management.',
+    modalCta: 'Upload now',
+    dialogType: 'lead',
+  },
+  {
+    id: 'contracts',
+    page: 'page-contracts',
+    nav: 'nav-contracts',
+    btnId: 'btn-add-tenancy',
+    stepLabel: 'Step 2 of 5',
+    title: 'Track your first managed property',
+    body: 'Tap the highlighted button to add a tenancy. kakisewa alerts you 60 days before any contract expires.',
+    hintText: 'Tap the button above',
+    flashText: 'Tenancy saved!',
+    modalLabel: 'Add an existing tenancy contract',
+    modalDesc: 'Track the properties you already manage so renewals never slip.',
+    modalCta: 'Add contract',
+    dialogType: 'tenancy',
+  },
+  {
+    id: 'calendar',
+    page: 'page-calendar',
+    nav: 'nav-calendar',
+    btnId: 'btn-add-event',
+    stepLabel: 'Step 3 of 5',
+    title: 'Schedule your first appointment',
+    body: 'Tap the highlighted button to add a viewing, meeting, or follow-up to your calendar.',
+    hintText: 'Tap the button above',
+    flashText: 'Appointment added!',
+    modalLabel: 'Add a calendar appointment',
+    modalDesc: 'Schedule a viewing, meeting, or follow-up to stay on top of your pipeline.',
+    modalCta: 'Open calendar',
+    dialogType: 'event',
+  },
+  {
+    id: 'tenants',
+    page: 'page-tenants',
+    nav: 'nav-tenants',
+    btnId: 'btn-add-tenant',
+    stepLabel: 'Step 4 of 5',
+    title: 'Save your first tenant profile',
+    body: 'Tap the highlighted button to add a tenant. Keep all their details in one place for renewals and handovers.',
+    hintText: 'Tap the button above',
+    flashText: 'Tenant profile saved!',
+    modalLabel: 'Add your first tenant profile',
+    modalDesc: 'Keep tenant details in one place for smooth handovers and renewals.',
+    modalCta: 'Add tenant',
+    dialogType: 'tenant',
+  },
+  {
+    id: 'supports',
+    page: 'page-network',
+    nav: 'nav-network',
+    btnId: 'btn-add-contact',
+    stepLabel: 'Step 5 of 5',
+    title: 'Save a support contact',
+    body: 'Tap the highlighted button to add your go-to plumber, electrician, or handyman.',
+    hintText: 'Tap the button above',
+    flashText: 'Contact saved!',
+    modalLabel: 'Save a support contact',
+    modalDesc: 'Add your go-to plumber, electrician, or handyman for quick access.',
+    modalCta: 'Go to network',
+    dialogType: 'contact',
+  },
+];
+
+const DIALOGS = {
+  lead: {
+    title: 'Add owner lead',
+    sub: 'Enter details of the owner you want to approach',
+    fields: `
+      <label class="field-lbl">Property name *</label>
+      <input class="field-inp" placeholder="e.g. D LATOUR, Citizen Residence">
+      <div class="row2">
+        <div><label class="field-lbl">Unit</label><input class="field-inp" placeholder="A-12-5"></div>
+        <div><label class="field-lbl">Owner name</label><input class="field-inp" placeholder="Ahmad Fauzi"></div>
+      </div>
+    `,
+    saveLabel: 'Add lead',
+  },
+  tenancy: {
+    title: 'Add tenancy',
+    sub: 'Enter the details of the property you manage',
+    fields: `
+      <label class="field-lbl">Property name *</label>
+      <input class="field-inp" placeholder="e.g. D LATOUR">
+      <div class="row2">
+        <div><label class="field-lbl">Unit</label><input class="field-inp" placeholder="A-25-13"></div>
+        <div><label class="field-lbl">Monthly rent (RM) *</label><input class="field-inp" type="number" placeholder="2500"></div>
+      </div>
+      <label class="field-lbl">Contract end date *</label>
+      <input class="field-inp" type="text" placeholder="31 Dec 2026">
+    `,
+    saveLabel: 'Save tenancy',
+  },
+  event: {
+    title: 'Add calendar event',
+    sub: 'Schedule a viewing, meeting, or follow-up',
+    fields: `
+      <label class="field-lbl">Event title *</label>
+      <input class="field-inp" placeholder="e.g. Viewing — D LATOUR A-25">
+      <div class="row2">
+        <div><label class="field-lbl">Date *</label><input class="field-inp" type="text" placeholder="19 Jun 2026"></div>
+        <div><label class="field-lbl">Time</label><input class="field-inp" placeholder="10:00 AM"></div>
+      </div>
+    `,
+    saveLabel: 'Add event',
+  },
+  tenant: {
+    title: 'Add tenant profile',
+    sub: 'Keep tenant details for renewals and handovers',
+    fields: `
+      <label class="field-lbl">Full name *</label>
+      <input class="field-inp" placeholder="e.g. Ahmad Fauzi Hassan">
+      <div class="row2">
+        <div><label class="field-lbl">Phone *</label><input class="field-inp" placeholder="+60 12-345 6789"></div>
+        <div><label class="field-lbl">IC / Passport</label><input class="field-inp" placeholder="980101-14-1234"></div>
+      </div>
+    `,
+    saveLabel: 'Save tenant',
+  },
+  contact: {
+    title: 'Add support contact',
+    sub: 'Your go-to contractor for quick access on property issues',
+    fields: `
+      <label class="field-lbl">Name *</label>
+      <input class="field-inp" placeholder="e.g. Ah Chong Plumbing">
+      <div class="row2">
+        <div><label class="field-lbl">Trade *</label><input class="field-inp" placeholder="Plumber"></div>
+        <div><label class="field-lbl">Phone *</label><input class="field-inp" placeholder="+60 11-234 5678"></div>
+      </div>
+    `,
+    saveLabel: 'Save contact',
+  },
+};
+
+// ── State ──
+let currentStep = 0;
+let doneSteps = [];
+let tourActive = false;
+let tourClickListener = null;
+
+// ── Init ──
+window.addEventListener('load', () => {
+  showPage(STEPS[0].page, STEPS[0].nav);
+  setTimeout(() => openModal(), 400);
+});
+
+// ── Page switching ──
+function showPage(pageId, navId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(pageId).classList.add('visible');
+  document.getElementById(navId).classList.add('active');
+  document.getElementById('main').scrollTop = 0;
+}
+
+// ── Modal ──
+function renderModal() {
+  const done = doneSteps.length;
+  const total = STEPS.length;
+  const prog = (done / total * 100).toFixed(0);
+
+  let rows = STEPS.map((s, i) => {
+    const isDone = doneSteps.includes(i);
+    const isActive = i === currentStep && !isDone;
+    const isLocked = !isDone && i > currentStep;
+    const circleClass = isDone ? 'done' : isActive ? 'active' : 'locked';
+    const labelClass = isDone ? 'done' : '';
+    const rowClass = isDone ? 'done' : isActive ? 'active' : 'locked';
+    const circleContent = isDone
+      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`
+      : isLocked
+      ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`
+      : (i + 1);
+
+    const cta = isActive
+      ? `<button class="step-cta" onclick="closeModal();setTimeout(()=>startTour(${i}),300)">${s.modalCta}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>`
+      : '';
+
+    return `
+      <div class="step-row ${rowClass}">
+        <div class="step-circle ${circleClass}">${circleContent}</div>
+        <div style="flex:1;min-width:0">
+          <div class="step-label ${labelClass}">${s.modalLabel}</div>
+          ${isActive ? `<div class="step-desc">${s.modalDesc}</div>` : ''}
+        </div>
+        ${cta}
+      </div>`;
+  }).join('');
+
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-label">Getting started</div>
+    <div class="modal-title">${done === total ? "You're all set up!" : "Your setup guide"}</div>
+    <div class="modal-sub">${done === total ? "All 5 steps done. kakisewa is working for you." : `Step ${done + 1} of ${total} — complete each step to get the most out of kakisewa.`}</div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${prog}%"></div></div>
+    ${rows}
+    ${done < total ? `<div class="modal-hint">Complete each step, then tap the checklist button to return</div>` : ''}
+  `;
+  document.getElementById('fab-badge').textContent = `${done}/${total}`;
+}
+
+function openModal() {
+  renderModal();
+  document.getElementById('modal-bg').style.display = 'flex';
+  hideTour();
+}
+function closeModal() {
+  document.getElementById('modal-bg').style.display = 'none';
+}
+
+// ── Tour ──
+function startTour(stepIdx) {
+  currentStep = stepIdx;
+  const s = STEPS[stepIdx];
+  showPage(s.page, s.nav);
+  setTimeout(() => positionTour(stepIdx), 180);
+}
+
+function positionTour(stepIdx) {
+  const s = STEPS[stepIdx];
+  const btn = document.getElementById(s.btnId);
+  if (!btn) return;
+
+  const rect = btn.getBoundingClientRect();
+  const ring = document.getElementById('tour-ring');
+  const tip  = document.getElementById('tour-tip');
+
+  const GAP = 7;
+  Object.assign(ring.style, {
+    display: 'block',
+    top:    (rect.top  - GAP) + 'px',
+    left:   (rect.left - GAP) + 'px',
+    width:  (rect.width  + GAP*2) + 'px',
+    height: (rect.height + GAP*2) + 'px',
+  });
+
+  // Content
+  document.getElementById('tip-step').textContent  = s.stepLabel;
+  document.getElementById('tip-title').textContent = s.title;
+  document.getElementById('tip-body').textContent  = s.body;
+  document.getElementById('tip-hint-text').textContent = s.hintText;
+
+  // Position tooltip
+  const TIP_W = 268, TIP_H = 200;
+  let tipLeft = rect.left - GAP;
+  if (tipLeft + TIP_W > window.innerWidth - 12) tipLeft = window.innerWidth - TIP_W - 12;
+  if (tipLeft < 12) tipLeft = 12;
+
+  const belowTop = rect.bottom + GAP + 14;
+  const aboveTop = rect.top - GAP - TIP_H - 14;
+  const tipBelow = belowTop + TIP_H < window.innerHeight - 20;
+  const tipTop   = tipBelow ? belowTop : aboveTop;
+
+  Object.assign(tip.style, {
+    display: 'block',
+    top:  tipTop  + 'px',
+    left: tipLeft + 'px',
+  });
+  tip.style.animation = 'none';
+  tip.offsetHeight;
+  tip.style.animation = '';
+
+  // Arrow
+  const arrow = document.getElementById('tour-arrow');
+  const arrowLeft = Math.max(12, Math.min(rect.left + rect.width/2 - tipLeft - 7, TIP_W - 26));
+  if (tipBelow) {
+    Object.assign(arrow.style, { top:'-7px', bottom:'', left: arrowLeft+'px' });
+    document.getElementById('arrow-path').setAttribute('d','M7 0L14 8H0L7 0Z');
+  } else {
+    Object.assign(arrow.style, { bottom:'-7px', top:'', left: arrowLeft+'px' });
+    document.getElementById('arrow-path').setAttribute('d','M7 8L0 0H14L7 8Z');
+  }
+
+  tourActive = true;
+
+  // Listen for click on the target button
+  if (tourClickListener) btn.removeEventListener('click', tourClickListener);
+  tourClickListener = () => { /* dialog opens — tour ring stays until save */ };
+  btn.addEventListener('click', tourClickListener, { once: true });
+}
+
+function hideTour() {
+  document.getElementById('tour-ring').style.display = 'none';
+  document.getElementById('tour-tip').style.display  = 'none';
+  tourActive = false;
+}
+
+function skipStep() {
+  hideTour();
+  // mark as skipped and move on
+  advanceAfterSave(true);
+}
+
+// ── Dialog ──
+let currentDialogType = null;
+
+function openDialog(type) {
+  hideTour(); // ring disappears the moment they click
+  currentDialogType = type;
+  const cfg = DIALOGS[type];
+  document.getElementById('dlg-title').textContent = cfg.title;
+  document.getElementById('dlg-sub').textContent   = cfg.sub;
+  document.getElementById('dlg-fields').innerHTML  = cfg.fields;
+  document.getElementById('dlg-save').textContent  = cfg.saveLabel;
+  document.getElementById('dialog-bg').style.display = 'flex';
+}
+
+function closeDialog() {
+  document.getElementById('dialog-bg').style.display = 'none';
+  // If they cancel without saving, re-show the tour spotlight
+  if (tourActive === false && currentStep < STEPS.length) {
+    setTimeout(() => positionTour(currentStep), 200);
+  }
+}
+
+function saveStep() {
+  document.getElementById('dialog-bg').style.display = 'none';
+  advanceAfterSave(false);
+}
+
+function advanceAfterSave(skipped) {
+  const s = STEPS[currentStep];
+  doneSteps.push(currentStep);
+
+  // Flash celebration
+  if (!skipped) {
+    const flash = document.getElementById('step-flash');
+    document.getElementById('flash-text').textContent = s.flashText;
+    flash.style.display = 'flex';
+    setTimeout(() => { flash.style.display = 'none'; }, 1700);
+  }
+
+  const nextStep = currentStep + 1;
+
+  if (nextStep >= STEPS.length) {
+    // All done
+    setTimeout(() => showDoneScreen(), skipped ? 300 : 1800);
+    return;
+  }
+
+  // Auto-navigate to next page after flash finishes
+  const delay = skipped ? 300 : 1800;
+  setTimeout(() => {
+    currentStep = nextStep;
+    const next = STEPS[nextStep];
+    showPage(next.page, next.nav);
+    setTimeout(() => positionTour(nextStep), 220);
+  }, delay);
+}
+
+function showDoneScreen() {
+  document.getElementById('done-screen').style.display = 'flex';
+  document.getElementById('setup-fab').style.display = 'none';
+}
+
+// ── All-done restart ──
+function restart() {
+  currentStep = 0;
+  doneSteps = [];
+  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('setup-fab').style.display = 'flex';
+  showPage(STEPS[0].page, STEPS[0].nav);
+  setTimeout(() => openModal(), 400);
+}
+
+// Reposition on resize
+window.addEventListener('resize', () => {
+  if (tourActive) positionTour(currentStep);
+});
+</script>
+</body>
+</html>

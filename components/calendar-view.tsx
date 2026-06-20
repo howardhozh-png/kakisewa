@@ -112,6 +112,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
             <ChevronRight className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
           </button>
           <button
+            id="tour-add-event"
             onClick={() => { setAddDate(today); setAddOpen(true); }}
             className="kk-pill flex items-center gap-2"
             style={{ background: "var(--kk-blue)", color: "#fff", padding: "7px 14px", fontSize: 13 }}

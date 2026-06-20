@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { getOwnerLeads, getSoftDeletedOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds } from "@/lib/db";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { AddOutreachButton } from "@/components/add-outreach-button";
 import { OutreachTable } from "@/components/outreach-table";
 import { OutreachEmptyState } from "@/components/outreach-empty-state";
 import { PageHelpButton } from "@/components/page-help-button";
+import { TourSpotlight } from "@/components/tour-spotlight";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,16 @@ export default async function MessageOwnersPage() {
       ? <OutreachEmptyState />
       : <OutreachTable leads={activeLeads} deletedLeads={deletedLeads} />;
   })()}
+
+      <Suspense fallback={null}>
+        <TourSpotlight
+          step="leads"
+          stepNumber={1}
+          targetId="tour-add-lead"
+          title="Add your first owner lead"
+          body="Tap the highlighted button to add an owner you want to approach for rental management."
+        />
+      </Suspense>
     </div>
   );
 }
