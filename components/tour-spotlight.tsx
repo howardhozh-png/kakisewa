@@ -141,22 +141,14 @@ export function TourSpotlight({ step, stepNumber, targetId, title, body }: Props
           {body}
         </p>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <button
-            onClick={dismiss}
-            style={{ fontSize: 11, color: "var(--kk-ink-faint)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-          >
-            Skip
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--kk-ink-mute)" }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: "50%", display: "inline-block", flexShrink: 0,
-              background: "rgba(0,113,227,0.25)",
-              boxShadow: "0 0 0 3px rgba(0,113,227,0.35)",
-              animation: "kk-pulse-subtle 1.6s ease-in-out infinite",
-            }} />
-            Tap the button above
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--kk-ink-mute)" }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: "50%", display: "inline-block", flexShrink: 0,
+            background: "rgba(0,113,227,0.25)",
+            boxShadow: "0 0 0 3px rgba(0,113,227,0.35)",
+            animation: "kk-pulse-subtle 1.6s ease-in-out infinite",
+          }} />
+          Tap the button above to continue
         </div>
       </div>
     </>,
