@@ -108,12 +108,11 @@ export function UploadOwnerCsvDialog() {
         const rawRows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: "" });
         ({ headers, rows } = parseSpreadsheetRows(rawRows));
       } else {
-        const parsed = Papa.parse<Record<string, string>>(e.target?.result as string, {
-          header: true,
+        const rawParsed = Papa.parse<string[]>(e.target?.result as string, {
+          header: false,
           skipEmptyLines: true,
         });
-        headers = parsed.meta.fields ?? [];
-        rows = parsed.data;
+        ({ headers, rows } = parseSpreadsheetRows(rawParsed.data as unknown[][]));
       }
 
       const detected = detectColumns(headers, rows);
@@ -218,7 +217,7 @@ Raj Kumar,60181112222,,,1500,2,1,Walk-in lead
         type="button"
         className="kk-pill kk-pill-white"
         style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}
-        onClick={() => setOpen(true)}
+        onClick={() => { reset(); setOpen(true); }}
       >
         <Upload className="w-3.5 h-3.5" /> Upload file
       </button>

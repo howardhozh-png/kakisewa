@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { X, Check, ListChecks, Lock, ArrowRight } from "lucide-react";
 
@@ -102,6 +102,18 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
     setModalOpen(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-open modal when active step advances (step just completed)
+  const prevActiveStep = useRef(activeStep);
+  useEffect(() => {
+    if (!isNewAgent || allDone) return;
+    if (activeStep > prevActiveStep.current) {
+      const timer = setTimeout(() => setModalOpen(true), 600);
+      prevActiveStep.current = activeStep;
+      return () => clearTimeout(timer);
+    }
+    prevActiveStep.current = activeStep;
+  }, [activeStep, isNewAgent, allDone]);
 
   // Reset banner dismiss when active step changes
   useEffect(() => {
