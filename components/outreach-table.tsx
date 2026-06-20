@@ -1350,14 +1350,14 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                 onClick={selectAllMatching}
                 style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-blue)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
               >
-                Select all {visible.length} matching owners
+                Select all {visible.length} matching properties
               </button>
             </div>
           )}
           {allMatchingSelected && visible.length > PAGE_SIZE && (
             <div style={{ padding: "8px 18px", background: "rgba(0,113,227,0.05)", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 13, color: "var(--kk-blue)", fontWeight: 500 }}>
-                All {visible.length} matching owners selected.
+                All {visible.length} matching properties selected.
               </span>
               <button
                 type="button"
