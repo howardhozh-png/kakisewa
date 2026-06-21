@@ -194,9 +194,12 @@
       box-shadow: 0 2px 8px rgba(255,59,48,0.3);
     }
     .slider-marks {
-      display: flex; justify-content: space-between;
-      font-size: 10px; color: #C7C7CC; margin-top: 8px;
-      padding: 0 13px;
+      position: relative; height: 14px;
+      margin: 8px 13px 0;
+    }
+    .slider-marks span {
+      position: absolute; transform: translateX(-50%);
+      font-size: 10px; color: #C7C7CC;
     }
 
     /* ────────────────────────────────────────────────────────────────
@@ -436,8 +439,7 @@
 ══════════════════════════════════════════════════════════════ -->
 <section class="chapter in" id="ch0">
   <div class="ch-content">
-    <span class="overline r" style="--d:.05s">For rental agents</span>
-    <div class="q1 r" style="--d:.15s">&#8220;I&#8217;m always working hard for new listing, but what about the old listing I worked hard for?&#8221;</div>
+    <div class="q1 r" style="--d:.15s">&#8220;I&#8217;m always working hard for new listing, but what about the <span style="color:#FF3B30">old listing I worked hard for?&#8221;</span></div>
   </div>
   <div class="scroll-nudge">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
@@ -455,7 +457,13 @@
       <div class="slider-contracts-lbl">You manage <span id="slider-contracts">50</span> contracts.</div>
       <input type="range" class="kk-slider" id="kk-slider" min="0" max="300" value="50" step="1">
       <div class="slider-marks">
-        <span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span><span>300</span>
+        <span style="left:0%">0</span>
+        <span style="left:16.67%">50</span>
+        <span style="left:33.33%">100</span>
+        <span style="left:50%">150</span>
+        <span style="left:66.67%">200</span>
+        <span style="left:83.33%">250</span>
+        <span style="left:100%">300</span>
       </div>
     </div>
     <div class="loss-number r" style="--d:.28s" id="counter">RM 75,000</div>
