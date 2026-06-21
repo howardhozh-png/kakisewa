@@ -10,12 +10,10 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html {
-      scroll-snap-type: y mandatory;
-      overflow-y: scroll;
-      overflow-x: hidden;
+    html, body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
     /* ─────────────────────────────────────────────────────────────────
@@ -34,42 +32,33 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(0,0,0,0.07);
-      transition: background 0.5s, border-color 0.5s;
+      transition: background 0.4s, border-color 0.4s;
     }
     .nav.dark {
-      background: rgba(5,17,31,0.85);
-      border-bottom-color: rgba(255,255,255,0.07);
+      background: rgba(5,17,31,0.88);
+      border-bottom-color: rgba(255,255,255,0.06);
     }
 
-    /* Logo — matching Logo component exactly */
     .logo-link {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       text-decoration: none;
       color: #1D1D1F;
-      transition: color 0.5s;
+      transition: color 0.4s;
     }
     .nav.dark .logo-link { color: #fff; }
-
     .logo-mark {
       font-family: 'DM Serif Display', Georgia, serif;
       font-size: 35px;
       line-height: 1;
-      color: currentColor;
       display: inline-block;
     }
-    .logo-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      line-height: 1;
-    }
+    .logo-text { display: flex; flex-direction: column; gap: 2px; line-height: 1; }
     .logo-name {
       font-family: 'DM Serif Display', Georgia, serif;
       font-size: 24px;
       letter-spacing: -0.02em;
-      color: currentColor;
       line-height: 1;
     }
     .logo-kana {
@@ -78,40 +67,26 @@
       font-size: 8px;
       font-weight: 600;
       opacity: 0.45;
-      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
-      color: currentColor;
+      font-family: 'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif;
       letter-spacing: 0;
     }
 
     .nav-actions { display: flex; align-items: center; gap: 6px; }
-
     .btn-ghost {
-      font-size: 13px;
-      font-weight: 500;
-      color: #6E6E73;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 7px 15px;
-      border-radius: 99px;
-      text-decoration: none;
-      transition: color 0.2s, background 0.2s;
+      font-size: 13px; font-weight: 500; color: #6E6E73;
+      background: transparent; border: none; cursor: pointer;
+      padding: 7px 15px; border-radius: 99px;
+      text-decoration: none; transition: color 0.2s, background 0.2s;
     }
     .btn-ghost:hover { color: #1D1D1F; background: #F2F2F7; }
     .nav.dark .btn-ghost { color: rgba(255,255,255,0.5); }
     .nav.dark .btn-ghost:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
     .btn-signup {
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-      background: #1D1D1F;
-      border: none;
-      cursor: pointer;
-      padding: 8px 18px;
-      border-radius: 99px;
-      text-decoration: none;
-      transition: background 0.4s, opacity 0.2s;
+      font-size: 13px; font-weight: 600; color: #fff;
+      background: #1D1D1F; border: none; cursor: pointer;
+      padding: 8px 18px; border-radius: 99px;
+      text-decoration: none; transition: background 0.4s, opacity 0.2s;
     }
     .btn-signup:hover { opacity: 0.82; }
     .nav.dark .btn-signup { background: #fff; color: #1D1D1F; }
@@ -121,22 +96,15 @@
     ───────────────────────────────────────────────────────────────── */
     .pdots {
       position: fixed;
-      right: 24px;
-      top: 50%;
+      right: 24px; top: 50%;
       transform: translateY(-50%);
       z-index: 200;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: flex; flex-direction: column; gap: 10px;
     }
     .pd {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: rgba(29,29,31,0.18);
-      cursor: pointer;
-      border: none;
-      padding: 0;
+      cursor: pointer; border: none; padding: 0;
       transition: background 0.3s, transform 0.3s;
     }
     .pd.active { background: #1D1D1F; transform: scale(1.6); }
@@ -144,254 +112,347 @@
     .pd.on-dark.active { background: #fff; }
 
     /* ─────────────────────────────────────────────────────────────────
-       CHAPTER BASE
+       SCROLL SECTIONS
     ───────────────────────────────────────────────────────────────── */
-    .chapter {
-      height: 100svh;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
+    .scroll-section {
+      height: 200vh;
+      position: relative;
+    }
+    .scroll-section.short { height: 160vh; }
+
+    .sticky-wrap {
+      position: sticky;
+      top: 0;
+      height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 80px 40px 56px;
-      position: relative;
       overflow: hidden;
+      padding: 80px 24px 48px;
     }
-    .ch-inner {
-      width: 100%;
-      max-width: 680px;
-      position: relative;
-      z-index: 2;
+
+    #s0 .sticky-wrap { background: #fff; }
+    #s1 .sticky-wrap { background: #FAFAFA; }
+    #s2 .sticky-wrap { background: #05111F; }
+    #s3 .sticky-wrap { background: #fff; }
+
+    /* dot patterns */
+    #s0 .sticky-wrap::before,
+    #s3 .sticky-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #D1D1D6 1.2px, transparent 1.2px);
+      background-size: 20px 20px;
+      opacity: 0.5;
+      pointer-events: none;
+      mask-image: radial-gradient(ellipse at 50% 50%, transparent 30%, black 75%);
+      -webkit-mask-image: radial-gradient(ellipse at 50% 50%, transparent 30%, black 75%);
+    }
+
+    /* aurora */
+    #s2 .aurora-a, #s2 .aurora-b {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #s2 .aurora-a {
+      width: 70vw; height: 60vh;
+      top: -10%; left: -10%;
+      background: radial-gradient(ellipse, rgba(0,113,227,0.22) 0%, transparent 65%);
+      animation: drift-a 14s ease-in-out infinite alternate;
+    }
+    #s2 .aurora-b {
+      width: 50vw; height: 50vh;
+      bottom: -10%; right: -10%;
+      background: radial-gradient(ellipse, rgba(0,71,160,0.16) 0%, transparent 65%);
+      animation: drift-b 18s ease-in-out infinite alternate;
+    }
+    @keyframes drift-a {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(8%,6%) scale(1.08); }
+    }
+    @keyframes drift-b {
+      from { transform: translate(0,0); }
+      to   { transform: translate(-6%,-8%) scale(0.95); }
     }
 
     /* ─────────────────────────────────────────────────────────────────
-       WORD-BY-WORD & BLOCK REVEAL
+       SECTION HEADER (parallax up)
     ───────────────────────────────────────────────────────────────── */
-    .w {
-      display: inline-block;
-      opacity: 0;
-      transform: translateY(12px);
-      transition-property: opacity, transform;
-      transition-duration: 0.55s, 0.55s;
-      transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
-      transition-delay: var(--d, 0s);
+    .s-header {
+      text-align: center;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+      will-change: transform, opacity;
     }
-    .r {
-      opacity: 0;
-      transform: translateY(16px);
-      transition-property: opacity, transform;
-      transition-duration: 0.6s, 0.6s;
-      transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
-      transition-delay: var(--d, 0s);
-    }
-    .chapter.in .w,
-    .chapter.in .r { opacity: 1; transform: translateY(0); }
-
-    .overline {
+    .s-overline {
       display: block;
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-bottom: 40px;
+      color: #C7C7CC;
+      margin-bottom: 10px;
+    }
+    .s-headline {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+      letter-spacing: -0.025em;
+      line-height: 1.12;
+      color: #1D1D1F;
+    }
+    .s-headline.light { color: #fff; }
+
+    /* ─────────────────────────────────────────────────────────────────
+       TILT CARD
+    ───────────────────────────────────────────────────────────────── */
+    .tilt-stage {
+      perspective: 1400px;
+      perspective-origin: center top;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+    .tilt-card {
+      transform-origin: top center;
+      will-change: transform, box-shadow;
+      border-radius: 24px;
+      position: relative;
     }
 
     /* ═══════════════════════════════════════════════════════════════
-       CHAPTER 1 — RECOGNITION  (white + dot pattern)
+       S0 QUOTE CARD
     ═══════════════════════════════════════════════════════════════ */
-    .c1 { background: #fff; }
-
-    /* SVG dot pattern */
-    .dot-bg {
-      position: absolute;
-      inset: 0;
+    .quote-card {
+      background: #fff;
+      border: 1px solid #E5E5EA;
+      border-radius: 24px;
+      padding: clamp(32px, 5vw, 56px) clamp(28px, 5vw, 56px);
+      max-width: 680px;
       width: 100%;
-      height: 100%;
-      z-index: 1;
-      pointer-events: none;
-      opacity: 0.6;
     }
-    .dot-mask {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      background: radial-gradient(ellipse at 50% 50%, transparent 30%, #fff 75%);
-    }
-
-    .c1 .overline { color: #C7C7CC; }
-
-    .c1-q1 {
+    .q1 {
       font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(2.8rem, 7.5vw, 5.25rem);
-      line-height: 1.08;
+      font-size: clamp(2rem, 5.5vw, 3.75rem);
+      line-height: 1.1;
       letter-spacing: -0.03em;
       color: #1D1D1F;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
-    .c1-q2 {
+    .q2 {
       font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(2.8rem, 7.5vw, 5.25rem);
-      line-height: 1.08;
+      font-size: clamp(2rem, 5.5vw, 3.75rem);
+      line-height: 1.1;
       letter-spacing: -0.03em;
       color: #C7C7CC;
-      margin-bottom: 52px;
+      margin-bottom: 36px;
     }
-    .c1-caption {
-      font-size: 16px;
-      color: #AEAEB2;
-      line-height: 1.7;
-    }
-
-    .scroll-nudge {
-      position: absolute;
-      bottom: 36px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      color: #C7C7CC;
-      animation: nudge 2.4s ease-in-out infinite;
-    }
-    .scroll-nudge span { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; }
-    @keyframes nudge {
-      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
-      50%       { transform: translateX(-50%) translateY(9px); opacity: 1; }
-    }
+    .q-caption { font-size: 15px; color: #AEAEB2; line-height: 1.7; }
 
     /* ═══════════════════════════════════════════════════════════════
-       CHAPTER 2 — THE MATH  (white / near-white)
+       S1 MATH CARD
     ═══════════════════════════════════════════════════════════════ */
-    .c2 { background: #FAFAFA; }
-
-    .c2 .overline { color: #C7C7CC; }
-
-    .c2-setup {
-      font-size: clamp(16px, 2vw, 19px);
-      color: #6E6E73;
-      line-height: 1.6;
-      margin-bottom: 32px;
+    .math-card {
+      background: #fff;
+      border: 1px solid #E5E5EA;
+      border-radius: 24px;
+      padding: clamp(28px, 4vw, 48px) clamp(28px, 5vw, 52px);
+      max-width: 620px;
+      width: 100%;
     }
-
+    .math-setup {
+      font-size: clamp(14px, 1.8vw, 16px);
+      color: #6E6E73;
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
     .loss-number {
       font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(5rem, 14vw, 9.5rem);
+      font-size: clamp(4rem, 11vw, 7.5rem);
       line-height: 1;
-      letter-spacing: -0.035em;
+      letter-spacing: -0.04em;
       color: #FF3B30;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-feature-settings: 'tnum';
     }
-    .loss-sub {
-      font-size: 14px;
-      color: #AEAEB2;
-      margin-bottom: 48px;
-    }
-
-    .scale-table { display: flex; flex-direction: column; gap: 14px; }
+    .loss-sub { font-size: 13px; color: #AEAEB2; margin-bottom: 32px; }
+    .scale-table { display: flex; flex-direction: column; gap: 12px; }
     .scale-row {
       display: grid;
-      grid-template-columns: 120px 1fr 120px;
+      grid-template-columns: 110px 1fr 105px;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
-    .scale-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #C7C7CC;
-    }
-    .bar-track {
-      height: 6px;
-      background: #F2F2F7;
-      border-radius: 99px;
-      overflow: hidden;
-    }
+    .scale-label { font-size: 12px; font-weight: 600; color: #C7C7CC; }
+    .bar-track { height: 5px; background: #F2F2F7; border-radius: 99px; overflow: hidden; }
     .bar-fill {
       height: 100%;
       background: linear-gradient(90deg, #FF6361, #FF3B30);
       border-radius: 99px;
       width: 0;
-      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 1.1s cubic-bezier(0.4,0,0.2,1);
     }
-    .scale-amount {
-      font-size: 14px;
-      font-weight: 700;
-      color: #1D1D1F;
-      text-align: right;
-    }
-    .c2-footnote {
-      font-size: 11px;
-      color: #D1D1D6;
-      margin-top: 22px;
-    }
+    .scale-amount { font-size: 13px; font-weight: 700; color: #1D1D1F; text-align: right; }
+    .math-footnote { font-size: 11px; color: #D1D1D6; margin-top: 18px; }
 
     /* ═══════════════════════════════════════════════════════════════
-       CHAPTER 3 — KAKISEWA  (deep navy + aurora)
+       S2 PHONE CARD
     ═══════════════════════════════════════════════════════════════ */
-    .c3 { background: #05111F; }
-
-    /* Aurora glow layers */
-    .aurora-a, .aurora-b, .aurora-c {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .aurora-a {
-      width: 70vw; height: 60vh;
-      top: -10%; left: -15%;
-      background: radial-gradient(ellipse, rgba(0,113,227,0.22) 0%, transparent 65%);
-      animation: drift-a 14s ease-in-out infinite alternate;
-    }
-    .aurora-b {
-      width: 50vw; height: 50vh;
-      bottom: -10%; right: -10%;
-      background: radial-gradient(ellipse, rgba(0,71,160,0.18) 0%, transparent 65%);
-      animation: drift-b 18s ease-in-out infinite alternate;
-    }
-    .aurora-c {
-      width: 40vw; height: 40vh;
-      top: 30%; right: 15%;
-      background: radial-gradient(ellipse, rgba(52,199,89,0.07) 0%, transparent 65%);
-      animation: drift-c 22s ease-in-out infinite alternate;
-    }
-    @keyframes drift-a {
-      from { transform: translate(0, 0) scale(1); }
-      to   { transform: translate(8%, 6%) scale(1.08); }
-    }
-    @keyframes drift-b {
-      from { transform: translate(0, 0) scale(1); }
-      to   { transform: translate(-6%, -8%) scale(0.95); }
-    }
-    @keyframes drift-c {
-      from { transform: translate(0, 0); }
-      to   { transform: translate(-10%, 5%); }
-    }
-
-    .c3-badge {
-      display: inline-flex;
+    .phone-showcase {
+      display: flex;
       align-items: center;
-      gap: 7px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.75);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 99px;
-      margin-bottom: 32px;
+      justify-content: center;
     }
-    .badge-pulse {
-      width: 6px; height: 6px;
-      border-radius: 50%;
+    .phone-frame {
+      width: 256px;
+      height: 516px;
+      border-radius: 38px;
+      background: #1A1A1C;
+      border: 6px solid #2C2C2E;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.04);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .phone-inner {
+      height: 100%;
+      background: #05111F;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-notch {
+      width: 60px; height: 8px;
+      background: #1A1A1C;
+      border-radius: 0 0 10px 10px;
+      margin: 0 auto;
+    }
+    .phone-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 16px 2px;
+      font-size: 9px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+    }
+    .phone-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .phone-logo {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 13px;
+      color: #fff;
+    }
+    .phone-bell {
+      width: 24px; height: 24px;
+      background: rgba(255,59,48,0.18);
+      border: 1px solid rgba(255,59,48,0.25);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #FF6961;
+    }
+    .phone-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 10px 12px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .stat-cell { background: rgba(255,255,255,0.04); padding: 10px 8px; text-align: center; }
+    .stat-val { display: block; font-size: 15px; font-weight: 700; color: #fff; line-height: 1; margin-bottom: 3px; }
+    .stat-lbl { display: block; font-size: 8px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .phone-body { padding: 0 10px; flex: 1; overflow: hidden; }
+    .phone-section-label {
+      font-size: 8px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: rgba(255,255,255,0.28);
+      margin: 8px 4px 6px;
+    }
+    .p-contract {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 11px;
+      margin-bottom: 7px;
+    }
+    .p-contract-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+    .p-owner { font-size: 11px; font-weight: 600; color: #fff; }
+    .p-badge {
+      font-size: 8px; font-weight: 700;
+      padding: 2px 6px; border-radius: 99px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .p-badge.expiring { background: rgba(255,149,0,0.18); color: #FFB340; border: 1px solid rgba(255,149,0,0.25); }
+    .p-badge.active   { background: rgba(52,199,89,0.15);  color: #4CD964; border: 1px solid rgba(52,199,89,0.2); }
+    .p-badge.renew    { background: rgba(0,113,227,0.18);  color: #5BB8FF; border: 1px solid rgba(0,113,227,0.25); }
+    .p-addr { font-size: 9px; color: rgba(255,255,255,0.38); margin-bottom: 5px; line-height: 1.4; }
+    .p-meta { display: flex; justify-content: space-between; }
+    .p-meta span { font-size: 9px; color: rgba(255,255,255,0.45); font-weight: 500; }
+
+    .phone-perf {
+      margin: 6px 10px 10px;
+      background: rgba(0,113,227,0.12);
+      border: 1px solid rgba(0,113,227,0.2);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .perf-label { font-size: 8px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .perf-value { font-size: 17px; font-weight: 700; color: #5BB8FF; letter-spacing: -0.02em; font-family: 'DM Serif Display', Georgia, serif; }
+    .perf-sub   { font-size: 8px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+    /* Feature labels — desktop only */
+    .feat-labels { display: none; }
+    @media (min-width: 860px) {
+      .feat-labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 516px;
+        margin-left: 44px;
+        padding: 30px 0;
+      }
+      .feat-item { display: flex; align-items: center; gap: 12px; }
+      .feat-line { width: 32px; height: 1px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+      .feat-item-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 3px; }
+      .feat-item-desc { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.5; max-width: 180px; }
+    }
+
+    /* Feature list — mobile only */
+    .feat-mobile { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; max-width: 280px; }
+    @media (min-width: 860px) { .feat-mobile { display: none; } }
+    .feat-mobile-item { display: flex; align-items: flex-start; gap: 10px; }
+    .feat-dot { width: 5px; height: 5px; border-radius: 50%; background: #5BB8FF; flex-shrink: 0; margin-top: 5px; }
+    .feat-mobile-text { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+    /* kakisewa badge */
+    .kk-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.7);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 99px;
+      margin-bottom: 10px;
+    }
+    .badge-dot {
+      display: inline-block;
+      width: 6px; height: 6px; border-radius: 50%;
       background: #34C759;
       position: relative;
     }
-    .badge-pulse::after {
+    .badge-dot::after {
       content: '';
       position: absolute;
       inset: -3px;
@@ -402,217 +463,112 @@
     }
     @keyframes pulse-ring {
       0%, 100% { transform: scale(1); opacity: 0.4; }
-      50%       { transform: scale(1.6); opacity: 0; }
-    }
-
-    .c3-headline {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(2.2rem, 5.5vw, 4rem);
-      line-height: 1.1;
-      letter-spacing: -0.025em;
-      color: #fff;
-      margin-bottom: 48px;
-    }
-
-    /* Feature cards */
-    .feat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
-    }
-    .feat-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
-      padding: 22px 20px;
-      transition: background 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
-      cursor: default;
-    }
-    .feat-card:hover {
-      background: rgba(255,255,255,0.09);
-      border-color: rgba(255,255,255,0.18);
-      transform: translateY(-3px);
-    }
-    .feat-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: rgba(0,113,227,0.25);
-      border: 1px solid rgba(0,113,227,0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-      color: #5BB8FF;
-    }
-    .feat-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.9);
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-    .feat-desc {
-      font-size: 12px;
-      color: rgba(255,255,255,0.38);
-      line-height: 1.65;
+      50%       { transform: scale(1.7); opacity: 0; }
     }
 
     /* ═══════════════════════════════════════════════════════════════
-       CHAPTER 4 — CTA  (clean white)
+       S3 CTA CARD
     ═══════════════════════════════════════════════════════════════ */
-    .c4 { background: #fff; }
-    .c4-inner { text-align: center; }
-
-    .c4-headline {
+    .cta-card {
+      background: #fff;
+      border: 1px solid #E5E5EA;
+      border-radius: 24px;
+      padding: clamp(40px, 6vw, 64px) clamp(32px, 5vw, 72px);
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+    .cta-hl {
       font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(2.4rem, 6vw, 4.25rem);
-      line-height: 1.08;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      line-height: 1.1;
       letter-spacing: -0.03em;
       color: #1D1D1F;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
-    .c4-sub {
-      font-size: 17px;
-      color: #AEAEB2;
-      margin-bottom: 52px;
-      line-height: 1.5;
-    }
-
-    /* Shimmer CTA button */
-    .cta-wrap { position: relative; display: inline-block; }
+    .cta-sub { font-size: 16px; color: #AEAEB2; margin-bottom: 44px; line-height: 1.5; }
     .cta-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: #0071E3;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      padding: 17px 40px;
-      border-radius: 99px;
-      text-decoration: none;
-      letter-spacing: -0.01em;
-      position: relative;
-      overflow: hidden;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #0071E3; color: #fff;
+      font-size: 16px; font-weight: 600;
+      padding: 16px 40px; border-radius: 99px;
+      text-decoration: none; letter-spacing: -0.01em;
+      position: relative; overflow: hidden;
       transition: opacity 0.2s;
     }
-    .cta-btn:hover { opacity: 0.9; }
+    .cta-btn:hover { opacity: 0.88; }
     .cta-btn::after {
       content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 60%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
       animation: shimmer 2.8s ease-in-out infinite;
     }
-    @keyframes shimmer {
-      0%   { left: -100%; }
-      60%, 100% { left: 160%; }
-    }
+    @keyframes shimmer { 0% { left: -100%; } 60%, 100% { left: 160%; } }
+    .cta-signin { margin-top: 20px; font-size: 13px; color: #AEAEB2; }
+    .cta-signin a { color: #6E6E73; text-decoration: underline; text-underline-offset: 3px; }
+    .cta-signin a:hover { color: #1D1D1F; }
 
-    .c4-signin {
-      margin-top: 24px;
-      font-size: 13px;
-      color: #AEAEB2;
+    /* scroll nudge */
+    .scroll-nudge {
+      position: absolute;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      color: #C7C7CC;
+      animation: nudge 2.4s ease-in-out infinite;
+      z-index: 3;
     }
-    .c4-signin a {
-      color: #6E6E73;
-      text-decoration: underline;
-      text-underline-offset: 3px;
+    .scroll-nudge span { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; }
+    @keyframes nudge {
+      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+      50%       { transform: translateX(-50%) translateY(8px); opacity: 1; }
     }
-    .c4-signin a:hover { color: #1D1D1F; }
 
     /* ─────────────────────────────────────────────────────────────────
-       POST-SNAP: FAQ + FOOTER
+       FAQ + FOOTER
     ───────────────────────────────────────────────────────────────── */
-    .faq-wrap {
-      background: #FBFBFD;
-      border-top: 1px solid #E5E5EA;
-      padding: 80px 40px 88px;
-    }
+    .faq-wrap { background: #FBFBFD; border-top: 1px solid #E5E5EA; padding: 80px 40px 88px; }
     .faq-inner { max-width: 680px; margin: 0 auto; }
-
     .faq-hl {
       font-family: 'DM Serif Display', Georgia, serif;
       font-size: clamp(1.6rem, 3vw, 2.2rem);
-      letter-spacing: -0.022em;
-      color: #1D1D1F;
-      margin-bottom: 48px;
+      letter-spacing: -0.022em; color: #1D1D1F; margin-bottom: 48px;
     }
-
     .faq-item { border-top: 1px solid #E5E5EA; }
     .faq-item:last-child { border-bottom: 1px solid #E5E5EA; }
     .faq-q {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      padding: 20px 0;
-      cursor: pointer;
-      user-select: none;
-      font-size: 14px;
-      font-weight: 600;
-      color: #1D1D1F;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; padding: 20px 0; cursor: pointer; user-select: none;
+      font-size: 14px; font-weight: 600; color: #1D1D1F;
     }
     .faq-chev { flex-shrink: 0; color: #C7C7CC; transition: transform 0.25s; }
     .faq-item.open .faq-chev { transform: rotate(180deg); }
-    .faq-a {
-      font-size: 13px;
-      color: #6E6E73;
-      line-height: 1.7;
-      padding-bottom: 20px;
-      display: none;
-      max-width: 56ch;
-    }
+    .faq-a { font-size: 13px; color: #6E6E73; line-height: 1.7; padding-bottom: 20px; display: none; max-width: 56ch; }
     .faq-item.open .faq-a { display: block; }
 
     footer {
-      background: #fff;
-      border-top: 1px solid #E5E5EA;
-      padding: 24px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
+      background: #fff; border-top: 1px solid #E5E5EA; padding: 24px 40px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
     }
-    .footer-logo {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: 18px;
-      color: #1D1D1F;
-      letter-spacing: -0.01em;
-    }
+    .footer-logo { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Serif Display', Georgia, serif; font-size: 18px; color: #1D1D1F; }
     .footer-copy { font-size: 12px; color: #AEAEB2; }
     .footer-links { display: flex; gap: 20px; }
     .footer-links a { font-size: 12px; color: #AEAEB2; text-decoration: none; }
     .footer-links a:hover { color: #6E6E73; }
 
-    /* ─────────────────────────────────────────────────────────────────
-       RESPONSIVE
-    ───────────────────────────────────────────────────────────────── */
     @media (max-width: 640px) {
       .pdots { display: none; }
-      .chapter { padding: 76px 22px 48px; }
-      .c1-q1, .c1-q2 { font-size: clamp(2.2rem, 10vw, 3rem); }
-      .feat-grid { grid-template-columns: 1fr; gap: 10px; }
-      .feat-card { padding: 18px 16px; display: flex; gap: 14px; align-items: flex-start; }
-      .feat-icon { flex-shrink: 0; margin-bottom: 0; }
-      .scale-row { grid-template-columns: 90px 1fr 95px; gap: 10px; }
-      .scale-label { font-size: 11px; }
-      .scale-amount { font-size: 12px; }
       .nav { padding: 0 18px; }
-      .logo-name { font-size: 20px; }
       .logo-mark { font-size: 28px; }
+      .logo-name { font-size: 20px; }
       .btn-ghost { padding: 6px 10px; font-size: 12px; }
       .btn-signup { padding: 7px 14px; font-size: 12px; }
+      .sticky-wrap { padding: 72px 18px 44px; }
+      .scale-row { grid-template-columns: 82px 1fr 90px; gap: 10px; }
+      .scale-label { font-size: 11px; }
+      .scale-amount { font-size: 12px; }
       .faq-wrap { padding: 56px 22px 64px; }
       footer { padding: 20px 22px; }
-      .cta-btn { font-size: 15px; padding: 15px 32px; }
     }
   </style>
 </head>
@@ -624,9 +580,7 @@
     <span class="logo-mark">k</span>
     <span class="logo-text">
       <span class="logo-name">kakisewa</span>
-      <span class="logo-kana">
-        <span>カ</span><span>キ</span><span>セ</span><span>ワ</span>
-      </span>
+      <span class="logo-kana"><span>カ</span><span>キ</span><span>セ</span><span>ワ</span></span>
     </span>
   </a>
   <div class="nav-actions">
@@ -636,246 +590,269 @@
 </header>
 
 <!-- PROGRESS DOTS -->
-<nav class="pdots" id="pdots" aria-label="Chapters">
-  <button class="pd active" onclick="goTo(0)"></button>
-  <button class="pd" onclick="goTo(1)"></button>
-  <button class="pd" onclick="goTo(2)"></button>
-  <button class="pd" onclick="goTo(3)"></button>
+<nav class="pdots" id="pdots" aria-label="Sections">
+  <button class="pd active" data-i="0"></button>
+  <button class="pd" data-i="1"></button>
+  <button class="pd" data-i="2"></button>
+  <button class="pd" data-i="3"></button>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     CHAPTER 1 — THE RECOGNITION
-═══════════════════════════════════════════════════════════════════ -->
-<section class="chapter c1 in" id="ch0">
-  <!-- Dot pattern background -->
-  <svg class="dot-bg" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-        <circle cx="1.5" cy="1.5" r="1.5" fill="#D1D1D6"/>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#dots)"/>
-  </svg>
-  <div class="dot-mask"></div>
-
-  <div class="ch-inner">
-    <span class="overline r" style="--d:0.05s">For rental agents</span>
-
-    <div class="c1-q1">
-      <span class="w" style="--d:0.12s">&#8220;I&#8217;m</span>&#32;
-      <span class="w" style="--d:0.2s">always</span>&#32;
-      <span class="w" style="--d:0.28s">working</span>&#32;
-      <span class="w" style="--d:0.36s">hard</span>&#32;
-      <span class="w" style="--d:0.44s">for</span>&#32;
-      <span class="w" style="--d:0.52s">new</span>&#32;
-      <span class="w" style="--d:0.6s">owners.&#8221;</span>
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 0 — RECOGNITION
+═══════════════════════════════════════════════════════════════ -->
+<section class="scroll-section" id="s0">
+  <div class="sticky-wrap">
+    <div class="s-header" id="h0">
+      <span class="s-overline">For rental agents</span>
     </div>
-
-    <div class="c1-q2">
-      <span class="w" style="--d:0.85s">&#8220;But</span>&#32;
-      <span class="w" style="--d:0.93s">what</span>&#32;
-      <span class="w" style="--d:1.01s">happened</span>&#32;
-      <span class="w" style="--d:1.09s">to</span>&#32;
-      <span class="w" style="--d:1.17s">the</span>&#32;
-      <span class="w" style="--d:1.25s">old</span>&#32;
-      <span class="w" style="--d:1.33s">owners</span>&#32;
-      <span class="w" style="--d:1.41s">I</span>&#32;
-      <span class="w" style="--d:1.49s">signed?&#8221;</span>
-    </div>
-
-    <p class="c1-caption r" style="--d:1.8s">
-      The ones you already did the hard work for.<br>
-      Whose contracts quietly slipped by.
-    </p>
-  </div>
-
-  <div class="scroll-nudge">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-    <span>scroll</span>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     CHAPTER 2 — THE MATH
-═══════════════════════════════════════════════════════════════════ -->
-<section class="chapter c2" id="ch1">
-  <div class="ch-inner">
-    <span class="overline r" style="--d:0.05s">The math nobody does</span>
-    <p class="c2-setup r" style="--d:0.2s">
-      Say you have 24 contracts. You lose track of half.<br>
-      That&rsquo;s just 1 missed renewal a month, at RM&nbsp;3,000 each.
-    </p>
-    <div class="loss-number r" style="--d:0.35s" id="counter">RM 0</div>
-    <p class="loss-sub r" style="--d:0.42s">gone in a single year. From just 24 contracts.</p>
-
-    <div class="scale-table r" style="--d:0.6s">
-      <div class="scale-row">
-        <span class="scale-label">50 contracts</span>
-        <div class="bar-track"><div class="bar-fill" data-w="16.7"></div></div>
-        <span class="scale-amount">RM 75,000</span>
-      </div>
-      <div class="scale-row">
-        <span class="scale-label">100 contracts</span>
-        <div class="bar-track"><div class="bar-fill" data-w="33.3"></div></div>
-        <span class="scale-amount">RM 150,000</span>
-      </div>
-      <div class="scale-row">
-        <span class="scale-label">200 contracts</span>
-        <div class="bar-track"><div class="bar-fill" data-w="66.6"></div></div>
-        <span class="scale-amount">RM 300,000</span>
-      </div>
-      <div class="scale-row">
-        <span class="scale-label">300 contracts</span>
-        <div class="bar-track"><div class="bar-fill" data-w="100"></div></div>
-        <span class="scale-amount">RM 450,000</span>
-      </div>
-    </div>
-    <p class="c2-footnote r" style="--d:0.72s">50% untracked renewals &middot; RM 3,000 average commission per renewal</p>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     CHAPTER 3 — KAKISEWA
-═══════════════════════════════════════════════════════════════════ -->
-<section class="chapter c3" id="ch2">
-  <div class="aurora-a"></div>
-  <div class="aurora-b"></div>
-  <div class="aurora-c"></div>
-
-  <div class="ch-inner">
-    <div class="c3-badge r" style="--d:0.05s">
-      <span class="badge-pulse"></span>
-      kakisewa
-    </div>
-
-    <h2 class="c3-headline r" style="--d:0.2s">Never lose an owner again.</h2>
-
-    <div class="feat-grid">
-
-      <div class="feat-card r" style="--d:0.38s">
-        <div class="feat-icon">
-          <!-- Folder / everything in one place -->
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
+    <div class="tilt-stage">
+      <div class="tilt-card" id="c0">
+        <div class="quote-card">
+          <div class="q1">&#8220;I&#8217;m always working hard for new owners.&#8221;</div>
+          <div class="q2">&#8220;But what happened to the old owners I signed?&#8221;</div>
+          <p class="q-caption">The ones you already did the hard work for.<br>Whose contracts quietly slipped by.</p>
         </div>
-        <div class="feat-title">Everything in one place.</div>
-        <div class="feat-desc">Owner, property, notes, photos, contracts. All in one card. Never lose them.</div>
       </div>
-
-      <div class="feat-card r" style="--d:0.52s">
-        <div class="feat-icon">
-          <!-- Bell / notification -->
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </div>
-        <div class="feat-title">No active tracking required.</div>
-        <div class="feat-desc">Get notified when contracts expire, when owners or tenants reply. kakisewa watches.</div>
-      </div>
-
-      <div class="feat-card r" style="--d:0.66s">
-        <div class="feat-icon">
-          <!-- Chart / income snapshot -->
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-        </div>
-        <div class="feat-title">Snapshot on your performance.</div>
-        <div class="feat-desc">See where your income comes from. Understand your pipeline at a glance.</div>
-      </div>
-
+    </div>
+    <div class="scroll-nudge" id="nudge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      <span>scroll</span>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     CHAPTER 4 — CTA
-═══════════════════════════════════════════════════════════════════ -->
-<section class="chapter c4" id="ch3">
-  <!-- Subtle dot background matching ch1 -->
-  <svg class="dot-bg" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="dots2" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-        <circle cx="1.5" cy="1.5" r="1.5" fill="#D1D1D6"/>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#dots2)"/>
-  </svg>
-  <div class="dot-mask"></div>
-
-  <div class="ch-inner c4-inner">
-    <h2 class="c4-headline r" style="--d:0.1s">
-      Your first recovered renewal<br>pays for the whole year.
-    </h2>
-    <p class="c4-sub r" style="--d:0.28s">2 months free. No credit card required.</p>
-
-    <div class="r" style="--d:0.44s">
-      <div class="cta-wrap">
-        <a href="/sign-up" class="cta-btn">
-          Start free trial
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — THE MATH
+═══════════════════════════════════════════════════════════════ -->
+<section class="scroll-section" id="s1">
+  <div class="sticky-wrap">
+    <div class="s-header" id="h1">
+      <span class="s-overline">The math nobody does</span>
+    </div>
+    <div class="tilt-stage">
+      <div class="tilt-card" id="c1">
+        <div class="math-card">
+          <p class="math-setup">
+            Say you have 24 contracts. You lose track of half.<br>
+            That&rsquo;s 1 missed renewal a month, at RM&nbsp;3,000 each.
+          </p>
+          <div class="loss-number" id="counter">RM 0</div>
+          <p class="loss-sub">gone in a single year. From just 24 contracts.</p>
+          <div class="scale-table">
+            <div class="scale-row">
+              <span class="scale-label">50 contracts</span>
+              <div class="bar-track"><div class="bar-fill" data-w="16.7"></div></div>
+              <span class="scale-amount">RM 75,000</span>
+            </div>
+            <div class="scale-row">
+              <span class="scale-label">100 contracts</span>
+              <div class="bar-track"><div class="bar-fill" data-w="33.3"></div></div>
+              <span class="scale-amount">RM 150,000</span>
+            </div>
+            <div class="scale-row">
+              <span class="scale-label">200 contracts</span>
+              <div class="bar-track"><div class="bar-fill" data-w="66.6"></div></div>
+              <span class="scale-amount">RM 300,000</span>
+            </div>
+            <div class="scale-row">
+              <span class="scale-label">300 contracts</span>
+              <div class="bar-track"><div class="bar-fill" data-w="100"></div></div>
+              <span class="scale-amount">RM 450,000</span>
+            </div>
+          </div>
+          <p class="math-footnote">50% untracked renewals &middot; RM 3,000 average commission</p>
+        </div>
       </div>
     </div>
-
-    <p class="c4-signin r" style="--d:0.58s">
-      Already have an account? <a href="/sign-in">Sign in</a>
-    </p>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     FAQ
-═══════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — KAKISEWA PHONE
+═══════════════════════════════════════════════════════════════ -->
+<section class="scroll-section" id="s2">
+  <div class="sticky-wrap">
+    <div class="aurora-a"></div>
+    <div class="aurora-b"></div>
+
+    <div class="s-header" id="h2">
+      <div class="kk-badge"><span class="badge-dot"></span>&#8202;kakisewa</div>
+      <div class="s-headline light">Never lose an owner again.</div>
+    </div>
+
+    <div class="tilt-stage">
+      <div class="tilt-card" id="c2">
+        <div class="phone-showcase">
+          <!-- Phone -->
+          <div class="phone-frame">
+            <div class="phone-inner">
+              <div class="phone-notch"></div>
+              <div class="phone-status">
+                <span>9:41</span>
+                <span style="letter-spacing:2px">&#9652; &#9632; &#11035;&#11035;&#11035;</span>
+              </div>
+              <div class="phone-nav">
+                <span class="phone-logo">kakisewa</span>
+                <div class="phone-bell">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
+              </div>
+              <div class="phone-stats">
+                <div class="stat-cell">
+                  <span class="stat-val">24</span>
+                  <span class="stat-lbl">Contracts</span>
+                </div>
+                <div class="stat-cell">
+                  <span class="stat-val" style="color:#FFB340">6</span>
+                  <span class="stat-lbl">Expiring</span>
+                </div>
+                <div class="stat-cell">
+                  <span class="stat-val" style="color:#4CD964">18</span>
+                  <span class="stat-lbl">Active</span>
+                </div>
+              </div>
+              <div class="phone-body">
+                <div class="phone-section-label">Upcoming renewals</div>
+                <div class="p-contract">
+                  <div class="p-contract-top">
+                    <span class="p-owner">Tan Wei Ming</span>
+                    <span class="p-badge expiring">30 days</span>
+                  </div>
+                  <div class="p-addr">A-12-3 The Meridin, Johor Bahru</div>
+                  <div class="p-meta">
+                    <span>RM 2,800/mo</span>
+                    <span>Until Dec 2026</span>
+                  </div>
+                </div>
+                <div class="p-contract">
+                  <div class="p-contract-top">
+                    <span class="p-owner">Lim Hui Shan</span>
+                    <span class="p-badge renew">Renewing</span>
+                  </div>
+                  <div class="p-addr">B-07, Setia Sky, Ampang</div>
+                  <div class="p-meta">
+                    <span>RM 3,500/mo</span>
+                    <span>Until Jan 2027</span>
+                  </div>
+                </div>
+                <div class="p-contract">
+                  <div class="p-contract-top">
+                    <span class="p-owner">Ahmad Razif</span>
+                    <span class="p-badge active">Active</span>
+                  </div>
+                  <div class="p-addr">Residensi Duta, Kuala Lumpur</div>
+                  <div class="p-meta">
+                    <span>RM 3,200/mo</span>
+                    <span>Until Aug 2027</span>
+                  </div>
+                </div>
+              </div>
+              <div class="phone-perf">
+                <div class="perf-label">Pipeline this quarter</div>
+                <div class="perf-value">RM 42,600</div>
+                <div class="perf-sub">From 14 active contracts tracked</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature labels (desktop) -->
+          <div class="feat-labels">
+            <div class="feat-item">
+              <div class="feat-line"></div>
+              <div>
+                <div class="feat-item-title">Everything in one place.</div>
+                <div class="feat-item-desc">Owner, property, notes, photos, contracts. Never lose them.</div>
+              </div>
+            </div>
+            <div class="feat-item">
+              <div class="feat-line"></div>
+              <div>
+                <div class="feat-item-title">No active tracking.</div>
+                <div class="feat-item-desc">Get notified when contracts near expiry or owners reply.</div>
+              </div>
+            </div>
+            <div class="feat-item">
+              <div class="feat-line"></div>
+              <div>
+                <div class="feat-item-title">Snapshot your pipeline.</div>
+                <div class="feat-item-desc">See where your income comes from at a glance.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature list (mobile) -->
+    <div class="feat-mobile">
+      <div class="feat-mobile-item"><div class="feat-dot"></div><div class="feat-mobile-text">Everything in one place — owner, property, contracts, photos.</div></div>
+      <div class="feat-mobile-item"><div class="feat-dot"></div><div class="feat-mobile-text">No active tracking — notified when renewals approach.</div></div>
+      <div class="feat-mobile-item"><div class="feat-dot"></div><div class="feat-mobile-text">Pipeline snapshot — see where your income comes from.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — CTA
+═══════════════════════════════════════════════════════════════ -->
+<section class="scroll-section short" id="s3">
+  <div class="sticky-wrap">
+    <div class="s-header" id="h3">
+      <span class="s-overline">Start today</span>
+    </div>
+    <div class="tilt-stage">
+      <div class="tilt-card" id="c3">
+        <div class="cta-card">
+          <h2 class="cta-hl">Your first recovered renewal pays for the whole year.</h2>
+          <p class="cta-sub">2 months free. No credit card required.</p>
+          <a href="/sign-up" class="cta-btn">
+            Start free trial
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <p class="cta-signin">Already have an account? <a href="/sign-in">Sign in</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
 <section class="faq-wrap">
   <div class="faq-inner">
     <h2 class="faq-hl">Common questions</h2>
-
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        Is there really no credit card needed?
+      <div class="faq-q" onclick="toggleFaq(this)">Is there really no credit card needed?
         <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="faq-a">None. You get 2 full months free. Sign up, add your contracts, and start tracking. If it&rsquo;s not for you, just stop. No billing, no cancellation process.</div>
     </div>
-
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        How does kakisewa remind me about renewals?
+      <div class="faq-q" onclick="toggleFaq(this)">How does kakisewa remind me about renewals?
         <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="faq-a">You get push notifications and email alerts 60, 30, and 7 days before each contract expires. You never have to manually check.</div>
     </div>
-
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        Can I import my existing contracts?
+      <div class="faq-q" onclick="toggleFaq(this)">Can I import my existing contracts?
         <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="faq-a">Yes. Upload a CSV or Excel file and kakisewa maps your columns automatically. Most agents have all their data in within 10 minutes.</div>
     </div>
-
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        Do I need to be tech-savvy?
+      <div class="faq-q" onclick="toggleFaq(this)">Do I need to be tech-savvy?
         <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="faq-a">Not at all. If you can use WhatsApp, you can use kakisewa. Designed for agents always on their phone, not sitting at a desk.</div>
     </div>
-
     <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        What happens after the 2-month trial?
+      <div class="faq-q" onclick="toggleFaq(this)">What happens after the 2-month trial?
         <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
-      <div class="faq-a">You choose a plan that fits how many properties you manage. Plans start at RM&nbsp;30/month. Cancel anytime, your data is always yours to export.</div>
+      <div class="faq-a">You choose a plan that fits how many properties you manage. Plans start at RM 30/month. Cancel anytime, your data is always yours to export.</div>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer>
   <span class="footer-logo">k kakisewa</span>
   <span class="footer-copy">&copy; 2026 kakisewa</span>
@@ -888,85 +865,138 @@
 </footer>
 
 <script>
-  const chapters = [
-    document.getElementById('ch0'),
-    document.getElementById('ch1'),
-    document.getElementById('ch2'),
-    document.getElementById('ch3'),
+  const SECTIONS = [
+    { id: 's0', cardId: 'c0', headerId: 'h0', dark: false },
+    { id: 's1', cardId: 'c1', headerId: 'h1', dark: false },
+    { id: 's2', cardId: 'c2', headerId: 'h2', dark: true  },
+    { id: 's3', cardId: 'c3', headerId: 'h3', dark: false },
   ];
-  const pds = document.querySelectorAll('.pd');
-  const nav = document.getElementById('nav');
 
-  // ch2 (navy) needs dark nav + white dots
-  const darkChapters = new Set([2]);
+  const nav    = document.getElementById('nav');
+  const pds    = document.querySelectorAll('.pd');
+  const nudge  = document.getElementById('nudge');
 
-  let current = 0;
-  let barsAnimated = false;
-  let counterAnimated = false;
+  let counterDone = false;
+  let barsDone    = false;
+  let ticking     = false;
+  let current     = 0;
 
-  // ── Count-up animation ──────────────────────────────────────────
-  function countUp(el, target, duration) {
-    const startTime = performance.now();
-    function tick(now) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const value = Math.floor(eased * target);
-      el.textContent = 'RM ' + value.toLocaleString();
-      if (progress < 1) requestAnimationFrame(tick);
+  function easeOut(t) { return 1 - Math.pow(1 - t, 2.6); }
+
+  function countUp(el, target, ms) {
+    const t0 = performance.now();
+    (function tick(now) {
+      const p = Math.min((now - t0) / ms, 1);
+      el.textContent = 'RM ' + Math.floor(easeOut(p) * target).toLocaleString();
+      if (p < 1) requestAnimationFrame(tick);
       else el.textContent = 'RM 36,000';
-    }
-    requestAnimationFrame(tick);
+    })(performance.now());
   }
 
-  // ── IntersectionObserver ────────────────────────────────────────
-  const io = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const idx = chapters.indexOf(entry.target);
-      if (idx === -1) return;
+  function onScroll() {
+    const scrollY = window.scrollY;
+    const vh = window.innerHeight;
 
-      entry.target.classList.add('in');
-      current = idx;
+    SECTIONS.forEach(({ id, cardId, headerId, dark }, i) => {
+      const section = document.getElementById(id);
+      const card    = document.getElementById(cardId);
+      const header  = document.getElementById(headerId);
+      if (!section || !card) return;
 
-      // Nav / dots theme
-      const isDark = darkChapters.has(idx);
-      nav.classList.toggle('dark', isDark);
-      pds.forEach((d, i) => {
-        d.classList.toggle('on-dark', isDark);
-        d.classList.toggle('active', i === idx);
-      });
+      const top = section.offsetTop;
+      const h   = section.offsetHeight;
+      const scrollable = Math.max(1, h - vh);
+      const p  = Math.max(0, Math.min(1, (scrollY - top) / scrollable));
+      const pe = easeOut(p);
 
-      // Animate counter + bars in ch1
-      if (idx === 1) {
-        if (!counterAnimated) {
-          counterAnimated = true;
-          setTimeout(() => countUp(document.getElementById('counter'), 36000, 1800), 500);
+      // Tilt + scale + lift
+      const rotate = 18 * (1 - pe);
+      const scale  = 0.80 + 0.20 * pe;
+      const ty     = -28 * pe;
+      card.style.transform = `rotateX(${rotate}deg) scale(${scale}) translateY(${ty}px)`;
+
+      // Dynamic shadow: deep when tilted, soft when flat
+      const sY = Math.round(38 + 52 * (1 - pe));
+      const sB = Math.round(sY * 1.6);
+      const sO = (0.16 + 0.24 * (1 - pe)).toFixed(2);
+      card.style.boxShadow = `0 ${sY}px ${sB}px rgba(0,0,0,${sO})`;
+
+      // Header parallax
+      if (header) {
+        header.style.transform = `translateY(${-55 * pe}px)`;
+        const oRaw = p < 0.06 ? p / 0.06 : (p > 0.9 ? (1 - p) / 0.1 : 1);
+        header.style.opacity = Math.max(0, oRaw).toFixed(3);
+      }
+
+      // Active section
+      if (scrollY + vh / 2 >= top && scrollY + vh / 2 < top + h) {
+        current = i;
+        pds.forEach((d, j) => {
+          d.classList.toggle('active', j === i);
+          d.classList.toggle('on-dark', dark);
+        });
+        nav.classList.toggle('dark', dark);
+        if (nudge) nudge.style.opacity = (i === 0 ? '1' : '0');
+      }
+
+      // Trigger counter + bars mid-way through s1
+      if (i === 1 && p >= 0.28) {
+        if (!counterDone) {
+          counterDone = true;
+          countUp(document.getElementById('counter'), 36000, 1800);
         }
-        if (!barsAnimated) {
-          barsAnimated = true;
-          document.querySelectorAll('.bar-fill').forEach((bar, i) => {
-            setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 700 + i * 180);
+        if (!barsDone) {
+          barsDone = true;
+          document.querySelectorAll('.bar-fill').forEach((b, k) => {
+            setTimeout(() => { b.style.width = b.dataset.w + '%'; }, k * 220);
           });
         }
       }
     });
-  }, { threshold: 0.55 });
-
-  chapters.forEach(c => io.observe(c));
-
-  // ── Navigation ──────────────────────────────────────────────────
-  function goTo(idx) {
-    chapters[idx].scrollIntoView({ behavior: 'smooth' });
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown' || e.key === 'PageDown') goTo(Math.min(current + 1, chapters.length - 1));
-    if (e.key === 'ArrowUp'   || e.key === 'PageUp')   goTo(Math.max(current - 1, 0));
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => { onScroll(); ticking = false; });
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Dot navigation
+  pds.forEach(d => {
+    d.addEventListener('click', () => {
+      document.getElementById(SECTIONS[+d.dataset.i].id)
+        .scrollIntoView({ behavior: 'smooth' });
+    });
   });
 
-  // ── FAQ ─────────────────────────────────────────────────────────
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      document.getElementById(SECTIONS[Math.min(current + 1, SECTIONS.length - 1)].id)
+        .scrollIntoView({ behavior: 'smooth' });
+    }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      document.getElementById(SECTIONS[Math.max(current - 1, 0)].id)
+        .scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // Initial state — s0 already in view so flatten it; others tilted
+  SECTIONS.forEach(({ cardId }, i) => {
+    const c = document.getElementById(cardId);
+    if (!c) return;
+    if (i === 0) {
+      c.style.transform = 'rotateX(0deg) scale(1) translateY(0px)';
+      c.style.boxShadow = '0 8px 32px rgba(0,0,0,0.06)';
+    } else {
+      c.style.transform = 'rotateX(18deg) scale(0.80) translateY(0px)';
+      c.style.boxShadow = '0 90px 144px rgba(0,0,0,0.40)';
+    }
+  });
+
   function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
 </script>
 </body>
