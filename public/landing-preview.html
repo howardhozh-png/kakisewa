@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kakisewa — landing preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       NAV
+    ───────────────────────────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 300;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      transition: background 0.5s, border-color 0.5s;
+    }
+    .nav.dark {
+      background: rgba(5,17,31,0.85);
+      border-bottom-color: rgba(255,255,255,0.07);
+    }
+
+    /* Logo — matching Logo component exactly */
+    .logo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #1D1D1F;
+      transition: color 0.5s;
+    }
+    .nav.dark .logo-link { color: #fff; }
+
+    .logo-mark {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 35px;
+      line-height: 1;
+      color: currentColor;
+      display: inline-block;
+    }
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      line-height: 1;
+    }
+    .logo-name {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      color: currentColor;
+      line-height: 1;
+    }
+    .logo-kana {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      font-weight: 600;
+      opacity: 0.45;
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+      color: currentColor;
+      letter-spacing: 0;
+    }
+
+    .nav-actions { display: flex; align-items: center; gap: 6px; }
+
+    .btn-ghost {
+      font-size: 13px;
+      font-weight: 500;
+      color: #6E6E73;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 7px 15px;
+      border-radius: 99px;
+      text-decoration: none;
+      transition: color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover { color: #1D1D1F; background: #F2F2F7; }
+    .nav.dark .btn-ghost { color: rgba(255,255,255,0.5); }
+    .nav.dark .btn-ghost:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+    .btn-signup {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: #1D1D1F;
+      border: none;
+      cursor: pointer;
+      padding: 8px 18px;
+      border-radius: 99px;
+      text-decoration: none;
+      transition: background 0.4s, opacity 0.2s;
+    }
+    .btn-signup:hover { opacity: 0.82; }
+    .nav.dark .btn-signup { background: #fff; color: #1D1D1F; }
+
+    /* ─────────────────────────────────────────────────────────────────
+       PROGRESS DOTS
+    ───────────────────────────────────────────────────────────────── */
+    .pdots {
+      position: fixed;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pd {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(29,29,31,0.18);
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .pd.active { background: #1D1D1F; transform: scale(1.6); }
+    .pd.on-dark { background: rgba(255,255,255,0.22); }
+    .pd.on-dark.active { background: #fff; }
+
+    /* ─────────────────────────────────────────────────────────────────
+       CHAPTER BASE
+    ───────────────────────────────────────────────────────────────── */
+    .chapter {
+      height: 100svh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 40px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ch-inner {
+      width: 100%;
+      max-width: 680px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       WORD-BY-WORD & BLOCK REVEAL
+    ───────────────────────────────────────────────────────────────── */
+    .w {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(12px);
+      transition-property: opacity, transform;
+      transition-duration: 0.55s, 0.55s;
+      transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
+      transition-delay: var(--d, 0s);
+    }
+    .r {
+      opacity: 0;
+      transform: translateY(16px);
+      transition-property: opacity, transform;
+      transition-duration: 0.6s, 0.6s;
+      transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
+      transition-delay: var(--d, 0s);
+    }
+    .chapter.in .w,
+    .chapter.in .r { opacity: 1; transform: translateY(0); }
+
+    .overline {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CHAPTER 1 — RECOGNITION  (white + dot pattern)
+    ═══════════════════════════════════════════════════════════════ */
+    .c1 { background: #fff; }
+
+    /* SVG dot pattern */
+    .dot-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .dot-mask {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 50%, transparent 30%, #fff 75%);
+    }
+
+    .c1 .overline { color: #C7C7CC; }
+
+    .c1-q1 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(2.8rem, 7.5vw, 5.25rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #1D1D1F;
+      margin-bottom: 12px;
+    }
+    .c1-q2 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(2.8rem, 7.5vw, 5.25rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #C7C7CC;
+      margin-bottom: 52px;
+    }
+    .c1-caption {
+      font-size: 16px;
+      color: #AEAEB2;
+      line-height: 1.7;
+    }
+
+    .scroll-nudge {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      color: #C7C7CC;
+      animation: nudge 2.4s ease-in-out infinite;
+    }
+    .scroll-nudge span { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; }
+    @keyframes nudge {
+      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+      50%       { transform: translateX(-50%) translateY(9px); opacity: 1; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CHAPTER 2 — THE MATH  (white / near-white)
+    ═══════════════════════════════════════════════════════════════ */
+    .c2 { background: #FAFAFA; }
+
+    .c2 .overline { color: #C7C7CC; }
+
+    .c2-setup {
+      font-size: clamp(16px, 2vw, 19px);
+      color: #6E6E73;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .loss-number {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(5rem, 14vw, 9.5rem);
+      line-height: 1;
+      letter-spacing: -0.035em;
+      color: #FF3B30;
+      margin-bottom: 8px;
+      font-feature-settings: 'tnum';
+    }
+    .loss-sub {
+      font-size: 14px;
+      color: #AEAEB2;
+      margin-bottom: 48px;
+    }
+
+    .scale-table { display: flex; flex-direction: column; gap: 14px; }
+    .scale-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 120px;
+      align-items: center;
+      gap: 16px;
+    }
+    .scale-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #C7C7CC;
+    }
+    .bar-track {
+      height: 6px;
+      background: #F2F2F7;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #FF6361, #FF3B30);
+      border-radius: 99px;
+      width: 0;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .scale-amount {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1D1D1F;
+      text-align: right;
+    }
+    .c2-footnote {
+      font-size: 11px;
+      color: #D1D1D6;
+      margin-top: 22px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CHAPTER 3 — KAKISEWA  (deep navy + aurora)
+    ═══════════════════════════════════════════════════════════════ */
+    .c3 { background: #05111F; }
+
+    /* Aurora glow layers */
+    .aurora-a, .aurora-b, .aurora-c {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .aurora-a {
+      width: 70vw; height: 60vh;
+      top: -10%; left: -15%;
+      background: radial-gradient(ellipse, rgba(0,113,227,0.22) 0%, transparent 65%);
+      animation: drift-a 14s ease-in-out infinite alternate;
+    }
+    .aurora-b {
+      width: 50vw; height: 50vh;
+      bottom: -10%; right: -10%;
+      background: radial-gradient(ellipse, rgba(0,71,160,0.18) 0%, transparent 65%);
+      animation: drift-b 18s ease-in-out infinite alternate;
+    }
+    .aurora-c {
+      width: 40vw; height: 40vh;
+      top: 30%; right: 15%;
+      background: radial-gradient(ellipse, rgba(52,199,89,0.07) 0%, transparent 65%);
+      animation: drift-c 22s ease-in-out infinite alternate;
+    }
+    @keyframes drift-a {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(8%, 6%) scale(1.08); }
+    }
+    @keyframes drift-b {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(-6%, -8%) scale(0.95); }
+    }
+    @keyframes drift-c {
+      from { transform: translate(0, 0); }
+      to   { transform: translate(-10%, 5%); }
+    }
+
+    .c3-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.75);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 99px;
+      margin-bottom: 32px;
+    }
+    .badge-pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #34C759;
+      position: relative;
+    }
+    .badge-pulse::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1px solid #34C759;
+      opacity: 0.4;
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { transform: scale(1); opacity: 0.4; }
+      50%       { transform: scale(1.6); opacity: 0; }
+    }
+
+    .c3-headline {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(2.2rem, 5.5vw, 4rem);
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+      color: #fff;
+      margin-bottom: 48px;
+    }
+
+    /* Feature cards */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    .feat-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 22px 20px;
+      transition: background 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
+      cursor: default;
+    }
+    .feat-card:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-3px);
+    }
+    .feat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(0,113,227,0.25);
+      border: 1px solid rgba(0,113,227,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: #5BB8FF;
+    }
+    .feat-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .feat-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.38);
+      line-height: 1.65;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CHAPTER 4 — CTA  (clean white)
+    ═══════════════════════════════════════════════════════════════ */
+    .c4 { background: #fff; }
+    .c4-inner { text-align: center; }
+
+    .c4-headline {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(2.4rem, 6vw, 4.25rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #1D1D1F;
+      margin-bottom: 20px;
+    }
+    .c4-sub {
+      font-size: 17px;
+      color: #AEAEB2;
+      margin-bottom: 52px;
+      line-height: 1.5;
+    }
+
+    /* Shimmer CTA button */
+    .cta-wrap { position: relative; display: inline-block; }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #0071E3;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 17px 40px;
+      border-radius: 99px;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.2s;
+    }
+    .cta-btn:hover { opacity: 0.9; }
+    .cta-btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: shimmer 2.8s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%   { left: -100%; }
+      60%, 100% { left: 160%; }
+    }
+
+    .c4-signin {
+      margin-top: 24px;
+      font-size: 13px;
+      color: #AEAEB2;
+    }
+    .c4-signin a {
+      color: #6E6E73;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .c4-signin a:hover { color: #1D1D1F; }
+
+    /* ─────────────────────────────────────────────────────────────────
+       POST-SNAP: FAQ + FOOTER
+    ───────────────────────────────────────────────────────────────── */
+    .faq-wrap {
+      background: #FBFBFD;
+      border-top: 1px solid #E5E5EA;
+      padding: 80px 40px 88px;
+    }
+    .faq-inner { max-width: 680px; margin: 0 auto; }
+
+    .faq-hl {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      letter-spacing: -0.022em;
+      color: #1D1D1F;
+      margin-bottom: 48px;
+    }
+
+    .faq-item { border-top: 1px solid #E5E5EA; }
+    .faq-item:last-child { border-bottom: 1px solid #E5E5EA; }
+    .faq-q {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 0;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1D1D1F;
+    }
+    .faq-chev { flex-shrink: 0; color: #C7C7CC; transition: transform 0.25s; }
+    .faq-item.open .faq-chev { transform: rotate(180deg); }
+    .faq-a {
+      font-size: 13px;
+      color: #6E6E73;
+      line-height: 1.7;
+      padding-bottom: 20px;
+      display: none;
+      max-width: 56ch;
+    }
+    .faq-item.open .faq-a { display: block; }
+
+    footer {
+      background: #fff;
+      border-top: 1px solid #E5E5EA;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 18px;
+      color: #1D1D1F;
+      letter-spacing: -0.01em;
+    }
+    .footer-copy { font-size: 12px; color: #AEAEB2; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 12px; color: #AEAEB2; text-decoration: none; }
+    .footer-links a:hover { color: #6E6E73; }
+
+    /* ─────────────────────────────────────────────────────────────────
+       RESPONSIVE
+    ───────────────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .pdots { display: none; }
+      .chapter { padding: 76px 22px 48px; }
+      .c1-q1, .c1-q2 { font-size: clamp(2.2rem, 10vw, 3rem); }
+      .feat-grid { grid-template-columns: 1fr; gap: 10px; }
+      .feat-card { padding: 18px 16px; display: flex; gap: 14px; align-items: flex-start; }
+      .feat-icon { flex-shrink: 0; margin-bottom: 0; }
+      .scale-row { grid-template-columns: 90px 1fr 95px; gap: 10px; }
+      .scale-label { font-size: 11px; }
+      .scale-amount { font-size: 12px; }
+      .nav { padding: 0 18px; }
+      .logo-name { font-size: 20px; }
+      .logo-mark { font-size: 28px; }
+      .btn-ghost { padding: 6px 10px; font-size: 12px; }
+      .btn-signup { padding: 7px 14px; font-size: 12px; }
+      .faq-wrap { padding: 56px 22px 64px; }
+      footer { padding: 20px 22px; }
+      .cta-btn { font-size: 15px; padding: 15px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <a href="#" class="logo-link">
+    <span class="logo-mark">k</span>
+    <span class="logo-text">
+      <span class="logo-name">kakisewa</span>
+      <span class="logo-kana">
+        <span>カ</span><span>キ</span><span>セ</span><span>ワ</span>
+      </span>
+    </span>
+  </a>
+  <div class="nav-actions">
+    <a href="/sign-in" class="btn-ghost">Sign in</a>
+    <a href="/sign-up" class="btn-signup">Start free trial</a>
+  </div>
+</header>
+
+<!-- PROGRESS DOTS -->
+<nav class="pdots" id="pdots" aria-label="Chapters">
+  <button class="pd active" onclick="goTo(0)"></button>
+  <button class="pd" onclick="goTo(1)"></button>
+  <button class="pd" onclick="goTo(2)"></button>
+  <button class="pd" onclick="goTo(3)"></button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CHAPTER 1 — THE RECOGNITION
+═══════════════════════════════════════════════════════════════════ -->
+<section class="chapter c1 in" id="ch0">
+  <!-- Dot pattern background -->
+  <svg class="dot-bg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="1.5" cy="1.5" r="1.5" fill="#D1D1D6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#dots)"/>
+  </svg>
+  <div class="dot-mask"></div>
+
+  <div class="ch-inner">
+    <span class="overline r" style="--d:0.05s">For rental agents</span>
+
+    <div class="c1-q1">
+      <span class="w" style="--d:0.12s">&#8220;I&#8217;m</span>&#32;
+      <span class="w" style="--d:0.2s">always</span>&#32;
+      <span class="w" style="--d:0.28s">working</span>&#32;
+      <span class="w" style="--d:0.36s">hard</span>&#32;
+      <span class="w" style="--d:0.44s">for</span>&#32;
+      <span class="w" style="--d:0.52s">new</span>&#32;
+      <span class="w" style="--d:0.6s">owners.&#8221;</span>
+    </div>
+
+    <div class="c1-q2">
+      <span class="w" style="--d:0.85s">&#8220;But</span>&#32;
+      <span class="w" style="--d:0.93s">what</span>&#32;
+      <span class="w" style="--d:1.01s">happened</span>&#32;
+      <span class="w" style="--d:1.09s">to</span>&#32;
+      <span class="w" style="--d:1.17s">the</span>&#32;
+      <span class="w" style="--d:1.25s">old</span>&#32;
+      <span class="w" style="--d:1.33s">owners</span>&#32;
+      <span class="w" style="--d:1.41s">I</span>&#32;
+      <span class="w" style="--d:1.49s">signed?&#8221;</span>
+    </div>
+
+    <p class="c1-caption r" style="--d:1.8s">
+      The ones you already did the hard work for.<br>
+      Whose contracts quietly slipped by.
+    </p>
+  </div>
+
+  <div class="scroll-nudge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    <span>scroll</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CHAPTER 2 — THE MATH
+═══════════════════════════════════════════════════════════════════ -->
+<section class="chapter c2" id="ch1">
+  <div class="ch-inner">
+    <span class="overline r" style="--d:0.05s">The math nobody does</span>
+    <p class="c2-setup r" style="--d:0.2s">
+      Say you have 24 contracts. You lose track of half.<br>
+      That&rsquo;s just 1 missed renewal a month, at RM&nbsp;3,000 each.
+    </p>
+    <div class="loss-number r" style="--d:0.35s" id="counter">RM 0</div>
+    <p class="loss-sub r" style="--d:0.42s">gone in a single year. From just 24 contracts.</p>
+
+    <div class="scale-table r" style="--d:0.6s">
+      <div class="scale-row">
+        <span class="scale-label">50 contracts</span>
+        <div class="bar-track"><div class="bar-fill" data-w="16.7"></div></div>
+        <span class="scale-amount">RM 75,000</span>
+      </div>
+      <div class="scale-row">
+        <span class="scale-label">100 contracts</span>
+        <div class="bar-track"><div class="bar-fill" data-w="33.3"></div></div>
+        <span class="scale-amount">RM 150,000</span>
+      </div>
+      <div class="scale-row">
+        <span class="scale-label">200 contracts</span>
+        <div class="bar-track"><div class="bar-fill" data-w="66.6"></div></div>
+        <span class="scale-amount">RM 300,000</span>
+      </div>
+      <div class="scale-row">
+        <span class="scale-label">300 contracts</span>
+        <div class="bar-track"><div class="bar-fill" data-w="100"></div></div>
+        <span class="scale-amount">RM 450,000</span>
+      </div>
+    </div>
+    <p class="c2-footnote r" style="--d:0.72s">50% untracked renewals &middot; RM 3,000 average commission per renewal</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CHAPTER 3 — KAKISEWA
+═══════════════════════════════════════════════════════════════════ -->
+<section class="chapter c3" id="ch2">
+  <div class="aurora-a"></div>
+  <div class="aurora-b"></div>
+  <div class="aurora-c"></div>
+
+  <div class="ch-inner">
+    <div class="c3-badge r" style="--d:0.05s">
+      <span class="badge-pulse"></span>
+      kakisewa
+    </div>
+
+    <h2 class="c3-headline r" style="--d:0.2s">Never lose an owner again.</h2>
+
+    <div class="feat-grid">
+
+      <div class="feat-card r" style="--d:0.38s">
+        <div class="feat-icon">
+          <!-- Folder / everything in one place -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <div class="feat-title">Everything in one place.</div>
+        <div class="feat-desc">Owner, property, notes, photos, contracts. All in one card. Never lose them.</div>
+      </div>
+
+      <div class="feat-card r" style="--d:0.52s">
+        <div class="feat-icon">
+          <!-- Bell / notification -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <div class="feat-title">No active tracking required.</div>
+        <div class="feat-desc">Get notified when contracts expire, when owners or tenants reply. kakisewa watches.</div>
+      </div>
+
+      <div class="feat-card r" style="--d:0.66s">
+        <div class="feat-icon">
+          <!-- Chart / income snapshot -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="feat-title">Snapshot on your performance.</div>
+        <div class="feat-desc">See where your income comes from. Understand your pipeline at a glance.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CHAPTER 4 — CTA
+═══════════════════════════════════════════════════════════════════ -->
+<section class="chapter c4" id="ch3">
+  <!-- Subtle dot background matching ch1 -->
+  <svg class="dot-bg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="dots2" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="1.5" cy="1.5" r="1.5" fill="#D1D1D6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#dots2)"/>
+  </svg>
+  <div class="dot-mask"></div>
+
+  <div class="ch-inner c4-inner">
+    <h2 class="c4-headline r" style="--d:0.1s">
+      Your first recovered renewal<br>pays for the whole year.
+    </h2>
+    <p class="c4-sub r" style="--d:0.28s">2 months free. No credit card required.</p>
+
+    <div class="r" style="--d:0.44s">
+      <div class="cta-wrap">
+        <a href="/sign-up" class="cta-btn">
+          Start free trial
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <p class="c4-signin r" style="--d:0.58s">
+      Already have an account? <a href="/sign-in">Sign in</a>
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     FAQ
+═══════════════════════════════════════════════════════════════════ -->
+<section class="faq-wrap">
+  <div class="faq-inner">
+    <h2 class="faq-hl">Common questions</h2>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Is there really no credit card needed?
+        <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">None. You get 2 full months free. Sign up, add your contracts, and start tracking. If it&rsquo;s not for you, just stop. No billing, no cancellation process.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        How does kakisewa remind me about renewals?
+        <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">You get push notifications and email alerts 60, 30, and 7 days before each contract expires. You never have to manually check.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Can I import my existing contracts?
+        <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Yes. Upload a CSV or Excel file and kakisewa maps your columns automatically. Most agents have all their data in within 10 minutes.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Do I need to be tech-savvy?
+        <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Not at all. If you can use WhatsApp, you can use kakisewa. Designed for agents always on their phone, not sitting at a desk.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        What happens after the 2-month trial?
+        <svg class="faq-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">You choose a plan that fits how many properties you manage. Plans start at RM&nbsp;30/month. Cancel anytime, your data is always yours to export.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">k kakisewa</span>
+  <span class="footer-copy">&copy; 2026 kakisewa</span>
+  <div class="footer-links">
+    <a href="/terms">Terms</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/sign-in">Sign in</a>
+    <a href="/sign-up">Start trial</a>
+  </div>
+</footer>
+
+<script>
+  const chapters = [
+    document.getElementById('ch0'),
+    document.getElementById('ch1'),
+    document.getElementById('ch2'),
+    document.getElementById('ch3'),
+  ];
+  const pds = document.querySelectorAll('.pd');
+  const nav = document.getElementById('nav');
+
+  // ch2 (navy) needs dark nav + white dots
+  const darkChapters = new Set([2]);
+
+  let current = 0;
+  let barsAnimated = false;
+  let counterAnimated = false;
+
+  // ── Count-up animation ──────────────────────────────────────────
+  function countUp(el, target, duration) {
+    const startTime = performance.now();
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = Math.floor(eased * target);
+      el.textContent = 'RM ' + value.toLocaleString();
+      if (progress < 1) requestAnimationFrame(tick);
+      else el.textContent = 'RM 36,000';
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ── IntersectionObserver ────────────────────────────────────────
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const idx = chapters.indexOf(entry.target);
+      if (idx === -1) return;
+
+      entry.target.classList.add('in');
+      current = idx;
+
+      // Nav / dots theme
+      const isDark = darkChapters.has(idx);
+      nav.classList.toggle('dark', isDark);
+      pds.forEach((d, i) => {
+        d.classList.toggle('on-dark', isDark);
+        d.classList.toggle('active', i === idx);
+      });
+
+      // Animate counter + bars in ch1
+      if (idx === 1) {
+        if (!counterAnimated) {
+          counterAnimated = true;
+          setTimeout(() => countUp(document.getElementById('counter'), 36000, 1800), 500);
+        }
+        if (!barsAnimated) {
+          barsAnimated = true;
+          document.querySelectorAll('.bar-fill').forEach((bar, i) => {
+            setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 700 + i * 180);
+          });
+        }
+      }
+    });
+  }, { threshold: 0.55 });
+
+  chapters.forEach(c => io.observe(c));
+
+  // ── Navigation ──────────────────────────────────────────────────
+  function goTo(idx) {
+    chapters[idx].scrollIntoView({ behavior: 'smooth' });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') goTo(Math.min(current + 1, chapters.length - 1));
+    if (e.key === 'ArrowUp'   || e.key === 'PageUp')   goTo(Math.max(current - 1, 0));
+  });
+
+  // ── FAQ ─────────────────────────────────────────────────────────
+  function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
+</script>
+</body>
+</html>
