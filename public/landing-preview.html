@@ -203,6 +203,7 @@
     .slider-marks {
       display: flex; justify-content: space-between;
       font-size: 10px; color: #C7C7CC; margin-top: 8px;
+      padding: 0 13px;
     }
 
     /* ────────────────────────────────────────────────────────────────
@@ -246,7 +247,7 @@
     }
 
     /* Dual mockup row */
-    .mockup-pair { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
+    .mockup-pair { display: grid; grid-template-columns: 3fr 1fr; gap: 16px; align-items: start; }
     .mockup-wrap { display: flex; flex-direction: column; align-items: center; }
     .mockup-lbl {
       margin-top: 6px; font-size: 9px; font-weight: 700;
@@ -271,7 +272,7 @@
       background: #FBFBFD;
       border: 1px solid #E5E5EA; border-top: none;
       border-radius: 0 0 8px 8px;
-      height: 310px; overflow: hidden; padding: 14px;
+      height: 370px; overflow: hidden; padding: 12px;
     }
     .db-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .db-logo { font-family: 'DM Serif Display', Georgia, serif; font-size: 13px; color: #1D1D1F; }
@@ -443,9 +444,8 @@
 <section class="chapter in" id="ch0">
   <div class="ch-content">
     <span class="overline r" style="--d:.05s">For rental agents</span>
-    <div class="q1 r" style="--d:.15s">&#8220;I&#8217;m always working hard for new owners.&#8221;</div>
+    <div class="q1 r" style="--d:.15s">&#8220;I&#8217;m always working hard for new listing, but what about the old listing I worked hard for?&#8221;</div>
     <div class="q2 r" style="--d:.32s">&#8220;What happened to the owners I signed 1-2 years ago?&#8221;</div>
-    <p class="q-caption r" style="--d:.5s">The ones you already did the hard work for.<br>Whose contracts quietly slipped by.</p>
   </div>
   <div class="scroll-nudge">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
@@ -476,7 +476,7 @@
      CH2 — KAKISEWA
 ══════════════════════════════════════════════════════════════ -->
 <section class="chapter" id="ch2">
-  <div class="ch-content" style="max-width:860px">
+  <div class="ch-content" style="max-width:1000px">
 
     <!-- 3 huge feature points -->
     <div class="feat3-grid r" style="--d:.1s">
@@ -514,37 +514,100 @@
               <span class="browser-dot" style="background:#FEBC2E"></span>
               <span class="browser-dot" style="background:#28C840"></span>
             </div>
-            <div class="browser-url">kakisewa.com/home</div>
+            <div class="browser-url">kakisewa.com/my-listing</div>
           </div>
           <div class="browser-body">
-            <div class="db-header">
-              <span class="db-logo" style="font-size:17px">kakisewa</span>
-              <span style="font-size:11px;color:#AEAEB2">John Doe</span>
+            <!-- Availability -->
+            <div style="font-size:8px;color:#AEAEB2;margin-bottom:6px">See how many units are available each month, up to 24 months ahead</div>
+            <div style="margin-bottom:8px">
+              <div style="font-size:7px;font-weight:600;color:#AEAEB2;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px">Property Availability · 12 Months</div>
+              <div style="font-size:18px;font-weight:700;color:#1D1D1F;letter-spacing:-.02em;line-height:1.1;margin-bottom:1px">RM 18,000</div>
+              <div style="font-size:8px;color:#6E6E73;margin-bottom:5px">6 properties &middot; 100% commission</div>
+              <div style="display:flex;align-items:flex-end;gap:3px;height:36px;margin-bottom:2px">
+                <div style="flex:1;background:#AEAEB2;border-radius:2px 2px 0 0;height:90%"></div>
+                <div style="flex:1;background:#E5E5EA;border-radius:2px 2px 0 0;height:4%"></div>
+                <div style="flex:1;background:#AEAEB2;border-radius:2px 2px 0 0;height:55%"></div>
+                <div style="flex:1;background:#AEAEB2;border-radius:2px 2px 0 0;height:30%"></div>
+                <div style="flex:1;background:#E5E5EA;border-radius:2px 2px 0 0;height:4%"></div>
+                <div style="flex:1;background:#E5E5EA;border-radius:2px 2px 0 0;height:4%"></div>
+              </div>
+              <div style="display:flex;gap:3px;font-size:7px;color:#AEAEB2">
+                <div style="flex:1">Jun '26</div><div style="flex:1">Jul '26</div><div style="flex:1">Aug '26</div>
+                <div style="flex:1">Sep '26</div><div style="flex:1">Oct '26</div><div style="flex:1">Nov '26</div>
+              </div>
             </div>
-            <div class="db-stats">
-              <div class="db-stat"><div class="db-stat-v" style="font-size:20px">24</div><div class="db-stat-l" style="font-size:9px">Contracts</div></div>
-              <div class="db-stat"><div class="db-stat-v" style="font-size:20px;color:#FF9500">6</div><div class="db-stat-l" style="font-size:9px">Expiring</div></div>
-              <div class="db-stat"><div class="db-stat-v" style="font-size:20px;color:#34C759">18</div><div class="db-stat-l" style="font-size:9px">Active</div></div>
+            <!-- Search + filter -->
+            <div style="display:flex;gap:5px;margin-bottom:8px;align-items:center">
+              <div style="flex:1;background:#fff;border:1px solid #E5E5EA;border-radius:5px;padding:4px 8px;display:flex;gap:4px;align-items:center">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span style="font-size:8px;color:#AEAEB2">Search...</span>
+              </div>
+              <div style="background:#fff;border:1px solid #E5E5EA;border-radius:5px;padding:4px 9px;font-size:8px;color:#6E6E73;white-space:nowrap">All properties &#9662;</div>
             </div>
-            <div class="db-row" style="padding:10px 12px;margin-bottom:6px">
-              <span class="db-row-name" style="font-size:12px">Tan Wei Ming, The Meridin</span>
-              <span class="db-row-tag" style="font-size:9px;background:rgba(255,149,0,0.12);color:#C47800">30 days</span>
-            </div>
-            <div class="db-row" style="padding:10px 12px;margin-bottom:6px">
-              <span class="db-row-name" style="font-size:12px">Lim Hui Shan, Setia Sky Ampang</span>
-              <span class="db-row-tag" style="font-size:9px;background:rgba(52,199,89,0.12);color:#1F8B4C">Active</span>
-            </div>
-            <div class="db-row" style="padding:10px 12px;margin-bottom:6px">
-              <span class="db-row-name" style="font-size:12px">Ahmad Razif, Residensi Duta KL</span>
-              <span class="db-row-tag" style="font-size:9px;background:rgba(0,113,227,0.12);color:#0071E3">Renewing</span>
-            </div>
-            <div class="db-row" style="padding:10px 12px;margin-bottom:6px">
-              <span class="db-row-name" style="font-size:12px">Siti Nuraini, D'Pulze Cyberjaya</span>
-              <span class="db-row-tag" style="font-size:9px;background:rgba(255,149,0,0.12);color:#C47800">14 days</span>
-            </div>
-            <div class="db-perf" style="padding:10px 12px;margin-top:6px">
-              <div style="font-size:10px;color:#AEAEB2;margin-bottom:3px">Pipeline this quarter</div>
-              <div style="font-size:18px;font-weight:700;color:#0071E3;font-family:'DM Serif Display',Georgia,serif">RM 42,600</div>
+            <!-- Two-column listing -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+              <!-- LISTED -->
+              <div style="background:#F2F2F7;border-radius:8px;padding:8px">
+                <div style="font-size:8px;font-weight:800;color:#1D1D1F;letter-spacing:.05em;margin-bottom:1px">LISTED <span style="font-weight:400;color:#6E6E73">4</span></div>
+                <div style="font-size:7px;color:#6E6E73;margin-bottom:6px">Build the tenant pack. Find the right tenant.</div>
+                <div style="background:#fff;border:1px solid #E5E5EA;border-radius:6px;padding:6px;margin-bottom:4px">
+                  <div style="display:flex;gap:5px;margin-bottom:4px">
+                    <div style="width:24px;height:24px;background:#D1D1D6;border-radius:4px;flex-shrink:0"></div>
+                    <div>
+                      <div style="font-size:8px;font-weight:700;color:#1D1D1F;line-height:1.2">Ritze Perdana</div>
+                      <div style="font-size:7px;color:#6E6E73">Unit 11C &middot; RM 2,400/mo</div>
+                      <div style="font-size:6px;color:#AEAEB2">Michelle Ong Cheng Bee</div>
+                    </div>
+                  </div>
+                  <div style="background:rgba(52,199,89,0.1);border-radius:3px;padding:2px 5px;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+                    <span style="font-size:7px;font-weight:600;color:#1F8B4C">&#10003; Tenant confirmed</span>
+                    <span style="color:#1F8B4C;font-size:9px">&#8594;</span>
+                  </div>
+                  <div style="background:rgba(52,199,89,0.07);border-radius:3px;padding:2px 5px;display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:7px;font-weight:600;color:#1F8B4C">Build tenant pack</span>
+                    <span style="color:#1F8B4C;font-size:9px">&#8594;</span>
+                  </div>
+                </div>
+                <div style="background:#fff;border:1px solid #E5E5EA;border-radius:6px;padding:6px">
+                  <div style="display:flex;gap:5px">
+                    <div style="width:24px;height:24px;background:#D1D1D6;border-radius:4px;flex-shrink:0"></div>
+                    <div>
+                      <div style="font-size:8px;font-weight:700;color:#1D1D1F;line-height:1.2">The Greens Subang</div>
+                      <div style="font-size:7px;color:#6E6E73">Unit 8-01 &middot; RM 2,100/mo</div>
+                      <div style="font-size:6px;color:#AEAEB2">Helen Tan Bee Choo</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- RENTED -->
+              <div style="background:#F2F2F7;border-radius:8px;padding:8px">
+                <div style="font-size:8px;font-weight:800;color:#1D1D1F;letter-spacing:.05em;margin-bottom:1px">RENTED <span style="font-weight:400;color:#6E6E73">3</span></div>
+                <div style="font-size:7px;color:#6E6E73;margin-bottom:6px">Well done, proud of you!</div>
+                <div style="background:#fff;border:1px solid #E5E5EA;border-radius:6px;padding:6px;margin-bottom:4px">
+                  <div style="display:flex;gap:5px;margin-bottom:4px">
+                    <div style="width:24px;height:24px;background:#D1D1D6;border-radius:4px;flex-shrink:0"></div>
+                    <div>
+                      <div style="font-size:8px;font-weight:700;color:#1D1D1F;line-height:1.2">Kelisa Residence</div>
+                      <div style="font-size:7px;color:#6E6E73">Unit 4C &middot; RM 1,900/mo</div>
+                      <div style="font-size:6px;color:#AEAEB2">Kamaruddin bin Baharom</div>
+                    </div>
+                  </div>
+                  <div style="background:rgba(52,199,89,0.1);border-radius:3px;padding:2px 5px;display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:7px;font-weight:600;color:#1F8B4C">&#10003; Confirm moved in</span>
+                    <span style="color:#1F8B4C;font-size:9px">&#8594;</span>
+                  </div>
+                </div>
+                <div style="background:#fff;border:1px solid #E5E5EA;border-radius:6px;padding:6px">
+                  <div style="display:flex;gap:5px">
+                    <div style="width:24px;height:24px;background:#D1D1D6;border-radius:4px;flex-shrink:0"></div>
+                    <div>
+                      <div style="font-size:8px;font-weight:700;color:#1D1D1F;line-height:1.2">Laman Suria</div>
+                      <div style="font-size:7px;color:#6E6E73">Unit 6A &middot; RM 1,600/mo</div>
+                      <div style="font-size:6px;color:#AEAEB2">Mohd Farouk Hamdan</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
