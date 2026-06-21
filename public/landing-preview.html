@@ -170,6 +170,7 @@
       line-height: 1; letter-spacing: -0.04em;
       color: #FF3B30; margin-bottom: 8px;
       font-feature-settings: 'tnum';
+      white-space: nowrap;
     }
     .loss-sub { font-size: 15px; color: #AEAEB2; margin-bottom: 28px; }
     .math-footnote { font-size: 11px; color: #D1D1D6; margin-top: 14px; }
@@ -298,7 +299,8 @@
     .phone-sm-inner {
       width: 120px; height: 242px;
       transform: scale(1.5); transform-origin: top left;
-      background: #05111F; display: flex; flex-direction: column;
+      background: #FBFBFD; display: flex; flex-direction: column;
+      overflow: hidden;
     }
     .phone-sm-notch { width: 40px; height: 5px; background: #1A1A1C; border-radius: 0 0 8px 8px; margin: 0 auto; }
     .phone-sm-status { display: flex; justify-content: space-between; padding: 4px 10px 2px; font-size: 6px; font-weight: 600; color: rgba(255,255,255,0.4); }
@@ -459,9 +461,9 @@
     <span class="overline r" style="--d:.05s">The math nobody does</span>
     <div class="slider-section r" style="--d:.15s">
       <div class="slider-contracts-lbl">You manage <span id="slider-contracts">50</span> contracts.</div>
-      <input type="range" class="kk-slider" id="kk-slider" min="0" max="500" value="50" step="1">
+      <input type="range" class="kk-slider" id="kk-slider" min="0" max="300" value="50" step="1">
       <div class="slider-marks">
-        <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span>
+        <span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span><span>300</span>
       </div>
     </div>
     <div class="loss-number r" style="--d:.28s" id="counter">RM 75,000</div>
@@ -553,37 +555,64 @@
       <div class="mockup-wrap">
         <div class="phone-frame-sm">
           <div class="phone-sm-inner">
-            <div class="phone-sm-notch"></div>
-            <div class="phone-sm-status"><span>9:41</span><span>&#9652; &#9632;</span></div>
-            <div class="phone-sm-nav">
-              <span class="phone-sm-logo">kakisewa</span>
-              <div class="phone-sm-bell">
-                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <!-- Nav -->
+            <div style="background:#fff;border-bottom:1px solid #E5E5EA;padding:6px 8px;display:flex;align-items:center;gap:5px;flex-shrink:0">
+              <span style="font-size:11px;color:#1D1D1F;line-height:1;font-weight:300">&#9776;</span>
+              <span style="font-family:'DM Serif Display',Georgia,serif;font-size:9px;color:#1D1D1F;flex:1;line-height:1">k kakisewa</span>
+              <span style="font-size:5px;font-weight:700;background:#B8922E;color:#fff;padding:1px 4px;border-radius:3px;letter-spacing:.04em">ELITE</span>
+              <div style="position:relative;flex-shrink:0;margin-left:2px">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <div style="position:absolute;top:-2px;right:-2px;width:5px;height:5px;background:#FF3B30;border-radius:50%"></div>
               </div>
             </div>
-            <div class="phone-sm-stats">
-              <div class="psm-cell"><span class="psm-val">24</span><span class="psm-lbl">Total</span></div>
-              <div class="psm-cell"><span class="psm-val" style="color:#FFB340">6</span><span class="psm-lbl">Expiring</span></div>
-              <div class="psm-cell"><span class="psm-val" style="color:#4CD964">18</span><span class="psm-lbl">Active</span></div>
-            </div>
-            <div class="phone-sm-body">
-              <div class="psm-sec">Upcoming</div>
-              <div class="psm-row">
-                <span class="psm-name">Tan Wei Ming</span>
-                <span class="psm-badge" style="background:rgba(255,149,0,0.18);color:#FFB340;border:1px solid rgba(255,149,0,0.25)">30d</span>
+            <!-- Availability card -->
+            <div style="background:#fff;margin:5px;border-radius:7px;padding:7px;border:1px solid #E5E5EA;flex-shrink:0">
+              <div style="font-size:5px;font-weight:600;color:#AEAEB2;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Property Availability · 12 Months</div>
+              <div style="font-size:13px;font-weight:700;color:#1D1D1F;letter-spacing:-.02em;line-height:1;margin-bottom:1px">RM 18,000</div>
+              <div style="font-size:5px;color:#6E6E73;margin-bottom:5px">6 properties &middot; 100% commission</div>
+              <div style="display:flex;align-items:flex-end;gap:2px;height:20px;margin-bottom:3px">
+                <div style="flex:1;background:#AEAEB2;border-radius:2px 2px 0 0;height:90%"></div>
+                <div style="flex:1;background:#E5E5EA;border-radius:2px 2px 0 0;height:3%"></div>
+                <div style="flex:1;background:#AEAEB2;border-radius:2px 2px 0 0;height:60%"></div>
+                <div style="flex:1;background:#AEAEB2;border-radius:2px 2px 0 0;height:35%"></div>
+                <div style="flex:1;background:#E5E5EA;border-radius:2px 2px 0 0;height:3%"></div>
+                <div style="flex:1;background:#E5E5EA;border-radius:2px 2px 0 0;height:3%"></div>
               </div>
-              <div class="psm-row">
-                <span class="psm-name">Lim Hui Shan</span>
-                <span class="psm-badge" style="background:rgba(52,199,89,0.15);color:#4CD964;border:1px solid rgba(52,199,89,0.2)">Active</span>
-              </div>
-              <div class="psm-row">
-                <span class="psm-name">Ahmad Razif</span>
-                <span class="psm-badge" style="background:rgba(0,113,227,0.18);color:#5BB8FF;border:1px solid rgba(0,113,227,0.25)">Renew</span>
+              <div style="display:flex;gap:2px;font-size:4px;color:#AEAEB2">
+                <div style="flex:1">Jun</div><div style="flex:1">Jul</div><div style="flex:1">Aug</div>
+                <div style="flex:1">Sep</div><div style="flex:1">Oct</div><div style="flex:1">Nov</div>
               </div>
             </div>
-            <div class="psm-pipeline">
-              <div class="psm-pl-lbl">Pipeline</div>
-              <div class="psm-pl-val">RM 42,600</div>
+            <!-- Search -->
+            <div style="margin:0 5px 4px;background:#fff;border:1px solid #E5E5EA;border-radius:5px;padding:4px 7px;display:flex;align-items:center;gap:4px;flex-shrink:0">
+              <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span style="font-size:6px;color:#AEAEB2">Search...</span>
+            </div>
+            <!-- Listing card 1 -->
+            <div style="margin:0 5px 4px;background:#fff;border:1px solid #E5E5EA;border-radius:7px;padding:6px;flex-shrink:0">
+              <div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">
+                <div style="width:20px;height:20px;background:#D1D1D6;border-radius:4px;flex-shrink:0"></div>
+                <div>
+                  <div style="font-size:7px;font-weight:700;color:#1D1D1F;line-height:1.2">Ritze Perdana</div>
+                  <div style="font-size:6px;color:#6E6E73">Unit 11C &middot; RM 2,400/mo</div>
+                  <div style="font-size:5px;color:#AEAEB2;margin-top:1px">Michelle Ong Cheng Bee</div>
+                </div>
+              </div>
+              <div style="background:rgba(52,199,89,0.1);border-radius:4px;padding:3px 5px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:6px;font-weight:600;color:#1F8B4C">&#10003; Tenant confirmed</span>
+                <span style="font-size:8px;color:#1F8B4C">&#8594;</span>
+              </div>
+            </div>
+            <!-- Listing card 2 -->
+            <div style="margin:0 5px;background:#fff;border:1px solid #E5E5EA;border-radius:7px;padding:6px;flex-shrink:0">
+              <div style="display:flex;gap:5px;align-items:flex-start">
+                <div style="width:20px;height:20px;background:#D1D1D6;border-radius:4px;flex-shrink:0"></div>
+                <div>
+                  <div style="font-size:7px;font-weight:700;color:#1D1D1F;line-height:1.2">The Greens Subang</div>
+                  <div style="font-size:6px;color:#6E6E73">Unit 8-01 &middot; RM 2,100/mo</div>
+                  <div style="font-size:5px;color:#AEAEB2;margin-top:1px">Helen Tan Bee Choo</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -798,7 +827,7 @@ const io = new IntersectionObserver(entries => {
     const loss = Math.round(n * 0.5 * 3000);
     contractsEl.textContent = n;
     counterEl.textContent = 'RM ' + loss.toLocaleString();
-    const pct = (n / 500 * 100).toFixed(1) + '%';
+    const pct = (n / 300 * 100).toFixed(1) + '%';
     slider.style.setProperty('--pct', pct);
   }
 
