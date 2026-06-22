@@ -443,7 +443,7 @@ function HealthTab({ agents, funnel, rawLeads, rawTenancies, onSelectSegment }: 
 
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 
-type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "health" | "potential" | "listed" | "existing" | "target" | "msgs";
+type SortCol = "name" | "joined_at" | "last_login_at" | "days_inactive" | "health" | "potential" | "listed" | "existing" | "target" | "outreach_wa" | "renewal_wa" | "msgs";
 
 function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: "asc" | "desc" }) {
   if (col !== sortCol) return <ChevronUp className="w-3 h-3 opacity-20" />;
@@ -552,7 +552,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
     setAgents(prev => prev.map(a => a.id === id ? { ...a, is_test_account: val } : a));
   }
 
-  const NUMERIC_COLS = new Set<SortCol>(["potential", "listed", "existing", "target", "msgs", "health"]);
+  const NUMERIC_COLS = new Set<SortCol>(["potential", "listed", "existing", "target", "outreach_wa", "renewal_wa", "msgs", "health"]);
   function toggleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortCol(col); setSortDir(NUMERIC_COLS.has(col) ? "desc" : "asc"); }
@@ -592,6 +592,8 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
       else if (sortCol === "listed") { av = a.my_listing_count; bv = b.my_listing_count; }
       else if (sortCol === "existing") { av = a.existing_listing_count; bv = b.existing_listing_count; }
       else if (sortCol === "target") { av = a.target_listing_count; bv = b.target_listing_count; }
+      else if (sortCol === "outreach_wa") { av = a.outreaches_sent; bv = b.outreaches_sent; }
+      else if (sortCol === "renewal_wa") { av = a.renewal_wa_count; bv = b.renewal_wa_count; }
       else if (sortCol === "msgs") { av = a.totalMsgs; bv = b.totalMsgs; }
       if (av < bv) return sortDir === "asc" ? -1 : 1;
       if (av > bv) return sortDir === "asc" ? 1 : -1;
@@ -733,25 +735,13 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
                   </span>
                 </th>
                 {/* Card columns */}
-                <th style={{ ...TH_BASE, textAlign: "right" }} title="Potential listings (owner leads, excl. competitor tracking)">
-                  Potl
-                </th>
-                <th style={{ ...TH_BASE, textAlign: "right" }} title="My listings (wants_rent / listed / matched stage)">
-                  Listed
-                </th>
-                <th style={{ ...TH_BASE, textAlign: "right" }} title="Existing contracts (tenancies)">
-                  Exist
-                </th>
-                <th style={{ ...TH_BASE, textAlign: "right" }} title="Competitor-tracking leads">
-                  Target
-                </th>
+                <Th col="potential" label="Potl" right />
+                <Th col="listed" label="Listed" right />
+                <Th col="existing" label="Exist" right />
+                <Th col="target" label="Target" right />
                 {/* Message columns */}
-                <th style={{ ...TH_BASE, textAlign: "right" }} title="WhatsApp messages sent to owner leads">
-                  Owner WA
-                </th>
-                <th style={{ ...TH_BASE, textAlign: "right" }} title="Renewal WA threads (tenancies in headsup / pinged / renewing)">
-                  Renewal WA
-                </th>
+                <Th col="outreach_wa" label="Owner WA" right />
+                <Th col="renewal_wa" label="Renewal WA" right />
                 {/* Activity */}
                 <Th col="days_inactive" label="Inactive" />
                 <Th col="health" label="Health" right />
