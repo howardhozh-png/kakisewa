@@ -1,4 +1,4 @@
-const CACHE = 'kk-v207';
+const CACHE = 'kk-v208';
 const OFFLINE_URL = '/offline';
 
 self.addEventListener('install', (event) => {
@@ -14,7 +14,9 @@ self.addEventListener('activate', (event) => {
       Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
     )
   );
-  self.clients.claim();
+  // Do NOT call clients.claim() here — it causes a mid-navigation SW takeover
+  // on first PWA install which leaves iOS WebKit with a white screen.
+  // The SW controls new navigations naturally after activation.
 });
 
 self.addEventListener('fetch', (event) => {
