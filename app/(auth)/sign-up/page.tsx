@@ -96,7 +96,7 @@ function SignUpForm() {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             is_admin: isAdmin,
-            referral_slug: refSlug,
+            referred_by: refSlug,
           },
         },
       })

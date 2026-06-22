@@ -922,7 +922,10 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       trial_started_at: trialStart,
       trial_ends_at: trialEnd,
       subscription_status: "trial",
-      referral_slug: (meta.referral_slug as string | null) ?? null,
+      // Auto-generate user's own referral slug from UUID
+      referral_slug: user.id.replace(/-/g, "").slice(0, 8).toUpperCase(),
+      // Store who referred this user (from ?ref= param passed at signup as "referred_by")
+      referred_by_slug: (meta.referred_by as string | null) ?? null,
     });
     // Stamp invite as used (fire-and-forget)
     if (user.email) {

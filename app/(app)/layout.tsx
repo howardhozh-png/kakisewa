@@ -15,6 +15,8 @@ import { FaqChatbot } from "@/components/faq-chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports, countCalendarEvents } from "@/lib/db";
+import { getTotalCardCount } from "@/lib/plan-caps";
+import { createClient } from "@/lib/supabase/server";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
 import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
@@ -39,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const hdrs = await headers();
   const isAdmin = hdrs.get("x-is-admin") === "true";
+  const userId = hdrs.get("x-user-id");
   const status = agent.subscription_status ?? null;
   const trialEndsAt = agent.trial_ends_at ? new Date(agent.trial_ends_at) : null;
   const now = new Date();
@@ -50,6 +53,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
   const isCancelled = !isAdmin && status === "cancelled";
   const showTrialBanner = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
+  // Fetch card count once for trial banner (only when banner will show)
+  let trialCardCount: number | undefined;
+  if (showTrialBanner && userId) {
+    try {
+      const supabase = await createClient();
+      trialCardCount = await getTotalCardCount(supabase, userId);
+    } catch {}
+  }
   // Show card nudge 8-30 days before trial ends (distinct from the urgent 7-day banner);
   // escalates to a red/urgent style once 15 days or fewer remain
   const showCardNudge = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft > 7 && trialDaysLeft <= 30 && !agent.stripe_subscription_id;
@@ -87,7 +98,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Top bar — sticky, extends left to cover sidebar rail */}
         <div className="kk-top-bar sticky top-0 z-50">
           {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} urgent={cardNudgeUrgent} />}
-          {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={false} />}
+          {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={false} currentCardCount={trialCardCount} />}
           <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs />
           <PwaInstallBanner />
         </div>
