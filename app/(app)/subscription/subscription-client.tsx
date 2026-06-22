@@ -69,10 +69,10 @@ interface PlanData {
 }
 
 const PLANS: PlanData[] = [
-  { planId: "silver",   name: "Silver",   cards: 50,   y1Monthly: 29,  y2Monthly: 29,  y1Annual: 348,  y2Annual: 348,  headline: "Move your pipeline.",       archetype: "New agent · <RM4k/month",         quote: "I want to start building my portfolio and learn renewal cycle",                          popular: false },
-  { planId: "gold",     name: "Gold",     cards: 150,  y1Monthly: 49,  y2Monthly: 69,  y1Annual: 588,  y2Annual: 828,  headline: "Scale your portfolio.",      archetype: "Growing agent · RM4-8k/month",    quote: "I have enough existing contracts and I don't want to miss them",                        popular: false },
-  { planId: "platinum", name: "Platinum", cards: 400,  y1Monthly: 99,  y2Monthly: 139, y1Annual: 1188, y2Annual: 1668, headline: "Never miss a renewal.",      archetype: "Established agent · RM8-15k/month", quote: "Renewal contract is a big portion of my passive income and I must capture them",      popular: true  },
-  { planId: "elite",    name: "Elite",    cards: 1000, y1Monthly: 159, y2Monthly: 219, y1Annual: 1908, y2Annual: 2628, headline: "Your all-in-one hub.",       archetype: "Elite agent · >RM15k/month",     quote: "I am successful, and I want to build my own personal brand",                           popular: false },
+  { planId: "silver",   name: "Silver",   cards: 50,   y1Monthly: 29,  y2Monthly: 29,  y1Annual: 348,  y2Annual: 348,  headline: "Move your pipeline.",       archetype: "New/Part-time agent <5k/month",      quote: "I want to start building my portfolio and learn renewal cycle",                          popular: false },
+  { planId: "gold",     name: "Gold",     cards: 150,  y1Monthly: 49,  y2Monthly: 69,  y1Annual: 588,  y2Annual: 828,  headline: "Scale your portfolio.",      archetype: "Growing agent RM5-10k/month",         quote: "I have enough existing contracts and I don't want to miss them",                        popular: false },
+  { planId: "platinum", name: "Platinum", cards: 400,  y1Monthly: 99,  y2Monthly: 139, y1Annual: 1188, y2Annual: 1668, headline: "Never miss a renewal.",      archetype: "Established agent RM10-20k/month",   quote: "Renewal contract is a big portion of my passive income and I must capture them",      popular: true  },
+  { planId: "elite",    name: "Elite",    cards: 1000, y1Monthly: 159, y2Monthly: 219, y1Annual: 1908, y2Annual: 2628, headline: "Your all-in-one hub.",       archetype: "Elite agent >RM20k/month",           quote: "I am successful, and I want to build my own personal brand",                           popular: false },
 ];
 
 // ── Copy button ────────────────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ function PricingCard({
           <div>
             {showStrikethrough && (
               <p className="text-[11px] mb-0.5" style={{ color: s.faint, textDecoration: "line-through" }}>
-                RM {y2PriceDisplay}/mo yr2
+                RM {y2PriceDisplay}/mo Year 2
               </p>
             )}
             <div className="flex items-end gap-1.5">
@@ -222,23 +222,21 @@ function PricingCard({
               </span>
               <span className="text-[12px] pb-1" style={{ color: s.mute }}>/mo</span>
             </div>
+            {showStrikethrough && (
+              <p className="text-[10px] mt-0.5" style={{ color: s.faint }}>for Year 1</p>
+            )}
             {interval === "annual" ? (
-              <>
-                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                  {showFreeMonths && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-                      style={{ background: s.accent, color: s.accentInk }}>
-                      Pay 12, get 14 months
-                    </span>
-                  )}
-                  <span className="text-[10px]" style={{ color: s.faint }}>
-                    RM {annualTotal.toLocaleString()}/year
+              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                {showFreeMonths && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{ background: s.accent, color: s.accentInk }}>
+                    Pay 12, get 14 months
                   </span>
-                </div>
-                <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                  RM {(plan.y1Annual / plan.cards).toFixed(2)}/card
-                </p>
-              </>
+                )}
+                <span className="text-[10px]" style={{ color: s.faint }}>
+                  RM {annualTotal.toLocaleString()}/year
+                </span>
+              </div>
             ) : (
               <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
                 {plan.y1Monthly !== plan.y2Monthly
@@ -585,7 +583,7 @@ export function SubscriptionClient({
                   <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
                     {(plan.y1Annual / plan.cards).toFixed(2)}
                   </span>
-                  <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/card</span>
+                  <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/card/mo</span>
                 </div>
                 <p className="mt-1.5 text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
                   {plan.cards.toLocaleString()} cards included
@@ -621,9 +619,6 @@ export function SubscriptionClient({
                 ["Push notifications",    "Yes",     "Yes",     "Yes",     "Yes",                "normal"],
                 ["Agent profile",         "—",       "—",       "Private", "Public + searchable","normal"],
                 ["Performance dashboard", "—",       "—",       "—",       "Yes",                "normal"],
-                ["Y2 monthly rate",       "RM 29",   "RM 69",   "RM 139",  "RM 219",             "normal"],
-                ["Y1 annual (14mo)",      "RM 348",  "RM 588",  "RM 1,188","RM 1,908",           "normal"],
-                ["Y2 annual (12mo)",      "RM 348",  "RM 828",  "RM 1,668","RM 2,628",           "normal"],
               ] as [string,string,string,string,string,string][]).map(([feature, silver, gold, platinum, elite, rowType], i) => {
                 const isHeader = rowType === "header";
                 return (
