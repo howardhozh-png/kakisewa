@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 interface CapInfo {
   current_plan: string;
-  upgrade_to: string;
+  upgrade_to?: string;
   current_cap: number;
   upgrade_cap: number | null;
 }
@@ -80,8 +80,8 @@ export function ConfirmMovedInDialog({
               </h3>
               <p className="text-[13px] mt-2 leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
                 {capInfo.upgrade_cap !== null
-                  ? `Upgrade to ${TIER_NAMES[capInfo.upgrade_to]} for up to ${capInfo.upgrade_cap} contracts.`
-                  : `Upgrade to ${TIER_NAMES[capInfo.upgrade_to]} for unlimited contracts.`}
+                  ? `Upgrade to ${TIER_NAMES[capInfo.upgrade_to ?? "elite"]} for up to ${capInfo.upgrade_cap} contracts.`
+                  : `Upgrade to ${TIER_NAMES[capInfo.upgrade_to ?? "elite"]} for unlimited contracts.`}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -91,8 +91,8 @@ export function ConfirmMovedInDialog({
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full font-semibold text-[13px] transition-opacity hover:opacity-90"
                 style={{ background: "var(--kk-ink)", color: "#fff" }}
               >
-                Upgrade to {TIER_NAMES[capInfo.upgrade_to]}
-                {TIER_PRICES[capInfo.upgrade_to] ? ` — RM ${TIER_PRICES[capInfo.upgrade_to]}/mo` : ""}
+                Upgrade to {TIER_NAMES[capInfo.upgrade_to ?? "elite"]}
+                {TIER_PRICES[capInfo.upgrade_to ?? ""] ? ` — RM ${TIER_PRICES[capInfo.upgrade_to ?? ""]}/mo` : ""}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <button onClick={handleClose} className="w-full px-4 py-2.5 rounded-full text-[13px] font-medium transition-opacity hover:opacity-70" style={{ color: "var(--kk-ink-mute)" }}>

@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, animate } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { PLAN_PRICES } from "@/lib/plans";
+import type { PlanId } from "@/lib/plans";
 
 // ── Plan data ─────────────────────────────────────────────────────────────────
 
@@ -17,9 +17,8 @@ const TIER_STYLES = {
     shadow: "5px 5px 0 0 rgba(0,0,0,0.12)",
     shadowHover: "8px 8px 0 0 rgba(0,0,0,0.16)",
     ink: "#1a1a1a", mute: "#555", faint: "#888",
-    roiGreen: "#15803d",
     btnBg: "#1a1a1a", btnInk: "#fff",
-    accent: "#16a34a",
+    accent: "#16a34a", accentInk: "#fff",
   },
   Gold: {
     bg: "linear-gradient(145deg, #92400e 0%, #b45309 15%, #d97706 35%, #eab308 55%, #fcd34d 68%, #ca8a04 85%, #92400e 100%)",
@@ -28,9 +27,8 @@ const TIER_STYLES = {
     shadow: "5px 5px 0 0 rgba(100,60,0,0.3)",
     shadowHover: "8px 8px 0 0 rgba(100,60,0,0.4)",
     ink: "#fff8e1", mute: "rgba(255,248,220,0.85)", faint: "rgba(255,235,150,0.65)",
-    roiGreen: "#fde68a",
     btnBg: "rgba(255,255,255,0.95)", btnInk: "#92400e",
-    accent: "#fde68a",
+    accent: "#fde68a", accentInk: "#92400e",
   },
   Platinum: {
     bg: "linear-gradient(145deg, #0b1f4a 0%, #1a3464 35%, #152a56 65%, #0a1a3c 100%)",
@@ -39,9 +37,8 @@ const TIER_STYLES = {
     shadow: "5px 5px 0 0 rgba(10,26,60,0.55)",
     shadowHover: "8px 8px 0 0 rgba(10,26,60,0.65)",
     ink: "#ffffff", mute: "rgba(255,255,255,0.80)", faint: "rgba(255,255,255,0.55)",
-    roiGreen: "#4ade80",
     btnBg: "rgba(255,255,255,0.95)", btnInk: "#0b1f4a",
-    accent: "#4ade80",
+    accent: "#4ade80", accentInk: "#0b1f4a",
   },
   Elite: {
     bg: "linear-gradient(145deg, #6b3d1e 0%, #a8692e 25%, #c98840 50%, #9a5e28 75%, #5c3015 100%)",
@@ -50,46 +47,55 @@ const TIER_STYLES = {
     shadow: "5px 5px 0 0 rgba(80,40,0,0.45)",
     shadowHover: "8px 8px 0 0 rgba(80,40,0,0.55)",
     ink: "#fff8f0", mute: "rgba(255,240,210,0.85)", faint: "rgba(255,220,170,0.6)",
-    roiGreen: "#fbbf24",
     btnBg: "rgba(255,255,255,0.95)", btnInk: "#5c3015",
-    accent: "#fbbf24",
+    accent: "#fbbf24", accentInk: "#5c3015",
   },
 };
 
-const PLANS = [
-  {
-    name: "Silver" as const, planId: "silver" as const,
-    ...PLAN_PRICES.silver,
-    headline: "Move your pipeline.",
-    archetype: "New agent · <RM4k/month",
-    quote: "I want to start building my portfolio and learn renewal cycle",
-    popular: false,
-  },
-  {
-    name: "Gold" as const, planId: "gold" as const,
-    ...PLAN_PRICES.gold,
-    headline: "Scale your portfolio.",
-    archetype: "Growing agent · RM4-8k/month",
-    quote: "I have enough existing contracts and I don't want to miss them",
-    popular: false,
-  },
-  {
-    name: "Platinum" as const, planId: "platinum" as const,
-    ...PLAN_PRICES.platinum,
-    headline: "Never miss a renewal.",
-    archetype: "Established agent · RM8-15k/month",
-    quote: "Renewal contract is a big portion of my passive income and I must capture them",
-    popular: true,
-  },
-  {
-    name: "Elite" as const, planId: "elite" as const,
-    ...PLAN_PRICES.elite,
-    headline: "Your all-in-one hub.",
-    archetype: "Elite agent · >RM15k/month",
-    quote: "I am successful, and I want to build my own personal brand",
-    popular: false,
-  },
+type TierName = "Silver" | "Gold" | "Platinum" | "Elite";
+
+interface PlanData {
+  planId: PlanId;
+  name: TierName;
+  cards: number;
+  y1Monthly: number;
+  y2Monthly: number;
+  y1Annual: number;
+  y2Annual: number;
+  headline: string;
+  archetype: string;
+  quote: string;
+  popular: boolean;
+}
+
+const PLANS: PlanData[] = [
+  { planId: "silver",   name: "Silver",   cards: 50,   y1Monthly: 29,  y2Monthly: 29,  y1Annual: 348,  y2Annual: 348,  headline: "Move your pipeline.",       archetype: "New agent · <RM4k/month",         quote: "I want to start building my portfolio and learn renewal cycle",                          popular: false },
+  { planId: "gold",     name: "Gold",     cards: 150,  y1Monthly: 49,  y2Monthly: 69,  y1Annual: 588,  y2Annual: 828,  headline: "Scale your portfolio.",      archetype: "Growing agent · RM4-8k/month",    quote: "I have enough existing contracts and I don't want to miss them",                        popular: false },
+  { planId: "platinum", name: "Platinum", cards: 400,  y1Monthly: 99,  y2Monthly: 139, y1Annual: 1188, y2Annual: 1668, headline: "Never miss a renewal.",      archetype: "Established agent · RM8-15k/month", quote: "Renewal contract is a big portion of my passive income and I must capture them",      popular: true  },
+  { planId: "elite",    name: "Elite",    cards: 1000, y1Monthly: 159, y2Monthly: 219, y1Annual: 1908, y2Annual: 2628, headline: "Your all-in-one hub.",       archetype: "Elite agent · >RM15k/month",     quote: "I am successful, and I want to build my own personal brand",                           popular: false },
 ];
+
+// ── Copy button ────────────────────────────────────────────────────────────────
+
+function CopyButton({ text, compact }: { text: string; compact?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-[12px] transition-opacity hover:opacity-80 shrink-0"
+      style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}
+    >
+      {copied ? <Check className="w-3 h-3" style={{ color: "var(--kk-green)" }} /> : <Copy className="w-3 h-3" />}
+      {!compact && (copied ? "Copied" : "Copy")}
+    </button>
+  );
+}
 
 // ── Animated price ─────────────────────────────────────────────────────────────
 
@@ -117,27 +123,38 @@ function AnimatedPrice({ value, ink }: { value: number; ink: string }) {
 // ── 3D card ────────────────────────────────────────────────────────────────────
 
 function PricingCard({
-  plan, interval, isCurrentPlan, isSelected, onCardClick, onSelect, isOnTrial,
+  plan, interval, billingYear, isCurrentPlan, isSelected,
+  onCardClick, onSelect, isOnTrial, currentCardCount,
 }: {
-  plan: typeof PLANS[number];
+  plan: PlanData;
   interval: "monthly" | "annual";
+  billingYear: 1 | 2;
   isCurrentPlan: boolean;
   isSelected: boolean;
   onCardClick: () => void;
   onSelect: () => void;
   isOnTrial?: boolean;
+  currentCardCount: number;
 }) {
   const s = TIER_STYLES[plan.name];
-  const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
+  const tooManyCards = currentCardCount > plan.cards;
+  const disabled = tooManyCards;
+
+  const monthlyPrice = billingYear === 1 ? plan.y1Monthly : plan.y2Monthly;
+  const annualTotal  = billingYear === 1 ? plan.y1Annual  : plan.y2Annual;
+  const annualMonthly = Math.round(annualTotal / 12);
+  const price = interval === "annual" ? annualMonthly : monthlyPrice;
+  const showFreeMonths = interval === "annual" && billingYear === 1;
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 22 } }}
-      className="flex flex-col h-full rounded-2xl overflow-hidden cursor-pointer"
+      whileHover={disabled ? {} : { scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+      className="flex flex-col h-full rounded-2xl overflow-hidden"
       initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: disabled ? 0.55 : 1, y: 0 }}
       transition={{ duration: 0.4, delay: PLANS.indexOf(plan) * 0.07 }}
-      onClick={onCardClick}
+      onClick={disabled ? undefined : onCardClick}
+      style={{ cursor: disabled ? "not-allowed" : "pointer" }}
     >
       <div
         className="flex flex-col h-full"
@@ -151,19 +168,30 @@ function PricingCard({
           position: "relative",
           transition: "box-shadow 0.2s, border-color 0.2s",
         }}
-        onMouseEnter={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "8px 8px 0 0 rgba(22,163,74,0.45)" : s.shadowHover)}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = isCurrentPlan ? "5px 5px 0 0 rgba(22,163,74,0.4)" : isSelected ? `0 0 0 3px rgba(255,255,255,0.2), ${s.shadowHover}` : s.shadow)}
+        onMouseEnter={e => { if (!disabled) e.currentTarget.style.boxShadow = isCurrentPlan ? "8px 8px 0 0 rgba(22,163,74,0.45)" : s.shadowHover; }}
+        onMouseLeave={e => { if (!disabled) e.currentTarget.style.boxShadow = isCurrentPlan ? "5px 5px 0 0 rgba(22,163,74,0.4)" : isSelected ? `0 0 0 3px rgba(255,255,255,0.2), ${s.shadowHover}` : s.shadow; }}
       >
         <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: s.shine }} />
 
-        {(plan.popular || isCurrentPlan) && (
-          <div className="absolute top-4 right-4 z-10">
-            <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide"
-              style={{ background: isCurrentPlan ? "#16a34a" : "#eab308", color: "#fff" }}>
-              {isCurrentPlan ? "Active plan" : "Most popular"}
+        <div className="absolute top-4 right-4 z-10">
+          {tooManyCards ? (
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide flex items-center gap-1"
+              style={{ background: "rgba(255,59,48,0.9)", color: "#fff" }}>
+              <AlertTriangle className="w-3 h-3" />
+              Over limit
             </span>
-          </div>
-        )}
+          ) : isCurrentPlan ? (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide"
+              style={{ background: "#16a34a", color: "#fff" }}>
+              Active plan
+            </span>
+          ) : plan.popular ? (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide"
+              style={{ background: "#eab308", color: "#fff" }}>
+              Most popular
+            </span>
+          ) : null}
+        </div>
 
         <div className="p-5 flex flex-col gap-3 flex-1 relative z-10">
           <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: s.faint }}>
@@ -190,23 +218,33 @@ function PricingCard({
             {interval === "annual" ? (
               <>
                 <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    style={{ background: s.accent, color: plan.name === "Silver" ? "#fff" : plan.name === "Gold" ? "#92400e" : plan.name === "Platinum" ? "#0b1f4a" : "#5c3015" }}>
-                    2 months free
-                  </span>
+                  {showFreeMonths && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                      style={{ background: s.accent, color: s.accentInk }}>
+                      2 months free
+                    </span>
+                  )}
                   <span className="text-[10px]" style={{ color: s.faint }}>
-                    RM {plan.annualTotal}/year
+                    RM {annualTotal.toLocaleString()}/year
                   </span>
                 </div>
                 <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                  RM {(plan.annualTotal / 365).toFixed(2)}/day on annual plan
+                  RM {(annualTotal / 365).toFixed(2)}/day
                 </p>
               </>
             ) : (
               <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                RM {plan.perDay}/day · annual saves RM {plan.annualSavings}
+                {plan.y1Monthly !== plan.y2Monthly
+                  ? `Year 2: RM ${plan.y2Monthly}/mo`
+                  : "Fixed rate, no increase"}
               </p>
             )}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-bold tabular-nums" style={{ color: s.faint }}>
+              {plan.cards.toLocaleString()} total cards
+            </span>
           </div>
 
           <div style={{ height: 1, background: s.faint, opacity: 0.25, marginTop: 4 }} />
@@ -218,22 +256,27 @@ function PricingCard({
           </div>
 
           <button
-            onClick={onSelect}
+            onClick={disabled ? undefined : (e) => { e.stopPropagation(); onSelect(); }}
+            disabled={disabled}
             className="w-full py-3 rounded-xl font-bold text-[13px] transition-all active:scale-95"
             style={{
-              background: s.btnBg, color: s.btnInk,
+              background: disabled ? "rgba(128,128,128,0.25)" : s.btnBg,
+              color: disabled ? "rgba(200,200,200,0.7)" : s.btnInk,
               border: "none",
-              boxShadow: "3px 3px 0 0 rgba(0,0,0,0.15)",
+              boxShadow: disabled ? "none" : "3px 3px 0 0 rgba(0,0,0,0.15)",
               letterSpacing: "-0.01em",
+              cursor: disabled ? "not-allowed" : "pointer",
             }}
-            onMouseEnter={e => (e.currentTarget.style.transform = "translate(-1px,-1px)")}
-            onMouseLeave={e => (e.currentTarget.style.transform = "translate(0,0)")}
+            onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = "translate(-1px,-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translate(0,0)"; }}
           >
-            {isOnTrial
+            {tooManyCards
+              ? `${currentCardCount}/${plan.cards} cards — reduce first`
+              : isOnTrial
               ? "Save card — free until trial ends"
               : interval === "annual"
-              ? `Pay RM ${plan.annualTotal}/year`
-              : `Pay RM ${plan.monthly}/month`}
+              ? `Pay RM ${annualTotal.toLocaleString()}/year`
+              : `Pay RM ${monthlyPrice}/month`}
           </button>
         </div>
       </div>
@@ -244,8 +287,10 @@ function PricingCard({
 // ── Confirm dialog ─────────────────────────────────────────────────────────────
 
 interface ConfirmProps {
-  plan: typeof PLANS[number];
+  plan: PlanData;
   interval: "monthly" | "annual";
+  billingYear: 1 | 2;
+  isUpgrade: boolean;
   onCancel: () => void;
   onConfirm: () => void;
   loading: boolean;
@@ -253,9 +298,13 @@ interface ConfirmProps {
   trialDaysLeft?: number | null;
 }
 
-function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading, isOnTrial, trialDaysLeft }: ConfirmProps) {
+function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onConfirm, loading, isOnTrial, trialDaysLeft }: ConfirmProps) {
   const s = TIER_STYLES[plan.name];
-  const price = interval === "annual" ? plan.annualMonthly : plan.monthly;
+  // Upgrades always use Y2 rate regardless of current subscriptionYear
+  const effectiveYear: 1 | 2 = isUpgrade ? 2 : billingYear;
+  const monthlyPrice = effectiveYear === 1 ? plan.y1Monthly : plan.y2Monthly;
+  const annualTotal  = effectiveYear === 1 ? plan.y1Annual  : plan.y2Annual;
+  const price = interval === "annual" ? Math.round(annualTotal / 12) : monthlyPrice;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape" && !loading) onCancel(); }
@@ -282,21 +331,26 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading, isOnTrial
           </div>
           {interval === "annual" ? (
             <div className="space-y-1 mt-3">
-              <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {plan.annualTotal.toLocaleString()} billed annually</p>
-              <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Save RM {plan.annualSavings}/year · 2 months free</p>
+              <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {annualTotal.toLocaleString()} billed annually</p>
+              {effectiveYear === 1 && (
+                <p className="text-[13px] font-semibold" style={{ color: s.accent }}>2 months free included</p>
+              )}
             </div>
           ) : (
-            <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {plan.monthly}/month · cancel anytime</p>
+            <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {monthlyPrice}/month · cancel anytime</p>
+          )}
+          {isUpgrade && (
+            <p className="text-[11px] mt-3 font-semibold" style={{ color: s.faint }}>Year 2 rate applies on plan upgrades</p>
           )}
         </div>
         <div className="px-6 pt-4 pb-5 space-y-4">
           {isOnTrial && trialDaysLeft && trialDaysLeft > 0 ? (
-            <div className="rounded-xl p-3" style={{ background: "var(--kk-green-soft, #f0fdf4)", border: "1px solid var(--kk-green, #34C759)" }}>
-              <p className="text-[11px] font-semibold mb-1" style={{ color: "var(--kk-green-ink, #1F8B4C)" }}>
+            <div className="rounded-xl p-3" style={{ background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.3)" }}>
+              <p className="text-[11px] font-semibold mb-1" style={{ color: "var(--kk-green-ink)" }}>
                 No charge today
               </p>
-              <p className="text-[11px] leading-relaxed" style={{ color: "var(--kk-green-ink, #1F8B4C)" }}>
-                Your card is saved securely. You will only be charged after your {trialDaysLeft}-day trial ends. Cancel anytime before then at no cost.
+              <p className="text-[11px] leading-relaxed" style={{ color: "var(--kk-green-ink)" }}>
+                Your card is saved securely. You will only be charged after your {trialDaysLeft}-day trial ends.
               </p>
             </div>
           ) : (
@@ -313,7 +367,7 @@ function ConfirmDialog({ plan, interval, onCancel, onConfirm, loading, isOnTrial
               className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90"
               style={{ background: "var(--kk-ink)", color: "#fff", opacity: loading ? 0.7 : 1 }}>
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {loading ? "Redirecting…" : isOnTrial && trialDaysLeft && trialDaysLeft > 0 ? "Save card →" : "Confirm & Pay →"}
+              {loading ? "Redirecting…" : isOnTrial && trialDaysLeft && trialDaysLeft > 0 ? "Save card" : "Confirm"}
             </button>
           </div>
           <p className="text-[10px] text-center" style={{ color: "var(--kk-ink-faint)" }}>Press Esc to cancel</p>
@@ -329,19 +383,29 @@ interface Props {
   status: string | null;
   trialDaysLeft: number | null;
   currentPlan: string | null;
+  subscriptionYear: 1 | 2;
+  currentCardCount: number;
+  referralCode: string | null;
+  creditBalanceMyr: number;
 }
 
-export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props) {
+export function SubscriptionClient({
+  status, trialDaysLeft, currentPlan,
+  subscriptionYear, currentCardCount, referralCode, creditBalanceMyr,
+}: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan ?? "platinum");
-  const [pending, setPending] = useState<{ plan: typeof PLANS[number]; interval: "monthly" | "annual" } | null>(null);
+  const [pending, setPending] = useState<{ plan: PlanData; interval: "monthly" | "annual"; isUpgrade: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const isOnTrial = (status === "beta" || status === "trial") && trialDaysLeft !== null && trialDaysLeft > 0;
+  // Trial/beta users are treated as Y1 (they'll start Y1 when trial ends)
+  const effectiveBillingYear: 1 | 2 = (status === "trial" || status === "beta") ? 1 : subscriptionYear;
+
   const selectedPlan = PLANS.find(p => p.planId === selectedPlanId) ?? PLANS[2];
-  const headerPrice = interval === "annual" ? selectedPlan.annualMonthly : selectedPlan.monthly;
 
   useEffect(() => {
     if (searchParams.get("success") === "1") {
@@ -354,7 +418,10 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isOnTrial = (status === "beta" || status === "trial") && trialDaysLeft !== null && trialDaysLeft > 0;
+  function handleSelectPlan(plan: PlanData) {
+    const isUpgrade = status === "active" && currentPlan !== null && plan.planId !== currentPlan;
+    setPending({ plan, interval, isUpgrade });
+  }
 
   async function handleConfirm() {
     if (!pending) return;
@@ -365,13 +432,14 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
       body: JSON.stringify({
         plan: pending.plan.planId,
         interval: pending.interval,
-        ...(isOnTrial && trialDaysLeft !== null && trialDaysLeft > 0
-          ? { trialDaysLeft }
-          : {}),
+        ...(isOnTrial && trialDaysLeft !== null && trialDaysLeft > 0 ? { trialDaysLeft } : {}),
       }),
     });
     const data = await res.json();
-    if (data.upgraded) {
+    if (res.status === 422 && data.error === "card_count_exceeded") {
+      toast.error(`You have ${data.current} cards. This plan supports up to ${data.cap}. Delete some cards first.`);
+      setLoading(false); setPending(null);
+    } else if (data.upgraded) {
       toast.success("Plan updated — prorated charge applied to your next invoice.");
       setPending(null); setLoading(false); router.refresh();
     } else if (data.url) {
@@ -390,12 +458,20 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
     else { toast.error(data.error ?? "No active subscription found"); setPortalLoading(false); }
   }
 
+  const referralLink = referralCode ? `https://kakisewa.com/sign-up?ref=${referralCode}` : null;
+
+  // Current plan cap for usage display
+  const currentPlanData = PLANS.find(p => p.planId === currentPlan);
+  const planCap = isOnTrial ? 1000 : (currentPlanData?.cards ?? null);
+
   return (
     <>
       {pending && (
         <ConfirmDialog
           plan={pending.plan}
           interval={pending.interval}
+          billingYear={effectiveBillingYear}
+          isUpgrade={pending.isUpgrade}
           onCancel={() => { if (!loading) setPending(null); }}
           onConfirm={handleConfirm}
           loading={loading}
@@ -412,15 +488,25 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             Choose your plan
           </h1>
 
-          {isOnTrial && (
-            <div className="mt-4 flex justify-center">
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+            {isOnTrial && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
                 style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
                 {status === "beta" ? "Beta" : "Trial"} · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
               </span>
-            </div>
-          )}
+            )}
+            {planCap !== null && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
+                style={{
+                  background: currentCardCount >= planCap ? "var(--kk-red)" : currentCardCount > planCap * 0.8 ? "#fef3c7" : "var(--kk-surface-2)",
+                  color: currentCardCount >= planCap ? "#fff" : currentCardCount > planCap * 0.8 ? "#92400e" : "var(--kk-ink-mute)",
+                  border: `1px solid ${currentCardCount >= planCap ? "var(--kk-red)" : currentCardCount > planCap * 0.8 ? "#fcd34d" : "var(--kk-line)"}`,
+                }}>
+                {currentCardCount} / {planCap} cards used
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Toggle */}
@@ -440,10 +526,12 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               style={{ background: interval === "annual" ? "var(--kk-ink)" : "transparent", color: interval === "annual" ? "#fff" : "var(--kk-ink-mute)" }}
             >
               Annual
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
-                style={{ background: interval === "annual" ? "#16a34a" : "var(--kk-line)", color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)" }}>
-                2mo free
-              </span>
+              {effectiveBillingYear === 1 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
+                  style={{ background: interval === "annual" ? "#16a34a" : "var(--kk-line)", color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)" }}>
+                  2mo free
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -455,11 +543,13 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               key={plan.name}
               plan={plan}
               interval={interval}
+              billingYear={effectiveBillingYear}
               isCurrentPlan={currentPlan === plan.planId}
               isSelected={selectedPlanId === plan.planId}
               onCardClick={() => setSelectedPlanId(plan.planId)}
-              onSelect={() => setPending({ plan, interval })}
+              onSelect={() => handleSelectPlan(plan)}
               isOnTrial={isOnTrial}
+              currentCardCount={currentCardCount}
             />
           ))}
         </div>
@@ -467,7 +557,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
         {/* Per-plan per-day callout */}
         <div className="mb-14">
           <p className="text-center text-[11px] font-bold uppercase tracking-[0.12em] mb-8" style={{ color: "var(--kk-ink-faint)" }}>
-            Annual billing: what you pay per day
+            Annual billing: what you pay per day (year 1)
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mx-2">
             {([
@@ -475,29 +565,23 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
               { plan: PLANS[1], food: "1 kopitiam egg/day" },
               { plan: PLANS[2], food: "2 kopitiam eggs/day" },
               { plan: PLANS[3], food: "1 set kopitiam egg and butter kaya toast/day" },
-            ] as { plan: typeof PLANS[number]; food: string | null }[]).map(({ plan, food }) => (
+            ] as { plan: PlanData; food: string | null }[]).map(({ plan, food }) => (
               <div key={plan.planId} className="relative text-center" style={{ padding: "20px 18px 18px", backgroundColor: "var(--kk-surface)" }}>
-                {/* pixel border top */}
                 <div className="absolute" style={{ top: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
-                {/* pixel border bottom */}
                 <div className="absolute" style={{ bottom: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
-                {/* pixel border left */}
                 <div className="absolute" style={{ left: "-6px", top: "6px", bottom: "6px", width: "6px", backgroundColor: "var(--kk-ink)" }} />
-                {/* pixel border right */}
                 <div className="absolute" style={{ right: "-6px", top: "6px", bottom: "6px", width: "6px", backgroundColor: "var(--kk-ink)" }} />
-                {/* corner pixels */}
                 <div className="absolute" style={{ top: "0px", left: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
                 <div className="absolute" style={{ top: "0px", right: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
                 <div className="absolute" style={{ bottom: "0px", left: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
                 <div className="absolute" style={{ bottom: "0px", right: "0px", width: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
-                {/* content */}
                 <p className="text-[10px] font-black uppercase tracking-[0.15em] mb-2" style={{ color: "var(--kk-ink-faint)" }}>
                   {plan.name}
                 </p>
                 <div className="flex items-baseline justify-center gap-1 flex-wrap">
                   <span className="text-[12px] font-bold" style={{ color: "var(--kk-ink-mute)" }}>RM</span>
                   <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
-                    {(plan.annualTotal / 365).toFixed(2)}
+                    {(plan.y1Annual / 365).toFixed(2)}
                   </span>
                   <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/day</span>
                 </div>
@@ -513,6 +597,9 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
 
         {/* Comparison table */}
         <div className="mb-12 overflow-x-auto">
+          <p className="text-[11px] font-semibold mb-4 ml-1" style={{ color: "var(--kk-ink-faint)" }}>
+            Card limit is shared across My Listing, Existing Contracts, and Lost Listing
+          </p>
           <table className="w-full text-left border-collapse" style={{ fontSize: "var(--kk-sm)" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid var(--kk-line-strong)" }}>
@@ -521,7 +608,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
                   <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)", width: "19%" }}>
                     <div>{p.name}</div>
                     <div className="text-[11px] font-normal mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-                      RM {p.monthly}/mo
+                      RM {p.y1Monthly}/mo
                     </div>
                   </th>
                 ))}
@@ -529,36 +616,30 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             </thead>
             <tbody>
               {([
-                ["Total cards",           "70",       "200",       "700",       "2,000",              "header"],
-                ["My listing",            "40 cards", "100 cards", "300 cards", "800 cards",          "sub"],
-                ["Existing listing",      "20 cards", "60 cards",  "200 cards", "700 cards",          "sub"],
-                ["Lost listing",        "10 cards", "40 cards",  "100 cards", "500 cards",          "sub"],
-                ["Email notifications",   "Yes",      "Yes",       "Yes",       "Yes",                "normal"],
-                ["Push notifications",    "Yes",      "Yes",       "Yes",       "Yes",                "normal"],
-                ["Agent profile",         "—",        "—",         "Private",   "Public + searchable","normal"],
-                ["Performance dashboard", "—",        "—",         "—",         "Yes",                "normal"],
+                ["Total cards",           "50",      "150",     "400",     "1,000",              "header"],
+                ["Email notifications",   "Yes",     "Yes",     "Yes",     "Yes",                "normal"],
+                ["Push notifications",    "Yes",     "Yes",     "Yes",     "Yes",                "normal"],
+                ["Agent profile",         "—",       "—",       "Private", "Public + searchable","normal"],
+                ["Performance dashboard", "—",       "—",       "—",       "Yes",                "normal"],
+                ["Y2 monthly rate",       "RM 29",   "RM 69",   "RM 139",  "RM 219",             "normal"],
+                ["Y1 annual (14mo)",      "RM 348",  "RM 588",  "RM 1,188","RM 1,908",           "normal"],
+                ["Y2 annual (12mo)",      "RM 348",  "RM 828",  "RM 1,668","RM 2,628",           "normal"],
               ] as [string,string,string,string,string,string][]).map(([feature, silver, gold, platinum, elite, rowType], i) => {
                 const isHeader = rowType === "header";
-                const isSub    = rowType === "sub";
                 return (
                   <tr key={feature} style={{
                     borderBottom: "1px solid var(--kk-line)",
-                    background: (isHeader || isSub) ? "rgba(52,199,89,0.08)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
+                    background: isHeader ? "rgba(52,199,89,0.08)" : i % 2 === 0 ? "transparent" : "var(--kk-surface-2)",
                   }}>
-                    <td className="py-2.5 pr-6" style={{
-                      paddingLeft: isSub ? 28 : 20,
-                      color: (isHeader || isSub) ? "#1F8B4C" : "var(--kk-ink-mute)",
-                      fontWeight: isHeader ? 700 : isSub ? 500 : 500,
-                      fontSize: isSub ? 12 : undefined,
-                    }}>
+                    <td className="py-2.5 pl-5 pr-6"
+                      style={{ color: isHeader ? "#1F8B4C" : "var(--kk-ink-mute)", fontWeight: isHeader ? 700 : 500 }}>
                       {feature}
                     </td>
                     {[silver, gold, platinum, elite].map((val, j) => (
                       <td key={j} className="py-2.5 px-3 text-center"
                         style={{
-                          color: val === "—" ? "var(--kk-ink-faint)" : (isHeader || isSub) ? "#1F8B4C" : "var(--kk-ink)",
+                          color: val === "—" ? "var(--kk-ink-faint)" : isHeader ? "#1F8B4C" : "var(--kk-ink)",
                           fontWeight: isHeader ? 700 : val !== "—" ? 500 : 400,
-                          fontSize: isSub ? 12 : undefined,
                         }}>
                         {val}
                       </td>
@@ -570,6 +651,60 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
           </table>
         </div>
 
+        {/* Referral section */}
+        {referralCode && (
+          <div className="mb-12 rounded-2xl p-6" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="kk-overline mb-4">Referral program</p>
+            <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>
+              Earn 100% of your referral&apos;s first payment
+            </p>
+            <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
+              When someone signs up using your code and makes their first payment, the full amount is credited to your billing account.
+            </p>
+
+            {creditBalanceMyr > 0 && (
+              <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
+                style={{ background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.25)" }}>
+                <div>
+                  <p className="text-[11px] font-semibold" style={{ color: "var(--kk-green-ink)" }}>Credit balance</p>
+                  <p className="text-[18px] font-black tabular-nums" style={{ color: "var(--kk-green-ink)" }}>
+                    RM {creditBalanceMyr.toFixed(2)}
+                  </p>
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--kk-green-ink)", opacity: 0.8 }}>
+                  Auto-applied to your next invoice
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--kk-ink-faint)" }}>Your referral code</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2.5 rounded-xl font-mono font-bold text-[14px] tracking-widest"
+                    style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line)" }}>
+                    {referralCode.toUpperCase()}
+                  </div>
+                  <CopyButton text={referralCode.toUpperCase()} />
+                </div>
+              </div>
+
+              {referralLink && (
+                <div>
+                  <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--kk-ink-faint)" }}>Share link</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 px-3 py-2.5 rounded-xl text-[12px] truncate"
+                      style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
+                      {referralLink}
+                    </div>
+                    <CopyButton text={referralLink} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Manage billing */}
         <div className="text-center">
           <button
@@ -579,7 +714,7 @@ export function SubscriptionClient({ status, trialDaysLeft, currentPlan }: Props
             style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line-strong)", opacity: portalLoading ? 0.6 : 1 }}
           >
             {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {portalLoading ? "Opening…" : "Manage billing →"}
+            {portalLoading ? "Opening…" : "Manage billing"}
           </button>
           <p className="mt-3 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
             Secure payment via Stripe · No lock-in · Cancel anytime

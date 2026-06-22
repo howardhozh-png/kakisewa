@@ -31,7 +31,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
-  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null } | null>(null);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId?: string; upgradeCap: number | null } | null>(null);
   const [form, setForm] = useState({
     property_name: "", unit: "", owner_name: "", owner_phone: "",
     expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "",
@@ -102,7 +102,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
         // Check target cap before creating anything
         const capCheck = await checkTargetCapAction();
         if (!capCheck.allowed) {
-          setCapBlock({ currentPlan: capCheck.current_plan, currentCount: capCheck.current_count, currentCap: capCheck.current_cap, upgradeToId: capCheck.upgrade_to, upgradeCap: capCheck.upgrade_cap });
+          setCapBlock({ currentPlan: capCheck.current_plan, currentCount: capCheck.current_count, currentCap: capCheck.current_cap, upgradeToId: capCheck.upgrade_to ?? undefined, upgradeCap: capCheck.upgrade_cap });
           setUploading(false);
           return;
         }

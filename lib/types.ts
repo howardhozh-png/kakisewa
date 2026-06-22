@@ -174,6 +174,9 @@ export interface AgentProfile {
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
   stripe_price_id?: string | null;
+  subscription_year?: number | null;
+  referred_by_slug?: string | null;
+  referral_slug?: string | null;
   trial_downgrade_archived_count?: number | null;
   profile_strengths?: ProfileStrengthItem[] | null;
   profile_verbatim?: ProfileVerbatimItem[] | null;

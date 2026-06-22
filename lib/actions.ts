@@ -151,7 +151,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   }
 
   const cap = await checkRenewalCardCap();
-  if (!cap.allowed) return { ok: false, reason: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
+  if (!cap.allowed) return { ok: false, reason: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to ?? undefined, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
   const newTenancy = await createTenancy({
     owner_lead_id: ownerLeadId,
@@ -853,7 +853,7 @@ export async function moveTenantLeaving(
           current_plan: capCheck.current_plan,
           current_count: capCheck.current_count,
           current_cap: capCheck.current_cap,
-          upgrade_to: capCheck.upgrade_to,
+          upgrade_to: capCheck.upgrade_to ?? undefined,
           upgrade_cap: capCheck.upgrade_cap,
           remaining: 0,
         };
@@ -1037,7 +1037,7 @@ export async function setOwnerLeadStage(id: string, stage: import("./types").Own
         current_plan: capCheck.current_plan,
         current_count: capCheck.current_count,
         current_cap: capCheck.current_cap,
-        upgrade_to: capCheck.upgrade_to,
+        upgrade_to: capCheck.upgrade_to ?? undefined,
         upgrade_cap: capCheck.upgrade_cap,
         remaining: 0,
       };
@@ -1064,7 +1064,7 @@ export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./type
         current_plan: capCheck.current_plan,
         current_count: capCheck.current_count,
         current_cap: capCheck.current_cap,
-        upgrade_to: capCheck.upgrade_to,
+        upgrade_to: capCheck.upgrade_to ?? undefined,
         upgrade_cap: capCheck.upgrade_cap,
         remaining: 0,
         trying: ids.length,
@@ -1078,7 +1078,7 @@ export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./type
         current_plan: capCheck.current_plan,
         current_count: capCheck.current_count,
         current_cap: capCheck.current_cap,
-        upgrade_to: capCheck.upgrade_to,
+        upgrade_to: capCheck.upgrade_to ?? undefined,
         upgrade_cap: capCheck.upgrade_cap,
         remaining: capCheck.remaining,
         trying: ids.length,
@@ -1144,7 +1144,7 @@ export async function convertLeadToTenancy(
     const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 
     const cap = await checkRenewalCardCap();
-    if (!cap.allowed) return { ok: false, message: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
+    if (!cap.allowed) return { ok: false, message: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to ?? undefined, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
     // Close stale tenancies first so the trigger recalculates has_active_tenancy = false.
     const { createServiceClient } = await import("@/lib/supabase/service");
@@ -1196,7 +1196,7 @@ export async function convertLeadToTenancy(
 
 export async function confirmMovedIn(
   tenancyId: string
-): Promise<{ ok: boolean; message?: string; cap_reached?: { current_plan: string; upgrade_to: string; current_cap: number; upgrade_cap: number | null } }> {
+): Promise<{ ok: boolean; message?: string; cap_reached?: { current_plan: string; upgrade_to?: string; current_cap: number; upgrade_cap: number | null } }> {
   try {
     const capCheck = await checkRenewalCardCap();
     if (!capCheck.allowed) {
@@ -1205,7 +1205,7 @@ export async function confirmMovedIn(
         message: "cap_reached",
         cap_reached: {
           current_plan: capCheck.current_plan,
-          upgrade_to: capCheck.upgrade_to,
+          upgrade_to: capCheck.upgrade_to ?? undefined,
           current_cap: capCheck.current_cap,
           upgrade_cap: capCheck.upgrade_cap ?? null,
         },
@@ -1793,7 +1793,7 @@ export async function addOwnerLeadAction(data: {
           current_plan: capCheck.current_plan,
           current_count: capCheck.current_count,
           current_cap: capCheck.current_cap,
-          upgrade_to: capCheck.upgrade_to,
+          upgrade_to: capCheck.upgrade_to ?? undefined,
           upgrade_cap: capCheck.upgrade_cap,
           remaining: 0,
         };
@@ -2012,7 +2012,7 @@ export async function generateLhdn(
 
 export async function markCommissionCollected(
   tenancyId: string
-): Promise<{ ok: boolean; message?: string; cap_reached?: { current_plan: string; upgrade_to: string; current_cap: number; upgrade_cap: number | null } }> {
+): Promise<{ ok: boolean; message?: string; cap_reached?: { current_plan: string; upgrade_to?: string; current_cap: number; upgrade_cap: number | null } }> {
   "use server";
   try {
     // Check contract cap before moving to active
@@ -2023,7 +2023,7 @@ export async function markCommissionCollected(
         message: "cap_reached",
         cap_reached: {
           current_plan: capCheck.current_plan,
-          upgrade_to: capCheck.upgrade_to,
+          upgrade_to: capCheck.upgrade_to ?? undefined,
           current_cap: capCheck.current_cap,
           upgrade_cap: capCheck.upgrade_cap ?? null,
         },
@@ -2164,7 +2164,7 @@ export async function markCompetitorRentedAction(
       current_plan: capCheck.current_plan,
       current_count: capCheck.current_count,
       current_cap: capCheck.current_cap,
-      upgrade_to: capCheck.upgrade_to,
+      upgrade_to: capCheck.upgrade_to ?? undefined,
       upgrade_cap: capCheck.upgrade_cap,
     };
   }
