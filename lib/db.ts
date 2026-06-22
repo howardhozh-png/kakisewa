@@ -1298,8 +1298,11 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   if (data.listing_purpose !== undefined)        updates.listing_purpose = data.listing_purpose;
   if (data.agreement_url !== undefined)          updates.agreement_url = data.agreement_url;
   if (data.intake_sent_at !== undefined)         updates.intake_sent_at = data.intake_sent_at;
-  if (data.is_managed !== undefined)             updates.is_managed = data.is_managed;
-  if (data.managed_at !== undefined)             updates.managed_at = data.managed_at;
+  if (data.is_managed !== undefined)                        updates.is_managed = data.is_managed;
+  if (data.managed_at !== undefined)                        updates.managed_at = data.managed_at;
+  if (data.competitor_contract_start !== undefined)         updates.competitor_contract_start = data.competitor_contract_start;
+  if (data.competitor_contract_duration_months !== undefined) updates.competitor_contract_duration_months = data.competitor_contract_duration_months;
+  if (data.competitor_contract_end !== undefined)           updates.competitor_contract_end = data.competitor_contract_end;
   if (Object.keys(updates).length === 0) return;
   const supabase = await createClient();
   const { data: updated, error } = await supabase.from("owner_leads").update(updates).eq("id", id).select("id");
