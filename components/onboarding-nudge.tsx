@@ -121,6 +121,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   }, [activeStep]);
 
   if (!isNewAgent) return null;
+  if (allDone) return null;
 
   function go(m: Mission) {
     setModalOpen(false);

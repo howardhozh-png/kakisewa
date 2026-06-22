@@ -82,8 +82,7 @@ export default async function AdminPage() {
   const { data: feedbackRows } = await supabase
     .from("feedback")
     .select("id, agent_name, agent_email, category, message, page_url, resolved, created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
+    .order("created_at", { ascending: false });
 
   const { data: inviteRows } = await supabase
     .from("invites")

@@ -46,9 +46,10 @@ interface RawFeedbackItem { agent_id: string; created_at: string; }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const MRR_BY_PLAN: Record<string, number> = { gold: 119, platinum: 179, elite: 299 };
-const PLAN_LABEL: Record<string, string> = { gold: "Gold", platinum: "Platinum", elite: "Elite" };
+const MRR_BY_PLAN: Record<string, number> = { silver: 29, gold: 49, platinum: 99, elite: 159 };
+const PLAN_LABEL: Record<string, string> = { silver: "Silver", gold: "Gold", platinum: "Platinum", elite: "Elite" };
 const PLAN_COLOR: Record<string, { text: string; bg: string; bar: string }> = {
+  silver:   { text: "#1D4ED8", bg: "rgba(59,130,246,0.10)",  bar: "#3B82F6" },
   gold:     { text: "#92400E", bg: "rgba(255,149,0,0.10)",   bar: "#FF9500" },
   platinum: { text: "#0b1f4a", bg: "rgba(11,31,74,0.12)",    bar: "#334155" },
   elite:    { text: "#6b3d1e", bg: "rgba(107,61,30,0.12)",   bar: "#92400E" },
@@ -70,12 +71,12 @@ const CATEGORY_STYLE: Record<string, { bg: string; color: string; label: string 
 
 type Segment = "power" | "active" | "risk" | "ghost" | "new";
 
-const SEGMENT_META: Record<Segment, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
-  power:  { label: "Power",  color: "#1F8B4C", bg: "rgba(52,199,89,0.10)",   border: "#34C759", icon: <Zap className="w-3 h-3" /> },
-  active: { label: "Active", color: "#0071E3", bg: "rgba(0,113,227,0.10)",   border: "#0071E3", icon: <Activity className="w-3 h-3" /> },
-  risk:   { label: "At risk",color: "#92400E", bg: "rgba(255,149,0,0.10)",   border: "#FF9500", icon: <AlertCircle className="w-3 h-3" /> },
-  ghost:  { label: "Ghost",  color: "#6E6E73", bg: "rgba(110,110,115,0.10)", border: "#C7C7CC", icon: <Ghost className="w-3 h-3" /> },
-  new:    { label: "New",    color: "#6d28d9", bg: "rgba(139,92,246,0.10)",  border: "#8b5cf6", icon: <UserPlus className="w-3 h-3" /> },
+const SEGMENT_META: Record<Segment, { label: string; desc: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
+  power:  { label: "Power user",  desc: "High activity + 10+ cards", color: "#1F8B4C", bg: "rgba(52,199,89,0.10)",   border: "#34C759", icon: <Zap className="w-3 h-3" /> },
+  active: { label: "Active",      desc: "Logging in regularly",      color: "#0071E3", bg: "rgba(0,113,227,0.10)",   border: "#0071E3", icon: <Activity className="w-3 h-3" /> },
+  risk:   { label: "At risk",     desc: "Low activity lately",       color: "#92400E", bg: "rgba(255,149,0,0.10)",   border: "#FF9500", icon: <AlertCircle className="w-3 h-3" /> },
+  ghost:  { label: "Ghost",       desc: "Never added any cards",     color: "#6E6E73", bg: "rgba(110,110,115,0.10)", border: "#C7C7CC", icon: <Ghost className="w-3 h-3" /> },
+  new:    { label: "New",         desc: "Joined less than 7 days ago",color: "#6d28d9", bg: "rgba(139,92,246,0.10)",  border: "#8b5cf6", icon: <UserPlus className="w-3 h-3" /> },
 };
 
 function computeHealthScore(a: AgentRow): number {
@@ -645,20 +646,37 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
     <div>
       {/* Segment chips */}
       <div className="flex gap-2 mb-4 flex-wrap">
-        {([["all", "All"], ...Object.keys(SEGMENT_META).map(s => [s, SEGMENT_META[s as Segment].label])] as [string, string][]).map(([seg, label]) => {
+        {/* All chip */}
+        <button onClick={() => setSegFilter("all")}
+          className="flex flex-col items-start px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
+          style={{
+            background: segFilter === "all" ? "var(--kk-ink)" : "var(--kk-surface-2)",
+            border: "1px solid var(--kk-line)",
+            color: segFilter === "all" ? "#fff" : "var(--kk-ink-mute)",
+          }}>
+          <span className="flex items-center gap-1">
+            All <span className="opacity-70">({segmentCounts["all"] ?? 0})</span>
+          </span>
+        </button>
+        {(Object.keys(SEGMENT_META) as Segment[]).map(seg => {
           const active = segFilter === seg;
-          const meta = seg !== "all" ? SEGMENT_META[seg as Segment] : null;
+          const meta = SEGMENT_META[seg];
           return (
-            <button key={seg} onClick={() => setSegFilter(seg as Segment | "all")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all"
+            <button key={seg} onClick={() => setSegFilter(active ? "all" : seg)}
+              className="flex flex-col items-start px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
               style={{
-                background: active ? (meta?.bg ?? "var(--kk-ink)") : "var(--kk-surface-2)",
-                border: active ? `1px solid ${meta?.border ?? "var(--kk-ink)"}40` : "1px solid var(--kk-line)",
-                color: active ? (meta?.color ?? "#fff") : "var(--kk-ink-mute)",
+                background: active ? meta.bg : "var(--kk-surface-2)",
+                border: active ? `1px solid ${meta.border}60` : "1px solid var(--kk-line)",
+                color: active ? meta.color : "var(--kk-ink-mute)",
               }}>
-              {meta?.icon}
-              {label}
-              <span className="ml-0.5 opacity-70">({segmentCounts[seg] ?? 0})</span>
+              <span className="flex items-center gap-1.5">
+                {meta.icon}
+                {meta.label}
+                <span className="opacity-70">({segmentCounts[seg] ?? 0})</span>
+              </span>
+              <span className="text-[10px] font-normal mt-0.5" style={{ color: active ? meta.color : "var(--kk-ink-faint)", opacity: 0.8 }}>
+                {meta.desc}
+              </span>
             </button>
           );
         })}
@@ -854,7 +872,7 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
       }
     }
     byPlanUsers.sort((a, b) => {
-      const planOrder = ["elite", "platinum", "gold"];
+      const planOrder = ["elite", "platinum", "gold", "silver"];
       const pa = planOrder.indexOf(a.subscription_plan ?? "");
       const pb = planOrder.indexOf(b.subscription_plan ?? "");
       if (pa !== pb) return pa - pb;
@@ -933,11 +951,11 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
         </div>
 
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-          {["gold", "platinum", "elite"].map((plan, i) => {
+          {["silver", "gold", "platinum", "elite"].map((plan, i) => {
             const count = displayByPlan[plan] ?? 0;
             const planMrr = count * (MRR_BY_PLAN[plan] ?? 0);
             const planMeta = PLAN_COLOR[plan];
-            const maxPlanMrr = Math.max(...["gold", "platinum", "elite"].map(p => (displayByPlan[p] ?? 0) * (MRR_BY_PLAN[p] ?? 0)), 1);
+            const maxPlanMrr = Math.max(...["silver", "gold", "platinum", "elite"].map(p => (displayByPlan[p] ?? 0) * (MRR_BY_PLAN[p] ?? 0)), 1);
             return (
               <div key={plan} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
                 <div style={{ width: 72, flexShrink: 0 }}>
