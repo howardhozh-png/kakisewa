@@ -1279,30 +1279,27 @@ export async function bulkImportTenancies(
   return { imported: rows.length };
 }
 
+// Fields on OwnerLead that must never be overwritten via a generic update.
+// Everything else in Partial<OwnerLead> is written automatically — no per-field
+// opt-in needed, so new fields on the type are always persisted without any
+// change to this function.
+const OWNER_LEAD_IMMUTABLE: ReadonlySet<keyof OwnerLead> = new Set([
+  "id",
+  "user_id",
+  "created_at",
+  "deleted_at",    // managed by deleteOwnerLead()
+  "intake_token",  // managed by getOrCreateOwnerIntakeToken()
+  "has_active_tenancy", // derived / set by tenancy triggers
+]);
+
 export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Promise<void> {
-  const updates: Record<string, unknown> = {};
-  if (data.owner_name !== undefined)             updates.owner_name = data.owner_name;
-  if (data.owner_phone !== undefined)            updates.owner_phone = data.owner_phone;
-  if (data.stage !== undefined)                  updates.stage = data.stage;
-  if (data.notes !== undefined)                  updates.notes = data.notes;
-  if (data.expected_rent !== undefined)          updates.expected_rent = data.expected_rent;
-  if (data.bedrooms !== undefined)               updates.bedrooms = data.bedrooms;
-  if (data.bathrooms !== undefined)              updates.bathrooms = data.bathrooms;
-  if (data.parking !== undefined)                updates.parking = data.parking;
-  if (data.property_name !== undefined)          updates.property_name = data.property_name;
-  if (data.unit !== undefined)                   updates.unit = data.unit;
-  if (data.address !== undefined)                updates.address = data.address;
-  if (data.available_from !== undefined)         updates.available_from = data.available_from;
-  if (data.photo_urls !== undefined)             updates.photo_urls = data.photo_urls ?? [];
-  if (data.cover_photo_index !== undefined)      updates.cover_photo_index = data.cover_photo_index;
-  if (data.listing_purpose !== undefined)        updates.listing_purpose = data.listing_purpose;
-  if (data.agreement_url !== undefined)          updates.agreement_url = data.agreement_url;
-  if (data.intake_sent_at !== undefined)         updates.intake_sent_at = data.intake_sent_at;
-  if (data.is_managed !== undefined)                        updates.is_managed = data.is_managed;
-  if (data.managed_at !== undefined)                        updates.managed_at = data.managed_at;
-  if (data.competitor_contract_start !== undefined)         updates.competitor_contract_start = data.competitor_contract_start;
-  if (data.competitor_contract_duration_months !== undefined) updates.competitor_contract_duration_months = data.competitor_contract_duration_months;
-  if (data.competitor_contract_end !== undefined)           updates.competitor_contract_end = data.competitor_contract_end;
+  const updates = Object.fromEntries(
+    (Object.entries(data) as [keyof OwnerLead, unknown][]).filter(
+      ([k, v]) => !OWNER_LEAD_IMMUTABLE.has(k) && v !== undefined
+    )
+  );
+  // photo_urls: coerce null → [] to satisfy the DB array column constraint
+  if ("photo_urls" in updates && updates.photo_urls === null) updates.photo_urls = [];
   if (Object.keys(updates).length === 0) return;
   const supabase = await createClient();
   const { data: updated, error } = await supabase.from("owner_leads").update(updates).eq("id", id).select("id");
