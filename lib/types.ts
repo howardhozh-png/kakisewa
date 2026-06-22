@@ -319,6 +319,7 @@ export interface PropertySupport {
   contact_name: string | null;
   phone: string;
   type: SupportType;
+  types: SupportType[];
   area: string | null;
   notes: string | null;
   starred: number; // 0 | 1

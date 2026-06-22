@@ -23,13 +23,20 @@ export function AddSupportButton() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [type, setType] = useState<SupportType>("other");
+  const [types, setTypes] = useState<SupportType[]>(["other"]);
   const [area, setArea] = useState("");
   const [notes, setNotes] = useState("");
   const [pending, startTransition] = useTransition();
 
+  function toggleType(t: SupportType) {
+    setTypes(prev => {
+      if (prev.includes(t)) return prev.length === 1 ? prev : prev.filter(x => x !== t);
+      return [...prev, t];
+    });
+  }
+
   function reset() {
-    setName(""); setPhone(""); setType("other"); setArea(""); setNotes("");
+    setName(""); setPhone(""); setTypes(["other"]); setArea(""); setNotes("");
   }
 
   function close() { reset(); setOpen(false); }
@@ -47,7 +54,8 @@ export function AddSupportButton() {
       const res = await savePropertySupport({
         name: name.trim(),
         phone: phone.trim(),
-        type,
+        type: types[0],
+        types,
         area: area.trim() || null,
         notes: notes.trim() || null,
         starred: 0,
@@ -100,21 +108,27 @@ export function AddSupportButton() {
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <p className="kk-overline mb-2">Type</p>
+                <p className="kk-overline mb-2">
+                  Service type{" "}
+                  <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(select all that apply)</span>
+                </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {SUPPORT_TYPES.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setType(t)}
-                      className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium"
-                      style={{
-                        background: type === t ? "var(--kk-ink)" : "var(--kk-surface-2)",
-                        color: type === t ? "#fff" : "var(--kk-ink-mute)",
-                      }}
-                    >
-                      {SUPPORT_ICONS[t]} {SUPPORT_LABELS[t]}
-                    </button>
-                  ))}
+                  {SUPPORT_TYPES.map((t) => {
+                    const active = types.includes(t);
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => toggleType(t)}
+                        className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium"
+                        style={{
+                          background: active ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                          color: active ? "#fff" : "var(--kk-ink-mute)",
+                        }}
+                      >
+                        {SUPPORT_ICONS[t]} {SUPPORT_LABELS[t]}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

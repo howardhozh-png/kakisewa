@@ -2065,23 +2065,25 @@ export async function savePropertySupport(data: {
   contact_name?: string | null;
   phone: string;
   type: SupportType;
+  types?: SupportType[];
   area?: string | null;
   notes?: string | null;
   starred?: number;
 }): Promise<{ ok: boolean }> {
   "use server";
+  const effectiveTypes = data.types?.length ? data.types : [data.type];
   try {
     if (data.id) {
       updatePropertySupport(data.id, {
         name: data.name, contact_name: data.contact_name ?? null,
-        phone: data.phone, type: data.type,
+        phone: data.phone, type: effectiveTypes[0], types: effectiveTypes,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred,
       });
     } else {
       createPropertySupport({
         name: data.name, contact_name: data.contact_name ?? null,
-        phone: data.phone, type: data.type,
+        phone: data.phone, type: effectiveTypes[0], types: effectiveTypes,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred ?? 0,
       });

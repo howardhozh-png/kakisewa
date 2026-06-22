@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition, useMemo, useEffect } from "react";
-import { Star, Trash2, X, Check, Loader2, Search, Phone } from "lucide-react";
+import { Trash2, X, Check, Loader2, Search } from "lucide-react";
 import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_ICONS } from "@/lib/types";
 import { savePropertySupport, toggleSupportStar, removeSupportContact } from "@/lib/actions";
+import { resolveTemplate, parseTemplateOverrides, type TemplateOverrides } from "@/lib/whatsapp-templates";
 import { toast } from "sonner";
 
 interface Props {
@@ -35,11 +36,10 @@ function getInitials(name: string): string {
 function Avatar({ name, type, size = 44, light = false }: { name: string; type: SupportType; size?: number; light?: boolean }) {
   const bg = light ? "rgba(255,255,255,0.25)" : TYPE_COLORS[type];
   const border = light ? "1.5px solid rgba(255,255,255,0.4)" : "none";
-  const color = light ? "white" : "white";
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      background: bg, border, color,
+      background: bg, border, color: "white",
       display: "flex", alignItems: "center", justifyContent: "center",
       fontWeight: 700, fontSize: size * 0.33, letterSpacing: "-0.5px",
       flexShrink: 0,
@@ -49,12 +49,31 @@ function Avatar({ name, type, size = 44, light = false }: { name: string; type: 
   );
 }
 
-// ── WhatsApp button ───────────────────────────────────────────────────────────
-function WaButton({ phone }: { phone: string }) {
-  const clean = phone.replace(/\D/g, "").replace(/^0/, "60");
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getTypes(c: PropertySupport): SupportType[] {
+  if (c.types?.length) return c.types;
+  return c.type ? [c.type] : ["other"];
+}
+
+function buildShareUrl(c: PropertySupport, templateOverrides: TemplateOverrides): string {
+  const types = getTypes(c);
+  const typeLabels = types.map(t => SUPPORT_LABELS[t]).join(", ");
+  const cleanPhone = c.phone.replace(/\D/g, "").replace(/^0/, "60");
+  const message = resolveTemplate("service_contact_share", templateOverrides, {
+    contactType: typeLabels,
+    contactName: c.name,
+    contactPhone: cleanPhone,
+    contactAreaLine: c.area ? `\nArea: ${c.area}` : "",
+    contactNotesLine: c.notes ? `\nNote: ${c.notes}` : "",
+  });
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
+// ── WhatsApp share button ─────────────────────────────────────────────────────
+function WaButton({ shareUrl }: { shareUrl: string }) {
   return (
     <a
-      href={`https://wa.me/${clean}`}
+      href={shareUrl}
       target="_blank"
       rel="noopener noreferrer"
       style={{
@@ -69,111 +88,99 @@ function WaButton({ phone }: { phone: string }) {
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
         <path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2 22l5.227-1.323C8.87 21.536 10.407 22 12 22c5.523 0 10-4.477 10-10S17.522 2 12 2z" fill="none" stroke="white" strokeWidth="1.5"/>
       </svg>
-      WhatsApp
+      Share contact
     </a>
   );
 }
 
-// ── Type chip ─────────────────────────────────────────────────────────────────
-function TypeChip({ type }: { type: SupportType }) {
+// ── Type chips ────────────────────────────────────────────────────────────────
+function TypeChip({ type, light = false }: { type: SupportType; light?: boolean }) {
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
       padding: "3px 8px", borderRadius: 6,
       fontSize: 11, fontWeight: 600,
-      background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)",
+      background: light ? "rgba(255,255,255,0.2)" : "var(--kk-surface-2)",
+      color: light ? "rgba(255,255,255,0.9)" : "var(--kk-ink-mute)",
     }}>
       {SUPPORT_ICONS[type]} {SUPPORT_LABELS[type]}
     </span>
   );
 }
 
-// ── Regular / Starred card ────────────────────────────────────────────────────
-function RegularCard({ contact, onEdit, onDelete, onStar }: {
+function TypeChips({ types, light = false }: { types: SupportType[]; light?: boolean }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+      {types.map(t => <TypeChip key={t} type={t} light={light} />)}
+    </div>
+  );
+}
+
+// ── Regular / Starred card (custom + starred custom) ─────────────────────────
+function RegularCard({ contact, onEdit, onDelete, onStar, shareUrl }: {
   contact: PropertySupport;
   onEdit: (c: PropertySupport) => void;
   onDelete: (c: PropertySupport) => void;
   onStar: (c: PropertySupport) => void;
+  shareUrl: string;
 }) {
   const isStarred = !!contact.starred;
   const isSeed = contact.source === "seed";
+  const types = getTypes(contact);
+  const primaryType = types[0] ?? "other";
 
   return (
-    <div
-      style={{
-        background: "var(--kk-surface)",
-        borderRadius: 18,
-        border: isStarred
-          ? "1.5px solid rgba(255,204,0,0.6)"
-          : "1px solid var(--kk-line)",
-        boxShadow: isStarred
-          ? "0 0 0 3px rgba(255,204,0,0.15), 0 4px 16px rgba(0,0,0,0.07)"
-          : "0 2px 8px rgba(0,0,0,0.05)",
-        overflow: "hidden",
-      }}
-    >
+    <div style={{
+      background: "var(--kk-surface)",
+      borderRadius: 18,
+      border: isStarred ? "1.5px solid rgba(255,204,0,0.6)" : "1px solid var(--kk-line)",
+      boxShadow: isStarred
+        ? "0 0 0 3px rgba(255,204,0,0.15), 0 4px 16px rgba(0,0,0,0.07)"
+        : "0 2px 8px rgba(0,0,0,0.05)",
+      overflow: "hidden",
+    }}>
       <div style={{ padding: 14 }}>
-        {/* Top row */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <Avatar name={contact.name} type={contact.type} />
+          <Avatar name={contact.name} type={primaryType} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1.3, marginBottom: 2 }}>
               {contact.name}
             </p>
-            {contact.contact_name ? (
-              <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", marginBottom: 6 }}>{contact.contact_name}</p>
-            ) : (
-              <p style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginBottom: 6, fontStyle: "italic" }}>No contact name</p>
-            )}
+            <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", marginBottom: 6 }}>
+              {contact.contact_name ? `${contact.contact_name} · ${contact.phone}` : contact.phone}
+            </p>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <TypeChip type={contact.type} />
+              <TypeChips types={types} />
               {contact.area && (
                 <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>📍 {contact.area}</span>
               )}
             </div>
           </div>
-          {/* Star button */}
           <button
             onClick={(e) => { e.stopPropagation(); onStar(contact); }}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              padding: 4, borderRadius: 8, fontSize: 18, lineHeight: 1,
-              flexShrink: 0, marginTop: -2,
-            }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: -2 }}
           >
             {isStarred ? "⭐" : "☆"}
           </button>
         </div>
 
-        {/* Divider */}
         <div style={{ borderTop: "1px solid var(--kk-line)", margin: "12px 0 10px" }} />
 
-        {/* Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <WaButton phone={contact.phone} />
-          {/* Edit — available for all */}
+          <WaButton shareUrl={shareUrl} />
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(contact); }}
-            style={{
-              background: "var(--kk-surface-2)", border: "none", borderRadius: 10,
-              width: 32, height: 32, display: "flex", alignItems: "center",
-              justifyContent: "center", cursor: "pointer", flexShrink: 0,
-            }}
+            style={{ background: "var(--kk-surface-2)", border: "none", borderRadius: 10, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--kk-ink-mute)" strokeWidth="2" strokeLinecap="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </button>
-          {/* Delete — only for custom contacts */}
           {!isSeed && (
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(contact); }}
-              style={{
-                background: "var(--kk-surface-2)", border: "none", borderRadius: 10,
-                width: 32, height: 32, display: "flex", alignItems: "center",
-                justifyContent: "center", cursor: "pointer", flexShrink: 0,
-              }}
+              style={{ background: "var(--kk-surface-2)", border: "none", borderRadius: 10, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
             >
               <Trash2 style={{ width: 14, height: 14, color: "var(--kk-red)" }} />
             </button>
@@ -184,11 +191,86 @@ function RegularCard({ contact, onEdit, onDelete, onStar }: {
   );
 }
 
-// ── Recommended card (seed, unstarred) ───────────────────────────────────────
-function RecommendedCard({ contact, onStar }: {
+// ── Starred + Recommended card (seed + starred = blue gradient + gold star glow) ──
+function StarredRecCard({ contact, onStar, shareUrl }: {
   contact: PropertySupport;
   onStar: (c: PropertySupport) => void;
+  shareUrl: string;
 }) {
+  const types = getTypes(contact);
+  const primaryType = types[0] ?? "other";
+
+  return (
+    <div style={{
+      borderRadius: 18,
+      border: "1.5px solid rgba(255,204,0,0.5)",
+      boxShadow: "0 0 0 3px rgba(255,204,0,0.12), 0 6px 24px rgba(0,113,227,0.15)",
+      overflow: "hidden",
+    }}>
+      <div style={{ background: "linear-gradient(135deg, #0060C7 0%, #0084FF 60%, #34AAFF 100%)", padding: "14px 14px 16px" }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: 6, padding: "2px 8px",
+            fontSize: 10, fontWeight: 700, color: "white",
+            letterSpacing: "0.06em", textTransform: "uppercase",
+          }}>
+            ✦ Recommended
+          </span>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            background: "rgba(255,204,0,0.25)", border: "1px solid rgba(255,204,0,0.5)",
+            borderRadius: 6, padding: "2px 8px",
+            fontSize: 10, fontWeight: 700, color: "#FFD700",
+            letterSpacing: "0.06em", textTransform: "uppercase",
+          }}>
+            ⭐ Starred
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <Avatar name={contact.name} type={primaryType} size={44} light />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "white", lineHeight: 1.3, marginBottom: 2 }}>
+              {contact.name}
+            </p>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+              {contact.contact_name ? `${contact.contact_name} · ${contact.phone}` : contact.phone}
+            </p>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onStar(contact); }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: -2 }}
+          >
+            ⭐
+          </button>
+        </div>
+      </div>
+
+      <div style={{ padding: "12px 14px 14px", background: "var(--kk-surface)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+          <TypeChips types={types} />
+          {contact.area && (
+            <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>📍 {contact.area}</span>
+          )}
+        </div>
+        <div style={{ borderTop: "1px solid var(--kk-line)", marginBottom: 10 }} />
+        <WaButton shareUrl={shareUrl} />
+      </div>
+    </div>
+  );
+}
+
+// ── Recommended card (seed, unstarred) ───────────────────────────────────────
+function RecommendedCard({ contact, onStar, shareUrl }: {
+  contact: PropertySupport;
+  onStar: (c: PropertySupport) => void;
+  shareUrl: string;
+}) {
+  const types = getTypes(contact);
+  const primaryType = types[0] ?? "other";
+
   return (
     <div style={{
       background: "var(--kk-surface)",
@@ -197,12 +279,7 @@ function RecommendedCard({ contact, onStar }: {
       boxShadow: "0 6px 24px rgba(0,113,227,0.12)",
       overflow: "hidden",
     }}>
-      {/* Gradient header */}
-      <div style={{
-        background: "linear-gradient(135deg, #0060C7 0%, #0084FF 60%, #34AAFF 100%)",
-        padding: "14px 14px 16px",
-      }}>
-        {/* Recommended chip */}
+      <div style={{ background: "linear-gradient(135deg, #0060C7 0%, #0084FF 60%, #34AAFF 100%)", padding: "14px 14px 16px" }}>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 4,
           background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
@@ -214,40 +291,34 @@ function RecommendedCard({ contact, onStar }: {
           ✦ Recommended
         </div>
 
-        {/* Company + contact */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <Avatar name={contact.name} type={contact.type} size={44} light />
+          <Avatar name={contact.name} type={primaryType} size={44} light />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: "white", lineHeight: 1.3, marginBottom: 2 }}>
               {contact.name}
             </p>
-            {contact.contact_name && (
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{contact.contact_name}</p>
-            )}
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+              {contact.contact_name ? `${contact.contact_name} · ${contact.phone}` : contact.phone}
+            </p>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onStar(contact); }}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              padding: 4, fontSize: 18, lineHeight: 1,
-              flexShrink: 0, marginTop: -2, color: "white",
-            }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: -2, color: "white" }}
           >
             ☆
           </button>
         </div>
       </div>
 
-      {/* Body */}
       <div style={{ padding: "12px 14px 14px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-          <TypeChip type={contact.type} />
+          <TypeChips types={types} />
           {contact.area && (
             <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>📍 {contact.area}</span>
           )}
         </div>
         <div style={{ borderTop: "1px solid var(--kk-line)", marginBottom: 10 }} />
-        <WaButton phone={contact.phone} />
+        <WaButton shareUrl={shareUrl} />
       </div>
     </div>
   );
@@ -255,20 +326,29 @@ function RecommendedCard({ contact, onStar }: {
 
 // ── Section header ────────────────────────────────────────────────────────────
 function SectionHeader({ label, count, variant = "default" }: {
-  label: string; count: number; variant?: "default" | "starred" | "rec";
+  label: string; count: number; variant?: "default" | "starred" | "rec" | "starredRec";
 }) {
-  const labelColor = variant === "starred" ? "#B8860B" : variant === "rec" ? "#0071E3" : "var(--kk-ink-mute)";
-  const countBg    = variant === "starred" ? "#FFF3E0" : variant === "rec" ? "#E8F2FF" : "var(--kk-surface-2)";
-  const countColor = variant === "starred" ? "#FF9500" : variant === "rec" ? "#0071E3" : "var(--kk-ink-faint)";
+  const labelColor =
+    variant === "starredRec" ? "#0060C7"
+    : variant === "starred" ? "#B8860B"
+    : variant === "rec" ? "#0071E3"
+    : "var(--kk-ink-mute)";
+  const countBg =
+    variant === "starredRec" ? "#E8F2FF"
+    : variant === "starred" ? "#FFF3E0"
+    : variant === "rec" ? "#E8F2FF"
+    : "var(--kk-surface-2)";
+  const countColor =
+    variant === "starredRec" ? "#0071E3"
+    : variant === "starred" ? "#FF9500"
+    : variant === "rec" ? "#0071E3"
+    : "var(--kk-ink-faint)";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
       <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: labelColor }}>
         {label}
       </span>
-      <span style={{
-        background: countBg, color: countColor,
-        fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 20,
-      }}>
+      <span style={{ background: countBg, color: countColor, fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>
         {count}
       </span>
     </div>
@@ -292,23 +372,35 @@ function ContactForm({ initial, onClose, onSaved }: {
   onClose: () => void;
   onSaved: (c: PropertySupport) => void;
 }) {
+  const initialTypes: SupportType[] = initial?.types?.length ? initial.types : (initial?.type ? [initial.type] : ["other"]);
   const [name, setName]               = useState(initial?.name ?? "");
   const [contactName, setContactName] = useState(initial?.contact_name ?? "");
   const [phone, setPhone]             = useState(initial?.phone ?? "");
-  const [type, setType]               = useState<SupportType>(initial?.type ?? "other");
+  const [types, setTypes]             = useState<SupportType[]>(initialTypes);
   const [area, setArea]               = useState(initial?.area ?? "");
   const [notes, setNotes]             = useState(initial?.notes ?? "");
   const [pending, startTransition]    = useTransition();
 
+  function toggleType(t: SupportType) {
+    setTypes(prev => {
+      if (prev.includes(t)) {
+        if (prev.length === 1) return prev;
+        return prev.filter(x => x !== t);
+      }
+      return [...prev, t];
+    });
+  }
+
   function submit() {
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone.trim() || types.length === 0) return;
     startTransition(async () => {
       const res = await savePropertySupport({
         id: initial?.id,
         name: name.trim(),
         contact_name: contactName.trim() || null,
         phone: phone.trim(),
-        type,
+        type: types[0],
+        types,
         area: area.trim() || null,
         notes: notes.trim() || null,
         starred: initial?.starred ?? 0,
@@ -319,9 +411,13 @@ function ContactForm({ initial, onClose, onSaved }: {
           id: initial?.id ?? `sup_${Date.now()}`,
           name: name.trim(),
           contact_name: contactName.trim() || null,
-          phone: phone.trim(), type,
-          area: area.trim() || null, notes: notes.trim() || null,
-          starred: initial?.starred ?? 0, source: initial?.source ?? "custom",
+          phone: phone.trim(),
+          type: types[0],
+          types,
+          area: area.trim() || null,
+          notes: notes.trim() || null,
+          starred: initial?.starred ?? 0,
+          source: initial?.source ?? "custom",
           created_at: initial?.created_at ?? new Date().toISOString(),
         });
         onClose();
@@ -362,24 +458,31 @@ function ContactForm({ initial, onClose, onSaved }: {
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
-          {/* Type */}
+        <div className="px-6 py-5 space-y-4" style={{ maxHeight: "80vh", overflowY: "auto" }}>
           <div>
-            <p className="kk-overline mb-2">Service type</p>
+            <p className="kk-overline mb-2">
+              Service type{" "}
+              <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                (select all that apply)
+              </span>
+            </p>
             <div className="flex flex-wrap gap-1.5">
-              {SUPPORT_TYPES.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setType(t)}
-                  className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium"
-                  style={{
-                    background: type === t ? "var(--kk-ink)" : "var(--kk-surface-2)",
-                    color: type === t ? "#fff" : "var(--kk-ink-mute)",
-                  }}
-                >
-                  {SUPPORT_ICONS[t]} {SUPPORT_LABELS[t]}
-                </button>
-              ))}
+              {SUPPORT_TYPES.map((t) => {
+                const active = types.includes(t);
+                return (
+                  <button
+                    key={t}
+                    onClick={() => toggleType(t)}
+                    className="kk-toggle-pill px-3 py-1.5 rounded-full text-[12px] font-medium"
+                    style={{
+                      background: active ? "var(--kk-ink)" : "var(--kk-surface-2)",
+                      color: active ? "#fff" : "var(--kk-ink-mute)",
+                    }}
+                  >
+                    {SUPPORT_ICONS[t]} {SUPPORT_LABELS[t]}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -389,7 +492,10 @@ function ContactForm({ initial, onClose, onSaved }: {
           </div>
 
           <div>
-            <p className="kk-overline mb-1.5">Contact person <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
+            <p className="kk-overline mb-1.5">
+              Contact person{" "}
+              <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+            </p>
             <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="e.g. Ahmad, Uncle Chong" style={INPUT_STYLE} />
           </div>
 
@@ -480,16 +586,16 @@ function DeleteConfirm({ contact, onCancel, onConfirmed }: {
 }
 
 // ── Main directory ────────────────────────────────────────────────────────────
-export function SupportsDirectory({ initialContacts }: Props) {
-  const [contacts, setContacts]     = useState<PropertySupport[]>(initialContacts);
-  const [search, setSearch]         = useState("");
-  const [filterType, setFilterType] = useState<SupportType | "all" | "starred">("all");
-  const [editTarget, setEditTarget] = useState<PropertySupport | null | "new">(null);
+export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props) {
+  const templateOverrides = useMemo(() => parseTemplateOverrides(whatsappTemplates), [whatsappTemplates]);
+  const [contacts, setContacts]         = useState<PropertySupport[]>(initialContacts);
+  const [search, setSearch]             = useState("");
+  const [filterType, setFilterType]     = useState<SupportType | "all" | "starred">("all");
+  const [editTarget, setEditTarget]     = useState<PropertySupport | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<PropertySupport | null>(null);
-  const [, startTransition]         = useTransition();
+  const [, startTransition]             = useTransition();
 
-  // Three sections: starred (any source), recommended (seed unstarred), yours (custom unstarred)
-  const { starred, recommended, yours } = useMemo(() => {
+  const { starredRec, starred, recommended, others } = useMemo(() => {
     const q = search.toLowerCase();
     const matches = (c: PropertySupport) => {
       if (!q) return true;
@@ -504,16 +610,17 @@ export function SupportsDirectory({ initialContacts }: Props) {
     const typeMatch = (c: PropertySupport) =>
       filterType === "all" ||
       filterType === "starred" ||
-      c.type === filterType;
+      getTypes(c).includes(filterType as SupportType);
 
     const all = contacts.filter((c) => matches(c) && typeMatch(c));
     const starredFilter = filterType === "starred";
 
-    const starred      = all.filter((c) => !!c.starred);
-    const recommended  = starredFilter ? [] : all.filter((c) => !c.starred && c.source === "seed");
-    const yours        = starredFilter ? [] : all.filter((c) => !c.starred && c.source !== "seed");
+    const starredRec   = all.filter(c => !!c.starred && c.source === "seed");
+    const starred      = all.filter(c => !!c.starred && c.source !== "seed");
+    const recommended  = starredFilter ? [] : all.filter(c => !c.starred && c.source === "seed");
+    const others       = starredFilter ? [] : all.filter(c => !c.starred && c.source !== "seed");
 
-    return { starred, recommended, yours };
+    return { starredRec, starred, recommended, others };
   }, [contacts, search, filterType]);
 
   function handleStar(c: PropertySupport) {
@@ -541,12 +648,12 @@ export function SupportsDirectory({ initialContacts }: Props) {
     setDeleteTarget(null);
   }
 
-  const totalVisible = starred.length + recommended.length + yours.length;
+  const totalVisible = starredRec.length + starred.length + recommended.length + others.length;
   const hasStarred   = contacts.some((c) => c.starred);
+  const hasType      = (t: SupportType) => contacts.some(c => getTypes(c).includes(t));
 
   return (
     <>
-      {/* Search + filters */}
       <div className="flex flex-col gap-3 mb-5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--kk-ink-faint)" }} />
@@ -562,11 +669,11 @@ export function SupportsDirectory({ initialContacts }: Props) {
 
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {(["all", "starred", ...SUPPORT_TYPES] as const).map((t) => {
-            if (t !== "all" && t !== "starred" && !contacts.some((c) => c.type === t)) return null;
+            if (t !== "all" && t !== "starred" && !hasType(t as SupportType)) return null;
             if (t === "starred" && !hasStarred) return null;
-            const isActive  = filterType === t;
+            const isActive   = filterType === t;
             const isStarPill = t === "starred";
-            const label = t === "all" ? "All" : t === "starred" ? "⭐ Starred" : `${SUPPORT_ICONS[t]} ${SUPPORT_LABELS[t]}`;
+            const label = t === "all" ? "All" : t === "starred" ? "⭐ Starred" : `${SUPPORT_ICONS[t as SupportType]} ${SUPPORT_LABELS[t as SupportType]}`;
             return (
               <button
                 key={t}
@@ -588,7 +695,6 @@ export function SupportsDirectory({ initialContacts }: Props) {
         </div>
       </div>
 
-      {/* Empty state */}
       {totalVisible === 0 ? (
         <div className="kk-section flex flex-col items-center justify-center py-20 gap-3 text-center">
           <p className="text-[17px] font-semibold" style={{ color: "var(--kk-ink)" }}>No contacts found</p>
@@ -599,37 +705,45 @@ export function SupportsDirectory({ initialContacts }: Props) {
       ) : (
         <div className="space-y-8">
 
-          {/* ── Starred ── */}
+          {starredRec.length > 0 && (
+            <section>
+              <SectionHeader label="⭐ Starred + Recommended" count={starredRec.length} variant="starredRec" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {starredRec.map((c) => (
+                  <StarredRecCard key={c.id} contact={c} onStar={handleStar} shareUrl={buildShareUrl(c, templateOverrides)} />
+                ))}
+              </div>
+            </section>
+          )}
+
           {starred.length > 0 && (
             <section>
               <SectionHeader label="⭐ Starred" count={starred.length} variant="starred" />
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {starred.map((c) => (
-                  <RegularCard key={c.id} contact={c} onEdit={setEditTarget} onDelete={setDeleteTarget} onStar={handleStar} />
+                  <RegularCard key={c.id} contact={c} onEdit={setEditTarget} onDelete={setDeleteTarget} onStar={handleStar} shareUrl={buildShareUrl(c, templateOverrides)} />
                 ))}
               </div>
             </section>
           )}
 
-          {/* ── Recommended ── */}
           {recommended.length > 0 && (
             <section>
               <SectionHeader label="✦ Recommended" count={recommended.length} variant="rec" />
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {recommended.map((c) => (
-                  <RecommendedCard key={c.id} contact={c} onStar={handleStar} />
+                  <RecommendedCard key={c.id} contact={c} onStar={handleStar} shareUrl={buildShareUrl(c, templateOverrides)} />
                 ))}
               </div>
             </section>
           )}
 
-          {/* ── Your contacts ── */}
-          {yours.length > 0 && (
+          {others.length > 0 && (
             <section>
-              <SectionHeader label="Your Contacts" count={yours.length} variant="default" />
+              <SectionHeader label="Others" count={others.length} variant="default" />
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {yours.map((c) => (
-                  <RegularCard key={c.id} contact={c} onEdit={setEditTarget} onDelete={setDeleteTarget} onStar={handleStar} />
+                {others.map((c) => (
+                  <RegularCard key={c.id} contact={c} onEdit={setEditTarget} onDelete={setDeleteTarget} onStar={handleStar} shareUrl={buildShareUrl(c, templateOverrides)} />
                 ))}
               </div>
             </section>
@@ -638,7 +752,6 @@ export function SupportsDirectory({ initialContacts }: Props) {
         </div>
       )}
 
-      {/* Add / Edit panel */}
       {editTarget !== null && (
         <ContactForm
           initial={editTarget === "new" ? null : editTarget}
@@ -647,7 +760,6 @@ export function SupportsDirectory({ initialContacts }: Props) {
         />
       )}
 
-      {/* Delete confirm */}
       {deleteTarget && (
         <DeleteConfirm
           contact={deleteTarget}

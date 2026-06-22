@@ -205,7 +205,7 @@ const _cachedAllTenantProfiles = unstable_cache(
 const _cachedPropertySupports = unstable_cache(
   async (userId: string): Promise<PropertySupport[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("property_supports").select("id, name, contact_name, phone, type, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("source", { ascending: false }).order("name", { ascending: true });
+    const { data, error } = await svc.from("property_supports").select("id, name, contact_name, phone, type, types, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("source", { ascending: false }).order("name", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PropertySupport[];
   },
@@ -2466,7 +2466,7 @@ export async function getPropertySupports(): Promise<PropertySupport[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("property_supports").select("id, name, phone, type, area, notes, starred, source, created_at").order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
+    const { data, error } = await supabase.from("property_supports").select("id, name, contact_name, phone, type, types, area, notes, starred, source, created_at").order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PropertySupport[];
   }
@@ -2474,20 +2474,22 @@ export async function getPropertySupports(): Promise<PropertySupport[]> {
 }
 
 export async function createPropertySupport(data: {
-  name: string; contact_name?: string | null; phone: string; type: SupportType;
+  name: string; contact_name?: string | null; phone: string; type: SupportType; types?: SupportType[];
   area?: string | null; notes?: string | null; starred?: number;
 }): Promise<PropertySupport> {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
   const id = `sup_${Date.now()}`;
+  const effectiveTypes = data.types?.length ? data.types : [data.type];
   const { error } = await supabase.from("property_supports").insert({
     id,
     user_id: user!.id,
     name: data.name,
     contact_name: data.contact_name ?? null,
     phone: data.phone,
-    type: data.type,
+    type: effectiveTypes[0],
+    types: effectiveTypes,
     area: data.area ?? null,
     notes: data.notes ?? null,
     starred: data.starred ?? 0,
@@ -2496,14 +2498,14 @@ export async function createPropertySupport(data: {
   if (error) throw error;
   const { data: fresh } = await supabase
     .from("property_supports")
-    .select("id, name, contact_name, phone, type, area, notes, starred, source, created_at")
+    .select("id, name, contact_name, phone, type, types, area, notes, starred, source, created_at")
     .eq("id", id)
     .single();
   return fresh as PropertySupport;
 }
 
 export async function updatePropertySupport(id: string, data: Partial<{
-  name: string; contact_name: string | null; phone: string; type: SupportType;
+  name: string; contact_name: string | null; phone: string; type: SupportType; types: SupportType[];
   area: string | null; notes: string | null; starred: number;
 }>): Promise<void> {
   const updates: Record<string, unknown> = {};
@@ -2511,6 +2513,7 @@ export async function updatePropertySupport(id: string, data: Partial<{
   if (data.contact_name !== undefined) updates.contact_name = data.contact_name;
   if (data.phone        !== undefined) updates.phone        = data.phone;
   if (data.type         !== undefined) updates.type         = data.type;
+  if (data.types        !== undefined) updates.types        = data.types;
   if (data.area         !== undefined) updates.area         = data.area;
   if (data.notes        !== undefined) updates.notes        = data.notes;
   if (data.starred      !== undefined) updates.starred      = data.starred;
