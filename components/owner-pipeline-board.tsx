@@ -758,7 +758,7 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCon
           if (!stageRes.ok && stageRes.reason === "plan_cap_reached") {
             onCapReached({ currentPlan: stageRes.current_plan ?? "silver", currentCount: stageRes.current_count ?? 0, currentCap: stageRes.current_cap ?? 0, upgradeToId: stageRes.upgrade_to ?? "gold", upgradeCap: stageRes.upgrade_cap ?? null });
             router.refresh();
-            toast.success("Message sent. Card stays in Potential Listing — My Listing is full.");
+            toast.success("Message sent. Card stays in Property Leads — My Listing is full.");
             return;
           }
           if (stageRes.ok && stageRes.low_remaining && stageRes.remaining !== undefined) {

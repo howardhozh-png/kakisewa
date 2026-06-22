@@ -65,7 +65,7 @@ const STEPS: TourStep[] = [
   },
   {
     targetId: "tour-btn-upload-csv",
-    href: "/potential-listing",
+    href: "/property-leads",
     label: "Workflow 1 of 3",
     title: "Get new owners listed",
     Icon: Upload,

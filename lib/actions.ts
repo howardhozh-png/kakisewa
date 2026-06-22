@@ -218,7 +218,7 @@ export async function removeTenancy(id: string) {
   await deleteTenancy(id);
   invalidateCache();
   revalidatePath("/existing-listing");
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   revalidatePath("/");
 }
 
@@ -238,14 +238,14 @@ export async function bulkRemoveTenancies(ids: string[]): Promise<void> {
   await bulkSoftDeleteTenancies(ids);
   invalidateCache();
   revalidatePath("/existing-listing");
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   revalidatePath("/");
 }
 
 export async function removeOwnerLead(id: string) {
   await deleteOwnerLead(id);
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   revalidatePath("/");
 }
 
@@ -259,28 +259,28 @@ export async function removeOwnerLeadForce(id: string) {
 export async function bulkDeleteOwnerLeads(ids: string[]): Promise<void> {
   await bulkSoftDeleteOwnerLeads(ids);
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   revalidatePath("/");
 }
 
 export async function restoreOwnerLeadAction(id: string): Promise<void> {
   await restoreOwnerLead(id);
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   revalidatePath("/");
 }
 
 export async function hardDeleteOwnerLeadAction(id: string): Promise<void> {
   await hardDeleteOwnerLead(id);
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   revalidatePath("/");
 }
 
 export async function bulkHardDeleteOwnerLeadsAction(ids: string[]): Promise<void> {
   await bulkHardDeleteOwnerLeads(ids);
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   revalidatePath("/");
 }
 
@@ -311,7 +311,7 @@ export async function assignPropertyNameAction(newName: string): Promise<{ ok: b
     .is("property_name", null);
   if (error) return { ok: false, message: error.message };
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   revalidatePath("/my-listing");
   revalidatePath("/");
   return { ok: true };
@@ -330,7 +330,7 @@ export async function renamePropertyGroupAction(oldName: string, newName: string
     .eq("property_name", oldName);
   if (error) return { ok: false, message: error.message };
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   revalidatePath("/my-listing");
   revalidatePath("/");
   return { ok: true };
@@ -724,7 +724,7 @@ export async function setLifecycleStage(id: string, target: LifecycleStage) {
   await updateTenancy(id, updates);
   invalidateCache();
   revalidatePath("/existing-listing");
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return { ok: true, message: `Moved to ${target}.` };
 }
 
@@ -866,7 +866,7 @@ export async function moveTenantLeaving(
       await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "tenant_leaving" });
       invalidateCache();
       revalidatePath("/existing-listing");
-      revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+      revalidatePath("/property-leads"); revalidatePath("/my-listing");
       revalidatePath("/");
       return {
         ok: true,
@@ -924,7 +924,7 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "owner_leaving" });
     invalidateCache();
     revalidatePath("/existing-listing");
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     revalidatePath("/tenants");
     revalidatePath("/");
     return { ok: true, message: "Lead archived, tenant marked as seeking, tenancy closed." };
@@ -1044,13 +1044,13 @@ export async function setOwnerLeadStage(id: string, stage: import("./types").Own
     }
     await updateOwnerLead(id, { stage });
     invalidateCache();
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     const remaining = capCheck.remaining - 1;
     return { ok: true, message: "Moved to Listed.", remaining, low_remaining: remaining <= CAP_WARN_THRESHOLD };
   }
   await updateOwnerLead(id, { stage });
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return { ok: true, message: `Moved to ${stage.replace("_", " ")}.` };
 }
 
@@ -1088,7 +1088,7 @@ export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./type
       await updateOwnerLead(id, { stage });
     }
     invalidateCache();
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     const remaining = capCheck.remaining - ids.length;
     return { ok: true, remaining, low_remaining: remaining <= CAP_WARN_THRESHOLD };
   }
@@ -1096,7 +1096,7 @@ export async function bulkSetOwnerLeadStage(ids: string[], stage: import("./type
     await updateOwnerLead(id, { stage });
   }
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return { ok: true };
 }
 
@@ -1112,14 +1112,14 @@ export async function bulkMarkOwnerLeadsContacted(ids: string[]) {
       ]))
   );
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return { ok: true };
 }
 
 export async function logManualContactAction(id: string, method: "call" | "text") {
   await incrementOwnerOutreachCount(id);
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   return { ok: true, method };
 }
 
@@ -1183,7 +1183,7 @@ export async function convertLeadToTenancy(
     }
 
     invalidateCache();
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     revalidatePath("/existing-listing");
     revalidatePath("/directory");
     revalidatePath("/");
@@ -1228,7 +1228,7 @@ export async function confirmMovedIn(
 
     await updateTenancy(tenancyId, { lifecycle_stage: "active" });
     invalidateCache();
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     revalidatePath("/existing-listing");
     revalidatePath("/performance");
     revalidatePath("/");
@@ -1294,11 +1294,11 @@ export async function saveOwnerPackRanking(
 
   if (pack?.user_id) {
     const propLabel = pack.property_label ?? "Tenant pack";
-    const deepLink = `/potential-listing?highlight=${pack.owner_lead_id}`;
+    const deepLink = `/property-leads?highlight=${pack.owner_lead_id}`;
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
     sendPushToUser(pack.user_id, {
       title: "Owner ranked your tenant pack",
-      body: `${propLabel} — view rankings in Potential listing`,
+      body: `${propLabel} — view rankings in Property Leads`,
       url: deepLink,
       tag: `packranked_${packId}`,
     }).catch(() => {});
@@ -1361,7 +1361,7 @@ export async function updateOwnerLeadDetails(
 ) {
   await updateOwnerLead(id, data);
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   revalidatePath("/matching");
   return { ok: true, promoted: false, message: "Details updated." };
 }
@@ -1425,7 +1425,7 @@ Reply here or I can send you a quick form — takes about 2 minutes 🙏
     await updateOwnerLead(id, { intake_sent_at: new Date().toISOString() });
   }
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return { ok: true, url: out.url, message: "Message ready" };
 }
 
@@ -1554,7 +1554,7 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
   );
 
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return {
     ok: valid.length > 0,
     imported: valid.length,
@@ -1605,7 +1605,7 @@ export async function importParsedOwnerLeads(
   );
 
   invalidateCache();
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return {
     ok: valid.length > 0,
     imported: valid.length,
@@ -1659,7 +1659,7 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
     updateOwnerLead(ownerLeadId, { wa_status: "pending" }),
   ]);
   await incrementOwnerOutreachCount(ownerLeadId);
-  revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+  revalidatePath("/property-leads"); revalidatePath("/my-listing");
   return { ok: true, url, waUrl: out.url, message: "Intake form link ready" };
 }
 
@@ -1821,7 +1821,7 @@ export async function addOwnerLeadAction(data: {
       listing_purpose: data.listing_purpose ?? null,
     });
     invalidateCache();
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     if (data.stage === "listed") {
       const capCheck = await checkLeadCap();
       if (capCheck.allowed) {
@@ -2047,7 +2047,7 @@ export async function markCommissionCollected(
     }
     await updateTenancy(tenancyId, { lifecycle_stage: "active" });
     invalidateCache();
-    revalidatePath("/potential-listing"); revalidatePath("/my-listing");
+    revalidatePath("/property-leads"); revalidatePath("/my-listing");
     revalidatePath("/existing-listing");
     revalidatePath("/");
     revalidatePath("/performance");
@@ -2173,7 +2173,7 @@ export async function markCompetitorRentedAction(
   const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
   await markCompetitorRented(id, contractEnd);
   invalidateCache();
-  revalidatePath("/potential-listing");
+  revalidatePath("/property-leads");
   revalidatePath("/my-listing");
   revalidatePath("/lost-listing");
   return { ok: true };

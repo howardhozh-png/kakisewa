@@ -6,5 +6,5 @@ interface Props {
 
 export default async function LegacyNewOwnersPage({ searchParams }: Props) {
   const { tab } = await searchParams;
-  redirect(tab === "pipeline" ? "/my-listing" : "/potential-listing");
+  redirect(tab === "pipeline" ? "/my-listing" : "/property-leads");
 }

@@ -521,14 +521,14 @@ export function StatsSection({
       {/* 4 stat cards — 1 col mobile, 2 col sm+ */}
       <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Block
-          overline="Potential listing"
+          overline="Property Leads"
           primaryNum={stats.totalUploaded}
           primaryLabel="owner contacts imported"
           stats={[
             { label: "Contacted", value: stats.totalContacted },
             { label: "Not contacted", value: stats.totalUploaded - stats.totalContacted },
           ]}
-          href="/potential-listing"
+          href="/property-leads"
           bannerColor="#1A4FA3"
           bg="rgba(0,113,227,0.09)"
           inkColor="#0A3880"

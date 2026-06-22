@@ -240,7 +240,7 @@ export async function GET() {
       type: "wa_reply_owner",
       title: row.replied_owner === "yes" ? "Owner wants to list (WhatsApp)" : "Owner not interested (WhatsApp)",
       body: `${row.owner_name}${propParts.length ? ` · ${propParts.join(" · ")}` : ""}`,
-      href: `/potential-listing?highlight=${row.id}`,
+      href: `/property-leads?highlight=${row.id}`,
       createdAt: row.last_wa_reply_at,
       priority: row.replied_owner === "yes" ? "normal" : "high",
     });

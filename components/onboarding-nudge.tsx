@@ -34,11 +34,11 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   const missions: Mission[] = [
     {
       id: "leads",
-      label: "Upload your first potential listing",
+      label: "Upload your first property lead",
       description: "Add the owners you want to approach for rental management.",
       cta: "Upload now",
-      href: "/potential-listing",
-      matchPaths: ["/potential-listing", "/new-owners", "/leads"],
+      href: "/property-leads",
+      matchPaths: ["/property-leads", "/potential-listing", "/new-owners", "/leads"],
       done: hasLeads,
     },
     {

@@ -141,13 +141,13 @@ export function waReplyOwnerEmail(p: {
     : `${p.ownerName} is not interested (WhatsApp reply)`;
   const actionText = p.intent === "yes"
     ? "Move this owner to My listing and send the tenant pack."
-    : "Archive this lead or follow up later in Potential listing.";
+    : "Archive this lead or follow up later in Property Leads.";
   return (
     EMAIL_BASE +
     `<h1 style="font-size:18px;font-weight:600;margin:0 0 12px">${heading}</h1>` +
     (p.propLabel ? detail(p.propLabel) : "") +
     `<div style="margin:20px 0">` + action(actionText) + `</div>` +
-    cta("Open in Potential listing", p.url) +
+    cta("Open in Property Leads", p.url) +
     EMAIL_FOOTER
   );
 }
@@ -220,7 +220,7 @@ export function packRankedEmail(p: {
     `<h1 style="font-size:18px;font-weight:600;margin:0 0 12px">Owner ranked your tenant pack</h1>` +
     detail(p.propLabel) +
     `<div style="margin:20px 0">` + action("Check the rankings and contact the preferred tenant.") + `</div>` +
-    cta("View rankings in Potential listing", p.url) +
+    cta("View rankings in Property Leads", p.url) +
     EMAIL_FOOTER
   );
 }

@@ -144,7 +144,9 @@ function PricingCard({
   const annualTotal  = billingYear === 1 ? plan.y1Annual  : plan.y2Annual;
   const annualMonthly = Math.round(annualTotal / 12);
   const price = interval === "annual" ? annualMonthly : monthlyPrice;
-  const showFreeMonths = interval === "annual" && billingYear === 1;
+  const showFreeMonths = interval === "annual" && billingYear === 1 && plan.planId !== "silver";
+  const y2PriceDisplay = interval === "annual" ? Math.round(plan.y2Annual / 12) : plan.y2Monthly;
+  const showStrikethrough = billingYear === 1 && plan.y1Monthly !== plan.y2Monthly;
 
   return (
     <motion.div
@@ -208,6 +210,11 @@ function PricingCard({
           </div>
 
           <div>
+            {showStrikethrough && (
+              <p className="text-[11px] mb-0.5" style={{ color: s.faint, textDecoration: "line-through" }}>
+                RM {y2PriceDisplay}/mo yr2
+              </p>
+            )}
             <div className="flex items-end gap-1.5">
               <span className="text-[12px] font-medium pb-1" style={{ color: s.mute }}>RM</span>
               <span className="text-[34px] font-black leading-none" style={{ letterSpacing: "-0.04em" }}>
@@ -221,7 +228,7 @@ function PricingCard({
                   {showFreeMonths && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
                       style={{ background: s.accent, color: s.accentInk }}>
-                      2 months free
+                      Pay 12, get 14 months
                     </span>
                   )}
                   <span className="text-[10px]" style={{ color: s.faint }}>
@@ -229,7 +236,7 @@ function PricingCard({
                   </span>
                 </div>
                 <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                  RM {(annualTotal / 365).toFixed(2)}/day
+                  RM {(plan.y1Annual / plan.cards).toFixed(2)}/card
                 </p>
               </>
             ) : (
@@ -332,8 +339,8 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
           {interval === "annual" ? (
             <div className="space-y-1 mt-3">
               <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {annualTotal.toLocaleString()} billed annually</p>
-              {effectiveYear === 1 && (
-                <p className="text-[13px] font-semibold" style={{ color: s.accent }}>2 months free included</p>
+              {effectiveYear === 1 && plan.planId !== "silver" && (
+                <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Pay 12 months, get 14 months</p>
               )}
             </div>
           ) : (
@@ -554,18 +561,13 @@ export function SubscriptionClient({
           ))}
         </div>
 
-        {/* Per-plan per-day callout */}
+        {/* Per-plan per-card callout */}
         <div className="mb-14">
           <p className="text-center text-[11px] font-bold uppercase tracking-[0.12em] mb-8" style={{ color: "var(--kk-ink-faint)" }}>
-            Annual billing: what you pay per day (year 1)
+            Annual billing: what you pay per card (year 1)
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mx-2">
-            {([
-              { plan: PLANS[0], food: null },
-              { plan: PLANS[1], food: "1 kopitiam egg/day" },
-              { plan: PLANS[2], food: "2 kopitiam eggs/day" },
-              { plan: PLANS[3], food: "1 set kopitiam egg and butter kaya toast/day" },
-            ] as { plan: PlanData; food: string | null }[]).map(({ plan, food }) => (
+            {PLANS.map(plan => (
               <div key={plan.planId} className="relative text-center" style={{ padding: "20px 18px 18px", backgroundColor: "var(--kk-surface)" }}>
                 <div className="absolute" style={{ top: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
                 <div className="absolute" style={{ bottom: "-6px", left: "6px", right: "6px", height: "6px", backgroundColor: "var(--kk-ink)" }} />
@@ -581,15 +583,13 @@ export function SubscriptionClient({
                 <div className="flex items-baseline justify-center gap-1 flex-wrap">
                   <span className="text-[12px] font-bold" style={{ color: "var(--kk-ink-mute)" }}>RM</span>
                   <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
-                    {(plan.y1Annual / 365).toFixed(2)}
+                    {(plan.y1Annual / plan.cards).toFixed(2)}
                   </span>
-                  <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/day</span>
+                  <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/card</span>
                 </div>
-                {food && (
-                  <p className="mt-1.5 text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
-                    or {food}
-                  </p>
-                )}
+                <p className="mt-1.5 text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
+                  {plan.cards.toLocaleString()} cards included
+                </p>
               </div>
             ))}
           </div>
@@ -598,7 +598,7 @@ export function SubscriptionClient({
         {/* Comparison table */}
         <div className="mb-12 overflow-x-auto">
           <p className="text-[11px] font-semibold mb-4 ml-1" style={{ color: "var(--kk-ink-faint)" }}>
-            Card limit is shared across My Listing, Existing Contracts, and Lost Listing
+            Card limit is shared across My Listing, Existing Listing, and Lost Listing
           </p>
           <table className="w-full text-left border-collapse" style={{ fontSize: "var(--kk-sm)" }}>
             <thead>

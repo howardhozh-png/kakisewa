@@ -246,11 +246,11 @@ async function processMessage(msg: WaMessage, meta: WaMeta | undefined) {
         const { data: olRow } = await svc.from("owner_leads").select("property_name, unit").eq("id", cardId).maybeSingle();
         const oPropParts = [olRow?.property_name, olRow?.unit ? `Unit ${olRow.unit}` : null].filter(Boolean);
         const oPropLabel = oPropParts.length ? oPropParts.join(" · ") : null;
-        const oBody = oPropLabel ? `${oPropLabel} — view in Potential listing` : "View in Potential listing";
+        const oBody = oPropLabel ? `${oPropLabel} — view in Property Leads` : "View in Property Leads";
 
-        const oDeepLink = `/potential-listing?highlight=${cardId}`;
+        const oDeepLink = `/property-leads?highlight=${cardId}`;
         const oTitle = intent === "yes" ? "Owner wants to list" : "Owner not interested";
-        const oBodyFull = oPropLabel ? `${oPropLabel} · ${cardName ?? "Owner"} — view in Potential listing` : `${cardName ?? "Owner"} — view in Potential listing`;
+        const oBodyFull = oPropLabel ? `${oPropLabel} · ${cardName ?? "Owner"} — view in Property Leads` : `${cardName ?? "Owner"} — view in Property Leads`;
         await sendPushToUser(agentId, {
           title: oTitle,
           body: oBodyFull,

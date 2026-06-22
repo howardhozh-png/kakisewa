@@ -257,7 +257,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
             <div className="py-16 text-center">
               <p className="text-[14px]" style={{ color: "var(--kk-ink-faint)" }}>
                 {leads.length === 0
-                  ? "No properties yet. Add listings in Potential Listing or My Listing."
+                  ? "No properties yet. Add listings in Property Leads or My Listing."
                   : search.trim()
                   ? "No properties match your search."
                   : `No ${TABS.find(t => t.id === activeTab)?.label.toLowerCase() ?? ""} properties.`}

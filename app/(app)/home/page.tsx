@@ -118,17 +118,27 @@ function SetupState({
   contractsComplete,
   profileComplete,
   doneCount,
+  cardCount,
+  cardCap,
+  planName,
 }: {
   firstName: string | null;
   leadsComplete: boolean;
   contractsComplete: boolean;
   profileComplete: boolean;
   doneCount: number;
+  cardCount: number;
+  cardCap: number;
+  planName: string;
 }) {
   const progressPct = Math.round((doneCount / 3) * 100);
 
   return (
     <>
+      <div className="mb-4">
+        <CardDonut used={cardCount} cap={cardCap} planName={planName} />
+      </div>
+
       <div className="kk-card p-5 mb-2">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
@@ -158,7 +168,7 @@ function SetupState({
           done={leadsComplete}
           title="Upload your leads"
           why="Never lose a number again. You'll see exactly who you haven't contacted yet."
-          href="/potential-listing"
+          href="/property-leads"
           cta="Start →"
         />
         <ChecklistItem
@@ -299,9 +309,9 @@ export default async function HomePage() {
   const doneCount = [leadsComplete, contractsComplete, profileComplete].filter(Boolean).length;
   const isSetupComplete = leadsComplete && contractsComplete && profileComplete;
 
-  // Card usage for the donut (only fetch when showing active state)
+  // Card usage — always fetch for donut display in both setup and active states
   let cardCount = 0;
-  if (isSetupComplete && userId) {
+  if (userId) {
     try {
       const supabase = await createClient();
       cardCount = await getTotalCardCount(supabase, userId);
@@ -332,6 +342,9 @@ export default async function HomePage() {
           contractsComplete={contractsComplete}
           profileComplete={profileComplete}
           doneCount={doneCount}
+          cardCount={cardCount}
+          cardCap={cardCap}
+          planName={planLabel}
         />
       )}
     </div>

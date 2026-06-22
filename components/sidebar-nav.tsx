@@ -13,7 +13,7 @@ const TOP_ITEMS = [
 ] as const;
 
 const PIPELINE_ITEMS = [
-  { href: "/potential-listing", icon: MessageCircle, label: "Potential listing", minPlan: null },
+  { href: "/property-leads", icon: MessageCircle, label: "Property Leads", minPlan: null },
   { href: "/my-listing",  icon: ClipboardList,  label: "My listing",  minPlan: null },
   { href: "/existing-listing",  icon: RefreshCw,      label: "Existing listing",  minPlan: null },
   { href: "/lost-listing",      icon: Target,         label: "Lost listing",     minPlan: null },
@@ -34,7 +34,7 @@ function hasAccess(minPlan: string | null, plan: string | null | undefined, stat
 }
 
 function isPipelineActive(href: string, pathname: string, _tab: string | null): boolean {
-  if (href === "/potential-listing") return pathname.startsWith("/potential-listing") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
+  if (href === "/property-leads") return pathname.startsWith("/property-leads") || pathname.startsWith("/potential-listing") || pathname.startsWith("/new-owners") || pathname.startsWith("/leads");
   if (href === "/my-listing")  return pathname.startsWith("/my-listing");
   if (href === "/existing-listing")  return pathname.startsWith("/existing-listing") || pathname.startsWith("/existing-contracts") || pathname.startsWith("/tenancies");
   if (href === "/lost-listing")      return pathname.startsWith("/lost-listing");
