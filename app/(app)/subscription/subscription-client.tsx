@@ -233,6 +233,12 @@ function PricingCard({
                     Pay 12, get 14 months
                   </span>
                 )}
+                {plan.planId === "silver" && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{ background: "rgba(110,110,115,0.14)", color: "#6E6E73", border: "1px solid rgba(110,110,115,0.22)" }}>
+                    Exempted
+                  </span>
+                )}
                 <span className="text-[10px]" style={{ color: s.faint }}>
                   RM {annualTotal.toLocaleString()}/year
                 </span>
@@ -581,7 +587,7 @@ export function SubscriptionClient({
                 <div className="flex items-baseline justify-center gap-1 flex-wrap">
                   <span className="text-[12px] font-bold" style={{ color: "var(--kk-ink-mute)" }}>RM</span>
                   <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
-                    {(plan.y1Annual / plan.cards).toFixed(2)}
+                    {(plan.y1Monthly / plan.cards).toFixed(2)}
                   </span>
                   <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/card/mo</span>
                 </div>
