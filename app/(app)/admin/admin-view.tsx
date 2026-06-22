@@ -544,7 +544,6 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
   const [search, setSearch] = useState("");
   const [segFilter, setSegFilter] = useState<Segment | "all">(initialSegment);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [minCards, setMinCards] = useState(0);
   const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -553,9 +552,10 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
     setAgents(prev => prev.map(a => a.id === id ? { ...a, is_test_account: val } : a));
   }
 
+  const NUMERIC_COLS = new Set<SortCol>(["potential", "listed", "existing", "target", "msgs", "health"]);
   function toggleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
-    else { setSortCol(col); setSortDir("asc"); }
+    else { setSortCol(col); setSortDir(NUMERIC_COLS.has(col) ? "desc" : "asc"); }
   }
 
   const enriched = useMemo(() => agents.map(a => ({
@@ -579,7 +579,6 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
       rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
     }
     if (segFilter !== "all") rows = rows.filter(a => a.segment === segFilter);
-    if (minCards > 0) rows = rows.filter(a => a.totalCards >= minCards);
     if (statusFilter === "test") rows = rows.filter(a => a.is_test_account);
     else if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
     return [...rows].sort((a, b) => {
@@ -701,14 +700,6 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
           <option value="active">Paid</option>
           <option value="expired">Expired</option>
           <option value="test">Test</option>
-        </select>
-        <select value={minCards} onChange={e => setMinCards(Number(e.target.value))} className="rounded-xl px-3 py-2 outline-none text-[12px] font-medium" style={{ background: minCards > 0 ? "rgba(0,113,227,0.08)" : "var(--kk-surface-2)", border: minCards > 0 ? "1px solid rgba(0,113,227,0.3)" : "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
-          <option value={0}>Any cards</option>
-          <option value={1}>1+ cards</option>
-          <option value={10}>10+ cards</option>
-          <option value={50}>50+ cards</option>
-          <option value={100}>100+ cards</option>
-          <option value={500}>500+ cards</option>
         </select>
         <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
         <div className="flex items-center gap-2 ml-auto">

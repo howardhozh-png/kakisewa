@@ -221,10 +221,10 @@ function PricingCard({
                 <AnimatedPrice value={price} ink={s.ink} />
               </span>
               <span className="text-[12px] pb-1" style={{ color: s.mute }}>/mo</span>
+              {showStrikethrough && (
+                <span className="text-[10px] pb-1.5" style={{ color: s.faint }}>for Year 1</span>
+              )}
             </div>
-            {showStrikethrough && (
-              <p className="text-[10px] mt-0.5" style={{ color: s.faint }}>for Year 1</p>
-            )}
             {interval === "annual" ? (
               <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                 {showFreeMonths && (
