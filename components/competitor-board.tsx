@@ -748,7 +748,7 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackTo
 }) {
   const [choice, setChoice] = useState<ExpiringOutcome>("");
   const [confirming, setConfirming] = useState(false);
-  const [availableFrom, setAvailableFrom] = useState(lead.competitor_contract_end ?? "");
+  const [availableFrom, setAvailableFrom] = useState(() => new Date().toISOString().slice(0, 10));
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -932,7 +932,7 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackTo
 
 function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveToMyListing: (id: string, availableFrom?: string) => void }) {
   const [confirming, setConfirming] = useState(false);
-  const [availableFrom, setAvailableFrom] = useState(lead.competitor_contract_end ?? "");
+  const [availableFrom, setAvailableFrom] = useState(() => new Date().toISOString().slice(0, 10));
 
   return (
     <>
