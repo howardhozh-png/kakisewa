@@ -183,7 +183,14 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
   async function handleWin(id: string) {
     setLocal((prev) => prev.filter((x) => x.id !== id));
     await winCompetitorUnitAction(id);
-    toast.success("Won! Card moved to Existing listing.");
+    toast.success("Moved to My Listing. Start finding a tenant.");
+    router.refresh();
+  }
+
+  async function handleMoveToMyListing(id: string) {
+    setLocal((prev) => prev.filter((x) => x.id !== id));
+    await winCompetitorUnitAction(id);
+    toast.success("Moved to My Listing. Start finding a tenant.");
     router.refresh();
   }
 
@@ -277,6 +284,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
                       onOpen={() => setEditLead(l)}
                       onWin={handleWin}
                       onMoveToRenewing={handleMoveToRenewing}
+                      onMoveToMyListing={handleMoveToMyListing}
                       onBackToWatching={handleBackToWatching}
                     />
                   ));
@@ -461,7 +469,7 @@ function CardPreview({ lead }: { lead: OwnerLead }) {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, onBackToWatching }: {
+function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, onMoveToMyListing, onBackToWatching }: {
   lead: OwnerLead;
   col: ColMeta;
   today: Date;
@@ -469,6 +477,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
   onOpen: () => void;
   onWin: (id: string) => void;
   onMoveToRenewing: (id: string) => void;
+  onMoveToMyListing: (id: string) => void;
   onBackToWatching: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
@@ -485,6 +494,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
 
   const isExpiring = col.stage === "reach_out";
   const isRenewing = col.stage === "renewing";
+  const isWatching = col.stage === "watching";
 
   const cardStyle: React.CSSProperties = isDragging ? { opacity: 0.2 } : {};
   if (isExpiring && !isDragging) {
@@ -584,6 +594,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
           <ExpiringWhatsNext
             lead={lead}
             onMoveToRenewing={onMoveToRenewing}
+            onMoveToMyListing={onMoveToMyListing}
             onBackToWatching={onBackToWatching}
           />
         </>
@@ -592,6 +603,11 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
       {/* Actions — Renewing column */}
       {isRenewing && (
         <MovedInAction lead={lead} onWin={onWin} />
+      )}
+
+      {/* Actions — Watching column */}
+      {isWatching && (
+        <WatchingActions lead={lead} onMoveToMyListing={onMoveToMyListing} />
       )}
     </div>
   );
@@ -724,9 +740,10 @@ const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
   },
 };
 
-function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching }: {
+function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackToWatching }: {
   lead: OwnerLead;
   onMoveToRenewing: (id: string) => void;
+  onMoveToMyListing: (id: string) => void;
   onBackToWatching: (id: string) => void;
 }) {
   const [choice, setChoice] = useState<ExpiringOutcome>("");
@@ -749,11 +766,10 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching }: {
     if (val) setConfirming(true);
   }
 
-  function handleConfirm() {
+  function handleConfirmBack() {
     setConfirming(false);
     setChoice("");
-    if (choice === "renewing") onMoveToRenewing(lead.id);
-    if (choice === "back")     onBackToWatching(lead.id);
+    onBackToWatching(lead.id);
   }
 
   const meta = choice ? EXPIRING_OUTCOMES[choice] : null;
@@ -801,7 +817,62 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching }: {
         </div>
       </div>
 
-      {meta && (
+      {/* "Owner rents with me" — 2-choice dialog */}
+      {choice === "renewing" && (
+        <Dialog open={confirming} onOpenChange={(v) => { if (!v) { setConfirming(false); setChoice(""); } }}>
+          <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(52,199,89,0.12)", color: "#1F8B4C" }}>
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Owner rents with me</p>
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{lead.owner_name} · {lead.property_name}</p>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "rgba(52,199,89,0.12)" }}>
+                <p className="text-[13px] leading-relaxed" style={{ color: "#1F8B4C" }}>
+                  What happens next?
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); onMoveToRenewing(lead.id); }}
+                  className="w-full kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2.5 rounded-full"
+                  style={{ background: "#1F8B4C", color: "#fff" }}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Move to Renewing
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); onMoveToMyListing(lead.id); }}
+                  className="w-full kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2.5 rounded-full"
+                  style={{ background: "var(--kk-blue)", color: "#fff" }}
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  Move to My Listing
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }}
+                  className="w-full kk-pill kk-pill-ghost text-[13px] py-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* "Owner doesn't rent" — single confirm */}
+      {choice === "back" && meta && (
         <Dialog open={confirming} onOpenChange={(v) => { if (!v) { setConfirming(false); setChoice(""); } }}>
           <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col gap-5">
@@ -820,11 +891,9 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching }: {
                   <XCircle className="w-4 h-4" />
                 </button>
               </div>
-
               <div className="rounded-xl p-4" style={{ background: meta.soft }}>
                 <p className="text-[13px] leading-relaxed" style={{ color: meta.ink }}>{meta.description}</p>
               </div>
-
               <div className="flex gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); }}
@@ -833,11 +902,81 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onBackToWatching }: {
                   Cancel
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleConfirm(); }}
+                  onClick={(e) => { e.stopPropagation(); handleConfirmBack(); }}
                   className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
                   style={{ background: meta.ink, color: "#fff" }}
                 >
                   {meta.confirm} →
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+}
+
+// ─── "Move to My Listing" for Watching cards ──────────────────────────────────
+
+function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveToMyListing: (id: string) => void }) {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <>
+      <div
+        data-card-action
+        className="pt-2"
+        style={{ borderTop: "1px solid var(--kk-line)" }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+          className="flex items-center gap-2 text-[12px] pl-3 pr-2.5 py-1.5 rounded-lg"
+          style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)", border: "1px solid var(--kk-line)" }}
+        >
+          <Home className="w-3 h-3 shrink-0" />
+          Move to My Listing
+        </button>
+      </div>
+
+      {confirming && (
+        <Dialog open onOpenChange={(v) => { if (!v) setConfirming(false); }}>
+          <DialogContent showCloseButton={false} className="bg-card border-border max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)" }}>
+                    <Home className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Move to My Listing?</p>
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{lead.owner_name} · {lead.property_name}</p>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); setConfirming(false); }} className="p-1 rounded-lg hover:opacity-70" style={{ color: "var(--kk-ink-faint)" }}>
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "rgba(0,113,227,0.08)" }}>
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--kk-blue)" }}>
+                  This removes the unit from Lost Listing and adds it to My Listing so you can start finding a tenant.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); }}
+                  className="flex-1 kk-pill kk-pill-ghost text-[13px] py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); onMoveToMyListing(lead.id); }}
+                  className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
+                  style={{ background: "var(--kk-blue)", color: "#fff" }}
+                >
+                  Yes, move it →
                 </button>
               </div>
             </div>
