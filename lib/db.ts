@@ -1717,11 +1717,17 @@ export async function setCompetitorStage(id: string, stage: string): Promise<voi
   if (error) throw error;
 }
 
-export async function winCompetitorUnit(id: string): Promise<void> {
+export async function winCompetitorUnit(id: string, availableFrom?: string | null): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("owner_leads")
-    .update({ is_competitor_target: false, competitor_stage: "watching", competitor_contract_end: null, stage: "listed" })
+    .update({
+      is_competitor_target: false,
+      competitor_stage: "watching",
+      competitor_contract_end: null,
+      stage: "listed",
+      ...(availableFrom ? { available_from: availableFrom } : {}),
+    })
     .eq("id", id);
   if (error) throw error;
 }

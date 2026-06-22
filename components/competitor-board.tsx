@@ -187,9 +187,9 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
     router.refresh();
   }
 
-  async function handleMoveToMyListing(id: string) {
+  async function handleMoveToMyListing(id: string, availableFrom?: string) {
     setLocal((prev) => prev.filter((x) => x.id !== id));
-    await winCompetitorUnitAction(id);
+    await winCompetitorUnitAction(id, availableFrom || null);
     toast.success("Moved to My Listing. Start finding a tenant.");
     router.refresh();
   }
@@ -477,7 +477,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
   onOpen: () => void;
   onWin: (id: string) => void;
   onMoveToRenewing: (id: string) => void;
-  onMoveToMyListing: (id: string) => void;
+  onMoveToMyListing: (id: string, availableFrom?: string) => void;
   onBackToWatching: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
@@ -743,11 +743,12 @@ const EXPIRING_OUTCOMES: Record<Exclude<ExpiringOutcome, "">, {
 function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackToWatching }: {
   lead: OwnerLead;
   onMoveToRenewing: (id: string) => void;
-  onMoveToMyListing: (id: string) => void;
+  onMoveToMyListing: (id: string, availableFrom?: string) => void;
   onBackToWatching: (id: string) => void;
 }) {
   const [choice, setChoice] = useState<ExpiringOutcome>("");
   const [confirming, setConfirming] = useState(false);
+  const [availableFrom, setAvailableFrom] = useState(lead.competitor_contract_end ?? "");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -842,6 +843,16 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackTo
                   What happens next?
                 </p>
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="kk-overline" style={{ color: "var(--kk-ink-faint)" }}>Availability date (optional)</label>
+                <input
+                  type="date"
+                  value={availableFrom}
+                  onChange={(e) => setAvailableFrom(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ fontSize: 16, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", borderRadius: 10, padding: "8px 12px", width: "100%" }}
+                />
+              </div>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); onMoveToRenewing(lead.id); }}
@@ -852,7 +863,7 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackTo
                   Move to Renewing
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); onMoveToMyListing(lead.id); }}
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); setChoice(""); onMoveToMyListing(lead.id, availableFrom || undefined); }}
                   className="w-full kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2.5 rounded-full"
                   style={{ background: "var(--kk-blue)", color: "#fff" }}
                 >
@@ -919,8 +930,9 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackTo
 
 // ─── "Move to My Listing" for Watching cards ──────────────────────────────────
 
-function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveToMyListing: (id: string) => void }) {
+function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveToMyListing: (id: string, availableFrom?: string) => void }) {
   const [confirming, setConfirming] = useState(false);
+  const [availableFrom, setAvailableFrom] = useState(lead.competitor_contract_end ?? "");
 
   return (
     <>
@@ -964,6 +976,16 @@ function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveT
                   This removes the unit from Lost Listing and adds it to My Listing so you can start finding a tenant.
                 </p>
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="kk-overline" style={{ color: "var(--kk-ink-faint)" }}>Availability date (optional)</label>
+                <input
+                  type="date"
+                  value={availableFrom}
+                  onChange={(e) => setAvailableFrom(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ fontSize: 16, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", borderRadius: 10, padding: "8px 12px", width: "100%" }}
+                />
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirming(false); }}
@@ -972,7 +994,7 @@ function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveT
                   Cancel
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setConfirming(false); onMoveToMyListing(lead.id); }}
+                  onClick={(e) => { e.stopPropagation(); setConfirming(false); onMoveToMyListing(lead.id, availableFrom || undefined); }}
                   className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
                   style={{ background: "var(--kk-blue)", color: "#fff" }}
                 >

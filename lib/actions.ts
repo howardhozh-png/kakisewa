@@ -2195,9 +2195,9 @@ export async function setCompetitorStageAction(
   return { ok: true };
 }
 
-export async function winCompetitorUnitAction(id: string): Promise<{ ok: boolean }> {
+export async function winCompetitorUnitAction(id: string, availableFrom?: string | null): Promise<{ ok: boolean }> {
   "use server";
-  await winCompetitorUnit(id);
+  await winCompetitorUnit(id, availableFrom);
   invalidateCache();
   revalidatePath("/lost-listing");
   revalidatePath("/my-listing");
