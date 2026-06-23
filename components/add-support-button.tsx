@@ -6,17 +6,7 @@ import { Plus, X, Loader2 } from "lucide-react";
 import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_ICONS } from "@/lib/types";
 import { savePropertySupport } from "@/lib/actions";
 import { toast } from "sonner";
-
-const INPUT_STYLE: React.CSSProperties = {
-  width: "100%",
-  background: "var(--kk-surface-2)",
-  border: "1px solid var(--kk-line)",
-  borderRadius: 10,
-  padding: "9px 13px",
-  fontSize: 14,
-  color: "var(--kk-ink)",
-  outline: "none",
-};
+import { INPUT_STYLE } from "@/lib/styles";
 
 export function AddSupportButton() {
   const router = useRouter();

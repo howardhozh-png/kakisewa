@@ -13,6 +13,7 @@ import { AgentProfile } from "@/lib/types";
 import { saveProfileDetails } from "@/lib/actions";
 import { PhotoCropDialog } from "@/components/photo-crop-dialog";
 import { toast } from "sonner";
+import { INPUT_STYLE } from "@/lib/styles";
 import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
@@ -77,16 +78,6 @@ function Modal({ onClose, children, wide }: { onClose: () => void; children: Rea
 }
 
 // ── Account settings modal ────────────────────────────────────────────────────
-const INPUT_STYLE: React.CSSProperties = {
-  width: "100%",
-  background: "var(--kk-surface-2)",
-  border: "1px solid var(--kk-line)",
-  borderRadius: 10,
-  padding: "9px 13px",
-  fontSize: 14,
-  color: "var(--kk-ink)",
-  outline: "none",
-};
 
 function AvatarCircle({ src, name, size = 64 }: { src?: string | null; name?: string | null; size?: number }) {
   if (src) {

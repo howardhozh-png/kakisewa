@@ -13,17 +13,7 @@ import {
 } from "@/lib/whatsapp-templates";
 import { toast } from "sonner";
 import { Loader2, ChevronDown, RotateCcw, Eye, X, Info, CheckCircle2, MessageCircle, Bell, Mail } from "lucide-react";
-
-const INPUT_STYLE: React.CSSProperties = {
-  width: "100%",
-  background: "var(--kk-surface-2)",
-  border: "1px solid var(--kk-line)",
-  borderRadius: 10,
-  padding: "9px 13px",
-  fontSize: 14,
-  color: "var(--kk-ink)",
-  outline: "none",
-};
+import { INPUT_STYLE } from "@/lib/styles";
 
 // camelCase → "Title Case", with URL suffix fix
 function tokenLabel(key: string): string {
@@ -854,9 +844,9 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
   return (
     <section className="kk-section p-6">
       <div className="flex items-center gap-2 mb-4">
-        <MessageCircle className="w-4 h-4" style={{ color: isConnected ? "#25D366" : "var(--kk-ink-faint)" }} />
+        <MessageCircle className="w-4 h-4" style={{ color: isConnected ? "var(--kk-whatsapp)" : "var(--kk-ink-faint)" }} />
         <h2 className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>WhatsApp reply tracking</h2>
-        {isConnected && <CheckCircle2 className="w-3.5 h-3.5 ml-auto" style={{ color: "#25D366" }} />}
+        {isConnected && <CheckCircle2 className="w-3.5 h-3.5 ml-auto" style={{ color: "var(--kk-whatsapp)" }} />}
       </div>
 
       {/* Two-mode explanation */}
@@ -869,7 +859,7 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
           <p className="text-[11px] mt-1.5 font-medium" style={{ color: "var(--kk-ink-faint)" }}>No setup needed. Works today.</p>
         </div>
 
-        <div className="rounded-xl p-3.5" style={{ background: "var(--kk-surface-2)", border: `1.5px solid ${isConnected ? "#25D366" : "var(--kk-line)"}` }}>
+        <div className="rounded-xl p-3.5" style={{ background: "var(--kk-surface-2)", border: `1.5px solid ${isConnected ? "var(--kk-whatsapp)" : "var(--kk-line)"}` }}>
           <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>
             WhatsApp Business API
             <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#166534" }}>Auto</span>
