@@ -188,6 +188,7 @@ export interface AgentProfile {
   notif_email?: boolean | null;
   survey_completed_at?: string | null;
   survey_response?: Record<string, unknown> | null;
+  is_test_account?: boolean | null;
 }
 
 export interface ProfileStrengthItem {

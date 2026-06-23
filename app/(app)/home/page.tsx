@@ -325,7 +325,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 lg:py-16">
-      <BetaSurveyModal surveyCompleted={!!agent.survey_completed_at} />
+      <BetaSurveyModal surveyCompleted={!!agent.survey_completed_at || !!agent.is_test_account} />
       <ReferralBanner />
       {isSetupComplete ? (
         <ActiveState
