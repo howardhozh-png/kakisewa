@@ -54,7 +54,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
-import { toE164Display } from "@/lib/phone";
+import { toE164Display, normalizePhone } from "@/lib/phone";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -472,7 +472,7 @@ function LeadPopup({
               />
               {form.owner_phone && (
                 <>
-                  <a href={`https://wa.me/${(form.owner_phone ?? "").replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                  <a href={`https://wa.me/${normalizePhone(form.owner_phone ?? "")}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
                   <a href={`tel:${toE164Display(form.owner_phone)}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
@@ -1613,7 +1613,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                                 disabled={sending === lead.id}
                                 onClick={(e) => handleSend(lead, e)}
                                 className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
-                                style={{ background: "#25D366", color: "#fff" }}
+                                style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
                                 title="Send WhatsApp"
                               >
                                 {sending === lead.id

@@ -22,6 +22,7 @@ import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
+import { normalizePhone } from "@/lib/phone";
 
 interface Props {
   pack: MatchPack;
@@ -563,7 +564,7 @@ function TenantDetailModal({
     ? `up to RM ${t.budget_max.toLocaleString()}/mo`
     : t.budget_min ? `from RM ${t.budget_min.toLocaleString()}/mo` : null;
 
-  const waPhone = (() => { const d = (t.phone ?? "").replace(/\D/g, ""); return d.startsWith("0") ? "60" + d.slice(1) : d; })();
+  const waPhone = t.phone ? normalizePhone(t.phone) : "";
   // Use everything after the first space as "first name" (handles Chinese surname-first format)
   const givenName = t.name.includes(" ") ? t.name.slice(t.name.indexOf(" ") + 1) : t.name;
   const property = propertyLabel ?? "the property";
@@ -747,7 +748,7 @@ function TenantDetailModal({
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-90"
-              style={{ background: "#25D366", color: "#fff" }}
+              style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
             >
               <WhatsAppIcon className="w-5 h-5" />
               Contact for house viewing

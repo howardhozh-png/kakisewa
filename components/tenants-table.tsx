@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
 import { AddTenantButton } from "@/components/add-tenant-button";
 import { DateRangeFilter } from "@/components/date-range-filter";
+import { normalizePhone } from "@/lib/phone";
 
 export interface PropertyTenant {
   tenancy_id: string;
@@ -283,9 +284,9 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
               <input className={inputCls} style={{ ...inputStyle, flex: 1 }} value={phone} onChange={(e) => setPhone(e.target.value)} />
               {phone && (
                 <div className="flex items-center gap-1 shrink-0">
-                  <a href={`https://wa.me/${phone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener"
+                  <a href={`https://wa.me/${normalizePhone(phone)}`} target="_blank" rel="noopener"
                     className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: "var(--kk-surface-2)", color: "#25D366" }}>
+                    style={{ background: "var(--kk-surface-2)", color: "var(--kk-whatsapp)" }}>
                     <WhatsAppIcon className="w-4 h-4" />
                   </a>
                   <a href={`tel:${phone}`} className="w-8 h-8 rounded-xl flex items-center justify-center"
@@ -493,11 +494,11 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       {p.phone ? (
                         <div className="flex items-center justify-end gap-1">
                           <a
-                            href={`https://wa.me/${p.phone.replace(/\D/g, "").replace(/^0/, "60")}`}
+                            href={`https://wa.me/${normalizePhone(p.phone)}`}
                             target="_blank" rel="noopener"
                             onClick={(e) => e.stopPropagation()}
                             className="w-8 h-8 rounded-full flex items-center justify-center"
-                            style={{ background: "#25D366", color: "#fff" }}
+                            style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
                             aria-label="WhatsApp"
                           >
                             <WhatsAppIcon className="w-4 h-4" />
@@ -557,11 +558,11 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       {t.tenant_phone ? (
                         <div className="flex items-center justify-end gap-1">
                           <a
-                            href={`https://wa.me/${t.tenant_phone.replace(/\D/g, "").replace(/^0/, "60")}`}
+                            href={`https://wa.me/${normalizePhone(t.tenant_phone)}`}
                             target="_blank" rel="noopener"
                             onClick={(e) => e.stopPropagation()}
                             className="w-8 h-8 rounded-full flex items-center justify-center"
-                            style={{ background: "#25D366", color: "#fff" }}
+                            style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
                             aria-label="WhatsApp"
                           >
                             <WhatsAppIcon className="w-4 h-4" />

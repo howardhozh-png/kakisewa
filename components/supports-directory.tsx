@@ -5,6 +5,8 @@ import { Trash2, X, Check, Loader2, Search } from "lucide-react";
 import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_ICONS } from "@/lib/types";
 import { savePropertySupport, toggleSupportStar, removeSupportContact } from "@/lib/actions";
 import { resolveTemplate, parseTemplateOverrides, type TemplateOverrides } from "@/lib/whatsapp-templates";
+import { normalizePhone } from "@/lib/phone";
+import { INPUT_STYLE } from "@/lib/styles";
 import { toast } from "sonner";
 
 interface Props {
@@ -65,7 +67,7 @@ function getContactPriority(c: PropertySupport): 0 | 1 | 2 | 3 {
 function buildShareUrl(c: PropertySupport, templateOverrides: TemplateOverrides): string {
   const types = getTypes(c);
   const typeLabels = types.map(t => SUPPORT_LABELS[t]).join(", ");
-  const cleanPhone = c.phone.replace(/\D/g, "").replace(/^0/, "60");
+  const cleanPhone = normalizePhone(c.phone);
   const message = resolveTemplate("service_contact_share", templateOverrides, {
     contactType: typeLabels,
     contactName: c.name,
@@ -85,7 +87,7 @@ function WaButton({ shareUrl }: { shareUrl: string }) {
       rel="noopener noreferrer"
       style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        gap: 6, background: "#25D366", color: "white",
+        gap: 6, background: "var(--kk-whatsapp)", color: "white",
         borderRadius: 10, padding: "7px 12px",
         fontSize: 12, fontWeight: 600, textDecoration: "none",
       }}
@@ -294,16 +296,6 @@ function RegularCard({ contact, primaryType, onEdit, onDelete, onStar, shareUrl 
 }
 
 // ── Edit / Add form ───────────────────────────────────────────────────────────
-const INPUT_STYLE: React.CSSProperties = {
-  width: "100%",
-  background: "var(--kk-surface-2)",
-  border: "1px solid var(--kk-line)",
-  borderRadius: 10,
-  padding: "9px 13px",
-  fontSize: 14,
-  color: "var(--kk-ink)",
-  outline: "none",
-};
 
 function ContactForm({ initial, onClose, onSaved }: {
   initial?: PropertySupport | null;

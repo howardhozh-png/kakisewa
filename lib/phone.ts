@@ -49,3 +49,13 @@ export function phoneError(raw: string): string | null {
 export function toE164Display(phone: string): string {
   return phone.startsWith("+") ? phone : `+${phone}`;
 }
+
+/**
+ * Build a wa.me URL for opening a WhatsApp chat.
+ * Phone is normalised before being embedded. Message is URL-encoded.
+ */
+export function buildWaLink(phone: string, message?: string): string {
+  const normalized = normalizePhone(phone);
+  if (message) return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${normalized}`;
+}

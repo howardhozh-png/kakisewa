@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { PropertyPackLead } from "@/lib/db";
+import { buildWaLink } from "@/lib/phone";
 
 interface Tenant { id: string; name: string; phone: string | null }
 
@@ -161,9 +162,8 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
     if (!tenant.phone || selectedLeads.length === 0) return;
     const url = (packUrl && !packDirty) ? packUrl : await generateLink();
     if (!url) return;
-    const phone = tenant.phone.replace(/\D/g, "").replace(/^0/, "60");
     const msg = buildWaMessage(tenant, selectedLeads, url);
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    window.open(buildWaLink(tenant.phone, msg), "_blank", "noopener,noreferrer");
   }
 
   function handleCopy() {
@@ -381,7 +381,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
           disabled={selected.size === 0 || !tenant.phone || generating}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold"
           style={{
-            background: selected.size > 0 && tenant.phone && !generating ? "#25D366" : "var(--kk-line)",
+            background: selected.size > 0 && tenant.phone && !generating ? "var(--kk-whatsapp)" : "var(--kk-line)",
             color: selected.size > 0 && tenant.phone && !generating ? "#fff" : "var(--kk-ink-faint)",
             transition: "background 0.15s ease",
           }}
