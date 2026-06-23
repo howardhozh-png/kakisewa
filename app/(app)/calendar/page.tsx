@@ -6,26 +6,38 @@ import { TourSpotlight } from "@/components/tour-spotlight";
 export const dynamic = "force-dynamic";
 
 interface Props {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ month?: string }>;
 }
 
 export default async function CalendarPage({ searchParams }: Props) {
-  const { week } = await searchParams;
+  const { month } = await searchParams;
 
-  // Pin "today" to MYT date regardless of server's local timezone
+  // Pin "today" to MYT regardless of server timezone
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
-  const [ty, tm, td] = todayStr.split("-").map(Number);
-  const nowMYT = new Date(ty, tm - 1, td);
-  const weekStart = getWeekStart(week ? new Date(week + "T00:00:00") : nowMYT);
-  const weekEnd   = new Date(weekStart.getTime() + 6 * 86400000);
+  const [ty, tm] = todayStr.split("-").map(Number);
 
-  const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  let year: number, monthNum: number;
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    [year, monthNum] = month.split("-").map(Number);
+  } else {
+    year = ty;
+    monthNum = tm;
+  }
 
-  const events = await getCalendarEventsForWeek(toISO(weekStart), toISO(weekEnd));
+  const toISO = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const monthStart = new Date(year, monthNum - 1, 1);
+  const monthEnd = new Date(year, monthNum, 0); // last day of month
+
+  const events = await getCalendarEventsForWeek(toISO(monthStart), toISO(monthEnd));
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-10">
-      <CalendarView events={events} weekStartISO={toISO(weekStart)} />
+      <CalendarView
+        events={events}
+        monthISO={`${year}-${String(monthNum).padStart(2, "0")}`}
+      />
       <Suspense fallback={null}>
         <TourSpotlight
           step="calendar"
@@ -37,13 +49,4 @@ export default async function CalendarPage({ searchParams }: Props) {
       </Suspense>
     </div>
   );
-}
-
-function getWeekStart(ref: Date): Date {
-  const d = new Date(ref);
-  const day = d.getDay(); // 0 Sun … 6 Sat
-  const diff = day === 0 ? -6 : 1 - day; // shift to Monday
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
 }
