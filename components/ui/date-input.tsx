@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar-rac";
+import { parseDate, type CalendarDate, type DateValue } from "@internationalized/date";
 
 function isoToDMY(iso: string): string {
   if (!iso || !iso.match(/^\d{4}-\d{2}-\d{2}$/)) return "";
@@ -22,8 +23,9 @@ function dmyToIso(dmy: string): string {
   return "";
 }
 
-function toISO(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function isoToCalendarDate(iso: string): CalendarDate | undefined {
+  if (!iso || !iso.match(/^\d{4}-\d{2}-\d{2}$/)) return undefined;
+  try { return parseDate(iso); } catch { return undefined; }
 }
 
 interface Props {
@@ -46,14 +48,12 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const selectedDate = value && value.match(/^\d{4}-\d{2}-\d{2}$/)
-    ? new Date(value + "T00:00:00")
-    : undefined;
+  const selectedCalDate = isoToCalendarDate(value);
 
-  function handleSelect(date: Date | undefined) {
+  function handleSelect(date: DateValue | null) {
     setOpen(false);
     if (!date) return;
-    const iso = toISO(date);
+    const iso = date.toString(); // DateValue.toString() returns YYYY-MM-DD
     onChange(iso);
     setDisplay(isoToDMY(iso));
   }
@@ -99,19 +99,11 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
             <CalendarDays className="w-4 h-4" />
           </button>
         </PopoverTrigger>
-        <PopoverContent
-          className="p-0"
-          align="end"
-          style={{ width: 280 }}
-        >
+        <PopoverContent className="p-2" align="end" style={{ width: "auto" }}>
           <Calendar
-            mode="single"
-            selected={selectedDate}
-            defaultMonth={selectedDate ?? new Date()}
-            onSelect={handleSelect}
-            captionLayout="dropdown"
-            startMonth={new Date(2020, 0)}
-            endMonth={new Date(2035, 11)}
+            value={selectedCalDate ?? null}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onChange={handleSelect as any}
           />
         </PopoverContent>
       </Popover>

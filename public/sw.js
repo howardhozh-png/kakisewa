@@ -1,4 +1,4 @@
-const CACHE = 'kk-v213';
+const CACHE = 'kk-v214';
 const OFFLINE_URL = '/offline';
 
 self.addEventListener('install', (event) => {

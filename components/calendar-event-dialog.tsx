@@ -2,7 +2,8 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar-rac";
+import { parseDate, type DateValue } from "@internationalized/date";
 import { Loader2 } from "lucide-react";
 import { createCalendarEvent } from "@/lib/actions";
 import { toast } from "sonner";
@@ -200,18 +201,15 @@ export function CalendarEventDialog({
           <div style={{
             border: "1.5px solid var(--kk-line)",
             borderRadius: 14,
-            overflow: "hidden",
+            padding: "8px",
             background: "var(--kk-surface)",
             marginBottom: 14,
+            display: "inline-block",
           }}>
             <Calendar
-              mode="single"
-              selected={date}
-              defaultMonth={date ?? new Date()}
-              onSelect={(d) => { if (d) setDate(d); }}
-              captionLayout="dropdown"
-              startMonth={new Date(2020, 0)}
-              endMonth={new Date(2035, 11)}
+              value={date ? parseDate(toISO(date)) : null}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onChange={(d: any) => { if (d) setDate(new Date(d.year, d.month - 1, d.day)); }}
             />
           </div>
 
