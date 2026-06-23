@@ -1,4 +1,5 @@
 import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads } from "@/lib/db";
+import { checkCardCap } from "@/lib/plan-caps";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { AddListingButton } from "@/components/add-listing-button";
 import { PageHelpButton } from "@/components/page-help-button";
@@ -40,10 +41,11 @@ interface Props {
 
 export default async function TrackListingPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const [ownerLeads, rankedLeadIds, deletedLeads] = await Promise.all([
+  const [ownerLeads, rankedLeadIds, deletedLeads, capStatus] = await Promise.all([
     getOwnerLeads(),
     getRankedLeadIds(),
     getSoftDeletedMyListingLeads(),
+    checkCardCap(),
   ]);
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
@@ -152,6 +154,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
           highlightId={highlight}
           tenantsByLeadId={tenantsByLeadId}
           rankedLeadIds={rankedLeadIds}
+          capStatus={capStatus}
         />
       )}
     </div>

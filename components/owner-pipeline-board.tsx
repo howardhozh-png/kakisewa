@@ -10,6 +10,7 @@ import { OwnerLead } from "@/lib/types";
 import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { CAP_WARN_THRESHOLD } from "@/lib/cap-constants";
+import type { CapCheckResult } from "@/lib/plan-caps";
 import { ConfirmMovedInDialog } from "@/components/confirm-moved-in-dialog";
 import { Megaphone, XCircle, ArrowRight, Phone, Loader2, X as XIcon, Check, Users, Banknote, CheckCircle2, Clock, User, Home, Calendar, Building2, Search } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -63,9 +64,10 @@ interface Props {
   highlightId?: string;
   tenantsByLeadId?: Record<string, TenantInfo>;
   rankedLeadIds?: Set<string>;
+  capStatus?: CapCheckResult;
 }
 
-export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set() }: Props) {
+export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus }: Props) {
   const router = useRouter();
   const ph = usePostHog();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -188,6 +190,12 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     const target = String(e.over.id) as Stage;
     const lead = local.find((x) => x.id === id);
     if (!lead || lead.stage === target) return;
+
+    // Pre-check: if already at or over cap, block all moves immediately
+    if (capStatus && !capStatus.allowed) {
+      setCapBlock({ currentPlan: capStatus.current_plan, currentCount: capStatus.current_count, currentCap: capStatus.current_cap, upgradeToId: capStatus.upgrade_to ?? "gold", upgradeCap: capStatus.upgrade_cap ?? null });
+      return;
+    }
 
     // Gate on Listed — require property details + availability date before allowing move
     if (target === "listed") {

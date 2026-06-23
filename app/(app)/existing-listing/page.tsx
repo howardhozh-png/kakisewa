@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { getLifecycleTenancies, getOwnerLeads, getAgentProfile, getSoftDeletedTenancies } from "@/lib/db";
-import { effectivePlan } from "@/lib/plan-caps";
+import { effectivePlan, checkCardCap } from "@/lib/plan-caps";
 import { LifecycleBoard } from "@/components/lifecycle-board";
 import { AddTenancyDialog } from "@/components/add-tenancy-dialog";
 import { UploadTenancyCsvDialog } from "@/components/upload-tenancy-csv-dialog";
@@ -49,11 +49,12 @@ interface Props {
 
 export default async function TrackRenewalPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const [lifecycle, ownerLeads, agentProfile, deletedTenancies] = await Promise.all([
+  const [lifecycle, ownerLeads, agentProfile, deletedTenancies, capStatus] = await Promise.all([
     getLifecycleTenancies(),
     getOwnerLeads(),
     getAgentProfile().catch(() => null),
     getSoftDeletedTenancies(),
+    checkCardCap(),
   ]);
   const plan = effectivePlan(agentProfile);
 
@@ -136,7 +137,7 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
         return (
           <div style={{ position: "relative" }}>
             <div style={{ filter: "blur(1px) saturate(0.55)", opacity: 0.82, pointerEvents: "none", userSelect: "none" }}>
-              <LifecycleBoard tenancies={demo} openTenancyId={undefined} highlightId={undefined} plan={plan} />
+              <LifecycleBoard tenancies={demo} openTenancyId={undefined} highlightId={undefined} plan={plan} totalCards={capStatus.current_count} />
             </div>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", background: "linear-gradient(160deg,rgba(251,251,253,0.65) 0%,rgba(251,251,253,0.88) 50%,rgba(251,251,253,0.65) 100%)" }}>
               <div style={{ background: "var(--kk-surface)", borderRadius: 24, border: "1px solid var(--kk-line)", boxShadow: "0 20px 60px rgba(0,0,0,0.10),0 4px 16px rgba(0,0,0,0.06)", padding: "36px 44px", textAlign: "center", maxWidth: 480, width: "100%" }}>
@@ -161,7 +162,7 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
           </div>
         );
       })() : (
-        <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={highlight} plan={plan} />
+        <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={highlight} plan={plan} totalCards={capStatus.current_count} />
       )}
     </div>
   );

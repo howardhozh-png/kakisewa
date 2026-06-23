@@ -2197,8 +2197,20 @@ export async function setCompetitorStageAction(
   return { ok: true };
 }
 
-export async function winCompetitorUnitAction(id: string, availableFrom?: string | null): Promise<{ ok: boolean }> {
+export async function winCompetitorUnitAction(id: string, availableFrom?: string | null): Promise<{ ok: boolean; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null }> {
   "use server";
+  const capCheck = await checkLeadCap();
+  if (!capCheck.allowed) {
+    return {
+      ok: false,
+      reason: "plan_cap_reached",
+      current_plan: capCheck.current_plan,
+      current_count: capCheck.current_count,
+      current_cap: capCheck.current_cap,
+      upgrade_to: capCheck.upgrade_to ?? undefined,
+      upgrade_cap: capCheck.upgrade_cap,
+    };
+  }
   await winCompetitorUnit(id, availableFrom);
   invalidateCache();
   revalidatePath("/lost-listing");

@@ -14,9 +14,9 @@ const TIER_PRICES: Record<string, number> = {
 };
 
 const PIPELINE_LABELS: Record<PipelineType, { title: string; unit: string; context: string }> = {
-  existing:   { title: "Existing Listing is full",  unit: "contracts",       context: "Active contracts count toward this limit." },
-  my_listing: { title: "My Listing is full",        unit: "listings",        context: "Listed and Rented cards both count toward this limit." },
-  target:     { title: "Lost Listing is full",      unit: "target units",    context: "Competitor units you are tracking count toward this limit." },
+  existing:   { title: "Card limit reached", unit: "cards", context: "Cards across My Listing, Existing Listing, and Lost Listing all count toward your total." },
+  my_listing: { title: "Card limit reached", unit: "cards", context: "Cards across My Listing, Existing Listing, and Lost Listing all count toward your total." },
+  target:     { title: "Card limit reached", unit: "cards", context: "Cards across My Listing, Existing Listing, and Lost Listing all count toward your total." },
 };
 
 interface Props {
@@ -40,7 +40,7 @@ export function PlanCapDialog({
   const upgradeName = TIER_NAMES[upgradeToId] ?? upgradeToId;
   const upgradePrice = TIER_PRICES[upgradeToId];
   const { title, unit, context } = PIPELINE_LABELS[pipeline];
-  const upgradeCapLabel = upgradeCap !== null ? `up to ${upgradeCap} ${unit}` : `unlimited ${unit}`;
+  const upgradeCapLabel = upgradeCap !== null ? `up to ${upgradeCap} cards` : `unlimited cards`;
 
   const isBulkPartial = trying !== undefined && remaining !== undefined && remaining > 0;
 
@@ -77,7 +77,7 @@ export function PlanCapDialog({
             {planName} includes {currentCap} {unit}. You have{" "}
             <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>{currentCount}/{currentCap}</span> active.
             {" "}{context}
-            {pipeline === "existing" && nearestExpiryDays !== null && nearestExpiryDays !== undefined && (
+            {nearestExpiryDays !== null && nearestExpiryDays !== undefined && (
               <>
                 {" "}Your next renewal is due in{" "}
                 <span style={{ color: "var(--kk-ink)", fontWeight: 600 }}>

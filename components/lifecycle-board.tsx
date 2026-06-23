@@ -55,9 +55,10 @@ interface Props {
   openTenancyId?: string;
   highlightId?: string;
   plan?: string;
+  totalCards?: number;
 }
 
-export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "platinum" }: Props) {
+export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "platinum", totalCards }: Props) {
   const today = useMemo(() => getBusinessToday(), []);
   const router = useRouter();
   const ph = usePostHog();
@@ -75,7 +76,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [lostTenancy, setLostTenancy] = useState<Tenancy | null>(null);
   const [pendingMove, setPendingMove] = useState<{ t: Tenancy; target: LifecycleStage } | null>(null);
   const UPGRADE_FROM: Record<string, { id: string; cap: number | null }> = {
-    silver: { id: "gold", cap: 80 }, gold: { id: "platinum", cap: 200 }, platinum: { id: "elite", cap: null }, elite: { id: "elite", cap: null },
+    silver: { id: "gold", cap: 150 }, gold: { id: "platinum", cap: 400 }, platinum: { id: "elite", cap: null }, elite: { id: "elite", cap: null },
   };
   const [capBlocked, setCapBlocked] = useState(false);
 
@@ -111,8 +112,8 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const [local, setLocal] = useState<Tenancy[]>(tenancies);
   useEffect(() => { setLocal(tenancies); }, [tenancies]);
 
-  const TENANCY_CAPS: Record<string, number> = { silver: 20, gold: 80, platinum: 200, elite: Infinity };
-  const planCap = TENANCY_CAPS[plan] ?? Infinity;
+  const PLAN_CARD_CAP: Record<string, number> = { frozen: 0, silver: 50, gold: 150, platinum: 400, elite: 1000 };
+  const planCap = PLAN_CARD_CAP[plan] ?? Infinity;
   const activeCardCount = useMemo(
     () => local.filter((t) => t.lifecycle_stage !== "closed" && defaultLifecycleStage(t, today) !== null).length,
     [local, today]
@@ -208,7 +209,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     if (!isFinite(planCap)) return false;
     const activeStages: LifecycleStage[] = ["active", "headsup", "renewing", "pinged", "stalled", "pending_payment"];
     if (!activeStages.includes(targetStage)) return false;
-    return activeCardCount >= planCap;
+    return (totalCards ?? activeCardCount) >= planCap;
   }
 
   function handleDragEnd(e: DragEndEvent) {
@@ -478,12 +479,11 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
         />
       )}
 
-      {/* Plan contract cap dialog */}
+      {/* Plan cap dialog */}
       <PlanCapDialog
         open={capBlocked}
-        pipeline="existing"
         currentPlan={plan}
-        currentCount={activeCardCount}
+        currentCount={totalCards ?? activeCardCount}
         currentCap={isFinite(planCap) ? planCap : 0}
         upgradeToId={UPGRADE_FROM[plan]?.id ?? "elite"}
         upgradeCap={UPGRADE_FROM[plan]?.cap ?? null}

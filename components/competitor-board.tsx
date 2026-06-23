@@ -12,6 +12,7 @@ import { EditCompetitorDialog } from "@/components/edit-competitor-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, ChevronDown, Loader2, XCircle, Search, X, Bed, Bath } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DateInput } from "@/components/ui/date-input";
@@ -100,6 +101,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
   const [search, setSearch] = useState("");
   const [pendingMove, setPendingMove] = useState<{ lead: OwnerLead; target: ColStage } | null>(null);
   const [editLead, setEditLead] = useState<OwnerLead | null>(null);
+  const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null } | null>(null);
 
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
@@ -182,15 +184,31 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
   }
 
   async function handleWin(id: string) {
+    const res = await winCompetitorUnitAction(id);
+    if (!res.ok) {
+      if (res.reason === "plan_cap_reached") {
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 0, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
+      } else {
+        toast.error("Could not move card");
+      }
+      return;
+    }
     setLocal((prev) => prev.filter((x) => x.id !== id));
-    await winCompetitorUnitAction(id);
     toast.success("Moved to My Listing. Start finding a tenant.");
     router.refresh();
   }
 
   async function handleMoveToMyListing(id: string, availableFrom?: string) {
+    const res = await winCompetitorUnitAction(id, availableFrom || null);
+    if (!res.ok) {
+      if (res.reason === "plan_cap_reached") {
+        setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 0, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
+      } else {
+        toast.error("Could not move card");
+      }
+      return;
+    }
     setLocal((prev) => prev.filter((x) => x.id !== id));
-    await winCompetitorUnitAction(id, availableFrom || null);
     toast.success("Moved to My Listing. Start finding a tenant.");
     router.refresh();
   }
@@ -210,6 +228,16 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
 
   return (
     <>
+      <PlanCapDialog
+        open={!!capBlock}
+        currentPlan={capBlock?.currentPlan ?? "silver"}
+        currentCount={capBlock?.currentCount ?? 0}
+        currentCap={capBlock?.currentCap ?? 0}
+        upgradeToId={capBlock?.upgradeToId ?? "gold"}
+        upgradeCap={capBlock?.upgradeCap ?? null}
+        onClose={() => setCapBlock(null)}
+      />
+
       {/* Chart */}
       <div className="kk-section p-5 mb-5">
         <div className="mb-4">
