@@ -343,6 +343,7 @@ function LeadPopup({
     }
     setMoving(true);
     try {
+      if (dirty) await handleSave();
       await onMoveToListed(lead.id);
       onClose();
     } finally {

@@ -191,7 +191,7 @@ const CalendarGridComponent = ({ isRange = false }: { isRange?: boolean }) => {
           </CalendarHeaderCellRac>
         )}
       </CalendarGridHeaderRac>
-      <CalendarGridBodyRac className="[&_td]:px-0">
+      <CalendarGridBodyRac className="[&_td]:px-0" style={{ minHeight: 216 }}>
         {(date) => (
           <CalendarCellRac
             date={date}
@@ -254,25 +254,27 @@ const Calendar = ({ className, value, onChange, ...props }: CalendarProps) => {
         setFocusedDate={setFocusedDate}
       />
 
-      {view === "days" && <CalendarGridComponent />}
+      <div style={{ minHeight: 252 }}>
+        {view === "days" && <CalendarGridComponent />}
 
-      {view === "months" && (
-        <MonthGrid
-          focusedDate={focusedDate}
-          selectedDate={value as DateValue | null}
-          setFocusedDate={setFocusedDate}
-          setView={setView}
-        />
-      )}
+        {view === "months" && (
+          <MonthGrid
+            focusedDate={focusedDate}
+            selectedDate={value as DateValue | null}
+            setFocusedDate={setFocusedDate}
+            setView={setView}
+          />
+        )}
 
-      {view === "years" && (
-        <YearGrid
-          focusedDate={focusedDate}
-          selectedDate={value as DateValue | null}
-          setFocusedDate={setFocusedDate}
-          setView={setView}
-        />
-      )}
+        {view === "years" && (
+          <YearGrid
+            focusedDate={focusedDate}
+            selectedDate={value as DateValue | null}
+            setFocusedDate={setFocusedDate}
+            setView={setView}
+          />
+        )}
+      </div>
     </CalendarRac>
   )
 }
