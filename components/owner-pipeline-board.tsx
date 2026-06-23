@@ -1046,7 +1046,7 @@ function BulkSendDialog({ leads, onClose }: { leads: OwnerLead[]; onClose: () =>
               onClick={sendNext}
               disabled={!!sending}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold shrink-0 disabled:opacity-50"
-              style={{ background: "#25D366", color: "#fff" }}
+              style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
             >
               {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WhatsAppIcon className="w-3.5 h-3.5" />}
               Next ({todaysUnsent.length} left)
@@ -1107,7 +1107,7 @@ function BulkSendDialog({ leads, onClose }: { leads: OwnerLead[]; onClose: () =>
                           onClick={() => sendLead(l.id)}
                           disabled={!!sending}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold disabled:opacity-40 transition-opacity hover:opacity-80"
-                          style={{ background: "#25D366", color: "#fff" }}
+                          style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
                         >
                           {isSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <WhatsAppIcon className="w-3 h-3" />}
                           Send

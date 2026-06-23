@@ -29,7 +29,7 @@ export default async function TenantIntakePage({ params }: Props) {
       >
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold"
-          style={{ background: "#25D366" }}
+          style={{ background: "var(--kk-whatsapp)" }}
         >
           ✓
         </div>

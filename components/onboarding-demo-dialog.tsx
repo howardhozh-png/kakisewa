@@ -317,7 +317,7 @@ function Scene1({ active }: { active: boolean }) {
                     </div>
                   ) : (
                     <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{
-                      background: i === 0 && waHov ? "#25D366" : "rgba(37,211,102,0.10)",
+                      background: i === 0 && waHov ? "var(--kk-whatsapp)" : "rgba(37,211,102,0.10)",
                       color: i === 0 && waHov ? "#fff" : "#1F8B4C",
                       fontSize: 11, fontWeight: 600,
                       transform: i === 0 && waClk ? "scale(0.92)" : "scale(1)",
@@ -927,7 +927,7 @@ function Scene3({ active }: { active: boolean }) {
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                   <div style={{
                     padding: "5px 10px", borderRadius: 20, fontSize: 9, fontWeight: 600,
-                    background: "#25D366", color: "#fff",
+                    background: "var(--kk-whatsapp)", color: "#fff",
                     boxShadow: "0 2px 8px rgba(37,211,102,0.35)",
                     animation: "kk-demo-card-in 0.3s ease-out 0.6s both",
                   }}>Yes, extend</div>

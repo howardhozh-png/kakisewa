@@ -249,7 +249,7 @@ export default async function AgentProfilePage({ params, searchParams }: Props) 
                 {waUrl && (
                   <a href={waUrl} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center w-7 h-7 rounded-full transition-opacity hover:opacity-80"
-                    style={{ background: "#25D366", color: "#fff" }}
+                    style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
                     title="Chat on WhatsApp">
                     <MessageCircle className="w-4 h-4" />
                   </a>
@@ -297,7 +297,7 @@ export default async function AgentProfilePage({ params, searchParams }: Props) 
                   </div>
                   <div className="rounded-full overflow-hidden" style={{ height: 4, background: "#F2F2F7" }}>
                     <div className="h-full rounded-full"
-                      style={{ width: `${(s.rating / 5) * 100}%`, background: s.rating >= 4 ? "#25D366" : s.rating >= 3 ? "#f59e0b" : "#AEAEB2" }} />
+                      style={{ width: `${(s.rating / 5) * 100}%`, background: s.rating >= 4 ? "var(--kk-whatsapp)" : s.rating >= 3 ? "#f59e0b" : "#AEAEB2" }} />
                   </div>
                 </div>
               ))}

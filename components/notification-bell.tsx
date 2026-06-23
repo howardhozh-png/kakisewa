@@ -65,8 +65,8 @@ const TYPE_COLOR: Record<NotificationItem["type"], string> = {
   owner_pack_ranked: "#FF9F0A",
   tenant_intake:        "#AF52DE",
   tenant_renewal:       "#30D158",
-  wa_reply:             "#25D366",
-  wa_reply_owner:       "#25D366",
+  wa_reply:             "var(--kk-whatsapp)",
+  wa_reply_owner:       "var(--kk-whatsapp)",
   property_available:   "#0A84FF",
   property_pack_ranked: "#FF9F0A",
 };

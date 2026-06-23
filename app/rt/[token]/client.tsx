@@ -60,7 +60,7 @@ export function TenantRenewalClient({ token, tenantName, propertyName, contractE
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3" style={{ background: "#075E54", color: "#fff" }}>
-        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0" style={{ background: "#25D366" }}>
+        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0" style={{ background: "var(--kk-whatsapp)" }}>
           {initial}
         </div>
         <div>
@@ -80,7 +80,7 @@ export function TenantRenewalClient({ token, tenantName, propertyName, contractE
 
         {step !== null && step !== "submitting" && step !== "done" && step !== "error" && (
           <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, I'll stay" active={staying === true} disabled={staying !== null} onClick={() => handleChoice(true)} color="#25D366" />
+            <ChoiceButton label="Yes, I'll stay" active={staying === true} disabled={staying !== null} onClick={() => handleChoice(true)} color="var(--kk-whatsapp)" />
             <ChoiceButton label="No, I'm moving out" active={staying === false} disabled={staying !== null} onClick={() => handleChoice(false)} color="#E53E3E" />
           </div>
         )}
@@ -88,7 +88,7 @@ export function TenantRenewalClient({ token, tenantName, propertyName, contractE
         {step === "done" && (
           <AgentBubble>
             <span className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 inline shrink-0" style={{ color: "#25D366" }} />
+              <CheckCircle className="w-4 h-4 inline shrink-0" style={{ color: "var(--kk-whatsapp)" }} />
               {staying
                 ? `Thanks ${tenantName}! I've noted that you'd like to stay. I'll be in touch with the renewal details shortly.`
                 : `Thanks ${tenantName} for letting me know. I'll get things sorted for the end of your tenancy.`}

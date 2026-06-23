@@ -210,7 +210,7 @@ export default async function AgentProfilePage({ params }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-[15px] transition-all hover:opacity-90 active:scale-95"
-                style={{ background: "#25D366", color: "#fff" }}
+                style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
               >
                 <MessageCircle className="w-5 h-5" />
                 Chat on WhatsApp

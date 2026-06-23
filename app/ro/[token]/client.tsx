@@ -172,13 +172,13 @@ export function OwnerRenewalClient({
         )}
         {step === "extend_tenant" && (
           <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, extend" active={false} disabled={false} onClick={() => handleExtendTenant(true)} color="#25D366" />
+            <ChoiceButton label="Yes, extend" active={false} disabled={false} onClick={() => handleExtendTenant(true)} color="var(--kk-whatsapp)" />
             <ChoiceButton label="No" active={false} disabled={false} onClick={() => handleExtendTenant(false)} color="#E53E3E" />
           </div>
         )}
         {extendTenant !== null && step !== "extend_tenant" && (
           <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, extend" active={extendTenant === true} disabled onClick={() => {}} color="#25D366" />
+            <ChoiceButton label="Yes, extend" active={extendTenant === true} disabled onClick={() => {}} color="var(--kk-whatsapp)" />
             <ChoiceButton label="No" active={extendTenant === false} disabled onClick={() => {}} color="#E53E3E" />
           </div>
         )}
@@ -191,13 +191,13 @@ export function OwnerRenewalClient({
         )}
         {step === "rent_out" && (
           <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, new tenant" active={false} disabled={false} onClick={() => handleRentOut(true)} color="#25D366" />
+            <ChoiceButton label="Yes, new tenant" active={false} disabled={false} onClick={() => handleRentOut(true)} color="var(--kk-whatsapp)" />
             <ChoiceButton label="No, I'll stop" active={false} disabled={false} onClick={() => handleRentOut(false)} color="#E53E3E" />
           </div>
         )}
         {rentOut !== null && step !== "rent_out" && (
           <div className="flex gap-2 justify-end mt-1">
-            <ChoiceButton label="Yes, new tenant" active={rentOut === true} disabled onClick={() => {}} color="#25D366" />
+            <ChoiceButton label="Yes, new tenant" active={rentOut === true} disabled onClick={() => {}} color="var(--kk-whatsapp)" />
             <ChoiceButton label="No, I'll stop" active={rentOut === false} disabled onClick={() => {}} color="#E53E3E" />
           </div>
         )}
@@ -224,7 +224,7 @@ export function OwnerRenewalClient({
             <button
               type="submit"
               className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
-              style={{ background: "#25D366" }}
+              style={{ background: "var(--kk-whatsapp)" }}
             >
               Confirm
             </button>
@@ -246,7 +246,7 @@ export function OwnerRenewalClient({
           <>
             <AgentBubble>
               <span className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 inline shrink-0" style={{ color: "#25D366" }} />
+                <CheckCircle className="w-4 h-4 inline shrink-0" style={{ color: "var(--kk-whatsapp)" }} />
                 {alreadySubmitted
                   ? "You've already responded — thank you! Your agent will be in touch soon."
                   : extendTenant === true

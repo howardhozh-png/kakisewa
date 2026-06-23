@@ -260,7 +260,7 @@ export function ProfileSettingsClient({
                 </p>
               )}
               {waUrl && (
-                <div className="flex items-center justify-center w-6 h-6 rounded-full" style={{ background: "#25D366", color: "#fff" }}>
+                <div className="flex items-center justify-center w-6 h-6 rounded-full" style={{ background: "var(--kk-whatsapp)", color: "#fff" }}>
                   <MessageCircle className="w-3.5 h-3.5" />
                 </div>
               )}
@@ -342,7 +342,7 @@ export function ProfileSettingsClient({
                   </div>
                   <div className="rounded-full overflow-hidden" style={{ height: 4, background: "#F2F2F7" }}>
                     <div className="h-full rounded-full transition-all"
-                      style={{ width: `${(s.rating / 5) * 100}%`, background: s.rating >= 4 ? "#25D366" : s.rating >= 3 ? "#f59e0b" : "#AEAEB2" }} />
+                      style={{ width: `${(s.rating / 5) * 100}%`, background: s.rating >= 4 ? "var(--kk-whatsapp)" : s.rating >= 3 ? "#f59e0b" : "#AEAEB2" }} />
                   </div>
                 </div>
               ))}
