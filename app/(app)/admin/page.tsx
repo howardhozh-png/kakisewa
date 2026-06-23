@@ -94,6 +94,13 @@ export default async function AdminPage() {
     .select("id, name, email, ren_number, expected_spend, created_at")
     .order("created_at", { ascending: false });
 
+  // Survey responses — join name from agent_profiles, email resolved below via emailById
+  const { data: surveyRaw } = await supabase
+    .from("agent_profiles")
+    .select("id, name, survey_completed_at, survey_response")
+    .not("survey_completed_at", "is", null)
+    .order("survey_completed_at", { ascending: false });
+
   // Paginate through all auth users (handles >1000 agents)
   const emailById: Record<string, string> = {};
   const createdById: Record<string, string> = {};
@@ -213,5 +220,21 @@ export default async function AdminPage() {
     };
   });
 
-  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />;
+  const surveyResponses = (surveyRaw ?? []).map((r: {
+    id: string; name: string | null; survey_completed_at: string;
+    survey_response: Record<string, unknown> | null;
+  }) => ({
+    id: r.id,
+    name: r.name,
+    email: emailById[r.id] ?? null,
+    survey_completed_at: r.survey_completed_at,
+    role: (r.survey_response?.role as string | null) ?? null,
+    tenancy_volume: (r.survey_response?.tenancy_volume as string | null) ?? null,
+    tracking_before: (r.survey_response?.tracking_before as string | null) ?? null,
+    beliefs: (r.survey_response?.beliefs as string[] | null) ?? [],
+    willingness_to_pay: (r.survey_response?.willingness_to_pay as string | null) ?? null,
+    open_feedback: (r.survey_response?.open_feedback as string | null) ?? null,
+  }));
+
+  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} surveyResponses={surveyResponses} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />;
 }

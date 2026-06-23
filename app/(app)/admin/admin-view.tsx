@@ -40,6 +40,11 @@ interface AgentRow {
 }
 interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
 interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
+interface SurveyRow {
+  id: string; name: string | null; email: string | null; survey_completed_at: string;
+  role: string | null; tenancy_volume: string | null; tracking_before: string | null;
+  beliefs: string[]; willingness_to_pay: string | null; open_feedback: string | null;
+}
 interface RawLead { user_id: string; stage: string; wa_status: string | null; created_at: string; last_outreach_at: string | null; is_competitor_target: boolean | null; }
 interface RawTenancy { user_id: string; created_at: string; contract_end: string | null; amount: number | null; stage: string | null; }
 interface RawFeedbackItem { agent_id: string; created_at: string; }
@@ -1110,10 +1115,11 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
 
 // ─── Ops Tab ──────────────────────────────────────────────────────────────────
 
-function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initialInvites, waitlist, openFeedbackCount }: {
-  links: LinkRow[]; feedback: FeedbackRow[]; invites: InviteRow[]; waitlist: WaitlistRow[]; openFeedbackCount: number;
+function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initialInvites, waitlist, surveyResponses, openFeedbackCount }: {
+  links: LinkRow[]; feedback: FeedbackRow[]; invites: InviteRow[]; waitlist: WaitlistRow[];
+  surveyResponses: SurveyRow[]; openFeedbackCount: number;
 }) {
-  const [sub, setSub] = useState<"links" | "feedback" | "invites" | "waitlist" | "dev">("links");
+  const [sub, setSub] = useState<"links" | "feedback" | "survey" | "invites" | "waitlist" | "dev">("links");
   const [links, setLinks] = useState<LinkRow[]>(initialLinks);
   const [feedback, setFeedback] = useState<FeedbackRow[]>(initialFeedback);
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites);
@@ -1179,6 +1185,7 @@ function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initi
   const subTabs: [typeof sub, string][] = [
     ["links", `Links (${links.length})`],
     ["feedback", `Feedback${openFeedbackCount ? ` (${openFeedbackCount})` : ""}`],
+    ["survey", `Survey (${surveyResponses.length})`],
     ["invites", `Invites (${invites.length})`],
     ["waitlist", `Waitlist (${waitlist.length})`],
     ["dev", "Dev Tools"],
@@ -1285,6 +1292,117 @@ function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initi
         </div>
       )}
 
+      {sub === "survey" && (
+        <div>
+          {surveyResponses.length === 0 ? (
+            <p style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-faint)" }}>No survey responses yet.</p>
+          ) : (
+            <>
+              {/* Aggregate stats */}
+              {(() => {
+                const tally = (field: keyof SurveyRow) => {
+                  const counts: Record<string, number> = {};
+                  for (const r of surveyResponses) {
+                    const v = r[field];
+                    if (typeof v === "string" && v) counts[v] = (counts[v] ?? 0) + 1;
+                  }
+                  return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                };
+                const beliefCounts: Record<string, number> = {};
+                for (const r of surveyResponses) {
+                  for (const b of r.beliefs) beliefCounts[b] = (beliefCounts[b] ?? 0) + 1;
+                }
+                const beliefEntries = Object.entries(beliefCounts).sort((a, b) => b[1] - a[1]);
+                const sections: { label: string; entries: [string, number][] }[] = [
+                  { label: "Role", entries: tally("role") },
+                  { label: "Tenancy volume", entries: tally("tenancy_volume") },
+                  { label: "Tracked before", entries: tally("tracking_before") },
+                  { label: "Willingness to pay", entries: tally("willingness_to_pay") },
+                ];
+                const total = surveyResponses.length;
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    {sections.map(s => (
+                      <div key={s.label} className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                        <p className="kk-overline mb-3">{s.label}</p>
+                        <div className="space-y-2">
+                          {s.entries.map(([val, count]) => (
+                            <div key={val}>
+                              <div className="flex justify-between mb-0.5">
+                                <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink)" }}>{val}</span>
+                                <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", fontWeight: 600 }}>{count} ({Math.round(count / total * 100)}%)</span>
+                              </div>
+                              <div style={{ height: 4, background: "var(--kk-surface-2)", borderRadius: 2 }}>
+                                <div style={{ height: "100%", width: `${Math.round(count / total * 100)}%`, background: "var(--kk-blue)", borderRadius: 2 }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="rounded-2xl p-4 sm:col-span-2" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                      <p className="kk-overline mb-3">Beliefs (multi-select)</p>
+                      <div className="space-y-2">
+                        {beliefEntries.map(([val, count]) => (
+                          <div key={val}>
+                            <div className="flex justify-between mb-0.5">
+                              <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink)" }}>{val}</span>
+                              <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-mute)", fontWeight: 600 }}>{count} ({Math.round(count / total * 100)}%)</span>
+                            </div>
+                            <div style={{ height: 4, background: "var(--kk-surface-2)", borderRadius: 2 }}>
+                              <div style={{ height: "100%", width: `${Math.round(count / total * 100)}%`, background: "var(--kk-green)", borderRadius: 2 }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Individual responses */}
+              <p className="kk-overline mb-3">All responses ({surveyResponses.length})</p>
+              <div className="space-y-3">
+                {surveyResponses.map(r => (
+                  <div key={r.id} className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+                    <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                      <div>
+                        <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{r.name || r.email || "Unknown"}</p>
+                        {r.name && r.email && <p className="font-mono text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>{r.email}</p>}
+                      </div>
+                      <span className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-faint)" }}>{fmtDate(r.survey_completed_at)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                      {[
+                        ["Role", r.role],
+                        ["Tenancies", r.tenancy_volume],
+                        ["Tracked before", r.tracking_before],
+                        ["WTP", r.willingness_to_pay],
+                      ].map(([label, val]) => val ? (
+                        <div key={label} className="flex gap-2">
+                          <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", minWidth: 80 }}>{label}</span>
+                          <span style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink)", fontWeight: 500 }}>{val}</span>
+                        </div>
+                      ) : null)}
+                    </div>
+                    {r.beliefs.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {r.beliefs.map(b => (
+                          <span key={b} className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)" }}>{b}</span>
+                        ))}
+                      </div>
+                    )}
+                    {r.open_feedback && (
+                      <p className="mt-2 text-[12px] leading-relaxed italic" style={{ color: "var(--kk-ink-mute)" }}>&ldquo;{r.open_feedback}&rdquo;</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {sub === "invites" && (
         <div>
           <div className="mb-5">
@@ -1354,9 +1472,9 @@ function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initi
 
 // ─── Main AdminView ────────────────────────────────────────────────────────────
 
-export function AdminView({ funnel, links, feedback, agents, invites, waitlist, rawLeads, rawTenancies, rawFeedback }: {
+export function AdminView({ funnel, links, feedback, agents, invites, waitlist, surveyResponses, rawLeads, rawTenancies, rawFeedback }: {
   funnel: Funnel; links: LinkRow[]; feedback: FeedbackRow[]; agents: AgentRow[];
-  invites: InviteRow[]; waitlist: WaitlistRow[];
+  invites: InviteRow[]; waitlist: WaitlistRow[]; surveyResponses: SurveyRow[];
   rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
 }) {
   const [tab, setTab] = useState<"health" | "users" | "revenue" | "ops">("health");
@@ -1428,7 +1546,7 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
       )}
       {tab === "revenue" && <RevenueTab agents={agents} />}
       {tab === "ops" && (
-        <OpsTab links={links} feedback={feedback} invites={invites} waitlist={waitlist} openFeedbackCount={openFeedbackCount} />
+        <OpsTab links={links} feedback={feedback} invites={invites} waitlist={waitlist} surveyResponses={surveyResponses} openFeedbackCount={openFeedbackCount} />
       )}
     </div>
   );
