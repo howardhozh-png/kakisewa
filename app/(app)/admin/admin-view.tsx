@@ -120,13 +120,28 @@ function fmtShort(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short" });
 }
 
-function InactiveBadge({ days }: { days: number | null }) {
-  if (days === null) return <span style={{ color: "var(--kk-ink-faint)", fontSize: 11 }}>Never</span>;
-  const color = days <= 6 ? "#1F8B4C" : days <= 13 ? "#92400E" : "#DC2626";
-  const bg    = days <= 6 ? "rgba(52,199,89,0.10)" : days <= 13 ? "rgba(255,149,0,0.12)" : "rgba(220,38,38,0.10)";
+function LastSeenBadge({ iso }: { iso: string | null }) {
+  if (!iso) return <span style={{ color: "var(--kk-ink-faint)", fontSize: 11 }}>Never</span>;
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins  = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days  = Math.floor(diffMs / 86400000);
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+
+  let label: string;
+  let color: string;
+  let bg: string;
+  if (mins < 1)        { label = "just now";          color = "#1F8B4C"; bg = "rgba(52,199,89,0.10)"; }
+  else if (mins < 60)  { label = `${mins} min ago`;   color = "#1F8B4C"; bg = "rgba(52,199,89,0.10)"; }
+  else if (hours < 24) { label = `${hours} hr ago`;   color = "#1F8B4C"; bg = "rgba(52,199,89,0.10)"; }
+  else if (days < 7)   { label = `${days}d ago`;      color = "#92400E"; bg = "rgba(255,149,0,0.12)"; }
+  else if (weeks < 5)  { label = `${weeks}w ago`;     color = "#DC2626"; bg = "rgba(220,38,38,0.10)"; }
+  else                 { label = `${months}mo ago`;   color = "#6E6E73"; bg = "rgba(110,110,115,0.10)"; }
+
   return (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums" style={{ background: bg, color }}>
-      {days === 0 ? "Today" : `${days}d ago`}
+    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums whitespace-nowrap" style={{ background: bg, color }}>
+      {label}
     </span>
   );
 }
@@ -608,11 +623,11 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
 
   function exportCsv() {
     const rows = [
-      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Seen","Days Inactive","Potential","Listed","Existing","Target","Owner WAs","Renewal WAs","Total Msgs"].join(","),
+      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Seen","Potential","Listed","Existing","Target","Owner WAs","Renewal WAs","Total Msgs"].join(","),
       ...filtered.map(a => [
         a.name ?? "", a.email ?? "", a.agency ?? "",
         a.subscription_status ?? "", a.subscription_plan ?? "", a.segment, a.health,
-        fmtDate(a.joined_at), fmtDate(a.last_login_at), a.days_inactive ?? "Never",
+        fmtDate(a.joined_at), fmtDate(a.last_login_at),
         a.potential_listing_count, a.my_listing_count, a.existing_listing_count, a.target_listing_count,
         a.outreaches_sent, a.renewal_wa_count, a.totalMsgs,
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
@@ -748,7 +763,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
                 <Th col="outreach_wa" label="Owner WA" right />
                 <Th col="renewal_wa" label="Renewal WA" right />
                 {/* Activity */}
-                <Th col="days_inactive" label="Inactive" />
+                <Th col="days_inactive" label="Last seen" />
                 <Th col="health" label="Health" right />
                 {/* Expand */}
                 <th style={{ ...TH_BASE, width: 36, padding: "10px 8px" }} />
@@ -801,7 +816,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
                       <NumCell val={a.renewal_wa_count} />
                       {/* Activity */}
                       <td style={{ ...TD, padding: "10px 12px", whiteSpace: "nowrap" }}>
-                        <InactiveBadge days={a.days_inactive} />
+                        <LastSeenBadge iso={a.last_login_at} />
                       </td>
                       {/* Health */}
                       <td style={{ ...TD, padding: "10px 12px", minWidth: 100 }}>
