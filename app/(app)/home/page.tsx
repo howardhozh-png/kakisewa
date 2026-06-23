@@ -7,6 +7,7 @@ import { StatsSection } from "./stats-section";
 import { getTotalCardCount, TOTAL_CARD_CAP, effectivePlan } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
+import { ReferralBanner } from "@/components/referral-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -323,6 +324,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 lg:py-16">
+      <ReferralBanner />
       {isSetupComplete ? (
         <ActiveState
           firstName={firstName}

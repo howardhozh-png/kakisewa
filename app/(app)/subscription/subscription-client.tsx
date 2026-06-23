@@ -397,12 +397,13 @@ interface Props {
   subscriptionYear: 1 | 2;
   currentCardCount: number;
   referralCode: string | null;
+  referralCount: number;
   creditBalanceMyr: number;
 }
 
 export function SubscriptionClient({
   status, trialDaysLeft, currentPlan,
-  subscriptionYear, currentCardCount, referralCode, creditBalanceMyr,
+  subscriptionYear, currentCardCount, referralCode, referralCount, creditBalanceMyr,
 }: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan ?? "platinum");
@@ -655,13 +656,34 @@ export function SubscriptionClient({
         {/* Referral section */}
         {referralCode && (
           <div className="mb-12 rounded-2xl p-6" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-            <p className="kk-overline mb-4">Referral program</p>
-            <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--kk-ink)" }}>
-              Earn 100% of your referral&apos;s first payment
+            <p className="kk-overline mb-3">Referral program</p>
+            <p className="text-[17px] font-bold mb-1" style={{ color: "var(--kk-ink)" }}>
+              Refer 12 agents, get 1 full year free
             </p>
             <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
-              When someone signs up using your code and makes their first payment, the full amount is credited to your billing account.
+              Each agent who signs up with your code and pays their first month gives you full credit for that amount. Refer 12 and you have covered a full year on us.
             </p>
+
+            {/* Progress bar */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[12px] font-semibold" style={{ color: "var(--kk-ink)" }}>
+                  {referralCount} of 12 agents referred
+                </p>
+                <p className="text-[11px]" style={{ color: referralCount >= 12 ? "var(--kk-green-ink)" : "var(--kk-ink-faint)" }}>
+                  {referralCount >= 12 ? "Goal reached!" : `${12 - referralCount} to go`}
+                </p>
+              </div>
+              <div style={{ height: 6, background: "var(--kk-line)", borderRadius: 3 }}>
+                <div style={{
+                  height: "100%",
+                  width: `${Math.min((referralCount / 12) * 100, 100)}%`,
+                  background: referralCount >= 12 ? "var(--kk-green)" : "var(--kk-blue)",
+                  borderRadius: 3,
+                  transition: "width 0.4s ease",
+                }} />
+              </div>
+            </div>
 
             {creditBalanceMyr > 0 && (
               <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"

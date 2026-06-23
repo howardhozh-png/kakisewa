@@ -38,6 +38,15 @@ export default async function SubscriptionPage() {
   const subscriptionYear = ((agent.subscription_year ?? 1) as number) as 1 | 2;
   const referralCode = agent.referral_slug ?? null;
 
+  let referralCount = 0;
+  if (referralCode) {
+    const { count } = await supabase
+      .from("agent_profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("referred_by_slug", referralCode);
+    referralCount = count ?? 0;
+  }
+
   const currentCardCount = user ? await getTotalCardCount(supabase, user.id) : 0;
 
   let creditBalanceMyr = 0;
@@ -58,6 +67,7 @@ export default async function SubscriptionPage() {
       subscriptionYear={subscriptionYear}
       currentCardCount={currentCardCount}
       referralCode={referralCode}
+      referralCount={referralCount}
       creditBalanceMyr={creditBalanceMyr}
     />
   );
