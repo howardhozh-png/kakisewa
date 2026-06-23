@@ -238,7 +238,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   {ownerPhone ? (
                     <div className="flex items-center gap-0.5 mt-1">
                       <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(ownerPhone)}</p>
-                      <a href={`https://wa.me/${ownerPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "#25D366" }} aria-label="WhatsApp">
+                      <a href={`https://wa.me/${normalizePhone(ownerPhone)}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                         <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
                       <a href={`tel:${toE164Display(ownerPhone)}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
@@ -286,10 +286,9 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                 </div>
                 <div className="space-y-0.5">
                   <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Contract start</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={contractStart}
-                    onChange={(e) => setContractStart(e.target.value)}
+                    onChange={setContractStart}
                     className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
                     style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)", fontSize: 16 }}
                   />

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 function isoToDMY(iso: string): string {
   if (!iso || !iso.match(/^\d{4}-\d{2}-\d{2}$/)) return "";
@@ -32,13 +34,25 @@ interface Props {
 
 export function DateInput({ value, onChange, className, style, placeholder = "DD/MM/YYYY", required, name }: Props) {
   const [display, setDisplay] = useState(() => isoToDMY(value));
-  const nativeRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const converted = isoToDMY(value);
     if (converted !== display) setDisplay(converted);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
+
+  const selectedDate = value && value.match(/^\d{4}-\d{2}-\d{2}$/)
+    ? new Date(value + "T00:00:00")
+    : undefined;
+
+  function handleSelect(date: Date | undefined) {
+    setOpen(false);
+    if (!date) return;
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    onChange(iso);
+    setDisplay(isoToDMY(iso));
+  }
 
   return (
     <div className="relative">
@@ -49,7 +63,6 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
         className={className}
         style={{ ...style, paddingRight: 36 }}
         required={required}
-        name={name}
         onChange={(e) => {
           const raw = e.target.value;
           setDisplay(raw);
@@ -68,32 +81,29 @@ export function DateInput({ value, onChange, className, style, placeholder = "DD
         }}
       />
 
-      {/* Native date input — truly hidden, triggered programmatically by the button below */}
-      <input
-        ref={nativeRef}
-        type="date"
-        value={value || ""}
-        onChange={(e) => {
-          const iso = e.target.value;
-          onChange(iso);
-          setDisplay(isoToDMY(iso));
-        }}
-        tabIndex={-1}
-        aria-hidden="true"
-        style={{ position: "absolute", width: 0, height: 0, opacity: 0, pointerEvents: "none", border: "none", padding: 0, margin: 0 }}
-      />
+      {/* Hidden input so the ISO value is captured when used inside a <form name="..."> */}
+      {name && <input type="hidden" name={name} value={value || ""} />}
 
-      {/* Calendar icon button — opens the native date picker on click */}
-      <button
-        type="button"
-        className="absolute right-2.5 top-1/2 -translate-y-1/2"
-        style={{ color: "var(--kk-ink-faint)", background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 0 }}
-        onClick={() => { nativeRef.current?.showPicker?.(); nativeRef.current?.click(); }}
-        tabIndex={-1}
-        aria-label="Open date picker"
-      >
-        <CalendarDays className="w-4 h-4" />
-      </button>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2"
+            style={{ color: "var(--kk-ink-faint)", background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 0 }}
+            tabIndex={-1}
+            aria-label="Open date picker"
+          >
+            <CalendarDays className="w-4 h-4" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleSelect}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

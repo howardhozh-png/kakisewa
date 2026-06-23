@@ -14,6 +14,7 @@ import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, C
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DateInput } from "@/components/ui/date-input";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -845,13 +846,13 @@ function ExpiringWhatsNext({ lead, onMoveToRenewing, onMoveToMyListing, onBackTo
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="kk-overline" style={{ color: "var(--kk-ink-faint)" }}>Availability date (optional)</label>
-                <input
-                  type="date"
-                  value={availableFrom}
-                  onChange={(e) => setAvailableFrom(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ fontSize: 16, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", borderRadius: 10, padding: "8px 12px", width: "100%" }}
-                />
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DateInput
+                    value={availableFrom}
+                    onChange={setAvailableFrom}
+                    style={{ fontSize: 16, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", borderRadius: 10, padding: "8px 12px", width: "100%" }}
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <button
@@ -978,13 +979,13 @@ function WatchingActions({ lead, onMoveToMyListing }: { lead: OwnerLead; onMoveT
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="kk-overline" style={{ color: "var(--kk-ink-faint)" }}>Availability date (optional)</label>
-                <input
-                  type="date"
-                  value={availableFrom}
-                  onChange={(e) => setAvailableFrom(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ fontSize: 16, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", borderRadius: 10, padding: "8px 12px", width: "100%" }}
-                />
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DateInput
+                    value={availableFrom}
+                    onChange={setAvailableFrom}
+                    style={{ fontSize: 16, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)", borderRadius: 10, padding: "8px 12px", width: "100%" }}
+                  />
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
