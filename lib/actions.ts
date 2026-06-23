@@ -176,7 +176,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   if (contractStart) {
     const agent = await getAgentProfile();
     const pct = agent.commission_pct ?? 100;
-    recordCommissionEvent({
+    await recordCommissionEvent({
       tenancy_id: newTenancy.id,
       type: "new_signing",
       amount: Math.round(newTenancy.amount * pct / 100),
@@ -815,7 +815,7 @@ export async function collectRenewalCommission(
     await clearRenewalData(tenancyId);
 
     const today = new Date().toISOString().slice(0, 10);
-    recordCommissionEvent({
+    await recordCommissionEvent({
       tenancy_id: tenancyId,
       owner_lead_id: tenancy.owner_lead_id,
       type: "renewal",
@@ -1217,7 +1217,7 @@ export async function confirmMovedIn(
 
     const agent = await getAgentProfile();
     if (tenancy.owner_lead_id) {
-      recordCommissionEvent({
+      await recordCommissionEvent({
         tenancy_id: tenancyId,
         owner_lead_id: tenancy.owner_lead_id,
         type: "new_signing",
@@ -2036,7 +2036,7 @@ export async function markCommissionCollected(
       if (lead) {
         const amount = Math.round((lead.expected_rent ?? tenancy.amount) * 0.5);
         const today = new Date().toISOString().slice(0, 10);
-        recordCommissionEvent({
+        await recordCommissionEvent({
           tenancy_id: tenancyId,
           owner_lead_id: tenancy.owner_lead_id,
           type: "renewal",
