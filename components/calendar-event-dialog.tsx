@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition, useEffect, useCallback, useMemo } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Loader2 } from "lucide-react";
-import { createCalendarEvent, getCalendarEventDatesForMonth } from "@/lib/actions";
+import { createCalendarEvent } from "@/lib/actions";
 import { toast } from "sonner";
-import type { DayButtonProps } from "react-day-picker";
 
 const TIMES = [
   "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
@@ -30,10 +29,6 @@ function toISO(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function toMonthKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function formatDisplay(date: Date): string {
@@ -107,49 +102,30 @@ export function CalendarEventDialog({
   const [date, setDate] = useState<Date | undefined>(
     defaultDate ? new Date(defaultDate + "T00:00:00") : new Date()
   );
-  const [displayedMonth, setDisplayedMonth] = useState<Date>(
-    defaultDate ? new Date(defaultDate + "T00:00:00") : new Date()
-  );
   const [timeLabel, setTimeLabel] = useState<string>("");
   const [ownerName, setOwnerName] = useState(defaultOwnerName);
   const [ownerPhone, setOwnerPhone] = useState(defaultOwnerPhone);
   const [tenantName, setTenantName] = useState(defaultTenantName);
   const [tenantPhone, setTenantPhone] = useState(defaultTenantPhone);
-  const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
-
-  const fetchEventDates = useCallback(async (month: Date) => {
-    const key = toMonthKey(month);
-    const dates = await getCalendarEventDatesForMonth(key);
-    setEventDates(new Set(dates));
-  }, []);
 
   useEffect(() => {
     if (open) {
       setTitle(defaultTitle);
-      const d = defaultDate ? new Date(defaultDate + "T00:00:00") : new Date();
-      setDate(d);
-      setDisplayedMonth(d);
+      setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
       setTimeLabel("");
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
       setTenantName(defaultTenantName);
       setTenantPhone(defaultTenantPhone);
-      fetchEventDates(d);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  useEffect(() => {
-    if (open) fetchEventDates(displayedMonth);
-  }, [open, displayedMonth, fetchEventDates]);
-
   function handleOpen(val: boolean) {
     if (val) {
       setTitle(defaultTitle);
-      const d = defaultDate ? new Date(defaultDate + "T00:00:00") : new Date();
-      setDate(d);
-      setDisplayedMonth(d);
+      setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
       setTimeLabel("");
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
@@ -181,32 +157,6 @@ export function CalendarEventDialog({
       onOpenChange(false);
     });
   }
-
-  const DotDayButton = useMemo(() => {
-    return function DotDayButton({ day, modifiers, children, ...props }: DayButtonProps) {
-      const iso = toISO(day.date);
-      const hasEvent = eventDates.has(iso);
-      return (
-        <button {...props} style={{ position: "relative", ...props.style }}>
-          {children}
-          {hasEvent && (
-            <span style={{
-              position: "absolute",
-              bottom: 2,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "var(--kk-blue)",
-              opacity: 0.7,
-              pointerEvents: "none",
-            }} />
-          )}
-        </button>
-      );
-    };
-  }, [eventDates]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -257,10 +207,11 @@ export function CalendarEventDialog({
             <Calendar
               mode="single"
               selected={date}
-              month={displayedMonth}
-              onMonthChange={(m) => setDisplayedMonth(m)}
+              defaultMonth={date ?? new Date()}
               onSelect={(d) => { if (d) setDate(d); }}
-              components={{ DayButton: DotDayButton }}
+              captionLayout="dropdown"
+              startMonth={new Date(2020, 0)}
+              endMonth={new Date(2035, 11)}
             />
           </div>
 
