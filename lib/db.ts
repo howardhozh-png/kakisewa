@@ -833,6 +833,7 @@ function gmt8Today(): string {
 
 export async function recordLoginStreak(): Promise<number> {
   const today = gmt8Today();
+  const now = new Date().toISOString();
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
@@ -846,20 +847,26 @@ export async function recordLoginStreak(): Promise<number> {
 
   if (!row) return 0;
   const cur = (row.login_streak as number | null) ?? 0;
-  if (row.last_login_date === today) return cur;
+
+  // Always stamp last_seen_at on every page load regardless of date
+  if (row.last_login_date === today) {
+    supabase.from("agent_profiles").update({ last_seen_at: now }).eq("id", user.id).then(() => {});
+    return cur;
+  }
 
   const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const next = row.last_login_date === yesterday ? cur + 1 : 1;
   const longest = Math.max((row.longest_streak as number | null) ?? 0, next);
   await supabase
     .from("agent_profiles")
-    .update({ login_streak: next, longest_streak: longest, last_login_date: today })
+    .update({ login_streak: next, longest_streak: longest, last_login_date: today, last_seen_at: now })
     .eq("id", user.id);
   return next;
 }
 
 export async function bumpLoginStreak(): Promise<number> {
   const today = gmt8Today();
+  const now = new Date().toISOString();
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
@@ -872,12 +879,15 @@ export async function bumpLoginStreak(): Promise<number> {
     .maybeSingle();
 
   if (!row) return 0;
-  if (row.last_login_date === today) return (row.login_streak as number | null) ?? 0;
+  if (row.last_login_date === today) {
+    supabase.from("agent_profiles").update({ last_seen_at: now }).eq("id", user.id).then(() => {});
+    return (row.login_streak as number | null) ?? 0;
+  }
   const next = ((row.login_streak as number | null) ?? 0) + 1;
   const longest = Math.max((row.longest_streak as number | null) ?? 0, next);
   await supabase
     .from("agent_profiles")
-    .update({ login_streak: next, longest_streak: longest, last_login_date: today })
+    .update({ login_streak: next, longest_streak: longest, last_login_date: today, last_seen_at: now })
     .eq("id", user.id);
   return next;
 }

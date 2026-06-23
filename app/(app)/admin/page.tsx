@@ -12,7 +12,7 @@ export default async function AdminPage() {
   // Funnel + agents: all agent profiles
   const { data: profiles } = await supabase
     .from("agent_profiles")
-    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, trial_ends_at, subscription_activated_at, is_test_account, created_at, referral_slug")
+    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, trial_ends_at, subscription_activated_at, is_test_account, created_at, referral_slug, last_seen_at")
     .order("created_at", { ascending: false });
 
   const nowTs = new Date();
@@ -187,13 +187,16 @@ export default async function AdminPage() {
   const agents = (profiles ?? []).map((p: {
     id: string; name: string | null; phone: string | null; agency: string | null;
     ren_number: string | null; subscription_status: string | null; subscription_plan: string | null;
-    trial_ends_at: string | null; subscription_activated_at: string | null; is_test_account: boolean | null; created_at: string;
+    trial_ends_at: string | null; subscription_activated_at: string | null; is_test_account: boolean | null;
+    created_at: string; last_seen_at: string | null;
   }) => {
     const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at) : null;
     const trialDaysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - nowTs.getTime()) / 86400000) : null;
-    const lastLogin = lastLoginById[p.id] ?? null;
-    const daysInactive = lastLogin
-      ? Math.floor((nowTs.getTime() - new Date(lastLogin).getTime()) / 86400000)
+    // Use last_seen_at (stamped on every page load) — more accurate than auth.last_sign_in_at
+    // which only updates on explicit sign-in, not session refreshes.
+    const lastSeen = p.last_seen_at ?? null;
+    const daysInactive = lastSeen
+      ? Math.floor((nowTs.getTime() - new Date(lastSeen).getTime()) / 86400000)
       : null;
     return {
       id: p.id,
@@ -208,7 +211,7 @@ export default async function AdminPage() {
       subscription_activated_at: p.subscription_activated_at ?? null,
       is_test_account: p.is_test_account ?? false,
       joined_at: createdById[p.id] ?? p.created_at,
-      last_login_at: lastLogin,
+      last_login_at: lastSeen,
       days_inactive: daysInactive,
       potential_listing_count: leadsByUser[p.id]?.total ?? 0,
       outreaches_sent: leadsByUser[p.id]?.outreached ?? 0,

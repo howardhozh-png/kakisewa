@@ -497,7 +497,7 @@ function AgentDetailPanel({ a, onTestToggled }: { a: AgentRow & { segment: Segme
         <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Activity</p>
         <div className="text-[12px] space-y-0.5" style={{ color: "var(--kk-ink-mute)" }}>
           <p>Joined {fmtShort(a.joined_at)}</p>
-          <p>Last login {fmtShort(a.last_login_at)}</p>
+          <p>Last seen {fmtShort(a.last_login_at)}</p>
         </div>
       </div>
       <div>
@@ -608,7 +608,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
 
   function exportCsv() {
     const rows = [
-      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Login","Days Inactive","Potential","Listed","Existing","Target","Owner WAs","Renewal WAs","Total Msgs"].join(","),
+      ["Name","Email","Agency","Status","Plan","Segment","Health","Joined","Last Seen","Days Inactive","Potential","Listed","Existing","Target","Owner WAs","Renewal WAs","Total Msgs"].join(","),
       ...filtered.map(a => [
         a.name ?? "", a.email ?? "", a.agency ?? "",
         a.subscription_status ?? "", a.subscription_plan ?? "", a.segment, a.health,
