@@ -186,6 +186,8 @@ export interface AgentProfile {
   whatsapp_number?: string | null;
   notif_push?: boolean | null;
   notif_email?: boolean | null;
+  survey_completed_at?: string | null;
+  survey_response?: Record<string, unknown> | null;
 }
 
 export interface ProfileStrengthItem {

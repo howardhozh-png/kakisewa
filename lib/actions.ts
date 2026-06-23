@@ -2437,6 +2437,35 @@ export async function deleteCalendarEvent(id: string): Promise<{ ok: boolean }> 
   return { ok: true };
 }
 
+export async function submitPricingSurvey(response: {
+  role: string;
+  tenancy_volume: string;
+  tracking_before: string;
+  beliefs: string[];
+  willingness_to_pay: string;
+  open_feedback?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  "use server";
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: "Not authenticated" };
+    const { error } = await supabase
+      .from("agent_profiles")
+      .update({
+        survey_response: response,
+        survey_completed_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/home");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
 // Returns ISO date strings ("YYYY-MM-DD") that have at least one calendar event
 export async function getCalendarEventDatesForMonth(month: string): Promise<string[]> {
   "use server";

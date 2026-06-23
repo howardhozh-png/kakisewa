@@ -926,6 +926,8 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       referral_slug: user.id.replace(/-/g, "").slice(0, 8).toUpperCase(),
       // Store who referred this user (from ?ref= param passed at signup as "referred_by")
       referred_by_slug: (meta.referred_by as string | null) ?? null,
+      // New accounts skip the beta survey — it's only for existing beta users
+      survey_completed_at: new Date().toISOString(),
     });
     // Stamp invite as used (fire-and-forget)
     if (user.email) {
