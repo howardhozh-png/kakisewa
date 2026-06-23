@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { adminResetMyAccount } from "@/lib/actions";
+import { PLAN_CONFIG } from "@/lib/plans";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ interface AgentRow {
   target_listing_count: number; renewal_wa_count: number;
   feedback_count: number; subscription_activated_at: string | null;
   is_test_account: boolean;
+  subscription_year: number | null; subscription_interval: string | null;
 }
 interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
 interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
@@ -51,7 +53,14 @@ interface RawFeedbackItem { agent_id: string; created_at: string; }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const MRR_BY_PLAN: Record<string, number> = { silver: 29, gold: 49, platinum: 99, elite: 159 };
+function mrrForAgent(a: { subscription_plan: string | null; subscription_year: number | null; subscription_interval: string | null }): number {
+  const plan = a.subscription_plan;
+  if (!plan || !PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG]) return 0;
+  const cfg = PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG];
+  const year = (a.subscription_year ?? 1) as 1 | 2;
+  if (a.subscription_interval === "annual") return (year === 1 ? cfg.y1Annual : cfg.y2Annual) / 12;
+  return year === 1 ? cfg.y1Monthly : cfg.y2Monthly;
+}
 const PLAN_LABEL: Record<string, string> = { silver: "Silver", gold: "Gold", platinum: "Platinum", elite: "Elite" };
 const PLAN_COLOR: Record<string, { text: string; bg: string; bar: string }> = {
   silver:   { text: "#1D4ED8", bg: "rgba(59,130,246,0.10)",  bar: "#3B82F6" },
@@ -606,7 +615,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
       if (sortCol === "name") { av = (a.name ?? "").toLowerCase(); bv = (b.name ?? "").toLowerCase(); }
       else if (sortCol === "joined_at") { av = a.joined_at; bv = b.joined_at; }
       else if (sortCol === "last_login_at") { av = a.last_login_at ?? ""; bv = b.last_login_at ?? ""; }
-      else if (sortCol === "days_inactive") { av = a.days_inactive ?? 9999; bv = b.days_inactive ?? 9999; }
+      else if (sortCol === "days_inactive") { av = a.last_login_at ? Date.now() - new Date(a.last_login_at).getTime() : Number.MAX_SAFE_INTEGER; bv = b.last_login_at ? Date.now() - new Date(b.last_login_at).getTime() : Number.MAX_SAFE_INTEGER; }
       else if (sortCol === "health") { av = a.health; bv = b.health; }
       else if (sortCol === "potential") { av = a.potential_listing_count; bv = b.potential_listing_count; }
       else if (sortCol === "listed") { av = a.my_listing_count; bv = b.my_listing_count; }
@@ -856,12 +865,15 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
 
     // Confirmed paid = status strictly "active"
     const confirmedByPlan: Record<string, number> = {};
+    const confirmedMrrByPlan: Record<string, number> = {};
     let confirmedMrr = 0;
     const paidUsers: AgentRow[] = [];
     for (const a of realAgents) {
       if (a.subscription_status === "active" && a.subscription_plan) {
         confirmedByPlan[a.subscription_plan] = (confirmedByPlan[a.subscription_plan] ?? 0) + 1;
-        confirmedMrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
+        const agentMrr = mrrForAgent(a);
+        confirmedMrrByPlan[a.subscription_plan] = (confirmedMrrByPlan[a.subscription_plan] ?? 0) + agentMrr;
+        confirmedMrr += agentMrr;
         paidUsers.push(a);
       }
     }
@@ -873,12 +885,15 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
 
     // By plan = anyone with a plan name assigned, regardless of trial/beta/active
     const byPlanAll: Record<string, number> = {};
+    const byPlanMrrByPlan: Record<string, number> = {};
     let potentialMrr = 0;
     const byPlanUsers: AgentRow[] = [];
     for (const a of realAgents) {
       if (a.subscription_plan) {
         byPlanAll[a.subscription_plan] = (byPlanAll[a.subscription_plan] ?? 0) + 1;
-        potentialMrr += MRR_BY_PLAN[a.subscription_plan] ?? 0;
+        const agentMrr = mrrForAgent(a);
+        byPlanMrrByPlan[a.subscription_plan] = (byPlanMrrByPlan[a.subscription_plan] ?? 0) + agentMrr;
+        potentialMrr += agentMrr;
         byPlanUsers.push(a);
       }
     }
@@ -902,11 +917,12 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
       ? Math.round((totalPaid / (totalPaid + totalExpired)) * 100)
       : null;
 
-    return { confirmedByPlan, confirmedMrr, byPlanAll, potentialMrr, paidUsers, byPlanUsers, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate, testCount };
+    return { confirmedByPlan, confirmedMrr, confirmedMrrByPlan, byPlanAll, byPlanMrrByPlan, potentialMrr, paidUsers, byPlanUsers, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate, testCount };
   }, [agents]);
 
   const isConfirmed = revenueView === "confirmed";
   const displayByPlan = isConfirmed ? stats.confirmedByPlan : stats.byPlanAll;
+  const displayMrrByPlan = isConfirmed ? stats.confirmedMrrByPlan : stats.byPlanMrrByPlan;
   const displayMrr = isConfirmed ? stats.confirmedMrr : stats.potentialMrr;
 
   return (
@@ -964,9 +980,9 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
           {["silver", "gold", "platinum", "elite"].map((plan, i) => {
             const count = displayByPlan[plan] ?? 0;
-            const planMrr = count * (MRR_BY_PLAN[plan] ?? 0);
+            const planMrr = displayMrrByPlan[plan] ?? 0;
             const planMeta = PLAN_COLOR[plan];
-            const maxPlanMrr = Math.max(...["silver", "gold", "platinum", "elite"].map(p => (displayByPlan[p] ?? 0) * (MRR_BY_PLAN[p] ?? 0)), 1);
+            const maxPlanMrr = Math.max(...["silver", "gold", "platinum", "elite"].map(p => displayMrrByPlan[p] ?? 0), 1);
             return (
               <div key={plan} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
                 <div style={{ width: 72, flexShrink: 0 }}>
@@ -974,8 +990,8 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{count} user{count !== 1 ? "s" : ""} × RM{MRR_BY_PLAN[plan]}/mo</p>
-                    <p className="tabular-nums font-bold text-[13px]" style={{ color: "var(--kk-ink)" }}>RM{planMrr.toLocaleString()}</p>
+                    <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{count} user{count !== 1 ? "s" : ""}</p>
+                    <p className="tabular-nums font-bold text-[13px]" style={{ color: "var(--kk-ink)" }}>RM{Math.round(planMrr).toLocaleString()}</p>
                   </div>
                   <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: "var(--kk-line)" }}>
                     <div style={{ width: `${planMrr > 0 ? Math.max(4, Math.round((planMrr / maxPlanMrr) * 100)) : 0}%`, height: "100%", background: planMeta.bar, borderRadius: 99, transition: "width 600ms ease" }} />
@@ -1503,7 +1519,7 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
     const weekMs = 7 * 86400000;
     const active7d = agents.filter(a => a.days_inactive !== null && a.days_inactive <= 6).length;
     const activated = agents.filter(a => a.potential_listing_count + a.existing_listing_count > 0).length;
-    const mrr = agents.reduce((s, a) => s + (a.subscription_status === "active" && a.subscription_plan ? (MRR_BY_PLAN[a.subscription_plan] ?? 0) : 0), 0);
+    const mrr = agents.filter(a => !a.is_test_account && a.subscription_status === "active").reduce((s, a) => s + mrrForAgent(a), 0);
     const thisWeekCutoff = now - weekMs;
     const lastWeekCutoff = now - 2 * weekMs;
     const signupsThisWeek = agents.filter(a => new Date(a.joined_at).getTime() >= thisWeekCutoff).length;
@@ -1548,7 +1564,7 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
         <KpiCard label="Active 7d" value={kpi.active7d} sub={`${funnel.total > 0 ? Math.round((kpi.active7d / funnel.total) * 100) : 0}% of users`} color="var(--kk-green)" icon={<Activity className="w-3.5 h-3.5" />} />
         <KpiCard label="Activated" value={`${kpi.activationRate}%`} sub={`${kpi.activated} added a card`} color="#0071E3" icon={<Zap className="w-3.5 h-3.5" />} />
         <KpiCard label="Paid users" value={funnel.active} sub={`${funnel.trial + funnel.beta} in trial/beta`} icon={<DollarSign className="w-3.5 h-3.5" />} />
-        <KpiCard label="MRR est." value={`RM${kpi.mrr}`} sub={`ARR RM${kpi.mrr * 12}`} color="var(--kk-blue)" icon={<TrendingUp className="w-3.5 h-3.5" />} />
+        <KpiCard label="MRR" value={`RM${Math.round(kpi.mrr)}`} sub={`ARR RM${Math.round(kpi.mrr * 12)}`} color="var(--kk-blue)" icon={<TrendingUp className="w-3.5 h-3.5" />} />
         <KpiCard label="Feedback" value={openFeedbackCount} sub="open items" color={openFeedbackCount > 0 ? "var(--kk-amber)" : "var(--kk-ink)"} icon={<MessageSquare className="w-3.5 h-3.5" />} />
       </div>
 
