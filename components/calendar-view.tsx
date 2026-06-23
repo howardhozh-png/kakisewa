@@ -2,22 +2,321 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth } from "date-fns";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { deleteCalendarEvent, updateCalendarEvent } from "@/lib/actions";
-import { CalendarPlus, Trash2, ExternalLink, CalendarDays, Loader2, Pencil } from "lucide-react";
+import { CalendarPlus, Trash2, ChevronLeft, ChevronRight, ExternalLink, CalendarDays, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { CalendarEvent } from "@/lib/db";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+
+function toISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function formatWeekRange(start: Date): string {
+  const end = new Date(start.getTime() + 6 * 86400000);
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+  if (start.getFullYear() !== end.getFullYear()) {
+    return `${start.toLocaleDateString("en-MY", { ...opts, year: "numeric" })} – ${end.toLocaleDateString("en-MY", { ...opts, year: "numeric" })}`;
+  }
+  if (start.getMonth() !== end.getMonth()) {
+    return `${start.toLocaleDateString("en-MY", opts)} – ${end.toLocaleDateString("en-MY", { ...opts, year: "numeric" })}`;
+  }
+  return `${start.getDate()} – ${end.toLocaleDateString("en-MY", { ...opts, year: "numeric" })}`;
+}
+
+function formatTime(t: string | null): string {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2,"0")} ${period}`;
+}
+
+interface Props {
+  events: CalendarEvent[];
+  weekStartISO: string; // "YYYY-MM-DD"
+}
+
+export function CalendarView({ events, weekStartISO }: Props) {
+  const router = useRouter();
+  const weekStart = new Date(weekStartISO + "T00:00:00");
+  // Pin today to MYT regardless of phone timezone so highlight matches server
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const [addOpen, setAddOpen] = useState(false);
+  const [addDate, setAddDate] = useState<string | undefined>();
+  const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
+  const [deletingId, startDelete] = useTransition();
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart.getTime() + i * 86400000);
+    return { date: d, iso: toISO(d), dayName: DAY_NAMES[i], dayNum: d.getDate() };
+  });
+
+  function navigate(delta: number) {
+    const next = new Date(weekStart.getTime() + delta * 7 * 86400000);
+    router.push(`/calendar?week=${toISO(next)}`);
+  }
+
+  function goToday() {
+    const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+    const [y, m, d] = todayStr.split("-").map(Number);
+    const ref = new Date(y, m - 1, d);
+    const day = ref.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    ref.setDate(ref.getDate() + diff);
+    router.push(`/calendar?week=${toISO(ref)}`);
+  }
+
+  function handleDelete(id: string) {
+    startDelete(async () => {
+      await deleteCalendarEvent(id);
+      toast.success("Event removed");
+      router.refresh();
+    });
+  }
+
+  return (
+    <div>
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>My Calendar</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goToday}
+            className="kk-pill kk-pill-ghost text-[13px] font-medium"
+            style={{ padding: "7px 14px" }}
+          >
+            Today
+          </button>
+          <button
+            onClick={() => navigate(-1)}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
+            style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}
+          >
+            <ChevronLeft className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
+          </button>
+          <span className="text-[14px] font-600 tabular-nums" style={{ color: "var(--kk-ink)", minWidth: 150, textAlign: "center", fontWeight: 600 }}>
+            {formatWeekRange(weekStart)}
+          </span>
+          <button
+            onClick={() => navigate(1)}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
+            style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}
+          >
+            <ChevronRight className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
+          </button>
+          <button
+            id="tour-add-event"
+            onClick={() => { setAddDate(today); setAddOpen(true); }}
+            className="kk-pill flex items-center gap-2"
+            style={{ background: "var(--kk-blue)", color: "#fff", padding: "7px 14px", fontSize: 13 }}
+          >
+            <CalendarPlus className="w-3.5 h-3.5" />
+            Add event
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop 7-column grid */}
+      <div
+        className="hidden lg:grid"
+        style={{
+          gridTemplateColumns: "repeat(7, 1fr)",
+          background: "var(--kk-surface)",
+          borderRadius: "var(--radius-2xl)",
+          border: "1px solid var(--kk-line)",
+          boxShadow: "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+          overflow: "hidden",
+        }}
+      >
+        {days.map(({ date, iso, dayName, dayNum }, idx) => {
+          const isToday = iso === today;
+          const dayEvents = events.filter((e) => e.event_date === iso);
+          return (
+            <div
+              key={iso}
+              style={{
+                borderRight: idx < 6 ? "1px solid rgba(0,0,0,0.05)" : "none",
+                background: isToday ? "rgba(0,113,227,0.02)" : "transparent",
+                minHeight: 360,
+                padding: "12px 8px",
+              }}
+            >
+              {/* Day header */}
+              <div style={{ textAlign: "center", marginBottom: 10, paddingBottom: 10, borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)", marginBottom: 5 }}>
+                  {dayName}
+                </div>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: isToday ? "var(--kk-blue)" : "transparent",
+                  color: isToday ? "#fff" : "var(--kk-ink)",
+                  fontSize: 17, fontWeight: 700,
+                }}>
+                  {dayNum}
+                </div>
+              </div>
+
+              {/* Events */}
+              {dayEvents.map((ev) => (
+                <EventPill key={ev.id} ev={ev} onDelete={handleDelete} onClick={() => setDetailEvent(ev)} />
+              ))}
+
+              {/* Add slot */}
+              <button
+                onClick={() => { setAddDate(iso); setAddOpen(true); }}
+                data-add-slot
+                style={{
+                  marginTop: 6, width: "100%", padding: "5px 0",
+                  textAlign: "center", fontSize: 11,
+                  color: "var(--kk-ink-faint)",
+                  background: "none", border: "none", cursor: "pointer",
+                  borderRadius: 7,
+                }}
+                onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = "var(--kk-surface-2)"; (e.target as HTMLButtonElement).style.color = "var(--kk-blue)"; }}
+                onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = "none"; (e.target as HTMLButtonElement).style.color = "var(--kk-ink-faint)"; }}
+              >
+                + Add
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile agenda view */}
+      <div className="lg:hidden space-y-6">
+        {days.map(({ date, iso, dayName, dayNum }) => {
+          const isToday = iso === today;
+          const dayEvents = events.filter((e) => e.event_date === iso);
+          if (!isToday && dayEvents.length === 0) return null;
+          return (
+            <div key={iso}>
+              <div className="flex items-center gap-3 mb-3">
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: isToday ? "var(--kk-blue)" : "var(--kk-surface-2)",
+                  color: isToday ? "#fff" : "var(--kk-ink)",
+                  fontSize: 16, fontWeight: 700,
+                }}>
+                  {dayNum}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>
+                    {dayName}{isToday ? " · Today" : ""}
+                  </p>
+                  <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+                    {date.toLocaleDateString("en-MY", { day: "numeric", month: "long" })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setAddDate(iso); setAddOpen(true); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "5px 12px", borderRadius: 999,
+                    fontSize: 12, fontWeight: 600,
+                    background: "var(--kk-blue)", color: "#fff",
+                    border: "none", cursor: "pointer", flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>+</span> Add
+                </button>
+              </div>
+              {dayEvents.length > 0 ? (
+                <div className="space-y-2 ml-12">
+                  {dayEvents.map((ev) => (
+                    <EventPill key={ev.id} ev={ev} onDelete={handleDelete} onClick={() => setDetailEvent(ev)} />
+                  ))}
+                </div>
+              ) : (
+                <p className="ml-12 text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>No events today</p>
+              )}
+            </div>
+          );
+        })}
+
+        {days.every(({ iso }) => events.filter(e => e.event_date === iso).length === 0) && (
+          <div className="text-center py-12">
+            <p className="text-[14px]" style={{ color: "var(--kk-ink-mute)" }}>No events this week</p>
+            <button
+              onClick={() => { setAddDate(today); setAddOpen(true); }}
+              className="mt-4 kk-pill"
+              style={{ background: "var(--kk-blue)", color: "#fff", fontSize: 13 }}
+            >
+              Add first event
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Global add dialog */}
+      <CalendarEventDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        defaultDate={addDate}
+      />
+
+      {/* Event detail popup */}
+      <EventDetailDialog
+        event={detailEvent}
+        onClose={() => setDetailEvent(null)}
+        onDelete={(id) => { setDetailEvent(null); handleDelete(id); }}
+      />
+    </div>
+  );
+}
+
+function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id: string) => void; onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  const timeStr = ev.event_time ? formatTime(ev.event_time) : "All day";
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        borderRadius: 9,
+        padding: "7px 9px",
+        marginBottom: 5,
+        background: "var(--kk-theme-light)",
+        color: "var(--kk-theme-dark)",
+        cursor: "pointer",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+      }}
+    >
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", opacity: 0.75 }}>{timeStr}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}>{ev.title}</div>
+      {ev.subtitle && (
+        <div style={{ fontSize: 10, opacity: 0.7, lineHeight: 1.3, marginTop: 1 }}>{ev.subtitle}</div>
+      )}
+      {hover && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(ev.id); }}
+          style={{
+            position: "absolute", top: 5, right: 5,
+            background: "none", border: "none", cursor: "pointer",
+            color: "var(--kk-theme-dark)", opacity: 0.55, padding: 2,
+          }}
+          title="Remove event"
+        >
+          <Trash2 style={{ width: 11, height: 11 }} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 const TIMES = [
   "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
   "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
@@ -27,22 +326,6 @@ const TIMES = [
   "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
   "8:00 PM",
 ];
-
-function toISO(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function formatTime(t: string | null): string {
-  if (!t) return "";
-  const [h, m] = t.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const hour = h % 12 || 12;
-  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
-}
-
-function formatDisplay(date: Date): string {
-  return date.toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-}
 
 function to24h(label: string): string {
   const [time, period] = label.split(" ");
@@ -58,422 +341,9 @@ function to12h(t24: string): string {
   return `${hour}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-interface Props {
-  events: CalendarEvent[];
-  monthISO: string; // "YYYY-MM"
+function formatDisplay(date: Date): string {
+  return date.toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
 }
-
-export function CalendarView({ events, monthISO }: Props) {
-  const router = useRouter();
-  const [yearStr, monthStr] = monthISO.split("-");
-  const year = parseInt(yearStr);
-  const monthNum = parseInt(monthStr); // 1-indexed
-  const currentMonth = new Date(year, monthNum - 1, 1);
-
-  // Today pinned to MYT
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
-
-  const [popoverDay, setPopoverDay] = useState<string | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
-  const [addDate, setAddDate] = useState<string | undefined>();
-  const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
-  const [, startDelete] = useTransition();
-
-  // Build the month grid (Mon–Sun, always starting on the Monday of the first week)
-  const gridStart = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
-  const gridEnd = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
-  const gridDays: Date[] = [];
-  let d = gridStart;
-  while (d <= gridEnd) {
-    gridDays.push(d);
-    d = addDays(d, 1);
-  }
-
-  const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
-
-  function navigate(y: number, m: number) {
-    router.push(`/calendar?month=${y}-${String(m).padStart(2, "0")}`);
-  }
-
-  function goToday() {
-    const [ty, tm] = today.split("-").map(Number);
-    navigate(ty, tm);
-  }
-
-  function handleDelete(id: string) {
-    startDelete(async () => {
-      await deleteCalendarEvent(id);
-      toast.success("Event removed");
-      setPopoverDay(null);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div>
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-        <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>My Calendar</h1>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Month selector */}
-          <Select
-            value={String(monthNum - 1)}
-            onValueChange={(v) => v && navigate(year, parseInt(v) + 1)}
-          >
-            <SelectTrigger style={{ width: 130, fontSize: 13, height: 34 }}>
-              <SelectValue>{MONTHS[monthNum - 1]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((m, i) => (
-                <SelectItem key={m} value={String(i)}>{m}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Year selector */}
-          <Select
-            value={String(year)}
-            onValueChange={(v) => v && navigate(parseInt(v), monthNum)}
-          >
-            <SelectTrigger style={{ width: 88, fontSize: 13, height: 34 }}>
-              <SelectValue>{year}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((y) => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <button
-            onClick={goToday}
-            className="kk-pill kk-pill-ghost text-[13px] font-medium"
-            style={{ padding: "7px 14px" }}
-          >
-            Today
-          </button>
-
-          <button
-            id="tour-add-event"
-            onClick={() => { setAddDate(today); setAddOpen(true); }}
-            className="kk-pill flex items-center gap-2"
-            style={{ background: "var(--kk-blue)", color: "#fff", padding: "7px 14px", fontSize: 13 }}
-          >
-            <CalendarPlus className="w-3.5 h-3.5" />
-            Add event
-          </button>
-        </div>
-      </div>
-
-      {/* Calendar card */}
-      <div
-        style={{
-          background: "var(--kk-surface)",
-          borderRadius: "var(--radius-2xl)",
-          border: "1px solid var(--kk-line)",
-          boxShadow: "0 4px 12px -2px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
-          overflow: "hidden",
-        }}
-      >
-        {/* Day-of-week header */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--kk-line)" }}>
-          {DAY_NAMES.map((name) => (
-            <div
-              key={name}
-              style={{
-                textAlign: "center",
-                padding: "10px 0 9px",
-                fontSize: 10,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "var(--kk-ink-faint)",
-              }}
-            >
-              {name}
-            </div>
-          ))}
-        </div>
-
-        {/* Day cells */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
-          {gridDays.map((day, idx) => {
-            const iso = toISO(day);
-            const isToday = iso === today;
-            const inMonth = isSameMonth(day, currentMonth);
-            const dayEvents = events.filter((e) => e.event_date === iso);
-            const isWeekEnd = idx % 7 === 6;
-            const isLastRow = idx >= gridDays.length - 7;
-
-            return (
-              <Popover
-                key={iso}
-                open={popoverDay === iso}
-                onOpenChange={(o) => { if (!o) setPopoverDay(null); }}
-              >
-                <PopoverTrigger asChild>
-                  <button
-                    onClick={() => setPopoverDay(popoverDay === iso ? null : iso)}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      padding: "10px 4px 10px",
-                      minHeight: 76,
-                      borderRight: !isWeekEnd ? "1px solid var(--kk-line)" : "none",
-                      borderBottom: !isLastRow ? "1px solid var(--kk-line)" : "none",
-                      background: isToday ? "rgba(0,113,227,0.03)" : "transparent",
-                      cursor: "pointer",
-                      transition: "background 0.12s",
-                      outline: "none",
-                      width: "100%",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isToday) (e.currentTarget as HTMLButtonElement).style.background = "var(--kk-surface-2)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = isToday
-                        ? "rgba(0,113,227,0.03)"
-                        : "transparent";
-                    }}
-                  >
-                    {/* Day number */}
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: isToday ? "var(--kk-blue)" : "transparent",
-                        color: isToday ? "#fff" : inMonth ? "var(--kk-ink)" : "var(--kk-ink-faint)",
-                        fontSize: 13,
-                        fontWeight: isToday ? 700 : inMonth ? 600 : 400,
-                        flexShrink: 0,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {day.getDate()}
-                    </div>
-
-                    {/* Event dots */}
-                    {dayEvents.length > 0 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 3,
-                          flexWrap: "wrap",
-                          justifyContent: "center",
-                          maxWidth: "100%",
-                          paddingLeft: 2,
-                          paddingRight: 2,
-                        }}
-                      >
-                        {dayEvents.slice(0, 3).map((ev) => (
-                          <div
-                            key={ev.id}
-                            style={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: "50%",
-                              background: "var(--kk-theme-dark)",
-                              flexShrink: 0,
-                            }}
-                          />
-                        ))}
-                        {dayEvents.length > 3 && (
-                          <span
-                            style={{
-                              fontSize: 8,
-                              fontWeight: 700,
-                              color: "var(--kk-ink-mute)",
-                              lineHeight: "5px",
-                            }}
-                          >
-                            +{dayEvents.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                </PopoverTrigger>
-
-                <PopoverContent
-                  className="w-72 p-0"
-                  align="center"
-                  sideOffset={4}
-                >
-                  {/* Popover header */}
-                  <div
-                    style={{
-                      padding: "11px 14px 9px",
-                      borderBottom: "1px solid var(--kk-line)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 8,
-                    }}
-                  >
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)" }}>
-                      {day.toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short" })}
-                      {isToday && (
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            fontSize: 9,
-                            fontWeight: 700,
-                            color: "var(--kk-blue)",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.07em",
-                          }}
-                        >
-                          Today
-                        </span>
-                      )}
-                    </p>
-                    <button
-                      onClick={() => { setPopoverDay(null); setAddDate(iso); setAddOpen(true); }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        padding: "4px 10px",
-                        borderRadius: 999,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        background: "var(--kk-blue)",
-                        color: "#fff",
-                        border: "none",
-                        cursor: "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <CalendarPlus style={{ width: 11, height: 11 }} />
-                      Add
-                    </button>
-                  </div>
-
-                  {/* Events list */}
-                  <div style={{ maxHeight: 260, overflowY: "auto" }}>
-                    {dayEvents.length === 0 ? (
-                      <p
-                        style={{
-                          padding: "12px 14px",
-                          fontSize: 12,
-                          color: "var(--kk-ink-faint)",
-                        }}
-                      >
-                        No events scheduled
-                      </p>
-                    ) : (
-                      dayEvents.map((ev, i) => (
-                        <div
-                          key={ev.id}
-                          style={{
-                            padding: "8px 14px",
-                            borderBottom: i < dayEvents.length - 1 ? "1px solid var(--kk-line)" : "none",
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 8,
-                          }}
-                        >
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            {ev.event_time && (
-                              <p
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  color: "var(--kk-ink-mute)",
-                                  marginBottom: 1,
-                                }}
-                              >
-                                {formatTime(ev.event_time)}
-                              </p>
-                            )}
-                            <p
-                              style={{
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: "var(--kk-ink)",
-                                lineHeight: 1.3,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {ev.title}
-                            </p>
-                            {ev.subtitle && (
-                              <p
-                                style={{
-                                  fontSize: 10,
-                                  color: "var(--kk-ink-mute)",
-                                  marginTop: 1,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {ev.subtitle}
-                              </p>
-                            )}
-                          </div>
-                          <div style={{ display: "flex", gap: 1, flexShrink: 0 }}>
-                            <button
-                              onClick={() => { setPopoverDay(null); setDetailEvent(ev); }}
-                              style={{
-                                padding: 5,
-                                border: "none",
-                                background: "none",
-                                cursor: "pointer",
-                                color: "var(--kk-ink-faint)",
-                                borderRadius: 6,
-                              }}
-                              title="Edit"
-                            >
-                              <Pencil style={{ width: 11, height: 11 }} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(ev.id)}
-                              style={{
-                                padding: 5,
-                                border: "none",
-                                background: "none",
-                                cursor: "pointer",
-                                color: "var(--kk-red)",
-                                borderRadius: 6,
-                              }}
-                              title="Delete"
-                            >
-                              <Trash2 style={{ width: 11, height: 11 }} />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Global add dialog */}
-      <CalendarEventDialog open={addOpen} onOpenChange={setAddOpen} defaultDate={addDate} />
-
-      {/* Event detail/edit dialog */}
-      <EventDetailDialog
-        event={detailEvent}
-        onClose={() => setDetailEvent(null)}
-        onDelete={(id) => { setDetailEvent(null); handleDelete(id); }}
-      />
-    </div>
-  );
-}
-
-// ─── EventDetailDialog (edit/delete a calendar event) ──────────────────────
 
 function EventDetailDialog({
   event, onClose, onDelete,
@@ -494,6 +364,7 @@ function EventDetailDialog({
   const [showCal, setShowCal] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  // Sync fields when a different event is opened
   useEffect(() => {
     if (event) {
       setTitle(event.title);
@@ -538,23 +409,12 @@ function EventDetailDialog({
       <div style={{ marginBottom: 12 }}>
         <p className="kk-overline mb-1.5">{label}</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <input
-            value={nameVal}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder="Name (optional)"
+          <input value={nameVal} onChange={(e) => onNameChange(e.target.value)} placeholder="Name (optional)"
             style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
-          />
-          <input
-            value={phoneVal}
-            onChange={(e) => onPhoneChange(e.target.value)}
-            placeholder="Phone (optional)"
-            type="tel"
+            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
+          <input value={phoneVal} onChange={(e) => onPhoneChange(e.target.value)} placeholder="Phone (optional)" type="tel"
             style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
-          />
+            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
         </div>
       </div>
     );

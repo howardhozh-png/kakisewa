@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useCallback, useMemo } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarDays, Loader2 } from "lucide-react";
-import { createCalendarEvent } from "@/lib/actions";
+import { Loader2 } from "lucide-react";
+import { createCalendarEvent, getCalendarEventDatesForMonth } from "@/lib/actions";
 import { toast } from "sonner";
+import type { DayButtonProps } from "react-day-picker";
 
 const TIMES = [
   "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
@@ -24,15 +25,19 @@ function to24h(label: string): string {
   return `${String(hour).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function formatDisplay(date: Date): string {
-  return date.toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
-}
-
 function toISO(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+function toMonthKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatDisplay(date: Date): string {
+  return date.toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 }
 
 function ContactField({ label, nameVal, phoneVal, onNameChange, onPhoneChange }: {
@@ -50,11 +55,7 @@ function ContactField({ label, nameVal, phoneVal, onNameChange, onPhoneChange }:
           value={nameVal}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Name (optional)"
-          style={{
-            width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
-            padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)",
-            background: "var(--kk-surface)", outline: "none", fontFamily: "inherit",
-          }}
+          style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
           onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
           onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
         />
@@ -63,11 +64,7 @@ function ContactField({ label, nameVal, phoneVal, onNameChange, onPhoneChange }:
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="Phone (optional)"
           type="tel"
-          style={{
-            width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
-            padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)",
-            background: "var(--kk-surface)", outline: "none", fontFamily: "inherit",
-          }}
+          style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
           onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
           onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
         />
@@ -110,40 +107,54 @@ export function CalendarEventDialog({
   const [date, setDate] = useState<Date | undefined>(
     defaultDate ? new Date(defaultDate + "T00:00:00") : new Date()
   );
+  const [displayedMonth, setDisplayedMonth] = useState<Date>(
+    defaultDate ? new Date(defaultDate + "T00:00:00") : new Date()
+  );
   const [timeLabel, setTimeLabel] = useState<string>("");
   const [ownerName, setOwnerName] = useState(defaultOwnerName);
   const [ownerPhone, setOwnerPhone] = useState(defaultOwnerPhone);
   const [tenantName, setTenantName] = useState(defaultTenantName);
   const [tenantPhone, setTenantPhone] = useState(defaultTenantPhone);
-  const [showCal, setShowCal] = useState(false);
+  const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
 
-  // Sync date (and other fields) whenever the dialog opens, so the clicked
-  // day's date is reflected rather than the stale initial state.
+  const fetchEventDates = useCallback(async (month: Date) => {
+    const key = toMonthKey(month);
+    const dates = await getCalendarEventDatesForMonth(key);
+    setEventDates(new Set(dates));
+  }, []);
+
   useEffect(() => {
     if (open) {
       setTitle(defaultTitle);
-      setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
+      const d = defaultDate ? new Date(defaultDate + "T00:00:00") : new Date();
+      setDate(d);
+      setDisplayedMonth(d);
       setTimeLabel("");
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
       setTenantName(defaultTenantName);
       setTenantPhone(defaultTenantPhone);
-      setShowCal(false);
+      fetchEventDates(d);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  useEffect(() => {
+    if (open) fetchEventDates(displayedMonth);
+  }, [open, displayedMonth, fetchEventDates]);
+
   function handleOpen(val: boolean) {
     if (val) {
       setTitle(defaultTitle);
-      setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
+      const d = defaultDate ? new Date(defaultDate + "T00:00:00") : new Date();
+      setDate(d);
+      setDisplayedMonth(d);
       setTimeLabel("");
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
       setTenantName(defaultTenantName);
       setTenantPhone(defaultTenantPhone);
-      setShowCal(false);
     }
     onOpenChange(val);
   }
@@ -171,6 +182,32 @@ export function CalendarEventDialog({
     });
   }
 
+  const DotDayButton = useMemo(() => {
+    return function DotDayButton({ day, modifiers, children, ...props }: DayButtonProps) {
+      const iso = toISO(day.date);
+      const hasEvent = eventDates.has(iso);
+      return (
+        <button {...props} style={{ position: "relative", ...props.style }}>
+          {children}
+          {hasEvent && (
+            <span style={{
+              position: "absolute",
+              bottom: 2,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: "var(--kk-blue)",
+              opacity: 0.7,
+              pointerEvents: "none",
+            }} />
+          )}
+        </button>
+      );
+    };
+  }, [eventDates]);
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogContent className="bg-card border-border" style={{ maxWidth: 460, padding: 0 }}>
@@ -187,7 +224,7 @@ export function CalendarEventDialog({
 
         {/* Body */}
         <div style={{ padding: "18px 22px", maxHeight: "70vh", overflowY: "auto" }}>
-          {/* Title */}
+          {/* Event name */}
           <p className="kk-overline mb-1.5">Event name</p>
           <input
             value={title}
@@ -195,127 +232,66 @@ export function CalendarEventDialog({
             placeholder="e.g. House viewing 3pm"
             autoFocus
             style={{
-              width: "100%",
-              border: "1.5px solid var(--kk-line)",
-              borderRadius: 10,
-              padding: "10px 13px",
-              fontSize: 14,
-              color: "var(--kk-ink)",
-              background: "var(--kk-surface)",
-              outline: "none",
-              fontFamily: "inherit",
-              marginBottom: 16,
+              width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+              padding: "10px 13px", fontSize: 14, color: "var(--kk-ink)",
+              background: "var(--kk-surface)", outline: "none", fontFamily: "inherit", marginBottom: 16,
             }}
             onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
             onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
           />
 
-          {/* Date + Time row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 4 }}>
-            <div>
-              <p className="kk-overline mb-1.5">Date</p>
-              <button
-                type="button"
-                onClick={() => setShowCal((v) => !v)}
-                style={{
-                  width: "100%",
-                  border: "1.5px solid var(--kk-line)",
-                  borderRadius: 10,
-                  padding: "10px 13px",
-                  fontSize: 14,
-                  color: date ? "var(--kk-ink)" : "var(--kk-ink-faint)",
-                  background: "var(--kk-surface)",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                }}
-              >
-                <CalendarDays style={{ width: 14, height: 14, flexShrink: 0, color: "var(--kk-ink-faint)" }} />
-                {date ? formatDisplay(date) : "Pick date"}
-              </button>
-            </div>
-            <div>
-              <p className="kk-overline mb-1.5">Time (optional)</p>
-              <div style={{ position: "relative" }}>
-                <select
-                  value={timeLabel}
-                  onChange={(e) => setTimeLabel(e.target.value)}
-                  style={{
-                    width: "100%",
-                    border: "1.5px solid var(--kk-line)",
-                    borderRadius: 10,
-                    padding: "10px 13px",
-                    fontSize: 14,
-                    color: timeLabel ? "var(--kk-ink)" : "var(--kk-ink-faint)",
-                    background: "var(--kk-surface)",
-                    appearance: "none",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    outline: "none",
-                  }}
-                >
-                  <option value="">No time</option>
-                  {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
+          {/* Inline calendar — always visible */}
+          <p className="kk-overline mb-2">Date</p>
+          {date && (
+            <p className="text-[13px] font-medium mb-2" style={{ color: "var(--kk-blue)" }}>
+              {formatDisplay(date)}
+            </p>
+          )}
+          <div style={{
+            border: "1.5px solid var(--kk-line)",
+            borderRadius: 14,
+            overflow: "hidden",
+            background: "var(--kk-surface)",
+            marginBottom: 14,
+          }}>
+            <Calendar
+              mode="single"
+              selected={date}
+              month={displayedMonth}
+              onMonthChange={(m) => setDisplayedMonth(m)}
+              onSelect={(d) => { if (d) setDate(d); }}
+              components={{ DayButton: DotDayButton }}
+            />
           </div>
 
-          {/* Inline calendar picker */}
-          {showCal && (
-            <div style={{
-              marginTop: 8,
-              marginBottom: 12,
-              border: "1px solid var(--kk-line)",
-              borderRadius: 12,
-              overflow: "hidden",
-              background: "var(--kk-surface)",
-            }}>
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(d) => { setDate(d); setShowCal(false); }}
-              />
-            </div>
-          )}
+          {/* Time */}
+          <p className="kk-overline mb-1.5">Time <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
+          <select
+            value={timeLabel}
+            onChange={(e) => setTimeLabel(e.target.value)}
+            style={{
+              width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+              padding: "10px 13px", fontSize: 14,
+              color: timeLabel ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+              background: "var(--kk-surface)", appearance: "none", cursor: "pointer",
+              fontFamily: "inherit", outline: "none", marginBottom: 16,
+            }}
+          >
+            <option value="">No time set</option>
+            {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "var(--kk-line)", margin: "16px 0 14px" }} />
+          <div style={{ height: 1, background: "var(--kk-line)", margin: "4px 0 14px" }} />
 
-          {/* Contact fields */}
-          <ContactField
-            label="Owner"
-            nameVal={ownerName}
-            phoneVal={ownerPhone}
-            onNameChange={setOwnerName}
-            onPhoneChange={setOwnerPhone}
-          />
-          <ContactField
-            label="Tenant"
-            nameVal={tenantName}
-            phoneVal={tenantPhone}
-            onNameChange={setTenantName}
-            onPhoneChange={setTenantPhone}
-          />
+          {/* Contacts */}
+          <ContactField label="Owner" nameVal={ownerName} phoneVal={ownerPhone} onNameChange={setOwnerName} onPhoneChange={setOwnerPhone} />
+          <ContactField label="Tenant" nameVal={tenantName} phoneVal={tenantPhone} onNameChange={setTenantName} onPhoneChange={setTenantPhone} />
         </div>
 
         {/* Footer */}
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 8,
-          padding: "14px 22px",
-          borderTop: "1px solid var(--kk-line)",
-        }}>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={pending}
-            className="kk-pill kk-pill-ghost"
-          >
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 22px", borderTop: "1px solid var(--kk-line)" }}>
+          <button type="button" onClick={() => onOpenChange(false)} disabled={pending} className="kk-pill kk-pill-ghost">
             Cancel
           </button>
           <button

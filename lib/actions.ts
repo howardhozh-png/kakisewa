@@ -2437,3 +2437,23 @@ export async function deleteCalendarEvent(id: string): Promise<{ ok: boolean }> 
   return { ok: true };
 }
 
+// Returns ISO date strings ("YYYY-MM-DD") that have at least one calendar event
+export async function getCalendarEventDatesForMonth(month: string): Promise<string[]> {
+  "use server";
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) return [];
+  const [y, m] = month.split("-").map(Number);
+  const monthStart = `${month}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const monthEnd = `${month}-${String(lastDay).padStart(2, "0")}`;
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data } = await supabase
+    .from("calendar_events")
+    .select("event_date")
+    .gte("event_date", monthStart)
+    .lte("event_date", monthEnd);
+  return [...new Set((data ?? []).map((r: { event_date: string }) => r.event_date))];
+}
+
