@@ -374,8 +374,8 @@ html, body {
   padding: 14px 18px;
   border-bottom: 1px solid var(--kk-line);
   border-radius: 18px 18px 0 0;
-  /* No sticky needed — header is outside the scroll container */
   background: inherit;
+  min-height: 84px;
 }
 .kk-board-col-body {
   flex: 1;
