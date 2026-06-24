@@ -165,18 +165,18 @@ function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[];
   while (cells.length < 42) cells.push(null);
 
   return (
-    <Link href="/calendar" style={{
-      display: "block", textDecoration: "none", background: "var(--kk-surface)",
+    <div style={{
+      background: "var(--kk-surface)",
       border: "1px solid var(--kk-line)", borderRadius: 18, overflow: "hidden",
       boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)", height: "100%",
     }}>
-      {/* Header */}
+      {/* Header — NOT inside a link so the month picker can open freely */}
       <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--kk-ink)" }}>Event Calendar</span>
           {picker}
         </div>
-        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)", flexShrink: 0 }}>View full calendar →</span>
+        <Link href="/calendar" style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)", flexShrink: 0, textDecoration: "none" }}>View full calendar →</Link>
       </div>
 
       {/* Day headers */}
@@ -240,7 +240,7 @@ function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[];
           );
         })}
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -304,7 +304,7 @@ function UpcomingViewings({ viewings }: { viewings: CalendarEvent[] }) {
 
 // ── Recharts radial donut — shadcn style, count+label+pct inside ──────────────
 
-function FunnelDonut({ pct, color, count, countLabel, arcLabel, size = 140 }: {
+function FunnelDonut({ pct, color, count, countLabel, arcLabel, size = 160 }: {
   pct: number; color: string; count: number; countLabel: string; arcLabel: string; size?: number;
 }) {
   const sweep = Math.max(pct, 0.5) / 100 * 360;
@@ -377,7 +377,7 @@ function FunnelItem({
         {title}
       </p>
       {/* Donut with count + arcLabel inside */}
-      <FunnelDonut pct={donutPct} color={color} count={count} countLabel={countLabel} arcLabel={arcLabel} size={140} />
+      <FunnelDonut pct={donutPct} color={color} count={count} countLabel={countLabel} arcLabel={arcLabel} size={160} />
       {/* Sub-stats as pill boxes */}
       <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 14 }}>
         {stats.map((s) => (
@@ -548,7 +548,7 @@ export function StatsSection({
           subValue={safeCardCap.toLocaleString()}
           subLabel={(planName ?? "") + " plan"}
           progress={cardUsagePct}
-          progressColor={cardUsageColor}
+          progressColor="#004FAD"
           progressLabel={`${Math.round(Math.max(0, 100 - cardUsagePct))}% remaining`}
           href="/subscription"
         />
@@ -635,7 +635,7 @@ export function StatsSection({
                 <div style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 16, padding: "16px 12px 18px", textAlign: "center" }}>
                   <p style={{ fontSize: 12, fontWeight: 600, color: item.color, marginBottom: 10 }}>{item.title}</p>
                   <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                    <FunnelDonut pct={item.donutPct} color={item.color} count={item.count} countLabel={item.countLabel} arcLabel={item.arcLabel} size={110} />
+                    <FunnelDonut pct={item.donutPct} color={item.color} count={item.count} countLabel={item.countLabel} arcLabel={item.arcLabel} size={128} />
                   </div>
                   <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
                     {item.stats.map((s) => (
