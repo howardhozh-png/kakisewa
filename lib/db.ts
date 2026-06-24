@@ -3153,6 +3153,22 @@ export async function getCalendarEventsForWeek(weekStart: string, weekEnd: strin
   return (data ?? []) as CalendarEvent[];
 }
 
+export async function getCalendarEventsForMonth(yearMonth: string): Promise<CalendarEvent[]> {
+  const supabase = await createClient();
+  const [y, m] = yearMonth.split("-").map(Number);
+  const start = `${y}-${String(m).padStart(2, "0")}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  const { data } = await supabase
+    .from("calendar_events")
+    .select(CAL_SELECT)
+    .gte("event_date", start)
+    .lte("event_date", end)
+    .order("event_date", { ascending: true })
+    .order("event_time", { ascending: true, nullsFirst: false });
+  return (data ?? []) as CalendarEvent[];
+}
+
 export async function getUpcomingCalendarEvents(limit = 50): Promise<CalendarEvent[]> {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);

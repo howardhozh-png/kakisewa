@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
-import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForWeek, getPerformanceSummary, getUpcomingViewings } from "@/lib/db";
+import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForMonth, getPerformanceSummary, getUpcomingViewings } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/db";
 import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 import { StatsSection } from "./stats-section";
@@ -239,9 +239,8 @@ function ActiveState({
   firstName,
   stats,
   expandedStats,
-  weekEvents,
-  weekStart,
-  weekEnd,
+  monthEvents,
+  currentMonth,
   cardCount,
   cardCap,
   planName,
@@ -251,9 +250,8 @@ function ActiveState({
   firstName: string | null;
   stats: Stats;
   expandedStats: ExpandedStats;
-  weekEvents: CalendarEvent[];
-  weekStart: string;
-  weekEnd: string;
+  monthEvents: CalendarEvent[];
+  currentMonth: string;
   cardCount: number;
   cardCap: number;
   planName: string;
@@ -276,9 +274,8 @@ function ActiveState({
 
       <StatsSection
         initialStats={expandedStats}
-        weekEvents={weekEvents}
-        weekStart={weekStart}
-        weekEnd={weekEnd}
+        monthEvents={monthEvents}
+        currentMonth={currentMonth}
         mtdCommission={mtdCommission}
         upcomingViewings={upcomingViewings}
         cardCount={cardCount}
@@ -292,25 +289,17 @@ function ActiveState({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  // Pin week start/end to MYT date regardless of server's local timezone
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
-  const [ty, tm, td] = todayStr.split("-").map(Number);
-  const dow = new Date(ty, tm - 1, td).getDay();
-  const diffToMon = dow === 0 ? -6 : 1 - dow;
-  const monday = new Date(ty, tm - 1, td + diffToMon);
-  const sunday = new Date(ty, tm - 1, td + diffToMon + 6);
-  const weekStart = toISO(monday);
-  const weekEnd = toISO(sunday);
+  const currentMonth = todayStr.slice(0, 7); // "2026-06"
 
   const hdrs = await headers();
   const userId = hdrs.get("x-user-id");
 
-  const [agent, stats, expandedStats, weekEvents, perf, upcomingViewings] = await Promise.all([
+  const [agent, stats, expandedStats, monthEvents, perf, upcomingViewings] = await Promise.all([
     getAgentProfile(),
     getHomeDashboardStats(),
-    getExpandedDashboardStats(3),
-    getCalendarEventsForWeek(weekStart, weekEnd),
+    getExpandedDashboardStats(1, currentMonth),
+    getCalendarEventsForMonth(currentMonth),
     getPerformanceSummary(),
     getUpcomingViewings(14),
   ]);
@@ -344,9 +333,8 @@ export default async function HomePage() {
           firstName={firstName}
           stats={stats}
           expandedStats={expandedStats}
-          weekEvents={weekEvents}
-          weekStart={weekStart}
-          weekEnd={weekEnd}
+          monthEvents={monthEvents}
+          currentMonth={currentMonth}
           cardCount={cardCount}
           cardCap={cardCap}
           planName={planLabel}
