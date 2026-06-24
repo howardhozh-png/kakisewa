@@ -188,7 +188,7 @@ export function CalendarView({ events, weekStartISO, view = "weekly", activeMont
           >
             <ChevronLeft className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
           </button>
-          <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)", fontWeight: 600, whiteSpace: "nowrap" }}>
+          <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)", fontWeight: 600, whiteSpace: "nowrap", minWidth: 152, textAlign: "center", display: "inline-block" }}>
             {view === "monthly" ? `${MONTH_NAMES[mm - 1]} ${my}` : formatWeekRange(weekStart)}
           </span>
           <button
