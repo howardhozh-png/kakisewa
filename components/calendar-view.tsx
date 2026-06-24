@@ -200,15 +200,17 @@ export function CalendarView({ events, weekStartISO, view = "weekly", activeMont
           </button>
         </div>
         <div style={{ flex: 1 }} />
-        <button
-          id="tour-add-event"
-          onClick={() => { setAddDate(today); setAddOpen(true); }}
-          className="kk-pill flex items-center gap-1.5"
-          style={{ background: "var(--kk-blue)", color: "#fff", padding: "6px 12px", fontSize: 13, flexShrink: 0 }}
-        >
-          <CalendarPlus className="w-3.5 h-3.5" />
-          Add event
-        </button>
+        <div className="hidden lg:block" style={{ flexShrink: 0 }}>
+          <button
+            id="tour-add-event"
+            onClick={() => { setAddDate(today); setAddOpen(true); }}
+            className="kk-pill flex items-center gap-1.5"
+            style={{ background: "var(--kk-blue)", color: "#fff", padding: "6px 12px", fontSize: 13 }}
+          >
+            <CalendarPlus className="w-3.5 h-3.5" />
+            Add event
+          </button>
+        </div>
       </div>
 
       {/* Filter strip */}
