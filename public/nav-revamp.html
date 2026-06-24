@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kakisewa — Nav Revamp Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --kk-bg: #FBFBFD;
+    --kk-surface: #FFFFFF;
+    --kk-surface-2: #F5F5F7;
+    --kk-ink: #1D1D1F;
+    --kk-ink-mute: #6E6E73;
+    --kk-ink-faint: #AEAEB2;
+    --kk-line: rgba(0,0,0,0.08);
+    --kk-blue: #0071E3;
+    --kk-green: #34C759;
+    --kk-green-soft: #E8F9EE;
+    --kk-green-ink: #1F8B4C;
+    --kk-amber: #FF9500;
+    --kk-amber-soft: #FFF4E0;
+    --kk-amber-ink: #92520A;
+    --kk-red: #FF3B30;
+    --kk-red-soft: #FFF0EF;
+    --sidebar-w: 64px;
+    --sidebar-w-open: 220px;
+    --topbar-h: 52px;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: var(--kk-bg); color: var(--kk-ink); }
+
+  /* ── View toggle ────────────────────────────────────────────────────── */
+  .view-toggle {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: var(--kk-ink); color: #fff;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 16px; font-size: 13px; font-weight: 500;
+  }
+  .view-toggle span { opacity: 0.5; }
+  .toggle-btn {
+    padding: 4px 14px; border-radius: 20px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 600; transition: background 0.15s;
+    background: rgba(255,255,255,0.12); color: #fff;
+  }
+  .toggle-btn.active { background: #fff; color: var(--kk-ink); }
+
+  /* ── Desktop view ────────────────────────────────────────────────────── */
+  #desktop-view { display: flex; min-height: 100vh; padding-top: 40px; }
+  #mobile-view { display: none; padding-top: 40px; }
+
+  /* ── SIDEBAR ─────────────────────────────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    position: fixed;
+    top: 40px; left: 0;
+    background: var(--kk-surface);
+    border-right: 1px solid var(--kk-line);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: width 0.22s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
+    z-index: 40;
+  }
+  .sidebar:hover {
+    width: var(--sidebar-w-open);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.10);
+  }
+
+  /* Logo area */
+  .sidebar-logo {
+    height: var(--topbar-h);
+    display: flex; align-items: center;
+    padding: 0 0 0 16px;
+    border-bottom: 1px solid var(--kk-line);
+    flex-shrink: 0; overflow: hidden;
+    gap: 10px;
+  }
+  .sidebar-logo .mark {
+    width: 32px; height: 32px; flex-shrink: 0;
+    background: var(--kk-ink); border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px; font-weight: 800; letter-spacing: -0.04em;
+  }
+  .sidebar-logo .wordmark {
+    font-size: 15px; font-weight: 700; letter-spacing: -0.03em;
+    white-space: nowrap; opacity: 0;
+    transition: opacity 0.15s 0.05s;
+    color: var(--kk-ink);
+  }
+  .sidebar:hover .wordmark { opacity: 1; }
+
+  /* Nav */
+  .sidebar-nav { flex: 1; padding: 8px 8px; display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+  .nav-group { margin-top: 8px; }
+  .nav-group-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--kk-ink-faint); padding: 6px 12px 2px 12px; white-space: nowrap;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .sidebar:hover .nav-group-label { opacity: 1; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0 9px 14px;
+    border-radius: 8px; cursor: pointer; width: 100%;
+    color: var(--kk-ink-mute); border: none; background: transparent;
+    transition: background 0.1s, color 0.1s;
+    white-space: nowrap; overflow: hidden;
+  }
+  .nav-item:hover { background: var(--kk-surface-2); color: var(--kk-ink); }
+  .nav-item.active { background: var(--kk-surface-2); color: var(--kk-ink); font-weight: 600; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-item .label { font-size: 13px; opacity: 0; transition: opacity 0.15s; white-space: nowrap; }
+  .sidebar:hover .nav-item .label { opacity: 1; }
+
+  /* Active indicator dot on collapsed */
+  .nav-item.active svg { stroke-width: 2.2; }
+
+  /* Bottom of sidebar */
+  .sidebar-bottom {
+    padding: 12px 8px 16px;
+    border-top: 1px solid var(--kk-line);
+    flex-shrink: 0;
+  }
+  .sidebar-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px; border-radius: 8px; cursor: pointer;
+    overflow: hidden;
+  }
+  .sidebar-user:hover { background: var(--kk-surface-2); }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--kk-ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .sidebar-user .user-info { opacity: 0; transition: opacity 0.15s; }
+  .sidebar:hover .sidebar-user .user-info { opacity: 1; }
+  .user-name { font-size: 13px; font-weight: 600; color: var(--kk-ink); white-space: nowrap; }
+  .user-plan { font-size: 11px; color: var(--kk-ink-mute); white-space: nowrap; }
+
+  /* ── MAIN COLUMN ─────────────────────────────────────────────────────── */
+  .main-col {
+    flex: 1;
+    padding-left: var(--sidebar-w);
+    display: flex; flex-direction: column;
+    min-width: 0;
+    transition: padding-left 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── TOP BAR (desktop) ────────────────────────────────────────────────── */
+  .top-bar {
+    height: var(--topbar-h);
+    position: sticky; top: 40px; z-index: 30;
+    background: var(--kk-surface);
+    border-bottom: 1px solid var(--kk-line);
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 24px; gap: 8px;
+  }
+  .plan-badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--kk-ink); color: #fff;
+  }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 8px; border: none; cursor: pointer;
+    background: transparent; display: flex; align-items: center; justify-content: center;
+    color: var(--kk-ink-mute); transition: background 0.1s;
+  }
+  .icon-btn:hover { background: var(--kk-surface-2); }
+  .avatar-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--kk-ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; cursor: pointer; border: none;
+    flex-shrink: 0;
+  }
+
+  /* ── PAGE CONTENT ────────────────────────────────────────────────────── */
+  .page-content { padding: 32px 32px 64px; max-width: 1200px; }
+
+  /* Greeting header */
+  .page-greeting { margin-bottom: 28px; }
+  .greeting-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px; font-weight: 400;
+    color: var(--kk-ink); letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .greeting-subtitle { font-size: 14px; color: var(--kk-ink-mute); }
+
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--kk-surface); border-radius: 16px;
+    border: 1px solid var(--kk-line);
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--kk-ink-faint); margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--kk-ink); }
+  .stat-sub { font-size: 12px; color: var(--kk-ink-mute); margin-top: 2px; }
+  .stat-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+
+  /* Pipeline mini-boards */
+  .pipeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .pipeline-title { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--kk-ink); }
+  .pipeline-link { font-size: 13px; color: var(--kk-blue); font-weight: 500; cursor: pointer; text-decoration: none; }
+
+  .boards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .board-card {
+    background: var(--kk-surface); border-radius: 18px;
+    border: 1px solid var(--kk-line); padding: 16px;
+    cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .board-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .board-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kk-ink-faint); margin-bottom: 8px; }
+  .board-count { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: var(--kk-ink); }
+  .board-unit { font-size: 12px; color: var(--kk-ink-mute); margin-bottom: 12px; }
+  .board-mini-cards { display: flex; flex-direction: column; gap: 6px; }
+  .mini-card {
+    background: var(--kk-surface-2); border-radius: 10px;
+    padding: 8px 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .mini-photo {
+    width: 32px; height: 32px; border-radius: 7px; flex-shrink: 0;
+    background: linear-gradient(135deg, #e0e0e5, #c8c8d0);
+    overflow: hidden;
+  }
+  .mini-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .mini-info { flex: 1; min-width: 0; }
+  .mini-prop { font-size: 11px; font-weight: 600; color: var(--kk-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini-owner { font-size: 10px; color: var(--kk-ink-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini-badge {
+    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* ── MOBILE PREVIEW ──────────────────────────────────────────────────── */
+  /* ────────────────────────────────────────────────────────────────────── */
+
+  #mobile-view {
+    display: none;
+    min-height: 100vh;
+    background: #E5E5EA;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 0 60px;
+  }
+
+  .phone-frame {
+    width: 390px;
+    background: var(--kk-bg);
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.25), 0 0 0 10px #1D1D1F, 0 0 0 11px #3A3A3C;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+
+  /* Mobile top bar */
+  .m-top-bar {
+    height: 56px;
+    background: var(--kk-surface);
+    border-bottom: 1px solid var(--kk-line);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .m-logo { display: flex; align-items: center; gap: 8px; }
+  .m-logo .mark { width: 28px; height: 28px; background: var(--kk-ink); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 800; }
+  .m-logo .wordmark { font-size: 15px; font-weight: 700; letter-spacing: -0.03em; color: var(--kk-ink); }
+  .m-top-right { display: flex; align-items: center; gap: 6px; }
+
+  /* Mobile content */
+  .m-content { flex: 1; overflow-y: auto; padding: 20px 16px 80px; }
+
+  .m-greeting { margin-bottom: 20px; }
+  .m-greeting-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--kk-ink); margin-bottom: 2px; }
+  .m-greeting-sub { font-size: 13px; color: var(--kk-ink-mute); }
+
+  /* Mobile streak pill */
+  .streak-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--kk-amber-soft); border-radius: 20px;
+    padding: 4px 10px; font-size: 12px; font-weight: 600;
+    color: var(--kk-amber-ink); margin-bottom: 18px;
+  }
+
+  /* Mobile stats */
+  .m-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .m-stat {
+    background: var(--kk-surface); border-radius: 14px;
+    border: 1px solid var(--kk-line); padding: 12px 14px;
+  }
+  .m-stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kk-ink-faint); margin-bottom: 4px; }
+  .m-stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--kk-ink); }
+  .m-stat-sub { font-size: 11px; color: var(--kk-ink-mute); margin-top: 1px; }
+
+  /* Mobile section header */
+  .m-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; margin-top: 4px; }
+  .m-section-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--kk-ink); }
+  .m-section-link { font-size: 12px; color: var(--kk-blue); font-weight: 500; }
+
+  /* Mobile pipeline list */
+  .m-pipeline-item {
+    background: var(--kk-surface); border-radius: 14px;
+    border: 1px solid var(--kk-line); padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: box-shadow 0.1s;
+  }
+  .m-pipeline-item:active { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .m-pipeline-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .m-pipeline-info { flex: 1; min-width: 0; }
+  .m-pipeline-name { font-size: 13px; font-weight: 600; color: var(--kk-ink); }
+  .m-pipeline-sub { font-size: 11px; color: var(--kk-ink-mute); margin-top: 1px; }
+  .m-pipeline-count { font-size: 18px; font-weight: 700; color: var(--kk-ink); flex-shrink: 0; }
+
+  /* Bottom nav */
+  .m-bottom-nav {
+    height: 72px;
+    background: var(--kk-surface);
+    border-top: 1px solid var(--kk-line);
+    display: flex; align-items: stretch;
+    position: sticky; bottom: 0;
+    flex-shrink: 0;
+    padding-bottom: 8px; /* safe area */
+  }
+  .m-nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--kk-ink-faint); padding: 8px 4px 0;
+    transition: color 0.1s;
+  }
+  .m-nav-item.active { color: var(--kk-ink); }
+  .m-nav-item svg { width: 22px; height: 22px; }
+  .m-nav-label { font-size: 9px; font-weight: 500; letter-spacing: 0.01em; }
+  .m-nav-item.active .m-nav-label { font-weight: 700; }
+  /* Active dot */
+  .m-nav-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--kk-ink); margin-top: -2px;
+    opacity: 0;
+  }
+  .m-nav-item.active .m-nav-dot { opacity: 1; }
+
+  /* Comparison table */
+  .comparison {
+    max-width: 900px; margin: 48px auto 0;
+    background: var(--kk-surface); border-radius: 18px;
+    border: 1px solid var(--kk-line); overflow: hidden;
+    display: none;
+  }
+  .comparison.visible { display: block; }
+  .comparison-header {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    background: var(--kk-surface-2);
+    border-bottom: 1px solid var(--kk-line);
+  }
+  .comparison-header div { padding: 12px 16px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kk-ink-faint); }
+  .comparison-row { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid var(--kk-line); }
+  .comparison-row:last-child { border-bottom: none; }
+  .comparison-row div { padding: 12px 16px; font-size: 13px; color: var(--kk-ink); border-right: 1px solid var(--kk-line); }
+  .comparison-row div:last-child { border-right: none; }
+  .comparison-row div:first-child { color: var(--kk-ink-mute); font-weight: 500; }
+  .ok { color: var(--kk-green-ink) !important; font-weight: 600; }
+  .change { color: var(--kk-amber-ink) !important; font-weight: 600; }
+
+  /* SVG icons inline */
+  svg { display: block; }
+</style>
+</head>
+<body>
+
+<!-- View Toggle -->
+<div class="view-toggle">
+  <span>Preview:</span>
+  <button class="toggle-btn active" onclick="showView('desktop')">Desktop</button>
+  <button class="toggle-btn" onclick="showView('mobile')">Mobile</button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- DESKTOP VIEW                                                            -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="desktop-view">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="mark">k</div>
+      <span class="wordmark">kakisewa</span>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sidebar-nav">
+
+      <!-- Home -->
+      <button class="nav-item active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="label">Home</span>
+      </button>
+
+      <!-- Pipeline group -->
+      <div class="nav-group">
+        <div class="nav-group-label">My pipeline</div>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+          <span class="label">Potential listing</span>
+        </button>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span class="label">My listing</span>
+        </button>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span class="label">Existing listing</span>
+        </button>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          </svg>
+          <span class="label">Lost listing</span>
+        </button>
+      </div>
+
+      <!-- Desk group -->
+      <div class="nav-group">
+        <div class="nav-group-label">My desk</div>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="label">My calendar</span>
+        </button>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span class="label">Directory</span>
+        </button>
+
+        <button class="nav-item" style="padding-left: 18px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+            <polyline stroke-linecap="round" stroke-linejoin="round" points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span class="label">Performance</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- User at bottom -->
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="avatar">H</div>
+        <div class="user-info">
+          <div class="user-name">Howard</div>
+          <div class="user-plan">Platinum</div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Main column -->
+  <div class="main-col">
+
+    <!-- Top bar — right side only -->
+    <div class="top-bar">
+      <span class="plan-badge">Platinum</span>
+      <button class="icon-btn">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </button>
+      <button class="avatar-btn">H</button>
+    </div>
+
+    <!-- Page content -->
+    <div class="page-content">
+
+      <!-- Greeting -->
+      <div class="page-greeting">
+        <h1 class="greeting-title">Good morning, Howard 👋</h1>
+        <p class="greeting-subtitle">You have 3 renewals due this month. Let's get them sorted.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Potential leads</div>
+          <div class="stat-value">226</div>
+          <div class="stat-sub"><span class="stat-dot" style="background:var(--kk-amber)"></span>12 contacted today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active listings</div>
+          <div class="stat-value">8</div>
+          <div class="stat-sub"><span class="stat-dot" style="background:var(--kk-blue)"></span>3 matched</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Managed units</div>
+          <div class="stat-value">34</div>
+          <div class="stat-sub"><span class="stat-dot" style="background:var(--kk-green)"></span>All collecting</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Renewals due</div>
+          <div class="stat-value" style="color:var(--kk-red)">3</div>
+          <div class="stat-sub"><span class="stat-dot" style="background:var(--kk-red)"></span>Within 60 days</div>
+        </div>
+      </div>
+
+      <!-- Pipeline boards -->
+      <div class="pipeline-header">
+        <div class="pipeline-title">My pipeline</div>
+        <a class="pipeline-link">View all boards →</a>
+      </div>
+
+      <div class="boards-row">
+
+        <!-- My Listing -->
+        <div class="board-card">
+          <div class="board-name">My listing</div>
+          <div class="board-count">8</div>
+          <div class="board-unit">active units</div>
+          <div class="board-mini-cards">
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#c8e6c9,#81c784)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">H2O @ Ara Damansara</div>
+                <div class="mini-owner">Ahmad Fauzi</div>
+              </div>
+              <span class="mini-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Listed</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#bbdefb,#64b5f6)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">D LATOUR</div>
+                <div class="mini-owner">Tan Mei Lin</div>
+              </div>
+              <span class="mini-badge" style="background:#EEF4FF;color:#2563EB">Matched</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#f3e5f5,#ce93d8)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">Waltz</div>
+                <div class="mini-owner">Rajesh Kumar</div>
+              </div>
+              <span class="mini-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Listed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Existing Listing -->
+        <div class="board-card">
+          <div class="board-name">Existing listing</div>
+          <div class="board-count">34</div>
+          <div class="board-unit">managed tenancies</div>
+          <div class="board-mini-cards">
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#fff9c4,#f9a825)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">Greenfield</div>
+                <div class="mini-owner">Siti Fatimah</div>
+              </div>
+              <span class="mini-badge" style="background:var(--kk-red-soft);color:var(--kk-red)">Expiring</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#e8f5e9,#66bb6a)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">Citizen Residence</div>
+                <div class="mini-owner">Lee Cheng Yin</div>
+              </div>
+              <span class="mini-badge" style="background:#EEF4FF;color:#2563EB">Renewing</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#fce4ec,#f48fb1)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">Laurel</div>
+                <div class="mini-owner">Goh Wei Liang</div>
+              </div>
+              <span class="mini-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lost Listing -->
+        <div class="board-card">
+          <div class="board-name">Lost listing</div>
+          <div class="board-count">12</div>
+          <div class="board-unit">competitor units</div>
+          <div class="board-mini-cards">
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#e3f2fd,#90caf9)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">Verve Suite @ OKR</div>
+                <div class="mini-owner">Wong Kah Wai</div>
+              </div>
+              <span class="mini-badge" style="background:var(--kk-red-soft);color:var(--kk-red)">Reach out</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#f1f8e9,#aed581)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">H2O @ Ara Damansara</div>
+                <div class="mini-owner">Mohd Azri</div>
+              </div>
+              <span class="mini-badge" style="background:var(--kk-amber-soft);color:var(--kk-amber-ink)">Watching</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-photo" style="background:linear-gradient(135deg,#fafafa,#bdbdbd)"></div>
+              <div class="mini-info">
+                <div class="mini-prop">D LATOUR</div>
+                <div class="mini-owner">Jenny Ng</div>
+              </div>
+              <span class="mini-badge" style="background:#EEF4FF;color:#2563EB">Renewing</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MOBILE VIEW                                                             -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="mobile-view">
+  <div class="phone-frame">
+
+    <!-- Top bar -->
+    <div class="m-top-bar">
+      <div class="m-logo">
+        <div class="mark">k</div>
+        <span class="wordmark">kakisewa</span>
+      </div>
+      <div class="m-top-right">
+        <button class="icon-btn" style="width:30px;height:30px">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </button>
+        <div class="avatar-btn" style="width:28px;height:28px;font-size:11px">H</div>
+      </div>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="m-content">
+
+      <!-- Greeting -->
+      <div class="m-greeting">
+        <div class="m-greeting-title">Good morning 👋</div>
+        <p class="m-greeting-sub">3 renewals due this month</p>
+      </div>
+
+      <!-- Streak pill -->
+      <div class="streak-pill">🔥 7 day streak — keep it up!</div>
+
+      <!-- Stats 2x2 -->
+      <div class="m-stats">
+        <div class="m-stat">
+          <div class="m-stat-label">Potential</div>
+          <div class="m-stat-value">226</div>
+          <div class="m-stat-sub">leads</div>
+        </div>
+        <div class="m-stat">
+          <div class="m-stat-label">Listed</div>
+          <div class="m-stat-value">8</div>
+          <div class="m-stat-sub">active</div>
+        </div>
+        <div class="m-stat">
+          <div class="m-stat-label">Managed</div>
+          <div class="m-stat-value">34</div>
+          <div class="m-stat-sub">tenancies</div>
+        </div>
+        <div class="m-stat" style="border-color:rgba(255,59,48,0.25)">
+          <div class="m-stat-label" style="color:var(--kk-red)">Expiring</div>
+          <div class="m-stat-value" style="color:var(--kk-red)">3</div>
+          <div class="m-stat-sub" style="color:var(--kk-red);opacity:0.7">renewals</div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="m-section-header">
+        <div class="m-section-title">My pipeline</div>
+        <span class="m-section-link">View all</span>
+      </div>
+
+      <div class="m-pipeline-item">
+        <div class="m-pipeline-icon" style="background:#EFF6FF">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#2563EB" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+        </div>
+        <div class="m-pipeline-info">
+          <div class="m-pipeline-name">Potential listing</div>
+          <div class="m-pipeline-sub">12 contacted today</div>
+        </div>
+        <div class="m-pipeline-count">226</div>
+      </div>
+
+      <div class="m-pipeline-item">
+        <div class="m-pipeline-icon" style="background:var(--kk-green-soft)">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--kk-green-ink)" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <div class="m-pipeline-info">
+          <div class="m-pipeline-name">My listing</div>
+          <div class="m-pipeline-sub">3 matched with tenants</div>
+        </div>
+        <div class="m-pipeline-count">8</div>
+      </div>
+
+      <div class="m-pipeline-item">
+        <div class="m-pipeline-icon" style="background:#F0FDF4">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </div>
+        <div class="m-pipeline-info">
+          <div class="m-pipeline-name">Existing listing</div>
+          <div class="m-pipeline-sub" style="color:var(--kk-red)">3 expiring soon</div>
+        </div>
+        <div class="m-pipeline-count">34</div>
+      </div>
+
+      <div class="m-pipeline-item">
+        <div class="m-pipeline-icon" style="background:var(--kk-red-soft)">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--kk-red)" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          </svg>
+        </div>
+        <div class="m-pipeline-info">
+          <div class="m-pipeline-name">Lost listing</div>
+          <div class="m-pipeline-sub">2 ready to reach out</div>
+        </div>
+        <div class="m-pipeline-count">12</div>
+      </div>
+
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="m-bottom-nav">
+
+      <button class="m-nav-item active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="m-nav-label">Home</span>
+        <div class="m-nav-dot"></div>
+      </button>
+
+      <button class="m-nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span class="m-nav-label">Listing</span>
+        <div class="m-nav-dot"></div>
+      </button>
+
+      <button class="m-nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        </svg>
+        <span class="m-nav-label">Potential</span>
+        <div class="m-nav-dot"></div>
+      </button>
+
+      <button class="m-nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span class="m-nav-label">Calendar</span>
+        <div class="m-nav-dot"></div>
+      </button>
+
+      <button class="m-nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+          <circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <span class="m-nav-label">More</span>
+        <div class="m-nav-dot"></div>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function showView(view) {
+    document.getElementById('desktop-view').style.display = view === 'desktop' ? 'flex' : 'none';
+    document.getElementById('mobile-view').style.display = view === 'mobile' ? 'flex' : 'none';
+    document.querySelectorAll('.toggle-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && view === 'desktop') || (i === 1 && view === 'mobile'));
+    });
+  }
+</script>
+</body>
+</html>

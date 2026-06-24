@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Empty State Concept — kakisewa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --kk-ink:        #1D1D1F;
+    --kk-ink-mute:   #6E6E73;
+    --kk-ink-faint:  #AEAEB2;
+    --kk-bg:         #FBFBFD;
+    --kk-surface:    #FFFFFF;
+    --kk-surface-2:  #F5F5F7;
+    --kk-line:       #E5E5EA;
+    --kk-blue:       #0071E3;
+    --kk-blue-soft:  #EBF4FF;
+    --kk-green:      #34C759;
+    --kk-green-soft: #EDFAF1;
+    --kk-green-ink:  #1F8B4C;
+    --kk-theme-dark: #1B3A2D;
+    --radius-card:   18px;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--kk-bg);
+    color: var(--kk-ink);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* ── Page chrome (mimics kakisewa app shell) ── */
+  .topbar {
+    background: var(--kk-theme-dark);
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 10px;
+  }
+  .topbar-logo { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+  .topbar-logo span { opacity: 0.5; font-size: 10px; margin-left: 4px; }
+
+  /* ── Page content ── */
+  .page { max-width: 1200px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .page-title { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; color: var(--kk-theme-dark); font-family: 'DM Serif Display', serif; }
+  .page-sub   { font-size: 13px; color: var(--kk-ink-mute); margin-top: 4px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 99px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: none; font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-ghost   { background: var(--kk-surface); color: var(--kk-ink); border: 1px solid var(--kk-line); }
+  .btn-primary { background: var(--kk-theme-dark); color: #fff; }
+
+  /* ── Stats row ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--kk-surface); border: 1px solid var(--kk-line);
+    border-radius: var(--radius-card); padding: 18px 20px;
+  }
+  .stat-overline { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--kk-ink-faint); margin-bottom: 6px; }
+  .stat-value    { font-size: 28px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--kk-ink); font-variant-numeric: tabular-nums; }
+  .stat-sub      { font-size: 12px; color: var(--kk-ink-mute); margin-top: 4px; }
+
+  /* ── Toolbar ── */
+  .toolbar { background: var(--kk-surface); border: 1px solid var(--kk-line); border-radius: var(--radius-card); padding: 14px 18px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 12px; }
+  .search-row { display: flex; align-items: center; gap: 10px; }
+  .search-fake { flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; background: var(--kk-surface-2); border: 1px solid var(--kk-line); color: var(--kk-ink-faint); font-size: 13px; }
+  .chip { padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 500; background: var(--kk-surface-2); border: 1px solid var(--kk-line); color: var(--kk-ink-mute); white-space: nowrap; cursor: pointer; }
+  .tabs { display: flex; gap: 4px; }
+  .tab { padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 500; color: var(--kk-ink-mute); border: 1px solid transparent; white-space: nowrap; }
+  .tab.active { background: var(--kk-ink); color: #fff; }
+  .tab .count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; font-size: 11px; font-weight: 700; margin-left: 5px; background: rgba(255,255,255,0.2); }
+  .tab:not(.active) .count { background: var(--kk-surface-2); color: var(--kk-ink-mute); }
+
+  /* ── Table card wrapper (position: relative for overlay) ── */
+  .table-wrap-outer {
+    position: relative;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+
+  /* ── Blurred table ── */
+  .table-blur-layer {
+    filter: blur(1px) saturate(0.55);
+    opacity: 0.82;
+    pointer-events: none;
+    user-select: none;
+  }
+  .table-card {
+    background: var(--kk-surface);
+    border: 1px solid var(--kk-line);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--kk-ink-faint);
+    background: var(--kk-surface-2);
+    border-bottom: 1px solid var(--kk-line);
+    white-space: nowrap;
+  }
+  thead th:first-child { padding-left: 18px; width: 40px; }
+  thead th:last-child  { padding-right: 18px; text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--kk-line); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 12px 14px; vertical-align: middle; }
+  td:first-child { padding-left: 18px; }
+  td:last-child  { padding-right: 18px; }
+
+  .owner-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .owner-name  { font-size: 13px; font-weight: 600; color: var(--kk-ink); }
+  .owner-phone { font-size: 12px; color: var(--kk-ink-mute); }
+  .prop-name  { font-size: 13px; font-weight: 500; }
+  .prop-block { font-size: 12px; color: var(--kk-ink-mute); }
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge-grey  { background: var(--kk-surface-2); color: var(--kk-ink-mute); border: 1px solid var(--kk-line); }
+  .badge-blue  { background: #EBF4FF; color: #0056B3; }
+  .badge-green { background: var(--kk-green-soft); color: var(--kk-green-ink); }
+  .badge-amber { background: #FFF5E6; color: #B36200; }
+  .icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--kk-line); background: var(--kk-surface); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .actions-cell { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+
+  .table-footer-bar {
+    padding: 12px 18px;
+    border-top: 1px solid var(--kk-line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; color: var(--kk-ink-mute);
+  }
+  .page-pills { display: flex; gap: 4px; }
+  .page-pill { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--kk-line); background: var(--kk-surface); font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center; color: var(--kk-ink); }
+  .page-pill.active { background: var(--kk-ink); color: #fff; border-color: var(--kk-ink); }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    /* subtle frosted gradient so the blur below is readable */
+    background: linear-gradient(
+      160deg,
+      rgba(251,251,253,0.72) 0%,
+      rgba(251,251,253,0.88) 60%,
+      rgba(251,251,253,0.72) 100%
+    );
+  }
+  .overlay-card {
+    background: var(--kk-surface);
+    border-radius: 24px;
+    border: 1px solid var(--kk-line);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06);
+    padding: 40px 48px;
+    text-align: center;
+    max-width: 480px;
+    width: 100%;
+  }
+  .overlay-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: var(--kk-green-soft);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .overlay-title {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.03em;
+    color: var(--kk-ink); margin-bottom: 10px;
+    font-family: 'DM Serif Display', serif;
+  }
+  .overlay-body {
+    font-size: 14px; color: var(--kk-ink-mute); line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .overlay-actions { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .btn-upload {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 28px; border-radius: 99px;
+    background: var(--kk-theme-dark); color: #fff;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    border: none; font-family: inherit; width: 100%;
+    justify-content: center;
+  }
+  .btn-manual {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 24px; border-radius: 99px;
+    background: var(--kk-surface); color: var(--kk-ink);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--kk-line); font-family: inherit; width: 100%;
+    justify-content: center;
+  }
+  .overlay-hint {
+    font-size: 11px; color: var(--kk-ink-faint); margin-top: 16px;
+  }
+
+  /* ── Greyed stats / toolbar (outside the overlay, just muted) ── */
+  .dimmed { opacity: 0.6; pointer-events: none; filter: saturate(0.5); }
+
+  @media (max-width: 640px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .overlay-card { padding: 28px 22px; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- App chrome -->
+<div class="topbar">
+  <div class="topbar-logo">kakisewa <span>カキセワ</span></div>
+</div>
+
+<div class="page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Potential listing</div>
+      <div class="page-sub">Track every owner from first message to listing in one place.</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
+        How it works
+      </button>
+      <button class="btn btn-ghost">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Upload owners
+      </button>
+      <button class="btn btn-primary">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add owner lead
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats row (dimmed) -->
+  <div class="stats-row dimmed">
+    <div class="stat-card">
+      <div class="stat-overline">Total leads</div>
+      <div class="stat-value">50</div>
+      <div class="stat-sub">Active owner contacts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-overline">Contacted</div>
+      <div class="stat-value">12</div>
+      <div class="stat-sub">Sent at least once</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-overline">Contacted today</div>
+      <div class="stat-value">4</div>
+      <div class="stat-sub">Via WhatsApp</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-overline">Response rate</div>
+      <div class="stat-value">33%</div>
+      <div class="stat-sub">WA replies received</div>
+    </div>
+  </div>
+
+  <!-- Toolbar (dimmed) -->
+  <div class="toolbar dimmed" style="margin-bottom: 16px;">
+    <div class="search-row">
+      <div class="search-fake">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        Search by name, number, unit, property...
+      </div>
+      <div class="chip">All properties</div>
+      <div class="chip">All purposes</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">All <span class="count">50</span></div>
+      <div class="tab">Not contacted <span class="count">38</span></div>
+      <div class="tab">Contacted <span class="count">12</span></div>
+      <div class="tab">No response <span class="count">4</span></div>
+    </div>
+  </div>
+
+  <!-- Table with overlay -->
+  <div class="table-wrap-outer">
+
+    <!-- Blurred table (sample data) -->
+    <div class="table-blur-layer">
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" /></th>
+              <th>Owner</th>
+              <th>Property</th>
+              <th>Unit</th>
+              <th>Last contact</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#5856D6">AF</div><div><div class="owner-name">Ahmad Fauzi Hassan</div><div class="owner-phone">+60 12-345 6789</div></div></div></td>
+              <td><div class="prop-name">Union Soho</div><div class="prop-block">Block A</div></td>
+              <td>A-12-05</td>
+              <td><div>Today, 10:30 AM</div><div style="font-size:11px;color:var(--kk-ink-faint)">WhatsApp</div></td>
+              <td><span class="badge badge-blue">Contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 2 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#FF6B6B">TM</div><div><div class="owner-name">Tan Mei Lin</div><div class="owner-phone">+60 16-234 5678</div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 28</div></td>
+              <td>28-02</td>
+              <td><div>Yesterday</div><div style="font-size:11px;color:var(--kk-ink-faint)">WhatsApp</div></td>
+              <td><span class="badge badge-green">Interested</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 3 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#34AADC">RK</div><div><div class="owner-name">Rajesh Kumar</div><div class="owner-phone">+60 19-876 5432</div></div></div></td>
+              <td><div class="prop-name">Sri Damansara</div><div class="prop-block">Block C</div></td>
+              <td>C-08-11</td>
+              <td><div>2 days ago</div><div style="font-size:11px;color:var(--kk-ink-faint)">Call</div></td>
+              <td><span class="badge badge-amber">No unit</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 4 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#1F8B4C">NA</div><div><div class="owner-name">Nur Aisyah Mohamed</div><div class="owner-phone">+60 11-222 3344</div></div></div></td>
+              <td><div class="prop-name">Union Soho</div><div class="prop-block">Block B</div></td>
+              <td>B-05-03</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 5 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#FF9500">LB</div><div><div class="owner-name">Lim Boon Huat</div><div class="owner-phone">+60 17-988 7766</div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 27</div></td>
+              <td>27-08</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 6 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#C84B31">SF</div><div><div class="owner-name">Siti Fatimah Abdullah</div><div class="owner-phone">+60 13-555 1234</div></div></div></td>
+              <td><div class="prop-name">Sri Damansara</div><div class="prop-block">Block A</div></td>
+              <td>A-14-02</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 7 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#7C3AED">WK</div><div><div class="owner-name">Wong Kah Wai</div><div class="owner-phone">+60 12-667 8899</div></div></div></td>
+              <td><div class="prop-name">Union Soho</div><div class="prop-block">Block A</div></td>
+              <td>A-09-07</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 8 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#30B0C7">MA</div><div><div class="owner-name">Mohd Azri Rosli</div><div class="owner-phone">+60 16-443 2211</div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 26</div></td>
+              <td>26-06</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 9 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#5856D6">CJ</div><div><div class="owner-name">Cheong Jia Qi</div><div class="owner-phone">+60 11-789 0011</div></div></div></td>
+              <td><div class="prop-name">Sri Damansara</div><div class="prop-block">Block B</div></td>
+              <td>B-03-09</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+            <!-- Row 10 -->
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#B36200">YK</div><div><div class="owner-name">Yusof Bin Kassim</div><div class="owner-phone">+60 19-321 4455</div></div></div></td>
+              <td><div class="prop-name">Union Soho</div><div class="prop-block">Block C</div></td>
+              <td>C-11-01</td>
+              <td><div style="color:var(--kk-ink-faint)">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><div class="icon-btn"></div><div class="icon-btn"></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-footer-bar">
+          <span>Showing 1–10 of 50 owners</span>
+          <div class="page-pills">
+            <div class="page-pill">‹</div>
+            <div class="page-pill active">1</div>
+            <div class="page-pill">2</div>
+            <div class="page-pill">3</div>
+            <div class="page-pill" style="border:none;background:none;color:var(--kk-ink-faint)">…</div>
+            <div class="page-pill">5</div>
+            <div class="page-pill">›</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /blur layer -->
+
+    <!-- Overlay -->
+    <div class="overlay">
+      <div class="overlay-card">
+        <!-- Icon -->
+        <div class="overlay-icon">
+          <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="#1F8B4C" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+        </div>
+
+        <div class="overlay-title">Start building your owner list</div>
+        <div class="overlay-body">
+          Upload your existing Excel or CSV sheet and start reaching out to owners in minutes. Once you have leads, this page tracks every contact, reply, and listing.
+        </div>
+
+        <div class="overlay-actions">
+          <button class="btn-upload">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Upload owner list
+          </button>
+          <button class="btn-manual">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Add owners one by one
+          </button>
+        </div>
+
+        <div class="overlay-hint">Excel (.xlsx), CSV, or copy-paste — we handle the format</div>
+
+        <!-- Motivational tip -->
+        <div style="margin-top:20px; padding:14px 16px; background:var(--kk-green-soft); border-radius:12px; text-align:left; display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:18px; line-height:1; flex-shrink:0;">💡</span>
+          <div>
+            <div style="font-size:12px; font-weight:700; color:var(--kk-green-ink); margin-bottom:3px;">10 minutes today, 100 leads in 10 days</div>
+            <div style="font-size:12px; color:var(--kk-green-ink); opacity:0.85; line-height:1.5;">Invest 10 minutes now to add 10 leads. Do it every day for 10 days and you'll have 100 owners tracked — and you'll never miss a follow-up ever again.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /table-wrap-outer -->
+
+</div><!-- /page -->
+
+</body>
+</html>

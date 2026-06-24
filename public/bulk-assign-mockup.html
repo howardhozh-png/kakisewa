@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulk Assign Property — Mockup</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; background: #f5f5f7; display: flex; gap: 48px; padding: 48px; align-items: flex-start; flex-wrap: wrap; }
+  h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #6e6e73; margin: 0 0 12px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+    width: 520px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f5f5f7; border-bottom: 1px solid #e5e5e5; }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6e6e73; }
+  th:not(:first-child) { text-align: right; }
+
+  td { padding: 10px 16px; font-size: 13px; color: #1d1d1f; }
+  td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  .row { border-bottom: 1px solid #e5e5e5; cursor: pointer; }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: #f5f5f7; }
+  .row.selected { background: rgba(0,113,227,0.06); }
+
+  .prop-cell { display: flex; align-items: center; gap: 8px; }
+  .prop-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .no-name { color: #6e6e73; font-style: italic; }
+
+  .icon-btn {
+    width: 22px; height: 22px;
+    border: none; background: transparent; cursor: pointer;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: #aeaeb2;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: #e5e5e5; color: #1d1d1f; }
+
+  /* Inline assign input — STATE B */
+  .assign-input-row { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .assign-input {
+    flex: 1;
+    border: 1.5px solid #0071e3;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    outline: none;
+    color: #1d1d1f;
+    background: #fff;
+    min-width: 0;
+  }
+  .assign-input::placeholder { color: #aeaeb2; }
+  .confirm-btn {
+    width: 26px; height: 26px;
+    background: #0071e3; color: #fff;
+    border: none; border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cancel-btn {
+    width: 26px; height: 26px;
+    background: #f5f5f7; color: #6e6e73;
+    border: none; border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .dash { color: #d1d1d6; }
+  .label { font-size: 11px; color: #6e6e73; margin-bottom: 4px; }
+  .note { font-size: 11px; color: #6e6e73; margin-top: 8px; padding: 0 2px; }
+  .tag { display: inline-block; background: rgba(0,113,227,0.1); color: #0071e3; font-size: 10px; font-weight: 600; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- STATE A: Default — hover on "No property name" shows pencil -->
+<div>
+  <h3>State A — Hover on "No property name" row</h3>
+  <p class="label">Same pencil pattern as named properties. Nothing else changes.</p>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Uncontacted</th>
+          <th>Contacted</th>
+          <th>Listed</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row selected">
+          <td><span class="prop-name" style="font-weight:600">All properties</span></td>
+          <td>221</td><td>2</td><td>3</td><td>226</td>
+        </tr>
+        <tr class="row">
+          <td>
+            <div class="prop-cell">
+              <span class="prop-name">Residensi Highpark</span>
+              <button class="icon-btn" title="Rename">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            </div>
+          </td>
+          <td>172</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td>172</td>
+        </tr>
+        <tr class="row">
+          <td><span class="prop-name">Menara Selatan Residensi...</span></td>
+          <td>36</td><td>1</td><td><span class="dash">—</span></td><td>37</td>
+        </tr>
+        <!-- NO PROPERTY NAME ROW — hovered, shows pencil -->
+        <tr class="row" style="background:#f5f5f7">
+          <td>
+            <div class="prop-cell">
+              <span class="prop-name no-name">No property name</span>
+              <button class="icon-btn" title="Assign property name" style="color:#0071e3">
+                <!-- Pencil icon — same as rename, but action is "assign" -->
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            </div>
+          </td>
+          <td>2</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td>2</td>
+        </tr>
+        <tr class="row">
+          <td><span class="prop-name">No.1 Menara Selatan Res...</span></td>
+          <td>1</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td>1</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Pencil icon appears on hover — same as every other row. Tooltip says "Assign property name".</p>
+</div>
+
+<!-- STATE B: Pencil clicked — inline input replaces the label -->
+<div>
+  <h3>State B — After clicking the pencil</h3>
+  <p class="label">Inline input appears in-place. Type name, press Enter or ✓ to apply to all 2 unnamed leads.</p>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Uncontacted</th>
+          <th>Contacted</th>
+          <th>Listed</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row selected">
+          <td><span class="prop-name" style="font-weight:600">All properties</span></td>
+          <td>221</td><td>2</td><td>3</td><td>226</td>
+        </tr>
+        <tr class="row">
+          <td><span class="prop-name">Residensi Highpark</span></td>
+          <td>172</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td>172</td>
+        </tr>
+        <tr class="row">
+          <td><span class="prop-name">Menara Selatan Residensi...</span></td>
+          <td>36</td><td>1</td><td><span class="dash">—</span></td><td>37</td>
+        </tr>
+        <!-- NO PROPERTY NAME ROW — editing state -->
+        <tr class="row" style="background:#f0f6ff; cursor:default">
+          <td colspan="5" onclick="event.stopPropagation()">
+            <div class="assign-input-row">
+              <input class="assign-input" placeholder="Type property name e.g. Residensi Highpark" autofocus value="">
+              <button class="confirm-btn" title="Assign to all 2 unnamed leads">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button class="cancel-btn" title="Cancel">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <p style="font-size:11px;color:#6e6e73;margin:5px 0 0">Will assign this name to all <strong>2 unnamed leads</strong></p>
+          </td>
+        </tr>
+        <tr class="row">
+          <td><span class="prop-name">No.1 Menara Selatan Res...</span></td>
+          <td>1</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td>1</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Assigns the name to <em>all</em> unnamed leads — no selection needed. Confirm = checkmark or Enter. Cancel = X or Escape.</p>
+</div>
+
+</body>
+</html>

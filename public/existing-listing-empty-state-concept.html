@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Existing Listing Empty State — kakisewa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --kk-ink:        #1D1D1F;
+    --kk-ink-mute:   #6E6E73;
+    --kk-ink-faint:  #AEAEB2;
+    --kk-bg:         #FBFBFD;
+    --kk-surface:    #FFFFFF;
+    --kk-surface-2:  #F5F5F7;
+    --kk-line:       #E5E5EA;
+    --kk-green:      #34C759;
+    --kk-green-soft: #EDFAF1;
+    --kk-green-ink:  #1F8B4C;
+    --kk-red-soft:   #FFF0EF;
+    --kk-amber-soft: #FFF5E6;
+    --kk-amber-ink:  #B36200;
+    --kk-theme-dark: #1B3A2D;
+    --kk-theme-light:#E8F0EC;
+    --radius-card:   18px;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--kk-bg);
+    color: var(--kk-ink);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .topbar { background: var(--kk-theme-dark); height: 52px; display: flex; align-items: center; padding: 0 20px; }
+  .topbar-logo { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+  .topbar-logo span { opacity: 0.5; font-size: 10px; margin-left: 4px; }
+
+  .page { max-width: 1440px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .page-title { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; color: var(--kk-theme-dark); font-family: 'DM Serif Display', serif; }
+  .page-sub   { font-size: 13px; color: var(--kk-ink-mute); margin-top: 4px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; white-space: nowrap; }
+  .btn-ghost   { background: var(--kk-surface); color: var(--kk-ink); border: 1px solid var(--kk-line); }
+  .btn-primary { background: var(--kk-theme-dark); color: #fff; }
+
+  .board-outer { position: relative; }
+  .board-blur { filter: blur(1px) saturate(0.55); opacity: 0.82; pointer-events: none; user-select: none; }
+
+  /* ── Timeline section ── */
+  .kk-section { background: var(--kk-surface); border: 1px solid var(--kk-line); border-radius: var(--radius-card); padding: 20px; margin-bottom: 20px; }
+  .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+  .chart-overline { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--kk-ink-faint); margin-bottom: 2px; }
+  .chart-total { font-size: 18px; font-weight: 700; letter-spacing: -0.025em; color: var(--kk-theme-dark); line-height: 1; }
+  .chart-sub { font-size: 11px; color: var(--kk-ink-faint); margin-top: 4px; }
+  .chart-controls { display: flex; align-items: center; gap: 6px; }
+  .ctrl-pill { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--kk-line); background: var(--kk-surface-2); color: var(--kk-ink); }
+  .bars-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; overflow-x: auto; }
+  .bar-col { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  .bar-track { position: relative; display: flex; align-items: flex-end; height: 90px; padding-top: 6px; }
+  .bar-fill { width: 100%; border-radius: 4px 4px 0 0; }
+  .bar-label { text-align: center; }
+  .bar-count { font-size: 11px; font-weight: 600; line-height: 1; }
+  .bar-month { font-size: 10px; margin-top: 3px; color: var(--kk-ink-faint); line-height: 1; white-space: nowrap; }
+  .bar-rm    { font-size: 9px; margin-top: 2px; color: var(--kk-ink-mute); font-weight: 500; line-height: 1; }
+
+  /* ── Filter row ── */
+  .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: nowrap; overflow-x: auto; }
+  .search-pill { position: relative; display: flex; align-items: center; }
+  .search-pill svg { position: absolute; left: 10px; color: var(--kk-ink-faint); }
+  .search-pill input { background: var(--kk-surface-2); border: 1px solid var(--kk-line); border-radius: 99px; padding: 6px 14px 6px 32px; font-size: 13px; outline: none; color: var(--kk-ink); min-width: 160px; font-family: inherit; }
+  .filter-pill { display: flex; align-items: center; gap: 4px; background: var(--kk-surface-2); border: 1px solid var(--kk-line); border-radius: 99px; padding: 6px 12px; font-size: 13px; color: var(--kk-ink-mute); white-space: nowrap; }
+
+  /* ── Kanban ── */
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+  .col-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .col-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--kk-surface); border: 1px solid var(--kk-line); border-radius: 14px; }
+  .col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .col-label { font-size: 13px; font-weight: 700; flex: 1; }
+  .col-count { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+  .col-cards { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── Card ── */
+  .kk-card { background: var(--kk-surface); border: 1px solid var(--kk-line); border-radius: var(--radius-card); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .kk-card.expiring { box-shadow: 0 4px 14px rgba(27,58,45,0.14), 0 1px 4px rgba(0,0,0,0.06); }
+  .card-top { display: flex; gap: 10px; }
+  .card-photo { width: 64px; height: 64px; border-radius: 10px; flex-shrink: 0; overflow: hidden; border: 1px solid var(--kk-line); object-fit: cover; }
+  .card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 2px 0; gap: 3px; }
+  .card-prop { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--kk-ink); letter-spacing: -0.01em; }
+  .card-unit { font-size: 11px; color: var(--kk-ink-mute); }
+  .card-rent { font-size: 12px; font-weight: 600; color: var(--kk-ink); }
+  .card-owner { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--kk-ink-mute); }
+  .days-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; border-top: 1px solid var(--kk-line); font-size: 11px; color: var(--kk-ink-faint); }
+  .card-action { font-size: 12px; font-weight: 600; color: var(--kk-theme-dark); padding: 4px 10px; border-radius: 99px; background: var(--kk-theme-light); white-space: nowrap; }
+
+  /* ── Overlay ── */
+  .overlay { position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding: 48px 24px 24px; background: linear-gradient(160deg, rgba(251,251,253,0.65) 0%, rgba(251,251,253,0.88) 50%, rgba(251,251,253,0.65) 100%); }
+  .overlay-card { background: var(--kk-surface); border-radius: 24px; border: 1px solid var(--kk-line); box-shadow: 0 20px 60px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06); padding: 36px 44px; text-align: center; max-width: 480px; width: 100%; }
+  .overlay-icon { width: 64px; height: 64px; border-radius: 18px; background: var(--kk-green-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+  .overlay-title { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: var(--kk-ink); margin-bottom: 10px; font-family: 'DM Serif Display', serif; }
+  .overlay-body  { font-size: 14px; color: var(--kk-ink-mute); line-height: 1.6; margin-bottom: 24px; }
+  .overlay-actions { display: flex; flex-direction: column; gap: 10px; }
+  .btn-cta-primary { display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px; border-radius: 99px; background: var(--kk-theme-dark); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; justify-content: center; }
+  .btn-cta-ghost   { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px; border-radius: 99px; background: var(--kk-surface); color: var(--kk-ink); font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--kk-line); font-family: inherit; justify-content: center; }
+  .overlay-hint { font-size: 11px; color: var(--kk-ink-faint); margin-top: 12px; }
+
+  @media (max-width: 768px) {
+    .board { grid-template-columns: 1fr; }
+    .overlay-card { padding: 28px 20px; }
+    .overlay { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">kakisewa <span>カキセワ</span></div>
+</div>
+
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Existing listing</div>
+      <div class="page-sub">Track every tenancy. Get alerted 60 days before any contract expires.</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
+        How it works
+      </button>
+      <button class="btn btn-ghost">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Upload CSV
+      </button>
+      <button class="btn btn-primary">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add tenancy
+      </button>
+    </div>
+  </div>
+
+  <div class="board-outer">
+
+    <!-- ── Blurred page content ── -->
+    <div class="board-blur">
+
+      <!-- Bar chart -->
+      <div class="kk-section">
+        <div class="chart-header">
+          <div>
+            <div class="chart-overline">Renewal income · 12 months</div>
+            <div class="chart-total">RM 42,300</div>
+            <div class="chart-sub">9 contracts · 1 month rent counted as renewal income</div>
+          </div>
+          <div class="chart-controls">
+            <div class="ctrl-pill">Jun '26 ▾</div>
+            <div class="ctrl-pill">12m ▾</div>
+          </div>
+        </div>
+        <div class="bars-row">
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:14%;background:rgba(0,0,0,0.18)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">1</div><div class="bar-month">Jun '26</div><div class="bar-rm">·now</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:4%;background:var(--kk-surface-2)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink-faint)">0</div><div class="bar-month">Jul '26</div><div class="bar-rm">&nbsp;</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:32%;background:color-mix(in srgb,var(--kk-theme-dark) 55%,transparent)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">2</div><div class="bar-month">Aug '26</div><div class="bar-rm">RM 5.5k</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:4%;background:var(--kk-surface-2)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink-faint)">0</div><div class="bar-month">Sep '26</div><div class="bar-rm">&nbsp;</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:14%;background:color-mix(in srgb,var(--kk-theme-dark) 55%,transparent)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">1</div><div class="bar-month">Oct '26</div><div class="bar-rm">RM 2.4k</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:4%;background:var(--kk-surface-2)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink-faint)">0</div><div class="bar-month">Nov '26</div><div class="bar-rm">&nbsp;</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:100%;background:color-mix(in srgb,var(--kk-theme-dark) 55%,transparent)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">3</div><div class="bar-month">Dec '26</div><div class="bar-rm">RM 8.7k</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:4%;background:var(--kk-surface-2)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink-faint)">0</div><div class="bar-month">Jan '27</div><div class="bar-rm">&nbsp;</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:14%;background:color-mix(in srgb,var(--kk-theme-dark) 55%,transparent)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">1</div><div class="bar-month">Feb '27</div><div class="bar-rm">RM 3.5k</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:4%;background:var(--kk-surface-2)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink-faint)">0</div><div class="bar-month">Mar '27</div><div class="bar-rm">&nbsp;</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:14%;background:color-mix(in srgb,var(--kk-theme-dark) 55%,transparent)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">1</div><div class="bar-month">Apr '27</div><div class="bar-rm">RM 2.1k</div></div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-track"><div class="bar-fill" style="height:32%;background:color-mix(in srgb,var(--kk-theme-dark) 55%,transparent)"></div></div>
+            <div class="bar-label"><div class="bar-count" style="color:var(--kk-ink)">2</div><div class="bar-month">May '27</div><div class="bar-rm">RM 4.2k</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search / filter bar -->
+      <div class="filter-row">
+        <div class="search-pill">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search..." readonly />
+        </div>
+        <div class="filter-pill">All properties <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></div>
+        <div class="filter-pill"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg> Select</div>
+      </div>
+
+      <!-- Kanban -->
+      <div class="board">
+
+        <!-- Expiring -->
+        <div class="col-wrap">
+          <div class="col-header">
+            <div class="col-dot" style="background:var(--kk-theme-dark)"></div>
+            <div class="col-label">Expiring</div>
+            <div class="col-count" style="background:var(--kk-theme-light);color:var(--kk-theme-dark)">4</div>
+          </div>
+          <div class="col-cards">
+
+            <div class="kk-card expiring">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781690971988_y18o/1781691010306.jpeg" alt="D LATOUR" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">D LATOUR</div>
+                    <div class="days-badge" style="background:var(--kk-red-soft);color:#C62828">12d</div>
+                  </div>
+                  <div class="card-unit">Unit A-25-13 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,400/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Ahmad Fauzi Hassan
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 29 Jun 2026</span><div class="card-action">What's next?</div></div>
+            </div>
+
+            <div class="kk-card expiring">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781684844264_vq7t/1781684845187.jpeg" alt="CITIZEN RESIDENCE" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">Citizen Residence</div>
+                    <div class="days-badge" style="background:var(--kk-amber-soft);color:#B45309">28d</div>
+                  </div>
+                  <div class="card-unit">Unit B-28 · 1 bed · 1 bath</div>
+                  <div class="card-rent">RM 1,900/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Tan Mei Lin
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 15 Jul 2026</span><div class="card-action">What's next?</div></div>
+            </div>
+
+            <div class="kk-card expiring">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/documents/1781623709186-dffe98b8-c090-4e57-8a8e-7fe31197be1d.jpeg" alt="WALTZ" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">Waltz</div>
+                    <div class="days-badge" style="background:var(--kk-amber-soft);color:#B45309">55d</div>
+                  </div>
+                  <div class="card-unit">Unit N-35-2 · 3 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,200/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Rajesh Kumar
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 11 Aug 2026</span><div class="card-action">What's next?</div></div>
+            </div>
+
+            <div class="kk-card expiring">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/documents/1781599619238-IMG-20240701-WA0113.jpg" alt="H2O Ara Damansara" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">H2O @ Ara Damansara</div>
+                    <div class="days-badge" style="background:var(--kk-amber-soft);color:#B45309">58d</div>
+                  </div>
+                  <div class="card-unit">Unit C-13A-08 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 3,100/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Siti Fatimah Abdullah
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 14 Aug 2026</span><div class="card-action">What's next?</div></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Renewing -->
+        <div class="col-wrap">
+          <div class="col-header">
+            <div class="col-dot" style="background:var(--kk-green)"></div>
+            <div class="col-label">Renewing</div>
+            <div class="col-count" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">5</div>
+          </div>
+          <div class="col-cards">
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781690696774_hupx/1781690807827.jpg" alt="D LATOUR" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">D LATOUR</div>
+                    <div class="days-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Renewing</div>
+                  </div>
+                  <div class="card-unit">Unit A-5-10 · 3 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,800/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Nur Aisyah Mohamed
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>New end: 31 May 2027</span><span style="font-size:12px;font-weight:600;color:var(--kk-green-ink)">+RM 1,400</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/documents/1781620979376-f80e09db-002f-414e-ae50-f54f4ecade9c.jpeg" alt="Citizen Residence" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">Citizen Residence</div>
+                    <div class="days-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Renewing</div>
+                  </div>
+                  <div class="card-unit">Unit C-15-1 · 3 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,600/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Wong Kah Wai
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>New end: 30 Apr 2027</span><span style="font-size:12px;font-weight:600;color:var(--kk-green-ink)">+RM 1,300</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781619461700_6iy2/1781619462625.jpeg" alt="D LATOUR" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">D LATOUR</div>
+                    <div class="days-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Renewing</div>
+                  </div>
+                  <div class="card-unit">Unit B-15-13 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 3,500/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Mohd Azri Rosli
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>New end: 28 Feb 2027</span><span style="font-size:12px;font-weight:600;color:var(--kk-green-ink)">+RM 1,750</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781598310474_6vi1/1781598310796.jpeg" alt="H2O Ara Damansara" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">H2O @ Ara Damansara</div>
+                    <div class="days-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Renewing</div>
+                  </div>
+                  <div class="card-unit">Unit D-13A-10 · 2 bed · 1 bath</div>
+                  <div class="card-rent">RM 1,750/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Lim Boon Huat
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>New end: 31 Mar 2027</span><span style="font-size:12px;font-weight:600;color:var(--kk-green-ink)">+RM 875</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/documents/1781599340991-WhatsApp_Image_2026-06-16_at_4.41.35_PM__3_.jpeg" alt="Greenfield" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">Greenfield</div>
+                    <div class="days-badge" style="background:var(--kk-green-soft);color:var(--kk-green-ink)">Renewing</div>
+                  </div>
+                  <div class="card-unit">Unit B-13-10 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,100/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Cheong Jia Qi
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>New end: 30 Jun 2027</span><span style="font-size:12px;font-weight:600;color:var(--kk-green-ink)">+RM 1,050</span></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Active -->
+        <div class="col-wrap">
+          <div class="col-header">
+            <div class="col-dot" style="background:var(--kk-ink-faint)"></div>
+            <div class="col-label">Active</div>
+            <div class="col-count" style="background:var(--kk-surface-2);color:var(--kk-ink-mute)">41</div>
+          </div>
+          <div class="col-cards">
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781598179798_ijfp/1781598180607.jpg" alt="H2O Ara Damansara" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">H2O @ Ara Damansara</div>
+                    <div class="days-badge" style="background:var(--kk-surface-2);color:var(--kk-ink-mute)">287d</div>
+                  </div>
+                  <div class="card-unit">Unit B-20-10 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,500/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Yusof Bin Kassim
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 31 Mar 2027</span><span style="color:var(--kk-ink-faint)">10 months</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781629589725_6foe/1781629590341.jpeg" alt="Verve Suite OKR" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">Verve Suite @ OKR</div>
+                    <div class="days-badge" style="background:var(--kk-surface-2);color:var(--kk-ink-mute)">320d</div>
+                  </div>
+                  <div class="card-unit">Unit A-5-3 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,050/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Lee Cheng Yin
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 3 May 2027</span><span style="color:var(--kk-ink-faint)">11 months</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/documents/1781534349434-WhatsApp_Image_2026-06-15_at_22.37.40__1_.jpeg" alt="Laurel" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">Laurel</div>
+                    <div class="days-badge" style="background:var(--kk-surface-2);color:var(--kk-ink-mute)">348d</div>
+                  </div>
+                  <div class="card-unit">Unit A-10-08 · 2 bed · 1 bath</div>
+                  <div class="card-rent">RM 1,850/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Priya Devi A/P Raj
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 31 May 2027</span><span style="color:var(--kk-ink-faint)">12 months</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/documents/1781596497774-WhatsApp_Image_2022-12-06_at_1.26.44_PM__3_.jpeg" alt="H2O Ara Damansara" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">H2O @ Ara Damansara</div>
+                    <div class="days-badge" style="background:var(--kk-surface-2);color:var(--kk-ink-mute)">420d</div>
+                  </div>
+                  <div class="card-unit">Unit C-17-11 · 2 bed · 2 bath</div>
+                  <div class="card-rent">RM 3,300/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Nurul Ain Binti Omar
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 12 Aug 2027</span><span style="color:var(--kk-ink-faint)">14 months</span></div>
+            </div>
+
+            <div class="kk-card">
+              <div class="card-top">
+                <img class="card-photo" src="https://rfbrkbvnjc0tr4qu.public.blob.vercel-storage.com/owner-photos/olead_1781690696774_hupx/1781690834648.jpg" alt="D LATOUR" />
+                <div class="card-info">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                    <div class="card-prop">D LATOUR</div>
+                    <div class="days-badge" style="background:var(--kk-surface-2);color:var(--kk-ink-mute)">510d</div>
+                  </div>
+                  <div class="card-unit">Unit A-5-10 · 3 bed · 2 bath</div>
+                  <div class="card-rent">RM 2,350/mo</div>
+                  <div class="card-owner">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Goh Wei Liang
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer"><span>Ends 10 Nov 2027</span><span style="color:var(--kk-ink-faint)">17 months</span></div>
+            </div>
+
+            <div style="text-align:center;padding:12px;font-size:12px;color:var(--kk-ink-faint)">+ 36 more active tenancies</div>
+
+          </div>
+        </div>
+
+      </div><!-- /board -->
+    </div><!-- /blur -->
+
+    <!-- ── Overlay ── -->
+    <div class="overlay">
+      <div class="overlay-card">
+        <div class="overlay-icon">
+          <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="#1F8B4C" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <div class="overlay-title">Track all your managed units</div>
+        <div class="overlay-body">Add your existing tenants and kakisewa tracks rent, contract dates, and alerts you 60 days before anything expires.</div>
+        <div class="overlay-actions">
+          <button class="btn-cta-primary">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Add your first tenancy
+          </button>
+          <button class="btn-cta-ghost">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Import from spreadsheet
+          </button>
+        </div>
+        <div class="overlay-hint">Tracks contract end dates, rent amounts, and tenant contacts</div>
+        <div style="margin-top:18px;padding:14px 16px;background:var(--kk-amber-soft);border-radius:12px;text-align:left;display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:18px;line-height:1;flex-shrink:0;">⏰</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--kk-amber-ink);margin-bottom:3px;">10 minutes now, 100 listings tracked in 10 days</div>
+            <div style="font-size:12px;color:var(--kk-amber-ink);opacity:0.85;line-height:1.5;">Invest 10 minutes to add 10 of your existing tenancies. Do it for 10 days and you'll have 100 listings tracked — and you'll never miss a renewal ever again.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /board-outer -->
+</div>
+
+</body>
+</html>

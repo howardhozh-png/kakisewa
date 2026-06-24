@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Potential Listing — kakisewa concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --kk-ink:        #1D1D1F;
+    --kk-ink-mute:   #6E6E73;
+    --kk-ink-faint:  #AEAEB2;
+    --kk-bg:         #FBFBFD;
+    --kk-surface:    #FFFFFF;
+    --kk-surface-2:  #F5F5F7;
+    --kk-line:       #E5E5EA;
+    --kk-blue:       #0071E3;
+    --kk-blue-soft:  #EBF4FF;
+    --kk-blue-ink:   #0056B3;
+    --kk-green:      #34C759;
+    --kk-green-soft: #EDFAF1;
+    --kk-green-ink:  #1F8B4C;
+    --kk-red:        #FF3B30;
+    --kk-red-soft:   #FFF0EF;
+    --kk-red-ink:    #C0392B;
+    --kk-amber:      #FF9500;
+    --kk-amber-soft: #FFF5E6;
+    --kk-amber-ink:  #B36200;
+    --kk-theme-dark: #1B3A2D;
+    --radius-card:   18px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--kk-bg);
+    color: var(--kk-ink);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    background: var(--kk-theme-dark);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo .wordmark { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+  .sidebar-logo .tagline  { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+  .sidebar-nav { flex: 1; padding: 10px 10px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
+  .nav-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+  .nav-icon { width: 18px; height: 18px; opacity: 0.7; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .sidebar-goal {
+    margin: 8px 10px 12px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .goal-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); }
+  .goal-text  { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); margin-top: 4px; }
+  .goal-bar   { height: 5px; background: rgba(255,255,255,0.12); border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .goal-fill  { height: 100%; background: var(--kk-green); border-radius: 99px; width: 53%; }
+  .goal-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 5px; }
+
+  .sidebar-user {
+    padding: 14px 14px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .user-name   { font-size: 13px; font-weight: 600; color: #fff; }
+  .user-role   { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  /* ── Main content ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    background: var(--kk-surface);
+    border-bottom: 1px solid var(--kk-line);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+  }
+  .topbar-title h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+  .topbar-title p  { font-size: 13px; color: var(--kk-ink-mute); margin-top: 2px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: opacity 0.12s;
+    white-space: nowrap;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-ghost { background: var(--kk-surface-2); color: var(--kk-ink); border: 1px solid var(--kk-line); }
+  .btn-primary { background: var(--kk-theme-dark); color: #fff; }
+  .btn-blue    { background: var(--kk-blue); color: #fff; }
+
+  /* ── Page body ── */
+  .page-body { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
+
+  /* ── Stats ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card {
+    background: var(--kk-surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--kk-line);
+    padding: 18px 20px;
+  }
+  .stat-overline { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--kk-ink-faint); margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--kk-ink); font-variant-numeric: tabular-nums; }
+  .stat-sub   { font-size: 12px; color: var(--kk-ink-mute); margin-top: 4px; }
+  .stat-value.green { color: var(--kk-green-ink); }
+  .stat-value.blue  { color: var(--kk-blue-ink); }
+
+  /* ── Daily goal inline ── */
+  .goal-inline {
+    background: var(--kk-surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--kk-line);
+    padding: 18px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .goal-ring {
+    position: relative; width: 52px; height: 52px; flex-shrink: 0;
+  }
+  .goal-ring svg { transform: rotate(-90deg); }
+  .goal-ring-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--kk-ink);
+  }
+  .goal-info { flex: 1; }
+  .goal-info .overline { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--kk-ink-faint); }
+  .goal-info .title    { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .goal-info .sub      { font-size: 12px; color: var(--kk-ink-mute); margin-top: 2px; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    background: var(--kk-surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--kk-line);
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .search-wrap {
+    position: relative; flex: 1; min-width: 200px;
+  }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--kk-ink-faint); width: 15px; height: 15px; }
+  .search-input {
+    width: 100%; padding: 8px 12px 8px 34px;
+    border-radius: 99px; border: 1px solid var(--kk-line);
+    background: var(--kk-surface-2); font-size: 13px;
+    color: var(--kk-ink); outline: none;
+    font-family: inherit;
+  }
+  .search-input::placeholder { color: var(--kk-ink-faint); }
+  .filter-select {
+    padding: 7px 28px 7px 12px; border-radius: 99px;
+    border: 1px solid var(--kk-line); background: var(--kk-surface-2);
+    font-size: 13px; color: var(--kk-ink); font-family: inherit;
+    cursor: pointer; outline: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23AEAEB2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ── Info banner ── */
+  .info-banner {
+    background: var(--kk-blue-soft);
+    border: 1px solid #C7DFF7;
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .info-banner p { font-size: 13px; color: var(--kk-blue-ink); }
+  .info-banner p span { font-weight: 600; }
+  .btn-info { background: var(--kk-blue); color: #fff; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; align-items: center; }
+  .tab {
+    padding: 6px 14px; border-radius: 99px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid transparent;
+    color: var(--kk-ink-mute);
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .tab:hover { background: var(--kk-surface-2); color: var(--kk-ink); }
+  .tab.active { background: var(--kk-ink); color: #fff; }
+  .tab .count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 4px;
+    background: rgba(255,255,255,0.2); border-radius: 99px;
+    font-size: 11px; font-weight: 700; margin-left: 5px;
+  }
+  .tab:not(.active) .count { background: var(--kk-surface-2); color: var(--kk-ink-mute); }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: var(--kk-surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--kk-line);
+    overflow: hidden;
+  }
+  .table-header-row {
+    padding: 10px 18px 10px 18px;
+    border-bottom: 1px solid var(--kk-line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--kk-ink-faint);
+    background: var(--kk-surface-2);
+    border-bottom: 1px solid var(--kk-line);
+    white-space: nowrap;
+  }
+  thead th:first-child { padding-left: 18px; width: 40px; }
+  thead th:last-child  { padding-right: 18px; text-align: right; }
+
+  tbody tr { border-bottom: 1px solid var(--kk-line); transition: background 0.1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--kk-surface-2); }
+
+  td { padding: 13px 14px; vertical-align: middle; }
+  td:first-child { padding-left: 18px; }
+  td:last-child  { padding-right: 18px; }
+
+  /* Owner cell */
+  .owner-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .owner-name  { font-size: 13px; font-weight: 600; color: var(--kk-ink); }
+  .owner-phone { font-size: 12px; color: var(--kk-ink-mute); margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+  /* Property cell */
+  .prop-name  { font-size: 13px; font-weight: 500; color: var(--kk-ink); }
+  .prop-block { font-size: 12px; color: var(--kk-ink-mute); margin-top: 1px; }
+
+  /* Unit cell */
+  .unit-badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 6px;
+    background: var(--kk-surface-2); border: 1px solid var(--kk-line);
+    font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--kk-ink);
+  }
+
+  /* Last contact cell */
+  .contact-when   { font-size: 13px; font-weight: 500; color: var(--kk-ink); }
+  .contact-method { font-size: 11px; color: var(--kk-ink-faint); margin-top: 2px; }
+
+  /* Stage badge */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 99px;
+    font-size: 12px; font-weight: 600;
+  }
+  .badge-blue   { background: var(--kk-blue-soft);   color: var(--kk-blue-ink); }
+  .badge-green  { background: var(--kk-green-soft);  color: var(--kk-green-ink); }
+  .badge-amber  { background: var(--kk-amber-soft);  color: var(--kk-amber-ink); }
+  .badge-red    { background: var(--kk-red-soft);    color: var(--kk-red-ink); }
+  .badge-grey   { background: var(--kk-surface-2);   color: var(--kk-ink-mute); border: 1px solid var(--kk-line); }
+
+  /* Actions */
+  .actions-cell { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--kk-line);
+    background: var(--kk-surface);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--kk-ink-mute);
+    transition: background 0.1s, color 0.1s;
+  }
+  .icon-btn:hover { background: var(--kk-surface-2); color: var(--kk-ink); }
+  .icon-btn.wa:hover { background: #EDFDF5; color: #25D366; border-color: #25D36640; }
+  .icon-btn.call:hover { background: var(--kk-blue-soft); color: var(--kk-blue); border-color: #C7DFF7; }
+
+  /* Checkbox */
+  input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--kk-ink);
+    cursor: pointer;
+  }
+
+  /* ── Footer / Pagination ── */
+  .table-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--kk-line);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--kk-surface);
+  }
+  .footer-info { font-size: 12px; color: var(--kk-ink-mute); }
+  .pagination  { display: flex; align-items: center; gap: 4px; }
+  .page-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--kk-line);
+    background: var(--kk-surface);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; color: var(--kk-ink);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s;
+  }
+  .page-btn:hover { background: var(--kk-surface-2); }
+  .page-btn.active { background: var(--kk-ink); color: #fff; border-color: var(--kk-ink); }
+  .page-btn.dots { border: none; background: none; cursor: default; color: var(--kk-ink-mute); }
+
+  /* ── Annotation callouts ── */
+  .annotations { display: flex; flex-direction: column; gap: 10px; }
+  .note {
+    background: #FFFBEA; border: 1px solid #FDE68A;
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 12px; color: #92400E; line-height: 1.5;
+  }
+  .note strong { font-weight: 700; }
+
+  /* ── Bulk action bar (appears on checkbox select) ── */
+  .bulk-bar {
+    background: var(--kk-ink); color: #fff;
+    border-radius: 12px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 13px; font-weight: 500;
+  }
+  .bulk-bar span { flex: 1; }
+  .bulk-btn {
+    padding: 6px 14px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    color: #fff; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+  .bulk-btn:hover { background: rgba(255,255,255,0.18); }
+  .bulk-btn.wa    { border-color: #25D36650; background: #25D36620; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="wordmark">kakisewa</div>
+      <div class="tagline">カキセワ</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Home
+      </div>
+      <div class="nav-item active">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+        Potential Listing
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        My Listing
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        Existing Listing
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Performance
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+      </div>
+    </nav>
+
+    <!-- Daily goal in sidebar -->
+    <div class="sidebar-goal">
+      <div class="goal-label">Daily goal</div>
+      <div class="goal-text">Contact 15 owners</div>
+      <div class="goal-bar"><div class="goal-fill"></div></div>
+      <div class="goal-sub">8 of 15 done — keep going!</div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">JT</div>
+      <div>
+        <div class="user-name">John Tan</div>
+        <div class="user-role">Real Estate Agent</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>Potential listing</h1>
+        <p>Find new units, track every outreach, close more listings.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
+          How it works
+        </button>
+        <button class="btn btn-ghost">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Upload owners
+        </button>
+        <button class="btn btn-primary">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Add owner lead
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Stats + Goal -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr 280px; gap:14px; align-items:stretch;">
+        <div class="stat-card">
+          <div class="stat-overline">Total leads</div>
+          <div class="stat-value">212</div>
+          <div class="stat-sub">All owners in list</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-overline">Contacted today</div>
+          <div class="stat-value blue">7</div>
+          <div class="stat-sub">WhatsApp + calls</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-overline">Interested</div>
+          <div class="stat-value green">18</div>
+          <div class="stat-sub">Replied positively</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-overline">Response rate</div>
+          <div class="stat-value">24%</div>
+          <div class="stat-sub">Last 30 days</div>
+        </div>
+
+        <!-- Daily goal as 5th card -->
+        <div class="stat-card" style="display:flex; align-items:center; gap:16px; background:linear-gradient(135deg,#1B3A2D,#2d5a42);">
+          <svg width="42" height="42" viewBox="0 0 42 42" style="flex-shrink:0;">
+            <circle cx="21" cy="21" r="18" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+            <circle cx="21" cy="21" r="18" fill="none" stroke="#34C759" stroke-width="4"
+              stroke-dasharray="113" stroke-dashoffset="53"
+              stroke-linecap="round" transform="rotate(-90 21 21)"/>
+            <text x="21" y="25" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="Inter">8/15</text>
+          </svg>
+          <div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.45);">Daily goal</div>
+            <div style="font-size:15px;font-weight:700;color:#fff;margin-top:3px;">Contact 15 owners</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">You're on track!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info banner -->
+      <div class="info-banner">
+        <p><span>32 owners</span> have no contact number yet. We can help you find it.</p>
+        <button class="btn-info">Get contact info</button>
+      </div>
+
+      <!-- Bulk action bar (shown when rows selected) -->
+      <div class="bulk-bar" style="display:none;" id="bulkBar">
+        <span>2 owners selected</span>
+        <button class="bulk-btn wa">WhatsApp all</button>
+        <button class="bulk-btn">Move to listed</button>
+        <button class="bulk-btn">Mark no unit</button>
+        <button class="bulk-btn" style="background:rgba(255,59,48,0.15);border-color:rgba(255,59,48,0.3);">Delete</button>
+      </div>
+
+      <!-- Table card -->
+      <div class="table-wrap">
+
+        <!-- Tabs + search inside card header -->
+        <div style="padding:14px 18px; border-bottom:1px solid var(--kk-line); display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="search-wrap" style="max-width:300px;">
+              <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+              <input class="search-input" type="text" placeholder="Search owner, property, unit..." />
+            </div>
+            <select class="filter-select">
+              <option>All properties</option>
+              <option>Megah Rise Residensi</option>
+              <option>Sri Damansara</option>
+            </select>
+            <select class="filter-select">
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>All time</option>
+            </select>
+            <div style="margin-left:auto; font-size:12px; color:var(--kk-ink-mute);">212 owners</div>
+          </div>
+          <div class="tabs">
+            <div class="tab active">All <span class="count">212</span></div>
+            <div class="tab">Not contacted <span class="count">44</span></div>
+            <div class="tab">Contacted <span class="count">138</span></div>
+            <div class="tab">Interested <span class="count">18</span></div>
+            <div class="tab">No unit <span class="count">32</span></div>
+            <div class="tab">No response <span class="count">20</span></div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" /></th>
+              <th>Owner</th>
+              <th>Property</th>
+              <th>Unit</th>
+              <th>Last contact</th>
+              <th>Stage</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td>
+                <div class="owner-cell">
+                  <div class="avatar" style="background:#5856D6;">HH</div>
+                  <div>
+                    <div class="owner-name">Heng Hoi Nong</div>
+                    <div class="owner-phone">+60 16-333 1325 &nbsp;
+                      <svg style="display:inline;vertical-align:-2px;" width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="prop-name">Megah Rise Residensi</div>
+                <div class="prop-block">Block 28</div>
+              </td>
+              <td><span class="unit-badge">28-02</span></td>
+              <td>
+                <div class="contact-when">Today, 10:30 AM</div>
+                <div class="contact-method">WhatsApp</div>
+              </td>
+              <td><span class="badge badge-green">Interested</span></td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn wa" title="WhatsApp">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                  </button>
+                  <button class="icon-btn call" title="Call">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                  </button>
+                  <button class="icon-btn" title="More">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td>
+                <div class="owner-cell">
+                  <div class="avatar" style="background:#FF6B6B;">GM</div>
+                  <div>
+                    <div class="owner-name">Goh Mei Shan Geraldine</div>
+                    <div class="owner-phone">+60 12-234 3148 &nbsp;<svg style="display:inline;vertical-align:-2px;" width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></div>
+                  </div>
+                </div>
+              </td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 28</div></td>
+              <td><span class="unit-badge">28-01</span></td>
+              <td><div class="contact-when">Yesterday, 3:45 PM</div><div class="contact-method">WhatsApp</div></td>
+              <td><span class="badge badge-green">Interested</span></td>
+              <td><div class="actions-cell">
+                <button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button>
+                <button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button>
+                <button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              </div></td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#34AADC;">LY</div><div><div class="owner-name">Lim Yeong Koan</div><div class="owner-phone">+60 16-383 2830 &nbsp;<svg style="display:inline;vertical-align:-2px;" width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 27</div></td>
+              <td><span class="unit-badge">27-08</span></td>
+              <td><div class="contact-when">Yesterday, 11:20 AM</div><div class="contact-method">Call</div></td>
+              <td><span class="badge badge-amber">No unit</span></td>
+              <td><div class="actions-cell"><button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button><button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button><button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></div></td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#FF9500;">CL</div><div><div class="owner-name">Chong Lu Ying</div><div class="owner-phone">+60 12-683 2402 &nbsp;<svg style="display:inline;vertical-align:-2px;" width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 27</div></td>
+              <td><span class="unit-badge">27-07</span></td>
+              <td><div class="contact-when">2 days ago</div><div class="contact-method">WhatsApp</div></td>
+              <td><span class="badge badge-red">No response</span></td>
+              <td><div class="actions-cell"><button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button><button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button><button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></div></td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#30B0C7;">GK</div><div><div class="owner-name">Goh Kim Boon</div><div class="owner-phone">+60 19-212 0088 &nbsp;<svg style="display:inline;vertical-align:-2px;" width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 27</div></td>
+              <td><span class="unit-badge">27-05</span></td>
+              <td><div class="contact-when">3 days ago</div><div class="contact-method">WhatsApp</div></td>
+              <td><span class="badge badge-amber">No unit</span></td>
+              <td><div class="actions-cell"><button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button><button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button><button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></div></td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#1F8B4C;">KL</div><div><div class="owner-name">Khoo Ley Yin</div><div class="owner-phone">+60 17-236 7289 &nbsp;<svg style="display:inline;vertical-align:-2px;" width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 10</div></td>
+              <td><span class="unit-badge">10-07</span></td>
+              <td><div class="contact-when">3 days ago</div><div class="contact-method">Call</div></td>
+              <td><span class="badge badge-green">Interested</span></td>
+              <td><div class="actions-cell"><button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button><button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button><button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></div></td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#AEAEB2;">YL</div><div><div class="owner-name">Yew Lee Ling</div><div class="owner-phone">+60 12-322 5775</div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 26</div></td>
+              <td><span class="unit-badge">26-08</span></td>
+              <td><div class="contact-when" style="color:var(--kk-ink-faint);">Not yet</div><div class="contact-method"></div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button><button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button><button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></div></td>
+            </tr>
+
+            <tr>
+              <td><input type="checkbox" /></td>
+              <td><div class="owner-cell"><div class="avatar" style="background:#AEAEB2;">LW</div><div><div class="owner-name">Loo Wei Yang</div><div class="owner-phone">+60 13-368 0905</div></div></div></td>
+              <td><div class="prop-name">Megah Rise Residensi</div><div class="prop-block">Block 26</div></td>
+              <td><span class="unit-badge">26-06</span></td>
+              <td><div class="contact-when" style="color:var(--kk-ink-faint);">Not yet</div></td>
+              <td><span class="badge badge-grey">Not contacted</span></td>
+              <td><div class="actions-cell"><button class="icon-btn wa"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.558 4.112 1.531 5.84L.057 23.882c-.082.33.017.68.258.921A.997.997 0 001 25a.999.999 0 00.262-.035l6.195-1.607A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.692-.523-5.218-1.43L3 21.562l.998-3.842A10.016 10.016 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></button><button class="icon-btn call"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></button><button class="icon-btn"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></div></td>
+            </tr>
+
+          </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="table-footer">
+          <div class="footer-info">Showing 1 to 8 of 212 owners</div>
+          <div class="pagination">
+            <button class="page-btn">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn dots">...</button>
+            <button class="page-btn">22</button>
+            <button class="page-btn">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div><!-- /table-wrap -->
+
+    </div><!-- /page-body -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
