@@ -143,7 +143,6 @@ function WeekCalendar({ events }: { events: CalendarEvent[] }) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const [ty, tm, td] = today.split("-").map(Number);
 
-  // Monday of this week
   const todayDate = new Date(ty, tm - 1, td);
   const dow = (todayDate.getDay() + 6) % 7; // 0=Mon
   const weekDays: string[] = Array.from({ length: 7 }, (_, i) => {
@@ -170,52 +169,120 @@ function WeekCalendar({ events }: { events: CalendarEvent[] }) {
         <Link href="/calendar" style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)", flexShrink: 0, textDecoration: "none" }}>View full calendar →</Link>
       </div>
 
-      {/* Day-of-week headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--kk-line)", flexShrink: 0 }}>
-        {DAY_LABELS.map((d) => (
-          <div key={d} style={{ padding: "7px 0", textAlign: "center", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--kk-ink-faint)" }}>
-            {d}
-          </div>
-        ))}
+      {/* Desktop: 7-column grid with detailed event cards */}
+      <div className="hidden lg:flex" style={{ flexDirection: "column", flex: 1 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--kk-line)", flexShrink: 0 }}>
+          {DAY_LABELS.map((d) => (
+            <div key={d} style={{ padding: "7px 0", textAlign: "center", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--kk-ink-faint)" }}>
+              {d}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", flex: 1, minHeight: 80, overflow: "hidden" }}>
+          {weekDays.map((dateStr, i) => {
+            const isToday = dateStr === today;
+            const dayNum = parseInt(dateStr.split("-")[2]);
+            const dayEvents = byDate[dateStr] ?? [];
+
+            return (
+              <div key={dateStr} style={{
+                borderRight: i < 6 ? "1px solid var(--kk-line)" : "none",
+                padding: "8px 6px", overflow: "hidden",
+                background: isToday ? "rgba(0,113,227,0.04)" : "transparent",
+                display: "flex", flexDirection: "column",
+              }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 7, flexShrink: 0 }}>
+                  {isToday ? (
+                    <span style={{ width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--kk-blue)", color: "#fff", borderRadius: "50%", fontSize: 12, fontWeight: 700 }}>
+                      {dayNum}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)" }}>{dayNum}</span>
+                  )}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, overflow: "hidden" }}>
+                  {dayEvents.map((ev) => {
+                    const s = getEventStyle(ev.event_type ?? null);
+                    return (
+                      <Link key={ev.id} href="/calendar" style={{ textDecoration: "none" }}>
+                        <div style={{ background: s.bg, borderRadius: 7, padding: "5px 6px" }}>
+                          <p style={{ fontSize: 9, fontWeight: 700, color: s.color, lineHeight: 1.2, marginBottom: 1 }}>
+                            {fmtTime(ev.event_time) ?? "All day"}
+                          </p>
+                          <p style={{ fontSize: 10, fontWeight: 600, color: s.color, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ev.title}
+                          </p>
+                          {ev.subtitle && (
+                            <p style={{ fontSize: 9, color: s.color, opacity: 0.7, lineHeight: 1.2, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {ev.subtitle}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Single row of 7 day cells — flex:1 fills remaining height on desktop */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", flex: 1, minHeight: 80 }}>
+      {/* Mobile: agenda-style list with full event cards */}
+      <div className="lg:hidden" style={{ flex: 1, overflowY: "auto" }}>
         {weekDays.map((dateStr, i) => {
           const isToday = dateStr === today;
           const dayNum = parseInt(dateStr.split("-")[2]);
+          const dayLabel = DAY_LABELS[i];
           const dayEvents = byDate[dateStr] ?? [];
-          const borderRight = i < 6 ? "1px solid var(--kk-line)" : "none";
 
           return (
             <div key={dateStr} style={{
-              borderRight, padding: "6px 4px", overflow: "hidden",
-              background: isToday ? "rgba(0,113,227,0.04)" : "transparent",
-              display: "flex", flexDirection: "column",
+              borderBottom: i < 6 ? "1px solid var(--kk-line)" : "none",
+              padding: "10px 14px",
+              background: isToday ? "rgba(0,113,227,0.03)" : "transparent",
             }}>
-              {/* Day number */}
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 4, flexShrink: 0 }}>
-                {isToday ? (
-                  <span style={{ width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--kk-blue)", color: "#fff", borderRadius: "50%", fontSize: 10, fontWeight: 700 }}>
-                    {dayNum}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)" }}>{dayNum}</span>
-                )}
-              </div>
-              {/* Event pills */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 2, overflow: "hidden" }}>
-                {dayEvents.map((ev) => {
-                  const s = getEventStyle(ev.event_type ?? null);
-                  return (
-                    <div key={ev.id} style={{ background: s.bg, borderRadius: 3, padding: "2px 3px" }}>
-                      <p style={{ fontSize: 9, fontWeight: 500, color: s.color, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {ev.event_time && <span style={{ opacity: 0.85 }}>{fmtTime(ev.event_time)} </span>}
-                        {ev.title}
-                      </p>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", width: 36 }}>
+                  {isToday ? (
+                    <span style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--kk-blue)", color: "#fff", borderRadius: "50%", fontSize: 13, fontWeight: 700 }}>
+                      {dayNum}
+                    </span>
+                  ) : (
+                    <span style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>
+                      {dayNum}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: isToday ? "var(--kk-blue)" : "var(--kk-ink-faint)", marginTop: 2 }}>{dayLabel}</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {dayEvents.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      {dayEvents.map((ev) => {
+                        const s = getEventStyle(ev.event_type ?? null);
+                        return (
+                          <Link key={ev.id} href="/calendar" style={{ textDecoration: "none" }}>
+                            <div style={{ background: s.bg, borderRadius: 9, padding: "7px 10px" }}>
+                              <p style={{ fontSize: 10, fontWeight: 700, color: s.color, marginBottom: 2 }}>
+                                {fmtTime(ev.event_time) ?? "All day"}
+                              </p>
+                              <p style={{ fontSize: 13, fontWeight: 600, color: s.color, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {ev.title}
+                              </p>
+                              {ev.subtitle && (
+                                <p style={{ fontSize: 11, color: s.color, opacity: 0.7, lineHeight: 1.3, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {ev.subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  ) : (
+                    <p style={{ fontSize: 12, color: "var(--kk-ink-faint)", paddingTop: 6 }}>No events</p>
+                  )}
+                </div>
               </div>
             </div>
           );
