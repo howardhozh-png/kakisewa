@@ -7,6 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { deleteCalendarEvent, updateCalendarEvent } from "@/lib/actions";
 import { CalendarPlus, Trash2, ChevronLeft, ChevronRight, ExternalLink, CalendarDays, Clock, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const TIMES = [
   "12:00 AM", "12:30 AM",
@@ -406,6 +408,7 @@ function EventDetailDialog({
   const [title, setTitle] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [timeLabel, setTimeLabel] = useState("");
+  const [timeOpen, setTimeOpen] = useState(false);
   const [eventType, setEventType] = useState<"viewing" | "call" | "focus_time" | null>(null);
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
@@ -543,21 +546,50 @@ function EventDetailDialog({
             </div>
             <div>
               <p className="kk-overline mb-1.5">Time (optional)</p>
-              <select
-                size={10}
-                value={timeLabel}
-                onChange={(e) => setTimeLabel(e.target.value)}
-                style={{
-                  width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
-                  padding: "4px 0", fontSize: 14, color: "var(--kk-ink)",
-                  background: "var(--kk-surface)", outline: "none", fontFamily: "inherit", cursor: "pointer",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
-                onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
-              >
-                <option value="">No time</option>
-                {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <Popover open={timeOpen} onOpenChange={setTimeOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    style={{
+                      width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+                      padding: "10px 13px", fontSize: 14,
+                      color: timeLabel ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+                      background: "var(--kk-surface)", textAlign: "left", cursor: "pointer",
+                      fontFamily: "inherit", display: "flex", alignItems: "center", gap: 7,
+                    }}
+                  >
+                    <Clock style={{ width: 14, height: 14, flexShrink: 0, color: "var(--kk-ink-faint)" }} />
+                    {timeLabel || "No time"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  sideOffset={4}
+                  className="p-0 overflow-hidden"
+                  style={{ width: "var(--radix-popover-trigger-width)", minWidth: 160 }}
+                >
+                  <ScrollArea style={{ height: 220 }}>
+                    <div style={{ padding: "4px 0" }}>
+                      {["", ...TIMES].map((t) => (
+                        <button
+                          key={t || "__none__"}
+                          type="button"
+                          onClick={() => { setTimeLabel(t); setTimeOpen(false); }}
+                          style={{
+                            width: "100%", padding: "8px 14px", fontSize: 14, textAlign: "left",
+                            background: timeLabel === t ? "var(--kk-blue-soft)" : "transparent",
+                            color: timeLabel === t ? "var(--kk-blue)" : t ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+                            border: "none", cursor: "pointer", display: "block", fontFamily: "inherit",
+                            fontWeight: timeLabel === t ? 600 : 400,
+                          }}
+                        >
+                          {t || "No time"}
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
