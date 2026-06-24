@@ -3136,6 +3136,7 @@ export interface CalendarEvent {
   tenant_name: string | null;
   tenant_phone: string | null;
   created_at: string;
+  cover_photo_url?: string | null;
 }
 
 const CAL_SELECT = "id, title, subtitle, card_href, event_date, event_time, event_type, tenancy_id, owner_lead_id, owner_name, owner_phone, tenant_name, tenant_phone, created_at";
@@ -3171,16 +3172,28 @@ export async function getUpcomingViewings(days = 14): Promise<CalendarEvent[]> {
   const end = new Date(todayStr);
   end.setDate(end.getDate() + days);
   const endStr = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,"0")}-${String(end.getDate()).padStart(2,"0")}`;
+  const VW_SELECT = `${CAL_SELECT}, owner_leads!owner_lead_id(photo_urls, cover_photo_index)`;
   const { data } = await supabase
     .from("calendar_events")
-    .select(CAL_SELECT)
+    .select(VW_SELECT)
     .eq("event_type", "viewing")
     .gte("event_date", todayStr)
     .lte("event_date", endStr)
     .order("event_date", { ascending: true })
     .order("event_time", { ascending: true, nullsFirst: false })
     .limit(10);
-  return (data ?? []) as CalendarEvent[];
+  return (data ?? []).map((r: Record<string, unknown>) => {
+    const ol = r.owner_leads as { photo_urls?: unknown; cover_photo_index?: number | null } | null | undefined;
+    let cover_photo_url: string | null = null;
+    if (ol) {
+      const photos = parsePhotoUrls(ol.photo_urls);
+      const idx = ol.cover_photo_index ?? 0;
+      cover_photo_url = photos[idx] ?? photos[0] ?? null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { owner_leads: _ol, ...rest } = r;
+    return { ...rest, cover_photo_url } as unknown as CalendarEvent;
+  });
 }
 
 // ─── Board share (mypipeline) ─────────────────────────────────────────────────
