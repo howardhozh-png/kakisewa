@@ -104,11 +104,10 @@ function WaButton({ shareUrl }: { shareUrl: string }) {
 
 // ── Type chips (secondary badges on card body) ────────────────────────────────
 function TypeChips({ types, primaryType, light = false }: { types: SupportType[]; primaryType: SupportType; light?: boolean }) {
-  const secondary = types.filter(t => t !== primaryType);
-  if (!secondary.length) return null;
+  if (!types.length) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
-      {secondary.map(t => (
+      {types.map(t => (
         <span key={t} style={{
           display: "inline-flex", alignItems: "center", gap: 3,
           padding: "2px 7px", borderRadius: 6,
