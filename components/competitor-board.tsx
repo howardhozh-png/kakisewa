@@ -14,7 +14,6 @@ import { Eye, Clock, CheckCircle2, Home, User, Calendar, ArrowRight, Banknote, C
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { DateInput } from "@/components/ui/date-input";
 
 // ─── Column definitions ───────────────────────────────────────────────────────
@@ -443,9 +442,9 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         </div>
         <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
       </div>
-      <ScrollArea className="kk-board-col-body">
+      <div className="kk-board-col-body">
         <div className="kk-board-col-body-inner">{children}</div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -547,7 +546,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
       onTouchEnd={(e) => { listeners?.onTouchEnd?.(e); cancelPress(); }}
       onTouchCancel={(e) => { listeners?.onTouchCancel?.(e); cancelPress(); }}
       style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing lg:touch-none select-none`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action]")) return;
         onOpen();

@@ -17,7 +17,6 @@ import { FeatureLockedState } from "@/components/feature-locked-state";
 import { RenewalCommissionDialog } from "@/components/renewal-commission-dialog";
 import { TenantLeavingDialog } from "@/components/tenant-leaving-dialog";
 import { OwnerLeavingDialog } from "@/components/owner-leaving-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { FilterSelect } from "@/components/filter-select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
@@ -634,9 +633,9 @@ function Column({ col, count, children, extraStyle }: { col: ColMeta; count: num
         </div>
         <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
       </div>
-      <ScrollArea className="kk-board-col-body">
+      <div className="kk-board-col-body">
         <div className="kk-board-col-body-inner">{children}</div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -714,7 +713,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       onTouchEnd={(e) => { listeners?.onTouchEnd?.(e); cancelPress(); }}
       onTouchCancel={(e) => { listeners?.onTouchCancel?.(e); cancelPress(); }}
       style={{ ...cardStyle, position: "relative", ...(selectMode && selected ? { outline: "2px solid var(--kk-blue)", outlineOffset: -1 } : {}) }}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 ${selectMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"} touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 ${selectMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"} lg:touch-none select-none`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-card-action], [data-chip]")) return;
         if (selectMode) { onToggleSelect?.(); return; }

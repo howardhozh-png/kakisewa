@@ -381,7 +381,9 @@ html, body {
   flex: 1;
   min-height: 0;
   border-radius: 0 0 18px 18px;
-  overflow: hidden; /* ScrollArea Viewport handles scrolling */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 .kk-board-col-body-inner {
   padding: 12px;

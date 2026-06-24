@@ -25,7 +25,6 @@ import { FilterSelect } from "@/components/filter-select";
 import { AvailabilityTimeline } from "@/components/availability-timeline";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Stage = OwnerLead["stage"];
 
@@ -544,9 +543,9 @@ function Column({ col, count, children, extraStyle, headerExtra }: { col: ColMet
         </div>
         <p className="text-[11px] mt-1.5 leading-snug" style={{ color: "var(--kk-ink-mute)" }}>{col.hint}</p>
       </div>
-      <ScrollArea className="kk-board-col-body">
+      <div className="kk-board-col-body">
         <div className="kk-board-col-body-inner">{children}</div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -729,7 +728,7 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
       onTouchEnd={(e) => { listeners?.onTouchEnd?.(e); cancelPress(); }}
       onTouchCancel={(e) => { listeners?.onTouchCancel?.(e); cancelPress(); }}
       style={cardStyle}
-      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing touch-none select-none`}
+      className={`kk-card ${!isDragging ? "kk-card-hover" : ""} ${pressing && !isDragging ? "kk-card-shake" : ""} p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing lg:touch-none select-none`}
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest("[data-card-action]")) return;
