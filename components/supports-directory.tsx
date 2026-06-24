@@ -504,7 +504,12 @@ export function SupportsDirectory({ initialContacts, whatsappTemplates }: Props)
       if (filterType !== "all" && filterType !== "starred" && !getTypes(c).includes(filterType as SupportType)) continue;
 
       const types = getTypes(c);
-      for (const t of types) {
+      // When a specific type filter is active, only put the contact in that one bucket
+      // (not all its types), so the Electrician filter doesn't also show Plumber sections
+      const bucketsToAdd = (filterType !== "all" && filterType !== "starred")
+        ? [filterType as SupportType]
+        : types;
+      for (const t of bucketsToAdd) {
         if (!groups.has(t)) groups.set(t, []);
         groups.get(t)!.push(c);
       }
