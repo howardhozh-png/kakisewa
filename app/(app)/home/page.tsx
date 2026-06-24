@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
-import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForWeek, getPerformanceSummary } from "@/lib/db";
+import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForWeek, getPerformanceSummary, getUpcomingViewings } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/db";
 import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 import { StatsSection } from "./stats-section";
@@ -246,6 +246,7 @@ function ActiveState({
   cardCap,
   planName,
   mtdCommission,
+  upcomingViewings,
 }: {
   firstName: string | null;
   stats: Stats;
@@ -257,6 +258,7 @@ function ActiveState({
   cardCap: number;
   planName: string;
   mtdCommission: number;
+  upcomingViewings: CalendarEvent[];
 }) {
   return (
     <>
@@ -272,11 +274,17 @@ function ActiveState({
         </p>
       </div>
 
-      <div className="mb-6">
-        <CardDonut used={cardCount} cap={cardCap} planName={planName} />
-      </div>
-
-      <StatsSection initialStats={expandedStats} weekEvents={weekEvents} weekStart={weekStart} weekEnd={weekEnd} mtdCommission={mtdCommission} />
+      <StatsSection
+        initialStats={expandedStats}
+        weekEvents={weekEvents}
+        weekStart={weekStart}
+        weekEnd={weekEnd}
+        mtdCommission={mtdCommission}
+        upcomingViewings={upcomingViewings}
+        cardCount={cardCount}
+        cardCap={cardCap}
+        planName={planName}
+      />
     </>
   );
 }
@@ -298,12 +306,13 @@ export default async function HomePage() {
   const hdrs = await headers();
   const userId = hdrs.get("x-user-id");
 
-  const [agent, stats, expandedStats, weekEvents, perf] = await Promise.all([
+  const [agent, stats, expandedStats, weekEvents, perf, upcomingViewings] = await Promise.all([
     getAgentProfile(),
     getHomeDashboardStats(),
     getExpandedDashboardStats(3),
     getCalendarEventsForWeek(weekStart, weekEnd),
     getPerformanceSummary(),
+    getUpcomingViewings(14),
   ]);
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
   const missingProfileFields = getMissingWhatsAppFields(agent);
@@ -342,6 +351,7 @@ export default async function HomePage() {
           cardCap={cardCap}
           planName={planLabel}
           mtdCommission={perf.mtdCommission}
+          upcomingViewings={upcomingViewings}
         />
       ) : (
         <SetupState
