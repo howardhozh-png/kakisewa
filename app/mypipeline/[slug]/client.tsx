@@ -155,6 +155,7 @@ function CardSheet({ lead, onClose }: { lead: OwnerLead; onClose: () => void }) 
 
   const [photoIdx, setPhotoIdx] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const detailText = [
     lead.address ?? `${lead.property_name ?? ""}${lead.unit ? `, ${lead.unit}` : ""}`,
@@ -174,10 +175,32 @@ function CardSheet({ lead, onClose }: { lead: OwnerLead; onClose: () => void }) 
     });
   }
 
+  async function downloadAll() {
+    if (ordered.length === 0) return;
+    setDownloading(true);
+    const slug = `${lead.property_name ?? "property"}${lead.unit ? `-${lead.unit}` : ""}`.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+    for (let i = 0; i < ordered.length; i++) {
+      try {
+        const res = await fetch(ordered[i]);
+        const blob = await res.blob();
+        const ext = blob.type.includes("png") ? "png" : "jpg";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${slug}-photo-${i + 1}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (i < ordered.length - 1) await new Promise(r => setTimeout(r, 400));
+      } catch { /* skip failed photo */ }
+    }
+    setDownloading(false);
+  }
+
   return (
     <div
       style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
-      onClick={onClose}
     >
       <div
         style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 600, maxHeight: "92svh", overflow: "hidden", display: "flex", flexDirection: "column" }}
@@ -262,9 +285,18 @@ function CardSheet({ lead, onClose }: { lead: OwnerLead; onClose: () => void }) 
 
           {/* Copy button */}
           <button onClick={copy}
-            style={{ width: "100%", padding: 15, borderRadius: 14, background: copied ? "#34C759" : "#0071E3", color: "#fff", fontSize: 15, fontWeight: 600, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.2s" }}>
+            style={{ width: "100%", padding: 15, borderRadius: 14, background: copied ? "#34C759" : "#0071E3", color: "#fff", fontSize: 15, fontWeight: 600, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.2s", marginBottom: 10 }}>
             {copied ? "✓ Copied!" : "Copy listing details"}
           </button>
+
+          {/* Download photos button */}
+          {ordered.length > 0 && (
+            <button onClick={downloadAll} disabled={downloading}
+              style={{ width: "100%", padding: 15, borderRadius: 14, background: downloading ? "#F2F2F7" : "#F2F2F7", color: downloading ? "#8E8E93" : "#1D1D1F", fontSize: 15, fontWeight: 600, border: "1.5px solid #E5E5EA", cursor: downloading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              {downloading ? `Downloading ${ordered.length} photo${ordered.length > 1 ? "s" : ""}…` : `Download all photos (${ordered.length})`}
+            </button>
+          )}
         </div>
       </div>
     </div>
