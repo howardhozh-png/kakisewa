@@ -27,6 +27,11 @@ Last audited: 2026-06-15
 
 ## Completed ✓
 
+- **2026-06-24 debt run:** Deleted dead `stats-section-legacy.tsx` (595 lines) and `time-segment-input.tsx` (both had zero imports). Date input audit: `Field type="date"` already routes to `DateInput` (Popover + Calendar, iOS-safe) — no remaining native `type="date"` issues. All 26 DB tables confirmed active, none dropped.
+- **2026-06-24 duplicate formatters (Tier 2, new):** `formatTime`, `fmtTime`, `formatDate`, `fmtDate`, `fmtDateLabel` duplicated across 7+ files. Extract to `lib/date-utils.ts` when next touching those files.
+
+## Completed ✓ (pre-2026-06-24)
+
 - **`cover_photo_index` never persisted** — `updateOwnerLead()` had no mapping. Fixed `lib/db.ts`.
 - **`listing_purpose` never persisted** — same class of bug. Fixed `lib/db.ts`.
 - **Dead components** — `bottom-tab-bar.tsx`, `guide-strip.tsx`, `ui/container-scroll-animation.tsx` deleted (zero imports).
