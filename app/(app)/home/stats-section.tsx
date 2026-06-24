@@ -222,8 +222,8 @@ function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[];
                 )}
               </div>
 
-              {/* Event pills (desktop) */}
-              <div className="hidden lg:flex" style={{ flexDirection: "column", gap: 2 }}>
+              {/* Event pills */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {shown.map((ev) => {
                   const s = getEventStyle(ev.event_type ?? null);
                   return (
@@ -632,13 +632,13 @@ export function StatsSection({
               { title: "Existing Listing", href: "/existing-listing", count: (stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0), countLabel: "contracts", arcLabel: "expired/expiring", color: "#1F8B4C", donutPct: existingAtRiskPct, stats: [{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }] },
               { title: "Lost Listing", href: "/lost-listing", count: stats.targetTotalCount ?? 0, countLabel: "watching", arcLabel: "expiring", color: "#B45309", donutPct: targetAtRiskPct, stats: [{ label: "Expiring 60d", value: stats.targetExpiringIn60Count ?? 0 }, { label: "Watching", value: stats.targetWatchingCount ?? 0 }] },
             ].map((item) => (
-              <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "block" }}>
-                <div style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 16, padding: "16px 12px 18px", textAlign: "center" }}>
+              <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", height: "100%" }}>
+                <div style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 16, padding: "16px 12px 18px", textAlign: "center", flex: 1, display: "flex", flexDirection: "column" }}>
                   <p style={{ fontSize: 12, fontWeight: 600, color: item.color, marginBottom: 10 }}>{item.title}</p>
                   <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
                     <FunnelDonut pct={item.donutPct} color={item.color} count={item.count} countLabel={item.countLabel} arcLabel={item.arcLabel} size={128} />
                   </div>
-                  <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap", marginTop: "auto" }}>
                     {item.stats.map((s) => (
                       <div key={s.label} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 7, padding: "4px 8px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", fontVariantNumeric: "tabular-nums" }}>{typeof s.value === "number" ? s.value.toLocaleString() : s.value}</span>
