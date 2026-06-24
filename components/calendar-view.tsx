@@ -176,7 +176,7 @@ export function CalendarView({ events, weekStartISO, view = "weekly", activeMont
 
       {/* Page header — row 2: nav + date + add event, single non-wrapping row */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
-        {/* Today + both arrows grouped together */}
+        {/* Today + [< date >] grouped together */}
         <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
           <button onClick={goToday} className="kk-pill kk-pill-ghost text-[13px] font-medium" style={{ padding: "6px 12px" }}>
             Today
@@ -188,6 +188,9 @@ export function CalendarView({ events, weekStartISO, view = "weekly", activeMont
           >
             <ChevronLeft className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
           </button>
+          <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)", fontWeight: 600, whiteSpace: "nowrap" }}>
+            {view === "monthly" ? `${MONTH_NAMES[mm - 1]} ${my}` : formatWeekRange(weekStart)}
+          </span>
           <button
             onClick={() => view === "monthly" ? navigateMonth(1) : navigate(1)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
@@ -196,10 +199,7 @@ export function CalendarView({ events, weekStartISO, view = "weekly", activeMont
             <ChevronRight className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
           </button>
         </div>
-        {/* Date label — centered in remaining space */}
-        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)", flex: 1, textAlign: "center", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {view === "monthly" ? `${MONTH_NAMES[mm - 1]} ${my}` : formatWeekRange(weekStart)}
-        </span>
+        <div style={{ flex: 1 }} />
         <button
           id="tour-add-event"
           onClick={() => { setAddDate(today); setAddOpen(true); }}
