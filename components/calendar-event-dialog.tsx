@@ -7,23 +7,7 @@ import { parseDate, type DateValue } from "@internationalized/date";
 import { Loader2 } from "lucide-react";
 import { createCalendarEvent } from "@/lib/actions";
 import { toast } from "sonner";
-
-const TIMES = [
-  "12:00 AM", "12:30 AM",
-  "1:00 AM", "1:30 AM", "2:00 AM", "2:30 AM",
-  "3:00 AM", "3:30 AM", "4:00 AM", "4:30 AM",
-  "5:00 AM", "5:30 AM", "6:00 AM", "6:30 AM",
-  "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM",
-  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
-  "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM",
-  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
-  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
-  "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
-  "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM",
-  "9:00 PM", "9:30 PM", "10:00 PM", "10:30 PM",
-  "11:00 PM", "11:30 PM",
-];
+import { TimeSegmentInput } from "@/components/time-segment-input";
 
 function to24h(label: string): string {
   const [time, period] = label.split(" ");
@@ -260,20 +244,7 @@ export function CalendarEventDialog({
 
           {/* Time */}
           <p className="kk-overline mb-1.5">Time <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
-          <select
-            value={timeLabel}
-            onChange={(e) => setTimeLabel(e.target.value)}
-            style={{
-              width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
-              padding: "10px 13px", fontSize: 14,
-              color: timeLabel ? "var(--kk-ink)" : "var(--kk-ink-faint)",
-              background: "var(--kk-surface)", appearance: "none", cursor: "pointer",
-              fontFamily: "inherit", outline: "none", marginBottom: 16,
-            }}
-          >
-            <option value="">No time set</option>
-            {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <TimeSegmentInput value={timeLabel} onChange={setTimeLabel} style={{ marginBottom: 16 }} />
 
           {/* Divider */}
           <div style={{ height: 1, background: "var(--kk-line)", margin: "4px 0 14px" }} />
