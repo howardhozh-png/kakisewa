@@ -81,7 +81,7 @@ function MetricCard({
   href,
   sparkline,
 }: {
-  icon: React.ComponentType<{ style?: React.CSSProperties }>;
+  icon: React.ComponentType<{ style?: React.CSSProperties; className?: string }>;
   iconBg: string;
   iconColor: string;
   label: string;
