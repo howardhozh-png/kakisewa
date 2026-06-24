@@ -7,7 +7,7 @@ import { RadialBarChart, RadialBar, PolarRadiusAxis, Label } from "recharts";
 import { fetchExpandedStats, fetchCalendarMonth } from "./actions";
 import { MonthPickerPill } from "@/components/month-picker-pill";
 import type { ExpandedDashboardStats, CalendarEvent } from "@/lib/db";
-import { Layers, Banknote, CalendarDays, Building2, Users, FileText, Target } from "lucide-react";
+import { Layers, Banknote, CalendarDays, Building2, TrendingUp } from "lucide-react";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -105,8 +105,6 @@ function MetricCard({
             {sparkline}
           </div>
         )}
-
-        {/* Horizontal: icon left, text right */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 52, height: 52, borderRadius: 14, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Icon style={{ width: 26, height: 26, color: iconColor }} />
@@ -124,13 +122,12 @@ function MetricCard({
             )}
           </div>
         </div>
-
         {progress !== undefined && (
           <div style={{ marginTop: 12 }}>
-            <div style={{ height: 3, background: "var(--kk-line)", borderRadius: 2, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(progress, 100)}%`, background: progressColor ?? "var(--kk-blue)", borderRadius: 2, transition: "width 0.3s ease" }} />
+            <div style={{ height: 7, background: "var(--kk-line)", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(progress, 100)}%`, background: progressColor ?? "var(--kk-blue)", borderRadius: 4, transition: "width 0.3s ease" }} />
             </div>
-            <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", marginTop: 4 }}>{Math.round(progress)}% completed</p>
+            <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", marginTop: 5 }}>{Math.round(progress)}% completed</p>
           </div>
         )}
       </div>
@@ -138,7 +135,10 @@ function MetricCard({
   );
 }
 
-// ── Full month calendar ────────────────────────────────────────────────────────
+// ── Full month calendar — fixed 6-row grid ─────────────────────────────────────
+
+// Each cell is a fixed height; always 6 rows (42 cells) so height never changes
+const CELL_H = 60;
 
 function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMonth: string }) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
@@ -153,13 +153,12 @@ function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMon
   const daysInMonth = new Date(y, m, 0).getDate();
   const firstDow = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 0 = Mon
 
+  // Always 42 cells = 6 rows
   const cells: Array<number | null> = [
     ...Array(firstDow).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const totalRows = cells.length / 7;
+  while (cells.length < 42) cells.push(null);
 
   return (
     <Link href="/calendar" style={{
@@ -182,29 +181,29 @@ function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMon
         ))}
       </div>
 
-      {/* Day cells */}
+      {/* Day cells — fixed height, 6 rows */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
         {cells.map((day, i) => {
           const colIdx = i % 7;
           const rowIdx = Math.floor(i / 7);
-          const isLastRow = rowIdx === totalRows - 1;
+          const isLastRow = rowIdx === 5;
           const borderRight = colIdx < 6 ? "1px solid var(--kk-line)" : "none";
           const borderBottom = !isLastRow ? "1px solid var(--kk-line)" : "none";
 
           if (!day) {
             return (
-              <div key={i} style={{ borderRight, borderBottom, minHeight: 64, background: "rgba(0,0,0,0.015)" }} />
+              <div key={i} style={{ borderRight, borderBottom, height: CELL_H, background: "rgba(0,0,0,0.015)" }} />
             );
           }
 
           const dateStr = `${y}-${String(m).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
           const isToday = dateStr === today;
           const dayEvents = byDate[dateStr] ?? [];
-          const shown = dayEvents.slice(0, 3);
-          const extra = dayEvents.length - shown.length;
+          // Show max 2 events; clip rest (cell is fixed height, no "+N more")
+          const shown = dayEvents.slice(0, 2);
 
           return (
-            <div key={i} style={{ borderRight, borderBottom, minHeight: 64, padding: "5px 4px", background: isToday ? "rgba(0,113,227,0.04)" : "transparent" }}>
+            <div key={i} style={{ borderRight, borderBottom, height: CELL_H, padding: "5px 4px", overflow: "hidden", background: isToday ? "rgba(0,113,227,0.04)" : "transparent" }}>
               {/* Day number */}
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 3 }}>
                 {isToday ? (
@@ -216,7 +215,7 @@ function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMon
                 )}
               </div>
 
-              {/* Desktop: event title pills */}
+              {/* Event pills (desktop) */}
               <div className="hidden lg:flex" style={{ flexDirection: "column", gap: 2 }}>
                 {shown.map((ev) => {
                   const s = getEventStyle(ev.event_type ?? null);
@@ -228,17 +227,6 @@ function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMon
                       </p>
                     </div>
                   );
-                })}
-                {extra > 0 && (
-                  <p style={{ fontSize: 9, fontWeight: 600, color: "var(--kk-blue)", paddingLeft: 2 }}>+{extra} more</p>
-                )}
-              </div>
-
-              {/* Mobile: colored dots */}
-              <div className="lg:hidden" style={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center" }}>
-                {dayEvents.slice(0, 5).map((ev, idx) => {
-                  const s = getEventStyle(ev.event_type ?? null);
-                  return <div key={idx} style={{ width: 5, height: 5, borderRadius: "50%", background: s.color }} />;
                 })}
               </div>
             </div>
@@ -253,6 +241,7 @@ function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMon
 
 function UpcomingViewings({ viewings }: { viewings: CalendarEvent[] }) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const shown = viewings.slice(0, 5);
 
   return (
     <div style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 18, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column" }}>
@@ -270,14 +259,14 @@ function UpcomingViewings({ viewings }: { viewings: CalendarEvent[] }) {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {viewings.length === 0 ? (
+        {shown.length === 0 ? (
           <div style={{ padding: "24px 16px", textAlign: "center" }}>
             <p style={{ fontSize: 13, color: "var(--kk-ink-faint)" }}>No upcoming viewings</p>
             <Link href="/calendar" style={{ fontSize: 12, color: "var(--kk-blue)", textDecoration: "none", display: "block", marginTop: 6 }}>Schedule one →</Link>
           </div>
         ) : (
-          viewings.map((ev, idx) => (
-            <div key={ev.id} style={{ padding: "10px 14px", borderBottom: idx < viewings.length - 1 ? "1px solid var(--kk-line)" : "none", display: "flex", alignItems: "flex-start", gap: 10 }}>
+          shown.map((ev, idx) => (
+            <div key={ev.id} style={{ padding: "10px 14px", borderBottom: idx < shown.length - 1 ? "1px solid var(--kk-line)" : "none", display: "flex", alignItems: "flex-start", gap: 10 }}>
               <div style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", position: "relative" }}>
                 {ev.cover_photo_url ? (
                   <Image src={ev.cover_photo_url} alt={ev.title} fill style={{ objectFit: "cover" }} sizes="56px" />
@@ -309,44 +298,30 @@ function UpcomingViewings({ viewings }: { viewings: CalendarEvent[] }) {
 
 // ── Recharts radial donut ──────────────────────────────────────────────────────
 
-function FunnelDonut({ pct, color, bgColor, label }: { pct: number; color: string; bgColor: string; label: string }) {
+function FunnelDonut({ pct, color, bgColor, label, size = 110 }: { pct: number; color: string; bgColor: string; label: string; size?: number }) {
   const sweep = Math.max(pct, 0.5) / 100 * 360;
   const endAngle = 90 - sweep;
+  const r = size / 2;
+  const innerR = Math.round(r * 0.62);
+  const outerR = Math.round(r * 0.82);
   return (
-    <div style={{ position: "relative", width: 130, height: 130, flexShrink: 0 }}>
-      {/* Background track — full 360° */}
-      <svg width={130} height={130} viewBox="0 0 130 130" style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
-        <circle cx={65} cy={65} r={48.5} fill="none" stroke={bgColor} strokeWidth={14} />
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
+        <circle cx={r} cy={r} r={(innerR + outerR) / 2} fill="none" stroke={bgColor} strokeWidth={outerR - innerR} />
       </svg>
-      {/* Colored arc */}
       <div style={{ position: "absolute", top: 0, left: 0 }}>
-        <RadialBarChart width={130} height={130} data={[{ value: 1 }]} startAngle={90} endAngle={endAngle} innerRadius={42} outerRadius={56}>
-          <RadialBar dataKey="value" fill={color} cornerRadius={7} isAnimationActive={true} />
+        <RadialBarChart width={size} height={size} data={[{ value: 1 }]} startAngle={90} endAngle={endAngle} innerRadius={innerR} outerRadius={outerR}>
+          <RadialBar dataKey="value" fill={color} cornerRadius={6} isAnimationActive={true} />
           <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
             <Label
               content={({ viewBox }) => {
                 if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                   return (
                     <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) - 9}
-                        fill={color}
-                        fontSize={20}
-                        fontWeight={700}
-                        fontFamily="inherit"
-                      >
+                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 7} fill={color} fontSize={size < 100 ? 14 : 18} fontWeight={700} fontFamily="inherit">
                         {pct}%
                       </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 12}
-                        fill={color}
-                        fontSize={8}
-                        fontWeight={600}
-                        fontFamily="inherit"
-                        opacity={0.7}
-                      >
+                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 10} fill={color} fontSize={size < 100 ? 7 : 8} fontWeight={600} fontFamily="inherit" opacity={0.7}>
                         {label.toUpperCase()}
                       </tspan>
                     </text>
@@ -361,60 +336,60 @@ function FunnelDonut({ pct, color, bgColor, label }: { pct: number; color: strin
   );
 }
 
-// ── Pipeline funnel card ─────────────────────────────────────────────────────
+// ── Pipeline funnel panel — single white card above calendar ───────────────────
 
 interface FunnelStat { label: string; value: number | string }
 
-function FunnelCard({
-  icon: Icon, iconBg, iconColor,
-  label, count, stats, href,
-  donutPct, donutLabel,
+function FunnelItem({
+  title, href, count, label, color, bgColor,
+  donutPct, donutLabel, stats,
 }: {
-  icon: React.ComponentType<{ style?: React.CSSProperties }>;
-  iconBg: string;
-  iconColor: string;
-  label: string;
-  count: number;
+  title: string; href: string; count: number; label: string;
+  color: string; bgColor: string; donutPct: number; donutLabel: string;
   stats: FunnelStat[];
-  href: string;
-  donutPct: number;
-  donutLabel: string;
 }) {
   return (
-    <Link href={href} style={{ textDecoration: "none", display: "block", flex: 1, minWidth: 0 }}>
-      <div style={{
-        background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 16,
-        padding: "16px 14px 18px", cursor: "pointer", height: "100%", position: "relative",
-      }}>
-        {/* Top row: icon left, donut right */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon style={{ width: 26, height: 26, color: iconColor }} />
+    <Link href={href} style={{ textDecoration: "none", flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "0 8px" }}>
+      {/* Title */}
+      <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-mute)", marginBottom: 12 }}>
+        {title}
+      </p>
+      {/* Donut */}
+      <FunnelDonut pct={donutPct} color={color} bgColor={bgColor} label={donutLabel} size={110} />
+      {/* Count */}
+      <p style={{ fontSize: 28, fontWeight: 700, color: "var(--kk-ink)", letterSpacing: "-0.02em", lineHeight: 1, marginTop: 12, marginBottom: 4 }}>
+        {count.toLocaleString()}
+      </p>
+      {/* Color label */}
+      <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color, marginBottom: 10 }}>
+        {label}
+      </p>
+      {/* Sub-stats */}
+      <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+        {stats.map((s) => (
+          <div key={s.label} style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+              {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
+            </p>
+            <p style={{ fontSize: 10, color: "var(--kk-ink-mute)", marginTop: 2 }}>{s.label}</p>
           </div>
-          <FunnelDonut pct={donutPct} color={iconColor} bgColor={iconBg} label={donutLabel} />
-        </div>
-
-        {/* Count + label */}
-        <p style={{ fontSize: 30, fontWeight: 700, color: "var(--kk-ink)", letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 4 }}>
-          {count.toLocaleString()}
-        </p>
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: iconColor, marginBottom: 10 }}>
-          {label}
-        </p>
-
-        {/* Sub-stats */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {stats.map((s) => (
-            <div key={s.label}>
-              <p style={{ fontSize: 16, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-                {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
-              </p>
-              <p style={{ fontSize: 10, color: "var(--kk-ink-mute)", marginTop: 2 }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     </Link>
+  );
+}
+
+function Arrow() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: 32, color: "var(--kk-ink-faint)", fontSize: 18, paddingBottom: 8 }}>
+      →
+    </div>
+  );
+}
+
+function Divider() {
+  return (
+    <div style={{ width: 1, background: "var(--kk-line)", margin: "0 8px", alignSelf: "stretch", flexShrink: 0 }} />
   );
 }
 
@@ -495,6 +470,7 @@ export function StatsSection({
   monthEvents,
   currentMonth,
   mtdCommission,
+  closedThisMonth,
   upcomingViewings,
   cardCount,
   cardCap,
@@ -504,6 +480,7 @@ export function StatsSection({
   monthEvents: CalendarEvent[];
   currentMonth: string;
   mtdCommission: number;
+  closedThisMonth: number;
   upcomingViewings: CalendarEvent[];
   cardCount: number;
   cardCap: number;
@@ -551,7 +528,7 @@ export function StatsSection({
         <MetricCard
           icon={Layers}
           iconBg="rgba(0,113,227,0.10)"
-          iconColor="#0071E3"
+          iconColor="#004FAD"
           label="Card usage"
           value={safeCardCount.toLocaleString()}
           subValue={safeCardCap.toLocaleString()}
@@ -573,23 +550,23 @@ export function StatsSection({
         <MetricCard
           icon={CalendarDays}
           iconBg="rgba(0,113,227,0.10)"
-          iconColor="#0071E3"
+          iconColor="#004FAD"
           label="Viewings today"
           value={String(viewingsToday)}
           subValue="3"
           subLabel="daily goal"
           progress={(viewingsToday / 3) * 100}
-          progressColor="#0071E3"
+          progressColor="#004FAD"
           href="/calendar"
         />
         <MetricCard
-          icon={Building2}
-          iconBg="rgba(111,45,168,0.10)"
-          iconColor="#6F2DA8"
-          label="My listings"
-          value={(stats.totalListedCount ?? 0).toLocaleString()}
-          subLabel="listings in progress"
-          href="/my-listing"
+          icon={TrendingUp}
+          iconBg="rgba(52,199,89,0.12)"
+          iconColor="#145E33"
+          label="Closed deal this month"
+          value={String(closedThisMonth ?? 0)}
+          subLabel="deals closed"
+          href="/performance"
         />
       </div>
 
@@ -598,59 +575,78 @@ export function StatsSection({
         <MonthPickerPill value={startMonth} onChange={handleMonthChange} />
       </div>
 
+      {/* Pipeline funnel panel */}
+      <div ref={gridRef} className="mb-6">
+        {/* Desktop: single white card */}
+        <div className="hidden lg:block" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 18, padding: "28px 24px 24px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start" }}>
+            <FunnelItem
+              title="Property Leads" href="/property-leads"
+              count={stats.totalUploaded ?? 0} label="Property Leads" color="#0071E3" bgColor="rgba(0,113,227,0.10)"
+              donutPct={contactedPct} donutLabel="contacted"
+              stats={[{ label: "Contacted", value: stats.totalContacted ?? 0 }, { label: "Not contacted", value: (stats.totalUploaded ?? 0) - (stats.totalContacted ?? 0) }]}
+            />
+            <Arrow />
+            <FunnelItem
+              title="My Listing" href="/my-listing"
+              count={stats.totalListedCount ?? 0} label="My Listing" color="#6F2DA8" bgColor="rgba(111,45,168,0.10)"
+              donutPct={myAvailPct} donutLabel="avail. in 3m"
+              stats={[{ label: "For rent", value: stats.listedRentCount ?? 0 }, { label: "For sale", value: stats.listedSaleCount ?? 0 }]}
+            />
+            <Arrow />
+            <FunnelItem
+              title="Existing Listing" href="/existing-listing"
+              count={(stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0)} label="Existing Listing" color="#1F8B4C" bgColor="rgba(52,199,89,0.12)"
+              donutPct={existingAtRiskPct} donutLabel="expiring / expired"
+              stats={[{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }, { label: "Renewing", value: stats.existingRenewingCount ?? 0 }]}
+            />
+            <Divider />
+            <FunnelItem
+              title="Lost Listing" href="/lost-listing"
+              count={stats.targetTotalCount ?? 0} label="Lost Listing" color="#B45309" bgColor="rgba(255,149,0,0.12)"
+              donutPct={targetAtRiskPct} donutLabel="expiring / expired"
+              stats={[{ label: "Expiring 60d", value: stats.targetExpiringIn60Count ?? 0 }, { label: "Watching", value: stats.targetWatchingCount ?? 0 }]}
+            />
+          </div>
+        </div>
+
+        {/* Mobile: 2x2 grid */}
+        <div className="grid grid-cols-2 gap-3 lg:hidden">
+          {[
+            { title: "Property Leads", href: "/property-leads", count: stats.totalUploaded ?? 0, label: "Property Leads", color: "#0071E3", bgColor: "rgba(0,113,227,0.10)", donutPct: contactedPct, donutLabel: "contacted", stats: [{ label: "Contacted", value: stats.totalContacted ?? 0 }, { label: "Not yet", value: (stats.totalUploaded ?? 0) - (stats.totalContacted ?? 0) }] },
+            { title: "My Listing", href: "/my-listing", count: stats.totalListedCount ?? 0, label: "My Listing", color: "#6F2DA8", bgColor: "rgba(111,45,168,0.10)", donutPct: myAvailPct, donutLabel: "avail.", stats: [{ label: "For rent", value: stats.listedRentCount ?? 0 }, { label: "For sale", value: stats.listedSaleCount ?? 0 }] },
+            { title: "Existing Listing", href: "/existing-listing", count: (stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0), label: "Existing Listing", color: "#1F8B4C", bgColor: "rgba(52,199,89,0.12)", donutPct: existingAtRiskPct, donutLabel: "expiring", stats: [{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }] },
+            { title: "Lost Listing", href: "/lost-listing", count: stats.targetTotalCount ?? 0, label: "Lost Listing", color: "#B45309", bgColor: "rgba(255,149,0,0.12)", donutPct: targetAtRiskPct, donutLabel: "expiring", stats: [{ label: "Expiring 60d", value: stats.targetExpiringIn60Count ?? 0 }, { label: "Watching", value: stats.targetWatchingCount ?? 0 }] },
+          ].map((item) => (
+            <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "block" }}>
+              <div style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 16, padding: "16px 12px 18px", textAlign: "center" }}>
+                <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-mute)", marginBottom: 10 }}>{item.title}</p>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+                  <FunnelDonut pct={item.donutPct} color={item.color} bgColor={item.bgColor} label={item.donutLabel} size={88} />
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 700, color: "var(--kk-ink)", letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 3 }}>{item.count.toLocaleString()}</p>
+                <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: item.color, marginBottom: 8 }}>{item.label}</p>
+                <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                  {item.stats.map((s) => (
+                    <div key={s.label} style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1 }}>{typeof s.value === "number" ? s.value.toLocaleString() : s.value}</p>
+                      <p style={{ fontSize: 9, color: "var(--kk-ink-mute)", marginTop: 1 }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* Monthly calendar + Upcoming Viewings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6" style={{ minHeight: 360 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3" style={{ minHeight: 420 }}>
         <div className="lg:col-span-2">
           <MonthCalendar events={calendarEvents} yearMonth={startMonth} />
         </div>
         <div>
           <UpcomingViewings viewings={upcomingViewings} />
-        </div>
-      </div>
-
-      {/* Pipeline funnel */}
-      <div ref={gridRef}>
-        {/* Desktop: 1 row with arrows */}
-        <div className="hidden lg:flex items-stretch gap-0 mb-3">
-          <FunnelCard icon={Users} iconBg="rgba(0,113,227,0.10)" iconColor="#0071E3"
-            label="Property Leads" count={stats.totalUploaded ?? 0}
-            stats={[{ label: "Contacted", value: stats.totalContacted ?? 0 }, { label: "Not contacted", value: (stats.totalUploaded ?? 0) - (stats.totalContacted ?? 0) }]}
-            href="/property-leads" donutPct={contactedPct} donutLabel="contacted" />
-          <div style={{ display: "flex", alignItems: "center", padding: "0 6px", color: "var(--kk-ink-faint)", fontSize: 18, flexShrink: 0 }}>→</div>
-          <FunnelCard icon={Building2} iconBg="rgba(111,45,168,0.10)" iconColor="#6F2DA8"
-            label="My Listing" count={stats.totalListedCount ?? 0}
-            stats={[{ label: "For rent", value: stats.listedRentCount ?? 0 }, { label: "For sale", value: stats.listedSaleCount ?? 0 }]}
-            href="/my-listing" donutPct={myAvailPct} donutLabel="avail. in 3m" />
-          <div style={{ display: "flex", alignItems: "center", padding: "0 6px", color: "var(--kk-ink-faint)", fontSize: 18, flexShrink: 0 }}>→</div>
-          <FunnelCard icon={FileText} iconBg="rgba(52,199,89,0.12)" iconColor="#1F8B4C"
-            label="Existing Listing" count={(stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0)}
-            stats={[{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }, { label: "Renewing", value: stats.existingRenewingCount ?? 0 }]}
-            href="/existing-listing" donutPct={existingAtRiskPct} donutLabel="expiring / expired" />
-          <div style={{ display: "flex", alignItems: "center", padding: "0 6px", color: "var(--kk-ink-faint)", fontSize: 18, flexShrink: 0 }}>→</div>
-          <FunnelCard icon={Target} iconBg="rgba(255,149,0,0.12)" iconColor="#B45309"
-            label="Lost Listing" count={stats.targetTotalCount ?? 0}
-            stats={[{ label: "Expiring 60d", value: stats.targetExpiringIn60Count ?? 0 }, { label: "Watching", value: stats.targetWatchingCount ?? 0 }]}
-            href="/lost-listing" donutPct={targetAtRiskPct} donutLabel="expiring / expired" />
-        </div>
-
-        {/* Mobile: 2x2 grid */}
-        <div className="grid grid-cols-2 gap-3 lg:hidden mb-3">
-          <FunnelCard icon={Users} iconBg="rgba(0,113,227,0.10)" iconColor="#0071E3"
-            label="Property Leads" count={stats.totalUploaded ?? 0}
-            stats={[{ label: "Contacted", value: stats.totalContacted ?? 0 }, { label: "Not yet", value: (stats.totalUploaded ?? 0) - (stats.totalContacted ?? 0) }]}
-            href="/property-leads" donutPct={contactedPct} donutLabel="contacted" />
-          <FunnelCard icon={Building2} iconBg="rgba(111,45,168,0.10)" iconColor="#6F2DA8"
-            label="My Listing" count={stats.totalListedCount ?? 0}
-            stats={[{ label: "For rent", value: stats.listedRentCount ?? 0 }, { label: "For sale", value: stats.listedSaleCount ?? 0 }]}
-            href="/my-listing" donutPct={myAvailPct} donutLabel="avail. in 3m" />
-          <FunnelCard icon={FileText} iconBg="rgba(52,199,89,0.12)" iconColor="#1F8B4C"
-            label="Existing Listing" count={(stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0)}
-            stats={[{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }]}
-            href="/existing-listing" donutPct={existingAtRiskPct} donutLabel="expiring" />
-          <FunnelCard icon={Target} iconBg="rgba(255,149,0,0.12)" iconColor="#B45309"
-            label="Lost Listing" count={stats.targetTotalCount ?? 0}
-            stats={[{ label: "Expiring 60d", value: stats.targetExpiringIn60Count ?? 0 }, { label: "Watching", value: stats.targetWatchingCount ?? 0 }]}
-            href="/lost-listing" donutPct={targetAtRiskPct} donutLabel="expiring" />
         </div>
       </div>
     </div>

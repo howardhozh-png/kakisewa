@@ -245,6 +245,7 @@ function ActiveState({
   cardCap,
   planName,
   mtdCommission,
+  closedThisMonth,
   upcomingViewings,
 }: {
   firstName: string | null;
@@ -256,6 +257,7 @@ function ActiveState({
   cardCap: number;
   planName: string;
   mtdCommission: number;
+  closedThisMonth: number;
   upcomingViewings: CalendarEvent[];
 }) {
   return (
@@ -277,6 +279,7 @@ function ActiveState({
         monthEvents={monthEvents}
         currentMonth={currentMonth}
         mtdCommission={mtdCommission}
+        closedThisMonth={closedThisMonth}
         upcomingViewings={upcomingViewings}
         cardCount={cardCount}
         cardCap={cardCap}
@@ -339,6 +342,7 @@ export default async function HomePage() {
           cardCap={cardCap}
           planName={planLabel}
           mtdCommission={perf.mtdCommission}
+          closedThisMonth={perf.signedThisMonth}
           upcomingViewings={upcomingViewings}
         />
       ) : (
