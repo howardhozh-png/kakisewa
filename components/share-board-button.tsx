@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import { Share2, Copy, Check, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { upsertBoardShare, regenerateBoardLink } from "@/lib/actions";
 import { toast } from "sonner";
@@ -108,6 +108,13 @@ export function ShareBoardButton({ initialSlug, initialPasscode }: Props) {
 
   const passcodeChanged = isActive && currentPasscode !== passcode;
 
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <>
       <button
@@ -127,15 +134,20 @@ export function ShareBoardButton({ initialSlug, initialPasscode }: Props) {
 
       {open && (
         <div
-          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
           onClick={() => setOpen(false)}
         >
           <div
-            style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 480, padding: "24px 24px 40px", boxShadow: "0 -4px 40px rgba(0,0,0,0.10)" }}
+            style={{ background: "#fff", borderRadius: 24, width: "100%", maxWidth: 480, padding: "28px 28px 32px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", position: "relative" }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle */}
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: "#D1D1D6", margin: "0 auto 20px" }} />
+            {/* X close */}
+            <button
+              onClick={() => setOpen(false)}
+              style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderRadius: "50%", border: "none", background: "#F2F2F7", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6E6E73" }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            </button>
 
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Share your board</div>
             <div style={{ fontSize: 13, color: "#6E6E73", marginBottom: 24, lineHeight: 1.5 }}>

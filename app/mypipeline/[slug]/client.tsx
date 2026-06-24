@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { OwnerLead } from "@/lib/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -141,6 +141,12 @@ function fmtRent(n: number | null | undefined): string {
 }
 
 function CardSheet({ lead, onClose }: { lead: OwnerLead; onClose: () => void }) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const photos = lead.photo_urls ?? [];
   const coverIdx = lead.cover_photo_index ?? 0;
   const ordered = photos.length > 1

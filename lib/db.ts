@@ -3198,7 +3198,7 @@ export async function getListedLeadsByUserId(userId: string): Promise<OwnerLead[
     bathrooms: r.bathrooms as number | null,
     parking: r.parking as string | null,
     available_from: r.available_from as string | null,
-    photo_urls: Array.isArray(r.photo_urls) ? r.photo_urls as string[] : [],
+    photo_urls: parsePhotoUrls(r.photo_urls),
     cover_photo_index: r.cover_photo_index as number | null,
     stage: r.stage as OwnerLead["stage"],
     created_at: "",
