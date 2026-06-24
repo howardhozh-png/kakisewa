@@ -2486,3 +2486,82 @@ export async function getCalendarEventDatesForMonth(month: string): Promise<stri
   return [...new Set((data ?? []).map((r: { event_date: string }) => r.event_date))];
 }
 
+// ─── Board share (mypipeline) ─────────────────────────────────────────────────
+
+function nameToSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 40);
+}
+
+export async function upsertBoardShare(passcode: string): Promise<{ slug: string } | { error: string }> {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  if (!/^\d{8}$/.test(passcode)) return { error: "Passcode must be exactly 8 digits" };
+
+  const svc = createServiceClient();
+  const { data: profile } = await svc
+    .from("agent_profiles")
+    .select("name, board_slug")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.name) return { error: "Please add your name in Settings before generating a share link" };
+
+  let slug = (profile.board_slug as string | null) ?? null;
+  if (!slug) {
+    const base = nameToSlug(profile.name as string);
+    if (!base) return { error: "Could not generate a link from your name. Please update your name in Settings." };
+    slug = base;
+    let attempt = 1;
+    while (true) {
+      const { data: existing } = await svc
+        .from("agent_profiles")
+        .select("id")
+        .eq("board_slug", slug)
+        .neq("id", user.id)
+        .maybeSingle();
+      if (!existing) break;
+      attempt++;
+      slug = `${base}-${attempt}`;
+    }
+  }
+
+  await svc.from("agent_profiles").update({ board_slug: slug, board_passcode: passcode }).eq("id", user.id);
+  return { slug };
+}
+
+export async function regenerateBoardLink(): Promise<{ slug: string } | { error: string }> {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const svc = createServiceClient();
+  const { data: profile } = await svc
+    .from("agent_profiles")
+    .select("name, board_slug")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.name) return { error: "Please add your name in Settings first" };
+
+  const base = nameToSlug(profile.name as string);
+  const suffix = Math.random().toString(36).slice(2, 6);
+  const slug = `${base}-${suffix}`;
+
+  await svc.from("agent_profiles").update({ board_slug: slug }).eq("id", user.id);
+  return { slug };
+}
+

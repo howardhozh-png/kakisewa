@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>TL Share View — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #FBFBFD; color: #1D1D1F; -webkit-font-smoothing: antialiased; }
+
+  /* ── Option Switcher ── */
+  .switcher {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(251,251,253,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #E5E5EA;
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .switcher-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6E6E73; }
+  .switcher-tabs { display: flex; gap: 4px; background: #F2F2F7; padding: 3px; border-radius: 10px; }
+  .switcher-tab {
+    padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    border: none; cursor: pointer; background: transparent; color: #6E6E73; transition: all 0.15s;
+  }
+  .switcher-tab.active { background: #fff; color: #1D1D1F; box-shadow: 0 1px 3px rgba(0,0,0,0.10); }
+
+  /* ── Views ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Shared Header ── */
+  .view-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #E5E5EA;
+    background: #fff;
+  }
+  .view-header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .view-title { font-size: 17px; font-weight: 700; }
+  .badge-readonly {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px; background: rgba(255,149,0,0.10); color: #92400E;
+  }
+  .badge-expiry { font-size: 12px; color: #6E6E73; margin-top: 2px; }
+
+  /* ── Search bar ── */
+  .search-bar {
+    margin: 14px 20px 0;
+    display: flex; align-items: center; gap: 8px;
+    background: #F2F2F7; border-radius: 10px; padding: 9px 12px;
+  }
+  .search-bar svg { color: #8E8E93; flex-shrink: 0; }
+  .search-bar input { border: none; background: transparent; font-size: 14px; color: #1D1D1F; width: 100%; outline: none; }
+  .search-bar input::placeholder { color: #8E8E93; }
+
+  /* ════════════════════════════════════════════
+     OPTION A — Mirror My Listing (stripped)
+  ════════════════════════════════════════════ */
+  .a-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .a-card {
+    background: #fff; border-radius: 18px; border: 1px solid #E5E5EA;
+    overflow: hidden; cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .a-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+  .a-card-photo {
+    width: 100%; height: 160px; object-fit: cover; display: block;
+    background: linear-gradient(135deg, #E5E5EA 0%, #C7C7CC 100%);
+    position: relative; overflow: hidden;
+  }
+  .a-card-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .a-card-photo-count {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; font-weight: 500;
+    padding: 2px 7px; border-radius: 6px; backdrop-filter: blur(4px);
+  }
+
+  .a-card-body { padding: 14px 16px 16px; }
+  .a-card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .a-stage-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px;
+  }
+  .a-stage-listed { background: rgba(0,113,227,0.10); color: #0071E3; }
+  .a-stage-potential { background: rgba(52,199,89,0.10); color: #1F8B4C; }
+
+  .a-card-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .a-card-unit { font-size: 13px; color: #6E6E73; margin-bottom: 10px; }
+  .a-card-rent { font-size: 17px; font-weight: 700; color: #1D1D1F; }
+  .a-card-rent span { font-size: 13px; font-weight: 400; color: #6E6E73; }
+
+  .a-card-footer {
+    padding: 10px 16px; border-top: 1px solid #F2F2F7;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .a-card-detail { font-size: 12px; color: #6E6E73; }
+  .a-card-detail strong { color: #1D1D1F; }
+  .a-card-detail-sep { color: #C7C7CC; }
+
+  /* OPTION A POPUP */
+  .a-popup-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.40); backdrop-filter: blur(4px);
+    align-items: flex-end; justify-content: center;
+  }
+  .a-popup-backdrop.open { display: flex; }
+  .a-popup {
+    background: #fff; border-radius: 24px 24px 0 0;
+    width: 100%; max-width: 600px;
+    max-height: 88vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .a-popup-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #F2F2F7;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    flex-shrink: 0;
+  }
+  .a-popup-title { font-size: 17px; font-weight: 700; }
+  .a-popup-sub { font-size: 13px; color: #6E6E73; margin-top: 2px; }
+  .a-popup-close {
+    width: 30px; height: 30px; border-radius: 50%; background: #F2F2F7;
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 16px; color: #6E6E73;
+  }
+
+  .a-popup-tabs {
+    display: flex; gap: 0; padding: 0 20px; border-bottom: 1px solid #F2F2F7; flex-shrink: 0;
+  }
+  .a-popup-tab {
+    padding: 10px 16px; font-size: 13px; font-weight: 500; color: #6E6E73;
+    border-bottom: 2px solid transparent; border-top: none; border-left: none; border-right: none;
+    background: none; cursor: pointer; transition: all 0.15s;
+  }
+  .a-popup-tab.active { color: #0071E3; border-bottom-color: #0071E3; }
+
+  .a-popup-body { overflow-y: auto; flex: 1; }
+  .a-popup-section { padding: 16px 20px; border-bottom: 1px solid #F2F2F7; }
+  .a-popup-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .a-popup-row:last-child { margin-bottom: 0; }
+  .a-popup-field-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8E8E93; width: 110px; flex-shrink: 0; padding-top: 1px; }
+  .a-popup-field-val { font-size: 14px; color: #1D1D1F; flex: 1; }
+
+  .a-popup-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 16px 20px; }
+  .a-popup-photo { aspect-ratio: 4/3; border-radius: 10px; overflow: hidden; background: #E5E5EA; }
+  .a-popup-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+  .a-popup-disabled-note {
+    margin: 16px 20px; padding: 12px 14px; border-radius: 12px;
+    background: rgba(110,110,115,0.08); border: 1px solid #E5E5EA;
+    font-size: 12px; color: #6E6E73; display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ════════════════════════════════════════════
+     OPTION B — Purpose-built posting view
+  ════════════════════════════════════════════ */
+  .b-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .b-card {
+    background: #fff; border-radius: 18px; border: 1px solid #E5E5EA;
+    overflow: hidden; cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .b-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+  .b-card-photos {
+    position: relative; height: 200px; background: #E5E5EA; overflow: hidden;
+  }
+  .b-card-photos img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .b-photo-count {
+    position: absolute; bottom: 10px; right: 10px;
+    background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 8px; backdrop-filter: blur(4px);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .b-card-body { padding: 14px 16px 16px; }
+  .b-card-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .b-card-unit { font-size: 13px; color: #6E6E73; margin-bottom: 10px; }
+  .b-card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .b-chip {
+    font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 8px;
+    background: #F2F2F7; color: #1D1D1F;
+  }
+  .b-card-rent-row { display: flex; align-items: baseline; justify-content: space-between; }
+  .b-card-rent { font-size: 20px; font-weight: 700; }
+  .b-card-rent span { font-size: 13px; font-weight: 400; color: #6E6E73; }
+  .b-copy-btn {
+    font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 9px;
+    background: rgba(0,113,227,0.10); color: #0071E3; border: none; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .b-copy-btn:hover { background: rgba(0,113,227,0.18); }
+  .b-copy-btn.copied { background: rgba(52,199,89,0.12); color: #1F8B4C; }
+
+  /* OPTION B POPUP */
+  .b-popup-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.40); backdrop-filter: blur(4px);
+    align-items: flex-end; justify-content: center;
+  }
+  .b-popup-backdrop.open { display: flex; }
+  .b-popup {
+    background: #fff; border-radius: 24px 24px 0 0;
+    width: 100%; max-width: 600px;
+    max-height: 92vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: slideUp 0.25s ease;
+  }
+
+  .b-popup-photos-strip {
+    flex-shrink: 0; height: 240px; overflow: hidden; position: relative;
+  }
+  .b-popup-photos-strip img { width: 100%; height: 100%; object-fit: cover; }
+  .b-popup-photos-nav {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 12px;
+  }
+  .b-popup-photos-nav button {
+    width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(6px); border: none; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .b-popup-photo-dots {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 5px;
+  }
+  .b-popup-photo-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5);
+  }
+  .b-popup-photo-dot.active { background: #fff; }
+
+  .b-popup-close-row {
+    position: absolute; top: 12px; right: 12px;
+  }
+  .b-popup-close-row button {
+    width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px); border: none; cursor: pointer;
+    color: #fff; font-size: 15px; display: flex; align-items: center; justify-content: center;
+  }
+
+  .b-popup-content { overflow-y: auto; flex: 1; padding: 20px; }
+  .b-popup-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .b-popup-unit { font-size: 14px; color: #6E6E73; margin-bottom: 16px; }
+
+  .b-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .b-detail-cell {
+    background: #F9F9FB; border-radius: 12px; padding: 12px 14px;
+  }
+  .b-detail-cell-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #8E8E93; margin-bottom: 4px; }
+  .b-detail-cell-val { font-size: 15px; font-weight: 600; color: #1D1D1F; }
+  .b-detail-cell-val.rent { font-size: 18px; color: #0071E3; }
+
+  .b-popup-copy-main {
+    width: 100%; padding: 15px; border-radius: 14px;
+    background: #0071E3; color: #fff; font-size: 15px; font-weight: 600;
+    border: none; cursor: pointer; margin-bottom: 12px; transition: opacity 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .b-popup-copy-main:hover { opacity: 0.88; }
+  .b-popup-copy-main.copied { background: #34C759; }
+
+  .b-copy-preview {
+    background: #F9F9FB; border-radius: 12px; padding: 14px 16px;
+    font-size: 13px; color: #6E6E73; line-height: 1.7;
+    border: 1px dashed #D1D1D6; white-space: pre-wrap;
+    font-family: monospace; margin-bottom: 16px;
+  }
+
+  .b-popup-dl-photos {
+    width: 100%; padding: 13px; border-radius: 14px;
+    background: rgba(0,113,227,0.08); color: #0071E3; font-size: 14px; font-weight: 600;
+    border: 1.5px solid rgba(0,113,227,0.18); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s;
+  }
+  .b-popup-dl-photos:hover { background: rgba(0,113,227,0.14); }
+
+  /* ── Placeholder images (SVG) ── */
+  .img-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #E8E8ED 0%, #D1D1D6 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .img-placeholder svg { opacity: 0.3; }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .a-grid, .b-grid { grid-template-columns: 1fr; }
+    .b-detail-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Passcode gate */
+  .passcode-gate {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .passcode-card {
+    background: #fff; border-radius: 24px; padding: 36px 28px; width: 100%; max-width: 360px;
+    text-align: center; box-shadow: 0 4px 40px rgba(0,0,0,0.08); border: 1px solid #E5E5EA;
+  }
+  .passcode-logo { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; color: #1D1D1F; margin-bottom: 24px; }
+  .passcode-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .passcode-sub { font-size: 14px; color: #6E6E73; margin-bottom: 28px; line-height: 1.5; }
+  .passcode-boxes { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
+  .passcode-box {
+    width: 36px; height: 44px; border-radius: 10px; border: 1.5px solid #E5E5EA;
+    background: #F9F9FB; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: #1D1D1F; transition: border-color 0.15s;
+  }
+  .passcode-box.filled { border-color: #0071E3; background: #fff; }
+  .passcode-box.active { border-color: #0071E3; box-shadow: 0 0 0 3px rgba(0,113,227,0.12); }
+  .passcode-btn {
+    width: 100%; padding: 14px; border-radius: 14px; background: #0071E3; color: #fff;
+    font-size: 16px; font-weight: 600; border: none; cursor: pointer;
+  }
+  .passcode-expiry { font-size: 12px; color: #8E8E93; margin-top: 16px; }
+
+  .section-note {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #8E8E93; padding: 20px 20px 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Option Switcher ── -->
+<div class="switcher">
+  <span class="switcher-label">Mockup</span>
+  <div class="switcher-tabs">
+    <button class="switcher-tab active" onclick="switchView('passcode')">Passcode gate</button>
+    <button class="switcher-tab" onclick="switchView('a')">Option A</button>
+    <button class="switcher-tab" onclick="switchView('b')">Option B</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PASSCODE GATE
+══════════════════════════════════════════ -->
+<div class="view active" id="view-passcode">
+  <div class="passcode-gate">
+    <div class="passcode-card">
+      <div class="passcode-logo">kakisewa</div>
+      <div class="passcode-title">Ahmad's Listings</div>
+      <div class="passcode-sub">Enter the 8-digit passcode shared by your agent to view their property listings.</div>
+      <div class="passcode-boxes">
+        <div class="passcode-box filled">3</div>
+        <div class="passcode-box filled">7</div>
+        <div class="passcode-box filled">8</div>
+        <div class="passcode-box filled">2</div>
+        <div class="passcode-box active"></div>
+        <div class="passcode-box"></div>
+        <div class="passcode-box"></div>
+        <div class="passcode-box"></div>
+      </div>
+      <button class="passcode-btn">View listings</button>
+      <div class="passcode-expiry">Link expires in 6 days</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     OPTION A — Mirror My Listing (stripped)
+══════════════════════════════════════════ -->
+<div class="view" id="view-a">
+  <div class="view-header">
+    <div class="view-header-top">
+      <div class="view-title">Ahmad's Listings</div>
+      <span class="badge-readonly">Read only</span>
+    </div>
+    <div class="badge-expiry">12 properties · Link expires 30 Jun 2026</div>
+  </div>
+
+  <div class="search-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search by property name or unit…" />
+  </div>
+
+  <div class="section-note">My Listing (12)</div>
+
+  <div class="a-grid">
+    <!-- Card 1 -->
+    <div class="a-card" onclick="openAPopup()">
+      <div class="a-card-photo">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #C7E4FF 0%, #90C8FF 100%);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0071E3" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="a-card-photo-count">📷 7</div>
+      </div>
+      <div class="a-card-body">
+        <div class="a-card-meta">
+          <span class="a-stage-badge a-stage-listed">Listed</span>
+        </div>
+        <div class="a-card-name">Casa Subang</div>
+        <div class="a-card-unit">Block A, Unit 12-03 · USJ 10, Subang Jaya</div>
+        <div class="a-card-rent">RM 2,200 <span>/mo</span></div>
+      </div>
+      <div class="a-card-footer">
+        <span class="a-card-detail"><strong>3+1</strong> bed</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail"><strong>2</strong> bath</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail">Partly furnished</span>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="a-card">
+      <div class="a-card-photo">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #D4F0D4 0%, #A8DBA8 100%);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="a-card-photo-count">📷 4</div>
+      </div>
+      <div class="a-card-body">
+        <div class="a-card-meta">
+          <span class="a-stage-badge a-stage-listed">Listed</span>
+        </div>
+        <div class="a-card-name">Sunway Pyramid Tower</div>
+        <div class="a-card-unit">Tower East, Unit 08-15 · Bandar Sunway</div>
+        <div class="a-card-rent">RM 3,500 <span>/mo</span></div>
+      </div>
+      <div class="a-card-footer">
+        <span class="a-card-detail"><strong>2</strong> bed</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail"><strong>2</strong> bath</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail">Fully furnished</span>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="a-card">
+      <div class="a-card-photo">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #FFE5CC 0%, #FFCC99 100%);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF9500" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="a-card-photo-count">📷 11</div>
+      </div>
+      <div class="a-card-body">
+        <div class="a-card-meta">
+          <span class="a-stage-badge a-stage-potential">Potential</span>
+        </div>
+        <div class="a-card-name">Kelana Residence</div>
+        <div class="a-card-unit">Block C, Unit 05-22 · Kelana Jaya, PJ</div>
+        <div class="a-card-rent">RM 1,800 <span>/mo</span></div>
+      </div>
+      <div class="a-card-footer">
+        <span class="a-card-detail"><strong>3</strong> bed</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail"><strong>2</strong> bath</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail">Unfurnished</span>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="a-card">
+      <div class="a-card-photo">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #E8D4FF 0%, #CCA8FF 100%);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="a-card-photo-count">📷 6</div>
+      </div>
+      <div class="a-card-body">
+        <div class="a-card-meta">
+          <span class="a-stage-badge a-stage-listed">Listed</span>
+        </div>
+        <div class="a-card-name">The Leafz Residences</div>
+        <div class="a-card-unit">Unit 18-7 · Sri Petaling, KL</div>
+        <div class="a-card-rent">RM 2,800 <span>/mo</span></div>
+      </div>
+      <div class="a-card-footer">
+        <span class="a-card-detail"><strong>4</strong> bed</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail"><strong>3</strong> bath</span>
+        <span class="a-card-detail-sep">·</span>
+        <span class="a-card-detail">Fully furnished</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPTION A POPUP -->
+<div class="a-popup-backdrop" id="a-popup">
+  <div class="a-popup">
+    <div class="a-popup-header">
+      <div>
+        <div class="a-popup-title">Casa Subang, Block A Unit 12-03</div>
+        <div class="a-popup-sub">USJ 10, Subang Jaya · RM 2,200/mo</div>
+      </div>
+      <button class="a-popup-close" onclick="closeAPopup()">✕</button>
+    </div>
+    <div class="a-popup-tabs">
+      <button class="a-popup-tab active">Details</button>
+      <button class="a-popup-tab">Photos</button>
+    </div>
+    <div class="a-popup-body">
+      <div class="a-popup-disabled-note">
+        <span>👁</span>
+        <span>View only — actions are disabled for shared listings</span>
+      </div>
+      <div class="a-popup-section">
+        <div class="a-popup-row"><div class="a-popup-field-label">Property</div><div class="a-popup-field-val">Casa Subang</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Unit</div><div class="a-popup-field-val">Block A, Unit 12-03</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Address</div><div class="a-popup-field-val">Jalan USJ 10/1, USJ 10, 47620 Subang Jaya, Selangor</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Asking rent</div><div class="a-popup-field-val" style="font-weight:600; color:#0071E3;">RM 2,200 / month</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Available</div><div class="a-popup-field-val">1 Jul 2026</div></div>
+      </div>
+      <div class="a-popup-section">
+        <div class="a-popup-row"><div class="a-popup-field-label">Bedrooms</div><div class="a-popup-field-val">3+1</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Bathrooms</div><div class="a-popup-field-val">2</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Size</div><div class="a-popup-field-val">1,200 sq ft</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Furnishing</div><div class="a-popup-field-val">Partly furnished</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Parking</div><div class="a-popup-field-val">1 bay</div></div>
+        <div class="a-popup-row"><div class="a-popup-field-label">Floor</div><div class="a-popup-field-val">12th</div></div>
+      </div>
+      <div class="a-popup-photos">
+        <div class="a-popup-photo"><div class="img-placeholder" style="background: linear-gradient(135deg,#C7E4FF,#90C8FF)"></div></div>
+        <div class="a-popup-photo"><div class="img-placeholder" style="background: linear-gradient(135deg,#BFE0FF,#80BCFF)"></div></div>
+        <div class="a-popup-photo"><div class="img-placeholder" style="background: linear-gradient(135deg,#D0E8FF,#9ACCFF)"></div></div>
+        <div class="a-popup-photo"><div class="img-placeholder" style="background: linear-gradient(135deg,#C0DFFF,#85C0FF)"></div></div>
+        <div class="a-popup-photo"><div class="img-placeholder" style="background: linear-gradient(135deg,#CADFFF,#88BEFF)"></div></div>
+        <div class="a-popup-photo"><div class="img-placeholder" style="background: linear-gradient(135deg,#C5E2FF,#8EC5FF)"></div></div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     OPTION B — Purpose-built posting view
+══════════════════════════════════════════ -->
+<div class="view" id="view-b">
+  <div class="view-header">
+    <div class="view-header-top">
+      <div class="view-title">Ahmad's Listings</div>
+      <span class="badge-readonly">Read only</span>
+    </div>
+    <div class="badge-expiry">12 properties ready to post · Link expires 30 Jun 2026</div>
+  </div>
+
+  <div class="search-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search by property name or unit…" />
+  </div>
+
+  <div class="section-note">Tap any card to copy listing details</div>
+
+  <div class="b-grid">
+    <!-- Card 1 -->
+    <div class="b-card" onclick="openBPopup()">
+      <div class="b-card-photos">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #C7E4FF 0%, #90C8FF 100%);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0071E3" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="b-photo-count">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          7 photos
+        </div>
+      </div>
+      <div class="b-card-body">
+        <div class="b-card-name">Casa Subang</div>
+        <div class="b-card-unit">Block A · Unit 12-03 · USJ 10, Subang Jaya</div>
+        <div class="b-card-chips">
+          <span class="b-chip">3+1 bed</span>
+          <span class="b-chip">2 bath</span>
+          <span class="b-chip">1,200 sqft</span>
+          <span class="b-chip">Partly furnished</span>
+        </div>
+        <div class="b-card-rent-row">
+          <div class="b-card-rent">RM 2,200 <span>/mo</span></div>
+          <button class="b-copy-btn" onclick="event.stopPropagation(); copyQuick(this)">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="b-card">
+      <div class="b-card-photos">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #D4F0D4 0%, #A8DBA8 100%);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="b-photo-count">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          4 photos
+        </div>
+      </div>
+      <div class="b-card-body">
+        <div class="b-card-name">Sunway Pyramid Tower</div>
+        <div class="b-card-unit">Tower East · Unit 08-15 · Bandar Sunway</div>
+        <div class="b-card-chips">
+          <span class="b-chip">2 bed</span>
+          <span class="b-chip">2 bath</span>
+          <span class="b-chip">900 sqft</span>
+          <span class="b-chip">Fully furnished</span>
+        </div>
+        <div class="b-card-rent-row">
+          <div class="b-card-rent">RM 3,500 <span>/mo</span></div>
+          <button class="b-copy-btn" onclick="event.stopPropagation(); copyQuick(this)">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="b-card">
+      <div class="b-card-photos">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #FFE5CC 0%, #FFCC99 100%);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF9500" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="b-photo-count">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          11 photos
+        </div>
+      </div>
+      <div class="b-card-body">
+        <div class="b-card-name">Kelana Residence</div>
+        <div class="b-card-unit">Block C · Unit 05-22 · Kelana Jaya, PJ</div>
+        <div class="b-card-chips">
+          <span class="b-chip">3 bed</span>
+          <span class="b-chip">2 bath</span>
+          <span class="b-chip">1,050 sqft</span>
+          <span class="b-chip">Unfurnished</span>
+        </div>
+        <div class="b-card-rent-row">
+          <div class="b-card-rent">RM 1,800 <span>/mo</span></div>
+          <button class="b-copy-btn" onclick="event.stopPropagation(); copyQuick(this)">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="b-card">
+      <div class="b-card-photos">
+        <div class="img-placeholder" style="background: linear-gradient(135deg, #E8D4FF 0%, #CCA8FF 100%);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+        </div>
+        <div class="b-photo-count">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          6 photos
+        </div>
+      </div>
+      <div class="b-card-body">
+        <div class="b-card-name">The Leafz Residences</div>
+        <div class="b-card-unit">Unit 18-7 · Sri Petaling, KL</div>
+        <div class="b-card-chips">
+          <span class="b-chip">4 bed</span>
+          <span class="b-chip">3 bath</span>
+          <span class="b-chip">1,400 sqft</span>
+          <span class="b-chip">Fully furnished</span>
+        </div>
+        <div class="b-card-rent-row">
+          <div class="b-card-rent">RM 2,800 <span>/mo</span></div>
+          <button class="b-copy-btn" onclick="event.stopPropagation(); copyQuick(this)">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPTION B POPUP -->
+<div class="b-popup-backdrop" id="b-popup">
+  <div class="b-popup">
+    <div class="b-popup-photos-strip">
+      <div class="img-placeholder" style="background: linear-gradient(135deg, #C7E4FF 0%, #5BAEFF 100%); height:100%;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0071E3" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><path d="M3 15l4-4 4 4 4-4 4 4"/></svg>
+      </div>
+      <div class="b-popup-photos-nav">
+        <button>‹</button>
+        <button>›</button>
+      </div>
+      <div class="b-popup-photo-dots">
+        <div class="b-popup-photo-dot active"></div>
+        <div class="b-popup-photo-dot"></div>
+        <div class="b-popup-photo-dot"></div>
+        <div class="b-popup-photo-dot"></div>
+        <div class="b-popup-photo-dot"></div>
+        <div class="b-popup-photo-dot"></div>
+        <div class="b-popup-photo-dot"></div>
+      </div>
+      <div class="b-popup-close-row">
+        <button onclick="closeBPopup()">✕</button>
+      </div>
+    </div>
+    <div class="b-popup-content">
+      <div class="b-popup-name">Casa Subang</div>
+      <div class="b-popup-unit">Block A · Unit 12-03 · USJ 10, Subang Jaya, Selangor</div>
+      <div class="b-detail-grid">
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Asking rent</div><div class="b-detail-cell-val rent">RM 2,200/mo</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Available</div><div class="b-detail-cell-val">1 Jul 2026</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Size</div><div class="b-detail-cell-val">1,200 sqft</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Floor</div><div class="b-detail-cell-val">12th</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Bedrooms</div><div class="b-detail-cell-val">3+1</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Bathrooms</div><div class="b-detail-cell-val">2</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Furnishing</div><div class="b-detail-cell-val">Partly furnished</div></div>
+        <div class="b-detail-cell"><div class="b-detail-cell-label">Parking</div><div class="b-detail-cell-val">1 bay</div></div>
+      </div>
+      <div class="b-copy-preview">Subang Jaya, USJ 10
+Casa Subang, Block A Unit 12-03
+1,200 sqft | 3+1 bed | 2 bath | Partly furnished | 12th floor
+Asking: RM 2,200/month
+Available: 1 Jul 2026</div>
+      <button class="b-popup-copy-main" id="b-copy-main-btn" onclick="copyMain()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy listing details
+      </button>
+      <button class="b-popup-dl-photos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save all 7 photos
+      </button>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.switcher-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  event.target.classList.add('active');
+}
+function openAPopup() {
+  document.getElementById('a-popup').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeAPopup() {
+  document.getElementById('a-popup').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function openBPopup() {
+  document.getElementById('b-popup').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeBPopup() {
+  document.getElementById('b-popup').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('a-popup').addEventListener('click', function(e) {
+  if (e.target === this) closeAPopup();
+});
+document.getElementById('b-popup').addEventListener('click', function(e) {
+  if (e.target === this) closeBPopup();
+});
+function copyQuick(btn) {
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+}
+function copyMain() {
+  const btn = document.getElementById('b-copy-main-btn');
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy listing details';
+    btn.classList.remove('copied');
+  }, 2000);
+}
+</script>
+</body>
+</html>

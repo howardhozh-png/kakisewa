@@ -187,6 +187,8 @@ export interface AgentProfile {
   notif_push?: boolean | null;
   notif_email?: boolean | null;
   survey_completed_at?: string | null;
+  board_slug?: string | null;
+  board_passcode?: string | null;
   survey_response?: Record<string, unknown> | null;
   is_test_account?: boolean | null;
 }

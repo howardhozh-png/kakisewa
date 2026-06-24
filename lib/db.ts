@@ -3161,3 +3161,46 @@ export async function getUpcomingCalendarEvents(limit = 50): Promise<CalendarEve
     .limit(limit);
   return (data ?? []) as CalendarEvent[];
 }
+
+// ─── Board share (mypipeline) ─────────────────────────────────────────────────
+
+export async function getAgentByBoardSlug(slug: string): Promise<{
+  id: string; name: string | null; agency: string | null;
+  board_passcode: string | null; board_slug: string | null;
+} | null> {
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from("agent_profiles")
+    .select("id, name, agency, board_passcode, board_slug")
+    .eq("board_slug", slug)
+    .maybeSingle();
+  return data as { id: string; name: string | null; agency: string | null; board_passcode: string | null; board_slug: string | null; } | null;
+}
+
+export async function getListedLeadsByUserId(userId: string): Promise<OwnerLead[]> {
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from("owner_leads")
+    .select("id, property_name, unit, address, expected_rent, bedrooms, bathrooms, parking, available_from, photo_urls, cover_photo_index, stage")
+    .eq("user_id", userId)
+    .eq("stage", "listed")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    id: r.id as string,
+    owner_name: "",
+    owner_phone: "",
+    property_name: r.property_name as string | null,
+    unit: r.unit as string | null,
+    address: r.address as string | null,
+    expected_rent: r.expected_rent as number | null,
+    bedrooms: r.bedrooms as number | null,
+    bathrooms: r.bathrooms as number | null,
+    parking: r.parking as string | null,
+    available_from: r.available_from as string | null,
+    photo_urls: Array.isArray(r.photo_urls) ? r.photo_urls as string[] : [],
+    cover_photo_index: r.cover_photo_index as number | null,
+    stage: r.stage as OwnerLead["stage"],
+    created_at: "",
+  }));
+}
