@@ -146,66 +146,65 @@ export function CalendarView({ events, weekStartISO, view = "weekly", activeMont
 
   return (
     <div>
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
-        <div>
-          <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>My Calendar</h1>
+      {/* Page header — row 1: title + view toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>My Calendar</h1>
+        <div style={{ display: "flex", background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", borderRadius: 10, padding: 3, gap: 2, flexShrink: 0 }}>
+          {(["weekly", "monthly"] as const).map((v) => {
+            const active = view === v;
+            return (
+              <button
+                key={v}
+                onClick={() => {
+                  if (v === "monthly") router.push(`/calendar?view=monthly&month=${currentMonth}`);
+                  else router.push(`/calendar?week=${toISO(weekStart)}`);
+                }}
+                style={{
+                  padding: "5px 14px", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  border: "none", background: active ? "var(--kk-surface)" : "transparent",
+                  color: active ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                  boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            );
+          })}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* View toggle */}
-          <div style={{ display: "flex", background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", borderRadius: 10, padding: 3, gap: 2 }}>
-            {(["weekly", "monthly"] as const).map((v) => {
-              const active = view === v;
-              return (
-                <button
-                  key={v}
-                  onClick={() => {
-                    if (v === "monthly") router.push(`/calendar?view=monthly&month=${currentMonth}`);
-                    else router.push(`/calendar?week=${toISO(weekStart)}`);
-                  }}
-                  style={{
-                    padding: "5px 14px", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                    border: "none", background: active ? "var(--kk-surface)" : "transparent",
-                    color: active ? "var(--kk-ink)" : "var(--kk-ink-mute)",
-                    boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </button>
-              );
-            })}
-          </div>
-          <button onClick={goToday} className="kk-pill kk-pill-ghost text-[13px] font-medium" style={{ padding: "7px 14px" }}>
-            Today
-          </button>
-          <button
-            onClick={() => view === "monthly" ? navigateMonth(-1) : navigate(-1)}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
-            style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}
-          >
-            <ChevronLeft className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
-          </button>
-          <span className="text-[14px] tabular-nums" style={{ color: "var(--kk-ink)", minWidth: 150, textAlign: "center", fontWeight: 600 }}>
-            {view === "monthly" ? `${MONTH_NAMES[mm - 1]} ${my}` : formatWeekRange(weekStart)}
-          </span>
-          <button
-            onClick={() => view === "monthly" ? navigateMonth(1) : navigate(1)}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
-            style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}
-          >
-            <ChevronRight className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
-          </button>
-          <button
-            id="tour-add-event"
-            onClick={() => { setAddDate(today); setAddOpen(true); }}
-            className="kk-pill flex items-center gap-2"
-            style={{ background: "var(--kk-blue)", color: "#fff", padding: "7px 14px", fontSize: 13 }}
-          >
-            <CalendarPlus className="w-3.5 h-3.5" />
-            Add event
-          </button>
-        </div>
+      </div>
+
+      {/* Page header — row 2: nav + date + add event, single non-wrapping row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+        <button onClick={goToday} className="kk-pill kk-pill-ghost text-[13px] font-medium" style={{ padding: "6px 12px", flexShrink: 0 }}>
+          Today
+        </button>
+        <button
+          onClick={() => view === "monthly" ? navigateMonth(-1) : navigate(-1)}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
+          style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)", flexShrink: 0 }}
+        >
+          <ChevronLeft className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
+        </button>
+        <span className="text-[13px] tabular-nums" style={{ color: "var(--kk-ink)", flex: 1, textAlign: "center", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {view === "monthly" ? `${MONTH_NAMES[mm - 1]} ${my}` : formatWeekRange(weekStart)}
+        </span>
+        <button
+          onClick={() => view === "monthly" ? navigateMonth(1) : navigate(1)}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
+          style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)", flexShrink: 0 }}
+        >
+          <ChevronRight className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
+        </button>
+        <button
+          id="tour-add-event"
+          onClick={() => { setAddDate(today); setAddOpen(true); }}
+          className="kk-pill flex items-center gap-1.5"
+          style={{ background: "var(--kk-blue)", color: "#fff", padding: "6px 12px", fontSize: 13, flexShrink: 0 }}
+        >
+          <CalendarPlus className="w-3.5 h-3.5" />
+          Add event
+        </button>
       </div>
 
       {/* Filter strip */}
