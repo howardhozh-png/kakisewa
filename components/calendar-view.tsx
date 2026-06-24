@@ -70,16 +70,21 @@ function formatTime(t: string | null): string {
   return `${hour}:${String(m).padStart(2,"0")} ${period}`;
 }
 
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const CELL_H = 60;
+
 interface Props {
   events: CalendarEvent[];
-  weekStartISO: string; // "YYYY-MM-DD"
+  weekStartISO: string;
+  view?: "weekly" | "monthly";
+  activeMonth?: string; // "YYYY-MM"
 }
 
-export function CalendarView({ events, weekStartISO }: Props) {
+export function CalendarView({ events, weekStartISO, view = "weekly", activeMonth }: Props) {
   const router = useRouter();
   const weekStart = new Date(weekStartISO + "T00:00:00");
-  // Pin today to MYT regardless of phone timezone so highlight matches server
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const currentMonth = today.slice(0, 7);
   const [addOpen, setAddOpen] = useState(false);
   const [addDate, setAddDate] = useState<string | undefined>();
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
@@ -96,14 +101,26 @@ export function CalendarView({ events, weekStartISO }: Props) {
     router.push(`/calendar?week=${toISO(next)}`);
   }
 
+  function navigateMonth(delta: number) {
+    const base = activeMonth ?? currentMonth;
+    const [y, m] = base.split("-").map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    const newMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    router.push(`/calendar?view=monthly&month=${newMonth}`);
+  }
+
   function goToday() {
-    const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
-    const [y, m, d] = todayStr.split("-").map(Number);
-    const ref = new Date(y, m - 1, d);
-    const day = ref.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    ref.setDate(ref.getDate() + diff);
-    router.push(`/calendar?week=${toISO(ref)}`);
+    if (view === "monthly") {
+      router.push(`/calendar?view=monthly&month=${currentMonth}`);
+    } else {
+      const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+      const [y, m, d] = todayStr.split("-").map(Number);
+      const ref = new Date(y, m - 1, d);
+      const day = ref.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      ref.setDate(ref.getDate() + diff);
+      router.push(`/calendar?week=${toISO(ref)}`);
+    }
   }
 
   function handleDelete(id: string) {
@@ -114,33 +131,66 @@ export function CalendarView({ events, weekStartISO }: Props) {
     });
   }
 
+  // Monthly grid helpers
+  const monthlyYearMonth = activeMonth ?? currentMonth;
+  const [my, mm] = monthlyYearMonth.split("-").map(Number);
+  const byDate: Record<string, CalendarEvent[]> = {};
+  if (view === "monthly") {
+    for (const ev of events) {
+      const filtered = filterType === "all" || ev.event_type === filterType;
+      if (!filtered) continue;
+      if (!byDate[ev.event_date]) byDate[ev.event_date] = [];
+      byDate[ev.event_date].push(ev);
+    }
+  }
+
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
         <div>
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>My Calendar</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={goToday}
-            className="kk-pill kk-pill-ghost text-[13px] font-medium"
-            style={{ padding: "7px 14px" }}
-          >
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* View toggle */}
+          <div style={{ display: "flex", background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", borderRadius: 10, padding: 3, gap: 2 }}>
+            {(["weekly", "monthly"] as const).map((v) => {
+              const active = view === v;
+              return (
+                <button
+                  key={v}
+                  onClick={() => {
+                    if (v === "monthly") router.push(`/calendar?view=monthly&month=${currentMonth}`);
+                    else router.push(`/calendar?week=${toISO(weekStart)}`);
+                  }}
+                  style={{
+                    padding: "5px 14px", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                    border: "none", background: active ? "var(--kk-surface)" : "transparent",
+                    color: active ? "var(--kk-ink)" : "var(--kk-ink-mute)",
+                    boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={goToday} className="kk-pill kk-pill-ghost text-[13px] font-medium" style={{ padding: "7px 14px" }}>
             Today
           </button>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => view === "monthly" ? navigateMonth(-1) : navigate(-1)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
             style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}
           >
             <ChevronLeft className="w-4 h-4" style={{ color: "var(--kk-ink-soft)" }} />
           </button>
-          <span className="text-[14px] font-600 tabular-nums" style={{ color: "var(--kk-ink)", minWidth: 150, textAlign: "center", fontWeight: 600 }}>
-            {formatWeekRange(weekStart)}
+          <span className="text-[14px] tabular-nums" style={{ color: "var(--kk-ink)", minWidth: 150, textAlign: "center", fontWeight: 600 }}>
+            {view === "monthly" ? `${MONTH_NAMES[mm - 1]} ${my}` : formatWeekRange(weekStart)}
           </span>
           <button
-            onClick={() => navigate(1)}
+            onClick={() => view === "monthly" ? navigateMonth(1) : navigate(1)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-70"
             style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}
           >
@@ -182,8 +232,71 @@ export function CalendarView({ events, weekStartISO }: Props) {
         })}
       </div>
 
-      {/* Desktop 7-column grid */}
-      <div
+      {/* Monthly grid view — same design as homepage MonthCalendar */}
+      {view === "monthly" && (() => {
+        const daysInMonth = new Date(my, mm, 0).getDate();
+        const firstDow = (new Date(my, mm - 1, 1).getDay() + 6) % 7; // 0=Mon
+        const cells: Array<number | null> = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+        while (cells.length < 42) cells.push(null);
+        const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+        return (
+          <div style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 18, overflow: "hidden", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--kk-line)" }}>
+              {DAY_LABELS.map((d) => (
+                <div key={d} style={{ padding: "10px 0", textAlign: "center", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--kk-ink-faint)" }}>{d}</div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+              {cells.map((day, i) => {
+                const colIdx = i % 7;
+                const rowIdx = Math.floor(i / 7);
+                const isLastRow = rowIdx === 5;
+                const borderRight = colIdx < 6 ? "1px solid var(--kk-line)" : "none";
+                const borderBottom = !isLastRow ? "1px solid var(--kk-line)" : "none";
+                if (!day) return <div key={i} style={{ borderRight, borderBottom, height: CELL_H, background: "rgba(0,0,0,0.015)" }} />;
+                const dateStr = `${my}-${String(mm).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                const isToday = dateStr === today;
+                const dayEvents = byDate[dateStr] ?? [];
+                const shown = dayEvents.slice(0, 3);
+                return (
+                  <div key={i} style={{ borderRight, borderBottom, height: CELL_H, padding: "5px 4px", overflow: "hidden", background: isToday ? "rgba(0,113,227,0.04)" : "transparent" }}
+                    onClick={() => { setAddDate(dateStr); setAddOpen(true); }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 3 }}>
+                      {isToday ? (
+                        <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--kk-blue)", color: "#fff", borderRadius: "50%", fontSize: 11, fontWeight: 700 }}>{day}</span>
+                      ) : (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink)" }}>{day}</span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      {shown.map((ev) => {
+                        const s = getEventStyle(ev.event_type ?? null);
+                        return (
+                          <div key={ev.id} style={{ background: s.background, borderRadius: 3, padding: "2px 4px", cursor: "pointer" }}
+                            onClick={(e) => { e.stopPropagation(); setDetailEvent(ev); }}
+                          >
+                            <p style={{ fontSize: 9, fontWeight: 500, color: s.color, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {ev.event_time && <span style={{ opacity: 0.85 }}>{formatTime(ev.event_time)} </span>}
+                              {ev.title}
+                            </p>
+                          </div>
+                        );
+                      })}
+                      {dayEvents.length > 3 && (
+                        <p style={{ fontSize: 9, color: "var(--kk-ink-faint)", paddingLeft: 4 }}>+{dayEvents.length - 3} more</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Desktop 7-column weekly grid */}
+      {view === "weekly" && <div
         className="hidden lg:grid"
         style={{
           gridTemplateColumns: "repeat(7, 1fr)",
@@ -247,10 +360,10 @@ export function CalendarView({ events, weekStartISO }: Props) {
             </div>
           );
         })}
-      </div>
+      </div>}
 
-      {/* Mobile agenda view */}
-      <div className="lg:hidden space-y-6">
+      {/* Mobile agenda view — weekly only */}
+      {view === "weekly" && <div className="lg:hidden space-y-6">
         {days.map(({ date, iso, dayName, dayNum }) => {
           const isToday = iso === today;
           const dayEvents = events.filter((e) => e.event_date === iso && (filterType === "all" || e.event_type === filterType));
@@ -313,7 +426,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Global add dialog */}
       <CalendarEventDialog

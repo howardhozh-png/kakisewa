@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { RadialBarChart, RadialBar, PolarRadiusAxis, Label } from "recharts";
-import { fetchExpandedStats, fetchCalendarMonth } from "./actions";
+import { fetchCalendarMonth } from "./actions";
 import { MonthPickerPill } from "@/components/month-picker-pill";
 import type { ExpandedDashboardStats, CalendarEvent } from "@/lib/db";
 import { Layers, Banknote, CalendarDays, Building2, TrendingUp } from "lucide-react";
@@ -79,6 +79,7 @@ function MetricCard({
   subLabel,
   progress,
   progressColor,
+  progressLabel,
   href,
   sparkline,
 }: {
@@ -91,6 +92,7 @@ function MetricCard({
   subLabel?: string;
   progress?: number;
   progressColor?: string;
+  progressLabel?: string;
   href: string;
   sparkline?: React.ReactNode;
 }) {
@@ -127,7 +129,9 @@ function MetricCard({
             <div style={{ height: 7, background: "var(--kk-line)", borderRadius: 4, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min(progress, 100)}%`, background: progressColor ?? "var(--kk-blue)", borderRadius: 4, transition: "width 0.3s ease" }} />
             </div>
-            <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", marginTop: 5 }}>{Math.round(progress)}% completed</p>
+            <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", marginTop: 5 }}>
+              {progressLabel ?? `${Math.round(progress)}% completed`}
+            </p>
           </div>
         )}
       </div>
@@ -140,7 +144,7 @@ function MetricCard({
 // Each cell is a fixed height; always 6 rows (42 cells) so height never changes
 const CELL_H = 60;
 
-function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMonth: string }) {
+function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[]; yearMonth: string; picker?: React.ReactNode }) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const [y, m] = yearMonth.split("-").map(Number);
 
@@ -167,12 +171,12 @@ function MonthCalendar({ events, yearMonth }: { events: CalendarEvent[]; yearMon
       boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)", height: "100%",
     }}>
       {/* Header */}
-      <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--kk-ink)" }}>Event Calendar</span>
-          <span style={{ fontSize: 11, color: "var(--kk-ink-mute)", marginLeft: 8 }}>{MONTH_NAMES[m - 1]} {y}</span>
+          {picker}
         </div>
-        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)" }}>View full calendar →</span>
+        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)", flexShrink: 0 }}>View full calendar →</span>
       </div>
 
       {/* Day headers */}
@@ -517,11 +521,7 @@ export function StatsSection({
   function handleMonthChange(month: string) {
     setStartMonth(month);
     startTransition(async () => {
-      const [fresh, freshCal] = await Promise.all([
-        fetchExpandedStats(1, month),
-        fetchCalendarMonth(month),
-      ]);
-      setStats(fresh);
+      const freshCal = await fetchCalendarMonth(month);
       setCalendarEvents(freshCal);
     });
   }
@@ -549,6 +549,7 @@ export function StatsSection({
           subLabel={(planName ?? "") + " plan"}
           progress={cardUsagePct}
           progressColor={cardUsageColor}
+          progressLabel={`${Math.round(Math.max(0, 100 - cardUsagePct))}% remaining`}
           href="/subscription"
         />
         <MetricCard
@@ -584,11 +585,6 @@ export function StatsSection({
         />
       </div>
 
-      {/* Month picker */}
-      <div className="flex items-center gap-2 flex-wrap mb-4">
-        <MonthPickerPill value={startMonth} onChange={handleMonthChange} />
-      </div>
-
       {/* Pipeline funnel panel */}
       <div ref={gridRef} className="mb-6">
         {/* Desktop: single white card */}
@@ -611,7 +607,7 @@ export function StatsSection({
             <Arrow />
             <FunnelItem
               title="Existing Listing" href="/existing-listing"
-              count={(stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0)} countLabel="contracts" arcLabel="at risk" color="#1F8B4C"
+              count={(stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0)} countLabel="contracts" arcLabel="expired/expiring" color="#1F8B4C"
               donutPct={existingAtRiskPct}
               stats={[{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }, { label: "Renewing", value: stats.existingRenewingCount ?? 0 }]}
             />
@@ -632,7 +628,7 @@ export function StatsSection({
             {[
               { title: "Property Leads", href: "/property-leads", count: stats.totalUploaded ?? 0, countLabel: "leads", arcLabel: "contacted", color: "#0071E3", donutPct: contactedPct, stats: [{ label: "Contacted", value: stats.totalContacted ?? 0 }, { label: "Not yet", value: (stats.totalUploaded ?? 0) - (stats.totalContacted ?? 0) }] },
               { title: "My Listing", href: "/my-listing", count: stats.totalListedCount ?? 0, countLabel: "listings", arcLabel: "available", color: "#6F2DA8", donutPct: myAvailPct, stats: [{ label: "For rent", value: stats.listedRentCount ?? 0 }, { label: "For sale", value: stats.listedSaleCount ?? 0 }] },
-              { title: "Existing Listing", href: "/existing-listing", count: (stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0), countLabel: "contracts", arcLabel: "at risk", color: "#1F8B4C", donutPct: existingAtRiskPct, stats: [{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }] },
+              { title: "Existing Listing", href: "/existing-listing", count: (stats.existingTotalActiveCount ?? 0) + (stats.existingExpiredCount ?? 0), countLabel: "contracts", arcLabel: "expired/expiring", color: "#1F8B4C", donutPct: existingAtRiskPct, stats: [{ label: "Expired", value: stats.existingExpiredCount ?? 0 }, { label: "Expiring 60d", value: stats.existingExpiringIn60Count ?? 0 }] },
               { title: "Lost Listing", href: "/lost-listing", count: stats.targetTotalCount ?? 0, countLabel: "watching", arcLabel: "expiring", color: "#B45309", donutPct: targetAtRiskPct, stats: [{ label: "Expiring 60d", value: stats.targetExpiringIn60Count ?? 0 }, { label: "Watching", value: stats.targetWatchingCount ?? 0 }] },
             ].map((item) => (
               <Link key={item.href} href={item.href} style={{ textDecoration: "none", display: "block" }}>
@@ -659,7 +655,11 @@ export function StatsSection({
       {/* Monthly calendar + Upcoming Viewings */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3" style={{ minHeight: 420 }}>
         <div className="lg:col-span-2">
-          <MonthCalendar events={calendarEvents} yearMonth={startMonth} />
+          <MonthCalendar
+            events={calendarEvents}
+            yearMonth={startMonth}
+            picker={<MonthPickerPill value={startMonth} onChange={handleMonthChange} />}
+          />
         </div>
         <div>
           <UpcomingViewings viewings={upcomingViewings} />
