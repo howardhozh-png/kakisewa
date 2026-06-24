@@ -317,9 +317,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
             <XIcon className="w-3 h-3" /> Clear
           </button>
         )}
-        <span className="ml-auto shrink-0 text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
-          {filtered.length} of {local.length} leads
-        </span>
       </div>
 
       <DndContext
