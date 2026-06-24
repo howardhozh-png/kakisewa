@@ -383,8 +383,9 @@ function FunnelItem({
         {stats.map((s) => (
           <div key={s.label} style={{
             display: "inline-flex", alignItems: "center", gap: 5,
-            background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)",
+            background: "var(--kk-surface)", border: "1px solid var(--kk-line)",
             borderRadius: 8, padding: "5px 10px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
           }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", fontVariantNumeric: "tabular-nums" }}>
               {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
@@ -639,7 +640,7 @@ export function StatsSection({
                   </div>
                   <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
                     {item.stats.map((s) => (
-                      <div key={s.label} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", borderRadius: 7, padding: "4px 8px" }}>
+                      <div key={s.label} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 7, padding: "4px 8px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", fontVariantNumeric: "tabular-nums" }}>{typeof s.value === "number" ? s.value.toLocaleString() : s.value}</span>
                         <span style={{ fontSize: 10, color: "var(--kk-ink-mute)" }}>{s.label}</span>
                       </div>

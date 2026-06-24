@@ -43,7 +43,7 @@ function getEventStyle(eventType: string | null): { background: string; color: s
   const et = EVENT_TYPES.find((e) => e.value === eventType);
   return et
     ? { background: et.bg, color: et.color }
-    : { background: "var(--kk-theme-light)", color: "var(--kk-theme-dark)" };
+    : { background: "rgba(0,0,0,0.06)", color: "#6E6E73" };
 }
 
 function toISO(d: Date): string {
@@ -509,6 +509,25 @@ function formatDisplay(date: Date): string {
   return date.toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function ContactRow({ label, nameVal, phoneVal, onNameChange, onPhoneChange }: {
+  label: string; nameVal: string; phoneVal: string;
+  onNameChange: (v: string) => void; onPhoneChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <p className="kk-overline mb-1.5">{label}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <input value={nameVal} onChange={(e) => onNameChange(e.target.value)} placeholder="Name (optional)"
+          style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
+          onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
+        <input value={phoneVal} onChange={(e) => onPhoneChange(e.target.value)} placeholder="Phone (optional)" type="tel"
+          style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
+          onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
+      </div>
+    </div>
+  );
+}
+
 function EventDetailDialog({
   event, onClose, onDelete,
 }: {
@@ -567,25 +586,6 @@ function EventDetailDialog({
       onClose();
       router.refresh();
     });
-  }
-
-  function ContactRow({ label, nameVal, phoneVal, onNameChange, onPhoneChange }: {
-    label: string; nameVal: string; phoneVal: string;
-    onNameChange: (v: string) => void; onPhoneChange: (v: string) => void;
-  }) {
-    return (
-      <div style={{ marginBottom: 12 }}>
-        <p className="kk-overline mb-1.5">{label}</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <input value={nameVal} onChange={(e) => onNameChange(e.target.value)} placeholder="Name (optional)"
-            style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
-          <input value={phoneVal} onChange={(e) => onPhoneChange(e.target.value)} placeholder="Phone (optional)" type="tel"
-            style={{ width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "var(--kk-ink)", background: "var(--kk-surface)", outline: "none", fontFamily: "inherit" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")} onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")} />
-        </div>
-      </div>
-    );
   }
 
   return (
