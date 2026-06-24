@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { RadialBarChart, RadialBar, PolarRadiusAxis, Label } from "recharts";
-import { fetchCalendarMonth } from "./actions";
-import { MonthPickerPill } from "@/components/month-picker-pill";
 import type { ExpandedDashboardStats, CalendarEvent } from "@/lib/db";
 import { Layers, Banknote, CalendarDays, Building2, TrendingUp } from "lucide-react";
 
@@ -98,29 +96,29 @@ function MetricCard({
 }) {
   return (
     <Link href={href} style={{ textDecoration: "none", display: "block" }}>
-      <div style={{
+      <div className="kk-metric-card-inner" style={{
         background: "var(--kk-surface)", border: "1px solid var(--kk-line)", borderRadius: 16,
-        padding: "16px 16px 18px", cursor: "pointer", height: "100%", position: "relative", overflow: "hidden",
+        cursor: "pointer", height: "100%", position: "relative", overflow: "hidden",
       }}>
         {sparkline && (
           <div style={{ position: "absolute", bottom: 0, right: 0, pointerEvents: "none", lineHeight: 0 }}>
             {sparkline}
           </div>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icon style={{ width: 26, height: 26, color: iconColor }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="kk-metric-card-icon-wrap" style={{ background: iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon className="kk-metric-card-icon-svg" style={{ color: iconColor }} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", marginBottom: 4 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", marginBottom: 3 }}>
               {label}
             </p>
-            <p style={{ fontSize: 22, fontWeight: 700, color: "var(--kk-ink)", letterSpacing: "-0.02em", lineHeight: 1 }}>
+            <p className="kk-metric-card-value">
               {value}
-              {subValue && <span style={{ fontSize: 14, fontWeight: 500, color: "var(--kk-ink-mute)" }}>{" "}/{" "}{subValue}</span>}
+              {subValue && <span style={{ fontSize: 13, fontWeight: 500, color: "var(--kk-ink-mute)" }}>{" "}/{" "}{subValue}</span>}
             </p>
             {subLabel && (
-              <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", marginTop: 3 }}>{subLabel}</p>
+              <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", marginTop: 2 }}>{subLabel}</p>
             )}
           </div>
         </div>
@@ -139,14 +137,19 @@ function MetricCard({
   );
 }
 
-// ── Full month calendar — fixed 6-row grid ─────────────────────────────────────
+// ── Week calendar — shows Mon–Sun of the current week ─────────────────────────
 
-// Each cell is a fixed height; always 6 rows (42 cells) so height never changes
-const CELL_H = 60;
-
-function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[]; yearMonth: string; picker?: React.ReactNode }) {
+function WeekCalendar({ events }: { events: CalendarEvent[] }) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
-  const [y, m] = yearMonth.split("-").map(Number);
+  const [ty, tm, td] = today.split("-").map(Number);
+
+  // Monday of this week
+  const todayDate = new Date(ty, tm - 1, td);
+  const dow = (todayDate.getDay() + 6) % 7; // 0=Mon
+  const weekDays: string[] = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(ty, tm - 1, td - dow + i);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  });
 
   const byDate: Record<string, CalendarEvent[]> = {};
   for (const ev of events) {
@@ -154,33 +157,21 @@ function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[];
     byDate[ev.event_date].push(ev);
   }
 
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const firstDow = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 0 = Mon
-
-  // Always 42 cells = 6 rows
-  const cells: Array<number | null> = [
-    ...Array(firstDow).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length < 42) cells.push(null);
-
   return (
     <div style={{
       background: "var(--kk-surface)",
       border: "1px solid var(--kk-line)", borderRadius: 18, overflow: "hidden",
       boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)", height: "100%",
+      display: "flex", flexDirection: "column",
     }}>
-      {/* Header — NOT inside a link so the month picker can open freely */}
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--kk-ink)" }}>Event Calendar</span>
-          {picker}
-        </div>
+      {/* Header */}
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexShrink: 0 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--kk-ink)" }}>Event Calendar</span>
         <Link href="/calendar" style={{ fontSize: 12, fontWeight: 500, color: "var(--kk-blue)", flexShrink: 0, textDecoration: "none" }}>View full calendar →</Link>
       </div>
 
-      {/* Day headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--kk-line)" }}>
+      {/* Day-of-week headers */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--kk-line)", flexShrink: 0 }}>
         {DAY_LABELS.map((d) => (
           <div key={d} style={{ padding: "7px 0", textAlign: "center", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--kk-ink-faint)" }}>
             {d}
@@ -188,46 +179,36 @@ function MonthCalendar({ events, yearMonth, picker }: { events: CalendarEvent[];
         ))}
       </div>
 
-      {/* Day cells — fixed height, 6 rows */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
-        {cells.map((day, i) => {
-          const colIdx = i % 7;
-          const rowIdx = Math.floor(i / 7);
-          const isLastRow = rowIdx === 5;
-          const borderRight = colIdx < 6 ? "1px solid var(--kk-line)" : "none";
-          const borderBottom = !isLastRow ? "1px solid var(--kk-line)" : "none";
-
-          if (!day) {
-            return (
-              <div key={i} style={{ borderRight, borderBottom, height: CELL_H, background: "rgba(0,0,0,0.015)" }} />
-            );
-          }
-
-          const dateStr = `${y}-${String(m).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      {/* Single row of 7 day cells — flex:1 fills remaining height on desktop */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", flex: 1, minHeight: 80 }}>
+        {weekDays.map((dateStr, i) => {
           const isToday = dateStr === today;
+          const dayNum = parseInt(dateStr.split("-")[2]);
           const dayEvents = byDate[dateStr] ?? [];
-          // Show max 2 events; clip rest (cell is fixed height, no "+N more")
-          const shown = dayEvents.slice(0, 2);
+          const borderRight = i < 6 ? "1px solid var(--kk-line)" : "none";
 
           return (
-            <div key={i} style={{ borderRight, borderBottom, height: CELL_H, padding: "5px 4px", overflow: "hidden", background: isToday ? "rgba(0,113,227,0.04)" : "transparent" }}>
+            <div key={dateStr} style={{
+              borderRight, padding: "6px 4px", overflow: "hidden",
+              background: isToday ? "rgba(0,113,227,0.04)" : "transparent",
+              display: "flex", flexDirection: "column",
+            }}>
               {/* Day number */}
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 3 }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 4, flexShrink: 0 }}>
                 {isToday ? (
                   <span style={{ width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--kk-blue)", color: "#fff", borderRadius: "50%", fontSize: 10, fontWeight: 700 }}>
-                    {day}
+                    {dayNum}
                   </span>
                 ) : (
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)" }}>{day}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)" }}>{dayNum}</span>
                 )}
               </div>
-
               {/* Event pills */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {shown.map((ev) => {
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, overflow: "hidden" }}>
+                {dayEvents.map((ev) => {
                   const s = getEventStyle(ev.event_type ?? null);
                   return (
-                    <div key={ev.id} style={{ background: s.bg, borderRadius: 3, padding: "2px 4px" }}>
+                    <div key={ev.id} style={{ background: s.bg, borderRadius: 3, padding: "2px 3px" }}>
                       <p style={{ fontSize: 9, fontWeight: 500, color: s.color, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {ev.event_time && <span style={{ opacity: 0.85 }}>{fmtTime(ev.event_time)} </span>}
                         {ev.title}
@@ -508,7 +489,7 @@ export function StatsSection({
   const [startMonth, setStartMonth] = useState(currentMonth);
   const [calendarEvents, setCalendarEvents] = useState(monthEvents);
   const [stats, setStats] = useState(initialStats);
-  const [isPending, startTransition] = useTransition();
+
   const gridRef = useRef<HTMLDivElement>(null);
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
@@ -519,14 +500,6 @@ export function StatsSection({
   const cardUsageColor = cardUsagePct >= 100 ? "var(--kk-red)" : cardUsagePct >= 80 ? "var(--kk-amber)" : "var(--kk-green)";
   const commFormatted = (mtdCommission ?? 0).toLocaleString("en-MY", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-  function handleMonthChange(month: string) {
-    setStartMonth(month);
-    startTransition(async () => {
-      const freshCal = await fetchCalendarMonth(month);
-      setCalendarEvents(freshCal);
-    });
-  }
-
   const contactedPct = stats.totalUploaded > 0 ? Math.round((stats.totalContacted / stats.totalUploaded) * 100) : 0;
   const myAvailPct = stats.existingTotalActiveCount > 0 ? Math.round((stats.existingExpiringCount / stats.existingTotalActiveCount) * 100) : 0;
   const existingTotal = stats.existingTotalActiveCount + stats.existingExpiredCount;
@@ -536,7 +509,7 @@ export function StatsSection({
   void doExportPDF; void doExportImage;
 
   return (
-    <div style={{ opacity: isPending ? 0.5 : 1, transition: "opacity 0.15s ease" }}>
+    <div>
 
       {/* Top metric row — 4 white cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -653,14 +626,10 @@ export function StatsSection({
         </div>
       </div>
 
-      {/* Monthly calendar + Upcoming Viewings */}
+      {/* Week calendar + Upcoming Viewings */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3" style={{ minHeight: 420 }}>
         <div className="lg:col-span-2">
-          <MonthCalendar
-            events={calendarEvents}
-            yearMonth={startMonth}
-            picker={<MonthPickerPill value={startMonth} onChange={handleMonthChange} />}
-          />
+          <WeekCalendar events={calendarEvents} />
         </div>
         <div>
           <UpcomingViewings viewings={upcomingViewings} />

@@ -781,3 +781,16 @@ html, body {
 .rdp-chevron {
   fill: var(--kk-ink-mute);
 }
+
+/* ── Metric card responsive sizing ─────────────────────────────────────────── */
+.kk-metric-card-inner { padding: 16px 16px 18px; }
+.kk-metric-card-icon-wrap { width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0; }
+.kk-metric-card-icon-svg { width: 26px; height: 26px; }
+.kk-metric-card-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; color: var(--kk-ink); margin: 0; }
+
+@media (max-width: 639px) {
+  .kk-metric-card-inner { padding: 12px 12px 14px; }
+  .kk-metric-card-icon-wrap { width: 38px; height: 38px; border-radius: 10px; }
+  .kk-metric-card-icon-svg { width: 18px; height: 18px; }
+  .kk-metric-card-value { font-size: 17px; }
+}
