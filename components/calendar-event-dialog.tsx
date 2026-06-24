@@ -4,10 +4,26 @@ import { useState, useTransition, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar-rac";
 import { parseDate, type DateValue } from "@internationalized/date";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarDays } from "lucide-react";
 import { createCalendarEvent } from "@/lib/actions";
 import { toast } from "sonner";
-import { TimeSegmentInput } from "@/components/time-segment-input";
+
+const TIMES = [
+  "12:00 AM", "12:30 AM",
+  "1:00 AM", "1:30 AM", "2:00 AM", "2:30 AM",
+  "3:00 AM", "3:30 AM", "4:00 AM", "4:30 AM",
+  "5:00 AM", "5:30 AM", "6:00 AM", "6:30 AM",
+  "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM",
+  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM",
+  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+  "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
+  "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM",
+  "9:00 PM", "9:30 PM", "10:00 PM", "10:30 PM",
+  "11:00 PM", "11:30 PM",
+];
 
 function to24h(label: string): string {
   const [time, period] = label.split(" ");
@@ -106,6 +122,7 @@ export function CalendarEventDialog({
   );
   const [timeLabel, setTimeLabel] = useState<string>("");
   const [eventType, setEventType] = useState<EventType | null>(defaultEventType);
+  const [showCal, setShowCal] = useState(false);
   const [ownerName, setOwnerName] = useState(defaultOwnerName);
   const [ownerPhone, setOwnerPhone] = useState(defaultOwnerPhone);
   const [tenantName, setTenantName] = useState(defaultTenantName);
@@ -118,6 +135,7 @@ export function CalendarEventDialog({
       setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
       setTimeLabel("");
       setEventType(defaultEventType);
+      setShowCal(false);
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
       setTenantName(defaultTenantName);
@@ -220,31 +238,51 @@ export function CalendarEventDialog({
             onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
           />
 
-          {/* Inline calendar — always visible */}
-          <p className="kk-overline mb-2">Date</p>
-          {date && (
-            <p className="text-[13px] font-medium mb-2" style={{ color: "var(--kk-blue)" }}>
-              {formatDisplay(date)}
-            </p>
+          {/* Date — click to reveal calendar */}
+          <p className="kk-overline mb-1.5">Date</p>
+          <button
+            type="button"
+            onClick={() => setShowCal((v) => !v)}
+            style={{
+              width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+              padding: "10px 13px", fontSize: 14,
+              color: date ? "var(--kk-ink)" : "var(--kk-ink-faint)",
+              background: "var(--kk-surface)", textAlign: "left", cursor: "pointer",
+              fontFamily: "inherit", display: "flex", alignItems: "center", gap: 7,
+              marginBottom: showCal ? 8 : 14,
+            }}
+          >
+            <CalendarDays style={{ width: 14, height: 14, flexShrink: 0, color: "var(--kk-ink-faint)" }} />
+            {date ? formatDisplay(date) : "Pick date"}
+          </button>
+          {showCal && (
+            <div style={{ border: "1.5px solid var(--kk-line)", borderRadius: 14, padding: "8px", background: "var(--kk-surface)", marginBottom: 14, display: "inline-block" }}>
+              <Calendar
+                value={date ? parseDate(toISO(date)) : null}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onChange={(d: any) => { if (d) { setDate(new Date(d.year, d.month - 1, d.day)); setShowCal(false); } }}
+              />
+            </div>
           )}
-          <div style={{
-            border: "1.5px solid var(--kk-line)",
-            borderRadius: 14,
-            padding: "8px",
-            background: "var(--kk-surface)",
-            marginBottom: 14,
-            display: "inline-block",
-          }}>
-            <Calendar
-              value={date ? parseDate(toISO(date)) : null}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onChange={(d: any) => { if (d) setDate(new Date(d.year, d.month - 1, d.day)); }}
-            />
-          </div>
 
           {/* Time */}
           <p className="kk-overline mb-1.5">Time <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
-          <TimeSegmentInput value={timeLabel} onChange={setTimeLabel} style={{ marginBottom: 16 }} />
+          <select
+            size={10}
+            value={timeLabel}
+            onChange={(e) => setTimeLabel(e.target.value)}
+            style={{
+              width: "100%", border: "1.5px solid var(--kk-line)", borderRadius: 10,
+              padding: "4px 0", fontSize: 14,
+              color: "var(--kk-ink)", background: "var(--kk-surface)",
+              outline: "none", fontFamily: "inherit", marginBottom: 16, cursor: "pointer",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--kk-blue)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--kk-line)")}
+          >
+            <option value="">No time set</option>
+            {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
 
           {/* Divider */}
           <div style={{ height: 1, background: "var(--kk-line)", margin: "4px 0 14px" }} />
