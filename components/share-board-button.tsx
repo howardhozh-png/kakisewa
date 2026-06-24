@@ -119,16 +119,10 @@ export function ShareBoardButton({ initialSlug, initialPasscode }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "8px 14px", borderRadius: 12,
-          border: "1.5px solid var(--kk-line, #E5E5EA)",
-          background: "var(--kk-surface, #fff)",
-          color: "var(--kk-ink, #1D1D1F)",
-          fontSize: 13, fontWeight: 600, cursor: "pointer",
-        }}
+        className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"
+        style={{ fontSize: "13px", fontWeight: 500, background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}
       >
-        <Share2 size={14} />
+        <Share2 className="w-4 h-4" />
         Share board
       </button>
 
