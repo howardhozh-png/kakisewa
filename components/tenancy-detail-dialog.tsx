@@ -585,11 +585,15 @@ function TenancyForm({
       <CalendarEventDialog
         open={calendarOpen}
         onOpenChange={setCalendarOpen}
-        defaultTitle={[tenancy.tenant_name, propertyName].filter(Boolean).join(" · ") || propertyName || ""}
+        defaultTitle={[ownerName || tenancy.property?.owner_name, propertyName].filter(Boolean).join(" · ") || tenancy.tenant_name || propertyName || ""}
         subtitle={propertyName || undefined}
         cardHref={`/existing-listing?highlight=${tenancy.id}`}
-        contextLabel={[tenancy.tenant_name, propertyName].filter(Boolean).join(" · ") || undefined}
+        contextLabel={[ownerName || tenancy.property?.owner_name, propertyName].filter(Boolean).join(" · ") || undefined}
         tenancyId={tenancy.id}
+        defaultOwnerName={ownerName}
+        defaultOwnerPhone={ownerPhone}
+        defaultTenantName={tenantName}
+        defaultTenantPhone={tenantPhone}
       />
     </div>
   );

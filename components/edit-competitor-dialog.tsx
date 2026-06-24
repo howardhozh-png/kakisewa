@@ -462,11 +462,13 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
       <CalendarEventDialog
         open={calendarOpen}
         onOpenChange={setCalendarOpen}
-        defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || "Follow up"}
+        defaultTitle={[lead.owner_name, propertyName].filter(Boolean).join(" · ") || [propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || "Follow up"}
         subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
         cardHref={`/lost-listing?highlight=${lead.id}`}
-        contextLabel={[propertyName, unit ? `Unit ${unit}` : null, lead.owner_name].filter(Boolean).join(" · ") || undefined}
+        contextLabel={[lead.owner_name, propertyName].filter(Boolean).join(" · ") || undefined}
         ownerLeadId={lead.id}
+        defaultOwnerName={lead.owner_name ?? ""}
+        defaultOwnerPhone={lead.owner_phone ?? ""}
       />
     </Dialog>
   );

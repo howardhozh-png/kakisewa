@@ -538,11 +538,13 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
           <CalendarEventDialog
             open={calendarOpen}
             onOpenChange={setCalendarOpen}
-            defaultTitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || ""}
+            defaultTitle={[lead.owner_name, propertyName].filter(Boolean).join(" · ") || [propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || ""}
             subtitle={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || undefined}
             cardHref={`/my-listing?highlight=${lead.id}`}
-            contextLabel={[propertyName, unit ? `Unit ${unit}` : null].filter(Boolean).join(" · ") || lead.owner_name || undefined}
+            contextLabel={[lead.owner_name, propertyName].filter(Boolean).join(" · ") || undefined}
             ownerLeadId={lead.id}
+            defaultOwnerName={lead.owner_name ?? ""}
+            defaultOwnerPhone={lead.owner_phone ?? ""}
           />
           <CompetitorRentedDialog
             lead={lead}
