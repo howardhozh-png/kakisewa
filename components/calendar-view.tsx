@@ -12,6 +12,21 @@ import type { CalendarEvent } from "@/lib/db";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+type EventTypeFilter = "all" | "viewing" | "call" | "focus_time";
+
+const EVENT_TYPES: { value: "viewing" | "call" | "focus_time"; label: string; bg: string; color: string }[] = [
+  { value: "viewing",    label: "Viewing",    bg: "rgba(0,113,227,0.10)",  color: "#0071E3" },
+  { value: "call",       label: "Call",       bg: "rgba(52,199,89,0.12)",  color: "#1F8B4C" },
+  { value: "focus_time", label: "Focus time", bg: "rgba(175,82,222,0.10)", color: "#6F2DA8" },
+];
+
+function getEventStyle(eventType: string | null): { background: string; color: string } {
+  const et = EVENT_TYPES.find((e) => e.value === eventType);
+  return et
+    ? { background: et.bg, color: et.color }
+    : { background: "var(--kk-theme-light)", color: "var(--kk-theme-dark)" };
+}
+
 function toISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
@@ -50,6 +65,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
   const [addDate, setAddDate] = useState<string | undefined>();
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [deletingId, startDelete] = useTransition();
+  const [filterType, setFilterType] = useState<EventTypeFilter>("all");
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart.getTime() + i * 86400000);
@@ -123,6 +139,30 @@ export function CalendarView({ events, weekStartISO }: Props) {
         </div>
       </div>
 
+      {/* Filter strip */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {([{ value: "all", label: "All" }, ...EVENT_TYPES] as { value: EventTypeFilter; label: string; bg?: string; color?: string }[]).map((ft) => {
+          const active = filterType === ft.value;
+          const et = EVENT_TYPES.find((e) => e.value === ft.value);
+          return (
+            <button
+              key={ft.value}
+              onClick={() => setFilterType(ft.value)}
+              style={{
+                padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                border: "1.5px solid",
+                background: active ? (et ? et.bg : "var(--kk-surface-2)") : "transparent",
+                borderColor: active ? (et ? et.color : "var(--kk-ink-soft)") : "var(--kk-line)",
+                color: active ? (et ? et.color : "var(--kk-ink)") : "var(--kk-ink-mute)",
+                transition: "all 0.12s",
+              }}
+            >
+              {ft.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Desktop 7-column grid */}
       <div
         className="hidden lg:grid"
@@ -137,7 +177,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
       >
         {days.map(({ date, iso, dayName, dayNum }, idx) => {
           const isToday = iso === today;
-          const dayEvents = events.filter((e) => e.event_date === iso);
+          const dayEvents = events.filter((e) => e.event_date === iso && (filterType === "all" || e.event_type === filterType));
           return (
             <div
               key={iso}
@@ -194,7 +234,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
       <div className="lg:hidden space-y-6">
         {days.map(({ date, iso, dayName, dayNum }) => {
           const isToday = iso === today;
-          const dayEvents = events.filter((e) => e.event_date === iso);
+          const dayEvents = events.filter((e) => e.event_date === iso && (filterType === "all" || e.event_type === filterType));
           if (!isToday && dayEvents.length === 0) return null;
           return (
             <div key={iso}>
@@ -242,7 +282,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
           );
         })}
 
-        {days.every(({ iso }) => events.filter(e => e.event_date === iso).length === 0) && (
+        {days.every(({ iso }) => events.filter(e => e.event_date === iso && (filterType === "all" || e.event_type === filterType)).length === 0) && (
           <div className="text-center py-12">
             <p className="text-[14px]" style={{ color: "var(--kk-ink-mute)" }}>No events this week</p>
             <button
@@ -276,6 +316,7 @@ export function CalendarView({ events, weekStartISO }: Props) {
 function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id: string) => void; onClick: () => void }) {
   const [hover, setHover] = useState(false);
   const timeStr = ev.event_time ? formatTime(ev.event_time) : "All day";
+  const { background, color } = getEventStyle(ev.event_type ?? null);
 
   return (
     <div
@@ -286,8 +327,8 @@ function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id
         borderRadius: 9,
         padding: "7px 9px",
         marginBottom: 5,
-        background: "var(--kk-theme-light)",
-        color: "var(--kk-theme-dark)",
+        background,
+        color,
         cursor: "pointer",
         position: "relative",
         display: "flex",
@@ -306,7 +347,7 @@ function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id
           style={{
             position: "absolute", top: 5, right: 5,
             background: "none", border: "none", cursor: "pointer",
-            color: "var(--kk-theme-dark)", opacity: 0.55, padding: 2,
+            color, opacity: 0.55, padding: 2,
           }}
           title="Remove event"
         >
@@ -318,13 +359,20 @@ function EventPill({ ev, onDelete, onClick }: { ev: CalendarEvent; onDelete: (id
 }
 
 const TIMES = [
-  "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
-  "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-  "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
-  "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
-  "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
-  "8:00 PM",
+  "12:00 AM", "12:30 AM",
+  "1:00 AM", "1:30 AM", "2:00 AM", "2:30 AM",
+  "3:00 AM", "3:30 AM", "4:00 AM", "4:30 AM",
+  "5:00 AM", "5:30 AM", "6:00 AM", "6:30 AM",
+  "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM",
+  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM",
+  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+  "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
+  "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM",
+  "9:00 PM", "9:30 PM", "10:00 PM", "10:30 PM",
+  "11:00 PM", "11:30 PM",
 ];
 
 function to24h(label: string): string {
@@ -357,6 +405,7 @@ function EventDetailDialog({
   const [title, setTitle] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [timeLabel, setTimeLabel] = useState("");
+  const [eventType, setEventType] = useState<"viewing" | "call" | "focus_time" | null>(null);
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
   const [tenantName, setTenantName] = useState("");
@@ -370,6 +419,7 @@ function EventDetailDialog({
       setTitle(event.title);
       setDate(new Date(event.event_date + "T00:00:00"));
       setTimeLabel(event.event_time ? to12h(event.event_time) : "");
+      setEventType(event.event_type ?? null);
       setOwnerName(event.owner_name ?? "");
       setOwnerPhone(event.owner_phone ?? "");
       setTenantName(event.tenant_name ?? "");
@@ -389,6 +439,7 @@ function EventDetailDialog({
         title: title.trim(),
         event_date: toISO(date!),
         event_time: timeLabel ? to24h(timeLabel) : null,
+        event_type: eventType,
         owner_name: ownerName.trim() || null,
         owner_phone: ownerPhone.trim() || null,
         tenant_name: tenantName.trim() || null,
@@ -433,6 +484,30 @@ function EventDetailDialog({
 
         {/* Body */}
         <div style={{ padding: "18px 22px", maxHeight: "70vh", overflowY: "auto" }}>
+          {/* Event type chips */}
+          <p className="kk-overline mb-2">Event type <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+            {EVENT_TYPES.map((et) => {
+              const active = eventType === et.value;
+              return (
+                <button
+                  key={et.value}
+                  type="button"
+                  onClick={() => setEventType(active ? null : et.value)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1.5px solid",
+                    background: active ? et.bg : "transparent",
+                    borderColor: active ? et.color : "var(--kk-line)",
+                    color: active ? et.color : "var(--kk-ink-mute)",
+                    transition: "all 0.12s",
+                  }}
+                >
+                  {et.label}
+                </button>
+              );
+            })}
+          </div>
+
           <p className="kk-overline mb-1.5">Event name</p>
           <input
             value={title}

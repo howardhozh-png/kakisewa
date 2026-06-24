@@ -9,13 +9,20 @@ import { createCalendarEvent } from "@/lib/actions";
 import { toast } from "sonner";
 
 const TIMES = [
-  "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
-  "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-  "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
-  "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
-  "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
-  "8:00 PM",
+  "12:00 AM", "12:30 AM",
+  "1:00 AM", "1:30 AM", "2:00 AM", "2:30 AM",
+  "3:00 AM", "3:30 AM", "4:00 AM", "4:30 AM",
+  "5:00 AM", "5:30 AM", "6:00 AM", "6:30 AM",
+  "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM",
+  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM",
+  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+  "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
+  "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM",
+  "9:00 PM", "9:30 PM", "10:00 PM", "10:30 PM",
+  "11:00 PM", "11:30 PM",
 ];
 
 function to24h(label: string): string {
@@ -69,11 +76,20 @@ function ContactField({ label, nameVal, phoneVal, onNameChange, onPhoneChange }:
   );
 }
 
+type EventType = "viewing" | "call" | "focus_time";
+
+const EVENT_TYPES: { value: EventType; label: string; bg: string; color: string }[] = [
+  { value: "viewing",    label: "Viewing",    bg: "rgba(0,113,227,0.10)",   color: "#0071E3" },
+  { value: "call",       label: "Call",       bg: "rgba(52,199,89,0.12)",   color: "#1F8B4C" },
+  { value: "focus_time", label: "Focus time", bg: "rgba(175,82,222,0.10)", color: "#6F2DA8" },
+];
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultTitle?: string;
   defaultDate?: string; // "YYYY-MM-DD"
+  defaultEventType?: EventType | null;
   contextLabel?: string;
   subtitle?: string;
   cardHref?: string;
@@ -89,6 +105,7 @@ export function CalendarEventDialog({
   open, onOpenChange,
   defaultTitle = "",
   defaultDate,
+  defaultEventType = null,
   contextLabel,
   subtitle,
   cardHref,
@@ -104,6 +121,7 @@ export function CalendarEventDialog({
     defaultDate ? new Date(defaultDate + "T00:00:00") : new Date()
   );
   const [timeLabel, setTimeLabel] = useState<string>("");
+  const [eventType, setEventType] = useState<EventType | null>(defaultEventType);
   const [ownerName, setOwnerName] = useState(defaultOwnerName);
   const [ownerPhone, setOwnerPhone] = useState(defaultOwnerPhone);
   const [tenantName, setTenantName] = useState(defaultTenantName);
@@ -115,6 +133,7 @@ export function CalendarEventDialog({
       setTitle(defaultTitle);
       setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
       setTimeLabel("");
+      setEventType(defaultEventType);
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
       setTenantName(defaultTenantName);
@@ -128,6 +147,7 @@ export function CalendarEventDialog({
       setTitle(defaultTitle);
       setDate(defaultDate ? new Date(defaultDate + "T00:00:00") : new Date());
       setTimeLabel("");
+      setEventType(defaultEventType);
       setOwnerName(defaultOwnerName);
       setOwnerPhone(defaultOwnerPhone);
       setTenantName(defaultTenantName);
@@ -144,6 +164,7 @@ export function CalendarEventDialog({
         title: title.trim(),
         event_date: toISO(date),
         event_time: timeLabel ? to24h(timeLabel) : null,
+        event_type: eventType,
         subtitle: subtitle || null,
         card_href: cardHref || null,
         tenancy_id: tenancyId,
@@ -175,6 +196,30 @@ export function CalendarEventDialog({
 
         {/* Body */}
         <div style={{ padding: "18px 22px", maxHeight: "70vh", overflowY: "auto" }}>
+          {/* Event type chips */}
+          <p className="kk-overline mb-2">Event type <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+            {EVENT_TYPES.map((et) => {
+              const active = eventType === et.value;
+              return (
+                <button
+                  key={et.value}
+                  type="button"
+                  onClick={() => setEventType(active ? null : et.value)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1.5px solid",
+                    background: active ? et.bg : "transparent",
+                    borderColor: active ? et.color : "var(--kk-line)",
+                    color: active ? et.color : "var(--kk-ink-mute)",
+                    transition: "all 0.12s",
+                  }}
+                >
+                  {et.label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Event name */}
           <p className="kk-overline mb-1.5">Event name</p>
           <input

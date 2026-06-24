@@ -3128,6 +3128,7 @@ export interface CalendarEvent {
   card_href: string | null;
   event_date: string;   // "YYYY-MM-DD"
   event_time: string | null;
+  event_type: "viewing" | "call" | "focus_time" | null;
   tenancy_id: string | null;
   owner_lead_id: string | null;
   owner_name: string | null;
@@ -3137,11 +3138,13 @@ export interface CalendarEvent {
   created_at: string;
 }
 
+const CAL_SELECT = "id, title, subtitle, card_href, event_date, event_time, event_type, tenancy_id, owner_lead_id, owner_name, owner_phone, tenant_name, tenant_phone, created_at";
+
 export async function getCalendarEventsForWeek(weekStart: string, weekEnd: string): Promise<CalendarEvent[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("calendar_events")
-    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, owner_name, owner_phone, tenant_name, tenant_phone, created_at")
+    .select(CAL_SELECT)
     .gte("event_date", weekStart)
     .lte("event_date", weekEnd)
     .order("event_date", { ascending: true })
@@ -3154,11 +3157,29 @@ export async function getUpcomingCalendarEvents(limit = 50): Promise<CalendarEve
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await supabase
     .from("calendar_events")
-    .select("id, title, subtitle, card_href, event_date, event_time, tenancy_id, owner_lead_id, owner_name, owner_phone, tenant_name, tenant_phone, created_at")
+    .select(CAL_SELECT)
     .gte("event_date", today)
     .order("event_date", { ascending: true })
     .order("event_time", { ascending: true, nullsFirst: false })
     .limit(limit);
+  return (data ?? []) as CalendarEvent[];
+}
+
+export async function getUpcomingViewings(days = 14): Promise<CalendarEvent[]> {
+  const supabase = await createClient();
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+  const end = new Date(todayStr);
+  end.setDate(end.getDate() + days);
+  const endStr = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,"0")}-${String(end.getDate()).padStart(2,"0")}`;
+  const { data } = await supabase
+    .from("calendar_events")
+    .select(CAL_SELECT)
+    .eq("event_type", "viewing")
+    .gte("event_date", todayStr)
+    .lte("event_date", endStr)
+    .order("event_date", { ascending: true })
+    .order("event_time", { ascending: true, nullsFirst: false })
+    .limit(10);
   return (data ?? []) as CalendarEvent[];
 }
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
-import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForWeek } from "@/lib/db";
+import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForWeek, getPerformanceSummary } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/db";
 import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 import { StatsSection } from "./stats-section";
@@ -245,6 +245,7 @@ function ActiveState({
   cardCount,
   cardCap,
   planName,
+  mtdCommission,
 }: {
   firstName: string | null;
   stats: Stats;
@@ -255,6 +256,7 @@ function ActiveState({
   cardCount: number;
   cardCap: number;
   planName: string;
+  mtdCommission: number;
 }) {
   return (
     <>
@@ -274,7 +276,7 @@ function ActiveState({
         <CardDonut used={cardCount} cap={cardCap} planName={planName} />
       </div>
 
-      <StatsSection initialStats={expandedStats} weekEvents={weekEvents} weekStart={weekStart} weekEnd={weekEnd} />
+      <StatsSection initialStats={expandedStats} weekEvents={weekEvents} weekStart={weekStart} weekEnd={weekEnd} mtdCommission={mtdCommission} />
     </>
   );
 }
@@ -296,11 +298,12 @@ export default async function HomePage() {
   const hdrs = await headers();
   const userId = hdrs.get("x-user-id");
 
-  const [agent, stats, expandedStats, weekEvents] = await Promise.all([
+  const [agent, stats, expandedStats, weekEvents, perf] = await Promise.all([
     getAgentProfile(),
     getHomeDashboardStats(),
     getExpandedDashboardStats(3),
     getCalendarEventsForWeek(weekStart, weekEnd),
+    getPerformanceSummary(),
   ]);
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
   const missingProfileFields = getMissingWhatsAppFields(agent);
@@ -324,7 +327,7 @@ export default async function HomePage() {
   const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 lg:py-16">
+    <div className="mx-auto max-w-[1440px] px-4 lg:px-8 py-6 lg:py-16">
       <BetaSurveyModal surveyCompleted={!!agent.survey_completed_at || !!agent.is_test_account} />
       <ReferralBanner />
       {isSetupComplete ? (
@@ -338,6 +341,7 @@ export default async function HomePage() {
           cardCount={cardCount}
           cardCap={cardCap}
           planName={planLabel}
+          mtdCommission={perf.mtdCommission}
         />
       ) : (
         <SetupState

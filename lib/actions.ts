@@ -2360,6 +2360,7 @@ export async function createCalendarEvent(input: {
   title: string;
   event_date: string;
   event_time: string | null;
+  event_type?: "viewing" | "call" | "focus_time" | null;
   subtitle?: string | null;
   card_href?: string | null;
   tenancy_id?: string | null;
@@ -2382,6 +2383,7 @@ export async function createCalendarEvent(input: {
       title: input.title.trim(),
       event_date: input.event_date,
       event_time: input.event_time || null,
+      event_type: input.event_type || null,
       subtitle: input.subtitle || null,
       card_href: input.card_href || null,
       tenancy_id: input.tenancy_id || null,
@@ -2396,6 +2398,7 @@ export async function createCalendarEvent(input: {
 
   if (error) return { ok: false, message: error.message };
   revalidatePath("/calendar");
+  revalidatePath("/home");
   return { ok: true, id: (data as { id: string }).id };
 }
 
@@ -2403,6 +2406,7 @@ export async function updateCalendarEvent(id: string, input: {
   title: string;
   event_date: string;
   event_time: string | null;
+  event_type?: "viewing" | "call" | "focus_time" | null;
   owner_name?: string | null;
   owner_phone?: string | null;
   tenant_name?: string | null;
@@ -2417,6 +2421,7 @@ export async function updateCalendarEvent(id: string, input: {
       title: input.title.trim(),
       event_date: input.event_date,
       event_time: input.event_time || null,
+      event_type: input.event_type ?? null,
       owner_name: input.owner_name || null,
       owner_phone: input.owner_phone || null,
       tenant_name: input.tenant_name || null,
@@ -2425,6 +2430,7 @@ export async function updateCalendarEvent(id: string, input: {
     .eq("id", id);
   if (error) return { ok: false, message: error.message };
   revalidatePath("/calendar");
+  revalidatePath("/home");
   return { ok: true };
 }
 

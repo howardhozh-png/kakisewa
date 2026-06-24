@@ -281,8 +281,7 @@ function Block({
   primaryLabel,
   stats,
   href,
-  bg,
-  bannerColor,
+  softBg,
   inkColor,
   trackAlpha,
   donutPct,
@@ -293,8 +292,7 @@ function Block({
   primaryLabel: string;
   stats: BlockStat[];
   href: string;
-  bg: string;
-  bannerColor: string;
+  softBg: string;
   inkColor: string;
   trackAlpha: string;
   donutPct: number;
@@ -303,50 +301,48 @@ function Block({
   return (
     <Link
       href={href}
-      className="group hover:-translate-y-1 hover:shadow-xl"
+      className="group hover:-translate-y-1 hover:shadow-lg"
       style={{
         textDecoration: "none",
-        borderRadius: 22,
+        borderRadius: 18,
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
+        display: "block",
         cursor: "pointer",
         transition: "transform 0.18s cubic-bezier(.32,.72,0,1), box-shadow 0.18s",
       }}
     >
-      {/* Banner */}
-      <div style={{ background: bannerColor, padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "rgba(255,255,255,0.88)", margin: 0 }}>
-          {overline}
-        </p>
-        <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 15, lineHeight: 1 }}>↗</span>
-      </div>
+      <div style={{ background: softBg, color: inkColor, padding: "16px 20px 20px", position: "relative", overflow: "hidden", minHeight: 170, border: "1px solid rgba(0,0,0,0.05)" , borderRadius: 18 }}>
+        {/* Overline row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: inkColor, margin: 0, opacity: 0.7 }}>
+            {overline}
+          </p>
+          <span style={{ color: inkColor, fontSize: 14, lineHeight: 1, opacity: 0.4 }}>↗</span>
+        </div>
 
-      {/* Body */}
-      <div style={{ background: bg, color: inkColor, padding: "18px 20px 20px", flex: 1, position: "relative", overflow: "hidden", minHeight: 160 }}>
-        {/* Donut — large, anchored right, vertically centered, fully within bounds */}
-        <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 116, height: 116, flexShrink: 0 }}>
-          <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} size={116} />
+        {/* Donut — anchored right, vertically centered */}
+        <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-42%)", width: 108, height: 108 }}>
+          <DonutRing pct={donutPct} strokeColor={inkColor} trackColor={trackAlpha} size={108} />
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", lineHeight: 1 }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
-            <span style={{ fontSize: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 4, maxWidth: 64, textAlign: "center", lineHeight: 1.3, color: inkColor }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: inkColor }}>{donutPct}%</span>
+            <span style={{ fontSize: 7, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginTop: 3, maxWidth: 60, textAlign: "center", lineHeight: 1.3, color: inkColor }}>
               {donutLabel}
             </span>
           </div>
         </div>
 
         {/* Left: number + label + sub-stats */}
-        <div style={{ paddingRight: 108 }}>
-          <p style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: inkColor }}>
+        <div style={{ paddingRight: 104 }}>
+          <p style={{ fontSize: 42, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", color: inkColor }}>
             {primaryNum.toLocaleString()}
           </p>
-          <p style={{ fontSize: 12, fontWeight: 500, opacity: 0.65, marginTop: 5, marginBottom: 18, color: inkColor }}>
+          <p style={{ fontSize: 12, fontWeight: 500, opacity: 0.65, marginTop: 5, marginBottom: 16, color: inkColor }}>
             {primaryLabel}
           </p>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             {stats.map((s) => (
               <div key={s.label}>
-                <p style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", color: inkColor }}>
+                <p style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, fontVariantNumeric: "tabular-nums", color: inkColor }}>
                   {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
                 </p>
                 <p style={{ fontSize: 11, fontWeight: 500, opacity: 0.55, marginTop: 3, color: inkColor }}>
@@ -356,6 +352,41 @@ function Block({
             ))}
           </div>
         </div>
+      </div>
+    </Link>
+  );
+}
+
+// ── Commission card ────────────────────────────────────────────────────────────
+
+function CommissionBlock({ mtdCommission }: { mtdCommission: number }) {
+  const formatted = mtdCommission.toLocaleString("en-MY", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return (
+    <Link
+      href="/performance"
+      className="group hover:-translate-y-1 hover:shadow-lg"
+      style={{
+        textDecoration: "none",
+        borderRadius: 18,
+        overflow: "hidden",
+        display: "block",
+        cursor: "pointer",
+        transition: "transform 0.18s cubic-bezier(.32,.72,0,1), box-shadow 0.18s",
+      }}
+    >
+      <div style={{ background: "var(--kk-green-soft)", padding: "16px 20px 20px", borderRadius: 18, border: "1px solid rgba(0,0,0,0.05)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#1F8B4C", margin: 0, opacity: 0.7 }}>
+            Commission this month
+          </p>
+          <span style={{ color: "#1F8B4C", fontSize: 14, lineHeight: 1, opacity: 0.4 }}>↗</span>
+        </div>
+        <p style={{ fontSize: 42, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.02em", color: "#1F8B4C", marginBottom: 6 }}>
+          RM {formatted}
+        </p>
+        <p style={{ fontSize: 12, fontWeight: 500, color: "#1F8B4C", opacity: 0.65 }}>
+          earned this month
+        </p>
       </div>
     </Link>
   );
@@ -438,11 +469,13 @@ export function StatsSection({
   weekEvents,
   weekStart,
   weekEnd,
+  mtdCommission,
 }: {
   initialStats: ExpandedDashboardStats;
   weekEvents: CalendarEvent[];
   weekStart: string;
   weekEnd: string;
+  mtdCommission: number;
 }) {
   const todayMonthValue = new Date().toISOString().slice(0, 7);
   const [startMonth, setStartMonth] = useState(todayMonthValue);
@@ -529,10 +562,9 @@ export function StatsSection({
             { label: "Not contacted", value: stats.totalUploaded - stats.totalContacted },
           ]}
           href="/property-leads"
-          bannerColor="#1A4FA3"
-          bg="rgba(0,113,227,0.09)"
-          inkColor="#0A3880"
-          trackAlpha="rgba(10,56,128,0.15)"
+          softBg="var(--kk-blue-soft)"
+          inkColor="var(--kk-blue)"
+          trackAlpha="rgba(0,113,227,0.20)"
           donutPct={contactedPct}
           donutLabel="contacted"
         />
@@ -546,10 +578,9 @@ export function StatsSection({
             { label: "For sale", value: stats.listedSaleCount },
           ]}
           href="/my-listing"
-          bannerColor="#4A1490"
-          bg="rgba(175,82,222,0.09)"
-          inkColor="#3A0E7A"
-          trackAlpha="rgba(58,14,122,0.15)"
+          softBg="var(--kk-purple-soft)"
+          inkColor="#6F2DA8"
+          trackAlpha="rgba(111,45,168,0.20)"
           donutPct={myAvailPct}
           donutLabel="avail. in 3m"
         />
@@ -564,10 +595,9 @@ export function StatsSection({
             { label: "Renewing", value: stats.existingRenewingCount },
           ]}
           href="/existing-listing"
-          bannerColor="#1A6B35"
-          bg="rgba(52,199,89,0.09)"
-          inkColor="#145228"
-          trackAlpha="rgba(20,82,40,0.15)"
+          softBg="var(--kk-green-soft)"
+          inkColor="#1F8B4C"
+          trackAlpha="rgba(31,139,76,0.20)"
           donutPct={existingAtRiskPct}
           donutLabel="expiring / expired"
         />
@@ -582,14 +612,16 @@ export function StatsSection({
             { label: "Watching", value: stats.targetWatchingCount },
           ]}
           href="/lost-listing"
-          bannerColor="#7A3800"
-          bg="rgba(255,149,0,0.09)"
-          inkColor="#5C2800"
-          trackAlpha="rgba(92,40,0,0.15)"
+          softBg="var(--kk-amber-soft)"
+          inkColor="#B45309"
+          trackAlpha="rgba(180,83,9,0.20)"
           donutPct={targetAtRiskPct}
           donutLabel="expiring / expired"
         />
       </div>
+
+      {/* Commission card */}
+      <CommissionBlock mtdCommission={mtdCommission} />
     </div>
   );
 }
