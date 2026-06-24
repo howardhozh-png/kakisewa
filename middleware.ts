@@ -34,6 +34,9 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/agent/")) return true
   // Pitch deck — public shareable link, no auth required
   if (pathname.startsWith("/pitch")) return true
+  // TL share board — passcode-gated but no kakisewa login required
+  if (pathname.startsWith("/mypipeline/")) return true
+  if (pathname.startsWith("/api/board/")) return true
   // OG image and favicon — must be publicly accessible for WhatsApp/social previews
   if (pathname === "/opengraph-image" || pathname === "/icon") return true
   // PWA assets — must be accessible without auth for install prompts, crawlers, iOS icon fetching
