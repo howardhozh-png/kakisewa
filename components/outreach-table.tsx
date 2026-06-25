@@ -1625,7 +1625,17 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 justify-end">
-                          {(status === "listed" || status === "rented") ? (
+                          {lead.stage === "matched" && lead.has_active_tenancy ? (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); router.push(`/existing-listing?owner_lead_id=${lead.id}`); }}
+                              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                              title="Go to card"
+                            >
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (status === "listed" || status === "rented") ? (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}

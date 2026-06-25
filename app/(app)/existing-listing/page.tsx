@@ -44,11 +44,11 @@ function mkTenancy(
 export const dynamic = "force-dynamic";
 
 interface Props {
-  searchParams: Promise<{ open?: string; highlight?: string }>;
+  searchParams: Promise<{ open?: string; highlight?: string; owner_lead_id?: string }>;
 }
 
 export default async function TrackRenewalPage({ searchParams }: Props) {
-  const { open, highlight } = await searchParams;
+  const { open, highlight, owner_lead_id } = await searchParams;
   const [lifecycle, ownerLeads, agentProfile, deletedTenancies, capStatus] = await Promise.all([
     getLifecycleTenancies(),
     getOwnerLeads(),
@@ -57,6 +57,9 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
     checkCardCap(),
   ]);
   const plan = effectivePlan(agentProfile);
+  const resolvedHighlight = highlight ?? (owner_lead_id
+    ? lifecycle.find((t) => t.owner_lead_id === owner_lead_id)?.id ?? undefined
+    : undefined);
 
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
@@ -162,7 +165,7 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
           </div>
         );
       })() : (
-        <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={highlight} plan={plan} totalCards={capStatus.current_count} />
+        <LifecycleBoard tenancies={lifecycle} openTenancyId={open} highlightId={resolvedHighlight} plan={plan} totalCards={capStatus.current_count} />
       )}
     </div>
   );
