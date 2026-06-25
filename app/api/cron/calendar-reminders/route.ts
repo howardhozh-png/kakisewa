@@ -11,11 +11,12 @@ function fmtTime12(hhmm: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function getTitle(eventType: string | null): string {
-  if (eventType === "viewing")    return "Viewing in 1 hour";
-  if (eventType === "call")       return "Call in 1 hour";
-  if (eventType === "focus_time") return "Focus time in 1 hour";
-  return "Event in 1 hour";
+function getTitle(eventType: string | null, allDay = false): string {
+  const suffix = allDay ? "today" : "in 1 hour";
+  if (eventType === "viewing")    return `Viewing ${suffix}`;
+  if (eventType === "call")       return `Call ${suffix}`;
+  if (eventType === "focus_time") return `Focus time ${suffix}`;
+  return `Event ${suffix}`;
 }
 
 export async function GET(req: NextRequest) {
@@ -40,7 +41,11 @@ export async function GET(req: NextRequest) {
 
   const pad = (n: number) => String(n).padStart(2, "0");
   const fmtDate = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-  const fmtHHMM = (d: Date) => `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+
+  // Current hour in MYT — used to gate the all-day notification pass
+  const nowMyt = new Date(now.getTime() + MYT_OFFSET_MS);
+  const mytHour = nowMyt.getUTCHours(); // 0–23 in MYT
+  const todayMyt = fmtDate(nowMyt);
 
   const startDate = fmtDate(winStartMyt);
   const endDate   = fmtDate(winEndMyt);
@@ -108,6 +113,56 @@ export async function GET(req: NextRequest) {
       sent += result.sent;
     } else {
       errors++;
+    }
+  }
+
+  // ── All-day events: notify at 8 AM MYT (00:00 UTC) ──────────────────────────
+  // Only runs on the 8 AM MYT pass (cron fires at 00:00 UTC = 08:00 MYT).
+  if (mytHour === 8) {
+    const { data: allDayEvents } = await supabase
+      .from("calendar_events")
+      .select("id, user_id, title, subtitle, event_date, event_type, card_href")
+      .is("event_time", null)
+      .eq("event_date", todayMyt);
+
+    for (const ev of allDayEvents ?? []) {
+      const notifKey = `cal_${ev.id}_day`;
+
+      const { data: already } = await supabase
+        .from("push_sent_log")
+        .select("id")
+        .eq("user_id", ev.user_id)
+        .eq("notification_key", notifKey)
+        .maybeSingle();
+
+      if (already) { skipped++; continue; }
+      if (pushOptedOut.has(ev.user_id)) { skipped++; continue; }
+
+      const { count } = await supabase
+        .from("push_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", ev.user_id);
+
+      if (!count || count === 0) { skipped++; continue; }
+
+      const desc = (ev.subtitle || ev.title) as string;
+
+      const result = await sendPushToUser(ev.user_id, {
+        title: getTitle(ev.event_type, true),
+        body:  desc,
+        url:   ev.card_href || "/calendar",
+        tag:   notifKey,
+      });
+
+      if (result.sent > 0) {
+        await supabase.from("push_sent_log").insert({
+          user_id:          ev.user_id,
+          notification_key: notifKey,
+        });
+        sent += result.sent;
+      } else {
+        errors++;
+      }
     }
   }
 
