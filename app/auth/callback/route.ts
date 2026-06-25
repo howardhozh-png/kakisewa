@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -28,21 +27,8 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const email = data.session?.user?.email;
-      if (email) {
-        const svc = createServiceClient();
-        const { data: invite } = await svc
-          .from("invites")
-          .select("id")
-          .eq("email", email.toLowerCase().trim())
-          .maybeSingle();
-        if (!invite) {
-          await supabase.auth.signOut();
-          return NextResponse.redirect(`${origin}/sign-up?error=not_invited&email=${encodeURIComponent(email)}`);
-        }
-      }
       return successRedirect;
     }
   }
