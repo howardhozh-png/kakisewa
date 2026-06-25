@@ -759,26 +759,6 @@ export function SubscriptionClient({
               );
             })()}
 
-            {/* Progress bar */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[12px] font-semibold" style={{ color: "var(--kk-ink)" }}>
-                  {referralCount} of 12 agents referred
-                </p>
-                <p className="text-[11px]" style={{ color: referralCount >= 12 ? "var(--kk-green-ink)" : "var(--kk-ink-faint)" }}>
-                  {referralCount >= 12 ? "Goal reached!" : `${12 - referralCount} to go`}
-                </p>
-              </div>
-              <div style={{ height: 6, background: "var(--kk-line)", borderRadius: 3 }}>
-                <div style={{
-                  height: "100%",
-                  width: `${Math.min((referralCount / 12) * 100, 100)}%`,
-                  background: referralCount >= 12 ? "var(--kk-green)" : "var(--kk-blue)",
-                  borderRadius: 3,
-                  transition: "width 0.4s ease",
-                }} />
-              </div>
-            </div>
 
             <div className="space-y-3">
               <div>
