@@ -224,3 +224,39 @@ export function packRankedEmail(p: {
     EMAIL_FOOTER
   );
 }
+
+function fmtTime12(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+export function calendarDigestEmail(p: {
+  dateLabel: string;
+  events: Array<{ time: string | null; title: string; subtitle?: string | null }>;
+}): string {
+  const rows = p.events.map((ev) => {
+    const timeStr = ev.time ? fmtTime12(ev.time) : "All day";
+    return (
+      `<tr>` +
+      `<td style="padding:10px 0;border-bottom:1px solid #F2F2F7;vertical-align:top;white-space:nowrap;padding-right:16px">` +
+      `<span style="font-size:13px;font-weight:600;color:#1C1C1E">${timeStr}</span>` +
+      `</td>` +
+      `<td style="padding:10px 0;border-bottom:1px solid #F2F2F7;vertical-align:top">` +
+      `<p style="font-size:14px;font-weight:500;color:#1C1C1E;margin:0">${ev.title}</p>` +
+      (ev.subtitle ? `<p style="font-size:12px;color:#6C6C70;margin:3px 0 0">${ev.subtitle}</p>` : "") +
+      `</td>` +
+      `</tr>`
+    );
+  }).join("");
+
+  return (
+    EMAIL_BASE +
+    `<h1 style="font-size:18px;font-weight:600;margin:0 0 4px">Your schedule</h1>` +
+    `<p style="font-size:14px;color:#6C6C70;margin:0 0 20px">${p.dateLabel}</p>` +
+    `<table style="width:100%;border-collapse:collapse;margin-bottom:4px">${rows}</table>` +
+    `<div style="margin:24px 0">` + cta("Open Calendar", "https://kakisewa.com/calendar") + `</div>` +
+    EMAIL_FOOTER
+  );
+}

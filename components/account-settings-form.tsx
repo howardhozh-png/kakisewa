@@ -720,7 +720,7 @@ function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
         <NotifToggle
           icon={Mail}
           label="Email reminders"
-          description="Daily digest for contracts expiring in 60, 30, and 7 days"
+          description="Contract renewal alerts and daily calendar digest at 9 AM"
           enabled={email}
           onToggle={toggleEmail}
           saving={saving}
