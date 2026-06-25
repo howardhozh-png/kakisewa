@@ -910,6 +910,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [purposeFilter, setPurposeFilter] = useState<PurposeFilter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
+  const [boardFilter, setBoardFilter] = useState<string>("all");
   const [sentDateFilter, setSentDateFilter] = useState<SentDateFilter>(null);
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
@@ -995,13 +996,15 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
   const propertyFiltered = propertyFilter === "all" ? leads
     : propertyFilter === "__no_name__" ? leads.filter((l) => !l.property_name)
     : leads.filter((l) => l.property_name === propertyFilter);
+  const boardFiltered = boardFilter === "all" ? propertyFiltered
+    : propertyFiltered.filter((l) => getPipelineTab(l).label === boardFilter);
   const counts = {
-    all:       propertyFiltered.filter((l) => !l.is_competitor_target).length,
-    unsent:    propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "unsent").length,
-    contacted: propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "contacted").length,
-    listed:    propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "listed").length,
-    rented:    propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "rented").length,
-    declined:  propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "declined").length,
+    all:       boardFiltered.filter((l) => !l.is_competitor_target).length,
+    unsent:    boardFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "unsent").length,
+    contacted: boardFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "contacted").length,
+    listed:    boardFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "listed").length,
+    rented:    boardFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "rented").length,
+    declined:  boardFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "declined").length,
   };
 
   const searchLower = search.trim().toLowerCase();
@@ -1019,6 +1022,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           const s = getStatus(l);
           if (filter === "unsent")         { if (s !== "unsent")    return false; }
           else if (filter === "contacted") { if (s !== "contacted") return false; }
+          if (boardFilter !== "all" && getPipelineTab(l).label !== boardFilter) return false;
           if (purposeFilter !== "all" && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
           if (propertyFilter !== "all") {
             const matchUnnamed = propertyFilter === "__no_name__" && !l.property_name;
@@ -1338,6 +1342,21 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
           minWidth={140}
         />
 
+        {/* Boards filter */}
+        <FilterSelect
+          value={boardFilter}
+          onChange={(v) => setBoardFilter(v)}
+          options={[
+            { value: "all",              label: "All boards" },
+            { value: "Property Leads",   label: "Property Leads" },
+            { value: "My Listing",       label: "My Listing" },
+            { value: "Existing Listing", label: "Existing Listing" },
+            { value: "Own Stay",         label: "Own Stay" },
+            { value: "Archived",         label: "Archived" },
+          ]}
+          minWidth={140}
+        />
+
         {/* Last sent date filter */}
         <SentDatePickerFilter value={sentDateFilter} onChange={setSentDateFilter} />
 
@@ -1386,51 +1405,31 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             </div>
           )}
 
-          {/* Fixed column header — sits above the scroll container */}
-          <div style={{ background: "var(--kk-surface)", borderBottom: "1px solid var(--kk-line)" }}>
-            <table className="w-full" style={{ minWidth: 372, tableLayout: "fixed" }}>
-              <thead>
-                <tr>
-                  <th className="px-2 py-2 lg:py-3 text-left" style={{ width: 30, verticalAlign: "middle" }}>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={allPageSelected}
-                        ref={(el) => { if (el) el.indeterminate = somePageSelected; }}
-                        onChange={toggleAll}
-                        className="w-3.5 h-3.5 cursor-pointer block"
-                      />
-                    </div>
-                  </th>
-                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 130, color: "var(--kk-accent)" }}>Owner</th>
-                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 118, color: "var(--kk-accent)" }}>Number</th>
-                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 65, color: "var(--kk-accent)" }}>Unit</th>
-                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 170, color: "var(--kk-accent)" }}>Property</th>
-                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 200, color: "var(--kk-accent)" }}>Remarks</th>
-                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 120, color: "var(--kk-accent)" }}>Pipeline</th>
-                  <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 95, color: "var(--kk-accent)" }}>Status</th>
-                  <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" style={{ width: 84, color: "var(--kk-accent)" }}>Last sent</th>
-                  <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 68, background: "var(--kk-surface)" }}></th>
-                </tr>
-              </thead>
-            </table>
-          </div>
-          {/* Scrollable body — scrollbar starts at first data row */}
+          {/* Single scrollable container — header scrolls with body horizontally, sticks vertically */}
           <div style={{ overflowX: "auto" }}>
           <table className="w-full" style={{ minWidth: 380, tableLayout: "fixed" }}>
-            {/* Hidden header establishes column widths to match the fixed header above */}
-            <thead aria-hidden style={{ visibility: "hidden", height: 0, lineHeight: 0 }}>
-              <tr style={{ height: 0 }}>
-                <th style={{ padding: 0, height: 0, width: 30 }} />
-                <th style={{ padding: 0, height: 0, width: 130 }} />
-                <th style={{ padding: 0, height: 0, width: 118 }} />
-                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 65 }} />
-                <th style={{ padding: 0, height: 0, width: 170 }} />
-                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 200 }} />
-                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 120 }} />
-                <th style={{ padding: 0, height: 0, width: 95 }} />
-                <th className="hidden lg:table-cell" style={{ padding: 0, height: 0, width: 84 }} />
-                <th style={{ padding: 0, height: 0, width: 68 }} />
+            <thead style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--kk-surface)", boxShadow: "0 1px 0 var(--kk-line)" }}>
+              <tr>
+                <th className="px-2 py-2 lg:py-3 text-left" style={{ width: 30, verticalAlign: "middle" }}>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      ref={(el) => { if (el) el.indeterminate = somePageSelected; }}
+                      onChange={toggleAll}
+                      className="w-3.5 h-3.5 cursor-pointer block"
+                    />
+                  </div>
+                </th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 130, color: "var(--kk-accent)" }}>Owner</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 118, color: "var(--kk-accent)" }}>Number</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 65, color: "var(--kk-accent)" }}>Unit</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 170, color: "var(--kk-accent)" }}>Property</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 200, color: "var(--kk-accent)" }}>Remarks</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style={{ width: 120, color: "var(--kk-accent)" }}>Pipeline</th>
+                <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 95, color: "var(--kk-accent)" }}>Status</th>
+                <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" style={{ width: 84, color: "var(--kk-accent)" }}>Last sent</th>
+                <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 68, background: "var(--kk-surface)" }}></th>
               </tr>
             </thead>
             <tbody>
@@ -1566,6 +1565,15 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
                       <div className="flex flex-col items-start gap-1">
                         <StatusBadge lead={lead} />
                         <PurposeBadge purpose={lead.listing_purpose} />
+                        {/* Pipeline pill — mobile only */}
+                        {(() => {
+                          const pt = getPipelineTab(lead);
+                          return (
+                            <span className="lg:hidden" style={{ fontSize: 9, fontWeight: 600, background: pt.bg, color: pt.color, borderRadius: 5, padding: "2px 6px", whiteSpace: "nowrap", display: "inline-block" }}>
+                              {pt.label}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </td>
 
