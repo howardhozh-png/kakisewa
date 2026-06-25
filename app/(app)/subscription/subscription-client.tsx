@@ -401,12 +401,13 @@ interface Props {
   referralCount: number;
   creditBalanceMyr: number;
   pendingCreditMyr?: number;
+  totalCreditEarnedMyr?: number;
 }
 
 export function SubscriptionClient({
   isAdmin, status, trialDaysLeft, currentPlan,
   subscriptionYear, currentCardCount, referralCode, referralCount,
-  creditBalanceMyr, pendingCreditMyr = 0,
+  creditBalanceMyr, pendingCreditMyr = 0, totalCreditEarnedMyr = 0,
 }: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan ?? "platinum");
@@ -674,6 +675,56 @@ export function SubscriptionClient({
               Each agent who signs up with your code and pays their first month gives you full credit for that amount. Refer 12 and you have covered a full year on us.
             </p>
 
+            {/* 3 stat boxes */}
+            {(() => {
+              const creditBalance = creditBalanceMyr + pendingCreditMyr;
+              const isPending = pendingCreditMyr > 0 && creditBalanceMyr === 0;
+              const stats = [
+                {
+                  label: "Agents referred",
+                  value: String(referralCount),
+                  sub: referralCount === 0 ? "Share your link to start" : referralCount >= 12 ? "Goal reached!" : `${12 - referralCount} to go`,
+                  green: referralCount >= 12,
+                },
+                {
+                  label: "Total credit earned",
+                  value: `RM ${totalCreditEarnedMyr.toFixed(2)}`,
+                  sub: totalCreditEarnedMyr === 0 ? "From paid referrals" : `From ${referralCount} referral${referralCount !== 1 ? "s" : ""}`,
+                  green: totalCreditEarnedMyr > 0,
+                },
+                {
+                  label: "Credit balance",
+                  value: `RM ${creditBalance.toFixed(2)}`,
+                  sub: isPending ? "Applied at first invoice" : creditBalance > 0 ? "Auto-applied to next invoice" : "Builds as referrals pay",
+                  green: creditBalance > 0,
+                },
+              ];
+              return (
+                <div className="grid grid-cols-3 gap-2 mb-5">
+                  {stats.map((s) => (
+                    <div key={s.label} className="rounded-xl px-3 py-3 flex flex-col gap-1"
+                      style={{
+                        background: s.green ? "var(--kk-green-soft)" : "var(--kk-surface-2)",
+                        border: s.green ? "1px solid rgba(52,199,89,0.25)" : "1px solid var(--kk-line)",
+                      }}>
+                      <p className="text-[10px] font-semibold leading-tight"
+                        style={{ color: s.green ? "var(--kk-green-ink)" : "var(--kk-ink-faint)" }}>
+                        {s.label}
+                      </p>
+                      <p className="text-[15px] font-black tabular-nums leading-tight"
+                        style={{ color: s.green ? "var(--kk-green-ink)" : "var(--kk-ink)" }}>
+                        {s.value}
+                      </p>
+                      <p className="text-[10px] leading-tight"
+                        style={{ color: s.green ? "var(--kk-green-ink)" : "var(--kk-ink-faint)", opacity: s.green ? 0.8 : 1 }}>
+                        {s.sub}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
             {/* Progress bar */}
             <div className="mb-5">
               <div className="flex items-center justify-between mb-1.5">
@@ -694,38 +745,6 @@ export function SubscriptionClient({
                 }} />
               </div>
             </div>
-
-            {(() => {
-              const totalCredit = creditBalanceMyr + pendingCreditMyr;
-              const hasCredit = totalCredit > 0;
-              const isPending = pendingCreditMyr > 0 && creditBalanceMyr === 0;
-              return (
-                <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
-                  style={{
-                    background: hasCredit ? "var(--kk-green-soft)" : "var(--kk-surface-2)",
-                    border: hasCredit ? "1px solid rgba(52,199,89,0.25)" : "1px solid var(--kk-line)",
-                  }}>
-                  <div>
-                    <p className="text-[11px] font-semibold"
-                      style={{ color: hasCredit ? "var(--kk-green-ink)" : "var(--kk-ink-faint)" }}>
-                      Credit balance
-                    </p>
-                    <p className="text-[18px] font-black tabular-nums"
-                      style={{ color: hasCredit ? "var(--kk-green-ink)" : "var(--kk-ink-mute)" }}>
-                      RM {totalCredit.toFixed(2)}
-                    </p>
-                  </div>
-                  <p className="text-[11px]"
-                    style={{ color: hasCredit ? "var(--kk-green-ink)" : "var(--kk-ink-faint)", opacity: hasCredit ? 0.8 : 1 }}>
-                    {isPending
-                      ? "Will be deducted from your first invoice when you subscribe"
-                      : hasCredit
-                        ? "Auto-applied to your next invoice"
-                        : "Earn credits when your referred agents make their first payment"}
-                  </p>
-                </div>
-              );
-            })()}
 
             <div className="space-y-3">
               <div>

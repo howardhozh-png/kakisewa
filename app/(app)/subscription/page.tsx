@@ -51,18 +51,23 @@ export default async function SubscriptionPage() {
   // Pending credit from referral_credits table — earned but not yet applied to Stripe
   // (referrer had no Stripe account when the referred user first paid)
   let pendingCreditMyr = 0;
-  if (!agent.stripe_customer_id && user) {
+  let totalCreditEarnedMyr = 0;
+  if (user) {
     try {
       const svc = createServiceClient();
-      const { data: pending } = await svc
+      const { data: allCredits } = await svc
         .from("referral_credits")
-        .select("amount_myr")
-        .eq("referrer_user_id", user.id)
-        .is("stripe_balance_transaction_id", null);
-      pendingCreditMyr = (pending ?? []).reduce(
+        .select("amount_myr, stripe_balance_transaction_id")
+        .eq("referrer_user_id", user.id);
+      totalCreditEarnedMyr = (allCredits ?? []).reduce(
         (sum: number, r: { amount_myr: number }) => sum + r.amount_myr,
         0
       ) / 100;
+      if (!agent.stripe_customer_id) {
+        pendingCreditMyr = (allCredits ?? [])
+          .filter((r: { stripe_balance_transaction_id: string | null }) => r.stripe_balance_transaction_id === null)
+          .reduce((sum: number, r: { amount_myr: number }) => sum + r.amount_myr, 0) / 100;
+      }
     } catch {}
   }
 
@@ -78,6 +83,7 @@ export default async function SubscriptionPage() {
       referralCount={referralCount}
       creditBalanceMyr={creditBalanceMyr}
       pendingCreditMyr={pendingCreditMyr}
+      totalCreditEarnedMyr={totalCreditEarnedMyr}
     />
   );
 }
