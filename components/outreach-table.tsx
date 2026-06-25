@@ -981,11 +981,11 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
     : leads.filter((l) => l.property_name === propertyFilter);
   const counts = {
     all:       propertyFiltered.filter((l) => !l.is_competitor_target).length,
-    unsent:    propertyFiltered.filter((l) => getStatus(l) === "unsent").length,
-    contacted: propertyFiltered.filter((l) => getStatus(l) === "contacted").length,
-    listed:    propertyFiltered.filter((l) => getStatus(l) === "listed").length,
-    rented:    propertyFiltered.filter((l) => getStatus(l) === "rented").length,
-    declined:  propertyFiltered.filter((l) => getStatus(l) === "declined").length,
+    unsent:    propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "unsent").length,
+    contacted: propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "contacted").length,
+    listed:    propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "listed").length,
+    rented:    propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "rented").length,
+    declined:  propertyFiltered.filter((l) => !l.is_competitor_target && getStatus(l) === "declined").length,
   };
 
   const searchLower = search.trim().toLowerCase();
