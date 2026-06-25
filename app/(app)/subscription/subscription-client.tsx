@@ -695,35 +695,37 @@ export function SubscriptionClient({
               </div>
             </div>
 
-            {creditBalanceMyr > 0 && (
-              <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
-                style={{ background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.25)" }}>
-                <div>
-                  <p className="text-[11px] font-semibold" style={{ color: "var(--kk-green-ink)" }}>Credit balance</p>
-                  <p className="text-[18px] font-black tabular-nums" style={{ color: "var(--kk-green-ink)" }}>
-                    RM {creditBalanceMyr.toFixed(2)}
+            {(() => {
+              const totalCredit = creditBalanceMyr + pendingCreditMyr;
+              const hasCredit = totalCredit > 0;
+              const isPending = pendingCreditMyr > 0 && creditBalanceMyr === 0;
+              return (
+                <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
+                  style={{
+                    background: hasCredit ? "var(--kk-green-soft)" : "var(--kk-surface-2)",
+                    border: hasCredit ? "1px solid rgba(52,199,89,0.25)" : "1px solid var(--kk-line)",
+                  }}>
+                  <div>
+                    <p className="text-[11px] font-semibold"
+                      style={{ color: hasCredit ? "var(--kk-green-ink)" : "var(--kk-ink-faint)" }}>
+                      Credit balance
+                    </p>
+                    <p className="text-[18px] font-black tabular-nums"
+                      style={{ color: hasCredit ? "var(--kk-green-ink)" : "var(--kk-ink-mute)" }}>
+                      RM {totalCredit.toFixed(2)}
+                    </p>
+                  </div>
+                  <p className="text-[11px]"
+                    style={{ color: hasCredit ? "var(--kk-green-ink)" : "var(--kk-ink-faint)", opacity: hasCredit ? 0.8 : 1 }}>
+                    {isPending
+                      ? "Will be deducted from your first invoice when you subscribe"
+                      : hasCredit
+                        ? "Auto-applied to your next invoice"
+                        : "Earn credits when your referred agents make their first payment"}
                   </p>
                 </div>
-                <p className="text-[11px]" style={{ color: "var(--kk-green-ink)", opacity: 0.8 }}>
-                  Auto-applied to your next invoice
-                </p>
-              </div>
-            )}
-
-            {pendingCreditMyr > 0 && creditBalanceMyr === 0 && (
-              <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
-                style={{ background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.25)" }}>
-                <div>
-                  <p className="text-[11px] font-semibold" style={{ color: "var(--kk-green-ink)" }}>Credit earned</p>
-                  <p className="text-[18px] font-black tabular-nums" style={{ color: "var(--kk-green-ink)" }}>
-                    RM {pendingCreditMyr.toFixed(2)}
-                  </p>
-                </div>
-                <p className="text-[11px]" style={{ color: "var(--kk-green-ink)", opacity: 0.8 }}>
-                  Will be deducted from your first invoice when you subscribe
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             <div className="space-y-3">
               <div>
