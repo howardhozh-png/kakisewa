@@ -1,10 +1,10 @@
 import { headers } from "next/headers";
 import { getAgentProfile } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getTotalCardCount } from "@/lib/plan-caps";
 import { stripe } from "@/lib/stripe";
 import { SubscriptionClient } from "./subscription-client";
-import { FeatureLockedState } from "@/components/feature-locked-state";
 
 export const dynamic = "force-dynamic";
 
@@ -12,18 +12,6 @@ export default async function SubscriptionPage() {
   const agent = await getAgentProfile();
   const hdrs = await headers();
   const isAdmin = hdrs.get("x-is-admin") === "true";
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <FeatureLockedState
-          title="Subscription"
-          body="This area is only accessible to admins. Contact your account administrator for access."
-          ctaLabel="Go to home"
-          ctaHref="/home"
-        />
-      </div>
-    );
-  }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -49,6 +37,7 @@ export default async function SubscriptionPage() {
 
   const currentCardCount = user ? await getTotalCardCount(supabase, user.id) : 0;
 
+  // Credit from Stripe (applied balance) — only if user has a Stripe customer
   let creditBalanceMyr = 0;
   if (agent.stripe_customer_id) {
     try {
@@ -59,8 +48,27 @@ export default async function SubscriptionPage() {
     } catch {}
   }
 
+  // Pending credit from referral_credits table — earned but not yet applied to Stripe
+  // (referrer had no Stripe account when the referred user first paid)
+  let pendingCreditMyr = 0;
+  if (!agent.stripe_customer_id && user) {
+    try {
+      const svc = createServiceClient();
+      const { data: pending } = await svc
+        .from("referral_credits")
+        .select("amount_myr")
+        .eq("referrer_user_id", user.id)
+        .is("stripe_balance_transaction_id", null);
+      pendingCreditMyr = (pending ?? []).reduce(
+        (sum: number, r: { amount_myr: number }) => sum + r.amount_myr,
+        0
+      ) / 100;
+    } catch {}
+  }
+
   return (
     <SubscriptionClient
+      isAdmin={isAdmin}
       status={status}
       trialDaysLeft={trialDaysLeft}
       currentPlan={currentPlan}
@@ -69,6 +77,7 @@ export default async function SubscriptionPage() {
       referralCode={referralCode}
       referralCount={referralCount}
       creditBalanceMyr={creditBalanceMyr}
+      pendingCreditMyr={pendingCreditMyr}
     />
   );
 }

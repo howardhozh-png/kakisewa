@@ -391,6 +391,7 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 interface Props {
+  isAdmin?: boolean;
   status: string | null;
   trialDaysLeft: number | null;
   currentPlan: string | null;
@@ -399,11 +400,13 @@ interface Props {
   referralCode: string | null;
   referralCount: number;
   creditBalanceMyr: number;
+  pendingCreditMyr?: number;
 }
 
 export function SubscriptionClient({
-  status, trialDaysLeft, currentPlan,
-  subscriptionYear, currentCardCount, referralCode, referralCount, creditBalanceMyr,
+  isAdmin, status, trialDaysLeft, currentPlan,
+  subscriptionYear, currentCardCount, referralCode, referralCount,
+  creditBalanceMyr, pendingCreditMyr = 0,
 }: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan ?? "platinum");
@@ -497,10 +500,17 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            Choose your plan
+            {isAdmin ? "Choose your plan" : "Your referral program"}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
+            {status === "lifetime" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
+                style={{ background: "var(--kk-green-soft)", color: "var(--kk-green-ink)", border: "1px solid rgba(52,199,89,0.3)" }}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "var(--kk-green)" }} />
+                Lifetime member
+              </span>
+            )}
             {isOnTrial && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
                 style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}>
@@ -508,7 +518,7 @@ export function SubscriptionClient({
                 {status === "beta" ? "Beta" : "Trial"} · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
               </span>
             )}
-            {planCap !== null && (
+            {isAdmin && planCap !== null && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
                 style={{
                   background: currentCardCount >= planCap ? "var(--kk-red)" : currentCardCount > planCap * 0.8 ? "#fef3c7" : "var(--kk-surface-2)",
@@ -521,8 +531,8 @@ export function SubscriptionClient({
           </div>
         </div>
 
-        {/* Toggle */}
-        <div className="flex justify-center mb-10">
+        {/* Pricing — admin only */}
+        {isAdmin && <><div className="flex justify-center mb-10">
           <div className="inline-flex rounded-full p-1"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}>
             <button
@@ -651,7 +661,7 @@ export function SubscriptionClient({
               })}
             </tbody>
           </table>
-        </div>
+        </div></>}
 
         {/* Referral section */}
         {referralCode && (
@@ -700,6 +710,21 @@ export function SubscriptionClient({
               </div>
             )}
 
+            {pendingCreditMyr > 0 && creditBalanceMyr === 0 && (
+              <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
+                style={{ background: "var(--kk-green-soft)", border: "1px solid rgba(52,199,89,0.25)" }}>
+                <div>
+                  <p className="text-[11px] font-semibold" style={{ color: "var(--kk-green-ink)" }}>Credit earned</p>
+                  <p className="text-[18px] font-black tabular-nums" style={{ color: "var(--kk-green-ink)" }}>
+                    RM {pendingCreditMyr.toFixed(2)}
+                  </p>
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--kk-green-ink)", opacity: 0.8 }}>
+                  Will be deducted from your first invoice when you subscribe
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3">
               <div>
                 <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--kk-ink-faint)" }}>Your referral code</p>
@@ -728,21 +753,23 @@ export function SubscriptionClient({
           </div>
         )}
 
-        {/* Manage billing */}
-        <div className="text-center">
-          <button
-            onClick={openPortal}
-            disabled={portalLoading}
-            className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-85"
-            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line-strong)", opacity: portalLoading ? 0.6 : 1 }}
-          >
-            {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {portalLoading ? "Opening…" : "Manage billing"}
-          </button>
-          <p className="mt-3 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-            Secure payment via Stripe · No lock-in · Cancel anytime
-          </p>
-        </div>
+        {/* Manage billing — admin only */}
+        {isAdmin && (
+          <div className="text-center">
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-85"
+              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line-strong)", opacity: portalLoading ? 0.6 : 1 }}
+            >
+              {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {portalLoading ? "Opening…" : "Manage billing"}
+            </button>
+            <p className="mt-3 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+              Secure payment via Stripe · No lock-in · Cancel anytime
+            </p>
+          </div>
+        )}
       </div>
     </>
   );

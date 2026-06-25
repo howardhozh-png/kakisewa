@@ -68,6 +68,31 @@ export async function POST(req: NextRequest) {
     });
     customerId = customer.id;
     await admin.from("agent_profiles").update({ stripe_customer_id: customerId }).eq("id", userId);
+
+    // Apply any pending referral credits earned before this user had a Stripe account
+    const { data: pending } = await admin
+      .from("referral_credits")
+      .select("id, amount_myr")
+      .eq("referrer_user_id", userId)
+      .is("stripe_balance_transaction_id", null);
+
+    if (pending && pending.length > 0) {
+      for (const credit of pending as Array<{ id: string; amount_myr: number }>) {
+        try {
+          const txn = await stripe.customers.createBalanceTransaction(customerId, {
+            amount: -credit.amount_myr, // negative = credit
+            currency: "myr",
+            description: "Pending referral credit applied at subscription start",
+          });
+          await admin
+            .from("referral_credits")
+            .update({ stripe_balance_transaction_id: txn.id })
+            .eq("id", credit.id);
+        } catch {
+          // Non-fatal
+        }
+      }
+    }
   }
 
   const trialDays = typeof trialDaysLeft === "number" && trialDaysLeft > 0 ? trialDaysLeft : undefined;

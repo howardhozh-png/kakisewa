@@ -171,26 +171,43 @@ export async function POST(req: NextRequest) {
           .eq("referral_slug", referrerProfile.referred_by_slug)
           .maybeSingle();
 
-        if (referrer?.stripe_customer_id && invoice.amount_paid > 0) {
-          try {
-            const txn = await stripe.customers.createBalanceTransaction(
-              referrer.stripe_customer_id,
-              {
-                amount: -invoice.amount_paid, // negative = credit
-                currency: "myr",
-                description: `Referral credit for referring a new subscriber`,
-                metadata: { referred_user_id: referrerProfile.id, invoice_id: invoice.id },
-              }
-            );
-            await db.from("referral_credits").insert({
-              referrer_user_id: referrer.id,
-              referred_user_id: referrerProfile.id,
-              referred_invoice_id: invoice.id,
-              amount_myr: invoice.amount_paid,
-              stripe_balance_transaction_id: txn.id,
-            });
-          } catch {
-            // Non-fatal: referral credit failed, log but continue
+        if (referrer && invoice.amount_paid > 0) {
+          if (referrer.stripe_customer_id) {
+            // Referrer has a Stripe account — apply credit immediately
+            try {
+              const txn = await stripe.customers.createBalanceTransaction(
+                referrer.stripe_customer_id,
+                {
+                  amount: -invoice.amount_paid, // negative = credit
+                  currency: "myr",
+                  description: `Referral credit for referring a new subscriber`,
+                  metadata: { referred_user_id: referrerProfile.id, invoice_id: invoice.id },
+                }
+              );
+              await db.from("referral_credits").insert({
+                referrer_user_id: referrer.id,
+                referred_user_id: referrerProfile.id,
+                referred_invoice_id: invoice.id,
+                amount_myr: invoice.amount_paid,
+                stripe_balance_transaction_id: txn.id,
+              });
+            } catch {
+              // Non-fatal: log but continue
+            }
+          } else {
+            // Referrer has no Stripe account yet — save as pending credit
+            // Will be applied to Stripe when they create their first subscription
+            try {
+              await db.from("referral_credits").insert({
+                referrer_user_id: referrer.id,
+                referred_user_id: referrerProfile.id,
+                referred_invoice_id: invoice.id,
+                amount_myr: invoice.amount_paid,
+                stripe_balance_transaction_id: null,
+              });
+            } catch {
+              // Non-fatal
+            }
           }
         }
       }

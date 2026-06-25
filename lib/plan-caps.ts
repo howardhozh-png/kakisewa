@@ -43,6 +43,7 @@ export function planAllows(plan: string, min: "gold" | "platinum" | "elite"): bo
 
 export function effectivePlan(p: ProfileRow | null): string {
   if (!p) return "silver";
+  if (p.subscription_status === "lifetime")     return "elite";
   if (p.subscription_status === "beta")         return "elite";
   if (p.subscription_status === "trial")        return "elite";
   if (p.subscription_status === "active")       return p.subscription_plan ?? "silver";

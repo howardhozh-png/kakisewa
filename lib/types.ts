@@ -145,7 +145,7 @@ export interface OwnerLead {
 
 export type CompetitorStage = "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
 
-export type SubscriptionStatus = "beta" | "beta_frozen" | "trial" | "active" | "expired" | "cancelled";
+export type SubscriptionStatus = "beta" | "beta_frozen" | "trial" | "active" | "expired" | "cancelled" | "lifetime";
 
 export interface AgentProfile {
   id: number;
