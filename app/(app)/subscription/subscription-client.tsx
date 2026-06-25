@@ -58,6 +58,7 @@ interface PlanData {
   planId: PlanId;
   name: TierName;
   cards: number;
+  betaMonthly: number;
   y1Monthly: number;
   y2Monthly: number;
   y1Annual: number;
@@ -69,10 +70,10 @@ interface PlanData {
 }
 
 const PLANS: PlanData[] = [
-  { planId: "silver",   name: "Silver",   cards: 50,   y1Monthly: 29,  y2Monthly: 29,  y1Annual: 348,  y2Annual: 348,  headline: "Move your pipeline.",       archetype: "New/Part-time agent <5k/month",      quote: "I want to start building my portfolio and learn renewal cycle",                          popular: false },
-  { planId: "gold",     name: "Gold",     cards: 150,  y1Monthly: 49,  y2Monthly: 69,  y1Annual: 588,  y2Annual: 828,  headline: "Scale your portfolio.",      archetype: "Growing agent RM5-10k/month",         quote: "I have enough existing contracts and I don't want to miss them",                        popular: false },
-  { planId: "platinum", name: "Platinum", cards: 400,  y1Monthly: 99,  y2Monthly: 139, y1Annual: 1188, y2Annual: 1668, headline: "Never miss a renewal.",      archetype: "Established agent RM10-20k/month",   quote: "Renewal contract is a big portion of my passive income and I must capture them",      popular: true  },
-  { planId: "elite",    name: "Elite",    cards: 1000, y1Monthly: 159, y2Monthly: 219, y1Annual: 1908, y2Annual: 2628, headline: "Your all-in-one hub.",       archetype: "Elite agent >RM20k/month",           quote: "I am successful, and I want to build my own personal brand",                           popular: false },
+  { planId: "silver",   name: "Silver",   cards: 50,   betaMonthly: 19,  y1Monthly: 29,  y2Monthly: 29,  y1Annual: 348,  y2Annual: 348,  headline: "Move your pipeline.",       archetype: "New/Part-time agent <5k/month",      quote: "I want to start building my portfolio and learn renewal cycle",                          popular: false },
+  { planId: "gold",     name: "Gold",     cards: 150,  betaMonthly: 29,  y1Monthly: 49,  y2Monthly: 69,  y1Annual: 588,  y2Annual: 828,  headline: "Scale your portfolio.",      archetype: "Growing agent RM5-10k/month",         quote: "I have enough existing contracts and I don't want to miss them",                        popular: false },
+  { planId: "platinum", name: "Platinum", cards: 400,  betaMonthly: 39,  y1Monthly: 99,  y2Monthly: 139, y1Annual: 1188, y2Annual: 1668, headline: "Never miss a renewal.",      archetype: "Established agent RM10-20k/month",   quote: "Renewal contract is a big portion of my passive income and I must capture them",      popular: true  },
+  { planId: "elite",    name: "Elite",    cards: 1000, betaMonthly: 69,  y1Monthly: 159, y2Monthly: 219, y1Annual: 1908, y2Annual: 2628, headline: "Your all-in-one hub.",       archetype: "Elite agent >RM20k/month",           quote: "I am successful, and I want to build my own personal brand",                           popular: false },
 ];
 
 // ── Copy button ────────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ function AnimatedPrice({ value, ink }: { value: number; ink: string }) {
 
 function PricingCard({
   plan, interval, billingYear, isCurrentPlan, isSelected,
-  onCardClick, onSelect, isOnTrial, currentCardCount,
+  onCardClick, onSelect, isOnTrial, currentCardCount, betaPrice,
 }: {
   plan: PlanData;
   interval: "monthly" | "annual";
@@ -135,6 +136,7 @@ function PricingCard({
   onSelect: () => void;
   isOnTrial?: boolean;
   currentCardCount: number;
+  betaPrice?: number;
 }) {
   const s = TIER_STYLES[plan.name];
   const tooManyCards = currentCardCount > plan.cards;
@@ -143,10 +145,10 @@ function PricingCard({
   const monthlyPrice = billingYear === 1 ? plan.y1Monthly : plan.y2Monthly;
   const annualTotal  = billingYear === 1 ? plan.y1Annual  : plan.y2Annual;
   const annualMonthly = Math.round(annualTotal / 12);
-  const price = interval === "annual" ? annualMonthly : monthlyPrice;
-  const showFreeMonths = interval === "annual" && billingYear === 1 && plan.planId !== "silver";
+  const price = betaPrice ?? (interval === "annual" ? annualMonthly : monthlyPrice);
+  const showFreeMonths = !betaPrice && interval === "annual" && billingYear === 1 && plan.planId !== "silver";
   const y2PriceDisplay = interval === "annual" ? Math.round(plan.y2Annual / 12) : plan.y2Monthly;
-  const showStrikethrough = billingYear === 1 && plan.y1Monthly !== plan.y2Monthly;
+  const showStrikethrough = !betaPrice && billingYear === 1 && plan.y1Monthly !== plan.y2Monthly;
 
   return (
     <motion.div
@@ -392,6 +394,7 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
 
 interface Props {
   isAdmin?: boolean;
+  isBetaUser?: boolean;
   status: string | null;
   trialDaysLeft: number | null;
   currentPlan: string | null;
@@ -405,7 +408,7 @@ interface Props {
 }
 
 export function SubscriptionClient({
-  isAdmin, status, trialDaysLeft, currentPlan,
+  isAdmin, isBetaUser, status, trialDaysLeft, currentPlan,
   subscriptionYear, currentCardCount, referralCode, referralCount,
   creditBalanceMyr, pendingCreditMyr = 0, totalCreditEarnedMyr = 0,
 }: Props) {
@@ -501,7 +504,7 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            {isAdmin ? "Choose your plan" : "Your referral program"}
+            {isAdmin ? "Choose your plan" : isBetaUser ? "Your beta plan" : "Your referral program"}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -663,6 +666,37 @@ export function SubscriptionClient({
             </tbody>
           </table>
         </div></>}
+
+        {/* Beta pricing — shown only to beta users */}
+        {isBetaUser && <div className="mb-12">
+          <div className="text-center mb-6">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold mb-4"
+              style={{ background: "var(--kk-amber-soft, #FFF3E0)", color: "#B45309", border: "1px solid rgba(255,149,0,0.3)" }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#FF9500" }} />
+              Beta pricing — locked in forever
+            </span>
+            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
+              Monthly only. No annual lock-in. This rate never increases for your account.
+            </p>
+          </div>
+          <div className="grid lg:grid-cols-4 gap-5" style={{ perspective: 1200 }}>
+            {PLANS.map(plan => (
+              <PricingCard
+                key={plan.name}
+                plan={plan}
+                interval="monthly"
+                billingYear={1}
+                betaPrice={plan.betaMonthly}
+                isCurrentPlan={currentPlan === plan.planId}
+                isSelected={selectedPlanId === plan.planId}
+                onCardClick={() => setSelectedPlanId(plan.planId)}
+                onSelect={() => handleSelectPlan(plan)}
+                isOnTrial={isOnTrial}
+                currentCardCount={currentCardCount}
+              />
+            ))}
+          </div>
+        </div>}
 
         {/* Referral section */}
         {referralCode && (

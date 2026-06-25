@@ -9,6 +9,18 @@ export type { PlanId, BillingYear, BillingInterval };
 export type Plan = PlanId;
 export type Interval = BillingInterval;
 
+// Beta prices — flat monthly, no annual, no Y2
+export const BETA_PRICES: Record<PlanId, string> = {
+  silver:   process.env.STRIPE_PRICE_BETA_SILVER_MONTHLY   ?? "",
+  gold:     process.env.STRIPE_PRICE_BETA_GOLD_MONTHLY     ?? "",
+  platinum: process.env.STRIPE_PRICE_BETA_PLATINUM_MONTHLY ?? "",
+  elite:    process.env.STRIPE_PRICE_BETA_ELITE_MONTHLY    ?? "",
+};
+
+export function betaPriceId(plan: PlanId): string {
+  return BETA_PRICES[plan];
+}
+
 // Silver has same price for Y1 and Y2
 export const PRICES = {
   silver: {
@@ -52,6 +64,10 @@ export function priceId(plan: PlanId, interval: BillingInterval, year: BillingYe
 
 // Reverse lookup: price ID → { plan, year, interval }
 export function planFromPriceId(pid: string): { plan: PlanId; year: BillingYear; interval: BillingInterval } | null {
+  // Check beta prices first
+  for (const [plan, betaPid] of Object.entries(BETA_PRICES) as [PlanId, string][]) {
+    if (betaPid && pid === betaPid) return { plan, year: 1, interval: "monthly" };
+  }
   for (const [plan, p] of Object.entries(PRICES) as [PlanId, typeof PRICES[PlanId]][]) {
     if (pid === p.y1Monthly) return { plan, year: 1, interval: "monthly" };
     if (pid === p.y2Monthly) return { plan, year: 2, interval: "monthly" };
@@ -62,11 +78,14 @@ export function planFromPriceId(pid: string): { plan: PlanId; year: BillingYear;
 }
 
 // All price IDs that exist in our system (for PLAN_FROM_PRICE webhook lookup)
-export const ALL_PRICE_IDS: Record<string, PlanId> = Object.fromEntries(
-  (Object.entries(PRICES) as [PlanId, typeof PRICES[PlanId]][]).flatMap(([plan, p]) => [
+export const ALL_PRICE_IDS: Record<string, PlanId> = Object.fromEntries([
+  ...(Object.entries(PRICES) as [PlanId, typeof PRICES[PlanId]][]).flatMap(([plan, p]) => [
     [p.y1Monthly, plan],
     [p.y2Monthly, plan],
     [p.y1Annual, plan],
     [p.y2Annual, plan],
-  ])
-);
+  ]),
+  ...(Object.entries(BETA_PRICES) as [PlanId, string][])
+    .filter(([, pid]) => pid)
+    .map(([plan, pid]) => [pid, plan]),
+]);

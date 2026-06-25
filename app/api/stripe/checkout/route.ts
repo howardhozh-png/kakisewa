@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { stripe, priceId, type PlanId, type BillingInterval } from "@/lib/stripe";
+import { stripe, priceId, betaPriceId, type PlanId, type BillingInterval } from "@/lib/stripe";
 import { TOTAL_CARD_CAP, getTotalCardCount } from "@/lib/plan-caps";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const { data: profile } = await admin
     .from("agent_profiles")
-    .select("stripe_customer_id, stripe_subscription_id, subscription_status, subscription_year, name")
+    .select("stripe_customer_id, stripe_subscription_id, subscription_status, subscription_year, name, is_beta_user")
     .eq("id", userId)
     .single();
 
@@ -97,8 +97,9 @@ export async function POST(req: NextRequest) {
 
   const trialDays = typeof trialDaysLeft === "number" && trialDaysLeft > 0 ? trialDaysLeft : undefined;
 
-  // New subscriptions always start at Y1
-  const newPriceId = priceId(plan, interval, 1);
+  // Beta users always pay their locked-in beta price regardless of interval sent
+  const isBetaUser = !!(profile as { is_beta_user?: boolean } | null)?.is_beta_user;
+  const newPriceId = isBetaUser ? betaPriceId(plan) : priceId(plan, interval, 1);
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,

@@ -2,6 +2,14 @@ export type PlanId = "silver" | "gold" | "platinum" | "elite";
 export type BillingYear = 1 | 2;
 export type BillingInterval = "monthly" | "annual";
 
+// Beta pricing — flat monthly forever, no annual, no Y2
+export const BETA_PLAN_CONFIG: Record<PlanId, { betaMonthly: number }> = {
+  silver:   { betaMonthly: 19 },
+  gold:     { betaMonthly: 29 },
+  platinum: { betaMonthly: 39 },
+  elite:    { betaMonthly: 69 },
+};
+
 export const PLAN_CONFIG = {
   silver: {
     label: "Silver",
