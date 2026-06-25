@@ -1352,7 +1352,6 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             { value: "My Listing",       label: "My Listing" },
             { value: "Existing Listing", label: "Existing Listing" },
             { value: "Own Stay",         label: "Own Stay" },
-            { value: "Archived",         label: "Archived" },
           ]}
           minWidth={140}
         />
