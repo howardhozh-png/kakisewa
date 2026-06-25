@@ -504,7 +504,7 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            {isAdmin ? "Choose your plan" : isBetaUser ? "Your beta plan" : "Your referral program"}
+            {isAdmin ? "Choose your plan" : "Your referral program"}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -667,8 +667,8 @@ export function SubscriptionClient({
           </table>
         </div></>}
 
-        {/* Beta pricing — shown only to beta users */}
-        {isBetaUser && <div className="mb-12">
+        {/* Beta pricing — hidden until ready to launch */}
+        {false && isBetaUser && <div className="mb-12">
           <div className="text-center mb-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold mb-4"
               style={{ background: "var(--kk-amber-soft, #FFF3E0)", color: "#B45309", border: "1px solid rgba(255,149,0,0.3)" }}>
