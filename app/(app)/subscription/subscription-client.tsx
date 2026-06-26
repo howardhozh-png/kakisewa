@@ -212,7 +212,12 @@ function PricingCard({
           </div>
 
           <div>
-            {showStrikethrough && (
+            {betaPrice && (
+              <p className="text-[11px] mb-0.5" style={{ color: s.faint, textDecoration: "line-through" }}>
+                RM {plan.y1Monthly}/mo
+              </p>
+            )}
+            {!betaPrice && showStrikethrough && (
               <p className="text-[11px] mb-0.5" style={{ color: s.faint, textDecoration: "line-through" }}>
                 RM {y2PriceDisplay}/mo Year 2
               </p>
