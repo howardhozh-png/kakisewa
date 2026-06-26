@@ -2074,14 +2074,14 @@ export async function savePropertySupport(data: {
   const effectiveTypes = data.types?.length ? data.types : [data.type];
   try {
     if (data.id) {
-      updatePropertySupport(data.id, {
+      await updatePropertySupport(data.id, {
         name: data.name, contact_name: data.contact_name ?? null,
         phone: data.phone, type: effectiveTypes[0], types: effectiveTypes,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred,
       });
     } else {
-      createPropertySupport({
+      await createPropertySupport({
         name: data.name, contact_name: data.contact_name ?? null,
         phone: data.phone, type: effectiveTypes[0], types: effectiveTypes,
         area: data.area ?? null, notes: data.notes ?? null,
@@ -2089,7 +2089,7 @@ export async function savePropertySupport(data: {
       });
     }
     invalidateCache();
-    revalidatePath("/supports");
+    revalidatePath("/directory");
     return { ok: true };
   } catch {
     return { ok: false };

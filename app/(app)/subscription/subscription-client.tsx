@@ -300,7 +300,7 @@ function PricingCard({
             {tooManyCards
               ? `${currentCardCount}/${plan.cards} cards — reduce first`
               : isOnTrial
-              ? "Save card — free until trial ends"
+              ? `Save card — then RM ${betaPrice ?? monthlyPrice}/mo`
               : interval === "annual"
               ? `Pay RM ${annualTotal.toLocaleString()}/year`
               : `Pay RM ${betaPrice ?? monthlyPrice}/month`}
