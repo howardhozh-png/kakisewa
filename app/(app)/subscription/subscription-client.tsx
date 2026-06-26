@@ -259,11 +259,11 @@ function PricingCard({
               </div>
             ) : (
               <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                {betaPrice
+                {betaPrice || plan.y1Monthly === plan.y2Monthly
                   ? "Fixed rate, no increase"
-                  : plan.y1Monthly !== plan.y2Monthly
-                  ? `Year 2: RM ${plan.y2Monthly}/mo`
-                  : "Fixed rate, no increase"}
+                  : showStrikethrough
+                  ? null
+                  : `Year 2: RM ${plan.y2Monthly}/mo`}
               </p>
             )}
           </div>
