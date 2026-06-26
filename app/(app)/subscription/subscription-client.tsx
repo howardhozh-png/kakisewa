@@ -520,7 +520,7 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            {(isAdmin || isBetaUser) ? "Choose your plan" : "Your referral program"}
+            Choose your plan
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -538,7 +538,7 @@ export function SubscriptionClient({
                 {status === "beta" ? "Beta" : "Trial"} · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
               </span>
             )}
-            {(isAdmin || isBetaUser) && planCap !== null && (
+            {planCap !== null && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
                 style={{
                   background: currentCardCount >= planCap ? "var(--kk-red)" : currentCardCount > planCap * 0.8 ? "#fef3c7" : "var(--kk-surface-2)",
@@ -551,8 +551,8 @@ export function SubscriptionClient({
           </div>
         </div>
 
-        {/* Pricing — admin + beta users */}
-        {(isAdmin || isBetaUser) && <><div className="flex justify-center mb-10" style={{ display: isBetaUser ? "none" : undefined }}>
+        {/* Pricing */}
+        <><div className="flex justify-center mb-10" style={{ display: isBetaUser ? "none" : undefined }}>
           <div className="inline-flex rounded-full p-1"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}>
             <button
@@ -682,7 +682,7 @@ export function SubscriptionClient({
               })}
             </tbody>
           </table>
-        </div></>}
+        </div></>
 
 
         {/* Referral section */}
