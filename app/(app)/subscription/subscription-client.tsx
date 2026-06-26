@@ -247,7 +247,9 @@ function PricingCard({
               </div>
             ) : (
               <p className="mt-1 text-[10px]" style={{ color: s.faint }}>
-                {plan.y1Monthly !== plan.y2Monthly
+                {betaPrice
+                  ? "Fixed rate, no increase"
+                  : plan.y1Monthly !== plan.y2Monthly
                   ? `Year 2: RM ${plan.y2Monthly}/mo`
                   : "Fixed rate, no increase"}
               </p>
@@ -289,7 +291,7 @@ function PricingCard({
               ? "Save card — free until trial ends"
               : interval === "annual"
               ? `Pay RM ${annualTotal.toLocaleString()}/year`
-              : `Pay RM ${monthlyPrice}/month`}
+              : `Pay RM ${betaPrice ?? monthlyPrice}/month`}
           </button>
         </div>
       </div>
@@ -309,15 +311,16 @@ interface ConfirmProps {
   loading: boolean;
   isOnTrial?: boolean;
   trialDaysLeft?: number | null;
+  betaPrice?: number;
 }
 
-function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onConfirm, loading, isOnTrial, trialDaysLeft }: ConfirmProps) {
+function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onConfirm, loading, isOnTrial, trialDaysLeft, betaPrice }: ConfirmProps) {
   const s = TIER_STYLES[plan.name];
   // Upgrades always use Y2 rate regardless of current subscriptionYear
   const effectiveYear: 1 | 2 = isUpgrade ? 2 : billingYear;
   const monthlyPrice = effectiveYear === 1 ? plan.y1Monthly : plan.y2Monthly;
   const annualTotal  = effectiveYear === 1 ? plan.y1Annual  : plan.y2Annual;
-  const price = interval === "annual" ? Math.round(annualTotal / 12) : monthlyPrice;
+  const price = betaPrice ?? (interval === "annual" ? Math.round(annualTotal / 12) : monthlyPrice);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape" && !loading) onCancel(); }
@@ -350,7 +353,7 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
               )}
             </div>
           ) : (
-            <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {monthlyPrice}/month · cancel anytime</p>
+            <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {betaPrice ?? monthlyPrice}/month · cancel anytime</p>
           )}
           {isUpgrade && (
             <p className="text-[11px] mt-3 font-semibold" style={{ color: s.faint }}>Year 2 rate applies on plan upgrades</p>
@@ -414,7 +417,7 @@ export function SubscriptionClient({
 }: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan ?? "platinum");
-  const [pending, setPending] = useState<{ plan: PlanData; interval: "monthly" | "annual"; isUpgrade: boolean } | null>(null);
+  const [pending, setPending] = useState<{ plan: PlanData; interval: "monthly" | "annual"; isUpgrade: boolean; betaPrice?: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -437,9 +440,9 @@ export function SubscriptionClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleSelectPlan(plan: PlanData) {
+  function handleSelectPlan(plan: PlanData, betaPrice?: number) {
     const isUpgrade = status === "active" && currentPlan !== null && plan.planId !== currentPlan;
-    setPending({ plan, interval, isUpgrade });
+    setPending({ plan, interval, isUpgrade, betaPrice });
   }
 
   async function handleConfirm() {
@@ -496,6 +499,7 @@ export function SubscriptionClient({
           loading={loading}
           isOnTrial={isOnTrial}
           trialDaysLeft={trialDaysLeft}
+          betaPrice={pending.betaPrice}
         />
       )}
 
@@ -504,7 +508,7 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            {isAdmin ? "Choose your plan" : "Your referral program"}
+            {isAdmin ? "Choose your plan" : isBetaUser ? "Your beta plan" : "Your referral program"}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -690,7 +694,7 @@ export function SubscriptionClient({
                 isCurrentPlan={currentPlan === plan.planId}
                 isSelected={selectedPlanId === plan.planId}
                 onCardClick={() => setSelectedPlanId(plan.planId)}
-                onSelect={() => handleSelectPlan(plan)}
+                onSelect={() => handleSelectPlan(plan, plan.betaMonthly)}
                 isOnTrial={isOnTrial}
                 currentCardCount={currentCardCount}
               />
