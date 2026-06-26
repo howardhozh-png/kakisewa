@@ -213,9 +213,16 @@ function PricingCard({
 
           <div>
             {betaPrice && (
-              <p className="text-[11px] mb-0.5" style={{ color: s.faint, textDecoration: "line-through" }}>
-                RM {plan.y1Monthly}/mo
-              </p>
+              <div className="mb-1 flex flex-col gap-0.5">
+                <p className="text-[11px]" style={{ color: s.faint, textDecoration: "line-through" }}>
+                  RM {plan.y1Monthly}/mo Year 1
+                </p>
+                {plan.y2Monthly !== plan.y1Monthly && (
+                  <p className="text-[11px]" style={{ color: s.faint, textDecoration: "line-through" }}>
+                    RM {plan.y2Monthly}/mo Year 2
+                  </p>
+                )}
+              </div>
             )}
             {!betaPrice && showStrikethrough && (
               <p className="text-[11px] mb-0.5" style={{ color: s.faint, textDecoration: "line-through" }}>
