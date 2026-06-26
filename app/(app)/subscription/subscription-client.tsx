@@ -508,7 +508,7 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            {isAdmin ? "Choose your plan" : isBetaUser ? "Your beta plan" : "Your referral program"}
+            {isAdmin ? "Choose your plan" : "Your referral program"}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -539,8 +539,8 @@ export function SubscriptionClient({
           </div>
         </div>
 
-        {/* Pricing — admin only */}
-        {isAdmin && <><div className="flex justify-center mb-10">
+        {/* Pricing — admin + beta users */}
+        {(isAdmin || isBetaUser) && <><div className="flex justify-center mb-10" style={{ display: isBetaUser ? "none" : undefined }}>
           <div className="inline-flex rounded-full p-1"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}>
             <button
@@ -572,14 +572,15 @@ export function SubscriptionClient({
             <PricingCard
               key={plan.name}
               plan={plan}
-              interval={interval}
+              interval={isBetaUser ? "monthly" : interval}
               billingYear={effectiveBillingYear}
               isCurrentPlan={currentPlan === plan.planId}
               isSelected={selectedPlanId === plan.planId}
               onCardClick={() => setSelectedPlanId(plan.planId)}
-              onSelect={() => handleSelectPlan(plan)}
+              onSelect={() => handleSelectPlan(plan, isBetaUser ? plan.betaMonthly : undefined)}
               isOnTrial={isOnTrial}
               currentCardCount={currentCardCount}
+              betaPrice={isBetaUser ? plan.betaMonthly : undefined}
             />
           ))}
         </div>
@@ -587,7 +588,7 @@ export function SubscriptionClient({
         {/* Per-plan per-card callout */}
         <div className="mb-14">
           <p className="text-center text-[11px] font-bold uppercase tracking-[0.12em] mb-8" style={{ color: "var(--kk-ink-faint)" }}>
-            Annual billing: what you pay per card (year 1)
+            {isBetaUser ? "Beta pricing: what you pay per card" : "Annual billing: what you pay per card (year 1)"}
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mx-2">
             {PLANS.map(plan => (
@@ -606,7 +607,7 @@ export function SubscriptionClient({
                 <div className="flex items-baseline justify-center gap-1 flex-wrap">
                   <span className="text-[12px] font-bold" style={{ color: "var(--kk-ink-mute)" }}>RM</span>
                   <span className="text-[28px] font-black tabular-nums" style={{ color: "var(--kk-ink)", letterSpacing: "-0.04em", lineHeight: "1" }}>
-                    {(plan.y1Monthly / plan.cards).toFixed(2)}
+                    {((isBetaUser ? plan.betaMonthly : plan.y1Monthly) / plan.cards).toFixed(2)}
                   </span>
                   <span className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>/card/mo</span>
                 </div>
@@ -631,7 +632,7 @@ export function SubscriptionClient({
                   <th key={p.name} className="py-3 px-3 font-bold text-center" style={{ color: "var(--kk-ink)", width: "19%" }}>
                     <div>{p.name}</div>
                     <div className="text-[11px] font-normal mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-                      RM {p.y1Monthly}/mo
+                      RM {isBetaUser ? p.betaMonthly : p.y1Monthly}/mo
                     </div>
                   </th>
                 ))}
@@ -671,36 +672,6 @@ export function SubscriptionClient({
           </table>
         </div></>}
 
-        {/* Beta pricing — shown to beta users below standard pricing */}
-        {isBetaUser && <div className="mb-12">
-          <div className="text-center mb-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold mb-4"
-              style={{ background: "var(--kk-amber-soft, #FFF3E0)", color: "#B45309", border: "1px solid rgba(255,149,0,0.3)" }}>
-              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#FF9500" }} />
-              Beta pricing — locked in forever
-            </span>
-            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
-              Monthly only. No annual lock-in. This rate never increases for your account.
-            </p>
-          </div>
-          <div className="grid lg:grid-cols-4 gap-5" style={{ perspective: 1200 }}>
-            {PLANS.map(plan => (
-              <PricingCard
-                key={plan.name}
-                plan={plan}
-                interval="monthly"
-                billingYear={1}
-                betaPrice={plan.betaMonthly}
-                isCurrentPlan={currentPlan === plan.planId}
-                isSelected={selectedPlanId === plan.planId}
-                onCardClick={() => setSelectedPlanId(plan.planId)}
-                onSelect={() => handleSelectPlan(plan, plan.betaMonthly)}
-                isOnTrial={isOnTrial}
-                currentCardCount={currentCardCount}
-              />
-            ))}
-          </div>
-        </div>}
 
         {/* Referral section */}
         {referralCode && (
