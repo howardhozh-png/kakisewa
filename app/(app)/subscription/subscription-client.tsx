@@ -526,7 +526,7 @@ export function SubscriptionClient({
                 {status === "beta" ? "Beta" : "Trial"} · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
               </span>
             )}
-            {isAdmin && planCap !== null && (
+            {(isAdmin || isBetaUser) && planCap !== null && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
                 style={{
                   background: currentCardCount >= planCap ? "var(--kk-red)" : currentCardCount > planCap * 0.8 ? "#fef3c7" : "var(--kk-surface-2)",
