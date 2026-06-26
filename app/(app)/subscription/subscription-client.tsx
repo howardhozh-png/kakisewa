@@ -508,7 +508,7 @@ export function SubscriptionClient({
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="serif kk-display mb-3" style={{ color: "var(--kk-ink)" }}>
-            {isAdmin ? "Choose your plan" : "Your referral program"}
+            {(isAdmin || isBetaUser) ? "Choose your plan" : "Your referral program"}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4">
