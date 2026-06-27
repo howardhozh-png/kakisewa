@@ -312,6 +312,11 @@ function BoardView({ leads, agentName }: { leads: OwnerLead[]; agentName: string
   const filtered = leads.filter(l => {
     const q = search.toLowerCase();
     return !q || (l.property_name ?? "").toLowerCase().includes(q) || (l.unit ?? "").toLowerCase().includes(q) || (l.address ?? "").toLowerCase().includes(q);
+  }).sort((a, b) => {
+    if (!a.available_from && !b.available_from) return 0;
+    if (!a.available_from) return 1;
+    if (!b.available_from) return -1;
+    return a.available_from.localeCompare(b.available_from);
   });
 
   return (
