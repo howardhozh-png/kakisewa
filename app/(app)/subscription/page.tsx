@@ -29,21 +29,23 @@ export default async function SubscriptionPage() {
 
   let referralCount = 0;
   let referralPaidCount = 0;
-  if (referralCode) {
-    const { count } = await supabase
-      .from("agent_profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("referred_by_slug", referralCode);
-    referralCount = count ?? 0;
-  }
-  if (user) {
+  if (referralCode || user) {
     try {
       const svc = createServiceClient();
-      const { count } = await svc
-        .from("referral_credits")
-        .select("id", { count: "exact", head: true })
-        .eq("referrer_user_id", user.id);
-      referralPaidCount = count ?? 0;
+      if (referralCode) {
+        const { count } = await svc
+          .from("agent_profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("referred_by_slug", referralCode);
+        referralCount = count ?? 0;
+      }
+      if (user) {
+        const { count } = await svc
+          .from("referral_credits")
+          .select("id", { count: "exact", head: true })
+          .eq("referrer_user_id", user.id);
+        referralPaidCount = count ?? 0;
+      }
     } catch {}
   }
 
