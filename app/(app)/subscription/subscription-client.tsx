@@ -417,6 +417,7 @@ interface Props {
   currentCardCount: number;
   referralCode: string | null;
   referralCount: number;
+  referralPaidCount: number;
   creditBalanceMyr: number;
   pendingCreditMyr?: number;
   totalCreditEarnedMyr?: number;
@@ -424,7 +425,7 @@ interface Props {
 
 export function SubscriptionClient({
   isAdmin, isBetaUser, status, trialDaysLeft, currentPlan,
-  subscriptionYear, currentCardCount, referralCode, referralCount,
+  subscriptionYear, currentCardCount, referralCode, referralCount, referralPaidCount,
   creditBalanceMyr, pendingCreditMyr = 0, totalCreditEarnedMyr = 0,
 }: Props) {
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
@@ -696,21 +697,27 @@ export function SubscriptionClient({
               Each agent who signs up with your code and pays their first month gives you full credit for that amount. Refer 12 and you have covered a full year on us.
             </p>
 
-            {/* 3 stat boxes */}
+            {/* 4 stat boxes — 2×2 grid */}
             {(() => {
               const creditBalance = creditBalanceMyr + pendingCreditMyr;
               const isPending = pendingCreditMyr > 0 && creditBalanceMyr === 0;
               const stats = [
                 {
-                  label: "Agents referred",
+                  label: "Signed up",
                   value: String(referralCount),
-                  sub: referralCount === 0 ? "Share your link to start" : referralCount >= 12 ? "Goal reached!" : `${12 - referralCount} to go`,
-                  green: referralCount >= 12,
+                  sub: referralCount === 0 ? "Share your link to start" : "Used your code",
+                  green: false,
+                },
+                {
+                  label: "Converted to paid",
+                  value: String(referralPaidCount),
+                  sub: referralPaidCount >= 12 ? "Goal reached!" : referralPaidCount === 0 ? "Made first payment" : `${12 - referralPaidCount} to go`,
+                  green: referralPaidCount >= 12,
                 },
                 {
                   label: "Total credit earned",
                   value: `RM ${totalCreditEarnedMyr.toFixed(2)}`,
-                  sub: totalCreditEarnedMyr === 0 ? "From paid referrals" : `From ${referralCount} referral${referralCount !== 1 ? "s" : ""}`,
+                  sub: totalCreditEarnedMyr === 0 ? "From paid referrals" : `From ${referralPaidCount} paid referral${referralPaidCount !== 1 ? "s" : ""}`,
                   green: totalCreditEarnedMyr > 0,
                 },
                 {
@@ -721,7 +728,7 @@ export function SubscriptionClient({
                 },
               ];
               return (
-                <div className="grid grid-cols-3 gap-2 mb-5">
+                <div className="grid grid-cols-2 gap-2 mb-5">
                   {stats.map((s) => (
                     <div key={s.label} className="rounded-xl px-3 py-3 flex flex-col gap-1"
                       style={{
