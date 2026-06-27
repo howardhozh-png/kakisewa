@@ -28,15 +28,16 @@ type View = "form" | "email_sent"
 
 function SignUpForm() {
   const searchParams = useSearchParams()
-  const refSlug = searchParams.get("ref") ?? null
   const ph = usePostHog()
 
   const [form, setForm] = useState({ email: "", passcode: "" })
+  const [refCode, setRefCode] = useState(searchParams.get("ref") ?? "")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<View>("form")
 
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL
+  const effectiveRef = refCode.trim() || null
 
   function set(field: "email" | "passcode") {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,12 +62,12 @@ function SignUpForm() {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             is_admin: isAdmin,
-            referred_by: refSlug,
+            referred_by: effectiveRef,
           },
         },
       })
       if (err) { setError(err.message); setLoading(false); return }
-      ph?.capture("user_signed_up", { email: form.email, referral_slug: refSlug })
+      ph?.capture("user_signed_up", { email: form.email, referral_slug: effectiveRef })
       setLoading(false)
       setView("email_sent")
     } catch {
@@ -155,6 +156,36 @@ function SignUpForm() {
               <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>8 digits — you&apos;ll use this to sign in</p>
             </div>
 
+            {/* Referral code */}
+            <div className="flex flex-col gap-1.5">
+              <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>
+                Referral code{" "}
+                <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400 }}>(optional)</span>
+              </Label>
+              <div style={{ position: "relative" }}>
+                <Input
+                  type="text"
+                  value={refCode}
+                  onChange={e => setRefCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. AB3F92C1"
+                  className={sharedInputCls}
+                  style={{ ...sharedInputStyle, letterSpacing: "0.05em", paddingRight: refCode ? 80 : undefined }}
+                />
+                {refCode && (
+                  <span style={{
+                    position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                    fontSize: 11, fontWeight: 700, color: "var(--kk-green)",
+                    display: "flex", alignItems: "center", gap: 3,
+                  }}>
+                    <svg viewBox="0 0 12 12" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 6l3 3 5-5" />
+                    </svg>
+                    Applied
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* Divider */}
             <div className="relative flex items-center gap-3 my-1">
               <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
@@ -162,7 +193,7 @@ function SignUpForm() {
               <div className="flex-1 h-px" style={{ background: "var(--kk-line)" }} />
             </div>
 
-            <GoogleSignInButton onError={setError} />
+            <GoogleSignInButton onError={setError} refCode={effectiveRef} />
 
             {error && (
               <p className="rounded-xl px-3.5 py-2.5" style={{ fontSize: "var(--kk-sm)", color: "var(--destructive)", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.2)" }}>

@@ -29,6 +29,12 @@ export async function GET(request: NextRequest) {
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Stamp referral attribution from Google OAuth round-trip cookie
+      const kkRef = cookieStore.get("kk_ref")?.value;
+      if (kkRef) {
+        await supabase.auth.updateUser({ data: { referred_by: decodeURIComponent(kkRef) } });
+        successRedirect.cookies.set("kk_ref", "", { expires: new Date(0), path: "/" });
+      }
       return successRedirect;
     }
   }

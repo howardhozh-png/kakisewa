@@ -6,15 +6,22 @@ import { createClient } from "@/lib/supabase/client";
 interface Props {
   onError?: (msg: string) => void;
   onLoadingChange?: (loading: boolean) => void;
-  onNotInvited?: (email: string) => void; // unused with redirect flow — callback handles it
+  refCode?: string | null;
 }
 
-export function GoogleSignInButton({ onError, onLoadingChange }: Props) {
+export function GoogleSignInButton({ onError, onLoadingChange, refCode }: Props) {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
     setLoading(true);
     onLoadingChange?.(true);
+
+    // Persist referral code through Google OAuth round-trip via cookie
+    if (refCode) {
+      const expires = new Date(Date.now() + 60 * 60 * 1000).toUTCString();
+      document.cookie = `kk_ref=${encodeURIComponent(refCode)}; expires=${expires}; path=/; SameSite=Lax`;
+    }
+
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
