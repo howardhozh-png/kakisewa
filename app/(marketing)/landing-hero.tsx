@@ -106,8 +106,7 @@ export function LandingHero() {
   useEffect(() => {
     /* Scroll-snap on html (marketing page only — cleaned up on unmount) */
     const html = document.documentElement;
-    const prev = { snap: html.style.scrollSnapType, oy: html.style.overflowY, ox: html.style.overflowX };
-    html.style.scrollSnapType = "y proximity";
+    const prev = { oy: html.style.overflowY, ox: html.style.overflowX };
     html.style.overflowY      = "scroll";
     html.style.overflowX      = "hidden";
 
@@ -147,7 +146,6 @@ export function LandingHero() {
     document.addEventListener("keydown", onKey);
 
     return () => {
-      html.style.scrollSnapType = prev.snap;
       html.style.overflowY      = prev.oy;
       html.style.overflowX      = prev.ox;
       trails.forEach(t => t.destroy());
@@ -175,8 +173,6 @@ export function LandingHero() {
         .kk-land * { box-sizing: border-box; margin: 0; padding: 0; }
         .kk-land-chapter {
           height: 100svh;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
           position: relative;
           overflow: hidden;
           display: flex;
