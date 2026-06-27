@@ -107,7 +107,7 @@ export function LandingHero() {
     /* Scroll-snap on html (marketing page only — cleaned up on unmount) */
     const html = document.documentElement;
     const prev = { snap: html.style.scrollSnapType, oy: html.style.overflowY, ox: html.style.overflowX };
-    html.style.scrollSnapType = "y mandatory";
+    html.style.scrollSnapType = "y proximity";
     html.style.overflowY      = "scroll";
     html.style.overflowX      = "hidden";
 
