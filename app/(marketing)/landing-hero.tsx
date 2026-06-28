@@ -589,7 +589,7 @@ export function LandingHero() {
             marginBottom: 18,
             ...delay(0.1, revealed[3]),
           }}>
-            One renewal and kakisewa<br />is paid for the whole year.
+            One renewal or 12 referrals<br />and kakisewa is paid for the whole year.
           </h2>
           <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
             Start 2 months free. Cancel anytime.
