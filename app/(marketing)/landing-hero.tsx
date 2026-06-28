@@ -87,6 +87,14 @@ const CH_CONFIGS = [
   { r: 0,   g: 113, b: 227 },
 ];
 
+/* ── Luxury scroll items (static, defined outside component) ─────────────── */
+const LUX_ITEMS = [
+  { photo: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=560&h=370&fit=crop&auto=format", label: "branded bags",      calc: (l: number) => Math.floor(l / 8000).toString()  },
+  { photo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=560&h=370&fit=crop&auto=format", label: "Japan trips",        calc: (l: number) => Math.floor(l / 10000).toString() },
+  { photo: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=560&h=370&fit=crop&auto=format", label: "house installments", calc: (l: number) => Math.floor(l / 5000).toString()  },
+  { photo: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=560&h=370&fit=crop&auto=format", label: "luxury car",         calc: (l: number) => (l / 200000).toFixed(1)           },
+];
+
 /* ── Component ───────────────────────────────────────────────────────────── */
 export function LandingHero() {
   const [contracts, setContracts] = useState(50);
@@ -351,32 +359,38 @@ export function LandingHero() {
             in missed renewals per year.
           </p>
 
-          {/* What you could have bought */}
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10,
-            marginBottom: 24,
-            ...delay(0.42, revealed[1]),
-          }}>
-            {[
-              { emoji: "👜", value: Math.floor(loss / 8000).toString(),  label: "branded bags",           note: "RM 8,000 each" },
-              { emoji: "✈️", value: Math.floor(loss / 10000).toString(), label: "Japan trips",             note: "RM 10,000 each" },
-              { emoji: "🏠", value: Math.floor(loss / 5000).toString(),  label: "months of installments", note: "RM 5,000 / month" },
-              { emoji: "🚗", value: (loss / 200000).toFixed(1),          label: "luxury European car",    note: "RM 200,000 each" },
-            ].map(item => (
-              <div key={item.label} style={{
-                background: "#fff", border: "1px solid #E5E5EA",
-                borderRadius: 16, padding: "16px 18px",
+          {/* What you could have bought — auto-scroll strip */}
+          <div style={{ marginBottom: 24, ...delay(0.42, revealed[1]) }}>
+            <div className="kk-lux-wrapper">
+              <div style={{
+                display: "flex", gap: 14, width: "max-content",
+                animation: "kk-lux-scroll 22s linear infinite",
               }}>
-                <div style={{ fontSize: 18, lineHeight: 1, marginBottom: 8 }}>{item.emoji}</div>
-                <div style={{
-                  fontSize: "clamp(1.6rem, 3.5vw, 2.25rem)", fontWeight: 800,
-                  color: "#1D1D1F", lineHeight: 1,
-                  fontFeatureSettings: "'tnum'", letterSpacing: "-0.03em",
-                }}>{item.value}</div>
-                <div style={{ fontSize: 13, color: "#6E6E73", marginTop: 5, lineHeight: 1.3 }}>{item.label}</div>
-                <div style={{ fontSize: 11, color: "#AEAEB2", marginTop: 3 }}>{item.note}</div>
+                {[...LUX_ITEMS, ...LUX_ITEMS].map((item, i) => (
+                  <div key={i} style={{
+                    position: "relative",
+                    width: "clamp(148px, 38vw, 280px)",
+                    height: "clamp(125px, 14vw, 185px)",
+                    borderRadius: 18, overflow: "hidden", flexShrink: 0,
+                  }}>
+                    <img src={item.photo} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.72) 100%)" }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 14px 14px", display: "flex", alignItems: "flex-end", gap: 6 }}>
+                      <div style={{
+                        fontSize: "clamp(28px, 6vw, 48px)", fontWeight: 900,
+                        color: "#FF3B30", lineHeight: 1,
+                        letterSpacing: "-0.04em", fontFeatureSettings: "'tnum'", flexShrink: 0,
+                      }}>{item.calc(loss)}</div>
+                      <div style={{
+                        fontSize: "clamp(11px, 2.2vw, 15px)", fontWeight: 600,
+                        color: "#fff", lineHeight: 1.25,
+                        paddingBottom: 3, textShadow: "0 1px 6px rgba(0,0,0,0.4)",
+                      }}>{item.label}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
           <p style={{ fontSize: 14, color: "#D1D1D6", marginTop: 0, ...delay(0.54, revealed[1]) }}>

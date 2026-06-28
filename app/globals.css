@@ -782,6 +782,25 @@ html, body {
   fill: var(--kk-ink-mute);
 }
 
+/* ── Luxury scroll strip (landing math section) ────────────────────────────── */
+@keyframes kk-lux-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.kk-lux-wrapper {
+  overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
+  mask: linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
+}
+
+@media (max-width: 640px) {
+  .kk-lux-wrapper {
+    -webkit-mask: linear-gradient(90deg, transparent 0%, black 3%, black 97%, transparent 100%);
+    mask: linear-gradient(90deg, transparent 0%, black 3%, black 97%, transparent 100%);
+  }
+}
+
 /* ── Metric card responsive sizing ─────────────────────────────────────────── */
 .kk-metric-card-inner { padding: 16px 16px 18px; }
 .kk-metric-card-icon-wrap { width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0; }
