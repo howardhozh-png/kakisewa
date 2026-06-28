@@ -347,10 +347,39 @@ export function LandingHero() {
           }}>
             RM {loss.toLocaleString()}
           </div>
-          <p style={{ fontSize: 18, color: "#AEAEB2", marginBottom: 28, ...delay(0.36, revealed[1]) }}>
+          <p style={{ fontSize: 18, color: "#AEAEB2", marginBottom: 24, ...delay(0.36, revealed[1]) }}>
             in missed renewals per year.
           </p>
-          <p style={{ fontSize: 14, color: "#D1D1D6", marginTop: 14, ...delay(0.46, revealed[1]) }}>
+
+          {/* What you could have bought */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10,
+            marginBottom: 24,
+            ...delay(0.42, revealed[1]),
+          }}>
+            {[
+              { emoji: "👜", value: Math.floor(loss / 8000).toString(),  label: "branded bags",           note: "RM 8,000 each" },
+              { emoji: "✈️", value: Math.floor(loss / 10000).toString(), label: "Japan trips",             note: "RM 10,000 each" },
+              { emoji: "🏠", value: Math.floor(loss / 5000).toString(),  label: "months of installments", note: "RM 5,000 / month" },
+              { emoji: "🚗", value: (loss / 200000).toFixed(1),          label: "luxury European car",    note: "RM 200,000 each" },
+            ].map(item => (
+              <div key={item.label} style={{
+                background: "#fff", border: "1px solid #E5E5EA",
+                borderRadius: 16, padding: "16px 18px",
+              }}>
+                <div style={{ fontSize: 18, lineHeight: 1, marginBottom: 8 }}>{item.emoji}</div>
+                <div style={{
+                  fontSize: "clamp(1.6rem, 3.5vw, 2.25rem)", fontWeight: 800,
+                  color: "#1D1D1F", lineHeight: 1,
+                  fontFeatureSettings: "'tnum'", letterSpacing: "-0.03em",
+                }}>{item.value}</div>
+                <div style={{ fontSize: 13, color: "#6E6E73", marginTop: 5, lineHeight: 1.3 }}>{item.label}</div>
+                <div style={{ fontSize: 11, color: "#AEAEB2", marginTop: 3 }}>{item.note}</div>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 14, color: "#D1D1D6", marginTop: 0, ...delay(0.54, revealed[1]) }}>
             50% untracked renewals &middot; RM 3,000 average commission &middot; drag to see your number
           </p>
         </div>
@@ -426,12 +455,12 @@ export function LandingHero() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
                     {[
                       { title: "LISTED", count: 4, sub: "Build the tenant pack. Find the right tenant.", cards: [
-                        { name: "Ritze Perdana",    unit: "Unit 11C · RM 2,400/mo", tenant: "Michelle Ong Cheng Bee", action: "Tenant confirmed" },
-                        { name: "The Greens Subang", unit: "Unit 8-01 · RM 2,100/mo", tenant: "Helen Tan Bee Choo",    action: null },
+                        { name: "Ritze Perdana",    unit: "Unit 11C · RM 2,400/mo", tenant: "Michelle Ong Cheng Bee", action: "Tenant confirmed", photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=56&h=56&fit=crop&auto=format" },
+                        { name: "The Greens Subang", unit: "Unit 8-01 · RM 2,100/mo", tenant: "Helen Tan Bee Choo",   action: null,               photo: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=56&h=56&fit=crop&auto=format" },
                       ]},
                       { title: "RENTED", count: 3, sub: "Well done, proud of you!", cards: [
-                        { name: "Kelisa Residence", unit: "Unit 4C · RM 1,900/mo", tenant: "Kamaruddin bin Baharom", action: "Confirm moved in" },
-                        { name: "Laman Suria",      unit: "Unit 6A · RM 1,600/mo", tenant: "Mohd Farouk Hamdan",     action: null },
+                        { name: "Kelisa Residence", unit: "Unit 4C · RM 1,900/mo", tenant: "Kamaruddin bin Baharom", action: "Confirm moved in", photo: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=56&h=56&fit=crop&auto=format" },
+                        { name: "Laman Suria",      unit: "Unit 6A · RM 1,600/mo", tenant: "Mohd Farouk Hamdan",     action: null,              photo: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=56&h=56&fit=crop&auto=format" },
                       ]},
                     ].map(col => (
                       <div key={col.title} style={{ background: "#F2F2F7", borderRadius: 8, padding: 8 }}>
@@ -440,7 +469,7 @@ export function LandingHero() {
                         {col.cards.map(card => (
                           <div key={card.name} style={{ background: "#fff", border: "1px solid #E5E5EA", borderRadius: 6, padding: 6, marginBottom: 4 }}>
                             <div style={{ display: "flex", gap: 5, marginBottom: card.action ? 4 : 0 }}>
-                              <div style={{ width: 24, height: 24, background: "#D1D1D6", borderRadius: 4, flexShrink: 0 }} />
+                              <img src={card.photo} style={{ width: 24, height: 24, borderRadius: 4, flexShrink: 0, objectFit: "cover" }} alt="" />
                               <div>
                                 <div style={{ fontSize: 8, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.2 }}>{card.name}</div>
                                 <div style={{ fontSize: 7, color: "#6E6E73" }}>{card.unit}</div>
@@ -499,7 +528,7 @@ export function LandingHero() {
                   {/* Card 1 */}
                   <div style={{ margin: "0 5px 4px", background: "#fff", border: "1px solid #E5E5EA", borderRadius: 7, padding: 6, flexShrink: 0 }}>
                     <div style={{ display: "flex", gap: 5, alignItems: "flex-start", marginBottom: 4 }}>
-                      <div style={{ width: 20, height: 20, background: "#D1D1D6", borderRadius: 4, flexShrink: 0 }} />
+                      <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=48&h=48&fit=crop&auto=format" style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, objectFit: "cover" }} alt="" />
                       <div>
                         <div style={{ fontSize: 7, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.2 }}>Ritze Perdana</div>
                         <div style={{ fontSize: 6, color: "#6E6E73" }}>Unit 11C · RM 2,400/mo</div>
@@ -514,7 +543,7 @@ export function LandingHero() {
                   {/* Card 2 */}
                   <div style={{ margin: "0 5px", background: "#fff", border: "1px solid #E5E5EA", borderRadius: 7, padding: 6, flexShrink: 0 }}>
                     <div style={{ display: "flex", gap: 5, alignItems: "flex-start" }}>
-                      <div style={{ width: 20, height: 20, background: "#D1D1D6", borderRadius: 4, flexShrink: 0 }} />
+                      <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=48&h=48&fit=crop&auto=format" style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, objectFit: "cover" }} alt="" />
                       <div>
                         <div style={{ fontSize: 7, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.2 }}>The Greens Subang</div>
                         <div style={{ fontSize: 6, color: "#6E6E73" }}>Unit 8-01 · RM 2,100/mo</div>
