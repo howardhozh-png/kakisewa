@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToUser } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,13 @@ export async function POST(req: Request) {
     p256dh: keys.p256dh,
     auth: keys.auth,
   }, { onConflict: "user_id,endpoint" });
+
+  sendPushToUser(session.user.id, {
+    title: "Notifications are on",
+    body: "You'll get updates on your listings, tenants, and contracts",
+    url: "/home",
+    tag: "push_welcome",
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

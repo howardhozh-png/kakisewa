@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { stripe, planFromPriceId, ALL_PRICE_IDS, priceId } from "@/lib/stripe";
 import { PLAN_CONFIG, minimumPlanFor } from "@/lib/plans";
 import { getTotalCardCount, TOTAL_CARD_CAP } from "@/lib/plan-caps";
+import { sendPushToUser } from "@/lib/push";
 import type Stripe from "stripe";
 
 function admin() {
@@ -278,6 +279,12 @@ export async function POST(req: NextRequest) {
         const email = user?.email;
         const firstName = (profile.name ?? "").split(" ")[0] || "there";
         const resendKey = process.env.RESEND_API_KEY;
+        sendPushToUser(profile.id, {
+          title: "Payment failed",
+          body: "Please update your card to keep your account active",
+          url: "/subscription",
+          tag: "payment_failed",
+        }).catch(() => {});
         if (email && resendKey) {
           await fetch("https://api.resend.com/emails", {
             method: "POST",

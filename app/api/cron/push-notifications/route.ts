@@ -160,8 +160,58 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Property availability notifications removed — creates noise without value.
-  // Agents want to be notified when owners reply, not when availability dates approach.
+  // ── Property becoming available — 60 / 30 / 7 day reminders ─────────────────
+  for (const daysBefore of [60, 30, 7]) {
+    const targetDate = new Date(today.getTime() + daysBefore * 86400000);
+    const targetStr = targetDate.toISOString().slice(0, 10);
+    const bucket = daysBefore === 7 ? "7d" : daysBefore === 30 ? "30d" : "60d";
+    const whenLabel = daysBefore === 7 ? "in 7 days" : daysBefore === 30 ? "next month" : "in 2 months";
+
+    const { data: available } = await supabase
+      .from("owner_leads")
+      .select("id, user_id, property_name, unit, available_from")
+      .eq("available_from", targetStr)
+      .in("stage", ["wants_rent", "listed", "replied"]);
+
+    for (const row of available ?? []) {
+      if (!row.user_id) { skipped++; continue; }
+      const notifKey = `push_avail_${bucket}_${row.id}`;
+
+      const { data: existing } = await supabase
+        .from("push_sent_log")
+        .select("id")
+        .eq("user_id", row.user_id)
+        .eq("notification_key", notifKey)
+        .maybeSingle();
+
+      if (existing) { skipped++; continue; }
+      if (pushOptedOut.has(row.user_id)) { skipped++; continue; }
+
+      const { count } = await supabase
+        .from("push_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", row.user_id);
+
+      if (!count || count === 0) { skipped++; continue; }
+
+      const propParts = [row.property_name, row.unit ? `Unit ${row.unit}` : null].filter(Boolean);
+      const propLabel = propParts.join(" · ") || "a property";
+
+      const result = await sendPushToUser(row.user_id, {
+        title: `Property available ${whenLabel}`,
+        body: `${propLabel} — start listing now`,
+        url: `/my-listing?highlight=${row.id}`,
+        tag: notifKey,
+      });
+
+      if (result.sent > 0) {
+        await supabase.from("push_sent_log").insert({ user_id: row.user_id, notification_key: notifKey });
+        sent += result.sent;
+      } else {
+        errors++;
+      }
+    }
+  }
 
   return NextResponse.json({ sent, skipped, errors, at: today.toISOString() });
 }

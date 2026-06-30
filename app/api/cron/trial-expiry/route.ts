@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendPushToUser } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,25 @@ export async function GET(req: NextRequest) {
       }),
     });
     sent++;
+
+    const pushKey = `trial_expiry_${days}d_${agent.id}`;
+    const { data: alreadyPushed } = await supabase
+      .from("push_sent_log")
+      .select("id")
+      .eq("user_id", agent.id)
+      .eq("notification_key", pushKey)
+      .maybeSingle();
+    if (!alreadyPushed) {
+      const pushResult = await sendPushToUser(agent.id, {
+        title: subject,
+        body: "Subscribe now to keep your account active",
+        url: "/subscription",
+        tag: pushKey,
+      });
+      if (pushResult.sent > 0) {
+        await supabase.from("push_sent_log").insert({ user_id: agent.id, notification_key: pushKey });
+      }
+    }
   }
 
   return NextResponse.json({ sent });
