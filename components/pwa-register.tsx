@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const DISMISSED_KEY = "kk-pwa-dismissed";
 const DISMISS_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -34,6 +35,7 @@ export function PwaRegister() {
 }
 
 function PwaRegisterInner() {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [showAndroid, setShowAndroid] = useState(false);
   const [androidVisible, setAndroidVisible] = useState(false);
@@ -44,12 +46,15 @@ function PwaRegisterInner() {
 
   useEffect(() => {
     if (!mounted) return;
-    // Register service worker
+    // Register service worker on all pages — push notifications need it everywhere
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {
         // SW registration failed — non-fatal
       });
     }
+
+    // Don't show install prompts on public share pages
+    if (pathname.startsWith("/share") || pathname.startsWith("/sample-pack")) return;
 
     const isIOS =
       /iPad|iPhone|iPod/.test(navigator.userAgent) &&
@@ -81,6 +86,7 @@ function PwaRegisterInner() {
   }, [mounted]);
 
   if (!mounted) return null;
+  if (pathname.startsWith("/share") || pathname.startsWith("/sample-pack")) return null;
 
   // Android bottom sheet
   if (showAndroid) {
