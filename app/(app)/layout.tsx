@@ -18,6 +18,7 @@ import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTena
 import { getTotalCardCount } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
+import { PushNudge } from "@/components/push-nudge";
 import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
@@ -123,6 +124,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Overlays & dialogs */}
+      <PushNudge hasPushEnabled={(pushSubCount ?? 0) > 0} />
       <OnboardingDemoDialog />
       <TrialDowngradeNotice archivedCount={agent.trial_downgrade_archived_count ?? null} />
       <ProfileSetupDialog
