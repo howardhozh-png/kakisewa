@@ -23,26 +23,31 @@ export function PushNudge({ hasPushEnabled }: Props) {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    // Only show in standalone PWA mode
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (!standalone) return;
+    const isTest = new URLSearchParams(window.location.search).get("test_nudge") === "1";
 
-    // Already subscribed
-    if (hasPushEnabled) return;
+    // Only show in standalone PWA mode (or when ?test_nudge=1 bypasses all checks)
+    if (!isTest) {
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      if (!standalone) return;
 
-    // User explicitly blocked notifications — don't nag
-    if (typeof Notification !== "undefined" && Notification.permission === "denied") return;
+      // Already subscribed
+      if (hasPushEnabled) return;
 
-    // Already dismissed this session
-    if (sessionStorage.getItem(SESSION_KEY)) return;
+      // User explicitly blocked notifications — don't nag
+      if (typeof Notification !== "undefined" && Notification.permission === "denied") return;
 
-    // Delay 2s so the page settles before the sheet appears
+      // Already dismissed this session
+      if (sessionStorage.getItem(SESSION_KEY)) return;
+    }
+
+    // Delay 2s so the page settles before the sheet appears (instant in test mode)
+    const delay = isTest ? 0 : 2000;
     const timer = setTimeout(() => {
       setShow(true);
       requestAnimationFrame(() => setVisible(true));
-    }, 2000);
+    }, delay);
 
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
