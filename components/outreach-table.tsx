@@ -70,7 +70,7 @@ import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-type Filter = "all" | "unsent" | "contacted" | "deleted";
+type Filter = "all" | "unsent" | "contacted" | "declined" | "deleted";
 type PurposeFilter = "all" | "rent" | "sell";
 type SentDateFilter = { mode: "month" | "day"; value: string } | null;
 type ContactStatus = "listed" | "rented" | "contacted" | "unsent" | "declined";
@@ -154,7 +154,11 @@ function StatusBadge({ lead }: { lead: OwnerLead }) {
   if (status === "rented") {
     bg = "rgba(52,199,89,0.12)"; color = "#1F8B4C"; label = "Rented";
   } else if (status === "declined") {
-    bg = "rgba(0,0,0,0.06)"; color = "var(--kk-ink-mute)"; label = lead.stage === "own_stay" ? "Own stay" : "Archived";
+    if (lead.stage === "own_stay") {
+      bg = "var(--kk-red-soft)"; color = "var(--kk-red)"; label = "Own Stay";
+    } else {
+      bg = "rgba(0,0,0,0.06)"; color = "var(--kk-ink-mute)"; label = "Lost";
+    }
   } else if (status === "listed") {
     bg = "rgba(0,113,227,0.10)"; color = "var(--kk-blue)"; label = "Listed";
   } else if (status === "contacted") {
@@ -901,10 +905,11 @@ function WaDailyCounter({ count, cap, onCapChange }: { count: number; cap: numbe
 
 interface Props {
   leads: OwnerLead[];
+  declinedLeads?: OwnerLead[];
   deletedLeads?: OwnerLead[];
 }
 
-export function OutreachTable({ leads, deletedLeads = [] }: Props) {
+export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: Props) {
   const router = useRouter();
   const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
@@ -1015,6 +1020,18 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
         const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
           .map((v) => (v ?? "").toLowerCase()).join(" ");
         return haystack.includes(searchLower);
+      })
+    : filter === "declined"
+    ? declinedLeads.filter((l) => {
+        if (!searchLower) return true;
+        const haystack = [l.owner_name, l.owner_phone, l.unit, l.property_name]
+          .map((v) => (v ?? "").toLowerCase()).join(" ");
+        return haystack.includes(searchLower);
+      }).sort((a, b) => {
+        // Own stay first, then archived (lost to competitor)
+        if (a.stage === "own_stay" && b.stage !== "own_stay") return -1;
+        if (a.stage !== "own_stay" && b.stage === "own_stay") return 1;
+        return b.created_at.localeCompare(a.created_at);
       })
     : leads
         .filter((l) => {
@@ -1251,6 +1268,7 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
     { key: "all",       label: `All ${counts.all}` },
     { key: "unsent",    label: `Uncontacted ${counts.unsent}` },
     { key: "contacted", label: `Contacted ${counts.contacted}` },
+    ...(declinedLeads.length > 0 ? [{ key: "declined" as Filter, label: `Declined ${declinedLeads.length}` }] : []),
     ...(deletedLeads.length > 0 ? [{ key: "deleted" as Filter, label: `Deleted ${deletedLeads.length}` }] : []),
   ];
 
@@ -1351,7 +1369,6 @@ export function OutreachTable({ leads, deletedLeads = [] }: Props) {
             { value: "Property Leads",   label: "Property Leads" },
             { value: "My Listing",       label: "My Listing" },
             { value: "Existing Listing", label: "Existing Listing" },
-            { value: "Own Stay",         label: "Own Stay" },
           ]}
           minWidth={140}
         />

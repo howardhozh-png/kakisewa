@@ -24,6 +24,13 @@ export function SessionGuard() {
     });
 
     async function checkIdle() {
+      // PWA users expect to stay logged in indefinitely — only sign out when they explicitly tap Sign out.
+      // Supabase auto-refreshes the token every ~55 min, so session validity is handled separately.
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      if (standalone) { touch(); return; }
+
       const raw = localStorage.getItem(KEY);
       const last = raw ? Number(raw) : 0;
 

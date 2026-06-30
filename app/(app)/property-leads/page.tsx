@@ -44,10 +44,11 @@ export default async function MessageOwnersPage() {
       </header>
 
       {(() => {
-    const activeLeads = ownerLeads.filter((l) => l.stage !== "archived");
-    return activeLeads.length === 0 && deletedLeads.length === 0
+    const activeLeads = ownerLeads.filter((l) => l.stage !== "archived" && l.stage !== "own_stay");
+    const declinedLeads = ownerLeads.filter((l) => l.stage === "archived" || l.stage === "own_stay");
+    return activeLeads.length === 0 && deletedLeads.length === 0 && declinedLeads.length === 0
       ? <OutreachEmptyState />
-      : <OutreachTable leads={activeLeads} deletedLeads={deletedLeads} />;
+      : <OutreachTable leads={activeLeads} declinedLeads={declinedLeads} deletedLeads={deletedLeads} />;
   })()}
 
       <Suspense fallback={null}>
