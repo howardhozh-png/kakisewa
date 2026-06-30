@@ -573,11 +573,23 @@ function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
-    setPushGranted(
-      localStorage.getItem(LS_PUSH_KEY) === "1" ||
-      (typeof Notification !== "undefined" && Notification.permission === "granted")
-    );
     setPushBlocked(typeof Notification !== "undefined" && Notification.permission === "denied");
+
+    // Check for a live push subscription in the browser — permission granted alone
+    // is not enough; the subscription may have expired or never saved to the DB.
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then((reg) =>
+        reg.pushManager.getSubscription().then((sub) => {
+          setPushGranted(sub !== null);
+          if (sub === null) localStorage.removeItem(LS_PUSH_KEY);
+        })
+      ).catch(() => {
+        // SW not available — fall back to localStorage
+        setPushGranted(localStorage.getItem(LS_PUSH_KEY) === "1");
+      });
+    } else {
+      setPushGranted(localStorage.getItem(LS_PUSH_KEY) === "1");
+    }
   }, []);
 
   async function toggleEmail() {
