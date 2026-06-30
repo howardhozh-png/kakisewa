@@ -295,17 +295,27 @@ export default async function HomePage() {
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
   const currentMonth = todayStr.slice(0, 7); // "2026-06"
 
+  // Compute the Sunday of the current week to detect month-boundary overflow
+  const [ty, tm, td] = todayStr.split("-").map(Number);
+  const todayDate = new Date(ty, tm - 1, td);
+  const dow = (todayDate.getDay() + 6) % 7; // 0=Mon
+  const sundayDate = new Date(ty, tm - 1, td - dow + 6);
+  const sundayMonth = `${sundayDate.getFullYear()}-${String(sundayDate.getMonth() + 1).padStart(2, "0")}`;
+  const spansNextMonth = sundayMonth !== currentMonth;
+
   const hdrs = await headers();
   const userId = hdrs.get("x-user-id");
 
-  const [agent, stats, expandedStats, monthEvents, perf, upcomingViewings] = await Promise.all([
+  const [agent, stats, expandedStats, monthEventsBase, nextMonthEvents, perf, upcomingViewings] = await Promise.all([
     getAgentProfile(),
     getHomeDashboardStats(),
     getExpandedDashboardStats(1, currentMonth),
     getCalendarEventsForMonth(currentMonth),
+    spansNextMonth ? getCalendarEventsForMonth(sundayMonth) : Promise.resolve([] as Awaited<ReturnType<typeof getCalendarEventsForMonth>>),
     getPerformanceSummary(),
     getUpcomingViewings(14),
   ]);
+  const monthEvents = spansNextMonth ? [...monthEventsBase, ...nextMonthEvents] : monthEventsBase;
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
   const missingProfileFields = getMissingWhatsAppFields(agent);
 
