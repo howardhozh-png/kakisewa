@@ -504,6 +504,7 @@ function NotifToggle({
   enabled,
   onToggle,
   saving,
+  disabled,
 }: {
   icon: React.ElementType;
   label: string;
@@ -511,6 +512,7 @@ function NotifToggle({
   enabled: boolean;
   onToggle: () => void;
   saving: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderTop: "1px solid var(--kk-line)" }}>
@@ -523,25 +525,25 @@ function NotifToggle({
       </div>
       <button
         onClick={onToggle}
-        disabled={saving}
+        disabled={saving || disabled}
         aria-label={enabled ? `Disable ${label}` : `Enable ${label}`}
         style={{
           width: 44,
           height: 26,
           borderRadius: 13,
           border: "none",
-          background: enabled ? "var(--kk-ink)" : "var(--kk-line)",
-          cursor: saving ? "not-allowed" : "pointer",
+          background: enabled && !disabled ? "var(--kk-ink)" : "var(--kk-line)",
+          cursor: (saving || disabled) ? "not-allowed" : "pointer",
           position: "relative",
           flexShrink: 0,
           transition: "background 0.2s",
-          opacity: saving ? 0.6 : 1,
+          opacity: (saving || disabled) ? 0.45 : 1,
         }}
       >
         <span style={{
           position: "absolute",
           top: 3,
-          left: enabled ? 21 : 3,
+          left: enabled && !disabled ? 21 : 3,
           width: 20,
           height: 20,
           borderRadius: "50%",
@@ -554,160 +556,102 @@ function NotifToggle({
   );
 }
 
-function PushSetupSection() {
+function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
+  const [email, setEmail] = useState(agent.notif_email !== false);
+  const [pushGranted, setPushGranted] = useState(false);
+  const [pushSaving, setPushSaving] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [pushGranted, setPushGranted] = useState(false);
-  const [enabling, setEnabling] = useState(false);
-  const [blocked, setBlocked] = useState(false);
+  const [pushBlocked, setPushBlocked] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const ua = navigator.userAgent;
-    setIsIOS(/iPhone|iPad|iPod/.test(ua));
+    setIsIOS(/iPhone|iPad|iPod/.test(navigator.userAgent));
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
     setPushGranted(
       localStorage.getItem(LS_PUSH_KEY) === "1" ||
-        (typeof Notification !== "undefined" && Notification.permission === "granted")
+      (typeof Notification !== "undefined" && Notification.permission === "granted")
     );
-    setBlocked(typeof Notification !== "undefined" && Notification.permission === "denied");
+    setPushBlocked(typeof Notification !== "undefined" && Notification.permission === "denied");
   }, []);
 
-  async function handleEnable() {
-    if (typeof Notification === "undefined") return;
-    setEnabling(true);
-    setBlocked(false);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === "denied") { setBlocked(true); setEnabling(false); return; }
-      if (permission !== "granted") { setEnabling(false); return; }
-      const reg = await navigator.serviceWorker.ready;
-      const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key as unknown as ArrayBuffer });
-      await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub),
-      });
-      localStorage.setItem(LS_PUSH_KEY, "1");
-      setPushGranted(true);
-    } catch { setEnabling(false); }
-    finally { setEnabling(false); }
-  }
-
-  if (!mounted) return null;
-
-  if (pushGranted) {
-    return (
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 12, background: "color-mix(in srgb, #30D158 10%, transparent)", border: "1px solid color-mix(in srgb, #30D158 25%, transparent)" }}>
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#30D158", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-          <Bell style={{ width: 13, height: 13, color: "#fff" }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)" }}>Push notifications active</p>
-          <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", marginTop: 1 }}>This device will receive alerts for replies and renewals.</p>
-          <button
-            onClick={() => { localStorage.removeItem(LS_PUSH_KEY); setPushGranted(false); }}
-            style={{ marginTop: 6, fontSize: 11, color: "var(--kk-ink-faint)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-          >
-            Not receiving notifications? Re-subscribe on this device
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const steps = isIOS && !isStandalone
-    ? [
-        { n: 1, text: "Open kakisewa in Safari on your iPhone" },
-        { n: 2, text: `Tap the Share button ${String.fromCodePoint(0x1F4E4)} at the bottom of the screen` },
-        { n: 3, text: "Tap \"Add to Home Screen\" and confirm" },
-        { n: 4, text: "Open kakisewa from your Home Screen, then come back here to enable push" },
-      ]
-    : isIOS && isStandalone
-    ? [
-        { n: 1, text: "Tap \"Enable push notifications\" below" },
-        { n: 2, text: "When prompted, tap \"Allow\" to receive alerts" },
-      ]
-    : [
-        { n: 1, text: "Tap \"Enable push notifications\" below" },
-        { n: 2, text: "Allow notifications when your browser asks" },
-      ];
-
-  const needsInstall = isIOS && !isStandalone;
-
-  return (
-    <div style={{ borderRadius: 14, border: "1px solid var(--kk-line)", overflow: "hidden" }}>
-      <div style={{ padding: "14px 16px", background: "var(--kk-surface-2)", borderBottom: "1px solid var(--kk-line)" }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", marginBottom: 2 }}>Enable push notifications</p>
-        <p style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>
-          Get instant alerts when owners or tenants reply, and reminders before contracts expire.
-        </p>
-      </div>
-      <div style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
-          {steps.map((s) => (
-            <div key={s.n} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--kk-accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                {s.n}
-              </div>
-              <p style={{ fontSize: 13, color: "var(--kk-ink)", lineHeight: 1.45 }}>{s.text}</p>
-            </div>
-          ))}
-        </div>
-        {blocked && (
-          <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "color-mix(in srgb, #DC2626 8%, transparent)", border: "1px solid color-mix(in srgb, #DC2626 20%, transparent)" }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#DC2626", marginBottom: 3 }}>Notifications are blocked</p>
-            <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", lineHeight: 1.5 }}>
-              {isIOS
-                ? "Go to iPhone Settings → Apps → kakisewa → Notifications → turn on \"Allow Notifications\", then come back and try again."
-                : "Click the lock icon in your browser address bar and allow notifications, then refresh and try again."}
-            </p>
-          </div>
-        )}
-        {!needsInstall && (
-          <button
-            onClick={handleEnable}
-            disabled={enabling}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "9px 18px",
-              borderRadius: 100,
-              border: "none",
-              background: "var(--kk-ink)",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: enabling ? "not-allowed" : "pointer",
-              opacity: enabling ? 0.7 : 1,
-            }}
-          >
-            <Bell style={{ width: 13, height: 13 }} />
-            {enabling ? "Enabling..." : "Enable push notifications"}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
-  const [email, setEmail] = useState(agent.notif_email !== false);
-  const [saving, setSaving] = useState(false);
-
   async function toggleEmail() {
-    const nextEmail = !email;
-    setEmail(nextEmail);
-    setSaving(true);
-    await saveNotifPrefs({ notif_push: agent.notif_push ?? false, notif_email: nextEmail });
-    setSaving(false);
+    const next = !email;
+    setEmail(next);
+    setEmailSaving(true);
+    await saveNotifPrefs({ notif_push: pushGranted, notif_email: next });
+    setEmailSaving(false);
   }
+
+  async function togglePush() {
+    if (pushGranted) {
+      // Turn OFF: unsubscribe from browser + delete from DB + update prefs
+      setPushSaving(true);
+      try {
+        if ("serviceWorker" in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            await sub.unsubscribe();
+            await fetch("/api/push/subscribe", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ endpoint: sub.endpoint }),
+            });
+          }
+        }
+        localStorage.removeItem(LS_PUSH_KEY);
+        setPushGranted(false);
+        await saveNotifPrefs({ notif_push: false, notif_email: email });
+      } catch {}
+      setPushSaving(false);
+    } else {
+      // Turn ON: request OS permission then subscribe
+      if (isIOS && !isStandalone) return;
+      if (pushBlocked) return;
+      if (typeof Notification === "undefined") return;
+      setPushSaving(true);
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "denied") { setPushBlocked(true); setPushSaving(false); return; }
+        if (permission !== "granted") { setPushSaving(false); return; }
+        const reg = await navigator.serviceWorker.ready;
+        const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: key as unknown as ArrayBuffer,
+        });
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sub),
+        });
+        localStorage.setItem(LS_PUSH_KEY, "1");
+        setPushGranted(true);
+        await saveNotifPrefs({ notif_push: true, notif_email: email });
+      } catch {}
+      setPushSaving(false);
+    }
+  }
+
+  const needsInstall = mounted && isIOS && !isStandalone;
+
+  const pushDescription = !mounted
+    ? "Get instant alerts for replies and contract renewals"
+    : pushBlocked
+    ? isIOS
+      ? "Blocked — go to Settings > Apps > kakisewa > Notifications to allow"
+      : "Blocked — click the lock icon in your browser address bar to allow"
+    : needsInstall
+    ? "Add kakisewa to Home Screen first — tap Share then \"Add to Home Screen\""
+    : pushGranted
+    ? "Contract expiry, tenant replies, and ranking alerts"
+    : "Get instant alerts for replies and contract renewals";
 
   return (
     <section className="kk-section p-6">
@@ -715,15 +659,23 @@ function NotificationPrefsSection({ agent }: { agent: AgentProfile }) {
       <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
         Stay informed about contracts, replies, and renewals.
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <PushSetupSection />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <NotifToggle
+          icon={Bell}
+          label="Push notifications"
+          description={pushDescription}
+          enabled={mounted && pushGranted}
+          onToggle={togglePush}
+          saving={pushSaving}
+          disabled={needsInstall || pushBlocked}
+        />
         <NotifToggle
           icon={Mail}
           label="Email reminders"
           description="Contract renewal alerts and daily calendar digest at 9 AM"
           enabled={email}
           onToggle={toggleEmail}
-          saving={saving}
+          saving={emailSaving}
         />
       </div>
     </section>
