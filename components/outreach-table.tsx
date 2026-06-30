@@ -261,12 +261,14 @@ function LeadPopup({
   onClose,
   onSaved,
   onMoveToListed,
+  onReactivate,
   onDelete,
 }: {
   lead: OwnerLead;
   onClose: () => void;
   onSaved: (id: string, updates: Partial<OwnerLead>) => void;
   onMoveToListed: (id: string) => Promise<void>;
+  onReactivate: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
   const [form, setForm] = useState({
@@ -286,6 +288,7 @@ function LeadPopup({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<string[]>(lead.photo_urls ?? []);
@@ -701,6 +704,21 @@ function LeadPopup({
             >
               {moving && <Loader2 className="w-4 h-4 animate-spin" />}
               Move to Listed
+            </button>
+          ) : (lead.stage === "own_stay" || lead.stage === "archived") ? (
+            <button
+              type="button"
+              disabled={reactivating}
+              onClick={async () => {
+                setReactivating(true);
+                await onReactivate(lead.id);
+                onClose();
+              }}
+              className="w-full py-3 rounded-xl text-[14px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{ background: "var(--kk-ink)", color: "#fff" }}
+            >
+              {reactivating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+              Move to My Listing
             </button>
           ) : null}
 
@@ -1139,6 +1157,11 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
 
   async function handleMoveToListed(id: string) {
     await setOwnerLeadStage(id, "listed");
+    router.refresh();
+  }
+
+  async function handleReactivate(id: string) {
+    await setOwnerLeadStage(id, "wants_rent");
     router.refresh();
   }
 
@@ -1663,6 +1686,17 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
                             </button>
                           ) : (
                             <>
+                              {(lead.stage === "own_stay" || lead.stage === "archived") && (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => { e.stopPropagation(); await handleReactivate(lead.id); }}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                                  title="Move to My Listing"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 disabled={sending === lead.id}
@@ -1960,6 +1994,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
           onClose={() => setSelectedLead(null)}
           onSaved={handleSaved}
           onMoveToListed={handleMoveToListed}
+          onReactivate={handleReactivate}
           onDelete={handleDelete}
         />
       )}
