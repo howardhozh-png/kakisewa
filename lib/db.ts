@@ -723,6 +723,15 @@ export async function countCalendarEvents(): Promise<number> {
   return count ?? 0;
 }
 
+export async function countPushSubscriptions(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("push_subscriptions")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getHomeDashboardStats(): Promise<{
   totalOwners: number;
   uncontacted: number;

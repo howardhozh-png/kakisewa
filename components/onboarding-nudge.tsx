@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { X, Check, ListChecks, Lock, ArrowRight } from "lucide-react";
+import { X, Check, ListChecks, Lock, ArrowRight, Bell } from "lucide-react";
 
-const BANNER_DISMISS_KEY = "kk_onboarding_banner_";
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
 
 interface Props {
   isNewAgent: boolean;
@@ -13,6 +18,7 @@ interface Props {
   hasCalendarEvent: boolean;
   hasTenants: boolean;
   hasSupports: boolean;
+  hasPushEnabled: boolean;
 }
 
 interface Mission {
@@ -23,15 +29,30 @@ interface Mission {
   href: string;
   matchPaths: string[];
   done: boolean;
+  isPush?: boolean;
 }
 
-export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalendarEvent, hasTenants, hasSupports }: Props) {
+export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalendarEvent, hasTenants, hasSupports, hasPushEnabled }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [localPushEnabled, setLocalPushEnabled] = useState(hasPushEnabled);
+  const [pushEnabling, setPushEnabling] = useState(false);
+  const [pushDenied, setPushDenied] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  const missions: Mission[] = [
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(standalone);
+    if (typeof Notification !== "undefined" && Notification.permission === "denied") {
+      setPushDenied(true);
+    }
+  }, []);
+
+  const baseMissions: Mission[] = [
     {
       id: "leads",
       label: "Upload your first property lead",
@@ -79,6 +100,22 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
     },
   ];
 
+  const missions: Mission[] = isStandalone
+    ? [
+        ...baseMissions,
+        {
+          id: "push",
+          label: "Enable push notifications",
+          description: "Get alerts when contracts expire, tenants reply, or owners fill in their details.",
+          cta: pushEnabling ? "Enabling..." : "Enable notifications",
+          href: "",
+          matchPaths: [],
+          done: localPushEnabled,
+          isPush: true,
+        },
+      ]
+    : baseMissions;
+
   const total = missions.length;
   const allDone = missions.every((m) => m.done);
   const doneCount = missions.filter((m) => m.done).length;
@@ -92,6 +129,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   const onActivePage =
     !allDone &&
     currentPageMission !== null &&
+    currentPageMission.matchPaths.length > 0 &&
     currentPageMission.matchPaths.some((p) => pathname.startsWith(p));
 
   // Auto-open modal on fresh load, but not while a tour spotlight is active
@@ -123,7 +161,40 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   if (!isNewAgent) return null;
   if (allDone) return null;
 
+  async function enablePush() {
+    if (typeof Notification === "undefined") return;
+    setPushEnabling(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        if (permission === "denied") setPushDenied(true);
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key as unknown as ArrayBuffer,
+      });
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      localStorage.setItem("kk_push_subscribed", "1");
+      setLocalPushEnabled(true);
+    } catch {
+      // permission prompt dismissed or SW not ready
+    } finally {
+      setPushEnabling(false);
+    }
+  }
+
   function go(m: Mission) {
+    if (m.isPush) {
+      enablePush();
+      return;
+    }
     setModalOpen(false);
     const sep = m.href.includes("?") ? "&" : "?";
     router.push(m.href + sep + "tour=" + m.id);
@@ -238,7 +309,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
             </h2>
             <p className="text-[13px] mb-5" style={{ color: "var(--kk-ink-mute)" }}>
               {allDone
-                ? "All 5 steps done. kakisewa is working for you."
+                ? `All ${total} steps done. kakisewa is working for you.`
                 : `Step ${doneCount + 1} of ${total} — complete each step to get the most out of kakisewa.`}
             </p>
 
@@ -315,19 +386,31 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
                       </span>
                       {isActive && (
                         <span className="block text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>
-                          {m.description}
+                          {pushDenied && m.isPush
+                            ? "Notifications are blocked. Go to iPhone Settings > Safari > kakisewa.com > Notifications and set it to Allow, then return here."
+                            : m.description}
                         </span>
                       )}
                     </div>
 
-                    {isActive && (
+                    {isActive && !pushDenied && (
                       <button
                         onClick={() => go(m)}
+                        disabled={pushEnabling}
                         className="shrink-0 flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-80 mt-0.5"
-                        style={{ background: "var(--kk-ink)", color: "#fff", whiteSpace: "nowrap", border: "none", cursor: "pointer" }}
+                        style={{
+                          background: "var(--kk-ink)",
+                          color: "#fff",
+                          whiteSpace: "nowrap",
+                          border: "none",
+                          cursor: pushEnabling ? "default" : "pointer",
+                          opacity: pushEnabling ? 0.6 : 1,
+                        }}
                       >
                         {m.cta}
-                        <ArrowRight style={{ width: 11, height: 11 }} />
+                        {m.isPush
+                          ? <Bell style={{ width: 11, height: 11 }} />
+                          : <ArrowRight style={{ width: 11, height: 11 }} />}
                       </button>
                     )}
                   </div>

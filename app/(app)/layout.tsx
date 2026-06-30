@@ -14,7 +14,7 @@ import { SessionGuard } from "@/components/session-guard";
 import { FaqChatbot } from "@/components/faq-chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports, countCalendarEvents } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports, countCalendarEvents, countPushSubscriptions } from "@/lib/db";
 import { getTotalCardCount } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingNudge } from "@/components/onboarding-nudge";
@@ -28,12 +28,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const agent = await getAgentProfile();
   if (agent.id === 0) redirect("/login");
   const trialStart = agent.trial_started_at ? new Date(agent.trial_started_at) : undefined;
-  const [leadCount, contractCount, calendarEventCount, tenantCount, supportCount] = await Promise.all([
+  const [leadCount, contractCount, calendarEventCount, tenantCount, supportCount, pushSubCount] = await Promise.all([
     countOwnerLeads().catch(() => null),
     countLifecycleTenancies().catch(() => null),
     countCalendarEvents().catch(() => null),
     countTenantProfiles().catch(() => null),
     countPropertySupports(trialStart).catch(() => null),
+    countPushSubscriptions().catch(() => null),
   ]);
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
@@ -113,6 +114,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           hasCalendarEvent={(calendarEventCount ?? 0) > 0}
           hasTenants={(tenantCount ?? 0) > 0}
           hasSupports={(supportCount ?? 0) > 0}
+          hasPushEnabled={(pushSubCount ?? 0) > 0}
         />
 
         <ProfileProvider profile={agent}>
