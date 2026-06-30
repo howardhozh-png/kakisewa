@@ -65,8 +65,7 @@ import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
 import { toast } from "sonner";
-import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
-import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
+import { useProfile } from "@/components/profile-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -929,7 +928,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
   const exportRef = useRef<HTMLDivElement>(null);
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const { gateOpen, setGateOpen, missingFields, checkAndRun } = useWhatsAppGate();
+  const profile = useProfile();
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [hardDeletingId, setHardDeletingId] = useState<string | null>(null);
   const [hardDeleteConfirmId, setHardDeleteConfirmId] = useState<string | null>(null);
@@ -1106,9 +1105,12 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
   async function handleSend(lead: OwnerLead, e: React.MouseEvent) {
     e.stopPropagation();
     if (sending) return;
-    let didRun = false;
-    checkAndRun(() => { didRun = true; });
-    if (!didRun) return;
+    // Warn if profile is incomplete, but don't block — every WA click must count
+    const { getMissingWhatsAppFields } = await import("@/lib/profile-gate");
+    const missing = getMissingWhatsAppFields(profile);
+    if (missing.length > 0) {
+      toast.warning(`Message sent, but your profile is incomplete (${missing.map((f) => f.label).join(", ")} missing). Update it in Settings for better outreach.`, { duration: 6000 });
+    }
     setSending(lead.id);
     // Open window immediately during user gesture — mobile browsers block window.open after await
     const tab = window.open("", "_blank");
@@ -1961,7 +1963,6 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
           onDelete={handleDelete}
         />
       )}
-      <WhatsAppGateDialog open={gateOpen} onOpenChange={setGateOpen} missingFields={missingFields} />
     </div>
   );
 }
