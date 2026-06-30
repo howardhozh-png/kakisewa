@@ -893,7 +893,19 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     if (!t) return { ok: false, message: "Tenancy not found." };
 
     if (t.owner_lead_id) {
-      await updateOwnerLead(t.owner_lead_id, { stage: "archived" });
+      await updateOwnerLead(t.owner_lead_id, { stage: "own_stay" });
+    } else {
+      // Tenancy was added manually with no owner lead — create one so it surfaces in Property Leads
+      const newLead = await createOwnerLead({
+        owner_name: t.property?.owner_name ?? "",
+        owner_phone: t.property?.owner_phone ?? "",
+        property_name: t.property_name ?? null,
+        unit: t.property?.unit ?? null,
+        expected_rent: t.amount ?? null,
+        stage: "own_stay",
+        source: "manual",
+      } as Parameters<typeof createOwnerLead>[0]);
+      await updateTenancy(t.id, { owner_lead_id: newLead.id });
     }
 
     // Look up by both phone AND name to avoid updating the wrong profile
