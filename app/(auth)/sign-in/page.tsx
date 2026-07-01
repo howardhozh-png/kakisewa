@@ -4,6 +4,8 @@ import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
+import { usePostHog } from "posthog-js/react"
+import { track } from "@/lib/analytics"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,6 +34,7 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const ph = usePostHog()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,6 +55,7 @@ function SignInForm() {
         return
       }
 
+      track(ph, "user_signed_in", { method: "passcode" })
       window.location.href = "/home"
     } catch {
       setError("Something went wrong. Please try again.")

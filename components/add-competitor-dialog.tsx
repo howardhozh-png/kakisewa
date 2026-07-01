@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition, useRef, useMemo } from "react";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
@@ -29,6 +31,7 @@ interface Props {
 
 export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Props) {
   const router = useRouter();
+  const ph = usePostHog();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId?: string; upgradeCap: number | null } | null>(null);
@@ -151,8 +154,10 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
 
         const slotsLeft = capCheck.remaining - 1;
         if (slotsLeft <= CAP_WARN_THRESHOLD) {
+          track(ph, "card_added", { type: "listing" });
           toast.warning(`Target unit added. Only ${slotsLeft} Lost Listing slot${slotsLeft === 1 ? "" : "s"} remaining.`);
         } else {
+          track(ph, "card_added", { type: "listing" });
           toast.success("Target unit added");
         }
         onOpenChange(false);
