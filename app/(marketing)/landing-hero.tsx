@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePostHog } from "posthog-js/react";
+import { track } from "@/lib/analytics";
 import { Faq } from "./faq";
 
 /* ── PixelTrail ──────────────────────────────────────────────────────────────
@@ -101,12 +103,14 @@ export function LandingHero() {
   const [active, setActive]       = useState(0);
   const [revealed, setRevealed]   = useState([true, false, false, false]);
 
-  const activeRef = useRef(0);
+  const activeRef      = useRef(0);
+  const sliderTracked  = useRef(false);
   const ch0 = useRef<HTMLElement>(null);
   const ch1 = useRef<HTMLElement>(null);
   const ch2 = useRef<HTMLElement>(null);
   const ch3 = useRef<HTMLElement>(null);
   const chRefs = [ch0, ch1, ch2, ch3];
+  const ph = usePostHog();
 
   const loss = Math.round(contracts * 0.5 * 3000);
   const pct  = (contracts / 300 * 100).toFixed(1) + "%";
@@ -250,10 +254,10 @@ export function LandingHero() {
           </span>
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 500, color: "#6E6E73", background: "transparent", padding: "7px 15px", borderRadius: 99, textDecoration: "none" }}>
+          <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 500, color: "#6E6E73", background: "transparent", padding: "7px 15px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "sign_in", location: "header" })}>
             Sign in
           </Link>
-          <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 600, color: "#fff", background: "#1D1D1F", padding: "8px 18px", borderRadius: 99, textDecoration: "none" }}>
+          <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 600, color: "#fff", background: "#1D1D1F", padding: "8px 18px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "start_trial", location: "header" })}>
             Start free trial
           </Link>
         </div>
@@ -322,7 +326,13 @@ export function LandingHero() {
               type="range"
               className="kk-land-slider"
               min={0} max={300} value={contracts} step={1}
-              onChange={e => setContracts(+e.target.value)}
+              onChange={e => {
+                setContracts(+e.target.value);
+                if (!sliderTracked.current) {
+                  sliderTracked.current = true;
+                  track(ph, "landing_slider_interacted", { contracts: +e.target.value });
+                }
+              }}
               style={{
                 WebkitAppearance: "none", appearance: "none",
                 width: "100%", height: 6, borderRadius: 3, outline: "none",
@@ -598,6 +608,7 @@ export function LandingHero() {
             <Link
               href="/sign-up"
               className="kk-land-cta-btn"
+              onClick={() => track(ph, "landing_cta_clicked", { cta: "start_trial", location: "hero" })}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
                 background: "#0071E3", color: "#fff",
@@ -637,7 +648,9 @@ export function LandingHero() {
         <span style={{ fontSize: 12, color: "#AEAEB2" }}>&copy; 2026 kakisewa</span>
         <div style={{ display: "flex", gap: 20 }}>
           {[["Terms", "/terms"], ["Privacy", "/privacy"], ["Sign in", "/sign-in"], ["Start trial", "/sign-up"]].map(([l, h]) => (
-            <Link key={l} href={h} style={{ fontSize: 12, color: "#AEAEB2", textDecoration: "none" }}>{l}</Link>
+            <Link key={l} href={h} style={{ fontSize: 12, color: "#AEAEB2", textDecoration: "none" }}
+              onClick={() => (l === "Sign in" || l === "Start trial") && track(ph, "landing_cta_clicked", { cta: l === "Sign in" ? "sign_in" : "start_trial", location: "footer" })}
+            >{l}</Link>
           ))}
         </div>
       </footer>
