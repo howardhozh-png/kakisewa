@@ -120,21 +120,37 @@ function saveSent(sent) {
   fs.writeFileSync(SENT_LOG, JSON.stringify(sent, null, 2), "utf8");
 }
 
+// Domain tiers for prioritisation (lower = safer, sent first)
+const DOMAIN_TIER = {
+  "gmail.com": 1,
+  "icloud.com": 1, "me.com": 1, "mac.com": 1,
+};
+function domainTier(email) {
+  const d = (email.split("@")[1] ?? "").toLowerCase();
+  return DOMAIN_TIER[d] ?? 2; // tier 2 = business/unknown (fine, just lower priority)
+}
+
 function loadSuppressed() {
-  if (!fs.existsSync(SUPPRESSED)) return { bounced: [], blocked_domains: [] };
+  if (!fs.existsSync(SUPPRESSED)) return { bounced: new Set(), blocked_domains: new Set(), deferred_domains: new Set() };
   const s = JSON.parse(fs.readFileSync(SUPPRESSED, "utf8"));
   return {
-    bounced: new Set((s.bounced ?? []).map(e => e.toLowerCase())),
-    blocked_domains: new Set((s.blocked_domains ?? []).map(d => d.toLowerCase())),
+    bounced:           new Set((s.bounced           ?? []).map(e => e.toLowerCase())),
+    blocked_domains:   new Set((s.blocked_domains   ?? []).map(d => d.toLowerCase())),
+    deferred_domains:  new Set((s.deferred_domains  ?? []).map(d => d.toLowerCase())),
   };
 }
 
-function isSuppressed(email, suppressed) {
+function skipReason(email, suppressed) {
   const e = email.toLowerCase();
-  if (suppressed.bounced.has(e)) return true;
   const domain = e.split("@")[1] ?? "";
-  if (suppressed.blocked_domains.has(domain)) return true;
-  return false;
+  if (suppressed.bounced.has(e))          return "bounced";
+  if (suppressed.blocked_domains.has(domain))  return "domain_blocked";
+  if (suppressed.deferred_domains.has(domain)) return "deferred";
+  return null;
+}
+
+function isSuppressed(email, suppressed) {
+  return skipReason(email, suppressed) !== null;
 }
 
 function parseCSV(path) {
@@ -202,33 +218,40 @@ async function main() {
   const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
 
-  // Build today's queue — seq1 first, then seq2 due, then seq3 due
-  // Skip suppressed (bounced) addresses
-  const queue = [];
-  let suppressedCount = 0;
+  // Build candidate list — skip suppressed/deferred, tag with domain tier
+  const candidates = [];
+  let skippedBounce = 0, skippedDeferred = 0;
   for (const c of withEmail) {
-    if (queue.length >= DAILY_LIMIT) break;
     const e = c.email;
-    if (isSuppressed(e, suppressed)) { suppressedCount++; continue; }
-    if (!sent.seq1[e]) {
-      queue.push({ email: e, seq: "seq1" });
-    } else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) {
-      queue.push({ email: e, seq: "seq2" });
-    } else if (sent.seq2[e] && !sent.seq3[e] && daysDiff(sent.seq2[e]) >= SEQ3_AFTER_DAYS) {
-      queue.push({ email: e, seq: "seq3" });
-    }
+    const reason = skipReason(e, suppressed);
+    if (reason === "bounced" || reason === "domain_blocked") { skippedBounce++; continue; }
+    if (reason === "deferred") { skippedDeferred++; continue; }
+
+    let seq = null;
+    if (!sent.seq1[e]) seq = "seq1";
+    else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) seq = "seq2";
+    else if (sent.seq2[e] && !sent.seq3[e] && daysDiff(sent.seq2[e]) >= SEQ3_AFTER_DAYS) seq = "seq3";
+    if (seq) candidates.push({ email: e, seq, tier: domainTier(e) });
   }
+
+  // Sort: safer domains first (tier 1 = gmail/icloud before tier 2 = business/other)
+  candidates.sort((a, b) => a.tier - b.tier);
+
+  const queue = candidates.slice(0, DAILY_LIMIT);
 
   const counts = { seq1: 0, seq2: 0, seq3: 0 };
   queue.forEach(q => counts[q.seq]++);
 
+  const tier1Count = queue.filter(q => q.tier === 1).length;
+  const tier2Count = queue.filter(q => q.tier === 2).length;
+
   log(`=== Daily run ${today} ===`);
   log(`Contacts with email: ${withEmail.length}`);
-  log(`Suppressed (bounce/domain block): ${suppressed.bounced.size} emails, ${suppressed.blocked_domains.size} domains`);
+  log(`Skipped bounced/blocked: ${skippedBounce} | Deferred (Yahoo/Hotmail): ${skippedDeferred}`);
   log(`Seq1 sent all-time: ${Object.keys(sent.seq1).length}`);
   log(`Seq2 sent all-time: ${Object.keys(sent.seq2).length}`);
   log(`Seq3 sent all-time: ${Object.keys(sent.seq3).length}`);
-  log(`Today's queue: ${queue.length} (seq1: ${counts.seq1}, seq2: ${counts.seq2}, seq3: ${counts.seq3})`);
+  log(`Today's queue: ${queue.length} (seq1: ${counts.seq1}, seq2: ${counts.seq2}, seq3: ${counts.seq3}) | tier1(gmail/icloud): ${tier1Count} tier2(business): ${tier2Count}`);
 
   if (queue.length === 0) {
     log("Nothing to send today.");

@@ -25,5 +25,18 @@
     "propertyhub.com.my",
     "gamil.com"
   ],
+  "deferred_domains": [
+    "yahoo.com",
+    "yahoo.com.my",
+    "yahoo.com.sg",
+    "yahoo.co.uk",
+    "ymail.com",
+    "hotmail.com",
+    "hotmail.my",
+    "live.com",
+    "live.com.my",
+    "msn.com"
+  ],
+  "notes": "deferred_domains = skip until kakisewaofficial.com domain ages (~2 weeks). Yahoo bounced 100% on first blast day. Re-enable by removing from this list.",
   "last_synced": "2026-07-02"
 }
