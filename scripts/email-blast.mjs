@@ -41,13 +41,15 @@ const SENT_LOG = "scripts/email-blast-sent.json";
 const SEQUENCES = {
   seq1: {
     subject: "You have 8 property contracts expiring in 2 months",
-    body: `Sounds exciting, right? A notification to remind you what's expiring so you can capture your income without whatsapp or excel.
+    body: `Most agents lose 2 to 3 renewals every year without knowing it.
 
-kakisewa lets you keep everything in one place including property listing, photos, contract, contract duration, owner tenant info and reminds you whenever contract is expiring.
+The tenant calls the owner directly. Owner renews quietly. You find out 6 months later, or never. That's RM 3,000 to RM 8,000 gone per renewal.
 
-No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (don't tell our CFO i say that)
+kakisewa sends you a notification 90, 60, and 30 days before every contract expires, so you call the owner first.
 
-No commitment, start today, kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq1
+One renewal pays for 4 years of kakisewa. Free for 2 months, no credit card needed.
+
+https://kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq1
 
 Sincerely from,
 Jovanne
@@ -57,7 +59,7 @@ If you'd like to stop receiving emails from us, just reply and we'll remove you.
   },
 
   seq2: {
-    subject: "Your tenant selected her property.",
+    subject: "4 units in Sunway Geo Residences expiring next month",
     body: `It's Jovanne from kakisewa again! We got 279 users signed up for free last 5 days! What's holding you back?
 
 kakisewa will become your personal property diary forever.
@@ -68,7 +70,7 @@ Need to keep track of calendar schedule for house viewing? Use kakisewa.
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is shouting at me right now)
 
-No commitment, start today, kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq2
+No commitment, start today, https://kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq2
 
 Sincerely from,
 Jovanne
@@ -85,7 +87,7 @@ I just want to leave you with one thought: the next time a tenant calls asking a
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is strangling me now)
 
-No commitment, start today, kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq3
+No commitment, start today, https://kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq3
 
 Sincerely from,
 Jovanne
