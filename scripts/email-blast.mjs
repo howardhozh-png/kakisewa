@@ -47,7 +47,7 @@ The tenant calls the owner directly. Owner renews quietly. You find out 6 months
 
 kakisewa sends you a notification 90, 60, and 30 days before every contract expires, so you call the owner first.
 
-Sign up is free. kakisewa.com
+Sign up is free, works on your phone like an app. kakisewa.com
 
 Sincerely from,
 Jovanne Ng
@@ -66,7 +66,7 @@ Need to keep track of calendar schedule for house viewing? Use kakisewa.
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is shouting at me right now)
 
-Sign up is free. kakisewa.com
+Sign up is free, works on your phone like an app. kakisewa.com
 
 Sincerely from,
 Jovanne Ng
@@ -81,7 +81,7 @@ I just want to leave you with one thought: the next time a tenant calls asking a
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is strangling me now)
 
-Sign up is free. kakisewa.com
+Sign up is free, works on your phone like an app. kakisewa.com
 
 Sincerely from,
 Jovanne Ng
