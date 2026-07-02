@@ -26,7 +26,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY ?? (() => {
 })();
 
 const FROM_EMAIL      = "jovanne@kakisewaofficial.com";
-const FROM_NAME       = "Jovanne";
+const FROM_NAME       = "Jovanne Ng";
 const REPLY_TO        = "kkakisewa@gmail.com";
 const DAILY_LIMIT     = 100;
 const DELAY_MS        = 3000;  // 3s between sends — stays under Resend's 2 req/s limit
@@ -47,15 +47,11 @@ The tenant calls the owner directly. Owner renews quietly. You find out 6 months
 
 kakisewa sends you a notification 90, 60, and 30 days before every contract expires, so you call the owner first.
 
-One renewal pays for 4 years of kakisewa. Free for 2 months, no credit card needed.
-
-https://kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq1
+Sign up is free. kakisewa.com
 
 Sincerely from,
-Jovanne
-Chief Marketing Officer, kakisewa
-
-If you'd like to stop receiving emails from us, just reply and we'll remove you.`,
+Jovanne Ng
+Chief Marketing Officer, kakisewa`,
   },
 
   seq2: {
@@ -70,13 +66,11 @@ Need to keep track of calendar schedule for house viewing? Use kakisewa.
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is shouting at me right now)
 
-No commitment, start today, https://kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq2
+Sign up is free. kakisewa.com
 
 Sincerely from,
-Jovanne
-Chief Marketing Officer, kakisewa
-
-If you'd like to stop receiving emails from us, just reply and we'll remove you.`,
+Jovanne Ng
+Chief Marketing Officer, kakisewa`,
   },
 
   seq3: {
@@ -87,13 +81,11 @@ I just want to leave you with one thought: the next time a tenant calls asking a
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is strangling me now)
 
-No commitment, start today, https://kakisewa.com?utm_source=email&utm_medium=cold&utm_campaign=seq3
+Sign up is free. kakisewa.com
 
 Sincerely from,
-Jovanne
-Chief Marketing Officer, kakisewa
-
-If you'd like to stop receiving emails from us, just reply and we'll remove you.`,
+Jovanne Ng
+Chief Marketing Officer, kakisewa`,
   },
 };
 
