@@ -33,8 +33,9 @@ const DELAY_MS        = 3000;  // 3s between sends — stays under Resend's 2 re
 const SEQ2_AFTER_DAYS = 4;  // send seq2 4 days after seq1
 const SEQ3_AFTER_DAYS = 4;  // send seq3 4 days after seq2
 
-const MASTER   = "scripts/output-master.csv";
-const SENT_LOG = "scripts/email-blast-sent.json";
+const MASTER      = "scripts/output-master.csv";
+const SENT_LOG    = "scripts/email-blast-sent.json";
+const SUPPRESSED  = "scripts/email-blast-suppressed.json";
 
 // ── Message sequences ─────────────────────────────────────────────────────────
 
@@ -119,6 +120,23 @@ function saveSent(sent) {
   fs.writeFileSync(SENT_LOG, JSON.stringify(sent, null, 2), "utf8");
 }
 
+function loadSuppressed() {
+  if (!fs.existsSync(SUPPRESSED)) return { bounced: [], blocked_domains: [] };
+  const s = JSON.parse(fs.readFileSync(SUPPRESSED, "utf8"));
+  return {
+    bounced: new Set((s.bounced ?? []).map(e => e.toLowerCase())),
+    blocked_domains: new Set((s.blocked_domains ?? []).map(d => d.toLowerCase())),
+  };
+}
+
+function isSuppressed(email, suppressed) {
+  const e = email.toLowerCase();
+  if (suppressed.bounced.has(e)) return true;
+  const domain = e.split("@")[1] ?? "";
+  if (suppressed.blocked_domains.has(domain)) return true;
+  return false;
+}
+
 function parseCSV(path) {
   const lines = fs.readFileSync(path, "utf8").split("\n").filter(Boolean);
   const headers = lines[0].split(",").map(h => h.replace(/"/g, "").trim());
@@ -181,13 +199,17 @@ async function main() {
   const contacts = parseCSV(MASTER);
   const withEmail = contacts.filter(c => c.email && c.email.includes("@"));
   const sent = loadSent();
+  const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
 
   // Build today's queue — seq1 first, then seq2 due, then seq3 due
+  // Skip suppressed (bounced) addresses
   const queue = [];
+  let suppressedCount = 0;
   for (const c of withEmail) {
     if (queue.length >= DAILY_LIMIT) break;
     const e = c.email;
+    if (isSuppressed(e, suppressed)) { suppressedCount++; continue; }
     if (!sent.seq1[e]) {
       queue.push({ email: e, seq: "seq1" });
     } else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) {
@@ -202,6 +224,7 @@ async function main() {
 
   log(`=== Daily run ${today} ===`);
   log(`Contacts with email: ${withEmail.length}`);
+  log(`Suppressed (bounce/domain block): ${suppressed.bounced.size} emails, ${suppressed.blocked_domains.size} domains`);
   log(`Seq1 sent all-time: ${Object.keys(sent.seq1).length}`);
   log(`Seq2 sent all-time: ${Object.keys(sent.seq2).length}`);
   log(`Seq3 sent all-time: ${Object.keys(sent.seq3).length}`);
