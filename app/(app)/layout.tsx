@@ -34,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     countLifecycleTenancies().catch(() => null),
     countCalendarEvents().catch(() => null),
     countTenantProfiles().catch(() => null),
-    countPropertySupports(trialStart).catch(() => null),
+    countPropertySupports().catch(() => null),
     countPushSubscriptions().catch(() => null),
   ]);
   recordLoginStreak().catch(() => {});

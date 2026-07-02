@@ -36,6 +36,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   const [modalOpen, setModalOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [completionDismissed, setCompletionDismissed] = useState(false);
   const [localPushEnabled, setLocalPushEnabled] = useState(hasPushEnabled);
   const [pushEnabling, setPushEnabling] = useState(false);
   const [pushDenied, setPushDenied] = useState(false);
@@ -49,6 +50,9 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
     setIsStandalone(standalone);
     if (typeof Notification !== "undefined" && Notification.permission === "denied") {
       setPushDenied(true);
+    }
+    if (localStorage.getItem("kk_onboarding_complete")) {
+      setCompletionDismissed(true);
     }
   }, []);
 
@@ -143,8 +147,17 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
 
   // Re-open modal when active step advances (step just completed)
   const prevActiveStep = useRef(activeStep);
+  const prevAllDone = useRef(allDone);
   useEffect(() => {
-    if (!isNewAgent || allDone) return;
+    if (!isNewAgent) return;
+    // All steps just completed — open the celebration modal
+    if (allDone && !prevAllDone.current) {
+      const timer = setTimeout(() => setModalOpen(true), 600);
+      prevAllDone.current = true;
+      return () => clearTimeout(timer);
+    }
+    prevAllDone.current = allDone;
+    if (allDone) return;
     if (activeStep > prevActiveStep.current) {
       const timer = setTimeout(() => setModalOpen(true), 600);
       prevActiveStep.current = activeStep;
@@ -159,7 +172,7 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   }, [activeStep]);
 
   if (!isNewAgent) return null;
-  if (allDone) return null;
+  if (allDone && completionDismissed) return null;
 
   async function enablePush() {
     if (typeof Notification === "undefined") return;
@@ -291,7 +304,13 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
             {/* X button only after all done */}
             {!hardBlock && (
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={() => {
+                  setModalOpen(false);
+                  if (allDone) {
+                    setCompletionDismissed(true);
+                    localStorage.setItem("kk_onboarding_complete", "1");
+                  }
+                }}
                 className="absolute top-4 right-4 p-1.5 rounded-full transition-opacity hover:opacity-60"
                 style={{ color: "var(--kk-ink-mute)" }}
                 aria-label="Dismiss"
