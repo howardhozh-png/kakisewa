@@ -564,14 +564,13 @@ function AgentDetailPanel({ a, onTestToggled }: { a: AgentRow & { segment: Segme
   );
 }
 
-function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, initialSegment }: {
+function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }: {
   agents: AgentRow[];
   rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
-  initialSegment: Segment | "all";
 }) {
   const [agents, setAgents] = useState<AgentRow[]>(initialAgents);
   const [search, setSearch] = useState("");
-  const [segFilter, setSegFilter] = useState<Segment | "all">(initialSegment);
+  const [hideTest, setHideTest] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -595,21 +594,14 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
     totalMsgs: a.outreaches_sent + a.renewal_wa_count,
   })), [agents]);
 
-  const segmentCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: agents.length };
-    for (const a of enriched) counts[a.segment] = (counts[a.segment] ?? 0) + 1;
-    return counts;
-  }, [enriched, agents.length]);
-
   const filtered = useMemo(() => {
     let rows = enriched;
+    if (hideTest) rows = rows.filter(a => !a.is_test_account);
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
     }
-    if (segFilter !== "all") rows = rows.filter(a => a.segment === segFilter);
-    if (statusFilter === "test") rows = rows.filter(a => a.is_test_account);
-    else if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
+    if (statusFilter !== "all") rows = rows.filter(a => a.subscription_status === statusFilter);
     return [...rows].sort((a, b) => {
       let av: number | string = 0, bv: number | string = 0;
       if (sortCol === "name") { av = (a.name ?? "").toLowerCase(); bv = (b.name ?? "").toLowerCase(); }
@@ -628,7 +620,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
-  }, [enriched, search, segFilter, statusFilter, sortCol, sortDir]);
+  }, [enriched, search, hideTest, statusFilter, sortCol, sortDir]);
 
   function exportCsv() {
     const rows = [
@@ -676,43 +668,6 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
 
   return (
     <div>
-      {/* Segment chips */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {/* All chip */}
-        <button onClick={() => setSegFilter("all")}
-          className="flex flex-col items-start px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
-          style={{
-            background: segFilter === "all" ? "var(--kk-ink)" : "var(--kk-surface-2)",
-            border: "1px solid var(--kk-line)",
-            color: segFilter === "all" ? "#fff" : "var(--kk-ink-mute)",
-          }}>
-          <span className="flex items-center gap-1">
-            All <span className="opacity-70">({segmentCounts["all"] ?? 0})</span>
-          </span>
-        </button>
-        {(Object.keys(SEGMENT_META) as Segment[]).map(seg => {
-          const active = segFilter === seg;
-          const meta = SEGMENT_META[seg];
-          return (
-            <button key={seg} onClick={() => setSegFilter(active ? "all" : seg)}
-              className="flex flex-col items-start px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
-              style={{
-                background: active ? meta.bg : "var(--kk-surface-2)",
-                border: active ? `1px solid ${meta.border}60` : "1px solid var(--kk-line)",
-                color: active ? meta.color : "var(--kk-ink-mute)",
-              }}>
-              <span className="flex items-center gap-1.5">
-                {meta.icon}
-                {meta.label}
-                <span className="opacity-70">({segmentCounts[seg] ?? 0})</span>
-              </span>
-              <span className="text-[10px] font-normal mt-0.5" style={{ color: active ? meta.color : "var(--kk-ink-faint)", opacity: 0.8 }}>
-                {meta.desc}
-              </span>
-            </button>
-          );
-        })}
-      </div>
 
       {/* Filter + actions bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -730,9 +685,18 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback, 
           <option value="trial">Trial</option>
           <option value="active">Paid</option>
           <option value="expired">Expired</option>
-          <option value="test">Test</option>
         </select>
-        <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.length}</span>
+        <button
+          onClick={() => setHideTest(h => !h)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
+          style={{
+            background: hideTest ? "var(--kk-ink)" : "var(--kk-surface-2)",
+            border: "1px solid var(--kk-line)",
+            color: hideTest ? "#fff" : "var(--kk-ink-mute)",
+          }}>
+          Hide test accounts
+        </button>
+        <span className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{filtered.length} of {agents.filter(a => hideTest ? !a.is_test_account : true).length}</span>
         <div className="flex items-center gap-2 ml-auto">
           <button onClick={() => { const emails = filtered.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success(`${filtered.filter(a => a.email).length} emails copied`); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-70"
@@ -1509,8 +1473,6 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
   rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
 }) {
   const [tab, setTab] = useState<"health" | "users" | "revenue" | "ops">("health");
-  const [usersSegment, setUsersSegment] = useState<Segment | "all">("all");
-
   const openFeedbackCount = feedback.filter(f => !f.resolved).length;
 
   // Always-visible KPI strip
@@ -1528,8 +1490,7 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
     return { active7d, mrr, signupsThisWeek, signupsLastWeek, activationRate, activated };
   }, [agents, funnel]);
 
-  function handleSegmentClick(seg: Segment | "all") {
-    setUsersSegment(seg);
+  function handleSegmentClick(_seg: Segment | "all") {
     setTab("users");
   }
 
@@ -1573,7 +1534,7 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
         <HealthTab agents={agents} funnel={funnel} rawLeads={rawLeads} rawTenancies={rawTenancies} onSelectSegment={handleSegmentClick} />
       )}
       {tab === "users" && (
-        <UsersTab agents={agents} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} initialSegment={usersSegment} />
+        <UsersTab agents={agents} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />
       )}
       {tab === "revenue" && <RevenueTab agents={agents} />}
       {tab === "ops" && (
