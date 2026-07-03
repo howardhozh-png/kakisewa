@@ -109,7 +109,7 @@ const STORY_BEATS: Array<{ quote: string; emphasis: string; accentColor: string;
   },
   {
     quote: "WhatsApp just added usernames.",
-    emphasis: "Your existing listings are now your moat.",
+    emphasis: "Your existing listings are now your income.",
     accentColor: "#FF9500",
     sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
   },
