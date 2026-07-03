@@ -44,15 +44,14 @@ const SEQUENCES = {
     subject: "You have 8 property contracts expiring in 2 months",
     body: `Most agents lose over RM100,000 in renewal commissions every year without knowing it.
 
-The tenant calls the owner directly. Owner renews quietly. You find out 6 months later, or never. Thirty renewals at RM3,000 each, all gone.
+Tenant calls the owner. Owner renews quietly. You find out 6 months later. Thirty renewals at RM3,000 each, gone.
 
-kakisewa sends you a notification 90, 60, and 30 days before every contract expires, so you call the owner first.
+kakisewa notifies you 60 and 30 days before every contract expires, so you call the owner first.
 
-One more thing worth knowing: WhatsApp just introduced usernames. Agents who rely on blasting messages to cold numbers may soon find that channel harder to use. Your existing tenants and owners are now your income. Protecting your renewals is not optional anymore.
+Also: WhatsApp just introduced usernames. Cold outreach may get harder. Your existing tenants are your income now.
 
-Sign up is free, works on your phone like an app. kakisewa.com
+Free to sign up. kakisewa.com
 
-Sincerely from,
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
   },

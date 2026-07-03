@@ -91,10 +91,11 @@ const CH_CONFIGS = [
 
 /* ── CH0 horizontal story beats ─────────────────────────────────────────── */
 const CH0_SLIDES = 4;
-const STORY_BEATS: Array<{ quote: string; emphasis: string; accentColor: string; sub?: string }> = [
+const STORY_BEATS: Array<{ quote: string; emphasis: string; accentColor: string; quotePost?: string; sub?: string }> = [
   {
-    quote: "I lost RM150,000 last year.",
-    emphasis: "I didn't know.",
+    quote: "I lost",
+    emphasis: "RM150,000",
+    quotePost: "last year. I didn't know.",
     accentColor: "#FF3B30",
   },
   {
@@ -272,6 +273,7 @@ export function LandingHero() {
           .kk-land-sample-note { display: none !important; }
           .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; }
           .kk-land-pdots { display: none !important; }
+          .kk-ch0-nav-btn { display: none !important; }
         }
       `}</style>
 
@@ -360,18 +362,19 @@ export function LandingHero() {
                 justifyContent: "center",
                 padding: "80px 40px 80px",
               }}>
-                <div style={{ maxWidth: 680, width: "100%" }}>
+                <div style={{ maxWidth: 920, width: "100%" }}>
                   <div style={{
                     fontFamily: "’DM Serif Display’, Georgia, serif",
-                    fontSize: "clamp(2.2rem, 5.5vw, 4rem)",
-                    lineHeight: 1.1,
+                    fontSize: "clamp(3.2rem, 9vw, 7rem)",
+                    lineHeight: 1.05,
                     letterSpacing: "-0.03em",
                     color: "#1D1D1F",
-                    marginBottom: beat.sub ? 20 : 0,
+                    marginBottom: beat.sub ? 24 : 0,
                     ...delay(0.15, revealed[0]),
                   }}>
                     {beat.quote}{" "}
                     <span style={{ color: beat.accentColor }}>{beat.emphasis}</span>
+                    {beat.quotePost && <>{" "}{beat.quotePost}</>}
                   </div>
                   {beat.sub && (
                     <p style={{
@@ -410,6 +413,44 @@ export function LandingHero() {
             ))}
           </div>
         </div>
+
+        {/* Desktop prev / next buttons — hidden on mobile via @media */}
+        <button
+          className="kk-ch0-nav-btn"
+          onClick={() => setCh0Slide(s => Math.max(s - 1, 0))}
+          disabled={ch0Slide === 0}
+          aria-label="Previous slide"
+          style={{
+            position: "absolute", left: 28, top: "50%", transform: "translateY(-50%)",
+            zIndex: 3, width: 44, height: 44, borderRadius: "50%",
+            background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            opacity: ch0Slide === 0 ? 0.2 : 0.8,
+            transition: "opacity 0.2s",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <button
+          className="kk-ch0-nav-btn"
+          onClick={() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1))}
+          disabled={ch0Slide === CH0_SLIDES - 1}
+          aria-label="Next slide"
+          style={{
+            position: "absolute", right: 28, top: "50%", transform: "translateY(-50%)",
+            zIndex: 3, width: 44, height: 44, borderRadius: "50%",
+            background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            opacity: ch0Slide === CH0_SLIDES - 1 ? 0.2 : 0.8,
+            transition: "opacity 0.2s",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
 
         {/* Swipe nudge (slides 0–2) / Scroll nudge (last slide) */}
         {ch0Slide < CH0_SLIDES - 1 ? (
