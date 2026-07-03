@@ -26,6 +26,20 @@ interface Subscription {
   auth: string;
 }
 
+// Send to a specific subscription directly — no DB round-trip needed
+export async function sendPushToSubscription(
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+  payload: PushPayload
+): Promise<void> {
+  ensureVapid();
+  await webpush.sendNotification(
+    { endpoint, keys: { p256dh, auth } },
+    JSON.stringify(payload)
+  );
+}
+
 export async function sendPushToUser(
   userId: string,
   payload: PushPayload

@@ -1200,7 +1200,7 @@ export function OnboardingDemoDialog({ autoOpen = true }: { autoOpen?: boolean }
   }, []);
 
   useEffect(() => {
-    if (autoOpen && !localStorage.getItem(STORAGE_KEY)) setTimeout(openModal, 600);
+    if (autoOpen && !localStorage.getItem(STORAGE_KEY) && window.innerWidth > 768) setTimeout(openModal, 600);
   }, [autoOpen, openModal]);
 
   useEffect(() => {

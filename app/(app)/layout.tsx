@@ -22,6 +22,7 @@ import { PushNudge } from "@/components/push-nudge";
 import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
+import { PwaGate } from "@/components/pwa-gate";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Suspense } from "react";
 
@@ -124,6 +125,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Overlays & dialogs */}
+      <PwaGate />
       <PushNudge hasPushEnabled={(pushSubCount ?? 0) > 0} />
       <OnboardingDemoDialog />
       <TrialDowngradeNotice archivedCount={agent.trial_downgrade_archived_count ?? null} />

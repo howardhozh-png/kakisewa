@@ -16,8 +16,9 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false });
 
   const nowTs = new Date();
+  const realProfiles = (profiles ?? []).filter((p: { is_test_account?: boolean | null }) => !p.is_test_account);
   const funnel = {
-    total: (profiles ?? []).length,
+    total: realProfiles.length,
     beta: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "beta" &&
       (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs)

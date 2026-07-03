@@ -53,8 +53,17 @@ function PwaRegisterInner() {
       });
     }
 
-    // Don't show install prompts on public share pages
+    // Don't show install prompts on public share pages or app pages (PwaGate handles app pages)
+    const isAuthOrMarketing =
+      pathname === "/" ||
+      pathname.startsWith("/sign-in") ||
+      pathname.startsWith("/sign-up") ||
+      pathname.startsWith("/forgot-password") ||
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/pricing") ||
+      pathname.startsWith("/about");
     if (pathname.startsWith("/share") || pathname.startsWith("/sample-pack")) return;
+    if (!isAuthOrMarketing) return; // PwaGate handles install prompts on app pages
 
     const isIOS =
       /iPad|iPhone|iPod/.test(navigator.userAgent) &&

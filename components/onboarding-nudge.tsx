@@ -125,8 +125,8 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
   const doneCount = missions.filter((m) => m.done).length;
   const activeStep = missions.findIndex((m) => !m.done);
 
-  // Hard-block: no X button, modal always reopens on fresh load until all done
-  const hardBlock = !allDone;
+  // Never hard-block — always show X so users aren't trapped
+  const hardBlock = false;
 
   // Banner shows when user is already on the page for the active step
   const currentPageMission = activeStep >= 0 ? missions[activeStep] : null;
@@ -136,11 +136,22 @@ export function OnboardingNudge({ isNewAgent, hasLeads, hasContracts, hasCalenda
     currentPageMission.matchPaths.length > 0 &&
     currentPageMission.matchPaths.some((p) => pathname.startsWith(p));
 
-  // Auto-open modal on fresh load, but not while a tour spotlight is active
+  // Auto-open modal on first-ever login only — subsequent visits use the floating pill + page banners
   useEffect(() => {
     if (!isNewAgent) return;
     if (allDone) return;
     if (typeof window !== "undefined" && window.location.search.includes("tour=")) return;
+    if (localStorage.getItem("kk_nudge_opened")) return;
+
+    // Don't compete with PwaGate on first visit — wait until they install or skip it
+    const isMobileNonStandalone =
+      window.innerWidth <= 768 &&
+      !window.matchMedia("(display-mode: standalone)").matches &&
+      !(navigator as Navigator & { standalone?: boolean }).standalone;
+    const pwaGatePending = isMobileNonStandalone && !localStorage.getItem("kk_pwa_gate_skip_until");
+    if (pwaGatePending) return;
+
+    localStorage.setItem("kk_nudge_opened", "1");
     setModalOpen(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { sendPushToUser } from "@/lib/push";
+import { sendPushToSubscription } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
     auth: keys.auth,
   }, { onConflict: "user_id,endpoint" });
 
-  sendPushToUser(session.user.id, {
+  // Send welcome push directly using the sub we just received — avoids an extra DB round-trip
+  sendPushToSubscription(endpoint, keys.p256dh, keys.auth, {
     title: "Notifications are on",
     body: "You'll get updates on your listings, tenants, and contracts",
     url: "/home",
