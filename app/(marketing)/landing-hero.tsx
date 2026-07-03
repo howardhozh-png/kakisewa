@@ -135,6 +135,7 @@ export function LandingHero() {
   const sliderTracked  = useRef(false);
   const ch0Touch       = useRef<{ x: number; y: number } | null>(null);
   const ch0WheelTs     = useRef(0);
+  const ch0AutoStopped = useRef(false);
   const ch0 = useRef<HTMLElement>(null);
   const ch1 = useRef<HTMLElement>(null);
   const ch2 = useRef<HTMLElement>(null);
@@ -186,10 +187,12 @@ export function LandingHero() {
       }
       if (e.key === "ArrowRight" && activeRef.current === 0) {
         e.preventDefault();
+        ch0AutoStopped.current = true;
         setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1));
       }
       if (e.key === "ArrowLeft" && activeRef.current === 0) {
         e.preventDefault();
+        ch0AutoStopped.current = true;
         setCh0Slide(s => Math.max(s - 1, 0));
       }
     };
@@ -222,8 +225,9 @@ export function LandingHero() {
   }, []);
 
   useEffect(() => {
+    if (ch0AutoStopped.current) return;
     if (ch0Slide >= CH0_SLIDES - 1) return;
-    const t = setTimeout(() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)), 1500);
+    const t = setTimeout(() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)), 2500);
     return () => clearTimeout(t);
   }, [ch0Slide]);
 
@@ -358,6 +362,7 @@ export function LandingHero() {
           const dx = e.changedTouches[0].clientX - ch0Touch.current.x;
           const dy = e.changedTouches[0].clientY - ch0Touch.current.y;
           if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
+            ch0AutoStopped.current = true;
             if (dx < 0) setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1));
             else setCh0Slide(s => Math.max(s - 1, 0));
           }
@@ -409,62 +414,66 @@ export function LandingHero() {
                       {beat.sub}
                     </p>
                   )}
-                  {/* Slide nav — inline arrows + dots */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 44 }}>
-                    <button
-                      onClick={() => setCh0Slide(s => Math.max(s - 1, 0))}
-                      aria-label="Previous slide"
-                      disabled={ch0Slide === 0}
-                      style={{
-                        width: 32, height: 32, borderRadius: "50%",
-                        background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        opacity: ch0Slide === 0 ? 0.2 : 0.8, flexShrink: 0, padding: 0,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 18l-6-6 6-6"/>
-                      </svg>
-                    </button>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {STORY_BEATS.map((_, j) => (
-                        <button
-                          key={j}
-                          aria-label={`Slide ${j + 1}`}
-                          onClick={() => setCh0Slide(j)}
-                          style={{
-                            width: j === ch0Slide ? 20 : 6,
-                            height: 6,
-                            borderRadius: 3,
-                            background: j === ch0Slide ? "#1D1D1F" : "rgba(29,29,31,0.15)",
-                            border: "none",
-                            padding: 0,
-                            cursor: "pointer",
-                            transition: "all 0.3s ease",
-                            flexShrink: 0,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1))}
-                      aria-label="Next slide"
-                      disabled={ch0Slide === CH0_SLIDES - 1}
-                      style={{
-                        width: 32, height: 32, borderRadius: "50%",
-                        background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        opacity: ch0Slide === CH0_SLIDES - 1 ? 0.2 : 0.8, flexShrink: 0, padding: 0,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18l6-6-6-6"/>
-                      </svg>
-                    </button>
-                  </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Fixed slide nav — single row, doesn't animate with track */}
+        <div style={{
+          position: "absolute", bottom: 48, left: 0, right: 0,
+          display: "flex", justifyContent: "center", zIndex: 3,
+          padding: "0 40px",
+          pointerEvents: "none",
+        }}>
+          <div style={{ maxWidth: 920, width: "100%", display: "flex", alignItems: "center", gap: 12, pointerEvents: "auto" }}>
+            <button
+              onClick={() => { ch0AutoStopped.current = true; setCh0Slide(s => Math.max(s - 1, 0)); }}
+              aria-label="Previous slide"
+              disabled={ch0Slide === 0}
+              style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: ch0Slide === 0 ? 0.2 : 0.8, flexShrink: 0, padding: 0,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </button>
+            <div style={{ display: "flex", gap: 6 }}>
+              {STORY_BEATS.map((_, j) => (
+                <button
+                  key={j}
+                  aria-label={`Slide ${j + 1}`}
+                  onClick={() => { ch0AutoStopped.current = true; setCh0Slide(j); }}
+                  style={{
+                    width: j === ch0Slide ? 20 : 6,
+                    height: 6, borderRadius: 3,
+                    background: j === ch0Slide ? "#1D1D1F" : "rgba(29,29,31,0.15)",
+                    border: "none", padding: 0, cursor: "pointer",
+                    transition: "all 0.3s ease", flexShrink: 0,
+                  }}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => { ch0AutoStopped.current = true; setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)); }}
+              aria-label="Next slide"
+              disabled={ch0Slide === CH0_SLIDES - 1}
+              style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: ch0Slide === CH0_SLIDES - 1 ? 0.2 : 0.8, flexShrink: 0, padding: 0,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </button>
           </div>
         </div>
 
