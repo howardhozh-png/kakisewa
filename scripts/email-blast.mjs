@@ -48,6 +48,8 @@ The tenant calls the owner directly. Owner renews quietly. You find out 6 months
 
 kakisewa sends you a notification 90, 60, and 30 days before every contract expires, so you call the owner first.
 
+One more thing worth knowing: WhatsApp just introduced usernames. Agents who rely on blasting messages to cold numbers may soon find that channel harder to use. Your existing tenants and owners are now your most valuable asset. Protecting your renewals is not optional anymore.
+
 Sign up is free, works on your phone like an app. kakisewa.com
 
 Sincerely from,

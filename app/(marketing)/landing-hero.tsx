@@ -89,6 +89,32 @@ const CH_CONFIGS = [
   { r: 0,   g: 113, b: 227 },
 ];
 
+/* ── CH0 horizontal story beats ─────────────────────────────────────────── */
+const CH0_SLIDES = 4;
+const STORY_BEATS: Array<{ quote: string; emphasis: string; accentColor: string; sub?: string }> = [
+  {
+    quote: "I lost RM150,000 last year.",
+    emphasis: "I didn't know.",
+    accentColor: "#FF3B30",
+  },
+  {
+    quote: "I thought I could track all 50 units.",
+    emphasis: "Until I realized I could track none.",
+    accentColor: "#1D1D1F",
+  },
+  {
+    quote: "Now I get passive income",
+    emphasis: "just by messaging the owner while I travel.",
+    accentColor: "#0071E3",
+  },
+  {
+    quote: "WhatsApp just added usernames.",
+    emphasis: "Your existing listings are now your moat.",
+    accentColor: "#FF9500",
+    sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
+  },
+];
+
 /* ── Luxury scroll items (static, defined outside component) ─────────────── */
 const LUX_ITEMS = [
   { photo: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=560&h=370&fit=crop&auto=format", label: "branded bags",      calc: (l: number) => Math.floor(l / 8000).toString()  },
@@ -102,9 +128,11 @@ export function LandingHero() {
   const [contracts, setContracts] = useState(50);
   const [active, setActive]       = useState(0);
   const [revealed, setRevealed]   = useState([true, false, false, false]);
+  const [ch0Slide, setCh0Slide]   = useState(0);
 
   const activeRef      = useRef(0);
   const sliderTracked  = useRef(false);
+  const ch0Touch       = useRef<{ x: number; y: number } | null>(null);
   const ch0 = useRef<HTMLElement>(null);
   const ch1 = useRef<HTMLElement>(null);
   const ch2 = useRef<HTMLElement>(null);
@@ -154,6 +182,14 @@ export function LandingHero() {
         e.preventDefault();
         chRefs[Math.max(activeRef.current - 1, 0)]?.current?.scrollIntoView({ behavior: "smooth" });
       }
+      if (e.key === "ArrowRight" && activeRef.current === 0) {
+        e.preventDefault();
+        setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1));
+      }
+      if (e.key === "ArrowLeft" && activeRef.current === 0) {
+        e.preventDefault();
+        setCh0Slide(s => Math.max(s - 1, 0));
+      }
     };
     document.addEventListener("keydown", onKey);
 
@@ -201,6 +237,10 @@ export function LandingHero() {
         @keyframes kk-nudge {
           0%,100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
           50%      { transform: translateX(-50%) translateY(8px); opacity: 1; }
+        }
+        @keyframes kk-nudge-r {
+          0%,100% { transform: translateX(0); opacity: 0.5; }
+          50%      { transform: translateX(6px); opacity: 1; }
         }
         .kk-land-cta-btn::after {
           content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
@@ -280,28 +320,118 @@ export function LandingHero() {
       </nav>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          CH0 — RECOGNITION
+          CH0 — STORY (horizontal swipe)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={ch0} className="kk-land-chapter" style={{ background: "#fff" }}>
-        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, padding: "80px 40px 48px" }}>
+      <section
+        ref={ch0}
+        className="kk-land-chapter"
+        style={{ background: "#fff" }}
+        onTouchStart={(e) => {
+          ch0Touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }}
+        onTouchEnd={(e) => {
+          if (!ch0Touch.current) return;
+          const dx = e.changedTouches[0].clientX - ch0Touch.current.x;
+          const dy = e.changedTouches[0].clientY - ch0Touch.current.y;
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
+            if (dx < 0) setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1));
+            else setCh0Slide(s => Math.max(s - 1, 0));
+          }
+          ch0Touch.current = null;
+        }}
+      >
+        {/* Full-height slide track */}
+        <div style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", overflow: "hidden" }}>
           <div style={{
-            fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: "clamp(2.6rem, 7vw, 5rem)",
-            lineHeight: 1.08, letterSpacing: "-0.03em",
-            color: "#1D1D1F", marginBottom: 44,
-            ...delay(0.15, revealed[0]),
+            display: "flex",
+            width: `${CH0_SLIDES * 100}%`,
+            height: "100%",
+            transform: `translateX(-${ch0Slide * (100 / CH0_SLIDES)}%)`,
+            transition: "transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)",
+            willChange: "transform",
           }}>
-            {"“"}I{"’"}m always working hard for new listing, but what about the{" "}
-            <span style={{ color: "#FF3B30" }}>old listing I worked hard for?{"”"}</span>
+            {STORY_BEATS.map((beat, i) => (
+              <div key={i} style={{
+                flex: `0 0 ${100 / CH0_SLIDES}%`,
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "80px 40px 80px",
+              }}>
+                <div style={{ maxWidth: 680, width: "100%" }}>
+                  <div style={{
+                    fontFamily: "’DM Serif Display’, Georgia, serif",
+                    fontSize: "clamp(2.2rem, 5.5vw, 4rem)",
+                    lineHeight: 1.1,
+                    letterSpacing: "-0.03em",
+                    color: "#1D1D1F",
+                    marginBottom: beat.sub ? 20 : 0,
+                    ...delay(0.15, revealed[0]),
+                  }}>
+                    {beat.quote}{" "}
+                    <span style={{ color: beat.accentColor }}>{beat.emphasis}</span>
+                  </div>
+                  {beat.sub && (
+                    <p style={{
+                      fontSize: 17,
+                      lineHeight: 1.6,
+                      color: "#6E6E73",
+                      maxWidth: 480,
+                      ...delay(0.3, revealed[0]),
+                    }}>
+                      {beat.sub}
+                    </p>
+                  )}
+                  {/* Slide dots */}
+                  <div style={{ display: "flex", gap: 6, marginTop: 44 }}>
+                    {STORY_BEATS.map((_, j) => (
+                      <button
+                        key={j}
+                        aria-label={`Slide ${j + 1}`}
+                        onClick={() => setCh0Slide(j)}
+                        style={{
+                          width: j === i ? 20 : 6,
+                          height: 6,
+                          borderRadius: 3,
+                          background: j === i ? "#1D1D1F" : "rgba(29,29,31,0.15)",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          flexShrink: 0,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        {/* Scroll nudge */}
-        <div className="kk-land-nudge" style={{ zIndex: 2 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 5v14M5 12l7 7 7-7"/>
-          </svg>
-          <span style={{ fontSize: 9, letterSpacing: "0.13em", textTransform: "uppercase" }}>scroll</span>
-        </div>
+
+        {/* Swipe nudge (slides 0–2) / Scroll nudge (last slide) */}
+        {ch0Slide < CH0_SLIDES - 1 ? (
+          <div style={{
+            position: "absolute", bottom: 28, right: 40,
+            display: "flex", alignItems: "center", gap: 6,
+            color: "#C7C7CC", zIndex: 2,
+            animation: "kk-nudge-r 2.4s ease-in-out infinite",
+          }}>
+            <span style={{ fontSize: 9, letterSpacing: "0.13em", textTransform: "uppercase" }}>swipe</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+        ) : (
+          <div className="kk-land-nudge" style={{ zIndex: 2 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+            <span style={{ fontSize: 9, letterSpacing: "0.13em", textTransform: "uppercase" }}>scroll</span>
+          </div>
+        )}
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
