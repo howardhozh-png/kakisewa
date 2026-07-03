@@ -100,8 +100,8 @@ const STORY_BEATS: Array<{ quote: string; emphasis: string; accentColor: string;
   },
   {
     quote: "I thought I could track all 50 units.",
-    emphasis: "Until I realized I could track none.",
-    accentColor: "#1D1D1F",
+    emphasis: "I lost almost all of them.",
+    accentColor: "#FF3B30",
   },
   {
     quote: "Now I get passive income",
@@ -227,7 +227,8 @@ export function LandingHero() {
   useEffect(() => {
     if (ch0AutoStopped.current) return;
     if (ch0Slide >= CH0_SLIDES - 1) return;
-    const t = setTimeout(() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)), 2500);
+    const delay = ch0Slide === 0 ? 2500 : 4000;
+    const t = setTimeout(() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)), delay);
     return () => clearTimeout(t);
   }, [ch0Slide]);
 
