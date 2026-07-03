@@ -134,6 +134,7 @@ export function LandingHero() {
   const activeRef      = useRef(0);
   const sliderTracked  = useRef(false);
   const ch0Touch       = useRef<{ x: number; y: number } | null>(null);
+  const ch0WheelTs     = useRef(0);
   const ch0 = useRef<HTMLElement>(null);
   const ch1 = useRef<HTMLElement>(null);
   const ch2 = useRef<HTMLElement>(null);
@@ -204,6 +205,28 @@ export function LandingHero() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const el = ch0.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) < 10) return;
+      e.preventDefault();
+      const now = Date.now();
+      if (now - ch0WheelTs.current < 500) return;
+      ch0WheelTs.current = now;
+      setCh0Slide(s => e.deltaX > 0 ? Math.min(s + 1, CH0_SLIDES - 1) : Math.max(s - 1, 0));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (ch0Slide >= CH0_SLIDES - 1) return;
+    const t = setTimeout(() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)), 1500);
+    return () => clearTimeout(t);
+  }, [ch0Slide]);
+
   /* ── Render ─────────────────────────────────────────────────────────────── */
   const R = (revealed: boolean) =>
     revealed
@@ -273,7 +296,6 @@ export function LandingHero() {
           .kk-land-sample-note { display: none !important; }
           .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; }
           .kk-land-pdots { display: none !important; }
-          .kk-ch0-nav-btn { display: none !important; }
         }
       `}</style>
 
@@ -387,70 +409,64 @@ export function LandingHero() {
                       {beat.sub}
                     </p>
                   )}
-                  {/* Slide dots */}
-                  <div style={{ display: "flex", gap: 6, marginTop: 44 }}>
-                    {STORY_BEATS.map((_, j) => (
-                      <button
-                        key={j}
-                        aria-label={`Slide ${j + 1}`}
-                        onClick={() => setCh0Slide(j)}
-                        style={{
-                          width: j === i ? 20 : 6,
-                          height: 6,
-                          borderRadius: 3,
-                          background: j === i ? "#1D1D1F" : "rgba(29,29,31,0.15)",
-                          border: "none",
-                          padding: 0,
-                          cursor: "pointer",
-                          transition: "all 0.3s ease",
-                          flexShrink: 0,
-                        }}
-                      />
-                    ))}
+                  {/* Slide nav — inline arrows + dots */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 44 }}>
+                    <button
+                      onClick={() => setCh0Slide(s => Math.max(s - 1, 0))}
+                      aria-label="Previous slide"
+                      disabled={ch0Slide === 0}
+                      style={{
+                        width: 32, height: 32, borderRadius: "50%",
+                        background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        opacity: ch0Slide === 0 ? 0.2 : 0.8, flexShrink: 0, padding: 0,
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 18l-6-6 6-6"/>
+                      </svg>
+                    </button>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {STORY_BEATS.map((_, j) => (
+                        <button
+                          key={j}
+                          aria-label={`Slide ${j + 1}`}
+                          onClick={() => setCh0Slide(j)}
+                          style={{
+                            width: j === ch0Slide ? 20 : 6,
+                            height: 6,
+                            borderRadius: 3,
+                            background: j === ch0Slide ? "#1D1D1F" : "rgba(29,29,31,0.15)",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                            transition: "all 0.3s ease",
+                            flexShrink: 0,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1))}
+                      aria-label="Next slide"
+                      disabled={ch0Slide === CH0_SLIDES - 1}
+                      style={{
+                        width: 32, height: 32, borderRadius: "50%",
+                        background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        opacity: ch0Slide === CH0_SLIDES - 1 ? 0.2 : 0.8, flexShrink: 0, padding: 0,
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Desktop prev / next buttons — hidden on mobile via @media */}
-        <button
-          className="kk-ch0-nav-btn"
-          onClick={() => setCh0Slide(s => Math.max(s - 1, 0))}
-          disabled={ch0Slide === 0}
-          aria-label="Previous slide"
-          style={{
-            position: "absolute", left: 28, top: "50%", transform: "translateY(-50%)",
-            zIndex: 3, width: 44, height: 44, borderRadius: "50%",
-            background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            opacity: ch0Slide === 0 ? 0.2 : 0.8,
-            transition: "opacity 0.2s",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-        <button
-          className="kk-ch0-nav-btn"
-          onClick={() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1))}
-          disabled={ch0Slide === CH0_SLIDES - 1}
-          aria-label="Next slide"
-          style={{
-            position: "absolute", right: 28, top: "50%", transform: "translateY(-50%)",
-            zIndex: 3, width: 44, height: 44, borderRadius: "50%",
-            background: "rgba(29,29,31,0.07)", border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            opacity: ch0Slide === CH0_SLIDES - 1 ? 0.2 : 0.8,
-            transition: "opacity 0.2s",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
 
         {/* Swipe nudge (slides 0–2) / Scroll nudge (last slide) */}
         {ch0Slide < CH0_SLIDES - 1 ? (
