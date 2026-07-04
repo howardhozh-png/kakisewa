@@ -103,21 +103,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Top bar — sticky, extends left to cover sidebar rail */}
         <div className="kk-top-bar sticky top-0 z-50">
-          {status === "trial" && trialDaysLeft !== null && trialDaysLeft > 30 && !agent.stripe_subscription_id && (
-            <TrialWelcomeBanner trialDaysLeft={trialDaysLeft} />
-          )}
           {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} urgent={cardNudgeUrgent} />}
           {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={false} currentCardCount={trialCardCount} />}
-          {status === "trial" && agent.referral_slug && !agent.stripe_subscription_id && (
-            <ReferralTopBanner referralSlug={agent.referral_slug} />
-          )}
-          <PushTopBanner hasPushEnabled={(pushSubCount ?? 0) > 0} />
           <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs />
           <PwaInstallBanner />
         </div>
 
         {/* Streak / greeting bar */}
         <GreetingBar name={agent.name} streak={streak} checkedInToday={checkedInToday} />
+
+        {/* Persistent banners — below greeting row, clear of sticky nav + sidebar */}
+        {status === "trial" && trialDaysLeft !== null && trialDaysLeft > 30 && !agent.stripe_subscription_id && (
+          <TrialWelcomeBanner trialDaysLeft={trialDaysLeft} />
+        )}
+        {status === "trial" && agent.referral_slug && !agent.stripe_subscription_id && (
+          <ReferralTopBanner referralSlug={agent.referral_slug} />
+        )}
+        <PushTopBanner hasPushEnabled={(pushSubCount ?? 0) > 0} />
 
         <OnboardingNudge
           isNewAgent={isNewAgent}
