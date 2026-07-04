@@ -41,7 +41,7 @@ const SUPPRESSED  = "scripts/email-blast-suppressed.json";
 
 const SEQUENCES = {
   seq1: {
-    subject: "You have 8 property contracts expiring in 2 months",
+    subject: "WhatsApp introduced username, agent panics.",
     body: `Most agents lose over RM100,000 in renewal commissions every year without knowing it.
 
 Tenant calls the owner. Owner renews quietly. You find out 6 months later. Thirty renewals at RM3,000 each, gone.
@@ -94,6 +94,13 @@ Chief Marketing Officer, kakisewa`,
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function bodyToHtml(text) {
+  const paragraphs = text.split(/\n\n+/).map(p =>
+    `<p style="margin:0 0 16px 0;line-height:1.6;">${p.replace(/\n/g, "<br>")}</p>`
+  ).join("\n");
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:15px;color:#1d1d1f;background:#fff;margin:0;padding:0"><div style="max-width:560px;margin:40px auto;padding:0 24px 40px">${paragraphs}</div></body></html>`;
+}
 
 function log(...args) {
   const msg = `[email-blast] ${new Date().toISOString()} ${args.join(" ")}`;
@@ -181,6 +188,7 @@ function sendEmail(to, seq) {
       reply_to: REPLY_TO,
       subject,
       text: body,
+      html: bodyToHtml(body),
     });
     const req = https.request({
       hostname: "api.resend.com",
