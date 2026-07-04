@@ -3,7 +3,8 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar-rac";
+import { parseDate } from "@internationalized/date";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { deleteCalendarEvent, updateCalendarEvent } from "@/lib/actions";
 import { CalendarPlus, Trash2, ChevronLeft, ChevronRight, ExternalLink, CalendarDays, Clock, Loader2 } from "lucide-react";
@@ -713,7 +714,10 @@ function EventDetailDialog({
 
           {showCal && (
             <div style={{ marginTop: 8, marginBottom: 12, border: "1px solid var(--kk-line)", borderRadius: 12, overflow: "hidden", background: "var(--kk-surface)" }}>
-              <Calendar mode="single" selected={date} onSelect={(d) => { setDate(d); setShowCal(false); }} />
+              <Calendar
+                value={date ? parseDate(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`) : null}
+                onChange={(d: any) => { if (d) { setDate(new Date(d.year, d.month - 1, d.day)); setShowCal(false); } }}
+              />
             </div>
           )}
 

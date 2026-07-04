@@ -2362,7 +2362,7 @@ export async function lostContractAction(
     .eq("id", tenancyId);
   if (error) return { ok: false, message: error.message };
   if (ownerLeadId && competitorContractEnd) {
-    await markCompetitorRented(ownerLeadId, competitorContractEnd);
+    await markCompetitorRented(ownerLeadId, "", undefined, competitorContractEnd);
   }
   invalidateCache();
   revalidatePath("/existing-listing");

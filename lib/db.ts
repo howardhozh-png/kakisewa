@@ -1723,8 +1723,8 @@ export async function getManagedLeads() {
 export async function markCompetitorRented(
   id: string,
   competitorContractStart: string,
-  competitorContractDurationMonths: number,
-  competitorContractEnd: string
+  competitorContractDurationMonths?: number,
+  competitorContractEnd?: string
 ): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase

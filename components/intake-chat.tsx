@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { CalendarDays, Send, CheckCircle, Camera, X as XIcon, Lock } from "lucide-react";
 import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar-rac";
+import { parseDate } from "@internationalized/date";
 import { Logo } from "@/components/logo";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
@@ -422,13 +423,9 @@ function PhotoUploadCard({
 
 // ─── Date picker ──────────────────────────────────────────────────────────────
 
-const CAL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
-  const today = new Date();
   const [selected, setSelected] = useState<Date | undefined>(undefined);
-  const [month, setMonth] = useState(today.getMonth());
-  const [year, setYear]   = useState(today.getFullYear());
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -437,8 +434,6 @@ function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
     }, 350);
   }, []);
 
-  const displayMonth = new Date(year, month, 1);
-  const yearRange = Array.from({ length: 6 }, (_, i) => today.getFullYear() + i);
   const displayDate = selected ? format(selected, "d MMM yyyy") : "";
 
   return (
@@ -447,34 +442,11 @@ function DatePickerCard({ onConfirm }: { onConfirm: (iso: string) => void }) {
       className="mt-3 mx-auto w-full max-w-[320px] rounded-2xl overflow-hidden"
       style={{ background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}
     >
-      {/* Month / Year dropdowns */}
-      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-        <select
-          value={month}
-          onChange={e => setMonth(Number(e.target.value))}
-          className="flex-1 text-[13px] font-medium px-3 py-1.5 rounded-full appearance-none cursor-pointer"
-          style={{ background: "#F5F5F7", border: "1px solid rgba(0,0,0,0.08)", color: "#1D1D1F", outline: "none" }}
-        >
-          {CAL_MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-        </select>
-        <select
-          value={year}
-          onChange={e => setYear(Number(e.target.value))}
-          className="text-[13px] font-medium px-3 py-1.5 rounded-full appearance-none cursor-pointer"
-          style={{ background: "#F5F5F7", border: "1px solid rgba(0,0,0,0.08)", color: "#1D1D1F", outline: "none" }}
-        >
-          {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-      </div>
-
       {/* Calendar */}
-      <div className="px-3 pb-2">
+      <div className="px-3 pt-3 pb-2">
         <Calendar
-          mode="single"
-          selected={selected}
-          onSelect={setSelected}
-          month={displayMonth}
-          onMonthChange={d => { setMonth(d.getMonth()); setYear(d.getFullYear()); }}
+          value={selected ? parseDate(format(selected, "yyyy-MM-dd")) : null}
+          onChange={(d: any) => { if (d) { setSelected(new Date(d.year, d.month - 1, d.day)); } }}
         />
       </div>
 

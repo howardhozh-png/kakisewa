@@ -3,10 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
 import { format } from "date-fns";
-import type { DateRange } from "react-day-picker";
-import { Calendar } from "@/components/ui/calendar";
-
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+import { RangeCalendar } from "@/components/ui/calendar-rac";
+import { parseDate } from "@internationalized/date";
 
 interface Props {
   label?: string;
@@ -27,13 +25,10 @@ function dateToIso(d: Date): string {
 }
 
 export function DateRangeFilter({ label = "Available from", from, to, onFrom, onTo }: Props) {
-  const today = new Date();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
-  const [draft, setDraft] = useState<DateRange | undefined>(undefined);
-  const [month, setMonth] = useState(today.getMonth());
-  const [year, setYear]   = useState(today.getFullYear());
+  const [draft, setDraft] = useState<{ from?: Date; to?: Date } | undefined>(undefined);
 
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -43,9 +38,6 @@ export function DateRangeFilter({ label = "Available from", from, to, onFrom, on
       const f = isoToDate(from);
       const t = isoToDate(to);
       setDraft(f || t ? { from: f, to: t } : undefined);
-      const anchor = f ?? today;
-      setMonth(anchor.getMonth());
-      setYear(anchor.getFullYear());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -92,9 +84,6 @@ export function DateRangeFilter({ label = "Available from", from, to, onFrom, on
     : to   ? `Until ${format(new Date(to + "T00:00:00"), "d MMM")}`
     : label;
 
-  const displayMonth = new Date(year, month, 1);
-  const yearRange = Array.from({ length: 10 }, (_, i) => today.getFullYear() - 1 + i);
-
   return (
     <>
       <button
@@ -127,43 +116,23 @@ export function DateRangeFilter({ label = "Available from", from, to, onFrom, on
             width: Math.min(320, window.innerWidth - 16),
           }}
         >
-          {/* Month / Year dropdowns */}
-          <div className="flex items-center gap-2 mb-3">
-            <select
-              value={month}
-              onChange={e => setMonth(Number(e.target.value))}
-              className="flex-1 text-[13px] font-medium px-3 py-1.5 rounded-full appearance-none cursor-pointer"
-              style={{
-                background: "var(--kk-surface-2)",
-                border: "1px solid var(--kk-line)",
-                color: "var(--kk-ink)",
-                outline: "none",
-              }}
-            >
-              {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-            </select>
-            <select
-              value={year}
-              onChange={e => setYear(Number(e.target.value))}
-              className="text-[13px] font-medium px-3 py-1.5 rounded-full appearance-none cursor-pointer"
-              style={{
-                background: "var(--kk-surface-2)",
-                border: "1px solid var(--kk-line)",
-                color: "var(--kk-ink)",
-                outline: "none",
-              }}
-            >
-              {yearRange.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-
           {/* Calendar */}
-          <Calendar
-            mode="range"
-            selected={draft}
-            onSelect={setDraft}
-            month={displayMonth}
-            onMonthChange={d => { setMonth(d.getMonth()); setYear(d.getFullYear()); }}
+          <RangeCalendar
+            value={
+              draft?.from && draft?.to
+                ? { start: parseDate(format(draft.from, "yyyy-MM-dd")), end: parseDate(format(draft.to, "yyyy-MM-dd")) }
+                : null
+            }
+            onChange={(r: any) => {
+              if (r) {
+                setDraft({
+                  from: r.start ? new Date(r.start.year, r.start.month - 1, r.start.day) : undefined,
+                  to: r.end ? new Date(r.end.year, r.end.month - 1, r.end.day) : undefined,
+                });
+              } else {
+                setDraft(undefined);
+              }
+            }}
           />
 
           {/* Footer */}

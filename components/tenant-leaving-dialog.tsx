@@ -76,7 +76,7 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--kk-purple-soft)", color: "#6F2DA8" }}>
+              <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "var(--kk-purple-soft)", color: "var(--kk-purple-ink)" }}>
                 <RefreshCw className="w-4 h-4" />
               </div>
               <div>
@@ -121,7 +121,7 @@ export function TenantLeavingDialog({ t, open, onClose }: Props) {
               onClick={confirm}
               disabled={pending}
               className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
-              style={{ background: "#6F2DA8", color: "#fff" }}
+              style={{ background: "var(--kk-purple-ink)", color: "#fff" }}
             >
               {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               Create listing
