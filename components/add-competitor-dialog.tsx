@@ -56,8 +56,8 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
   const [form, setForm] = useState({
     property_name: "", unit: "", owner_name: "", owner_phone: "",
     expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "",
-    rented_on: new Date().toISOString().slice(0, 10),
-    duration: "12",
+    rented_on: "",
+    duration: "",
   });
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [showSugg, setShowSugg] = useState(false);
@@ -121,7 +121,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
 
   useEffect(() => {
     if (!open) {
-      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
+      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: "", duration: "" });
       setEndDate("");
       setPhoneErr(null);
       setShowSugg(false);
