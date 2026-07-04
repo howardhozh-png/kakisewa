@@ -2167,7 +2167,8 @@ export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
 export async function markCompetitorRentedAction(
   id: string,
   rentedOn: string,
-  durationMonths: number
+  durationMonths: number,
+  contractEndDate?: string
 ): Promise<{ ok: boolean; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null }> {
   "use server";
   const capCheck = await checkTargetCap();
@@ -2182,10 +2183,13 @@ export async function markCompetitorRentedAction(
       upgrade_cap: capCheck.upgrade_cap,
     };
   }
-  const [y, m, day] = rentedOn.split("-").map(Number);
-  const end = new Date(y, m - 1 + durationMonths, day);
-  const contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
-  await markCompetitorRented(id, contractEnd);
+  let contractEnd = contractEndDate ?? "";
+  if (!contractEnd) {
+    const [y, m, day] = rentedOn.split("-").map(Number);
+    const end = new Date(y, m - 1 + durationMonths, day);
+    contractEnd = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+  }
+  await markCompetitorRented(id, rentedOn, durationMonths, contractEnd);
   invalidateCache();
   revalidatePath("/property-leads");
   revalidatePath("/my-listing");

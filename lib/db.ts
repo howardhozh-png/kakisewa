@@ -1722,12 +1722,20 @@ export async function getManagedLeads() {
 
 export async function markCompetitorRented(
   id: string,
+  competitorContractStart: string,
+  competitorContractDurationMonths: number,
   competitorContractEnd: string
 ): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("owner_leads")
-    .update({ is_competitor_target: true, competitor_contract_end: competitorContractEnd, competitor_stage: "watching" })
+    .update({
+      is_competitor_target: true,
+      competitor_contract_start: competitorContractStart || null,
+      competitor_contract_duration_months: competitorContractDurationMonths || null,
+      competitor_contract_end: competitorContractEnd,
+      competitor_stage: "watching",
+    })
     .eq("id", id);
   if (error) throw error;
 }

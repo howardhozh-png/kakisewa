@@ -17,6 +17,24 @@ import type { OwnerLead } from "@/lib/types";
 
 const PHOTO_MAX = 10;
 
+function computeEnd(start: string, months: number): string {
+  if (!start || !months) return "";
+  const [y, m, day] = start.split("-").map(Number);
+  if (!y || !m || !day) return "";
+  if (day === 1) {
+    const e = new Date(y, m - 1 + months + 1, 0);
+    return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
+  }
+  const ann = new Date(y, m - 1 + months, day);
+  const e = new Date(ann.getTime() - 86400000);
+  return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
+}
+
+function computeDuration(start: string, end: string): number {
+  if (!start || !end) return 12;
+  return Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / (30.4375 * 86400000)));
+}
+
 function serializeAgreementUrls(urls: string[]): string | null {
   if (urls.length === 0) return null;
   if (urls.length === 1) return urls[0];
@@ -52,6 +70,21 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
     setForm(prev => ({ ...prev, [field]: value }));
   }
 
+  function handleStartChange(iso: string) {
+    set("rented_on", iso);
+    if (iso && form.duration) setEndDate(computeEnd(iso, parseInt(form.duration, 10)));
+  }
+
+  function handleDurationChange(val: string) {
+    set("duration", val);
+    if (form.rented_on && val) setEndDate(computeEnd(form.rented_on, parseInt(val, 10)));
+  }
+
+  function handleEndDateChange(iso: string) {
+    setEndDate(iso);
+    if (form.rented_on && iso) set("duration", String(computeDuration(form.rented_on, iso)));
+  }
+
   const suggestions = useMemo(() => {
     const q = form.property_name.trim().toLowerCase();
     const seen = new Set<string>();
@@ -84,18 +117,12 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
     setPhotoFiles((prev) => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, idx) => idx !== i); });
   }
 
-  const contractEnd = (() => {
-    if (!form.rented_on || !form.duration) return "";
-    const [y, m, day] = form.rented_on.split("-").map(Number);
-    const months = parseInt(form.duration, 10);
-    if (!months) return "";
-    const end = new Date(y, m - 1 + months, day);
-    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
-  })();
+  const [endDate, setEndDate] = useState(() => computeEnd(form.rented_on, 12));
 
   function handleSubmit() {
     if (!form.property_name.trim()) { toast.error("Property name required"); return; }
-    if (!form.rented_on || !form.duration) { toast.error("Rented on + duration required"); return; }
+    if (!form.rented_on) { toast.error("Start date required"); return; }
+    if (!endDate) { toast.error("End date required"); return; }
     const pErr = phoneError(normalizePhone(form.owner_phone));
     if (pErr) { setPhoneErr(pErr); toast.error(pErr); return; }
 
@@ -125,7 +152,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
         if (!res.ok || !res.id) { toast.error("Could not save"); return; }
 
         const { markCompetitorRentedAction } = await import("@/lib/actions");
-        await markCompetitorRentedAction(res.id, form.rented_on, parseInt(form.duration, 10));
+        await markCompetitorRentedAction(res.id, form.rented_on, parseInt(form.duration, 10) || computeDuration(form.rented_on, endDate), endDate);
 
         // Upload photos
         if (photoFiles.length > 0) {
@@ -161,7 +188,9 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
           toast.success("Target unit added");
         }
         onOpenChange(false);
-        setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
+        const today = new Date().toISOString().slice(0, 10);
+        setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: today, duration: "12" });
+        setEndDate(computeEnd(today, 12));
         setShowSugg(false);
         photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
         setPhotoFiles([]); setAgreementFiles([]);
@@ -286,25 +315,22 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             </div>
           </div>
 
-          {/* Contract dates */}
+          {/* Contract dates — all three linked */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rented on<span style={{ color: "var(--kk-red)" }}> *</span></label>
-              <DateInput value={form.rented_on} onChange={iso => set("rented_on", iso)} className={field} style={fs} />
+              <DateInput value={form.rented_on} onChange={handleStartChange} className={field} style={fs} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months)<span style={{ color: "var(--kk-red)" }}> *</span></label>
-              <input type="number" value={form.duration} min="1" max="36" onChange={e => set("duration", e.target.value)} onWheel={e => e.currentTarget.blur()} className={field} style={fs} />
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months)</label>
+              <input type="number" value={form.duration} min="1" max="120" onChange={e => handleDurationChange(e.target.value)} onWheel={e => e.currentTarget.blur()} className={field} style={fs} />
             </div>
           </div>
-
-          {contractEnd && (
-            <p className="text-[12px] px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>
-              Ends <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>
-                {new Date(contractEnd).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}
-              </span> — you'll be reminded 60 days before.
-            </p>
-          )}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>End date<span style={{ color: "var(--kk-red)" }}> *</span></label>
+            <DateInput value={endDate} onChange={handleEndDateChange} className={field} style={fs} />
+            <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>You'll be reminded 60 days before. Changing this updates duration.</p>
+          </div>
 
           {/* Notes */}
           <div className="space-y-1.5">
@@ -377,7 +403,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={busy || !form.property_name.trim() || !form.rented_on || !form.duration}
+              disabled={busy || !form.property_name.trim() || !form.rented_on || !endDate}
               className="kk-pill flex-1 font-semibold flex items-center justify-center gap-1.5"
               style={{ background: "var(--kk-ink)", color: "#fff", opacity: busy || !form.property_name.trim() ? 0.5 : 1 }}
             >
