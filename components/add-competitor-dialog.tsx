@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useMemo } from "react";
+import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
@@ -72,12 +72,12 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
 
   function handleStartChange(iso: string) {
     set("rented_on", iso);
-    if (iso && form.duration) setEndDate(computeEnd(iso, parseInt(form.duration, 10)));
+    if (endDate && iso && form.duration) setEndDate(computeEnd(iso, parseInt(form.duration, 10)));
   }
 
   function handleDurationChange(val: string) {
     set("duration", val);
-    if (form.rented_on && val) setEndDate(computeEnd(form.rented_on, parseInt(val, 10)));
+    if (endDate && form.rented_on && val) setEndDate(computeEnd(form.rented_on, parseInt(val, 10)));
   }
 
   function handleEndDateChange(iso: string) {
@@ -117,7 +117,18 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
     setPhotoFiles((prev) => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, idx) => idx !== i); });
   }
 
-  const [endDate, setEndDate] = useState(() => computeEnd(form.rented_on, 12));
+  const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: new Date().toISOString().slice(0, 10), duration: "12" });
+      setEndDate("");
+      setPhoneErr(null);
+      setShowSugg(false);
+      setPhotoFiles([]);
+      setAgreementFiles([]);
+    }
+  }, [open]);
 
   function handleSubmit() {
     if (!form.property_name.trim()) { toast.error("Property name required"); return; }
@@ -187,13 +198,8 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
           track(ph, "card_added", { type: "listing" });
           toast.success("Target unit added");
         }
-        onOpenChange(false);
-        const today = new Date().toISOString().slice(0, 10);
-        setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: today, duration: "12" });
-        setEndDate(computeEnd(today, 12));
-        setShowSugg(false);
         photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
-        setPhotoFiles([]); setAgreementFiles([]);
+        onOpenChange(false); // triggers useEffect reset
         router.refresh();
       } finally {
         setUploading(false);
