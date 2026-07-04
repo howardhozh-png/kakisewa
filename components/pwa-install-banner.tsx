@@ -25,8 +25,9 @@ export function PwaInstallBanner() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (standalone) return;
 
-    // Only show on mobile
-    if (window.innerWidth > 768) return;
+    // Only show on mobile (touch device, no fine pointer / mouse)
+    if (window.matchMedia("(pointer: fine)").matches) return;
+    if (window.innerWidth > 1024) return;
 
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     setIsIos(ios);

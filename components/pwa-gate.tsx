@@ -17,7 +17,9 @@ export function PwaGate() {
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    if (window.innerWidth > 768) return;
+    // Only show on mobile (touch device, no fine pointer / mouse)
+    if (window.matchMedia("(pointer: fine)").matches) return;
+    if (window.innerWidth > 1024) return;
 
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
