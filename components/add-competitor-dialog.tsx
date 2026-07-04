@@ -412,9 +412,9 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={busy || !form.property_name.trim() || !endDate}
+              disabled={busy}
               className="kk-pill flex-1 font-semibold flex items-center justify-center gap-1.5"
-              style={{ background: "var(--kk-ink)", color: "#fff", opacity: busy || !form.property_name.trim() ? 0.5 : 1 }}
+              style={{ background: "var(--kk-ink)", color: "#fff", opacity: busy ? 0.5 : 1 }}
             >
               {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {uploading ? "Uploading…" : pending ? "Adding…" : "Add target"}
