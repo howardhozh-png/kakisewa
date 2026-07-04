@@ -132,8 +132,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
 
   function handleSubmit() {
     if (!form.property_name.trim()) { toast.error("Property name required"); return; }
-    if (!form.rented_on) { toast.error("Start date required"); return; }
-    if (!endDate) { toast.error("End date required"); return; }
+    if (!endDate) { toast.error("End date required. Enter an end date directly, or fill in start date + duration."); return; }
     const pErr = phoneError(normalizePhone(form.owner_phone));
     if (pErr) { setPhoneErr(pErr); toast.error(pErr); return; }
 
@@ -321,21 +320,25 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             </div>
           </div>
 
-          {/* Contract dates — all three linked */}
+          {/* Contract dates — all three linked; end date alone is sufficient */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Rented on<span style={{ color: "var(--kk-red)" }}> *</span></label>
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
+                Rented on{!endDate && <span style={{ color: "var(--kk-red)" }}> *</span>}
+              </label>
               <DateInput value={form.rented_on} onChange={handleStartChange} className={field} style={fs} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Duration (months)</label>
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>
+                Duration (months){!endDate && <span style={{ color: "var(--kk-red)" }}> *</span>}
+              </label>
               <input type="number" value={form.duration} min="1" max="120" onChange={e => handleDurationChange(e.target.value)} onWheel={e => e.currentTarget.blur()} className={field} style={fs} />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>End date<span style={{ color: "var(--kk-red)" }}> *</span></label>
             <DateInput value={endDate} onChange={handleEndDateChange} className={field} style={fs} />
-            <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>You'll be reminded 60 days before. Changing this updates duration.</p>
+            <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>You'll be reminded 60 days before. Or fill in start + duration above.</p>
           </div>
 
           {/* Notes */}
@@ -409,7 +412,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={busy || !form.property_name.trim() || !form.rented_on || !endDate}
+              disabled={busy || !form.property_name.trim() || !endDate}
               className="kk-pill flex-1 font-semibold flex items-center justify-center gap-1.5"
               style={{ background: "var(--kk-ink)", color: "#fff", opacity: busy || !form.property_name.trim() ? 0.5 : 1 }}
             >
