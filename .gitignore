@@ -53,3 +53,6 @@ next-env.d.ts
 # Debug screenshots from Playwright sessions
 *.png
 supabase/.temp/
+
+# email blast runtime lock (created/removed by scripts/email-blast.mjs)
+scripts/.email-blast.lock

@@ -36,6 +36,12 @@ const SEQ3_AFTER_DAYS = 4;  // send seq3 4 days after seq2
 const MASTER      = "scripts/output-master.csv";
 const SENT_LOG    = "scripts/email-blast-sent.json";
 const SUPPRESSED  = "scripts/email-blast-suppressed.json";
+const LOCK_FILE   = "scripts/.email-blast.lock";
+const LOCK_STALE_MS = 30 * 60 * 1000; // a run should never take this long; treat an older lock as abandoned
+
+// Basic email shape check — catches CSV scraping artifacts (stray commas, spaces)
+// before they burn a Resend API call and show up as a "FAILED" in the log.
+const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
 // ── Message sequences ─────────────────────────────────────────────────────────
 
@@ -215,14 +221,46 @@ function sendEmail(to, seq) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+function acquireLock() {
+  if (fs.existsSync(LOCK_FILE)) {
+    const age = Date.now() - fs.statSync(LOCK_FILE).mtimeMs;
+    if (age < LOCK_STALE_MS) return false;
+    log(`Stale lock (${Math.round(age / 60000)}min old) — assuming a previous run crashed, taking over.`);
+  }
+  fs.writeFileSync(LOCK_FILE, String(process.pid));
+  return true;
+}
+
+function releaseLock() {
+  try { fs.unlinkSync(LOCK_FILE); } catch {}
+}
+
 async function main() {
   if (!RESEND_API_KEY) {
     log("ERROR: RESEND_API_KEY not found in .env.local");
     process.exit(1);
   }
 
+  // Guards against the exact failure mode seen on 2026-07-04: two overlapping
+  // invocations (e.g. cron firing during a delayed wake from sleep, or a manual
+  // run colliding with cron) both read sent.json before either had saved, so
+  // both queued and sent the same ~100 contacts — real people got the same
+  // cold email twice in one day.
+  if (!acquireLock()) {
+    log("Another run is already in progress (lock held) — exiting without sending.");
+    return;
+  }
+
+  try {
+    await run();
+  } finally {
+    releaseLock();
+  }
+}
+
+async function run() {
   const contacts = parseCSV(MASTER);
-  const withEmail = contacts.filter(c => c.email && c.email.includes("@"));
+  const withEmail = contacts.filter(c => c.email && EMAIL_RE.test(c.email));
   const sent = loadSent();
   const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
