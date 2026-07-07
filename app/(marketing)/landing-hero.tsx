@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
+import { STORY_BEATS } from "@/lib/hook-content";
 import { Faq } from "./faq";
 
 /* ── PixelTrail ──────────────────────────────────────────────────────────────
@@ -89,32 +90,8 @@ const CH_CONFIGS = [
   { r: 0,   g: 113, b: 227 },
 ];
 
-/* ── CH0 horizontal story beats ─────────────────────────────────────────── */
+/* ── CH0 horizontal story beats (data now shared — see lib/hook-content.ts) ── */
 const CH0_SLIDES = 4;
-const STORY_BEATS: Array<{ quote: string; emphasis: string; accentColor: string; quotePost?: string; sub?: string }> = [
-  {
-    quote: "I lost",
-    emphasis: "RM150,000",
-    quotePost: "last year. I didn't know.",
-    accentColor: "#FF3B30",
-  },
-  {
-    quote: "I thought I could track all 50 units.",
-    emphasis: "I lost almost all of them.",
-    accentColor: "#FF3B30",
-  },
-  {
-    quote: "Now I get passive income",
-    emphasis: "just by messaging the owner while I travel.",
-    accentColor: "#0071E3",
-  },
-  {
-    quote: "WhatsApp just added usernames.",
-    emphasis: "Your existing listings are now your income.",
-    accentColor: "#FF9500",
-    sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
-  },
-];
 
 /* ── Luxury scroll items (static, defined outside component) ─────────────── */
 const LUX_ITEMS = [
@@ -798,8 +775,11 @@ export function LandingHero() {
           }}>
             One renewal or 12 referrals<br />and kakisewa is paid for the whole year.
           </h2>
-          <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
+          <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 8, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
             Start 2 months free. Cancel anytime.
+          </p>
+          <p style={{ fontSize: 14, color: "#C7C7CC", marginBottom: 52, lineHeight: 1.5, ...delay(0.3, revealed[3]) }}>
+            Then starting at RM29/month, about RM1/day.
           </p>
           <div style={delay(0.4, revealed[3])}>
             <Link

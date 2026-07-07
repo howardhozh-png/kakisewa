@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
            padding:12px 24px;border-radius:10px;text-decoration:none">
     View plans
   </a>
-  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">Silver starts at RM 30/month. Cancel anytime.</p>
+  <p style="font-size:12px;color:#AEAEB2;margin:24px 0 0">Silver starts at RM 29/month, about RM1/day. Cancel anytime.</p>
 </div>`,
       }),
     });

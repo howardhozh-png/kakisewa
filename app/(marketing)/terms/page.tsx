@@ -86,20 +86,20 @@ export default function TermsPage() {
             </p>
             <ul>
               <li>
-                <strong>Silver</strong> — RM 69/month (or RM 57/month billed annually at RM 570/year).
-                Includes active lead pipeline, owner outreach, bulk upload, owner reply tracking, and branded tenant packs. Up to 20 active contracts tracked.
+                <strong>Silver</strong>, RM 29/month (or RM 348/year billed annually), flat for as long as you stay subscribed.
+                Includes active lead pipeline, owner outreach, bulk upload, owner reply tracking, and branded tenant packs. Up to 50 active contracts tracked.
               </li>
               <li>
-                <strong>Gold</strong> — RM 119/month (or RM 99/month billed annually at RM 990/year).
-                Everything in Silver, plus commission history and up to 80 active contracts tracked.
+                <strong>Gold</strong>, RM 49/month in year one (RM 588/year billed annually), then RM 69/month (RM 828/year) from year two onward.
+                Everything in Silver, plus commission history and up to 150 active contracts tracked.
               </li>
               <li>
-                <strong>Platinum</strong> — RM 179/month (or RM 149/month billed annually at RM 1,490/year).
-                Everything in Gold, plus property services contact directory, renewal commission tracking, agent profile page. Up to 200 active contracts tracked.
+                <strong>Platinum</strong>, RM 99/month in year one (RM 1,188/year billed annually), then RM 139/month (RM 1,668/year) from year two onward.
+                Everything in Gold, plus property services contact directory, renewal commission tracking, agent profile page. Up to 400 active contracts tracked.
               </li>
               <li>
-                <strong>Elite</strong> — RM 299/month (or RM 249/month billed annually at RM 2,490/year).
-                Everything in Platinum, plus public agent profile with search, performance dashboard, and advanced analytics. Unlimited contracts.
+                <strong>Elite</strong>, RM 159/month in year one (RM 1,908/year billed annually), then RM 219/month (RM 2,628/year) from year two onward.
+                Everything in Platinum, plus public agent profile with search, performance dashboard, and advanced analytics. Up to 1,000 active contracts tracked.
               </li>
             </ul>
             <p>

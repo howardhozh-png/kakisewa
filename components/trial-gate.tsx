@@ -6,10 +6,10 @@ import { ArrowRight, Lock } from "lucide-react";
 const ALLOWED_PATHS = ["/home", "/subscription", "/faq", "/support"];
 
 const PLANS = [
-  { name: "Silver",   price: 69,  desc: "Start building your pipeline and renewal tracking." },
-  { name: "Gold",     price: 119, desc: "Scale your portfolio with full renewal history." },
-  { name: "Platinum", price: 179, desc: "Never miss a renewal. 200 active contracts.", featured: true },
-  { name: "Elite",    price: 299, desc: "Your all-in-one hub. Unlimited + public profile." },
+  { name: "Silver",   price: 29,  desc: "Start building your pipeline and renewal tracking." },
+  { name: "Gold",     price: 49,  desc: "Scale your portfolio with full renewal history." },
+  { name: "Platinum", price: 99,  desc: "Never miss a renewal. 400 active contracts.", featured: true },
+  { name: "Elite",    price: 159, desc: "Your all-in-one hub. Up to 1,000 contracts + public profile." },
 ];
 
 export function TrialGate() {

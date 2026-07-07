@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
+import { STORY_BEATS } from "@/lib/hook-content"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
@@ -137,9 +138,21 @@ function SignUpForm() {
       </div>
 
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>kakisewa</p>
           <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Join kakisewa today!</p>
+        </div>
+
+        {/* Reinforce the landing page's loss-aversion hooks — this context was
+            previously lost entirely by the time someone reached the signup form. */}
+        <div className="flex flex-col gap-1.5 mb-6 text-center">
+          {STORY_BEATS.slice(0, 3).map((beat, i) => (
+            <p key={i} style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.5 }}>
+              {beat.quote}{" "}
+              <strong style={{ color: beat.accentColor }}>{beat.emphasis}</strong>
+              {beat.quotePost ? ` ${beat.quotePost}` : ""}
+            </p>
+          ))}
         </div>
 
         <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
@@ -152,8 +165,8 @@ function SignUpForm() {
 
             <div className="flex flex-col gap-1.5">
               <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Passcode</Label>
-              <PasscodeInput value={form.passcode} onChange={v => setForm(f => ({ ...f, passcode: v }))} autoComplete="new-password" required />
-              <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>8 digits — you&apos;ll use this to sign in</p>
+              <PasscodeInput value={form.passcode} onChange={v => setForm(f => ({ ...f, passcode: v }))} autoComplete="new-password" required variant="create" />
+              <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Create your own 8-digit passcode, you&apos;ll use it to sign in next time.</p>
             </div>
 
             {/* Referral code */}
@@ -204,6 +217,9 @@ function SignUpForm() {
             <Button type="submit" disabled={loading} className="w-full rounded-xl h-auto py-2.5 mt-0.5">
               {loading ? "Creating account…" : "Create account"}
             </Button>
+            <p className="text-center" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
+              2 months free, then starting at RM29/month, about RM1/day. Cancel anytime.
+            </p>
           </form>
         </div>
 

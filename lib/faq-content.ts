@@ -294,11 +294,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
     questions: [
       {
         q: "What plans are available?",
-        a: "kakisewa offers four plans: Silver (RM30/month), Gold (RM99/month), Platinum (RM179/month), and Elite (RM299/month). All plans include email and push notifications. Annual billing saves you 2 months of fees. See the Subscription page for the full comparison.",
+        a: "kakisewa offers four plans: Silver (RM29/month), Gold (RM49/month in year one, then RM69/month), Platinum (RM99/month in year one, then RM139/month), and Elite (RM159/month in year one, then RM219/month). All plans include email and push notifications. Annual billing saves you 2 months of fees. See the Subscription page for the full comparison.",
       },
       {
         q: "How many cards can I have on each plan?",
-        a: "Silver: 70 total (40 My listing + 20 Existing listing + 10 Lost listing). Gold: 200 total (100 + 60 + 40). Platinum: 600 total (300 + 200 + 100). Elite: 2,000 total (800 + 700 + 500).",
+        a: "Silver: up to 50 active contracts. Gold: up to 150. Platinum: up to 400. Elite: up to 1,000.",
       },
       {
         q: "What happens if I reach my card limit?",

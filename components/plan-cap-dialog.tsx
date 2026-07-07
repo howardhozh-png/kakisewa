@@ -10,7 +10,7 @@ const TIER_NAMES: Record<string, string> = {
 };
 
 const TIER_PRICES: Record<string, number> = {
-  gold: 99, platinum: 179, elite: 299,
+  gold: 49, platinum: 99, elite: 159,
 };
 
 const PIPELINE_LABELS: Record<PipelineType, { title: string; unit: string; context: string }> = {
@@ -96,7 +96,7 @@ export function PlanCapDialog({
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full font-semibold text-[13px] transition-opacity hover:opacity-90"
               style={{ background: "var(--kk-ink)", color: "#fff" }}
             >
-              Upgrade to {upgradeName}{upgradePrice ? ` — RM ${upgradePrice}/mo` : ""} <ArrowRight className="w-3.5 h-3.5" />
+              Upgrade to {upgradeName}{upgradePrice ? `, RM ${upgradePrice}/mo` : ""} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <button
               onClick={onClose}

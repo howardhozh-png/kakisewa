@@ -24,7 +24,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         <FeatureLockedState
           title="Track your renewal income"
           body="See your commission earned per renewal and 24 months of renewal income history. Available on Platinum and above."
-          ctaLabel="Upgrade to Platinum — RM 179/mo"
+          ctaLabel="Upgrade to Platinum, RM 99/mo"
         />
       </div>
     );

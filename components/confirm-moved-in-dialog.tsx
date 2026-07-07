@@ -18,7 +18,7 @@ const TIER_NAMES: Record<string, string> = {
   silver: "Silver", gold: "Gold", platinum: "Platinum", elite: "Elite",
 };
 const TIER_PRICES: Record<string, number> = {
-  gold: 119, platinum: 179, elite: 299,
+  gold: 49, platinum: 99, elite: 159,
 };
 
 function fmt(iso: string | null | undefined): string {
@@ -92,7 +92,7 @@ export function ConfirmMovedInDialog({
                 style={{ background: "var(--kk-ink)", color: "#fff" }}
               >
                 Upgrade to {TIER_NAMES[capInfo.upgrade_to ?? "elite"]}
-                {TIER_PRICES[capInfo.upgrade_to ?? ""] ? ` — RM ${TIER_PRICES[capInfo.upgrade_to ?? ""]}/mo` : ""}
+                {TIER_PRICES[capInfo.upgrade_to ?? ""] ? `, RM ${TIER_PRICES[capInfo.upgrade_to ?? ""]}/mo` : ""}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <button onClick={handleClose} className="w-full px-4 py-2.5 rounded-full text-[13px] font-medium transition-opacity hover:opacity-70" style={{ color: "var(--kk-ink-mute)" }}>

@@ -26,7 +26,7 @@ const TIER_NAMES: Record<string, string> = {
 };
 
 const TIER_PRICES: Record<string, number> = {
-  gold: 119, platinum: 179, elite: 299,
+  gold: 49, platinum: 99, elite: 159,
 };
 
 export function CommissionConfirmDialog({
@@ -77,7 +77,7 @@ export function CommissionConfirmDialog({
                 style={{ background: "var(--kk-ink)", color: "#fff" }}
               >
                 Upgrade to {TIER_NAMES[capInfo.upgrade_to ?? "elite"]}
-                {TIER_PRICES[capInfo.upgrade_to ?? ""] ? ` — RM ${TIER_PRICES[capInfo.upgrade_to ?? ""]}/mo` : ""}
+                {TIER_PRICES[capInfo.upgrade_to ?? ""] ? `, RM ${TIER_PRICES[capInfo.upgrade_to ?? ""]}/mo` : ""}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <button
