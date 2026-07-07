@@ -1,24 +1,35 @@
 {
   "bounced": [
+    "aabitec@gmail.com",
     "aalfredtanproperty@gmail.com",
+    "adrian_kow10@gmail.com",
     "agnes.tan@propertyhub.com.my",
+    "anvenpropety88@gmail.com",
     "calvinooi@reapfield.com",
+    "charisselcn2017@gmail.com",
     "deluxesj@gamil.com",
     "ishakhat@gmail.com",
     "ishau1@yahoo.com",
+    "jamieyeo0369@gmail.com",
     "jasonlim@tophills.com.my",
     "jaysialau@hotmail.com",
+    "jeffreyhauto@gmail.com",
+    "jimmy6613@gmail.com",
     "joanne6211@yahoo.com",
     "joannechoo@reapfield.com",
     "kcchuad23@yahoo.com",
     "kenneth.lee@propertyhub.com.my",
     "kentwong6690@gmail.com",
     "khairol_visionhomes@gmail.com",
+    "mayyti@gmail.com",
+    "michellelim2u@gmail.com",
     "owenwong@reapfield.com",
     "sh.neoh@propertyhub.com.my",
     "stephanie-kle@yahoo.com",
+    "syukor.hartanah@gmail.com",
     "tflee12@yahoo.com",
-    "wesleywong@reapfield.com"
+    "wesleywong@reapfield.com",
+    "zhairul74@gmail.com"
   ],
   "blocked_domains": [
     "reapfield.com",
@@ -38,5 +49,5 @@
     "msn.com"
   ],
   "notes": "deferred_domains = skip until kakisewaofficial.com domain ages (~2 weeks). Yahoo bounced 100% on first blast day. Re-enable by removing from this list.",
-  "last_synced": "2026-07-02"
+  "last_synced": "2026-07-07"
 }
