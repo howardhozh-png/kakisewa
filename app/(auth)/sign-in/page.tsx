@@ -3,7 +3,6 @@
 import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
 import { usePostHog } from "posthog-js/react"
 import { track } from "@/lib/analytics"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
@@ -11,8 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
+import { FloatingCards, type FloatingCardData } from "@/components/floating-cards"
 
-const SHAPES = [
+const SHAPES: FloatingCardData[] = [
   { label: "3 bed · 2 bath", sub: "Mont Kiara · RM 4,200/mo", x: "-2%", y: "12%", rotate: -8, delay: 0 },
   { label: "Lease renewed ✓", sub: "Damansara Perdana · 2 yr", x: "66%", y: "8%", rotate: 6, delay: 0.3 },
   { label: "New tenant matched", sub: "Aishah Tan · RM 2,800/mo", x: "8%", y: "65%", rotate: -4, delay: 0.6 },
@@ -20,6 +20,8 @@ const SHAPES = [
   { label: "Commission due", sub: "Shah Alam · RM 2,400", x: "-3%", y: "40%", rotate: -5, delay: 0.5 },
   { label: "Contract expiring", sub: "Bandar Utama · 30 days", x: "68%", y: "33%", rotate: 3, delay: 0.8 },
   { label: "Owner intro call ✓", sub: "Encik Farid · Cheras", x: "33%", y: "86%", rotate: -2, delay: 0.95 },
+  { label: "Referral credit ✓", sub: "1 month free applied", x: "4%", y: "84%", rotate: 4, delay: 0.45 },
+  { label: "I lost RM150,000", sub: "before I found kakisewa", accentColor: "#FF3B30", x: "76%", y: "82%", rotate: -6, delay: 0.7 },
 ]
 
 export default function SignInPage() {
@@ -67,29 +69,7 @@ function SignInForm() {
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden" style={{ background: "var(--kk-bg)" }}>
 
       {/* Floating property cards */}
-      {SHAPES.map((s) => (
-        <motion.div
-          key={s.label}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: [0, -8, 0] }}
-          transition={{
-            opacity: { duration: 0.6, delay: s.delay },
-            y: { duration: 4 + s.delay, repeat: Infinity, ease: "easeInOut", delay: s.delay },
-          }}
-          className="absolute hidden lg:block rounded-2xl px-4 py-3"
-          style={{
-            left: s.x, top: s.y, rotate: s.rotate,
-            background: "var(--kk-surface)",
-            border: "1px solid var(--kk-line)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-            minWidth: 180,
-          }}
-          aria-hidden="true"
-        >
-          <p className="font-semibold text-[13px] leading-tight" style={{ color: "var(--kk-ink)" }}>{s.label}</p>
-          <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{s.sub}</p>
-        </motion.div>
-      ))}
+      <FloatingCards cards={SHAPES} />
 
       {/* Back link */}
       <div className="w-full max-w-sm mb-4">

@@ -773,13 +773,13 @@ export function LandingHero() {
             marginBottom: 18,
             ...delay(0.1, revealed[3]),
           }}>
-            One renewal or 12 referrals<br />and kakisewa is paid for the whole year.
+            kakisewa starts at RM1/day.<br />Refer someone, get a month free.
           </h2>
           <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 8, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
-            Start 2 months free. Cancel anytime.
+            Cancel anytime.
           </p>
           <p style={{ fontSize: 14, color: "#C7C7CC", marginBottom: 52, lineHeight: 1.5, ...delay(0.3, revealed[3]) }}>
-            Then starting at RM29/month, about RM1/day.
+            Starting at RM1/day. 2 months free trial.
           </p>
           <div style={delay(0.4, revealed[3])}>
             <Link

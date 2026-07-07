@@ -10,12 +10,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
-import { STORY_BEATS } from "@/lib/hook-content"
+import { FloatingCards, type FloatingCardData } from "@/components/floating-cards"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
 const sharedInputCls = "rounded-xl h-auto py-2.5 px-3.5"
 const sharedInputStyle: React.CSSProperties = { fontSize: "var(--kk-body)", background: "var(--kk-bg)", color: "var(--kk-ink)" }
+
+// Same floating-card treatment as sign-in, built from the landing page's
+// loss-aversion hooks plus the pricing/referral messaging — replaces the
+// plain stacked text that was here before (looked flat, not "beautifully
+// designed" per feedback).
+const SIGNUP_SHAPES: FloatingCardData[] = [
+  { label: "I lost RM150,000", sub: "last year. I didn't know.", accentColor: "#FF3B30", x: "-3%", y: "10%", rotate: -7, delay: 0 },
+  { label: "I lost almost all of them", sub: "I thought I could track 50 units", accentColor: "#FF3B30", x: "68%", y: "6%", rotate: 5, delay: 0.3 },
+  { label: "Now I get passive income", sub: "just by messaging the owner while I travel", accentColor: "#0071E3", x: "5%", y: "62%", rotate: -4, delay: 0.6 },
+  { label: "Starting at RM1/day", sub: "2 months free trial", x: "70%", y: "55%", rotate: 5, delay: 0.15 },
+  { label: "Referral credit ✓", sub: "1 month free per referral", x: "-3%", y: "38%", rotate: -5, delay: 0.5 },
+  { label: "WhatsApp usernames are here", sub: "protect your renewals today", accentColor: "#FF9500", x: "66%", y: "32%", rotate: 3, delay: 0.8 },
+]
 
 export default function SignUpPage() {
   return (
@@ -126,7 +139,9 @@ function SignUpForm() {
 
   // Default: signup form
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 overflow-hidden" style={{ background: "var(--kk-bg)" }}>
+      <FloatingCards cards={SIGNUP_SHAPES} />
+
       <div className="w-full max-w-sm mb-4">
         <Link href="/" className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-60"
           style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
@@ -137,22 +152,10 @@ function SignUpForm() {
         </Link>
       </div>
 
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-6">
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="text-center mb-8">
           <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>kakisewa</p>
           <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Join kakisewa today!</p>
-        </div>
-
-        {/* Reinforce the landing page's loss-aversion hooks — this context was
-            previously lost entirely by the time someone reached the signup form. */}
-        <div className="flex flex-col gap-1.5 mb-6 text-center">
-          {STORY_BEATS.slice(0, 3).map((beat, i) => (
-            <p key={i} style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)", lineHeight: 1.5 }}>
-              {beat.quote}{" "}
-              <strong style={{ color: beat.accentColor }}>{beat.emphasis}</strong>
-              {beat.quotePost ? ` ${beat.quotePost}` : ""}
-            </p>
-          ))}
         </div>
 
         <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
@@ -218,7 +221,7 @@ function SignUpForm() {
               {loading ? "Creating account…" : "Create account"}
             </Button>
             <p className="text-center" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
-              2 months free, then starting at RM29/month, about RM1/day. Cancel anytime.
+              Starting at RM1/day. 2 months free trial. Cancel anytime.
             </p>
           </form>
         </div>
