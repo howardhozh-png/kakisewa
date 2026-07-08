@@ -36,9 +36,7 @@ export const STORY_BEATS: StoryBeat[] = [
   },
   {
     parts: [
-      { text: "WhatsApp", color: "#FF3B30" },
-      { text: " just added " },
-      { text: "usernames.", color: "#FF3B30" },
+      { text: "WhatsApp just added usernames." },
       { text: " Your " },
       { text: "existing listings", color: "#34C759" },
       { text: " are now your " },

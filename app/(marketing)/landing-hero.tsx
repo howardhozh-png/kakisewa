@@ -790,7 +790,7 @@ export function LandingHero() {
               onClick={() => track(ph, "landing_cta_clicked", { cta: "start_trial", location: "hero" })}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
-                background: "#0071E3", color: "#fff",
+                background: "#34C759", color: "#fff",
                 fontSize: 16, fontWeight: 600,
                 padding: "16px 40px", borderRadius: 99,
                 textDecoration: "none", letterSpacing: "-0.01em",
