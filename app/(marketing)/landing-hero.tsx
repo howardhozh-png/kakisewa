@@ -278,6 +278,12 @@ export function LandingHero() {
           .kk-land-sample-note { display: none !important; }
           .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; gap: 32px !important; }
           .kk-land-pdots { display: none !important; }
+          /* This chapter's content (feature cards + both mockups) got taller than
+             100svh once the desktop mockup was added to mobile — the other
+             chapters (hero carousel, money calc, CTA) stay fixed-height since
+             their layouts depend on it, but this one just flows and scrolls
+             instead of clipping. */
+          .kk-land-ch2 { height: auto !important; min-height: 100svh !important; overflow: visible !important; }
         }
       `}</style>
 
@@ -589,7 +595,7 @@ export function LandingHero() {
       {/* ══════════════════════════════════════════════════════════════════════
           CH2 — KAKISEWA
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={ch2} className="kk-land-chapter" style={{ background: "#fff" }}>
+      <section ref={ch2} className="kk-land-chapter kk-land-ch2" style={{ background: "#fff" }}>
         <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 1000, padding: "80px 40px 48px" }}>
 
           {/* 3 features */}
