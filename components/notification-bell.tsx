@@ -142,8 +142,22 @@ export function NotificationBell() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    const id = setInterval(load, 5 * 60 * 1000);
-    return () => clearInterval(id);
+    // Paused while the tab isn't visible, catches up immediately when it becomes
+    // visible again - a backgrounded tab polling every 5 min all day adds up for
+    // free with zero UX benefit.
+    function onVisible() {
+      if (document.visibilityState === "visible") load();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [load]);
 
   // Close on outside click (desktop only)

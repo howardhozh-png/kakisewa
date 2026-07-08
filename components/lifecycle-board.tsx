@@ -118,11 +118,28 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
     [local, today]
   );
 
-  // Poll every 20s so renewal form responses appear without a manual refresh
+  // Poll every 30s so renewal form responses appear without a manual refresh -
+  // only while at least one tenancy is actively awaiting a reply (was previously
+  // unconditional, running even with nothing to check). Paused while the tab
+  // isn't visible, catches up immediately the moment it becomes visible again.
   useEffect(() => {
-    const id = setInterval(() => router.refresh(), 20_000);
-    return () => clearInterval(id);
-  }, [router]);
+    const hasPendingResponse = local.some((t) => defaultLifecycleStage(t, today) === "headsup");
+    if (!hasPendingResponse) return;
+
+    function onVisible() {
+      if (document.visibilityState === "visible") router.refresh();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 30_000);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [local, today, router]);
 
   const hasAutoOpened = useRef(false);
   useEffect(() => {

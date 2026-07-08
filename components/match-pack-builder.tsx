@@ -95,10 +95,24 @@ export function MatchPackBuilder({
   }, [ownerLeadId, pending, tenants]);
 
   useEffect(() => {
-    // Poll while pending intakes exist OR tenants haven't been ranked yet (watching for owner action)
+    // Poll while pending intakes exist OR tenants haven't been ranked yet (watching
+    // for owner action). Paused while the tab isn't visible, catches up immediately
+    // the moment it becomes visible again.
     if (pending.length === 0 && tenants.length === 0) return;
-    const id = setInterval(poll, 30_000);
-    return () => clearInterval(id);
+
+    function onVisible() {
+      if (document.visibilityState === "visible") poll();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") poll();
+    }, 30_000);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [pending.length, tenants.length, poll]);
 
   function sendToOwnerWhatsApp() {

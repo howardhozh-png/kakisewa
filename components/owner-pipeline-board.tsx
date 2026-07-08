@@ -89,13 +89,28 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [local, setLocal] = useState<OwnerLead[]>(leads);
   useEffect(() => { setLocal(leads); }, [leads]);
 
-  // Auto-refresh every 5s while any lead has pending intake OR active listed deals (catches owner pack rankings)
+  // Auto-refresh every 15s while any lead has pending intake OR active listed deals
+  // (catches owner pack rankings). Paused while the tab isn't visible - refreshing
+  // a backgrounded tab helps no one - and catches up immediately the moment the
+  // tab becomes visible again, so nothing is ever left stale.
   useEffect(() => {
     const hasPending = local.some((l) => l.intake_sent_at && !l.intake_completed_at);
     const hasActive = local.some((l) => ["listed", "wants_rent", "replied"].includes(l.stage));
     if (!hasPending && !hasActive) return;
-    const id = setInterval(() => router.refresh(), 5_000);
-    return () => clearInterval(id);
+
+    function onVisible() {
+      if (document.visibilityState === "visible") router.refresh();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 15_000);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [local, router]);
 
   // Auto-open a specific lead when navigated from another page (only once)
