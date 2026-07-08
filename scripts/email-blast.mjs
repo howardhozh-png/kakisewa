@@ -99,6 +99,16 @@ Chief Marketing Officer, kakisewa`,
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// Bare <p>/<br> tags only, no wrapper div, no inline CSS, no font-family
+// styling. A styled "marketing template" HTML body (centered card, padding,
+// explicit font stack) got flagged into Gmail Promotions - this minimal
+// version reads like a normal person's email client output instead, and is
+// confirmed (2026-07-08) to land in Primary while still carrying Resend's
+// open-tracking pixel. Never add wrapper divs/CSS back to this.
+function bodyToHtml(text) {
+  return text.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("\n");
+}
+
 function log(...args) {
   const msg = `[email-blast] ${new Date().toISOString()} ${args.join(" ")}`;
   console.log(msg);
@@ -185,6 +195,7 @@ function sendEmail(to, seq) {
       reply_to: REPLY_TO,
       subject,
       text: body,
+      html: bodyToHtml(body),
     });
     const req = https.request({
       hostname: "api.resend.com",
