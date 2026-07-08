@@ -22,8 +22,9 @@ export const STORY_BEATS: StoryBeat[] = [
     accentColor: "#FF3B30",
   },
   {
-    quote: "Now I get passive income",
-    emphasis: "just by messaging the owner while I travel.",
+    quote: "With",
+    emphasis: "RM1/day,",
+    quotePost: "I get passive income just by tracking existing listings.",
     accentColor: "#0071E3",
   },
   {
