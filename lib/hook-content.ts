@@ -18,14 +18,14 @@ export interface StoryBeat {
 export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
-      { text: "I lost " },
+      { text: "I lost ", small: true },
       { text: "RM150,000", color: "#FF3B30" },
-      { text: " last year. I didn't know." },
+      { text: " last year. I didn't know.", small: true },
     ],
   },
   {
     parts: [
-      { text: "I thought I could track all 50 units. " },
+      { text: "I thought I could track all 50 units. ", small: true },
       { text: "I lost almost all of them.", color: "#FF3B30" },
     ],
   },
@@ -40,10 +40,10 @@ export const STORY_BEATS: StoryBeat[] = [
   },
   {
     parts: [
-      { text: "WhatsApp just added usernames." },
-      { text: " Your " },
+      { text: "WhatsApp just added usernames.", small: true },
+      { text: " Your ", small: true },
       { text: "existing listings", color: "#34C759" },
-      { text: " are now your " },
+      { text: " are now your ", small: true },
       { text: "income.", color: "#34C759" },
     ],
     sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
