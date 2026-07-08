@@ -6,6 +6,10 @@ export interface StoryBeat {
   emphasis: string;
   accentColor: string;
   quotePost?: string;
+  // Second highlighted phrase, for beats that need two colored spans
+  // instead of one (e.g. "RM1/day" and "passive income" both highlighted).
+  emphasis2?: string;
+  quotePost2?: string;
   sub?: string;
 }
 
@@ -24,13 +28,15 @@ export const STORY_BEATS: StoryBeat[] = [
   {
     quote: "With",
     emphasis: "RM1/day,",
-    quotePost: "I get passive income just by tracking existing listings.",
-    accentColor: "#0071E3",
+    quotePost: "I get",
+    emphasis2: "passive income",
+    quotePost2: "just by tracking existing listings.",
+    accentColor: "#34C759",
   },
   {
     quote: "WhatsApp just added usernames.",
     emphasis: "Your existing listings are now your income.",
-    accentColor: "#FF9500",
+    accentColor: "#34C759",
     sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
   },
 ];

@@ -380,6 +380,8 @@ export function LandingHero() {
                     {beat.quote}{" "}
                     <span style={{ color: beat.accentColor }}>{beat.emphasis}</span>
                     {beat.quotePost && <>{" "}{beat.quotePost}</>}
+                    {beat.emphasis2 && <>{" "}<span style={{ color: beat.accentColor }}>{beat.emphasis2}</span></>}
+                    {beat.quotePost2 && <>{" "}{beat.quotePost2}</>}
                   </div>
                   {beat.sub && (
                     <p style={{
