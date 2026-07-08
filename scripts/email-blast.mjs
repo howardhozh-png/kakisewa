@@ -33,6 +33,14 @@ const DELAY_MS        = 3000;  // 3s between sends — stays under Resend's 2 re
 const SEQ2_AFTER_DAYS = 4;  // send seq2 4 days after seq1
 const SEQ3_AFTER_DAYS = 4;  // send seq3 4 days after seq2
 
+// Resend open/click tracking turned out to already be live (DNS "Tracking"
+// CNAME was already verified when checked 2026-07-08 — earlier than assumed).
+// Real open events were confirmed as far back as 2026-07-04. To be safe,
+// only gate seq2 eligibility on opens for seq1 sends from 2026-07-03 on;
+// earlier sends (the initial ~285 contacts, campaign start ~2026-06-29) fall
+// back to date-only eligibility since tracking coverage there is unverified.
+const TRACKING_ENABLED_DATE = "2026-07-03";
+
 const MASTER      = "scripts/output-master.csv";
 const SENT_LOG    = "scripts/email-blast-sent.json";
 const SUPPRESSED  = "scripts/email-blast-suppressed.json";
@@ -219,6 +227,45 @@ function sendEmail(to, seq) {
   });
 }
 
+function resendGet(path) {
+  return new Promise((resolve, reject) => {
+    https.request({
+      hostname: "api.resend.com",
+      path,
+      method: "GET",
+      headers: { "Authorization": `Bearer ${RESEND_API_KEY}` },
+    }, res => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        try { resolve(JSON.parse(data)); } catch { reject(new Error("bad JSON from Resend: " + data.slice(0, 200))); }
+      });
+    }).on("error", reject).end();
+  });
+}
+
+// Recipients whose seq1 email (subject-matched) has an "opened" or "clicked"
+// event on Resend. Only meaningful for seq1 sends after TRACKING_ENABLED_DATE —
+// older sends had no tracking pixel, so they'll never show up here.
+async function fetchOpenedSeq1Emails() {
+  const opened = new Set();
+  let after = null;
+  for (let i = 0; i < 30; i++) {
+    const path = "/emails" + (after ? `?after=${after}&limit=100` : "?limit=100");
+    const r = await resendGet(path);
+    if (!r.data) break;
+    for (const item of r.data) {
+      if (item.subject === SEQUENCES.seq1.subject && (item.last_event === "opened" || item.last_event === "clicked")) {
+        for (const to of item.to) opened.add(to.toLowerCase());
+      }
+    }
+    if (!r.has_more) break;
+    after = r.data[r.data.length - 1].id;
+    await sleep(600); // stay under Resend's 2 req/s
+  }
+  return opened;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 function acquireLock() {
@@ -264,10 +311,11 @@ async function run() {
   const sent = loadSent();
   const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
+  const openedSeq1 = await fetchOpenedSeq1Emails();
 
   // Build candidate list — skip suppressed/deferred, tag with domain tier
   const candidates = [];
-  let skippedBounce = 0, skippedDeferred = 0;
+  let skippedBounce = 0, skippedDeferred = 0, skippedNotOpened = 0;
   for (const c of withEmail) {
     const e = c.email;
     const reason = skipReason(e, suppressed);
@@ -276,7 +324,14 @@ async function run() {
 
     let seq = null;
     if (!sent.seq1[e]) seq = "seq1";
-    else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) seq = "seq2";
+    else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) {
+      // Only gate on opens for seq1 sends that happened after tracking went
+      // live — earlier sends have no tracking pixel, so treat them as always
+      // eligible (we simply don't know either way).
+      const trackedSend = sent.seq1[e] >= TRACKING_ENABLED_DATE;
+      if (!trackedSend || openedSeq1.has(e.toLowerCase())) seq = "seq2";
+      else skippedNotOpened++;
+    }
     else if (sent.seq2[e] && !sent.seq3[e] && daysDiff(sent.seq2[e]) >= SEQ3_AFTER_DAYS) seq = "seq3";
     if (seq) candidates.push({ email: e, seq, tier: domainTier(e) });
   }
@@ -294,7 +349,8 @@ async function run() {
 
   log(`=== Daily run ${today} ===`);
   log(`Contacts with email: ${withEmail.length}`);
-  log(`Skipped bounced/blocked: ${skippedBounce} | Deferred (Yahoo/Hotmail): ${skippedDeferred}`);
+  log(`Skipped bounced/blocked: ${skippedBounce} | Deferred (Yahoo/Hotmail): ${skippedDeferred} | Held for no seq1 open: ${skippedNotOpened}`);
+  log(`Seq1 opens tracked so far: ${openedSeq1.size}`);
   log(`Seq1 sent all-time: ${Object.keys(sent.seq1).length}`);
   log(`Seq2 sent all-time: ${Object.keys(sent.seq2).length}`);
   log(`Seq3 sent all-time: ${Object.keys(sent.seq3).length}`);
