@@ -71,7 +71,7 @@ Chief Marketing Officer, kakisewa`,
   },
 
   seq2: {
-    subject: "4 units in Sunway Geo Residences expiring next month",
+    subject: "What's holding you back today?",
     body: `It's Jovanne from kakisewa again! We got 279 users signed up for free last 5 days! What's holding you back?
 
 kakisewa will become your personal property diary forever.
