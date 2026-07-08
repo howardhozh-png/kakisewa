@@ -13,9 +13,8 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/api/share")) return true
   if (pathname.startsWith("/api/r/")) return true
   if (pathname.startsWith("/api/auth/")) return true
-  if (pathname.startsWith("/api/webhooks/stripe")) return true
-  if (pathname.startsWith("/api/webhooks/whatsapp")) return true
-  if (pathname.startsWith("/api/cron/")) return true
+  // api/webhooks/* and api/cron/* are excluded from the matcher below, so
+  // middleware never runs for them at all - these two checks are unreachable.
   if (pathname.startsWith("/api/stripe/")) return true
   if (pathname.startsWith("/api/admin/")) return true
   if (pathname.startsWith("/terms") || pathname.startsWith("/privacy")) return true
@@ -132,5 +131,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|otf|woff|woff2|html)$).*)"],
+  // api/cron and api/webhooks excluded: they self-authenticate (CRON_SECRET,
+  // Stripe/WhatsApp signature checks) and never read the middleware-injected
+  // x-agent-id/x-is-admin headers, so skipping middleware here is safe and
+  // saves a full invocation + a wasted Supabase auth.getUser() call on every
+  // cron run and every incoming webhook.
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/cron|api/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|otf|woff|woff2|html)$).*)"],
 }
