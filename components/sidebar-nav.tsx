@@ -14,9 +14,9 @@ const TOP_ITEMS = [
 
 const PIPELINE_ITEMS = [
   { href: "/property-leads", icon: MessageCircle, label: "Property Leads", minPlan: null },
-  { href: "/my-listing",  icon: ClipboardList,  label: "My listing",  minPlan: null },
-  { href: "/existing-listing",  icon: RefreshCw,      label: "Existing listing",  minPlan: null },
-  { href: "/lost-listing",      icon: Target,         label: "Lost listing",     minPlan: null },
+  { href: "/my-listing",  icon: ClipboardList,  label: "My Listing",  minPlan: null },
+  { href: "/existing-listing",  icon: RefreshCw,      label: "Existing Listing",  minPlan: null },
+  { href: "/lost-listing",      icon: Target,         label: "Lost Listing",     minPlan: null },
 ] as const;
 
 const BOTTOM_ITEMS = [
