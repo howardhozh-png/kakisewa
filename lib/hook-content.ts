@@ -4,6 +4,10 @@
 export interface StoryBeatPart {
   text: string;
   color?: string;
+  // Renders at a reduced size — for connective black text on beats that
+  // otherwise wrap too many lines on mobile, while colored keywords stay
+  // at full size.
+  small?: boolean;
 }
 
 export interface StoryBeat {
@@ -27,11 +31,11 @@ export const STORY_BEATS: StoryBeat[] = [
   },
   {
     parts: [
-      { text: "With " },
+      { text: "With ", small: true },
       { text: "RM1/day,", color: "#34C759" },
-      { text: " I get " },
+      { text: " I get ", small: true },
       { text: "passive income", color: "#34C759" },
-      { text: " just by tracking existing listings." },
+      { text: " just by tracking existing listings.", small: true },
     ],
   },
   {

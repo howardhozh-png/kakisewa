@@ -377,11 +377,11 @@ export function LandingHero() {
                     marginBottom: beat.sub ? 24 : 0,
                     ...delay(0.15, revealed[0]),
                   }}>
-                    {beat.parts.map((part, j) =>
-                      part.color
-                        ? <span key={j} style={{ color: part.color }}>{part.text}</span>
-                        : <span key={j}>{part.text}</span>
-                    )}
+                    {beat.parts.map((part, j) => (
+                      <span key={j} style={{ color: part.color, fontSize: part.small ? "0.55em" : undefined }}>
+                        {part.text}
+                      </span>
+                    ))}
                   </div>
                   {beat.sub && (
                     <p style={{
