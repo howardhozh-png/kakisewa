@@ -385,9 +385,10 @@ export function LandingHero() {
                   </div>
                   {beat.sub && (
                     <p style={{
-                      fontSize: 17,
+                      fontSize: 14,
+                      fontStyle: "italic",
                       lineHeight: 1.6,
-                      color: "#6E6E73",
+                      color: "#AEAEB2",
                       maxWidth: 480,
                       ...delay(0.3, revealed[0]),
                     }}>
