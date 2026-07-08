@@ -18,6 +18,14 @@ export interface StoryBeat {
 export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
+      { text: "RM1/day", color: "#34C759" },
+      { text: " to get back the ", small: true },
+      { text: "RM150,000", color: "#FF3B30" },
+      { text: " I lost last year.", small: true },
+    ],
+  },
+  {
+    parts: [
       { text: "I lost ", small: true },
       { text: "RM150,000", color: "#FF3B30" },
       { text: " last year. I didn't know.", small: true },
@@ -27,15 +35,6 @@ export const STORY_BEATS: StoryBeat[] = [
     parts: [
       { text: "I thought I could track all 50 units. ", small: true },
       { text: "I lost almost all of them.", color: "#FF3B30" },
-    ],
-  },
-  {
-    parts: [
-      { text: "With ", small: true },
-      { text: "RM1/day,", color: "#34C759" },
-      { text: " I get ", small: true },
-      { text: "passive income", color: "#34C759" },
-      { text: " just by tracking existing listings.", small: true },
     ],
   },
   {
