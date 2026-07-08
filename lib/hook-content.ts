@@ -19,16 +19,9 @@ export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
       { text: "RM1/day", color: "#34C759" },
-      { text: " to get back the ", small: true },
+      { text: " gets back the ", small: true },
       { text: "RM150,000", color: "#FF3B30" },
       { text: " I lost last year.", small: true },
-    ],
-  },
-  {
-    parts: [
-      { text: "I lost ", small: true },
-      { text: "RM150,000", color: "#FF3B30" },
-      { text: " last year. I didn't know.", small: true },
     ],
   },
   {
@@ -46,5 +39,12 @@ export const STORY_BEATS: StoryBeat[] = [
       { text: "income.", color: "#34C759" },
     ],
     sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
+  },
+  {
+    parts: [
+      { text: "One tool", color: "#34C759" },
+      { text: " keeps everything in one place, and reminds you before ", small: true },
+      { text: "every renewal.", color: "#34C759" },
+    ],
   },
 ];
