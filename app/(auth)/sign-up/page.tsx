@@ -24,7 +24,7 @@ const sharedInputStyle: React.CSSProperties = { fontSize: "var(--kk-body)", back
 const SIGNUP_SHAPES: FloatingCardData[] = [
   { label: "I lost RM150,000", sub: "last year. I didn't know.", accentColor: "#FF3B30", x: "-3%", y: "10%", rotate: -7, delay: 0 },
   { label: "I lost almost all of them", sub: "I thought I could track 50 units", accentColor: "#FF3B30", x: "68%", y: "6%", rotate: 5, delay: 0.3 },
-  { label: "Now I get passive income", sub: "just by messaging the owner while I travel", accentColor: "#0071E3", x: "5%", y: "62%", rotate: -4, delay: 0.6 },
+  { label: "Now I get passive income", sub: "just by tracking existing listings", accentColor: "#0071E3", x: "5%", y: "62%", rotate: -4, delay: 0.6 },
   { label: "Starting at RM1/day", sub: "2 months free trial", x: "70%", y: "55%", rotate: 5, delay: 0.15 },
   { label: "Referral credit ✓", sub: "1 month free per referral", x: "-3%", y: "38%", rotate: -5, delay: 0.5 },
   { label: "WhatsApp usernames are here", sub: "protect your renewals today", accentColor: "#FF9500", x: "66%", y: "32%", rotate: 3, delay: 0.8 },
