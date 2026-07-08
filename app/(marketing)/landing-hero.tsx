@@ -272,11 +272,11 @@ export function LandingHero() {
         .kk-land-faq-item.open .kk-land-faq-chev { transform: rotate(180deg); }
         @media (max-width: 640px) {
           .kk-land-feat-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-          .kk-land-browser-wrap { display: none !important; }
+          .kk-land-browser-wrap { width: 300px !important; transform: scale(0.85); transform-origin: top center; margin-bottom: -28px; }
           .kk-land-phone-frame { width: 150px !important; height: 300px !important; }
           .kk-land-phone-inner { transform: scale(1.25) !important; }
           .kk-land-sample-note { display: none !important; }
-          .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; }
+          .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; gap: 32px !important; }
           .kk-land-pdots { display: none !important; }
         }
       `}</style>
