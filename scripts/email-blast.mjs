@@ -220,6 +220,53 @@ function sendEmail(to, seq) {
   });
 }
 
+function resendGet(path) {
+  return new Promise((resolve, reject) => {
+    https.request({
+      hostname: "api.resend.com",
+      path,
+      method: "GET",
+      headers: { "Authorization": `Bearer ${RESEND_API_KEY}` },
+    }, res => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        try { resolve(JSON.parse(data)); } catch { reject(new Error("bad JSON from Resend: " + data.slice(0, 200))); }
+      });
+    }).on("error", reject).end();
+  });
+}
+
+// Recipients whose seq1 email (subject-matched) has an "opened" or "clicked"
+// event on Resend. Paginates back to 2026-07-02 — sends before that predate
+// tracking (plain-text era + pre-tracking era), so there's nothing to find further back.
+async function fetchOpenedSeq1Emails() {
+  const opened = new Set();
+  let after = null;
+  let oldestSeen = null;
+  for (let i = 0; i < 80; i++) {
+    const path = "/emails" + (after ? `?after=${after}&limit=100` : "?limit=100");
+    let r;
+    for (let retry = 0; retry < 5; retry++) {
+      r = await resendGet(path);
+      if (r.statusCode === 429) { await sleep(1500); continue; }
+      break;
+    }
+    if (!r.data || r.data.length === 0) break;
+    for (const item of r.data) {
+      oldestSeen = item.created_at;
+      if (item.subject === SEQUENCES.seq1.subject && (item.last_event === "opened" || item.last_event === "clicked")) {
+        for (const to of item.to) opened.add(to.toLowerCase());
+      }
+    }
+    if (oldestSeen < "2026-07-02") break;
+    if (!r.has_more) break;
+    after = r.data[r.data.length - 1].id;
+    await sleep(700); // stay under Resend's 2 req/s
+  }
+  return opened;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 function acquireLock() {
@@ -265,10 +312,11 @@ async function run() {
   const sent = loadSent();
   const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
+  const openedSeq1 = await fetchOpenedSeq1Emails();
 
   // Build candidate list — skip suppressed/deferred, tag with domain tier
   const candidates = [];
-  let skippedBounce = 0, skippedDeferred = 0;
+  let skippedBounce = 0, skippedDeferred = 0, skippedNotOpened = 0;
   for (const c of withEmail) {
     const e = c.email;
     const reason = skipReason(e, suppressed);
@@ -277,8 +325,12 @@ async function run() {
 
     let seq = null;
     if (!sent.seq1[e]) seq = "seq1";
-    else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) seq = "seq2";
-    else if (sent.seq2[e] && !sent.seq3[e] && daysDiff(sent.seq2[e]) >= SEQ3_AFTER_DAYS) seq = "seq3";
+    else if (!sent.seq2[e] && daysDiff(sent.seq1[e]) >= SEQ2_AFTER_DAYS) {
+      // seq2 only goes to people who actually opened seq1 — no date-only fallback.
+      if (openedSeq1.has(e.toLowerCase())) seq = "seq2";
+      else skippedNotOpened++;
+    }
+    // seq3 disabled per Howard — leave SEQUENCES.seq3 defined for later re-enable.
     if (seq) candidates.push({ email: e, seq, tier: domainTier(e) });
   }
 
@@ -295,7 +347,8 @@ async function run() {
 
   log(`=== Daily run ${today} ===`);
   log(`Contacts with email: ${withEmail.length}`);
-  log(`Skipped bounced/blocked: ${skippedBounce} | Deferred (Yahoo/Hotmail): ${skippedDeferred}`);
+  log(`Skipped bounced/blocked: ${skippedBounce} | Deferred (Yahoo/Hotmail): ${skippedDeferred} | Held for no seq1 open: ${skippedNotOpened}`);
+  log(`Seq1 opens tracked so far: ${openedSeq1.size}`);
   log(`Seq1 sent all-time: ${Object.keys(sent.seq1).length}`);
   log(`Seq2 sent all-time: ${Object.keys(sent.seq2).length}`);
   log(`Seq3 sent all-time: ${Object.keys(sent.seq3).length}`);
