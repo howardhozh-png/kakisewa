@@ -7,9 +7,18 @@ function ensureVapid() {
   const mailto = process.env.VAPID_MAILTO;
   const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const priv = process.env.VAPID_PRIVATE_KEY;
-  if (!mailto || !pub || !priv) return;
+  if (!mailto || !pub || !priv) {
+    console.error("[push] VAPID env vars missing — every send will fail silently until this is set. mailto:", !!mailto, "pub:", !!pub, "priv:", !!priv);
+    return;
+  }
   webpush.setVapidDetails(mailto, pub, priv);
   vapidInitialised = true;
+}
+
+// Push endpoints are long, token-bearing URLs — log only the host so we can tell
+// which relay (Apple/Google/Mozilla) failed without leaking the token into logs.
+function endpointHost(endpoint: string): string {
+  try { return new URL(endpoint).host; } catch { return "unknown-host"; }
 }
 
 export interface PushPayload {
@@ -67,6 +76,10 @@ export async function sendPushToUser(
         sent++;
       } catch (err: unknown) {
         const statusCode = (err as { statusCode?: number }).statusCode;
+        const body = (err as { body?: string }).body;
+        console.error(
+          `[push] send failed — host: ${endpointHost(sub.endpoint)}, status: ${statusCode ?? "n/a"}, tag: ${payload.tag ?? "n/a"}, body: ${body ?? (err as Error)?.message ?? "n/a"}`
+        );
         if (statusCode === 410 || statusCode === 404) {
           // Subscription expired — remove it
           await supabase.from("push_subscriptions").delete().eq("id", sub.id);

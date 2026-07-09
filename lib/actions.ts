@@ -442,8 +442,7 @@ async function maybeFireExpiryNotification(
   else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
   else { bucket = "60d"; label = "2 months"; }
 
-  // Separate keys per channel so push cron logging doesn't block email (and vice versa)
-  const pushKey = `exp_${tenancyId}_${bucket}`;
+  // Email uses its own key so push logging (now shared with the cron sweep) cannot block it
   const emailKey = `email_exp_${tenancyId}_${bucket}`;
   const { createServiceClient } = await import("@/lib/supabase/service");
   const supabase = createServiceClient();
@@ -460,33 +459,15 @@ async function maybeFireExpiryNotification(
     .eq("id", tenancy.user_id)
     .maybeSingle();
 
-  // Push — check its own key (shared with push cron which uses the same exp_ format)
+  // Push — shared with the daily cron sweep (app/api/cron/push-notifications) so the
+  // bucket/dedup/send logic only exists in one place.
   if (prefs?.notif_push !== false) {
-    const { data: pushLogged } = await supabase
-      .from("push_sent_log")
-      .select("id")
-      .eq("user_id", tenancy.user_id)
-      .eq("notification_key", pushKey)
-      .maybeSingle();
-
-    if (!pushLogged) {
-      const { count } = await supabase
-        .from("push_subscriptions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", tenancy.user_id);
-      if (count && count > 0) {
-        const { sendPushToUser } = await import("@/lib/push");
-        const result = await sendPushToUser(tenancy.user_id, {
-          title: `Contract expiring in ${label}`,
-          body: `${propLabel} · ${tenancy.tenant_name} — send renewal message now`,
-          url: deepLink,
-          tag: pushKey,
-        });
-        if (result.sent > 0) {
-          await supabase.from("push_sent_log").insert({ user_id: tenancy.user_id, notification_key: pushKey });
-        }
-      }
-    }
+    const { notifyTenancyExpiryPush } = await import("@/lib/tenancy-expiry-push");
+    await notifyTenancyExpiryPush(
+      supabase,
+      { id: tenancyId, user_id: tenancy.user_id, tenant_name: tenancy.tenant_name ?? null, contract_end: tenancy.contract_end },
+      propLabel
+    );
   }
 
   // Email — uses its own key so push cron cannot block it

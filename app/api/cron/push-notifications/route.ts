@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendPushToUser } from "@/lib/push";
+import { notifyTenancyExpiryPush } from "@/lib/tenancy-expiry-push";
 
 export const dynamic = "force-dynamic";
 
@@ -45,61 +46,21 @@ export async function GET(req: NextRequest) {
   const unitByExpLeadId = Object.fromEntries((expiringOlUnits ?? []).map((ol: { id: string; unit: string | null; property_name: string | null }) => [ol.id, ol]));
 
   for (const row of expiring ?? []) {
-    const daysLeft = Math.ceil(
-      (new Date(row.contract_end).getTime() - today.getTime()) / 86400000
-    );
-
-    let bucket: string;
-    let label: string;
-
-    // Send once per milestone bucket — key is stable within each bucket window
-    if (daysLeft <= 7) { bucket = "7d"; label = "7 days"; }
-    else if (daysLeft <= 30) { bucket = "30d"; label = "1 month"; }
-    else { bucket = "60d"; label = "2 months"; }
-
-    const notifKey = `exp_${row.id}_${bucket}`;
-
-    // Skip if already sent this milestone for this user
-    const { data: existing } = await supabase
-      .from("push_sent_log")
-      .select("id")
-      .eq("user_id", row.user_id)
-      .eq("notification_key", notifKey)
-      .maybeSingle();
-
-    if (existing) { skipped++; continue; }
     if (pushOptedOut.has(row.user_id)) { skipped++; continue; }
     // Tenant already gave a clear answer — no point reminding
     if (row.replied_tenant === "yes" || row.replied_tenant === "no") { skipped++; continue; }
-
-    // Check user has push subscriptions before sending
-    const { count } = await supabase
-      .from("push_subscriptions")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", row.user_id);
-
-    if (!count || count === 0) { skipped++; continue; }
 
     const expLead = row.owner_lead_id ? unitByExpLeadId[row.owner_lead_id] : null;
     const unit = expLead?.unit ?? null;
     const propParts = [expLead?.property_name, unit ? `Unit ${unit}` : null].filter(Boolean);
     const propLabel = propParts.length ? propParts.join(" · ") : "your property";
-    const result = await sendPushToUser(row.user_id, {
-      title: `Contract expiring in ${label}`,
-      body: `${propLabel} · ${row.tenant_name} — send renewal message now`,
-      url: `/existing-listing?highlight=${row.id}`,
-      tag: notifKey,
-    });
 
-    if (result.sent > 0) {
-      await supabase.from("push_sent_log").insert({
-        user_id: row.user_id,
-        notification_key: notifKey,
-      });
-      sent += result.sent;
-    } else {
-      errors++;
-    }
+    // Shared with the real-time trigger (updateTenancyContract in lib/actions.ts) so
+    // the bucket/dedup/send logic only exists in one place.
+    const outcome = await notifyTenancyExpiryPush(supabase, row, propLabel);
+    if (outcome === "sent") sent++;
+    else if (outcome === "send_failed") errors++;
+    else skipped++;
   }
 
   // ── Tenant not renewing — one-time push per tenancy ───────────────────────
