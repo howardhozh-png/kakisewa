@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { GripVertical, Banknote, ArrowRight, CheckCircle, Check } from "lucide-react";
+import { GripVertical, Banknote, ArrowRight, CheckCircle, Check, FileText } from "lucide-react";
 
 // ─── Excel panel data ──────────────────────────────────────────────────────────
 
@@ -385,7 +385,12 @@ function KakiSewaPanel() {
                             }}>{card.badge}</span>
                           </div>
                           <p style={{ fontSize: 8, color: "#1D1D1F", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.prop}</p>
-                          <p style={{ fontSize: 7.5, color: "#6E6E73" }}>{card.sub}</p>
+                          <p style={{ fontSize: 7.5, color: "#6E6E73", display: "flex", alignItems: "center", gap: 3 }}>
+                            {card.sub}
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 1.5, color: "#86868B" }}>
+                              · <FileText style={{ width: 8, height: 8 }} /> 3
+                            </span>
+                          </p>
                         </div>
                       </div>
                       {/* Action button per stage */}

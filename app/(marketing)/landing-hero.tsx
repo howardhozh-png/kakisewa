@@ -6,8 +6,8 @@ import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
 import { STORY_BEATS } from "@/lib/hook-content";
 import { Faq } from "./faq";
-import { PainCards } from "./pain-cards";
-import { SolutionCards } from "./solution-cards";
+import { ComparisonSlider } from "./comparison-slider";
+import { MessageCircle, Check as CheckIcon } from "lucide-react";
 
 /* ── PixelTrail ──────────────────────────────────────────────────────────────
    Builds a grid of divs over a chapter and lights cells on mousemove.
@@ -280,6 +280,7 @@ export function LandingHero() {
           .kk-land-sample-note { display: none !important; }
           .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; gap: 32px !important; }
           .kk-land-pdots { display: none !important; }
+          .kk-land-wa-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
           /* This chapter's content (feature cards + both mockups) got taller than
              100svh once the desktop mockup was added to mobile — the other
              chapters (hero carousel, money calc, CTA) stay fixed-height since
@@ -489,21 +490,14 @@ export function LandingHero() {
         )}
       </section>
 
-      {/* ── AS-IS — what your week actually looks like right now ──────────────── */}
-      <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "80px 40px 88px" }}>
-        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-          <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 16 }}>
-            Sound familiar?
-          </span>
-          <h2 style={{
-            fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
-            marginBottom: 48, maxWidth: 620, lineHeight: 1.2,
-          }}>
-            This is what most weeks actually look like.
-          </h2>
-          <PainCards />
-        </div>
+      {/* ── BRIDGE — short, assumes some visitors already read the email ──────── */}
+      <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "48px 40px" }}>
+        <p style={{
+          textAlign: "center", maxWidth: 620, margin: "0 auto",
+          fontSize: "clamp(1rem, 1.6vw, 1.15rem)", color: "#6E6E73", lineHeight: 1.5,
+        }}>
+          If you already know the feeling, here is exactly what changes.
+        </p>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -611,20 +605,55 @@ export function LandingHero() {
         </div>
       </section>
 
-      {/* ── TO-BE — how kakisewa replaces each of those moments ───────────────── */}
-      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "80px 40px 88px" }}>
-        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-          <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 16 }}>
-            Here is what changes
-          </span>
-          <h2 style={{
-            fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
-            marginBottom: 48, maxWidth: 640, lineHeight: 1.2,
+      {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
+      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "80px 40px 56px" }}>
+        <ComparisonSlider />
+      </section>
+
+      {/* ── WHATSAPP CALLOUT — the third feature, kept as its own short beat ──── */}
+      <section style={{ background: "#FBFBFD", padding: "0 40px 88px" }}>
+        <div style={{
+          maxWidth: 720, margin: "0 auto",
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center",
+        }}
+        className="kk-land-wa-grid"
+        >
+          <div>
+            <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
+              On your own schedule
+            </span>
+            <h3 style={{
+              fontFamily: "'DM Serif Display', Georgia, serif",
+              fontSize: "clamp(1.5rem, 2.6vw, 1.9rem)", letterSpacing: "-0.02em", color: "#1D1D1F",
+              marginBottom: 12, lineHeight: 1.2,
+            }}>
+              Send WhatsApp outreach whenever you are free.
+            </h3>
+            <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
+              Branded templates, ready whenever you open the app. No pressure to reply instantly, no one waiting on you.
+            </p>
+          </div>
+          <div style={{
+            background: "#E5DDD5", borderRadius: 18, padding: 20,
+            boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
           }}>
-            Same job. None of the manual chasing.
-          </h2>
-          <SolutionCards />
+            <div style={{
+              background: "#DCF8C6", borderRadius: "12px 12px 2px 12px",
+              padding: "10px 12px", marginLeft: "18%",
+            }}>
+              <p style={{ fontSize: 12.5, color: "#1D1D1F", lineHeight: 1.5 }}>
+                Hi Puan Rozita, your tenancy at Cheras Hartamas renews in 60 days. Let me know if you would like to continue or if I should start finding a new tenant.
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 3, marginTop: 4 }}>
+                <span style={{ fontSize: 10, color: "#667781" }}>1:42 PM</span>
+                <CheckIcon style={{ width: 12, height: 12, color: "#53BDEB" }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, opacity: 0.6 }}>
+              <MessageCircle style={{ width: 13, height: 13, color: "#075E54" }} />
+              <span style={{ fontSize: 10.5, color: "#075E54", fontWeight: 600 }}>Sent from renewal template</span>
+            </div>
+          </div>
         </div>
       </section>
 
