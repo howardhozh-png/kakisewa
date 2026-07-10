@@ -23,7 +23,7 @@ const EMPTY_MANUAL: ManualForm = { property_name: "", unit: "", owner_name: "", 
 
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 flex items-end sm:items-center justify-center" style={{ zIndex: 10001 }}>
       <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
       <div className="relative z-10 w-full sm:max-w-sm">
         {children}

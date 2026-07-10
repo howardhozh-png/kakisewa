@@ -1219,7 +1219,7 @@ export function OnboardingDemoDialog({ autoOpen = true }: { autoOpen?: boolean }
     return (
       <div
         className="fixed inset-0 flex items-center justify-center z-50 p-4"
-        style={{ background: "rgba(0,0,0,0.50)", backdropFilter: "blur(6px)" }}
+        style={{ background: "rgba(0,0,0,0.50)", backdropFilter: "blur(6px)", zIndex: 10000 }}
         onClick={close}
       >
         <div
@@ -1304,7 +1304,7 @@ export function OnboardingDemoDialog({ autoOpen = true }: { autoOpen?: boolean }
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50 p-4"
-      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", zIndex: 10000 }}
       onClick={close}
     >
       <div

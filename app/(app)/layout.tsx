@@ -116,6 +116,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <ProfileProvider profile={agent}>
           <main className="flex-1">{children}</main>
+          {!isAdmin && !isBetaFrozen && !isTrialExpired && !isCancelled && (
+            <OnboardingGate
+              contractsComplete={(lifecycleTenancyCount ?? 0) > 0}
+              leadsComplete={(ownerLeadCount ?? 0) > 0}
+            />
+          )}
         </ProfileProvider>
       </div>
 
@@ -132,12 +138,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {isBetaFrozen && <BetaFrozenGate />}
       {isTrialExpired && <TrialGate />}
       {isCancelled && <CancelledGate />}
-      {!isAdmin && !isBetaFrozen && !isTrialExpired && !isCancelled && (
-        <OnboardingGate
-          contractsComplete={(lifecycleTenancyCount ?? 0) > 0}
-          leadsComplete={(ownerLeadCount ?? 0) > 0}
-        />
-      )}
       <FeedbackButton />
       <FaqChatbot />
       <SessionGuard />
