@@ -6,6 +6,8 @@ import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
 import { STORY_BEATS } from "@/lib/hook-content";
 import { Faq } from "./faq";
+import { PainCards } from "./pain-cards";
+import { SolutionCards } from "./solution-cards";
 
 /* ── PixelTrail ──────────────────────────────────────────────────────────────
    Builds a grid of divs over a chapter and lights cells on mousemove.
@@ -487,6 +489,23 @@ export function LandingHero() {
         )}
       </section>
 
+      {/* ── AS-IS — what your week actually looks like right now ──────────────── */}
+      <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "80px 40px 88px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+          <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 16 }}>
+            Sound familiar?
+          </span>
+          <h2 style={{
+            fontFamily: "'DM Serif Display', Georgia, serif",
+            fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
+            marginBottom: 48, maxWidth: 620, lineHeight: 1.2,
+          }}>
+            This is what most weeks actually look like.
+          </h2>
+          <PainCards />
+        </div>
+      </section>
+
       {/* ══════════════════════════════════════════════════════════════════════
           CH1 — THE MATH
       ══════════════════════════════════════════════════════════════════════ */}
@@ -589,6 +608,23 @@ export function LandingHero() {
           <p style={{ fontSize: 14, color: "#D1D1D6", marginTop: 0, ...delay(0.54, revealed[1]) }}>
             50% untracked renewals &middot; RM 3,000 average commission &middot; drag to see your number
           </p>
+        </div>
+      </section>
+
+      {/* ── TO-BE — how kakisewa replaces each of those moments ───────────────── */}
+      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "80px 40px 88px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+          <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 16 }}>
+            Here is what changes
+          </span>
+          <h2 style={{
+            fontFamily: "'DM Serif Display', Georgia, serif",
+            fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
+            marginBottom: 48, maxWidth: 640, lineHeight: 1.2,
+          }}>
+            Same job. None of the manual chasing.
+          </h2>
+          <SolutionCards />
         </div>
       </section>
 
