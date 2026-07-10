@@ -18,20 +18,6 @@ export interface StoryBeat {
 export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
-      { text: "RM1/day", color: "#34C759" },
-      { text: " gets back the ", small: true },
-      { text: "RM150,000", color: "#FF3B30" },
-      { text: " I lost last year.", small: true },
-    ],
-  },
-  {
-    parts: [
-      { text: "I thought I could track all 50 units. ", small: true },
-      { text: "I lost almost all of them.", color: "#FF3B30" },
-    ],
-  },
-  {
-    parts: [
       { text: "WhatsApp just added usernames.", small: true },
       { text: " Your ", small: true },
       { text: "existing listings", color: "#34C759" },
@@ -39,5 +25,21 @@ export const STORY_BEATS: StoryBeat[] = [
       { text: "income.", color: "#34C759" },
     ],
     sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
+  },
+  {
+    parts: [
+      { text: "The average agent loses ", small: true },
+      { text: "70%", color: "#FF3B30" },
+      { text: " of their existing listings.", small: true },
+    ],
+  },
+  {
+    parts: [
+      { text: "RM1/day", color: "#34C759" },
+      { text: " gets back the ", small: true },
+      { text: "RM150,000", color: "#FF3B30" },
+      { text: " a year at stake.", small: true },
+    ],
+    sub: "RM3,000 average commission x 50 listings a year.",
   },
 ];

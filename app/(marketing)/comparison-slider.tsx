@@ -333,7 +333,10 @@ function KakiSewaPanel() {
                     </span>
                     <span style={{ fontSize: 8.5, color: "#86868B", fontWeight: 600 }}>{col.cards.length}</span>
                   </div>
-                  <p style={{ fontSize: 7.5, color: "#86868B", marginTop: 2, lineHeight: 1.4 }}>{col.subtitle}</p>
+                  <p style={{
+                    fontSize: 7.5, color: "#86868B", marginTop: 2, lineHeight: 1.4,
+                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                  }}>{col.subtitle}</p>
                 </div>
                 {/* Cards */}
                 <div style={{ padding: "4px 7px 7px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
