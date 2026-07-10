@@ -325,7 +325,7 @@ export function LandingHero() {
           <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 500, color: "#6E6E73", background: "transparent", padding: "7px 15px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "sign_in", location: "header" })}>
             Sign in
           </Link>
-          <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 600, color: "#fff", background: "#1D1D1F", padding: "8px 18px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "start_trial", location: "header" })}>
+          <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 600, color: "#fff", background: "var(--kk-green)", padding: "8px 18px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "start_trial", location: "header" })}>
             Start free trial
           </Link>
         </div>
