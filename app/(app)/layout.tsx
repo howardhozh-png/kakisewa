@@ -17,10 +17,9 @@ import { SessionGuard } from "@/components/session-guard";
 import { FaqChatbot } from "@/components/faq-chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak, countOwnerLeads, countLifecycleTenancies, countTenantProfiles, countPropertySupports, countCalendarEvents, countPushSubscriptions } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countPushSubscriptions } from "@/lib/db";
 import { getTotalCardCount } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
-import { OnboardingNudge } from "@/components/onboarding-nudge";
 import { PushNudge } from "@/components/push-nudge";
 import { ProfileSetupDialog } from "@/components/profile-setup-dialog";
 import { ProfileProvider } from "@/components/profile-context";
@@ -32,15 +31,7 @@ import { Suspense } from "react";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
   if (agent.id === 0) redirect("/login");
-  const trialStart = agent.trial_started_at ? new Date(agent.trial_started_at) : undefined;
-  const [leadCount, contractCount, calendarEventCount, tenantCount, supportCount, pushSubCount] = await Promise.all([
-    countOwnerLeads().catch(() => null),
-    countLifecycleTenancies().catch(() => null),
-    countCalendarEvents().catch(() => null),
-    countTenantProfiles().catch(() => null),
-    countPropertySupports().catch(() => null),
-    countPushSubscriptions().catch(() => null),
-  ]);
+  const pushSubCount = await countPushSubscriptions().catch(() => null);
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
   const checkedInToday = agent.last_login_date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
@@ -71,9 +62,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // escalates to a red/urgent style once 15 days or fewer remain
   const showCardNudge = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft > 7 && trialDaysLeft <= 30 && !agent.stripe_subscription_id;
   const cardNudgeUrgent = trialDaysLeft !== null && trialDaysLeft <= 15;
-  const trialStartedAt = trialStart ?? null;
-  const daysSinceSignup = trialStartedAt ? Math.floor((now.getTime() - trialStartedAt.getTime()) / 86400000) : 0;
-  const isNewAgent = status === "beta" || status === "trial" || daysSinceSignup <= 14;
 
   const plan = agent.subscription_plan ?? null;
 
@@ -120,16 +108,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <ReferralTopBanner referralSlug={agent.referral_slug} />
         )}
         <PushTopBanner hasPushEnabled={(pushSubCount ?? 0) > 0} />
-
-        <OnboardingNudge
-          isNewAgent={isNewAgent}
-          hasLeads={(leadCount ?? 0) > 0}
-          hasContracts={(contractCount ?? 0) > 0}
-          hasCalendarEvent={(calendarEventCount ?? 0) > 0}
-          hasTenants={(tenantCount ?? 0) > 0}
-          hasSupports={(supportCount ?? 0) > 0}
-          hasPushEnabled={(pushSubCount ?? 0) > 0}
-        />
 
         <ProfileProvider profile={agent}>
           <main className="flex-1">{children}</main>

@@ -622,7 +622,7 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
             <>
               <div className="px-6 pb-0 pt-1 space-y-5">
                 <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>
-                  CSV, Excel or Google Sheets export. Contract end date is the only required column — start date is auto-calculated from end date if not provided.
+                  Start small — just your current active tenancies. Even a handful of clean rows is fine, you can always add more later. Contract end date is the only required column.
                 </p>
 
                 <button

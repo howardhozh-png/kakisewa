@@ -147,18 +147,11 @@ export default async function TrackRenewalPage({ searchParams }: Props) {
                 <div style={{ width:64, height:64, borderRadius:18, background:"var(--kk-green-soft)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 18px" }}>
                   <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="#1F8B4C" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </div>
-                <p style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.03em", color:"var(--kk-ink)", marginBottom:10, fontFamily:"'DM Serif Display',serif" }}>Track all your managed units</p>
-                <p style={{ fontSize:14, color:"var(--kk-ink-mute)", lineHeight:1.6, marginBottom:24 }}>Add your existing tenants and kakisewa tracks rent, contract dates, and alerts you 60 days before anything expires.</p>
+                <p style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.03em", color:"var(--kk-ink)", marginBottom:10, fontFamily:"'DM Serif Display',serif" }}>Add your first listing</p>
+                <p style={{ fontSize:14, color:"var(--kk-ink-mute)", lineHeight:1.6, marginBottom:24 }}>Start small — just your current active tenancies is enough. kakisewa tracks rent, contract dates, and alerts you 60 days before anything expires.</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:10, alignItems:"center" }}>
-                  <AddTenancyDialog ownerLeads={ownerLeads} />
                   <UploadTenancyCsvDialog />
-                </div>
-                <div style={{ marginTop:18, padding:"14px 16px", background:"var(--kk-amber-soft)", borderRadius:12, textAlign:"left", display:"flex", gap:10, alignItems:"flex-start" }}>
-                  <span style={{ fontSize:18, lineHeight:"1", flexShrink:0 }}>⏰</span>
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--kk-amber-ink)", marginBottom:3 }}>10 minutes now, 100 listings tracked in 10 days</div>
-                    <div style={{ fontSize:12, color:"var(--kk-amber-ink)", opacity:0.85, lineHeight:1.5 }}>Invest 10 minutes to add 10 of your existing tenancies. Do it for 10 days and you'll have 100 listings tracked — and you'll never miss a renewal ever again.</div>
-                  </div>
+                  <AddTenancyDialog ownerLeads={ownerLeads} triggerLabel="I don't have a list" />
                 </div>
               </div>
             </div>

@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { CheckCircle2, Circle } from "lucide-react";
 import { getAgentProfile, getHomeDashboardStats, getExpandedDashboardStats, getCalendarEventsForMonth, getPerformanceSummary, getUpcomingViewings } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/db";
-import { getMissingWhatsAppFields } from "@/lib/profile-gate";
 import { StatsSection } from "./stats-section";
 import { getTotalCardCount, TOTAL_CARD_CAP, effectivePlan } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
@@ -15,53 +13,7 @@ export const dynamic = "force-dynamic";
 type Stats = Awaited<ReturnType<typeof getHomeDashboardStats>>;
 type ExpandedStats = Awaited<ReturnType<typeof getExpandedDashboardStats>>;
 
-// ─── Checklist item ───────────────────────────────────────────────────────────
-
-function ChecklistItem({
-  done,
-  title,
-  why,
-  href,
-  cta,
-}: {
-  done: boolean;
-  title: string;
-  why: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <div className="flex items-start gap-3 py-4" style={{ borderTop: "1px solid var(--kk-line)" }}>
-      {done ? (
-        <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "var(--kk-green)" }} />
-      ) : (
-        <Circle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "var(--kk-ink-faint)" }} />
-      )}
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-[14px] font-semibold leading-snug"
-          style={{ color: done ? "var(--kk-ink-faint)" : "var(--kk-ink)", textDecoration: done ? "line-through" : "none" }}
-        >
-          {title}
-        </p>
-        <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-          {why}
-        </p>
-      </div>
-      {!done && (
-        <Link
-          href={href}
-          className="kk-pill kk-pill-ghost shrink-0 text-[12px]"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {cta}
-        </Link>
-      )}
-    </div>
-  );
-}
-
-// ─── Demo preview cards ───────────────────────────────────────────────────────
+// ─── Demo preview card ────────────────────────────────────────────────────────
 
 function DemoPreview() {
   return (
@@ -73,22 +25,6 @@ function DemoPreview() {
         Here's what you're setting up
       </p>
       <div style={{ opacity: 0.4, pointerEvents: "none", userSelect: "none" }}>
-        {/* Sample lead */}
-        <div className="kk-card p-4 mb-3 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>
-              Ahmad Hassan
-            </p>
-            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>
-              Agile Mont Kiara · A-12-05 · RM 3,200/mo
-            </p>
-          </div>
-          <span className="kk-status kk-status-pending shrink-0" style={{ whiteSpace: "nowrap" }}>
-            Not contacted
-          </span>
-        </div>
-
-        {/* Sample contract */}
         <div className="kk-card p-4 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>
@@ -112,29 +48,19 @@ function DemoPreview() {
   );
 }
 
-// ─── Setup state (checklist + demo) ──────────────────────────────────────────
+// ─── Setup state (single gate + demo) ────────────────────────────────────────
 
 function SetupState({
   firstName,
-  leadsComplete,
-  contractsComplete,
-  profileComplete,
-  doneCount,
   cardCount,
   cardCap,
   planName,
 }: {
   firstName: string | null;
-  leadsComplete: boolean;
-  contractsComplete: boolean;
-  profileComplete: boolean;
-  doneCount: number;
   cardCount: number;
   cardCap: number;
   planName: string;
 }) {
-  const progressPct = Math.round((doneCount / 3) * 100);
-
   return (
     <>
       <div className="mb-4">
@@ -142,51 +68,19 @@ function SetupState({
       </div>
 
       <div className="kk-card p-5 mb-2">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>
-            {firstName ? `Hi ${firstName} — get set up in 10 minutes` : "Get set up in 10 minutes"}
-          </p>
-          <p className="text-[12px] font-semibold shrink-0 ml-3" style={{ color: "var(--kk-ink-faint)" }}>
-            {doneCount} of 3
-          </p>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{ height: 4, background: "var(--kk-line)", borderRadius: 2, marginBottom: 4 }}>
-          <div
-            style={{
-              height: "100%",
-              width: `${progressPct}%`,
-              background: doneCount === 3 ? "var(--kk-green)" : "var(--kk-amber)",
-              borderRadius: 2,
-              transition: "width 0.4s ease",
-            }}
-          />
-        </div>
-
-        {/* Items */}
-        <ChecklistItem
-          done={leadsComplete}
-          title="Upload your leads"
-          why="Never lose a number again. You'll see exactly who you haven't contacted yet."
-          href="/property-leads"
-          cta="Start →"
-        />
-        <ChecklistItem
-          done={contractsComplete}
-          title="Upload your existing contracts"
-          why="We track when each one expires and alert you 60 days before. Every renewal is half a month's rent."
+        <p className="text-[15px] font-semibold mb-2" style={{ color: "var(--kk-ink)" }}>
+          {firstName ? `Hi ${firstName} — add your first listing` : "Add your first listing"}
+        </p>
+        <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--kk-ink-mute)" }}>
+          We track when each one expires and alert you 60 days before. Every renewal is half a month's rent.
+        </p>
+        <Link
           href="/existing-listing"
-          cta="Start →"
-        />
-        <ChecklistItem
-          done={profileComplete}
-          title="Complete your profile"
-          why="Your name and agency appear in every message you send to owners and tenants."
-          href="/settings/account"
-          cta="2 min →"
-        />
+          className="kk-pill kk-pill-primary text-[13px]"
+          style={{ display: "inline-flex" }}
+        >
+          Add your first listing →
+        </Link>
       </div>
 
       <DemoPreview />
@@ -317,13 +211,9 @@ export default async function HomePage() {
   ]);
   const monthEvents = spansNextMonth ? [...monthEventsBase, ...nextMonthEvents] : monthEventsBase;
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
-  const missingProfileFields = getMissingWhatsAppFields(agent);
 
-  const leadsComplete = stats.totalOwners > 0;
   const contractsComplete = stats.activeContracts > 0;
-  const profileComplete = missingProfileFields.length === 0;
-  const doneCount = [leadsComplete, contractsComplete, profileComplete].filter(Boolean).length;
-  const isSetupComplete = leadsComplete && contractsComplete && profileComplete;
+  const isSetupComplete = contractsComplete;
 
   // Card usage — always fetch for donut display in both setup and active states
   let cardCount = 0;
@@ -358,10 +248,6 @@ export default async function HomePage() {
       ) : (
         <SetupState
           firstName={firstName}
-          leadsComplete={leadsComplete}
-          contractsComplete={contractsComplete}
-          profileComplete={profileComplete}
-          doneCount={doneCount}
           cardCount={cardCount}
           cardCap={cardCap}
           planName={planLabel}

@@ -45,7 +45,7 @@ function TextInput({ value, onChange, onBlur, placeholder, type = "text" }: { va
   );
 }
 
-export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
+export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: OwnerLead[]; triggerLabel?: string }) {
   const ph = usePostHog();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -229,7 +229,7 @@ export function AddTenancyDialog({ ownerLeads }: { ownerLeads: OwnerLead[] }) {
         <DialogTrigger
           render={
             <button id="tour-add-tenancy" className="kk-pill kk-pill-white" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
-              Add tenancy
+              {triggerLabel ?? "Add tenancy"}
             </button>
           }
         />
