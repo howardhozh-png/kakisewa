@@ -26,15 +26,25 @@ interface AgentRow {
   profile_verbatim: ProfileVerbatimItem[] | null;
 }
 
-async function getPublicAgentByRen(ren: string): Promise<AgentRow | null> {
+async function getPublicAgentByRen(id: string, ren: string): Promise<AgentRow | null> {
   const supabase = createServiceClient();
-  const decoded = decodeURIComponent(ren);
+  const decodedRen = decodeURIComponent(ren);
   const { data } = await supabase
     .from("agent_profiles")
     .select("id, name, agency, photo_url, ren_number, phone, subscription_plan, subscription_status, profile_strengths, profile_verbatim")
-    .ilike("ren_number", decoded)
-    .maybeSingle();
-  return data as AgentRow | null;
+    .ilike("ren_number", decodedRen);
+
+  if (!data || data.length === 0) return null;
+  if (data.length === 1) return data[0] as AgentRow;
+
+  // Two agents share this REN (shouldn't normally happen — REN numbers are
+  // supposed to be unique — but nothing in signup enforces that). Rather than
+  // 404 or arbitrarily pick one, use the last-name slug from the URL to tell
+  // them apart; it's the same value the settings page put there.
+  const decodedId = decodeURIComponent(id).toLowerCase();
+  const rows = data as AgentRow[];
+  const match = rows.find((a) => a.name?.trim().split(/\s+/).pop()?.toLowerCase() === decodedId);
+  return match ?? rows[0];
 }
 
 async function getAgentStats(userId: string) {
@@ -58,8 +68,8 @@ function statRange(n: number): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { ren } = await params;
-  const agent = await getPublicAgentByRen(ren);
+  const { id, ren } = await params;
+  const agent = await getPublicAgentByRen(id, ren);
   if (!agent) return { title: "Agent not found" };
   const name = agent.name ?? "kakisewa Agent";
   const agency = agent.agency ?? "";
@@ -127,9 +137,9 @@ function seededShuffle(arr: string[], seed: string): string[] {
 const STRENGTH_POOL = ["Responsive","Handles tenants well","End-to-end service","Clear communicator","Renewal specialist","Quick to act","Trusted by owners","Strong negotiator"];
 
 export default async function AgentProfilePage({ params, searchParams }: Props) {
-  const [{ ren }, { preview }] = await Promise.all([params, searchParams]);
+  const [{ id, ren }, { preview }] = await Promise.all([params, searchParams]);
   const isPreview = preview === "1";
-  const agent = await getPublicAgentByRen(ren);
+  const agent = await getPublicAgentByRen(id, ren);
 
   if (!agent) notFound();
 

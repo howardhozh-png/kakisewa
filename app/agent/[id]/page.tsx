@@ -88,10 +88,10 @@ export default async function AgentProfilePage({ params }: Props) {
 
   if (!agent) notFound();
 
-  // Redirect to the prettier firstName/renNumber URL if possible
+  // Redirect to the prettier lastName/renNumber URL if possible
   if (agent.ren_number) {
-    const firstName = agent.name?.trim().split(/\s+/)[0].toLowerCase() || "agent";
-    redirect(`/agent/${encodeURIComponent(firstName)}/${encodeURIComponent(agent.ren_number)}`);
+    const lastName = agent.name?.trim().split(/\s+/).pop()?.toLowerCase() || "agent";
+    redirect(`/agent/${encodeURIComponent(lastName)}/${encodeURIComponent(agent.ren_number)}`);
   }
 
   const isActive = agent.subscription_status === "active" || agent.subscription_status === "trial";

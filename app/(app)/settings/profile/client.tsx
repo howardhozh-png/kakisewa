@@ -146,9 +146,12 @@ export function ProfileSettingsClient({
 
   const waUrl = agentPhone ? `https://wa.me/${normalisePhone(agentPhone)}` : null;
 
-  const agentFirstName = agentName?.trim().split(/\s+/)[0].toLowerCase() || "agent";
+  // Last name (not first) in the URL — first names collide far more often
+  // (many "Ahmad"s, "Tan"s), and this slug is also how the server
+  // disambiguates two agents who happen to share a REN number.
+  const agentLastName = agentName?.trim().split(/\s+/).pop()?.toLowerCase() || "agent";
   const profilePath = agentRen
-    ? `/agent/${encodeURIComponent(agentFirstName)}/${encodeURIComponent(agentRen)}?preview=1`
+    ? `/agent/${encodeURIComponent(agentLastName)}/${encodeURIComponent(agentRen)}?preview=1`
     : null;
 
   function toggleStrength(label: string) {
