@@ -693,6 +693,21 @@ export async function countLifecycleTenancies(): Promise<number> {
   return count ?? 0;
 }
 
+export async function getMostRecentTenancyId(): Promise<string | null> {
+  const userId = await getCurrentUserId();
+  const supabase = await createClient();
+  let q = supabase
+    .from("tenancies")
+    .select("id")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (userId) q = q.eq("user_id", userId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data?.[0] as { id: string } | undefined)?.id ?? null;
+}
+
 export async function countTenantProfiles(): Promise<number> {
   const userId = await getCurrentUserId();
   const supabase = await createClient();

@@ -191,6 +191,7 @@ export interface AgentProfile {
   board_passcode?: string | null;
   survey_response?: Record<string, unknown> | null;
   is_test_account?: boolean | null;
+  onboarding_tour_completed_at?: string | null;
 }
 
 export interface ProfileStrengthItem {

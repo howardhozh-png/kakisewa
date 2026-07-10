@@ -121,6 +121,7 @@ const { error: updateError } = await svc.from("agent_profiles").update({
   // so a "fresh" reset must pre-stamp this, not null it.
   survey_completed_at: new Date().toISOString(),
   accent_color: "navy_blue",
+  onboarding_tour_completed_at: null,
 }).eq("id", user.id);
 if (updateError) console.log(`  agent_profiles: ERROR ${updateError.message}`);
 

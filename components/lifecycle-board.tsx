@@ -724,6 +724,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
     <div
       ref={setNodeRef}
       data-card-id={t.id}
+      id={`tour-tenancy-${t.id}`}
       {...attributes}
       {...listeners}
       onTouchStart={(e) => { listeners?.onTouchStart?.(e); startPress(); }}

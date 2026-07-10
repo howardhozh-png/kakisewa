@@ -34,7 +34,10 @@ interface DrillDownHeaderProps {
 }
 
 const DrillDownHeader = ({ view, focusedDate, setView, setFocusedDate }: DrillDownHeaderProps) => {
-  const decadeStart = Math.floor(focusedDate.year / 12) * 12
+  // Biased 1 year back / 10 years forward from the focused year, not a fixed
+  // floor(year/12) decade — contract end dates are almost always forward-dated,
+  // so the default view should show future years, not mostly-past ones.
+  const decadeStart = focusedDate.year - 1
 
   const headingText =
     view === "days"   ? `${MONTH_FULL[focusedDate.month - 1]} ${focusedDate.year}`
@@ -142,7 +145,7 @@ interface YearGridProps {
 }
 
 const YearGrid = ({ focusedDate, selectedDate, setFocusedDate, setView }: YearGridProps) => {
-  const decadeStart = Math.floor(focusedDate.year / 12) * 12
+  const decadeStart = focusedDate.year - 1
   const years = Array.from({ length: 12 }, (_, i) => decadeStart + i)
 
   const selYear =

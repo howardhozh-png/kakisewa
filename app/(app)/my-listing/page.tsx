@@ -59,7 +59,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-[1440px] px-3 lg:px-5 py-6 lg:py-16">
       <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <div>
+        <div id="tour-my-listing-header">
           <h1 className="serif kk-display" style={{ color: "var(--kk-accent)" }}>
             My listing
           </h1>

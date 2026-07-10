@@ -18,7 +18,7 @@ import { SessionGuard } from "@/components/session-guard";
 import { FaqChatbot } from "@/components/faq-chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
-import { getAgentProfile, recordLoginStreak, countPushSubscriptions, countOwnerLeads, countLifecycleTenancies } from "@/lib/db";
+import { getAgentProfile, recordLoginStreak, countPushSubscriptions, countLifecycleTenancies, getMostRecentTenancyId } from "@/lib/db";
 import { getTotalCardCount } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
 import { PushNudge } from "@/components/push-nudge";
@@ -32,11 +32,13 @@ import { Suspense } from "react";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
   if (agent.id === 0) redirect("/login");
-  const [pushSubCount, ownerLeadCount, lifecycleTenancyCount] = await Promise.all([
+  const [pushSubCount, lifecycleTenancyCount] = await Promise.all([
     countPushSubscriptions().catch(() => null),
-    countOwnerLeads().catch(() => null),
     countLifecycleTenancies().catch(() => null),
   ]);
+  const contractsComplete = (lifecycleTenancyCount ?? 0) > 0;
+  const tourPending = contractsComplete && !agent.onboarding_tour_completed_at;
+  const mostRecentTenancyId = tourPending ? await getMostRecentTenancyId().catch(() => null) : null;
   recordLoginStreak().catch(() => {});
   const streak = agent.login_streak ?? 0;
   const checkedInToday = agent.last_login_date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
@@ -118,8 +120,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <main className="flex-1">{children}</main>
           {!isAdmin && !isBetaFrozen && !isTrialExpired && !isCancelled && (
             <OnboardingGate
-              contractsComplete={(lifecycleTenancyCount ?? 0) > 0}
-              leadsComplete={(ownerLeadCount ?? 0) > 0}
+              contractsComplete={contractsComplete}
+              tourPending={tourPending}
+              mostRecentTenancyId={mostRecentTenancyId}
             />
           )}
         </ProfileProvider>

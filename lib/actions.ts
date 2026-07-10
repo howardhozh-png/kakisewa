@@ -2119,6 +2119,18 @@ export async function bumpStreak(): Promise<{ streak: number }> {
   return { streak };
 }
 
+export async function completeOnboardingTour(): Promise<{ ok: boolean }> {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) return { ok: false };
+  await supabase.from("agent_profiles").update({ onboarding_tour_completed_at: new Date().toISOString() }).eq("id", uid);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
   const { createClient } = await import("@/lib/supabase/server");
   const { createServiceClient } = await import("@/lib/supabase/service");
