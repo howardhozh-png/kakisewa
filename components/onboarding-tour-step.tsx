@@ -48,6 +48,20 @@ export function OnboardingTourStep({ targetId, stepLabel, title, body, ctaLabel,
     };
   }, [mounted, targetId]);
 
+  // Defense in depth: if the target is genuinely never found (e.g. it was
+  // filtered off the board for a reason this component has no way to know
+  // about), don't leave the user in an invisible, un-dismissable state
+  // forever — auto-advance past this step instead. This exact failure mode
+  // (silent trap, tour never renders anything, redirect keeps firing) is
+  // what happened in production when the highlighted tenancy's id didn't
+  // match the board's own visibility filter.
+  useEffect(() => {
+    if (!mounted || rect) return;
+    const fallback = setTimeout(() => { onNext(); }, 3000);
+    return () => clearTimeout(fallback);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, rect, targetId]);
+
   if (!mounted || !rect) return null;
 
   const GAP = 7;

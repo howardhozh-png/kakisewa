@@ -696,10 +696,15 @@ export async function countLifecycleTenancies(): Promise<number> {
 export async function getMostRecentTenancyId(): Promise<string | null> {
   const userId = await getCurrentUserId();
   const supabase = await createClient();
+  // Must match getLifecycleTenancies' visibility filter — a tenancy this
+  // excludes never renders a card on the board, so its id can never be
+  // found by the onboarding tour's spotlight (document.getElementById),
+  // leaving the tour permanently un-dismissable with nothing on screen.
   let q = supabase
     .from("tenancies")
     .select("id")
     .is("deleted_at", null)
+    .not("lifecycle_stage", "in", '("closed","reserved")')
     .order("created_at", { ascending: false })
     .limit(1);
   if (userId) q = q.eq("user_id", userId);
