@@ -57,18 +57,49 @@ export function OnboardingTourStep({ targetId, stepLabel, title, body, ctaLabel,
   const spotH = rect.height + GAP * 2;
 
   const TIP_W = 280;
+  // Generous estimate (actual content — label + title + 2-3 line body + full
+  // width button — renders taller than a naive guess); the hard clamp below
+  // is the real guarantee, this just picks the better of above/below first.
+  const TIP_H = 240;
   let tipLeft = rect.left - GAP;
   if (tipLeft + TIP_W > window.innerWidth - 12) tipLeft = window.innerWidth - TIP_W - 12;
   if (tipLeft < 12) tipLeft = 12;
 
   const belowTop = rect.bottom + GAP + 14;
-  const aboveTop = rect.top - GAP - 190 - 14;
-  const tipBelow = belowTop + 190 < window.innerHeight - 20;
-  const tipTop = tipBelow ? belowTop : aboveTop;
+  const aboveTop = rect.top - GAP - TIP_H - 14;
+  const tipBelow = belowTop + TIP_H < window.innerHeight - 20;
+  let tipTop = tipBelow ? belowTop : aboveTop;
+  // Hard clamp — whichever side was picked, never let the card (and its CTA
+  // button) render past the viewport edge. This is what actually matters;
+  // the above/below choice is just a starting position.
+  tipTop = Math.max(12, Math.min(tipTop, window.innerHeight - TIP_H - 12));
   const arrowOff = Math.max(12, Math.min(rect.left + rect.width / 2 - tipLeft - 7, TIP_W - 26));
 
   return createPortal(
     <>
+      {/* Full-page click blocker — the ring below is only a visual dimming
+          trick (box-shadow doesn't intercept clicks outside its own box), so
+          without this the underlying page stays fully interactive and a user
+          can end up doing something else (e.g. opening an unrelated dialog)
+          while this tour is still sitting there waiting to be dismissed. */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          // Below OnboardingDemoDialog (z-index 10000) on purpose: if a
+          // tenancy already exists on someone's very first login, this tour
+          // and the demo dialog can both be eligible at once. This never
+          // opens nested dialogs itself (unlike the hard gate, which does
+          // need to sit above them), so there's no reason for it to be
+          // above 10000 — and being above it, even transparently, would
+          // silently swallow clicks meant for the demo dialog's own
+          // Skip/Next buttons since z-index governs hit-testing, not just
+          // paint order.
+          zIndex: 9997,
+          background: "transparent",
+        }}
+        onClick={(e) => e.preventDefault()}
+      />
       <div
         style={{
           position: "fixed",
@@ -78,7 +109,7 @@ export function OnboardingTourStep({ targetId, stepLabel, title, body, ctaLabel,
           boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)",
           border: "2.5px solid rgba(0,113,227,0.9)",
           pointerEvents: "none",
-          zIndex: 10002,
+          zIndex: 9998,
           animation: "kk-tour-ring 2s ease-in-out infinite",
         }}
       />
@@ -87,7 +118,7 @@ export function OnboardingTourStep({ targetId, stepLabel, title, body, ctaLabel,
           position: "fixed",
           top: tipTop, left: tipLeft,
           width: TIP_W,
-          zIndex: 10002,
+          zIndex: 9999,
           background: "var(--kk-surface)",
           borderRadius: 16,
           padding: "18px 20px",
