@@ -338,7 +338,7 @@ function KakiSewaPanel() {
             }} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, flex: 1 }}>
+          <div className="kk-land-kanban-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, flex: 1, overflow: "hidden" }}>
             {KANBAN.map(col => (
               <div key={col.id} style={{
                 background: "#F5F5F7",

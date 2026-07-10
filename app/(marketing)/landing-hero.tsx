@@ -274,13 +274,12 @@ export function LandingHero() {
         .kk-land-faq-item.open .kk-land-faq-chev { transform: rotate(180deg); }
         @media (max-width: 640px) {
           .kk-land-feat-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-          .kk-land-browser-wrap { width: 300px !important; transform: scale(0.85); transform-origin: top center; margin-bottom: -28px; }
           .kk-land-phone-frame { width: 150px !important; height: 300px !important; }
           .kk-land-phone-inner { transform: scale(1.25) !important; }
           .kk-land-sample-note { display: none !important; }
-          .kk-land-mockup-pair { grid-template-columns: 1fr !important; justify-items: center; gap: 32px !important; }
           .kk-land-pdots { display: none !important; }
           .kk-land-wa-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .kk-land-kanban-grid { grid-template-columns: 62% 34% 34% !important; }
           /* This chapter's content (feature cards + both mockups) got taller than
              100svh once the desktop mockup was added to mobile — the other
              chapters (hero carousel, money calc, CTA) stay fixed-height since
@@ -688,83 +687,10 @@ export function LandingHero() {
             </span>
           </div>
 
-          {/* Mockup pair */}
-          <div className="kk-land-mockup-pair" style={{ display: "grid", gridTemplateColumns: "3fr 1fr", gap: 16, alignItems: "start", ...delay(0.3, revealed[2]) }}>
-
-            {/* Browser */}
-            <div className="kk-land-browser-wrap" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div style={{ width: "100%" }}>
-                <div style={{ background: "#E8E8ED", borderRadius: "8px 8px 0 0", padding: "7px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {["#FF5F57","#FEBC2E","#28C840"].map(c => <span key={c} style={{ width: 9, height: 9, borderRadius: "50%", background: c, display: "block" }} />)}
-                  </div>
-                  <div style={{ flex: 1, background: "#fff", borderRadius: 4, padding: "3px 10px", fontSize: 9, color: "#6E6E73", textAlign: "center" }}>kakisewa.com/my-listing</div>
-                </div>
-                <div style={{ background: "#FBFBFD", border: "1px solid #E5E5EA", borderTop: "none", borderRadius: "0 0 8px 8px", height: 370, overflow: "hidden", padding: 12 }}>
-                  <div style={{ fontSize: 8, color: "#AEAEB2", marginBottom: 6 }}>See how many units are available each month, up to 24 months ahead</div>
-                  <div style={{ marginBottom: 8 }}>
-                    <div style={{ fontSize: 7, fontWeight: 600, color: "#AEAEB2", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 1 }}>Property Availability · 12 Months</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-.02em", lineHeight: 1.1, marginBottom: 1 }}>RM 18,000</div>
-                    <div style={{ fontSize: 8, color: "#6E6E73", marginBottom: 5 }}>6 properties · 100% commission</div>
-                    <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 36, marginBottom: 2 }}>
-                      {[90, 4, 55, 30, 4, 4].map((h, i) => (
-                        <div key={i} style={{ flex: 1, background: h > 20 ? "#AEAEB2" : "#E5E5EA", borderRadius: "2px 2px 0 0", height: `${h}%` }} />
-                      ))}
-                    </div>
-                    <div style={{ display: "flex", gap: 3, fontSize: 7, color: "#AEAEB2" }}>
-                      {["Jun '26","Jul '26","Aug '26","Sep '26","Oct '26","Nov '26"].map(m => <div key={m} style={{ flex: 1 }}>{m}</div>)}
-                    </div>
-                  </div>
-                  {/* Search */}
-                  <div style={{ display: "flex", gap: 5, marginBottom: 8, alignItems: "center" }}>
-                    <div style={{ flex: 1, background: "#fff", border: "1px solid #E5E5EA", borderRadius: 5, padding: "4px 8px", display: "flex", gap: 4, alignItems: "center" }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                      <span style={{ fontSize: 8, color: "#AEAEB2" }}>Search...</span>
-                    </div>
-                    <div style={{ background: "#fff", border: "1px solid #E5E5EA", borderRadius: 5, padding: "4px 9px", fontSize: 8, color: "#6E6E73", whiteSpace: "nowrap" }}>All properties &#9662;</div>
-                  </div>
-                  {/* Two-column listing */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-                    {[
-                      { title: "LISTED", count: 4, sub: "Build the tenant pack. Find the right tenant.", cards: [
-                        { name: "Ritze Perdana",    unit: "Unit 11C · RM 2,400/mo", tenant: "Michelle Ong Cheng Bee", action: "Tenant confirmed", photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=56&h=56&fit=crop&auto=format" },
-                        { name: "The Greens Subang", unit: "Unit 8-01 · RM 2,100/mo", tenant: "Helen Tan Bee Choo",   action: null,               photo: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=56&h=56&fit=crop&auto=format" },
-                      ]},
-                      { title: "RENTED", count: 3, sub: "Well done, proud of you!", cards: [
-                        { name: "Kelisa Residence", unit: "Unit 4C · RM 1,900/mo", tenant: "Kamaruddin bin Baharom", action: "Confirm moved in", photo: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=56&h=56&fit=crop&auto=format" },
-                        { name: "Laman Suria",      unit: "Unit 6A · RM 1,600/mo", tenant: "Mohd Farouk Hamdan",     action: null,              photo: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=56&h=56&fit=crop&auto=format" },
-                      ]},
-                    ].map(col => (
-                      <div key={col.title} style={{ background: "#F2F2F7", borderRadius: 8, padding: 8 }}>
-                        <div style={{ fontSize: 8, fontWeight: 800, color: "#1D1D1F", letterSpacing: ".05em", marginBottom: 1 }}>{col.title} <span style={{ fontWeight: 400, color: "#6E6E73" }}>{col.count}</span></div>
-                        <div style={{ fontSize: 7, color: "#6E6E73", marginBottom: 6 }}>{col.sub}</div>
-                        {col.cards.map(card => (
-                          <div key={card.name} style={{ background: "#fff", border: "1px solid #E5E5EA", borderRadius: 6, padding: 6, marginBottom: 4 }}>
-                            <div style={{ display: "flex", gap: 5, marginBottom: card.action ? 4 : 0 }}>
-                              <img src={card.photo} style={{ width: 24, height: 24, borderRadius: 4, flexShrink: 0, objectFit: "cover" }} alt="" />
-                              <div>
-                                <div style={{ fontSize: 8, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.2 }}>{card.name}</div>
-                                <div style={{ fontSize: 7, color: "#6E6E73" }}>{card.unit}</div>
-                                <div style={{ fontSize: 6, color: "#AEAEB2" }}>{card.tenant}</div>
-                              </div>
-                            </div>
-                            {card.action && (
-                              <div style={{ background: "rgba(52,199,89,0.1)", borderRadius: 3, padding: "2px 5px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: 7, fontWeight: 600, color: "#1F8B4C" }}>&#10003; {card.action}</span>
-                                <span style={{ color: "#1F8B4C", fontSize: 9 }}>&#8594;</span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div style={{ marginTop: 6, fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#C7C7CC" }}>Web</div>
-            </div>
-
-            {/* Phone */}
+          {/* Phone mockup — the browser mockup was cut; the comparison slider above
+              already covers "here's a screen of the app," this is the one thing it
+              doesn't cover: what it looks like installed on your phone. */}
+          <div className="kk-land-mockup-pair" style={{ display: "flex", justifyContent: "center", ...delay(0.3, revealed[2]) }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div className="kk-land-phone-frame" style={{ width: 180, height: 360, flexShrink: 0, borderRadius: 28, background: "#1A1A1C", border: "4px solid #2C2C2E", boxShadow: "0 0 0 1px rgba(255,255,255,0.07)", overflow: "hidden", position: "relative" }}>
                 <div className="kk-land-phone-inner" style={{ width: 120, height: 242, transform: "scale(1.5)", transformOrigin: "top left", background: "#FBFBFD", display: "flex", flexDirection: "column", overflow: "hidden" }}>
