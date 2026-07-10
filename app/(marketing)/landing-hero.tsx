@@ -93,7 +93,7 @@ const CH_CONFIGS = [
 ];
 
 /* ── CH0 horizontal story beats (data now shared — see lib/hook-content.ts) ── */
-const CH0_SLIDES = 4;
+const CH0_SLIDES = STORY_BEATS.length;
 
 /* ── Luxury scroll items (static, defined outside component) ─────────────── */
 const LUX_ITEMS = [
@@ -489,16 +489,6 @@ export function LandingHero() {
         )}
       </section>
 
-      {/* ── BRIDGE — short, assumes some visitors already read the email ──────── */}
-      <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "48px 40px" }}>
-        <p style={{
-          textAlign: "center", maxWidth: 620, margin: "0 auto",
-          fontSize: "clamp(1rem, 1.6vw, 1.15rem)", color: "#6E6E73", lineHeight: 1.5,
-        }}>
-          If you already know the feeling, here is exactly what changes.
-        </p>
-      </section>
-
       {/* ══════════════════════════════════════════════════════════════════════
           CH1 — THE MATH
       ══════════════════════════════════════════════════════════════════════ */}
@@ -604,8 +594,19 @@ export function LandingHero() {
         </div>
       </section>
 
+      {/* ── PIVOT — the one turn from pain to solution, ties directly to the
+             number the visitor just saw above ──────────────────────────────── */}
+      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 0" }}>
+        <p style={{
+          textAlign: "center", maxWidth: 560, margin: "0 auto",
+          fontSize: "clamp(1.1rem, 1.8vw, 1.3rem)", color: "#1D1D1F", lineHeight: 1.5, fontWeight: 500,
+        }}>
+          That number is real. Here is exactly what changes it.
+        </p>
+      </section>
+
       {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
-      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "80px 40px 56px" }}>
+      <section style={{ background: "#fff", padding: "40px 40px 56px" }}>
         <ComparisonSlider />
       </section>
 
@@ -662,22 +663,12 @@ export function LandingHero() {
       <section ref={ch2} className="kk-land-chapter kk-land-ch2" style={{ background: "#fff" }}>
         <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 1000, padding: "80px 40px 48px" }}>
 
-          {/* 3 features */}
-          <div className="kk-land-feat-grid" style={{
-            display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 28,
-            ...delay(0.1, revealed[2]),
-          }}>
-            {[
-              { n: "01", h: "Everything in one place.", s: "Property details, photos, contracts all in one place." },
-              { n: "02", h: "Automated tracking.",      s: "Notification when owner and tenant replied, before contract expires." },
-              { n: "03", h: "Forecast your income.",    s: "Look 12-24 months into the future to know how much you should earn from contracts." },
-            ].map(f => (
-              <div key={f.n} style={{ borderTop: "2.5px solid #1D1D1F", paddingTop: 14 }}>
-                <span style={{ display: "block", fontSize: 13, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1D1D1F", marginBottom: 10 }}>{f.n}</span>
-                <div style={{ fontSize: "clamp(1.2rem, 2.8vw, 1.75rem)", fontWeight: 800, color: "#1D1D1F", lineHeight: 1.2, marginBottom: 8 }}>{f.h}</div>
-                <div style={{ fontSize: "clamp(11px, 1.3vw, 13px)", color: "#6E6E73", lineHeight: 1.55 }}>{f.s}</div>
-              </div>
-            ))}
+          {/* Short label — the 3-feature text grid was cut, it restated what the
+              comparison slider and WhatsApp callout already showed visually. */}
+          <div style={{ textAlign: "center", marginBottom: 20, ...delay(0.1, revealed[2]) }}>
+            <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 10 }}>
+              On your phone
+            </span>
           </div>
 
           {/* SAMPLE badge */}

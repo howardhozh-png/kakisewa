@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef } from "react";
 import { GripVertical, Banknote, ArrowRight, CheckCircle, Check, FileText } from "lucide-react";
 
 // ─── Excel panel data ──────────────────────────────────────────────────────────
@@ -29,20 +29,12 @@ function ExcelPanel() {
       fontFamily: "system-ui, sans-serif",
       height: 510, display: "flex", flexDirection: "column",
     }}>
-      {/* Google Sheets-style green header */}
+      {/* Excel-style title bar — plain filename, no logo, no share/download */}
       <div style={{
-        background: "#0f9d58", padding: "7px 12px", flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: "#217346", padding: "7px 12px", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontSize: 16 }}>📊</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#fff" }}>Owner Outreach Tracker.xlsx</span>
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          {["Share", "↓"].map(b => (
-            <div key={b} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 3, background: "rgba(255,255,255,0.18)", color: "#fff" }}>{b}</div>
-          ))}
-        </div>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#fff" }}>Owner Outreach Tracker.xlsx</span>
       </div>
 
       {/* Toolbar */}
@@ -248,20 +240,6 @@ function KakiSewaPanel() {
         }}>HH</div>
       </div>
 
-      {/* Greeting bar */}
-      <div style={{
-        background: "#FBFBFD", borderBottom: "1px solid rgba(0,0,0,0.06)",
-        padding: "5px 14px", flexShrink: 0,
-        display: "flex", alignItems: "center", gap: 8,
-        fontSize: 9.5, color: "#6E6E73",
-      }}>
-        <span style={{ color: "#86868B" }}>☆</span>
-        <span style={{ color: "#1D1D1F", fontWeight: 600 }}>5d show up</span>
-        <span style={{ color: "#34C759", fontSize: 11 }}>✓</span>
-        <span style={{ color: "rgba(0,0,0,0.15)" }}>|</span>
-        <span style={{ fontStyle: "italic" }}>Do not let the busy days steal the moments that matter most.</span>
-      </div>
-
       <div style={{ flex: 1, padding: "12px 14px 10px", overflowY: "hidden", display: "flex", flexDirection: "column", gap: 9 }}>
         {/* Page title */}
         <div>
@@ -446,12 +424,6 @@ export function ComparisonSlider() {
   const startX = useRef(0);
   const startPos = useRef(50);
 
-  const getPos = useCallback((clientX: number) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return 50;
-    return Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-  }, []);
-
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     dragging.current = true;
     startX.current = e.clientX;
@@ -459,9 +431,17 @@ export function ComparisonSlider() {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
 
+  // Relative delta from where the drag started, not the pointer's absolute
+  // position — using getPos(clientX) directly here made the handle snap to
+  // wherever the pointer physically was on the very first move event, which
+  // read as the slider "slipping" out from under a press that didn't start
+  // exactly on the handle.
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!dragging.current) return;
-    setPosition(getPos(e.clientX));
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const deltaPct = ((e.clientX - startX.current) / rect.width) * 100;
+    setPosition(Math.max(0, Math.min(100, startPos.current + deltaPct)));
   }
 
   function onPointerUp() {

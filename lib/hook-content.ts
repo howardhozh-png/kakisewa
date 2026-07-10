@@ -40,11 +40,4 @@ export const STORY_BEATS: StoryBeat[] = [
     ],
     sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
   },
-  {
-    parts: [
-      { text: "One tool", color: "#34C759" },
-      { text: " keeps everything in one place, and reminds you before ", small: true },
-      { text: "every renewal.", color: "#34C759" },
-    ],
-  },
 ];
