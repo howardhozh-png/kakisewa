@@ -21,6 +21,17 @@ Common root causes to check first:
 - **Data-attribute classes**: Does `data-[x=y]:h-9` beat `h-auto`? (use inline `style={{ height: 'auto' }}` to fix)
 - **iOS native inputs**: Is `input[type="date/month"]` rendering at native size? (replace with Radix Popover)
 - **Turbopack cache**: Is the dev server serving stale JS? (`rm -rf .next`)
+- **Account-state logic**: If the bug is "stuck," "nothing happens," or a redirect loop, check whether it
+  depends on the reporting user's actual data shape (row count, status values, which row is "most recent").
+  A fresh, clean test account can't reproduce this class of bug — reproduce with an account seeded to match
+  the real failure shape (see Step 1a).
+
+### Step 1a — For account-state bugs, reproduce with realistic data
+If the bug involves gating, redirects, or "shows the wrong thing based on account state": don't just
+retest with a fresh disposable account — seed one with data resembling the *actual* affected account
+(row volume, mixed statuses, an edge-case value in whatever field the logic keys off). Confirm you can
+reproduce the exact reported symptom before concluding you've found the root cause, and confirm the fix
+resolves that exact seeded scenario, not just a clean happy-path case.
 
 ## Step 2 — Plan the fix
 State clearly:

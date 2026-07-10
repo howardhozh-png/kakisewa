@@ -56,6 +56,14 @@ session history, since this repo has no migration files to diff):
 - Run `mcp__supabase__get_advisors` (security and performance lints) and report any new findings
 - Confirm RLS is enabled on any new table
 - Confirm the change was already tested against existing queries (per the `/db` skill)
+- **Confirm behavioral impact on existing rows, not just query correctness.** For any new column
+  the app reads as a state/behavior flag (gates something, redirects somewhere, decides what to
+  show), state explicitly what its default/NULL value means for every row that already existed
+  before this migration. If NULL retroactively changes behavior for real, existing users — not
+  just future signups — the migration is incomplete without a backfill, and this deploy should not
+  proceed until that backfill has been run. Query correctness is not the same question as behavior
+  correctness; a schema change can pass every existing query and still silently change what the app
+  does for 100% of current users.
 
 If nothing schema-related changed, skip this and say so.
 

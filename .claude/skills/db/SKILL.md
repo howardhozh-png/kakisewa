@@ -25,6 +25,20 @@ For each proposed change (create / alter / drop), state:
 3. Which existing queries it affects
 4. Migration SQL
 
+**For any new column used as a state/behavior flag (not just data storage)** — e.g. a
+timestamp or boolean the app reads to decide whether to show something, gate something,
+or redirect somewhere — state explicitly what the default/NULL value means for rows that
+**already exist**, not just new ones. A nullable column added to an existing table takes
+that NULL value for every current row. If the app logic treats NULL as "hasn't happened
+yet," every existing row just became "hasn't happened yet" too, whether or not that's
+true. If this retroactively changes behavior for existing users, the migration is not
+complete until it includes a backfill for the rows that shouldn't be swept into the new
+behavior — in the same step, not a follow-up.
+
+(This is exactly what caused a production incident: a column added to gate a new-user
+tour was NULL for every existing account, dropping established beta users with 100+
+tenancies into a tour meant for someone who'd just signed up.)
+
 **STOP. Show the full plan including migration SQL before executing.**
 
 For new tables, always include:

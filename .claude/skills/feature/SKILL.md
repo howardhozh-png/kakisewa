@@ -50,7 +50,20 @@ Desktop (1280×800):
 - Confirm no regression in surrounding layout
 ```
 
-Do not report the feature as done until all scenarios pass.
+**If this feature gates, redirects, or changes what renders based on account state**
+(onboarding flows, plan limits, data-completeness checks, anything that reads "does this
+account have X" and branches on it) — testing must include at least one account seeded
+with realistic existing data, not only a freshly created, clean disposable account. Seed
+volume and edge-case values that resemble real production accounts (e.g. many rows, a
+mix of statuses, an old/closed/inactive record as the most-recently-created one) and
+confirm the feature behaves correctly against that shape too. A fresh test account can't
+surface bugs that only exist once an account has history — a real incident happened
+because every test this feature was verified against was clean and synthetic, while the
+actual failure only showed up for accounts with pre-existing, high-volume, mixed-status
+data.
+
+Do not report the feature as done until all scenarios pass, on both viewports, against
+both a fresh account and a realistic-data account where applicable.
 
 ## Step 5 — Commit and report to user
 Always commit before reporting done:
