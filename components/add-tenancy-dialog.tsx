@@ -294,13 +294,13 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <FieldLabel required={!contractEndDirect}>Start date</FieldLabel>
+                    <FieldLabel>Start date</FieldLabel>
                     <DateInput value={contractStart} onChange={setContractStart} name="contract_start"
                       className="w-full px-3 py-2 rounded-xl text-[13px] outline-none"
                       style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                   </div>
                   <div>
-                    <FieldLabel required={!contractEndDirect}>Duration (months)</FieldLabel>
+                    <FieldLabel>Duration (months)</FieldLabel>
                     <TextInput value={durationMonths} onChange={setDurationMonths} placeholder="e.g. 12" type="number" />
                   </div>
                 </div>
