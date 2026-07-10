@@ -35,6 +35,10 @@ interface Subscription {
   auth: string;
 }
 
+// "high" tells the push service (Apple/Google/Mozilla) this shouldn't be deferred —
+// nothing previously set this, every send used the relay's default urgency.
+const SEND_OPTIONS = { urgency: "high" as const };
+
 // Send to a specific subscription directly — no DB round-trip needed
 export async function sendPushToSubscription(
   endpoint: string,
@@ -45,7 +49,8 @@ export async function sendPushToSubscription(
   ensureVapid();
   await webpush.sendNotification(
     { endpoint, keys: { p256dh, auth } },
-    JSON.stringify(payload)
+    JSON.stringify(payload),
+    SEND_OPTIONS
   );
 }
 
@@ -71,7 +76,8 @@ export async function sendPushToUser(
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
+          SEND_OPTIONS
         );
         sent++;
       } catch (err: unknown) {

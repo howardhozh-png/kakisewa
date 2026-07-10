@@ -29,17 +29,62 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
+// TEMPORARY, targeted test — investigating a report that push (specifically the
+// expiry/calendar-digest cron sends) silently never displays for this one user,
+// despite the server reporting a successful send. Tearing down and re-creating
+// the push subscription rules out a silently-degraded-but-not-expired endpoint as
+// the cause. Runs once, fully in the background — no permission prompt (already
+// granted), no visible UI, no welcome notification. Remove once we have a result.
+const RESUB_TEST_USER_ID = "0a93374f-81fa-4337-b808-a2dcbfc7b6bf"; // Koo Ying Kang
+const RESUB_TEST_DONE_KEY = "kk_resub_test_done";
+
+async function forceResubscribeOnce(userId: string) {
+  if (userId !== RESUB_TEST_USER_ID) return;
+  if (localStorage.getItem(RESUB_TEST_DONE_KEY)) return;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  if (!("serviceWorker" in navigator)) return;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    const oldEndpoint = existing?.endpoint ?? null;
+    if (existing) await existing.unsubscribe();
+
+    const key = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "");
+    const fresh = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: key as unknown as ArrayBuffer,
+    });
+
+    if (oldEndpoint && oldEndpoint !== fresh.endpoint) {
+      await fetch("/api/push/subscribe", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: oldEndpoint }),
+      }).catch(() => {});
+    }
+
+    await fetch("/api/push/subscribe?silent=1", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fresh),
+    });
+
+    localStorage.setItem(RESUB_TEST_DONE_KEY, "1");
+    console.log("[resub-test] refreshed push subscription silently");
+  } catch (err) {
+    console.error("[resub-test] failed, will retry next session:", err);
+  }
+}
+
 function setBadge(count: number) {
   if (typeof navigator === "undefined") return;
-  if ("setAppBadge" in navigator) {
-    if (count > 0) {
-      (navigator as Navigator & { setAppBadge(n: number): Promise<void> }).setAppBadge(count).catch(() => {});
-    } else {
-      (navigator as Navigator & { clearAppBadge(): Promise<void> }).clearAppBadge?.().catch(() => {});
-    }
-  }
-  if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: "SET_BADGE", count });
+  if (!("setAppBadge" in navigator)) return;
+  const nav = navigator as Navigator & { setAppBadge(n: number): Promise<void>; clearAppBadge?(): Promise<void> };
+  if (count > 0) {
+    nav.setAppBadge(count).catch((err) => console.error("[badge] setAppBadge failed:", count, err));
+  } else {
+    nav.clearAppBadge?.().catch((err) => console.error("[badge] clearAppBadge failed:", err));
   }
 }
 
@@ -122,6 +167,7 @@ export function NotificationBell() {
       const uid = data.session?.user.id ?? "";
       setUserId(uid);
       if (uid) setReadIds(getReadIds(uid));
+      if (uid) forceResubscribeOnce(uid);
     });
 
     return () => window.removeEventListener("resize", check);

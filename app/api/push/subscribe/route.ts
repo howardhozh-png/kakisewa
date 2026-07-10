@@ -12,6 +12,9 @@ export async function POST(req: Request) {
   const sub = await req.json() as PushSubscription;
   const { endpoint } = sub;
   const keys = (sub as unknown as { keys: { p256dh: string; auth: string } }).keys;
+  // Background subscription refresh (e.g. forced resubscribe) — no welcome push,
+  // this isn't a first-time opt-in the user should see anything for.
+  const silent = new URL(req.url).searchParams.get("silent") === "1";
 
   // Remove this endpoint from any other user so one device = one active account.
   const svc = (await import("@/lib/supabase/service")).createServiceClient();
@@ -27,13 +30,15 @@ export async function POST(req: Request) {
     auth: keys.auth,
   }, { onConflict: "user_id,endpoint" });
 
-  // Send welcome push directly using the sub we just received — avoids an extra DB round-trip
-  sendPushToSubscription(endpoint, keys.p256dh, keys.auth, {
-    title: "Notifications are on",
-    body: "You'll get updates on your listings, tenants, and contracts",
-    url: "/home",
-    tag: "push_welcome",
-  }).catch(() => {});
+  if (!silent) {
+    // Send welcome push directly using the sub we just received — avoids an extra DB round-trip
+    sendPushToSubscription(endpoint, keys.p256dh, keys.auth, {
+      title: "Notifications are on",
+      body: "You'll get updates on your listings, tenants, and contracts",
+      url: "/home",
+      tag: "push_welcome",
+    }).catch(() => {});
+  }
 
   return NextResponse.json({ ok: true });
 }
