@@ -341,7 +341,7 @@ function KakiSewaPanel() {
                     <div key={card.name} style={{
                       background: "#fff", borderRadius: 7,
                       border: "1px solid rgba(0,0,0,0.07)",
-                      padding: "6px 7px",
+                      padding: "6px 7px", overflow: "hidden",
                     }}>
                       <div style={{ display: "flex", gap: 6 }}>
                         {/* Unit photo */}
@@ -354,18 +354,18 @@ function KakiSewaPanel() {
                           <img src={card.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         </div>
                         {/* Info */}
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, overflow: "hidden" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
-                            <p style={{ fontSize: 9.5, fontWeight: 600, color: "#1D1D1F", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.name}</p>
+                            <p style={{ fontSize: 9.5, fontWeight: 600, color: "#1D1D1F", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{card.name}</p>
                             <span style={{
-                              fontSize: 7.5, fontWeight: 600, color: card.badgeColor, flexShrink: 0,
+                              fontSize: 7.5, fontWeight: 600, color: card.badgeColor, flexShrink: 0, whiteSpace: "nowrap",
                               background: `${card.badgeColor}18`, borderRadius: 20, padding: "1px 5px",
                             }}>{card.badge}</span>
                           </div>
                           <p style={{ fontSize: 8, color: "#1D1D1F", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.prop}</p>
-                          <p style={{ fontSize: 7.5, color: "#6E6E73", display: "flex", alignItems: "center", gap: 3 }}>
-                            {card.sub}
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 1.5, color: "#86868B" }}>
+                          <p style={{ fontSize: 7.5, color: "#6E6E73", display: "flex", alignItems: "center", gap: 3, overflow: "hidden", whiteSpace: "nowrap" }}>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{card.sub}</span>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 1.5, color: "#86868B", flexShrink: 0 }}>
                               · <FileText style={{ width: 8, height: 8 }} /> 3
                             </span>
                           </p>
@@ -376,30 +376,30 @@ function KakiSewaPanel() {
                         <div style={{
                           marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
                           background: "rgba(0,0,0,0.04)", borderRadius: 6, padding: "4px 7px",
-                          fontSize: 8, fontWeight: 600, color: "#1D1D1F",
+                          fontSize: 8, fontWeight: 600, color: "#1D1D1F", whiteSpace: "nowrap",
                         }}>
                           <span>What&apos;s next?</span>
-                          <ArrowRight style={{ width: 9, height: 9 }} />
+                          <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
                         </div>
                       )}
                       {col.id === "renewing" && (
                         <div style={{
                           marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
                           background: "rgba(52,199,89,0.10)", borderRadius: 6, padding: "4px 7px",
-                          fontSize: 8, fontWeight: 600, color: "#34C759",
+                          fontSize: 8, fontWeight: 600, color: "#34C759", whiteSpace: "nowrap",
                         }}>
                           <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                            <CheckCircle style={{ width: 9, height: 9 }} /> Moved in
+                            <CheckCircle style={{ width: 9, height: 9, flexShrink: 0 }} /> Moved in
                           </span>
-                          <ArrowRight style={{ width: 9, height: 9 }} />
+                          <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
                         </div>
                       )}
                       {col.id === "active" && (
                         <div style={{
                           marginTop: 5, display: "flex", alignItems: "center", gap: 3,
-                          fontSize: 8, color: "#86868B",
+                          fontSize: 8, color: "#86868B", whiteSpace: "nowrap",
                         }}>
-                          <Check style={{ width: 9, height: 9, color: "#34C759" }} />
+                          <Check style={{ width: 9, height: 9, color: "#34C759", flexShrink: 0 }} />
                           <span>{card.badge}</span>
                         </div>
                       )}

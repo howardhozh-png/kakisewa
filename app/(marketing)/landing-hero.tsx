@@ -256,6 +256,12 @@ export function LandingHero() {
           animation: kk-sh 2.8s ease-in-out infinite;
         }
         @keyframes kk-sh { 0%{left:-100%} 60%,100%{left:160%} }
+        .kk-lux-wrapper {
+          overflow: hidden;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+        }
+        @keyframes kk-lux-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .kk-land-slider::-webkit-slider-thumb {
           -webkit-appearance: none; appearance: none;
           width: 26px; height: 26px; border-radius: 50%;
@@ -279,7 +285,7 @@ export function LandingHero() {
           .kk-land-sample-note { display: none !important; }
           .kk-land-pdots { display: none !important; }
           .kk-land-wa-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          .kk-land-kanban-grid { grid-template-columns: 62% 34% 34% !important; }
+          .kk-land-kanban-grid { grid-template-columns: 70% 25% 25% !important; }
           /* This chapter's content (feature cards + both mockups) got taller than
              100svh once the desktop mockup was added to mobile — the other
              chapters (hero carousel, money calc, CTA) stay fixed-height since
@@ -538,10 +544,13 @@ export function LandingHero() {
             </div>
           </div>
 
-          {/* Loss number */}
+          {/* Loss number — font size depends on digit count, not just viewport
+              width. "RM 1,500" and "RM 450,000" are very different lengths;
+              a fixed vw-based clamp overflowed the container at 6-7 digits
+              (contracts >= ~70) regardless of screen size. */}
           <div style={{
             fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: "clamp(5rem, 14vw, 10rem)",
+            fontSize: loss.toLocaleString().length >= 7 ? "clamp(3rem, 10vw, 6.5rem)" : "clamp(5rem, 14vw, 10rem)",
             lineHeight: 1, letterSpacing: "-0.04em",
             color: "#FF3B30", marginBottom: 8,
             fontFeatureSettings: "'tnum'",
@@ -608,53 +617,6 @@ export function LandingHero() {
       {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
       <section style={{ background: "#fff", padding: "40px 40px 56px" }}>
         <ComparisonSlider />
-      </section>
-
-      {/* ── WHATSAPP CALLOUT — the third feature, kept as its own short beat ──── */}
-      <section style={{ background: "#FBFBFD", padding: "0 40px 88px" }}>
-        <div style={{
-          maxWidth: 720, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center",
-        }}
-        className="kk-land-wa-grid"
-        >
-          <div>
-            <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
-              On your own schedule
-            </span>
-            <h3 style={{
-              fontFamily: "'DM Serif Display', Georgia, serif",
-              fontSize: "clamp(1.5rem, 2.6vw, 1.9rem)", letterSpacing: "-0.02em", color: "#1D1D1F",
-              marginBottom: 12, lineHeight: 1.2,
-            }}>
-              Send WhatsApp outreach whenever you are free.
-            </h3>
-            <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
-              Branded templates, ready whenever you open the app. No pressure to reply instantly, no one waiting on you.
-            </p>
-          </div>
-          <div style={{
-            background: "#E5DDD5", borderRadius: 18, padding: 20,
-            boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
-          }}>
-            <div style={{
-              background: "#DCF8C6", borderRadius: "12px 12px 2px 12px",
-              padding: "10px 12px", marginLeft: "18%",
-            }}>
-              <p style={{ fontSize: 12.5, color: "#1D1D1F", lineHeight: 1.5 }}>
-                Hi Puan Rozita, your tenancy at Cheras Hartamas renews in 60 days. Let me know if you would like to continue or if I should start finding a new tenant.
-              </p>
-              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 3, marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: "#667781" }}>1:42 PM</span>
-                <CheckIcon style={{ width: 12, height: 12, color: "#53BDEB" }} />
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, opacity: 0.6 }}>
-              <MessageCircle style={{ width: 13, height: 13, color: "#075E54" }} />
-              <span style={{ fontSize: 10.5, color: "#075E54", fontWeight: 600 }}>Sent from renewal template</span>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -749,6 +711,53 @@ export function LandingHero() {
           <p className="kk-land-sample-note" style={{ fontSize: 11, color: "#C7C7CC", marginTop: 10, ...delay(0.44, revealed[2]) }}>
             Sample data for illustration only.
           </p>
+        </div>
+      </section>
+
+      {/* ── WHATSAPP CALLOUT — third supporting proof beat, after desktop+phone ── */}
+      <section style={{ background: "#FBFBFD", padding: "56px 40px 88px" }}>
+        <div style={{
+          maxWidth: 720, margin: "0 auto",
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center",
+        }}
+        className="kk-land-wa-grid"
+        >
+          <div>
+            <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
+              On your own schedule
+            </span>
+            <h3 style={{
+              fontFamily: "'DM Serif Display', Georgia, serif",
+              fontSize: "clamp(1.5rem, 2.6vw, 1.9rem)", letterSpacing: "-0.02em", color: "#1D1D1F",
+              marginBottom: 12, lineHeight: 1.2,
+            }}>
+              Send WhatsApp outreach whenever you are free.
+            </h3>
+            <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
+              Branded templates, ready whenever you open the app. No pressure to reply instantly, no one waiting on you.
+            </p>
+          </div>
+          <div style={{
+            background: "#E5DDD5", borderRadius: 18, padding: 20,
+            boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
+          }}>
+            <div style={{
+              background: "#DCF8C6", borderRadius: "12px 12px 2px 12px",
+              padding: "10px 12px", marginLeft: "18%",
+            }}>
+              <p style={{ fontSize: 12.5, color: "#1D1D1F", lineHeight: 1.5 }}>
+                Hi Puan Rozita, your tenancy at Cheras Hartamas renews in 60 days. Let me know if you would like to continue or if I should start finding a new tenant.
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 3, marginTop: 4 }}>
+                <span style={{ fontSize: 10, color: "#667781" }}>1:42 PM</span>
+                <CheckIcon style={{ width: 12, height: 12, color: "#53BDEB" }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, opacity: 0.6 }}>
+              <MessageCircle style={{ width: 13, height: 13, color: "#075E54" }} />
+              <span style={{ fontSize: 10.5, color: "#075E54", fontWeight: 600 }}>Sent from renewal template</span>
+            </div>
+          </div>
         </div>
       </section>
 
