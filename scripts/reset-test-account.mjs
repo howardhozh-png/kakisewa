@@ -120,6 +120,7 @@ const { error: updateError } = await svc.from("agent_profiles").update({
   // Matches real signup (lib/db.ts) — new accounts skip the beta survey,
   // so a "fresh" reset must pre-stamp this, not null it.
   survey_completed_at: new Date().toISOString(),
+  accent_color: "navy_blue",
 }).eq("id", user.id);
 if (updateError) console.log(`  agent_profiles: ERROR ${updateError.message}`);
 

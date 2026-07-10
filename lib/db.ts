@@ -941,6 +941,8 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
       trial_started_at: trialStart,
       trial_ends_at: trialEnd,
       subscription_status: "trial",
+      // Default to a branded accent instead of THEMES[0] ("Default", grey/ink)
+      accent_color: "navy_blue",
       // Auto-generate user's own referral slug from UUID
       referral_slug: user.id.replace(/-/g, "").slice(0, 8).toUpperCase(),
       // Store who referred this user (from ?ref= param passed at signup as "referred_by")
