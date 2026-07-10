@@ -5,12 +5,8 @@ import { ChevronDown } from "lucide-react";
 
 const FAQS = [
   {
-    q: "Do I need a credit card to start?",
-    a: "No — sign up and get full access immediately. We'll only ask for payment details when your trial ends and you choose to continue.",
-  },
-  {
-    q: "What happens when my trial ends?",
-    a: "You'll get a reminder before it expires. To keep your listings, leads, and history, simply pick a plan.",
+    q: "Can I import my existing listings from Excel?",
+    a: "Yes. Upload a CSV to import your owner leads in bulk, or add them one by one. You can update the status of each lead as you work through them.",
   },
   {
     q: "How does kakisewa remind me about expiring contracts?",
@@ -21,8 +17,12 @@ const FAQS = [
     a: "You select approved tenant profiles and share one branded link with the owner. They browse, compare, and pick — without chasing you on WhatsApp.",
   },
   {
-    q: "Can I import my existing listings from Excel?",
-    a: "Yes. Upload a CSV to import your owner leads in bulk, or add them one by one. You can update the status of each lead as you work through them.",
+    q: "Do I need a credit card to start?",
+    a: "No — sign up and get full access immediately. We'll only ask for payment details when your trial ends and you choose to continue.",
+  },
+  {
+    q: "What happens when my trial ends?",
+    a: "You'll get a reminder before it expires. To keep your listings, leads, and history, simply pick a plan.",
   },
   {
     q: "What if I'm not great with technology?",
