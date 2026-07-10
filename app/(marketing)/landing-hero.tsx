@@ -105,7 +105,15 @@ const LUX_ITEMS = [
 
 /* ── Component ───────────────────────────────────────────────────────────── */
 export function LandingHero() {
-  const [contracts, setContracts] = useState(50);
+  // 100 contracts -> exactly RM150,000 at the current formula (contracts *
+  // 0.5 * 3000). The hero claims "RM150,000 I lost last year" — the
+  // calculator previously defaulted to 50 (RM75,000), so a visitor who
+  // scrolled straight from the hero to the calculator saw it contradict the
+  // number they'd just read. Now the default matches on load, before anyone
+  // drags anything. 100 is also a real number, not picked purely to make the
+  // math work — a beta user's own survey response reported managing 100-150
+  // tenancies.
+  const [contracts, setContracts] = useState(100);
   const [active, setActive]       = useState(0);
   const [revealed, setRevealed]   = useState([true, false, false, false]);
   const [ch0Slide, setCh0Slide]   = useState(0);
@@ -544,13 +552,14 @@ export function LandingHero() {
             </div>
           </div>
 
-          {/* Loss number — font size depends on digit count, not just viewport
-              width. "RM 1,500" and "RM 450,000" are very different lengths;
-              a fixed vw-based clamp overflowed the container at 6-7 digits
-              (contracts >= ~70) regardless of screen size. */}
+          {/* Loss number — one fixed size, calibrated to fit the worst case
+              (7 digits, "RM 450,000", the max the slider can produce) so it
+              never visibly resizes as you drag. A digit-count-conditional
+              size looked more broken than the original overflow — the
+              number shouldn't appear to change weight mid-interaction. */}
           <div style={{
             fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: loss.toLocaleString().length >= 7 ? "clamp(3rem, 10vw, 6.5rem)" : "clamp(5rem, 14vw, 10rem)",
+            fontSize: "clamp(3rem, 10vw, 6.5rem)",
             lineHeight: 1, letterSpacing: "-0.04em",
             color: "#FF3B30", marginBottom: 8,
             fontFeatureSettings: "'tnum'",

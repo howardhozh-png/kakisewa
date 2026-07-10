@@ -424,28 +424,37 @@ export function ComparisonSlider() {
   const startX = useRef(0);
   const startPos = useRef(50);
 
+  // Window-level listeners instead of relying only on setPointerCapture —
+  // reported as "doesn't drag, hard to use" on a MacBook trackpad on first
+  // try. Element-level pointer capture can be inconsistent with trackpad
+  // input in some browsers; binding move/up to window is the more robust,
+  // standard pattern for custom drag UIs and doesn't depend on capture
+  // behaving correctly.
+  function movePosition(clientX: number) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const deltaPct = ((clientX - startX.current) / rect.width) * 100;
+    setPosition(Math.max(0, Math.min(100, startPos.current + deltaPct)));
+  }
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     dragging.current = true;
     startX.current = e.clientX;
     startPos.current = position;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }
 
-  // Relative delta from where the drag started, not the pointer's absolute
-  // position — using getPos(clientX) directly here made the handle snap to
-  // wherever the pointer physically was on the very first move event, which
-  // read as the slider "slipping" out from under a press that didn't start
-  // exactly on the handle.
-  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!dragging.current) return;
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const deltaPct = ((e.clientX - startX.current) / rect.width) * 100;
-    setPosition(Math.max(0, Math.min(100, startPos.current + deltaPct)));
-  }
-
-  function onPointerUp() {
-    dragging.current = false;
+    const onMove = (ev: PointerEvent) => {
+      if (!dragging.current) return;
+      movePosition(ev.clientX);
+    };
+    const onUp = () => {
+      dragging.current = false;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   }
 
   return (
@@ -482,9 +491,6 @@ export function ComparisonSlider() {
       <div
         ref={containerRef}
         onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
         style={{
           position: "relative",
           overflow: "hidden",
