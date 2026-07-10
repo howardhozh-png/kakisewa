@@ -677,8 +677,15 @@ export async function countOwnerLeads(): Promise<number> {
   return count ?? 0;
 }
 
+// Its only caller (the onboarding gate, app/(app)/layout.tsx) uses this to
+// mean "does this account have anything on the Existing Listing board" —
+// so the filter must match _cachedLifecycleTenancies' visibility filter
+// exactly (deleted_at/contract_end/lifecycle_stage), not an independent
+// 90-day window. The two used to disagree: an account with only tenancies
+// older than 90 days (but never manually marked closed) would be counted
+// as 0 here while the board still showed them, permanently stuck behind
+// the "add your first listing" gate despite already having real data.
 export async function countLifecycleTenancies(): Promise<number> {
-  const earliest = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
   const userId = await getCurrentUserId();
   const supabase = await createClient();
   let q = supabase
@@ -686,7 +693,7 @@ export async function countLifecycleTenancies(): Promise<number> {
     .select("*", { count: "exact", head: true })
     .is("deleted_at", null)
     .not("contract_end", "is", null)
-    .gte("contract_end", earliest);
+    .not("lifecycle_stage", "in", '("closed","reserved")');
   if (userId) q = q.eq("user_id", userId);
   const { count, error } = await q;
   if (error) throw error;

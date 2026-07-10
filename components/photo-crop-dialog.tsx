@@ -156,7 +156,7 @@ export function PhotoCropDialog({ src, aspectRatio, shape = "rect", onDone, onCa
 
   return (
     <div
-      className="fixed inset-0 z-[99999] flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[900] flex flex-col items-center justify-center"
       style={{ background: "rgba(0,0,0,0.92)" }}
     >
       <p className="text-[12px] font-medium mb-5 tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.45)" }}>

@@ -55,7 +55,7 @@ function Modal({ onClose, children, wide }: { onClose: () => void; children: Rea
 
   return (
     <div
-      className="fixed inset-0 z-[99998] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[900] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -912,7 +912,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
         {menuOpen && (
           <div
             ref={dropdownRef}
-            style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 99999, background: "#fff", border: "1px solid var(--kk-line)", borderRadius: 20, boxShadow: "0 16px 40px rgba(0,0,0,0.14)", minWidth: 220, overflow: "hidden" }}
+            style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 900, background: "#fff", border: "1px solid var(--kk-line)", borderRadius: 20, boxShadow: "0 16px 40px rgba(0,0,0,0.14)", minWidth: 220, overflow: "hidden" }}
           >
             <div className="px-4 py-3 border-b flex items-center gap-3" style={{ borderColor: "var(--kk-line)" }}>
               <AvatarCircle src={agent.photo_url} name={agent.name} size={36} />
@@ -952,7 +952,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
         {themeOpen && (
           <div
             ref={themeDropdownRef}
-            style={{ position: "fixed", top: themePos.top, right: themePos.right, zIndex: 99999, background: "#fff", border: "1px solid var(--kk-line)", borderRadius: 20, boxShadow: "0 16px 40px rgba(0,0,0,0.14)", width: 220, overflow: "hidden" }}
+            style={{ position: "fixed", top: themePos.top, right: themePos.right, zIndex: 900, background: "#fff", border: "1px solid var(--kk-line)", borderRadius: 20, boxShadow: "0 16px 40px rgba(0,0,0,0.14)", width: 220, overflow: "hidden" }}
           >
             <div className="px-4 py-3 border-b" style={{ borderColor: "var(--kk-line)" }}>
               <p className="text-[13px] font-semibold" style={{ color: "var(--kk-ink)" }}>Dashboard theme</p>
@@ -990,7 +990,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="kk-topnav-hamburger fixed inset-0 flex-col" style={{ zIndex: tourMenuActive ? 100000 : 99990, background: "var(--kk-topnav-bg)" }}>
+        <div className="kk-topnav-hamburger fixed inset-0 flex-col" style={{ zIndex: tourMenuActive ? 950 : 900, background: "var(--kk-topnav-bg)" }}>
           {/* Top row */}
           <div className="flex items-center justify-between h-16 px-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
             <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5" style={{ color: "var(--kk-topnav-ink)" }}>

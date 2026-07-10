@@ -79,7 +79,13 @@ export function TourSpotlight({ step, stepNumber, targetId, title, body }: Props
   const belowTop = rect.bottom + GAP + 14;
   const aboveTop = rect.top - GAP - TIP_H - 14;
   const tipBelow = belowTop + TIP_H < window.innerHeight - 20;
-  const tipTop   = tipBelow ? belowTop : aboveTop;
+  let tipTop = tipBelow ? belowTop : aboveTop;
+  // Hard clamp — same fix as onboarding-tour-step.tsx: whichever side was
+  // picked, never let the card render past the viewport edge. Without this,
+  // a target close enough to the top of the screen pushes the tooltip
+  // (and the only way to dismiss it, since dismissal is click-the-target,
+  // not a button — but the target itself can also be offscreen) off-screen.
+  tipTop = Math.max(12, Math.min(tipTop, window.innerHeight - TIP_H - 12));
   const arrowOff = Math.max(12, Math.min(rect.left + rect.width / 2 - tipLeft - 7, TIP_W - 26));
 
   return createPortal(
