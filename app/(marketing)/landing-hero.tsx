@@ -782,13 +782,10 @@ export function LandingHero() {
             marginBottom: 18,
             ...delay(0.1, revealed[3]),
           }}>
-            kakisewa starts at <span style={{ color: "#34C759" }}>RM1/day.</span><br />Refer someone, get a month free.
+            kakisewa starts at <span style={{ color: "#34C759" }}>RM1/day.</span>
           </h2>
-          <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 8, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
-            Cancel anytime.
-          </p>
-          <p style={{ fontSize: 14, color: "#C7C7CC", marginBottom: 52, lineHeight: 1.5, ...delay(0.3, revealed[3]) }}>
-            Starting at RM1/day. 2 months free trial.
+          <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
+            2 months free to start. Cancel anytime.
           </p>
           <div style={delay(0.4, revealed[3])}>
             <Link
