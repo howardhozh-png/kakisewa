@@ -2127,6 +2127,7 @@ export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
   const uid = session?.user?.id;
   if (!uid) return { ok: false };
 
+  const { TRIAL_DURATION_DAYS } = await import("@/lib/beta-config");
   const svc = createServiceClient();
   await Promise.all([
     svc.from("owner_leads").delete().eq("user_id", uid),
@@ -2138,7 +2139,8 @@ export async function adminResetMyAccount(): Promise<{ ok: boolean }> {
     longest_streak: 0,
     last_login_date: null,
     trial_started_at: new Date().toISOString(),
-    trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    trial_ends_at: new Date(Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+    survey_completed_at: new Date().toISOString(),
   }).eq("id", uid);
 
   revalidatePath("/", "layout");

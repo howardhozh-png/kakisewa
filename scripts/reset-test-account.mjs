@@ -7,6 +7,8 @@ import { createClient } from "@supabase/supabase-js";
 
 config({ path: ".env.local" });
 
+const TRIAL_DURATION_DAYS = 61; // must match lib/beta-config.ts
+
 const email = process.argv[2];
 const execute = process.argv.includes("--execute");
 if (!email) {
@@ -85,12 +87,12 @@ if (propertyPackIds.length) {
 
 console.log("\nagent_profiles fields that will reset:");
 console.log(`  trial_started_at: ${profile.trial_started_at} -> now`);
-console.log(`  trial_ends_at: ${profile.trial_ends_at} -> +14d from now`);
+console.log(`  trial_ends_at: ${profile.trial_ends_at} -> +${TRIAL_DURATION_DAYS}d from now`);
 console.log(`  subscription_status: ${profile.subscription_status} -> trial`);
 console.log(`  login_streak: ${profile.login_streak} -> 0`);
 console.log(`  longest_streak: ${profile.longest_streak} -> 0`);
 console.log(`  last_login_date: ${profile.last_login_date} -> null`);
-console.log(`  survey_completed_at: ${profile.survey_completed_at} -> null`);
+console.log(`  survey_completed_at: ${profile.survey_completed_at} -> now (matches real signup — skips beta survey)`);
 console.log(`  (name / phone / agency / ren_number left as-is)`);
 
 if (!execute) {
@@ -110,12 +112,14 @@ for (const t of DIRECT_TABLES) {
 
 const { error: updateError } = await svc.from("agent_profiles").update({
   trial_started_at: new Date().toISOString(),
-  trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
+  trial_ends_at: new Date(Date.now() + TRIAL_DURATION_DAYS * 86400000).toISOString(),
   subscription_status: "trial",
   login_streak: 0,
   longest_streak: 0,
   last_login_date: null,
-  survey_completed_at: null,
+  // Matches real signup (lib/db.ts) — new accounts skip the beta survey,
+  // so a "fresh" reset must pre-stamp this, not null it.
+  survey_completed_at: new Date().toISOString(),
 }).eq("id", user.id);
 if (updateError) console.log(`  agent_profiles: ERROR ${updateError.message}`);
 
