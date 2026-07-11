@@ -155,6 +155,14 @@ function loadSuppressed() {
   };
 }
 
+function saveSuppressed(suppressed) {
+  fs.writeFileSync(SUPPRESSED, JSON.stringify({
+    bounced:          [...suppressed.bounced].sort(),
+    blocked_domains:  [...suppressed.blocked_domains].sort(),
+    deferred_domains: [...suppressed.deferred_domains].sort(),
+  }, null, 2), "utf8");
+}
+
 function skipReason(email, suppressed) {
   const e = email.toLowerCase();
   const domain = e.split("@")[1] ?? "";
@@ -237,6 +245,37 @@ function resendGet(path) {
   });
 }
 
+// Every address Resend has ever recorded a "bounced" event for, across all
+// sequences. The local suppressed.bounced list used to only grow when Howard
+// manually reported what he saw in the Resend dashboard — it drifted badly
+// behind reality (checked 2026-07-11: 30 addresses tracked locally vs ~63
+// real bounces in Resend's own log since the campaign started). This closes
+// that gap by pulling the ground truth on every run instead of relying on
+// someone remembering to check a dashboard.
+async function fetchBouncedEmails() {
+  const bounced = new Set();
+  let after = null;
+  for (let i = 0; i < 80; i++) {
+    const path = "/emails" + (after ? `?after=${after}&limit=100` : "?limit=100");
+    let r;
+    for (let retry = 0; retry < 5; retry++) {
+      r = await resendGet(path);
+      if (r.statusCode === 429) { await sleep(1500); continue; }
+      break;
+    }
+    if (!r.data || r.data.length === 0) break;
+    for (const item of r.data) {
+      if (item.last_event === "bounced" && item.from?.startsWith(FROM_NAME)) {
+        for (const to of item.to) bounced.add(to.toLowerCase());
+      }
+    }
+    if (!r.has_more) break;
+    after = r.data[r.data.length - 1].id;
+    await sleep(700); // stay under Resend's 2 req/s
+  }
+  return bounced;
+}
+
 // Recipients whose seq1 email (subject-matched) has an "opened" or "clicked"
 // event on Resend. Paginates back to 2026-07-02 — sends before that predate
 // tracking (plain-text era + pre-tracking era), so there's nothing to find further back.
@@ -312,6 +351,19 @@ async function run() {
   const sent = loadSent();
   const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
+
+  // Sync real bounce data from Resend before building today's queue — the
+  // local list used to only update when someone manually checked the
+  // dashboard, so known-dead addresses kept getting re-sent to in later
+  // sequences. See fetchBouncedEmails() for the full story.
+  const realBounces = await fetchBouncedEmails();
+  const newBounces = [...realBounces].filter(e => !suppressed.bounced.has(e));
+  for (const e of newBounces) suppressed.bounced.add(e);
+  if (newBounces.length > 0) {
+    saveSuppressed(suppressed);
+    log(`Synced ${newBounces.length} new bounce(s) from Resend (local list was missing them): ${newBounces.join(", ")}`);
+  }
+
   const openedSeq1 = await fetchOpenedSeq1Emails();
 
   // Build candidate list — skip suppressed/deferred, tag with domain tier
