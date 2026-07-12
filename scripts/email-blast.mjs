@@ -38,7 +38,7 @@ const SEQ3_AFTER_DAYS = 4;  // send seq3 4 days after seq2
 // rent/sale category pages by phone number — see tag-listing-type step.
 // Most contacts are "unknown" (no Mudah listing match), so this only
 // narrows the pool, it doesn't guarantee DAILY_LIMIT gets filled.
-const TARGET_LISTING_TYPE = null;
+const TARGET_LISTING_TYPE = "rent";
 
 const MASTER      = "scripts/output-master.csv";
 const SENT_LOG    = "scripts/email-blast-sent.json";
