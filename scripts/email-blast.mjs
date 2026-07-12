@@ -33,6 +33,13 @@ const DELAY_MS        = 3000;  // 3s between sends — stays under Resend's 2 re
 const SEQ2_AFTER_DAYS = 4;  // send seq2 4 days after seq1
 const SEQ3_AFTER_DAYS = 4;  // send seq3 4 days after seq2
 
+// "rent" | "sale" | null (null = no filter, target everyone). Backed by
+// output-master.csv's listing_type column, cross-referenced from Mudah.my's
+// rent/sale category pages by phone number — see tag-listing-type step.
+// Most contacts are "unknown" (no Mudah listing match), so this only
+// narrows the pool, it doesn't guarantee DAILY_LIMIT gets filled.
+const TARGET_LISTING_TYPE = null;
+
 const MASTER      = "scripts/output-master.csv";
 const SENT_LOG    = "scripts/email-blast-sent.json";
 const SUPPRESSED  = "scripts/email-blast-suppressed.json";
@@ -347,7 +354,12 @@ async function main() {
 
 async function run() {
   const contacts = parseCSV(MASTER);
-  const withEmail = contacts.filter(c => c.email && EMAIL_RE.test(c.email));
+  let withEmail = contacts.filter(c => c.email && EMAIL_RE.test(c.email));
+  if (TARGET_LISTING_TYPE) {
+    const beforeCount = withEmail.length;
+    withEmail = withEmail.filter(c => c.listing_type === TARGET_LISTING_TYPE);
+    log(`Targeting listing_type="${TARGET_LISTING_TYPE}" only: ${withEmail.length} of ${beforeCount} contacts with email match.`);
+  }
   const sent = loadSent();
   const suppressed = loadSuppressed();
   const today = new Date().toISOString().split("T")[0];
