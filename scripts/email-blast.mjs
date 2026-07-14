@@ -55,15 +55,15 @@ const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 const SEQUENCES = {
   seq1: {
     subject: "WhatsApp introduced username, agent panics.",
-    body: `Most agents lose over RM100,000 in renewal commissions every year without knowing it.
+    body: `Most rental agents lose over RM100,000 in renewal commissions a year without knowing it.
 
-Tenant calls the owner. Owner renews quietly. You find out 6 months later. Thirty renewals at RM3,000 each, gone.
+Tenant calls the owner directly. Owner renews quietly. You find out 6 months later — another RM3,000 gone.
 
-kakisewa notifies you 60 and 30 days before every contract expires, so you call the owner first.
-
-Also: WhatsApp just introduced usernames. Cold outreach may get harder. Your existing tenants are your income now.
+kakisewa notifies you 60 and 30 days before every tenancy expires, so you call the owner first, every time.
 
 Free to sign up. kakisewa.com
+
+What's your biggest headache with managing tenants right now?
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
