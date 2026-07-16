@@ -511,8 +511,8 @@ export function LandingHero() {
             </span>
             <h3 style={{
               fontFamily: "'DM Serif Display', Georgia, serif",
-              fontSize: "clamp(1.5rem, 2.6vw, 1.9rem)", letterSpacing: "-0.02em", color: "#1D1D1F",
-              marginBottom: 12, lineHeight: 1.2,
+              fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
+              marginBottom: 12, lineHeight: 1.1,
             }}>
               Send WhatsApp outreach whenever you are free.
             </h3>
