@@ -369,7 +369,7 @@ export function LandingHero() {
               }}>
                 <div style={{ maxWidth: 920, width: "100%" }}>
                   <div style={{
-                    fontFamily: "’DM Serif Display’, Georgia, serif",
+                    fontFamily: "'DM Serif Display', Georgia, serif",
                     fontSize: "clamp(3.2rem, 9vw, 7rem)",
                     lineHeight: 1.05,
                     letterSpacing: "-0.03em",
