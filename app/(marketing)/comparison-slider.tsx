@@ -469,11 +469,8 @@ export function ComparisonSlider() {
         <p className="uppercase font-semibold mb-5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}>
           The income gap
         </p>
-        <h2 className="serif mx-auto" style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1, letterSpacing: "-0.022em", maxWidth: "28ch" }}>
-          How agents work{" "}
-          <span style={{ color: "#DC2626" }}>today</span>{" "}
-          vs{" "}
-          <span style={{ color: "var(--kk-green)" }}>with kakisewa</span>
+        <h2 className="serif mx-auto" style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1, letterSpacing: "-0.022em", maxWidth: "28ch", color: "#1D1D1F" }}>
+          How agents work today vs with kakisewa
         </h2>
       </div>
 
