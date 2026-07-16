@@ -9,6 +9,10 @@ const FAQS = [
     a: "Yes. Upload a CSV to import your owner leads in bulk, or add them one by one. You can update the status of each lead as you work through them.",
   },
   {
+    q: "How do I keep track of owners I've messaged?",
+    a: "Every owner lead moves through a simple pipeline — contacted, interested, listed. kakisewa shows you exactly who you've reached out to and who's gone quiet, so no lead falls through the cracks.",
+  },
+  {
     q: "How does kakisewa remind me about expiring contracts?",
     a: "You get in-app alerts 60 days before a contract expires — then again at 30 and 7 days. You always follow up first, before another agent does.",
   },

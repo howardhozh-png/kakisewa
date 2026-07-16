@@ -18,10 +18,18 @@ export interface StoryBeat {
 export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
-      { text: "You forgot to message the owner. ", small: true },
-      { text: "Again.", color: "#FF3B30" },
+      { text: "You messaged the owner. ", small: true },
+      { text: "Then lost track.", color: "#FF3B30" },
     ],
-    sub: "kakisewa reminds you 60 and 30 days before every tenancy expires, so you reach out first, every time.",
+    sub: "kakisewa tracks every owner you reach out to today, and keeps protecting the renewal income once that lead becomes a tenancy.",
+  },
+  {
+    parts: [
+      { text: "The best agents send ", small: true },
+      { text: "700+", color: "#34C759" },
+      { text: " WhatsApp messages to owners a month.", small: true },
+    ],
+    sub: "kakisewa remembers every single one, even the ones from three weeks ago.",
   },
   {
     parts: [

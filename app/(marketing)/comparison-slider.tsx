@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { GripVertical, Banknote, ArrowRight, CheckCircle, Check, FileText } from "lucide-react";
+import { GripVertical, MessageCircle, ArrowRight, CheckCircle, Check, FileText } from "lucide-react";
 
 // ─── Excel panel data ──────────────────────────────────────────────────────────
 
@@ -135,37 +135,37 @@ const CHART_MAX = 2400;
 
 const KANBAN = [
   {
-    id: "expiring",
-    title: "EXPIRING",
+    id: "contacted",
+    title: "CONTACTED",
     icon: "△",
     iconColor: "#F4511E",
-    subtitle: "Expires soon. Use 'What's next?' to choose the outcome.",
+    subtitle: "Outreach sent. Waiting to hear back.",
     cards: [
-      { name: "Aiman Hafiz", prop: "The Park · A5905", sub: "exp 15 Jul 2026", badge: "41d", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Nur Farhana", prop: "Sri Damansara",    sub: "exp 28 Jun 2026", badge: "22d", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Aiman Hafiz", prop: "The Park · A5905", sub: "Sent 3 days ago", badge: "Sent", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Nur Farhana", prop: "Sri Damansara",    sub: "Sent twice", badge: "Sent twice", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
     ],
   },
   {
-    id: "renewing",
-    title: "RENEWING",
+    id: "interested",
+    title: "INTERESTED",
     icon: "✓",
     iconColor: "#34C759",
-    subtitle: "Both confirmed. Collect commission and set the new end date.",
+    subtitle: "Replied and engaged. Keep the conversation moving.",
     cards: [
-      { name: "Rajesh Kumar", prop: "Bangsar South",       sub: "Unit 8-2A",  badge: "Commission due", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Lee Wei",      prop: "Mutiara Damansara",   sub: "Unit 12-B",  badge: "Commission due", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1585128792020-803d29415281?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Rajesh Kumar", prop: "Bangsar South",       sub: "Replied yesterday",  badge: "Replied", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Lee Wei",      prop: "Mutiara Damansara",   sub: "Asked for property pack",  badge: "Replied", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1585128792020-803d29415281?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
     ],
   },
   {
-    id: "active",
-    title: "ACTIVE",
+    id: "listed",
+    title: "LISTED",
     icon: "○",
     iconColor: "#AEAEB2",
-    subtitle: "Tenancy in good standing. Nothing due yet.",
+    subtitle: "Signed on. Now finding the right tenant.",
     cards: [
-      { name: "Ahmad S.",  prop: "Puchong Perdana", sub: "exp Mar 2027", badge: "198d remain", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1665249934445-1de680641f50?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Priya N.",  prop: "Subang Mewah",    sub: "exp Feb 2027", badge: "156d remain", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Hasrul",    prop: "Kepong C-12",     sub: "exp Sep 2026", badge: "89d remain",  badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Ahmad S.",  prop: "Puchong Perdana", sub: "Listed 2 weeks ago", badge: "Listed", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1665249934445-1de680641f50?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Priya N.",  prop: "Subang Mewah",    sub: "Listed 1 month ago", badge: "Listed", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      { name: "Hasrul",    prop: "Kepong C-12",     sub: "Listed 3 months ago", badge: "Listed", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
     ],
   },
 ];
@@ -207,8 +207,8 @@ function KakiSewaPanel() {
         <div style={{ width: 1, height: 14, background: "rgba(0,0,0,0.1)", flexShrink: 0 }} />
         {[
           { label: "Home", active: false },
-          { label: "Existing Contracts", active: true },
-          { label: "New Owners", active: false },
+          { label: "New Owners", active: true },
+          { label: "Existing Contracts", active: false },
         ].map(l => (
           <span key={l.label} style={{
             fontSize: 10.5,
@@ -248,18 +248,18 @@ function KakiSewaPanel() {
             letterSpacing: "-0.03em", lineHeight: 1,
             fontFamily: "Georgia, 'Times New Roman', serif",
           }}>
-            Existing Contracts
+            New Owners
           </p>
           <p style={{ fontSize: 10, color: "#86868B", marginTop: 3 }}>
-            Your renewal commission is passive income. Never miss an expiry again.
+            Every owner you've messaged, tracked until they list or go cold.
           </p>
           <div style={{ marginTop: 8, borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 0, display: "flex", alignItems: "flex-end" }}>
             <span style={{
               fontSize: 11, fontWeight: 600, color: "#1D1D1F",
               borderBottom: "2px solid #1D1D1F", paddingBottom: 6, display: "inline-block",
             }}>
-              Existing contracts &nbsp;
-              <span style={{ background: "#1D1D1F", color: "#fff", borderRadius: "50%", fontSize: 9, padding: "1px 5px", fontWeight: 700 }}>35</span>
+              New owners &nbsp;
+              <span style={{ background: "#1D1D1F", color: "#fff", borderRadius: "50%", fontSize: 9, padding: "1px 5px", fontWeight: 700 }}>127</span>
             </span>
           </div>
         </div>
@@ -271,10 +271,10 @@ function KakiSewaPanel() {
           padding: "10px 12px",
         }}>
           <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#86868B" }}>
-            RENEWAL INCOME · NEXT 12 MONTHS
+            OWNER OUTREACH · LAST 12 MONTHS
           </p>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>RM 14,800</p>
-          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>35 contracts · 50% commission per renewal</p>
+          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>127 owners</p>
+          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>34 replied · 12 listed this month</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 44, marginTop: 8 }}>
             {CHART_DATA.map((v, i) => (
               <div key={i} style={{ flex: 1 }}>
@@ -296,7 +296,7 @@ function KakiSewaPanel() {
 
         {/* Kanban */}
         <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-          {/* "Don't forget your money!" tooltip above EXPIRING */}
+          {/* "3 owners went quiet!" tooltip above CONTACTED */}
           <div style={{ position: "absolute", top: -28, left: "2%", pointerEvents: "none" }}>
             <div style={{
               background: "#1D1D1F", color: "#fff", borderRadius: 22,
@@ -304,8 +304,8 @@ function KakiSewaPanel() {
               display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
               boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             }}>
-              <Banknote style={{ width: 13, height: 13, color: "#fff" }} />
-              Don&apos;t forget your money!
+              <MessageCircle style={{ width: 13, height: 13, color: "#fff" }} />
+              3 owners went quiet!
             </div>
             <div style={{
               width: 0, height: 0,
@@ -375,29 +375,29 @@ function KakiSewaPanel() {
                         </div>
                       </div>
                       {/* Action button per stage */}
-                      {col.id === "expiring" && (
+                      {col.id === "contacted" && (
                         <div style={{
                           marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
                           background: "rgba(0,0,0,0.04)", borderRadius: 6, padding: "4px 7px",
                           fontSize: 8, fontWeight: 600, color: "#1D1D1F", whiteSpace: "nowrap",
                         }}>
-                          <span>What&apos;s next?</span>
+                          <span>Follow up?</span>
                           <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
                         </div>
                       )}
-                      {col.id === "renewing" && (
+                      {col.id === "interested" && (
                         <div style={{
                           marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
                           background: "rgba(52,199,89,0.10)", borderRadius: 6, padding: "4px 7px",
                           fontSize: 8, fontWeight: 600, color: "#34C759", whiteSpace: "nowrap",
                         }}>
                           <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                            <CheckCircle style={{ width: 9, height: 9, flexShrink: 0 }} /> Moved in
+                            <CheckCircle style={{ width: 9, height: 9, flexShrink: 0 }} /> Send pack
                           </span>
                           <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
                         </div>
                       )}
-                      {col.id === "active" && (
+                      {col.id === "listed" && (
                         <div style={{
                           marginTop: 5, display: "flex", alignItems: "center", gap: 3,
                           fontSize: 8, color: "#86868B", whiteSpace: "nowrap",
@@ -422,6 +422,7 @@ function KakiSewaPanel() {
 
 export function ComparisonSlider() {
   const [position, setPosition] = useState(30);
+  const [interacted, setInteracted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const startX = useRef(0);
@@ -442,6 +443,7 @@ export function ComparisonSlider() {
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     dragging.current = true;
+    setInteracted(true);
     startX.current = e.clientX;
     startPos.current = position;
 
@@ -473,7 +475,6 @@ export function ComparisonSlider() {
           vs{" "}
           <span style={{ color: "var(--kk-green)" }}>with kakisewa</span>
         </h2>
-        <p style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginTop: 8 }}>Drag the handle to compare</p>
       </div>
 
       {/* Labels above the slider */}
@@ -527,19 +528,31 @@ export function ComparisonSlider() {
           zIndex: 20, pointerEvents: "none", transform: "translateX(-1px)",
         }} />
 
-        {/* Drag handle */}
-        <button style={{
-          position: "absolute", left: `${position}%`, top: "50%",
-          transform: "translate(-50%, -50%)", zIndex: 21,
-          width: 36, height: 36, borderRadius: "50%",
-          background: "#fff", border: "1.5px solid rgba(0,0,0,0.12)",
-          cursor: "ew-resize", boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          pointerEvents: "none",
-        }}>
+        {/* Drag handle — wiggles left-right until the visitor tries it once */}
+        <button
+          className={interacted ? "" : "kk-slide-handle-hint"}
+          style={{
+            position: "absolute", left: `${position}%`, top: "50%",
+            marginTop: -18, transform: "translateX(-50%)", zIndex: 21,
+            width: 36, height: 36, borderRadius: "50%",
+            background: "#fff", border: "1.5px solid rgba(0,0,0,0.12)",
+            cursor: "ew-resize", boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            pointerEvents: "none",
+          }}
+        >
           <GripVertical style={{ width: 15, height: 15, color: "#888" }} />
         </button>
       </div>
+
+      <style>{`
+        @keyframes kk-slide-handle-hint {
+          0%, 100% { transform: translateX(-50%); }
+          25%      { transform: translateX(calc(-50% - 10px)); }
+          75%      { transform: translateX(calc(-50% + 10px)); }
+        }
+        .kk-slide-handle-hint { animation: kk-slide-handle-hint 1.8s ease-in-out infinite; }
+      `}</style>
     </div>
   );
 }

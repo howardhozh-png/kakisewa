@@ -7,7 +7,8 @@ import { track } from "@/lib/analytics";
 import { STORY_BEATS } from "@/lib/hook-content";
 import { Faq } from "./faq";
 import { ComparisonSlider } from "./comparison-slider";
-import { MessageCircle, Check as CheckIcon } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { JourneyTimeline } from "./journey-timeline";
 
 /* ── PixelTrail ──────────────────────────────────────────────────────────────
    Builds a grid of divs over a chapter and lights cells on mousemove.
@@ -89,7 +90,6 @@ const CH_CONFIGS = [
   { r: 0,   g: 113, b: 227 },
   { r: 255, g: 59,  b: 48  },
   { r: 0,   g: 113, b: 227 },
-  { r: 0,   g: 113, b: 227 },
 ];
 
 /* ── CH0 horizontal story beats (data now shared — see lib/hook-content.ts) ── */
@@ -98,7 +98,7 @@ const CH0_SLIDES = STORY_BEATS.length;
 /* ── Component ───────────────────────────────────────────────────────────── */
 export function LandingHero() {
   const [active, setActive]       = useState(0);
-  const [revealed, setRevealed]   = useState([true, false, false, false]);
+  const [revealed, setRevealed]   = useState([true, false, false]);
   const [ch0Slide, setCh0Slide]   = useState(0);
 
   const activeRef      = useRef(0);
@@ -107,9 +107,8 @@ export function LandingHero() {
   const ch0AutoStopped = useRef(false);
   const ch0 = useRef<HTMLElement>(null);
   const ch1 = useRef<HTMLElement>(null);
-  const ch2 = useRef<HTMLElement>(null);
   const ch3 = useRef<HTMLElement>(null);
-  const chRefs = [ch0, ch1, ch2, ch3];
+  const chRefs = [ch0, ch1, ch3];
   const ph = usePostHog();
 
   useEffect(() => {
@@ -145,7 +144,7 @@ export function LandingHero() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
-        chRefs[Math.min(activeRef.current + 1, 3)]?.current?.scrollIntoView({ behavior: "smooth" });
+        chRefs[Math.min(activeRef.current + 1, 2)]?.current?.scrollIntoView({ behavior: "smooth" });
       }
       if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
@@ -269,17 +268,17 @@ export function LandingHero() {
           .kk-land-feat-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
           .kk-land-phone-frame { width: 150px !important; height: 300px !important; }
           .kk-land-phone-inner { transform: scale(1.25) !important; }
-          .kk-land-sample-note { display: none !important; }
           .kk-land-pdots { display: none !important; }
-          .kk-land-wa-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
           .kk-land-kanban-grid { grid-template-columns: 70% 25% 25% !important; }
-          /* This chapter's content (feature cards + both mockups) got taller than
-             100svh once the desktop mockup was added to mobile — the other
-             chapters (hero carousel, money calc, CTA) stay fixed-height since
-             their layouts depend on it, but this one just flows and scrolls
-             instead of clipping. */
-          .kk-land-ch2 { height: auto !important; min-height: 100svh !important; overflow: visible !important; }
+          .kk-land-wa-flow { grid-template-columns: 1fr !important; justify-items: center; gap: 14px !important; }
+          .kk-land-wa-arrow { flex-direction: row !important; }
+          .kk-land-wa-arrow-icon { transform: rotate(90deg); }
         }
+        @keyframes kk-wa-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,211,102,0.45); }
+          50% { transform: scale(1.18); box-shadow: 0 0 0 5px rgba(37,211,102,0); }
+        }
+        .kk-land-wa-pulse { animation: kk-wa-pulse 1.7s ease-in-out infinite; }
       `}</style>
 
       {/* ── Fixed Nav ──────────────────────────────────────────────────────── */}
@@ -312,7 +311,7 @@ export function LandingHero() {
 
       {/* ── Progress Dots ──────────────────────────────────────────────────── */}
       <nav className="kk-land-pdots" style={{ position: "fixed", right: 24, top: "50%", transform: "translateY(-50%)", zIndex: 200, display: "flex", flexDirection: "column", gap: 10 }}>
-        {[0,1,2,3].map(i => (
+        {[0,1,2].map(i => (
           <button
             key={i}
             onClick={() => chRefs[i]?.current?.scrollIntoView({ behavior: "smooth" })}
@@ -482,15 +481,20 @@ export function LandingHero() {
         )}
       </section>
 
-      {/* ── PIVOT — the one turn from pain to solution, ties directly to the
-             number the visitor just saw above ──────────────────────────────── */}
-      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 0" }}>
+      {/* ── JOURNEY TIMELINE — merged with the pivot line (was its own thin
+             section with no bottom padding, butting straight into the next
+             section). Sequences owner outreach and renewal tracking as one
+             story instead of two competing features, so a new agent building
+             their pipeline and a veteran agent protecting an existing book
+             both see themselves in the same page ─────────────────────────── */}
+      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
         <p style={{
-          textAlign: "center", maxWidth: 560, margin: "0 auto",
+          textAlign: "center", maxWidth: 560, margin: "0 auto 48px",
           fontSize: "clamp(1.1rem, 1.8vw, 1.3rem)", color: "#1D1D1F", lineHeight: 1.5, fontWeight: 500,
         }}>
           That number is real. Here is exactly what changes it.
         </p>
+        <JourneyTimeline />
       </section>
 
       {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
@@ -498,110 +502,10 @@ export function LandingHero() {
         <ComparisonSlider />
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          CH2 — KAKISEWA
-      ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={ch2} className="kk-land-chapter kk-land-ch2" style={{ background: "#fff" }}>
-        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 1000, padding: "80px 40px 48px" }}>
-
-          {/* Short label — the 3-feature text grid was cut, it restated what the
-              comparison slider and WhatsApp callout already showed visually. */}
-          <div style={{ textAlign: "center", marginBottom: 20, ...delay(0.1, revealed[2]) }}>
-            <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 10 }}>
-              On your phone
-            </span>
-          </div>
-
-          {/* SAMPLE badge */}
-          <div style={{ textAlign: "center", marginBottom: 14, ...delay(0.2, revealed[2]) }}>
-            <span style={{ display: "inline-block", padding: "4px 14px", background: "rgba(255,149,0,0.1)", border: "1px solid rgba(255,149,0,0.3)", borderRadius: 99, fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#C47800" }}>
-              Sample
-            </span>
-          </div>
-
-          {/* Phone mockup — the browser mockup was cut; the comparison slider above
-              already covers "here's a screen of the app," this is the one thing it
-              doesn't cover: what it looks like installed on your phone. */}
-          <div className="kk-land-mockup-pair" style={{ display: "flex", justifyContent: "center", ...delay(0.3, revealed[2]) }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div className="kk-land-phone-frame" style={{ width: 180, height: 360, flexShrink: 0, borderRadius: 28, background: "#1A1A1C", border: "4px solid #2C2C2E", boxShadow: "0 0 0 1px rgba(255,255,255,0.07)", overflow: "hidden", position: "relative" }}>
-                <div className="kk-land-phone-inner" style={{ width: 120, height: 242, transform: "scale(1.5)", transformOrigin: "top left", background: "#FBFBFD", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                  {/* Nav */}
-                  <div style={{ background: "#fff", borderBottom: "1px solid #E5E5EA", padding: "6px 8px", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-                    <span style={{ fontSize: 11, color: "#1D1D1F", lineHeight: 1, fontWeight: 300 }}>&#9776;</span>
-                    <span style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 9, color: "#1D1D1F", flex: 1, lineHeight: 1 }}>k kakisewa</span>
-                    <span style={{ fontSize: 5, fontWeight: 700, background: "#B8922E", color: "#fff", padding: "1px 4px", borderRadius: 3, letterSpacing: ".04em" }}>ELITE</span>
-                    <div style={{ position: "relative", flexShrink: 0, marginLeft: 2 }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                      <div style={{ position: "absolute", top: -2, right: -2, width: 5, height: 5, background: "#FF3B30", borderRadius: "50%" }} />
-                    </div>
-                  </div>
-                  {/* Availability card */}
-                  <div style={{ background: "#fff", margin: 5, borderRadius: 7, padding: 7, border: "1px solid #E5E5EA", flexShrink: 0 }}>
-                    <div style={{ fontSize: 5, fontWeight: 600, color: "#AEAEB2", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 2 }}>Property Availability · 12 Months</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-.02em", lineHeight: 1, marginBottom: 1 }}>RM 18,000</div>
-                    <div style={{ fontSize: 5, color: "#6E6E73", marginBottom: 5 }}>6 properties · 100% commission</div>
-                    <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 20, marginBottom: 3 }}>
-                      {[90, 3, 60, 35, 3, 3].map((h, i) => (
-                        <div key={i} style={{ flex: 1, background: h > 10 ? "#AEAEB2" : "#E5E5EA", borderRadius: "2px 2px 0 0", height: `${h}%` }} />
-                      ))}
-                    </div>
-                    <div style={{ display: "flex", gap: 2, fontSize: 4, color: "#AEAEB2" }}>
-                      {["Jun","Jul","Aug","Sep","Oct","Nov"].map(m => <div key={m} style={{ flex: 1 }}>{m}</div>)}
-                    </div>
-                  </div>
-                  {/* Search */}
-                  <div style={{ margin: "0 5px 4px", background: "#fff", border: "1px solid #E5E5EA", borderRadius: 5, padding: "4px 7px", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    <span style={{ fontSize: 6, color: "#AEAEB2" }}>Search...</span>
-                  </div>
-                  {/* Card 1 */}
-                  <div style={{ margin: "0 5px 4px", background: "#fff", border: "1px solid #E5E5EA", borderRadius: 7, padding: 6, flexShrink: 0 }}>
-                    <div style={{ display: "flex", gap: 5, alignItems: "flex-start", marginBottom: 4 }}>
-                      <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=48&h=48&fit=crop&auto=format" style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, objectFit: "cover" }} alt="" />
-                      <div>
-                        <div style={{ fontSize: 7, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.2 }}>Ritze Perdana</div>
-                        <div style={{ fontSize: 6, color: "#6E6E73" }}>Unit 11C · RM 2,400/mo</div>
-                        <div style={{ fontSize: 5, color: "#AEAEB2", marginTop: 1 }}>Michelle Ong Cheng Bee</div>
-                      </div>
-                    </div>
-                    <div style={{ background: "rgba(52,199,89,0.1)", borderRadius: 4, padding: "3px 5px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: 6, fontWeight: 600, color: "#1F8B4C" }}>&#10003; Tenant confirmed</span>
-                      <span style={{ fontSize: 8, color: "#1F8B4C" }}>&#8594;</span>
-                    </div>
-                  </div>
-                  {/* Card 2 */}
-                  <div style={{ margin: "0 5px", background: "#fff", border: "1px solid #E5E5EA", borderRadius: 7, padding: 6, flexShrink: 0 }}>
-                    <div style={{ display: "flex", gap: 5, alignItems: "flex-start" }}>
-                      <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=48&h=48&fit=crop&auto=format" style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, objectFit: "cover" }} alt="" />
-                      <div>
-                        <div style={{ fontSize: 7, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.2 }}>The Greens Subang</div>
-                        <div style={{ fontSize: 6, color: "#6E6E73" }}>Unit 8-01 · RM 2,100/mo</div>
-                        <div style={{ fontSize: 5, color: "#AEAEB2", marginTop: 1 }}>Helen Tan Bee Choo</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div style={{ marginTop: 6, fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#C7C7CC" }}>PWA</div>
-            </div>
-          </div>
-
-          <p className="kk-land-sample-note" style={{ fontSize: 11, color: "#C7C7CC", marginTop: 10, ...delay(0.44, revealed[2]) }}>
-            Sample data for illustration only.
-          </p>
-        </div>
-      </section>
-
       {/* ── WHATSAPP CALLOUT — third supporting proof beat, after desktop+phone ── */}
       <section style={{ background: "#FBFBFD", padding: "56px 40px 88px" }}>
-        <div style={{
-          maxWidth: 720, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center",
-        }}
-        className="kk-land-wa-grid"
-        >
-          <div>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", maxWidth: 480, margin: "0 auto 40px" }}>
             <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
               On your own schedule
             </span>
@@ -616,25 +520,125 @@ export function LandingHero() {
               Branded templates, ready whenever you open the app. No pressure to reply instantly, no one waiting on you.
             </p>
           </div>
-          <div style={{
-            background: "#E5DDD5", borderRadius: 18, padding: 20,
-            boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
-          }}>
-            <div style={{
-              background: "#DCF8C6", borderRadius: "12px 12px 2px 12px",
-              padding: "10px 12px", marginLeft: "18%",
-            }}>
-              <p style={{ fontSize: 12.5, color: "#1D1D1F", lineHeight: 1.5 }}>
-                Hi Puan Rozita, your tenancy at Cheras Hartamas renews in 60 days. Let me know if you would like to continue or if I should start finding a new tenant.
-              </p>
-              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 3, marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: "#667781" }}>1:42 PM</span>
-                <CheckIcon style={{ width: 12, height: 12, color: "#53BDEB" }} />
+
+          {/* Real product screens, not a staged mockup — tap an owner's WhatsApp
+              icon in the outreach list, land straight in the chat. Two frames
+              show that flow rather than describing it. */}
+          <div className="kk-land-wa-flow" style={{ display: "grid", gridTemplateColumns: "auto auto auto", alignItems: "center", justifyContent: "center", gap: 20 }}>
+            <div className="kk-land-phone-frame" style={{ width: 180, height: 360, flexShrink: 0, borderRadius: 28, background: "#1A1A1C", border: "4px solid #2C2C2E", boxShadow: "0 0 0 1px rgba(255,255,255,0.07)", overflow: "hidden", position: "relative" }}>
+              <div className="kk-land-phone-inner" style={{ width: 120, height: 242, transform: "scale(1.5)", transformOrigin: "top left", background: "#FBFBFD", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                {/* Nav, matches the real app's PWA header */}
+                <div style={{ background: "#fff", borderBottom: "1px solid #E5E5EA", padding: "6px 8px", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                  <span style={{ fontSize: 11, color: "#1D1D1F", lineHeight: 1, fontWeight: 300 }}>&#9776;</span>
+                  <span style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 9, color: "#1D1D1F", flex: 1, lineHeight: 1 }}>k kakisewa</span>
+                  <span style={{ fontSize: 5, fontWeight: 700, background: "#B8922E", color: "#fff", padding: "1px 4px", borderRadius: 3, letterSpacing: ".04em" }}>ELITE</span>
+                  <div style={{ position: "relative", flexShrink: 0, marginLeft: 2 }}>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <div style={{ position: "absolute", top: -2, right: -2, width: 5, height: 5, background: "#FF3B30", borderRadius: "50%" }} />
+                  </div>
+                </div>
+                {/* Sent-today banner */}
+                <div style={{ background: "#E4F7E9", margin: 5, borderRadius: 6, padding: "5px 6px", flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 5.5, fontWeight: 700 }}>
+                    <MessageCircle style={{ width: 6, height: 6, color: "#1F8B4C" }} />
+                    <span style={{ color: "#1F8B4C" }}>0 sent today</span>
+                    <span style={{ flex: 1 }} />
+                    <span style={{ color: "#6E6E73", fontWeight: 500 }}>50 remaining</span>
+                  </div>
+                  <div style={{ height: 2, background: "rgba(31,139,76,0.15)", borderRadius: 2, marginTop: 3 }} />
+                </div>
+                {/* Owner rows */}
+                <div style={{ flex: 1, overflow: "hidden" }}>
+                  {[
+                    { i: "DC", c: "#1F8B4C", n: "Daniel Hii Ju..." },
+                    { i: "FY", c: "#FF9500", n: "Fung Chen Y..." },
+                    { i: "WR", c: "#FF6B6B", n: "Wee Xiang R..." },
+                    { i: "NT", c: "#B23A48", n: "Ng Sek Teng" },
+                  ].map((row, i) => (
+                    <div key={row.i} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 6px", borderBottom: "1px solid #F0F0F0" }}>
+                      <div style={{ width: 12, height: 12, borderRadius: "50%", background: row.c, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: 3.6, fontWeight: 700, color: "#fff" }}>{row.i}</span>
+                      </div>
+                      <span style={{ fontSize: 5.4, color: "#1D1D1F", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.n}</span>
+                      <div
+                        className={i === 0 ? "kk-land-wa-pulse" : undefined}
+                        style={{ width: 10, height: 10, borderRadius: "50%", background: "#25D366", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        <MessageCircle style={{ width: 5.5, height: 5.5, color: "#fff" }} />
+                      </div>
+                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#E5E5EA", flexShrink: 0 }} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, opacity: 0.6 }}>
-              <MessageCircle style={{ width: 13, height: 13, color: "#075E54" }} />
-              <span style={{ fontSize: 10.5, color: "#075E54", fontWeight: 600 }}>Sent from renewal template</span>
+
+            {/* Connector — tap the pulsing icon, land in the chat */}
+            <div className="kk-land-wa-arrow" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: 9.5, fontWeight: 700, color: "#25D366", whiteSpace: "nowrap" }}>Tap WhatsApp</span>
+              <svg className="kk-land-wa-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" />
+                <path d="M13 6l6 6-6 6" />
+              </svg>
+            </div>
+
+            {/* Frame 2 — lands straight in the WhatsApp chat, no extra app to open */}
+            <div className="kk-land-phone-frame" style={{ width: 180, height: 360, flexShrink: 0, borderRadius: 28, background: "#1A1A1C", border: "4px solid #2C2C2E", boxShadow: "0 0 0 1px rgba(255,255,255,0.07)", overflow: "hidden", position: "relative" }}>
+              <div className="kk-land-phone-inner" style={{ width: 120, height: 242, transform: "scale(1.5)", transformOrigin: "top left", background: "#ECE5DD", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                {/* WhatsApp chat header */}
+                <div style={{ background: "#075E54", padding: "6px 8px", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#1F8B4C", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 5.5, fontWeight: 700, color: "#fff" }}>DC</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 7.5, fontWeight: 700, color: "#fff", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Daniel Hii Ju...</div>
+                    <div style={{ fontSize: 5, color: "rgba(255,255,255,0.75)", lineHeight: 1 }}>online</div>
+                  </div>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.65 2.65a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.43-1.27a2 2 0 0 1 2.11-.45c.86.31 1.75.53 2.65.65A2 2 0 0 1 22 16.92z"/></svg>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></svg>
+                </div>
+                {/* Chat body */}
+                <div style={{ flex: 1, padding: 6, display: "flex", flexDirection: "column", gap: 5, overflow: "hidden" }}>
+                  <div style={{ alignSelf: "flex-end", maxWidth: "82%", position: "relative", background: "#DCF8C6", borderRadius: "7px 7px 1px 7px", padding: "5px 7px" }}>
+                    <p style={{ fontSize: 6.5, color: "#1D1D1F", lineHeight: 1.35 }}>Hi Daniel! Unit at Ritze Perdana just went vacant, want me to help relist it?</p>
+                    <p style={{ fontSize: 4.5, color: "#6E9C7D", textAlign: "right", marginTop: 2 }}>10:41 <span style={{ color: "#34B7F1" }}>&#10003;&#10003;</span></p>
+                    <div style={{ position: "absolute", bottom: 0, right: -4, width: 0, height: 0, borderStyle: "solid", borderWidth: "0 0 6px 6px", borderColor: "transparent transparent transparent #DCF8C6" }} />
+                  </div>
+                  <div style={{ alignSelf: "flex-start", maxWidth: "78%", position: "relative", background: "#fff", borderRadius: "7px 7px 7px 1px", padding: "5px 7px" }}>
+                    <p style={{ fontSize: 6.5, color: "#1D1D1F", lineHeight: 1.35 }}>Yes please, let&apos;s talk!</p>
+                    <p style={{ fontSize: 4.5, color: "#AEAEB2", marginTop: 2 }}>10:44</p>
+                    <div style={{ position: "absolute", bottom: 0, left: -4, width: 0, height: 0, borderStyle: "solid", borderWidth: "0 6px 6px 0", borderColor: "transparent #fff transparent transparent" }} />
+                  </div>
+                </div>
+                {/* Input bar */}
+                <div style={{ background: "#F0F0F0", padding: "5px 6px", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8696A0" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
+                  <div style={{ flex: 1, background: "#fff", borderRadius: 20, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 6, color: "#AEAEB2", flex: 1 }}>Message</span>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#8696A0" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                  </div>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#25D366", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2z" /></svg>
+                  </div>
+                </div>
+                {/* Keyboard — signals "actively typing," fills the space so the
+                    chat doesn't read as empty below two short bubbles */}
+                <div style={{ background: "#D1D3D6", padding: "4px 3px 6px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                  {[10, 9, 8].map((count, r) => (
+                    <div key={r} style={{ display: "flex", gap: 2, paddingLeft: r * 4, paddingRight: r * 4 }}>
+                      {Array.from({ length: count }).map((_, k) => (
+                        <div key={k} style={{ flex: 1, height: 13, borderRadius: 2.5, background: "#fff", boxShadow: "0 1px 0 rgba(0,0,0,0.18)" }} />
+                      ))}
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", gap: 2, marginTop: 1 }}>
+                    <div style={{ width: 15, height: 13, borderRadius: 2.5, background: "#AEB1B5" }} />
+                    <div style={{ flex: 1, height: 13, borderRadius: 2.5, background: "#fff" }} />
+                    <div style={{ width: 15, height: 13, borderRadius: 2.5, background: "#AEB1B5" }} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -643,21 +647,21 @@ export function LandingHero() {
       {/* ══════════════════════════════════════════════════════════════════════
           CH3 — CTA
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={ch3} className="kk-land-chapter" style={{ background: "#fff" }}>
-        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, padding: "80px 40px 48px", textAlign: "center" }}>
+      <section ref={ch3} style={{ background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 720, padding: "88px 40px", textAlign: "center" }}>
           <h2 style={{
             fontFamily: "'DM Serif Display', Georgia, serif",
             fontSize: "clamp(2.4rem, 6vw, 4.25rem)",
             lineHeight: 1.08, letterSpacing: "-0.03em", color: "#1D1D1F",
             marginBottom: 18,
-            ...delay(0.1, revealed[3]),
+            ...delay(0.1, revealed[2]),
           }}>
             kakisewa starts at <span style={{ color: "#34C759" }}>RM1/day.</span>
           </h2>
-          <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[3]) }}>
+          <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[2]) }}>
             2 months free to start. Cancel anytime.
           </p>
-          <div style={delay(0.4, revealed[3])}>
+          <div style={delay(0.4, revealed[2])}>
             <Link
               href="/sign-up"
               className="kk-land-cta-btn"
@@ -675,7 +679,7 @@ export function LandingHero() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
           </div>
-          <p style={{ marginTop: 22, fontSize: 13, color: "#AEAEB2", ...delay(0.54, revealed[3]) }}>
+          <p style={{ marginTop: 22, fontSize: 13, color: "#AEAEB2", ...delay(0.54, revealed[2]) }}>
             Already have an account?{" "}
             <Link href="/sign-in" style={{ color: "#6E6E73", textDecoration: "underline", textUnderlineOffset: 3 }}>Sign in</Link>
           </p>
@@ -683,7 +687,7 @@ export function LandingHero() {
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
-      <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "80px 40px 88px" }}>
+      <section style={{ background: "#FBFBFD", padding: "80px 40px 88px" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <h2 style={{
             fontFamily: "'DM Serif Display', Georgia, serif",
