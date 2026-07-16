@@ -488,12 +488,6 @@ export function LandingHero() {
              their pipeline and a veteran agent protecting an existing book
              both see themselves in the same page ─────────────────────────── */}
       <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
-        <p style={{
-          textAlign: "center", maxWidth: 560, margin: "0 auto 48px",
-          fontSize: "clamp(1.1rem, 1.8vw, 1.3rem)", color: "#1D1D1F", lineHeight: 1.5, fontWeight: 500,
-        }}>
-          That number is real. Here is exactly what changes it.
-        </p>
         <JourneyTimeline />
       </section>
 
