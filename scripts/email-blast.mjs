@@ -54,32 +54,29 @@ const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
 const SEQUENCES = {
   seq1: {
-    subject: "You forgot to message the owner. Again.",
-    body: `Most rental agents lose over RM100,000 a year in renewal commissions. Not from bad service. From simply forgetting to reach out in time.
+    subject: "You messaged the owner. Then lost track.",
+    body: `You message owners all day. The hard part is remembering who replied.
 
-kakisewa reminds you 60 and 30 days before every tenancy expires, so you message the owner first, every time.
+kakisewa tracks every owner and reminds you before every tenancy expires. Agents lose 70% of income from existing tenancy without tracking.
 
 Free to sign up. kakisewa.com
 
-When's the last time you forgot to follow up on a renewal?
+How many owners are you tracking right now?
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
   },
 
   seq2: {
-    subject: "What's holding you back today?",
-    body: `It's Jovanne from kakisewa again.
+    subject: "Send WhatsApp outreach from anywhere",
+    body: `Reply from your phone, wherever you are. No pressure, no one waiting on you.
 
-You're showing a tenant three units this weekend. Photos on your phone, floor plans in email, owner numbers scattered across different chats.
+Every message gets tracked automatically, from first contact to renewal.
 
-kakisewa keeps owner, property details, photos, contracts, calendar all in one place.
+RM1/day. Free for 2 months. kakisewa.com
 
-RM1/day. Free for the first 2 months.
+Tell us what's holding you back? We'd really appreciate it.
 
-Sign up is free, works on your phone like an app. kakisewa.com
-
-Sincerely from,
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
   },
