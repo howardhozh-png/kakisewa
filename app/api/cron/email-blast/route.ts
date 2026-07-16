@@ -92,6 +92,21 @@ async function sendEmail(to: string, seq: string, resendKey: string) {
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+// Supabase/PostgREST caps a single response at 1000 rows regardless of a
+// client-requested .range() — the contact pool is ~32k, so this pages
+// through in 1000-row windows until a short page signals the end.
+async function fetchAllRows<T>(query: any): Promise<T[]> {
+  const PAGE = 1000;
+  const all: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await query.range(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+    all.push(...(data ?? []));
+    if (!data || data.length < PAGE) break;
+  }
+  return all;
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -117,8 +132,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const { data: suppressedRowsRaw } = await supabase.from("email_blast_suppressed").select("type, value");
-  const suppressedRows = (suppressedRowsRaw ?? []) as { type: string; value: string }[];
+  const suppressedRows = (await fetchAllRows(supabase.from("email_blast_suppressed").select("type, value"))) as { type: string; value: string }[];
   const bounced = new Set(suppressedRows.filter(r => r.type === "bounced").map(r => r.value));
   const blockedDomains = new Set(suppressedRows.filter(r => r.type === "blocked_domain").map(r => r.value));
   const deferredDomains = new Set(suppressedRows.filter(r => r.type === "deferred_domain").map(r => r.value));
@@ -129,8 +143,12 @@ export async function GET(req: NextRequest) {
     .is("seq3_sent_at", null); // seq3 disabled per Howard
   if (TARGET_LISTING_TYPE) query = query.eq("listing_type", TARGET_LISTING_TYPE);
 
-  const { data: contacts, error: contactsErr } = await query;
-  if (contactsErr) return NextResponse.json({ error: contactsErr.message }, { status: 500 });
+  let contacts: { email: string; seq1_sent_at: string | null; seq2_sent_at: string | null; seq1_opened: boolean }[];
+  try {
+    contacts = await fetchAllRows(query);
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+  }
 
   let skippedBounce = 0, skippedDeferred = 0, skippedNotOpened = 0;
   const candidates: { email: string; seq: string; tier: number }[] = [];
