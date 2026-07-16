@@ -270,9 +270,15 @@ export function LandingHero() {
           .kk-land-phone-inner { transform: scale(1.25) !important; }
           .kk-land-pdots { display: none !important; }
           .kk-land-kanban-grid { grid-template-columns: 70% 25% 25% !important; }
-          .kk-land-wa-flow { grid-template-columns: 1fr !important; justify-items: center; gap: 14px !important; }
-          .kk-land-wa-arrow { flex-direction: row !important; }
-          .kk-land-wa-arrow-icon { transform: rotate(90deg); }
+        }
+        @media (max-width: 460px) {
+          /* WhatsApp pair stays side by side on one screen — smaller frames
+             than the shared .kk-land-phone-frame mobile size, which was
+             sized for a single stacked phone, not two side by side */
+          .kk-land-wa-flow { gap: 6px !important; }
+          .kk-land-wa-flow .kk-land-phone-frame { width: 128px !important; height: 258px !important; }
+          .kk-land-wa-flow .kk-land-phone-inner { transform: scale(1.07) !important; }
+          .kk-land-wa-arrow-label { display: none !important; }
         }
         @keyframes kk-wa-pulse {
           0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,211,102,0.45); }
@@ -481,22 +487,8 @@ export function LandingHero() {
         )}
       </section>
 
-      {/* ── JOURNEY TIMELINE — merged with the pivot line (was its own thin
-             section with no bottom padding, butting straight into the next
-             section). Sequences owner outreach and renewal tracking as one
-             story instead of two competing features, so a new agent building
-             their pipeline and a veteran agent protecting an existing book
-             both see themselves in the same page ─────────────────────────── */}
-      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
-        <JourneyTimeline />
-      </section>
-
-      {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
-      <section style={{ background: "#fff", padding: "40px 40px 56px" }}>
-        <ComparisonSlider />
-      </section>
-
-      {/* ── WHATSAPP CALLOUT — third supporting proof beat, after desktop+phone ── */}
+      {/* ── WHATSAPP CALLOUT — concrete proof right after the hero, before the
+             page zooms out to the full pipeline and the tracking pitch ── */}
       <section style={{ background: "#FBFBFD", padding: "56px 40px 88px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ textAlign: "center", maxWidth: 480, margin: "0 auto 40px" }}>
@@ -569,7 +561,7 @@ export function LandingHero() {
 
             {/* Connector — tap the pulsing icon, land in the chat */}
             <div className="kk-land-wa-arrow" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-              <span style={{ fontSize: 9.5, fontWeight: 700, color: "#25D366", whiteSpace: "nowrap" }}>Tap WhatsApp</span>
+              <span className="kk-land-wa-arrow-label" style={{ fontSize: 9.5, fontWeight: 700, color: "#25D366", whiteSpace: "nowrap" }}>Tap WhatsApp</span>
               <svg className="kk-land-wa-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" />
                 <path d="M13 6l6 6-6 6" />
@@ -636,6 +628,17 @@ export function LandingHero() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ── JOURNEY TIMELINE — the full pipeline, after WhatsApp sending has
+             already been shown concretely, this zooms out to the whole story ── */}
+      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
+        <JourneyTimeline />
+      </section>
+
+      {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
+      <section style={{ background: "#fff", padding: "40px 40px 56px" }}>
+        <ComparisonSlider />
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
