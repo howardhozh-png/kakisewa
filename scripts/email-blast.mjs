@@ -54,16 +54,14 @@ const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
 const SEQUENCES = {
   seq1: {
-    subject: "WhatsApp introduced username, agent panics.",
-    body: `Most rental agents lose over RM100,000 in renewal commissions a year without knowing it.
+    subject: "You forgot to message the owner. Again.",
+    body: `Most rental agents lose over RM100,000 a year in renewal commissions. Not from bad service. From simply forgetting to reach out in time.
 
-Tenant calls the owner directly. Owner renews quietly. You find out 6 months later — another RM3,000 gone.
-
-kakisewa notifies you 60 and 30 days before every tenancy expires, so you call the owner first, every time.
+kakisewa reminds you 60 and 30 days before every tenancy expires, so you message the owner first, every time.
 
 Free to sign up. kakisewa.com
 
-What's your biggest headache with managing tenants right now?
+When's the last time you forgot to follow up on a renewal?
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,

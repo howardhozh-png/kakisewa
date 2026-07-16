@@ -27,7 +27,7 @@ const SIGNUP_SHAPES: FloatingCardData[] = [
   { label: "Now I get passive income", sub: "just by tracking existing listings", accentColor: "#0071E3", x: "5%", y: "62%", rotate: -4, delay: 0.6 },
   { label: "Starting at RM1/day", sub: "2 months free trial", x: "70%", y: "55%", rotate: 5, delay: 0.15 },
   { label: "Referral credit ✓", sub: "1 month free per referral", x: "-3%", y: "38%", rotate: -5, delay: 0.5 },
-  { label: "WhatsApp usernames are here", sub: "protect your renewals today", accentColor: "#FF9500", x: "66%", y: "32%", rotate: 3, delay: 0.8 },
+  { label: "I forgot to message him", sub: "found out 2 months too late", accentColor: "#FF9500", x: "66%", y: "32%", rotate: 3, delay: 0.8 },
 ]
 
 export default function SignUpPage() {

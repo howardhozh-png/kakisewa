@@ -18,17 +18,14 @@ export interface StoryBeat {
 export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
-      { text: "WhatsApp just added usernames.", small: true },
-      { text: " Your ", small: true },
-      { text: "existing listings", color: "#34C759" },
-      { text: " are now your ", small: true },
-      { text: "income.", color: "#34C759" },
+      { text: "You forgot to message the owner. ", small: true },
+      { text: "Again.", color: "#FF3B30" },
     ],
-    sub: "Cold outreach may never be the same. Agents who protect their renewals today are the ones who still have income tomorrow.",
+    sub: "kakisewa reminds you 60 and 30 days before every tenancy expires, so you reach out first, every time.",
   },
   {
     parts: [
-      { text: "The average agent loses ", small: true },
+      { text: "That's how the average agent loses ", small: true },
       { text: "70%", color: "#FF3B30" },
       { text: " of their existing listings.", small: true },
     ],
@@ -37,7 +34,7 @@ export const STORY_BEATS: StoryBeat[] = [
     parts: [
       { text: "RM1/day", color: "#34C759" },
       { text: " gets back the ", small: true },
-      { text: "RM150,000", color: "#FF3B30" },
+      { text: "RM150,000" },
       { text: " a year at stake.", small: true },
     ],
     sub: "RM3,000 average commission x 50 listings a year.",

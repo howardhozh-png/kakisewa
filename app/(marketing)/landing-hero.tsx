@@ -95,31 +95,13 @@ const CH_CONFIGS = [
 /* ── CH0 horizontal story beats (data now shared — see lib/hook-content.ts) ── */
 const CH0_SLIDES = STORY_BEATS.length;
 
-/* ── Luxury scroll items (static, defined outside component) ─────────────── */
-const LUX_ITEMS = [
-  { photo: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=560&h=370&fit=crop&auto=format", label: "branded bags",      calc: (l: number) => Math.floor(l / 8000).toString()  },
-  { photo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=560&h=370&fit=crop&auto=format", label: "Japan trips",        calc: (l: number) => Math.floor(l / 10000).toString() },
-  { photo: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=560&h=370&fit=crop&auto=format", label: "house installments", calc: (l: number) => Math.floor(l / 5000).toString()  },
-  { photo: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=560&h=370&fit=crop&auto=format", label: "luxury car",         calc: (l: number) => (l / 200000).toFixed(1)           },
-];
-
 /* ── Component ───────────────────────────────────────────────────────────── */
 export function LandingHero() {
-  // 100 contracts -> exactly RM150,000 at the current formula (contracts *
-  // 0.5 * 3000). The hero claims "RM150,000 I lost last year" — the
-  // calculator previously defaulted to 50 (RM75,000), so a visitor who
-  // scrolled straight from the hero to the calculator saw it contradict the
-  // number they'd just read. Now the default matches on load, before anyone
-  // drags anything. 100 is also a real number, not picked purely to make the
-  // math work — a beta user's own survey response reported managing 100-150
-  // tenancies.
-  const [contracts, setContracts] = useState(100);
   const [active, setActive]       = useState(0);
   const [revealed, setRevealed]   = useState([true, false, false, false]);
   const [ch0Slide, setCh0Slide]   = useState(0);
 
   const activeRef      = useRef(0);
-  const sliderTracked  = useRef(false);
   const ch0Touch       = useRef<{ x: number; y: number } | null>(null);
   const ch0WheelTs     = useRef(0);
   const ch0AutoStopped = useRef(false);
@@ -129,9 +111,6 @@ export function LandingHero() {
   const ch3 = useRef<HTMLElement>(null);
   const chRefs = [ch0, ch1, ch2, ch3];
   const ph = usePostHog();
-
-  const loss = Math.round(contracts * 0.5 * 3000);
-  const pct  = (contracts / 300 * 100).toFixed(1) + "%";
 
   useEffect(() => {
     /* Scroll-snap on html (marketing page only — cleaned up on unmount) */
@@ -501,115 +480,6 @@ export function LandingHero() {
             <span style={{ fontSize: 9, letterSpacing: "0.13em", textTransform: "uppercase" }}>scroll</span>
           </div>
         )}
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          CH1 — THE MATH
-      ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={ch1} className="kk-land-chapter" style={{ background: "#FAFAFA" }}>
-        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 820, padding: "80px 40px 48px" }}>
-          <span style={{
-            display: "block", fontSize: 11, fontWeight: 600,
-            letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 44,
-            ...delay(0.05, revealed[1]),
-          }}>
-            The math nobody does
-          </span>
-
-          {/* Slider */}
-          <div style={{ marginBottom: 28, ...delay(0.15, revealed[1]) }}>
-            <div style={{ fontSize: "clamp(1rem, 2.2vw, 1.3rem)", fontWeight: 700, color: "#1D1D1F", marginBottom: 14 }}>
-              You manage <span style={{ color: "#FF3B30" }}>{contracts}</span> contracts.
-            </div>
-            <input
-              type="range"
-              className="kk-land-slider"
-              min={0} max={300} value={contracts} step={1}
-              onChange={e => {
-                setContracts(+e.target.value);
-                if (!sliderTracked.current) {
-                  sliderTracked.current = true;
-                  track(ph, "landing_slider_interacted", { contracts: +e.target.value });
-                }
-              }}
-              style={{
-                WebkitAppearance: "none", appearance: "none",
-                width: "100%", height: 6, borderRadius: 3, outline: "none",
-                cursor: "pointer", margin: 0,
-                background: `linear-gradient(90deg, #FF3B30 ${pct}, #E5E5EA ${pct})`,
-              }}
-            />
-            {/* Marks — absolute-positioned for exact alignment with thumb */}
-            <div style={{ position: "relative", height: 14, margin: "8px 13px 0" }}>
-              {[0, 50, 100, 150, 200, 250, 300].map((v, i) => (
-                <span key={v} style={{
-                  position: "absolute",
-                  left: `${(i / 6) * 100}%`,
-                  transform: "translateX(-50%)",
-                  fontSize: 10, color: "#C7C7CC",
-                }}>{v}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Loss number — one fixed size, calibrated to fit the worst case
-              (7 digits, "RM 450,000", the max the slider can produce) so it
-              never visibly resizes as you drag. A digit-count-conditional
-              size looked more broken than the original overflow — the
-              number shouldn't appear to change weight mid-interaction. */}
-          <div style={{
-            fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: "clamp(3rem, 10vw, 6.5rem)",
-            lineHeight: 1, letterSpacing: "-0.04em",
-            color: "#FF3B30", marginBottom: 8,
-            fontFeatureSettings: "'tnum'",
-            whiteSpace: "nowrap",
-            ...delay(0.28, revealed[1]),
-          }}>
-            RM {loss.toLocaleString()}
-          </div>
-          <p style={{ fontSize: 18, color: "#AEAEB2", marginBottom: 24, ...delay(0.36, revealed[1]) }}>
-            in missed renewals per year.
-          </p>
-
-          {/* What you could have bought — auto-scroll strip */}
-          <div style={{ marginBottom: 24, ...delay(0.42, revealed[1]) }}>
-            <div className="kk-lux-wrapper">
-              <div style={{
-                display: "flex", gap: 14, width: "max-content",
-                animation: "kk-lux-scroll 22s linear infinite",
-              }}>
-                {[...LUX_ITEMS, ...LUX_ITEMS].map((item, i) => (
-                  <div key={i} style={{
-                    position: "relative",
-                    width: "clamp(148px, 38vw, 280px)",
-                    height: "clamp(125px, 14vw, 185px)",
-                    borderRadius: 18, overflow: "hidden", flexShrink: 0,
-                  }}>
-                    <img src={item.photo} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.72) 100%)" }} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 14px 14px", display: "flex", alignItems: "flex-end", gap: 6 }}>
-                      <div style={{
-                        fontSize: "clamp(28px, 6vw, 48px)", fontWeight: 900,
-                        color: "#FF3B30", lineHeight: 1,
-                        letterSpacing: "-0.04em", fontFeatureSettings: "'tnum'", flexShrink: 0,
-                      }}>{item.calc(loss)}</div>
-                      <div style={{
-                        fontSize: "clamp(11px, 2.2vw, 15px)", fontWeight: 600,
-                        color: "#fff", lineHeight: 1.25,
-                        paddingBottom: 3, textShadow: "0 1px 6px rgba(0,0,0,0.4)",
-                      }}>{item.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <p style={{ fontSize: 14, color: "#D1D1D6", marginTop: 0, ...delay(0.54, revealed[1]) }}>
-            50% untracked renewals &middot; RM 3,000 average commission &middot; drag to see your number
-          </p>
-        </div>
       </section>
 
       {/* ── PIVOT — the one turn from pain to solution, ties directly to the

@@ -53,9 +53,10 @@ function PwaRegisterInner() {
       });
     }
 
-    // Don't show install prompts on public share pages or app pages (PwaGate handles app pages)
+    // Don't show install prompts on the homepage (cold visitors evaluating the product
+    // shouldn't be interrupted before they've seen the pitch), public share pages, or
+    // app pages (PwaGate handles app pages).
     const isAuthOrMarketing =
-      pathname === "/" ||
       pathname.startsWith("/sign-in") ||
       pathname.startsWith("/sign-up") ||
       pathname.startsWith("/forgot-password") ||
