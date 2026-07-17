@@ -22,19 +22,29 @@ const TARGET_LISTING_TYPE = "rent";
 
 const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
-const SEQUENCES: Record<string, { subject: string; body: string }> = {
+// linkText must appear verbatim in body — bodyToHtml() wraps that exact
+// substring in a same-origin <a href> pointing at linkUrl. Deliberately not
+// using Resend's click-tracking (rewrites links through a redirect domain,
+// which reads as a stronger "marketing tool" signal to Gmail's Promotions
+// classifier than a same-origin link) — utm params on our own domain give
+// the same conversion signal without that risk, and PostHog (already wired
+// into the landing page via posthog-js/react) auto-captures utm_source/
+// utm_campaign from the URL with zero extra code.
+const LINK_TEXT = "kakisewa.com/sign-up";
+const SEQUENCES: Record<string, { subject: string; body: string; linkUrl: string }> = {
   seq1: {
     subject: "You messaged the owner. Then lost track.",
     body: `You message owners all day. The hard part is remembering who replied.
 
 kakisewa tracks every owner and reminds you before every tenancy expires. Agents lose 70% of income from existing tenancy without tracking.
 
-Free to sign up. kakisewa.com
+Free to sign up. ${LINK_TEXT}
 
 How many owners are you tracking right now?
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
+    linkUrl: "https://kakisewa.com/sign-up?utm_source=email&utm_campaign=seq1",
   },
   seq2: {
     subject: "Send WhatsApp outreach from anywhere",
@@ -42,17 +52,19 @@ Chief Marketing Officer, kakisewa`,
 
 Every message gets tracked automatically, from first contact to renewal.
 
-RM1/day. Free for 2 months. kakisewa.com
+RM1/day. Free for 2 months. ${LINK_TEXT}
 
 Tell us what's holding you back? We'd really appreciate it.
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
+    linkUrl: "https://kakisewa.com/sign-up?utm_source=email&utm_campaign=seq2",
   },
 };
 
-function bodyToHtml(text: string) {
-  return text.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("\n");
+function bodyToHtml(text: string, linkUrl: string) {
+  const html = text.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("\n");
+  return html.replace(LINK_TEXT, `<a href="${linkUrl.replace(/&/g, "&amp;")}">${LINK_TEXT}</a>`);
 }
 
 const DOMAIN_TIER: Record<string, number> = {
@@ -68,7 +80,7 @@ function daysDiff(dateStr: string) {
 }
 
 async function sendEmail(to: string, seq: string, resendKey: string) {
-  const { subject, body } = SEQUENCES[seq];
+  const { subject, body, linkUrl } = SEQUENCES[seq];
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -81,7 +93,7 @@ async function sendEmail(to: string, seq: string, resendKey: string) {
       reply_to: REPLY_TO,
       subject,
       text: body,
-      html: bodyToHtml(body),
+      html: bodyToHtml(body, linkUrl),
     }),
   });
   if (!res.ok) {

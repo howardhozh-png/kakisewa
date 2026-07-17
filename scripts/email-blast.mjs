@@ -52,6 +52,15 @@ const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
 // ── Message sequences ─────────────────────────────────────────────────────────
 
+// linkText must appear verbatim in each body — bodyToHtml() wraps that exact
+// substring in a same-origin <a href>. Deliberately not using Resend's
+// click-tracking (rewrites links through a redirect domain, which reads as a
+// stronger "marketing tool" signal to Gmail's Promotions classifier than a
+// same-origin link) — utm params on our own domain give the same conversion
+// signal without that risk, and PostHog (already on the landing page)
+// auto-captures utm_source/utm_campaign from the URL with zero extra code.
+const LINK_TEXT = "kakisewa.com/sign-up";
+
 const SEQUENCES = {
   seq1: {
     subject: "You messaged the owner. Then lost track.",
@@ -59,12 +68,13 @@ const SEQUENCES = {
 
 kakisewa tracks every owner and reminds you before every tenancy expires. Agents lose 70% of income from existing tenancy without tracking.
 
-Free to sign up. kakisewa.com
+Free to sign up. ${LINK_TEXT}
 
 How many owners are you tracking right now?
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
+    linkUrl: "https://kakisewa.com/sign-up?utm_source=email&utm_campaign=seq1",
   },
 
   seq2: {
@@ -73,12 +83,13 @@ Chief Marketing Officer, kakisewa`,
 
 Every message gets tracked automatically, from first contact to renewal.
 
-RM1/day. Free for 2 months. kakisewa.com
+RM1/day. Free for 2 months. ${LINK_TEXT}
 
 Tell us what's holding you back? We'd really appreciate it.
 
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
+    linkUrl: "https://kakisewa.com/sign-up?utm_source=email&utm_campaign=seq2",
   },
 
   seq3: {
@@ -89,11 +100,12 @@ I just want to leave you with one thought: the next time a tenant calls asking a
 
 No tricks, free for 2 months. Refer 12 friends, get 12 months free. One contract renewal pays for more than 1 year of kakisewa, we're just that cheap. (my CFO is strangling me now)
 
-Sign up is free, works on your phone like an app. kakisewa.com
+Sign up is free, works on your phone like an app. ${LINK_TEXT}
 
 Sincerely from,
 Jovanne Ng
 Chief Marketing Officer, kakisewa`,
+    linkUrl: "https://kakisewa.com/sign-up?utm_source=email&utm_campaign=seq3",
   },
 };
 
@@ -107,8 +119,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // version reads like a normal person's email client output instead, and is
 // confirmed (2026-07-08) to land in Primary while still carrying Resend's
 // open-tracking pixel. Never add wrapper divs/CSS back to this.
-function bodyToHtml(text) {
-  return text.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("\n");
+function bodyToHtml(text, linkUrl) {
+  const html = text.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("\n");
+  return html.replace(LINK_TEXT, `<a href="${linkUrl.replace(/&/g, "&amp;")}">${LINK_TEXT}</a>`);
 }
 
 function log(...args) {
@@ -197,7 +210,7 @@ function parseCSV(path) {
 }
 
 function sendEmail(to, seq) {
-  const { subject, body } = SEQUENCES[seq];
+  const { subject, body, linkUrl } = SEQUENCES[seq];
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -205,7 +218,7 @@ function sendEmail(to, seq) {
       reply_to: REPLY_TO,
       subject,
       text: body,
-      html: bodyToHtml(body),
+      html: bodyToHtml(body, linkUrl),
     });
     const req = https.request({
       hostname: "api.resend.com",
