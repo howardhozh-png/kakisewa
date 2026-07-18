@@ -12,7 +12,13 @@ export const maxDuration = 60;
 const FROM_EMAIL = "jovanne@kakisewaofficial.com";
 const FROM_NAME = "Jovanne Ng";
 const REPLY_TO = "kkakisewa@gmail.com";
-const DAILY_LIMIT = 100;
+// 100 timed out against Vercel's 60s maxDuration: 100 sends x 500ms throttle
+// alone is 50s, before any Resend/Supabase network latency. Real evidence:
+// Jul 16 (100 queued) never wrote its email_blast_runs completion row at
+// all, and Jul 17 sent only 66 of 100 before getting killed mid-run. 60
+// leaves real margin (30s of throttle + latency budget) and reliably
+// reaches the final insert so the idempotency guard actually works.
+const DAILY_LIMIT = 60;
 const SEND_INTERVAL_MS = 500; // 2 req/s — Resend's rate limit
 const SEQ2_AFTER_DAYS = 4;
 
