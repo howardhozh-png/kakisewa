@@ -622,7 +622,7 @@ export function StatsSection({
           label="Closed Deal This Month"
           value={String(closedThisMonth ?? 0)}
           subLabel="deals closed"
-          href="/existing-listing"
+          href="/performance"
         />
       </div>
 

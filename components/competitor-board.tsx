@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { OwnerLead, CompetitorStage, daysUntil } from "@/lib/types";
+import { OwnerLead, CompetitorStage, daysUntil, effectiveColumn, getBusinessToday } from "@/lib/types";
 import { setCompetitorStageAction, winCompetitorUnitAction, buildCompetitorOwnerPing } from "@/lib/actions";
 import { FilterSelect } from "@/components/filter-select";
 import { CompetitorTimeline } from "@/components/competitor-timeline";
@@ -62,16 +62,6 @@ const COLUMNS: ColMeta[] = [
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-function effectiveColumn(lead: OwnerLead, today: Date): ColStage {
-  const stored = (lead.competitor_stage ?? "watching") as CompetitorStage;
-  if (stored === "in_talks" || stored === "missed") return "watching";
-  if (stored === "reach_out") return "reach_out";
-  if (stored === "renewing") return "renewing";
-  // watching: auto-promote to expiring if within 60 days
-  if (lead.competitor_contract_end && daysUntil(lead.competitor_contract_end, today) <= 60) return "reach_out";
-  return "watching";
-}
-
 function normalizePropName(name: string): string {
   return name.toLowerCase().trim();
 }
@@ -91,7 +81,7 @@ interface Props {
 
 export function CompetitorBoard({ leads, highlightId }: Props) {
   const router = useRouter();
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => getBusinessToday(), []);
   const boardRef = useRef<HTMLDivElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingLead, setDraggingLead] = useState<OwnerLead | null>(null);

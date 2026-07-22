@@ -145,6 +145,21 @@ export interface OwnerLead {
 
 export type CompetitorStage = "watching" | "reach_out" | "renewing" | "in_talks" | "missed";
 
+export type CompetitorColumnStage = "reach_out" | "renewing" | "watching";
+
+// Mirrors defaultLifecycleStage's role for tenancies — the single source of
+// truth both the Lost Listing board and the homepage dashboard stats use to
+// bucket a competitor lead, so the two can never disagree.
+export function effectiveColumn(lead: OwnerLead, today: Date): CompetitorColumnStage {
+  const stored = (lead.competitor_stage ?? "watching") as CompetitorStage;
+  if (stored === "in_talks" || stored === "missed") return "watching";
+  if (stored === "reach_out") return "reach_out";
+  if (stored === "renewing") return "renewing";
+  // watching: auto-promote to expiring if within 60 days
+  if (lead.competitor_contract_end && daysUntil(lead.competitor_contract_end, today) <= 60) return "reach_out";
+  return "watching";
+}
+
 export type SubscriptionStatus = "beta" | "beta_frozen" | "trial" | "active" | "expired" | "cancelled" | "lifetime";
 
 export interface AgentProfile {

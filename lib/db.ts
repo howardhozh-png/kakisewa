@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import type { Tenancy, TenancyStatus, LhdnStatus, Tier, PropertySupport, SupportType } from "./types";
 import type { WhatsAppLogEntry, WhatsAppTemplate } from "./types";
 import type { OwnerLead, AgentProfile, TenantProfile, MatchPack, PackTenant } from "./types";
+import { defaultLifecycleStage, effectiveColumn, getBusinessToday, daysUntil } from "./types";
 
 // ─── Per-request helpers ───────────────────────────────────────────────────────
 
@@ -2787,6 +2788,7 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
   const userId = await getCurrentUserId();
   const svc = createServiceClient();
   const today = new Date().toISOString().slice(0, 10);
+  const businessToday = getBusinessToday();
   // windowStart: start of the selected month (or today if not specified)
   const windowStart = startMonth ? `${startMonth}-01` : today;
   // Period end: add rangeMonths to windowStart using calendar months (not days)
@@ -2794,7 +2796,6 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
   const periodEndDate = new Date(windowStartDate);
   periodEndDate.setMonth(periodEndDate.getMonth() + (rangeMonths === 0 ? 2 : rangeMonths));
   const periodEnd = periodEndDate.toISOString().slice(0, 10);
-  const sixtyDayEnd = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
 
   const sumExpectedRent = (rows: Array<{ expected_rent?: number | null }> | null) =>
     (rows ?? []).reduce((s, r) => s + (r.expected_rent ?? 0), 0);
@@ -2815,20 +2816,19 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     { data: listedSale },
     { data: repliedRent },
     { data: repliedSale },
-    { data: existingActive },
     { data: existingExpiring },
-    { data: existingRenewing },
-    { data: existingExpiring60 },
-    { count: existingExpired },
     { data: targetActive },
     { data: targetExpiring },
-    { data: targetWatching },
-    { data: targetExpiring60 },
-    { count: targetTotal },
+    lifecycleTenancies,
+    competitorLeads,
   ] = await Promise.all([
-    // Exclude soft-deleted rows so count matches what the Potential Listing page shows
-    ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false"),
-    ol().is("deleted_at", null).eq("stage", "imported").or("is_competitor_target.is.null,is_competitor_target.eq.false").not("outreach_count", "is", null).gt("outreach_count", 0),
+    // Matches the /property-leads page's own "Total leads" pill exactly
+    // (components/outreach-table.tsx): excludes archived/own_stay and competitor targets.
+    ol().is("deleted_at", null).not("stage", "in", '("archived","own_stay")').or("is_competitor_target.is.null,is_competitor_target.eq.false"),
+    // Matches the page's own "Contacted" pill: excludes archived/own_stay,
+    // but — unlike "Total leads" — does NOT exclude competitor targets and
+    // has no stage="imported" restriction (the page's pill doesn't have one either).
+    ol().is("deleted_at", null).not("stage", "in", '("archived","own_stay")').not("outreach_count", "is", null).gt("outreach_count", 0),
     ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["replied","wants_rent","listed","matched"]),
     // My Listing board shows listed/wants_rent/replied only; matched moves to Existing Listing once tenancy exists
     ol().is("deleted_at", null).or("is_competitor_target.is.null,is_competitor_target.eq.false").in("stage", ["listed","wants_rent","replied"]),
@@ -2836,25 +2836,53 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     olD().eq("stage", "listed").in("listing_purpose", ["sell", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["rent", "both"]),
     olD().in("stage", ["replied", "wants_rent"]).in("listing_purpose", ["sell", "both"]),
-    // Active = not closed, not yet expired — use neq (excludes NULL) to match board behaviour
-    tn().neq("lifecycle_stage", "closed").gte("contract_end", today),
-    // Expiring within selected window (start month → start month + N months)
+    // Expiring within selected window (start month → start month + N months) —
+    // a separate date-range feature for the Renewal Income chart, not tied to
+    // the board's lifecycle-stage buckets, left as its own query on purpose.
     tn().neq("lifecycle_stage", "closed").gte("contract_end", windowStart).lte("contract_end", periodEnd),
-    // Explicitly set to renewing lifecycle stage
-    tn().eq("lifecycle_stage", "renewing"),
-    // Expiring within fixed 60-day window from today (not range-sensitive)
-    tn().neq("lifecycle_stage", "closed").gte("contract_end", today).lte("contract_end", sixtyDayEnd),
-    // Already expired (contract_end < today, not yet closed) — neq excludes NULLs, matching board
-    svc.from("tenancies").select("id", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null).not("contract_end", "is", null).neq("lifecycle_stage", "closed").lt("contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today),
     svc.from("owner_leads").select("id, expected_rent").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", windowStart).lte("competitor_contract_end", periodEnd),
-    // Competitors in watching stage
-    svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).eq("stage", "watching"),
-    // Competitors expiring within fixed 60-day window
-    svc.from("owner_leads").select("id").eq("user_id", userId).eq("is_competitor_target", true).not("competitor_contract_end", "is", null).gte("competitor_contract_end", today).lte("competitor_contract_end", sixtyDayEnd),
-    // Total competitor targets (all, regardless of stage or contract end)
-    svc.from("owner_leads").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_competitor_target", true).is("deleted_at", null),
+    // Same source the Existing Listing board itself reads (getLifecycleTenancies),
+    // bucketed below via the board's own defaultLifecycleStage() — so Active,
+    // Renewing, Expired and Expiring-60 are guaranteed to match the board exactly,
+    // instead of being re-derived by a second, independently hand-written query.
+    _cachedLifecycleTenancies(userId),
+    // Same source the Lost Listing board itself reads (getCompetitorLeads),
+    // bucketed below via the board's own effectiveColumn() for the same reason.
+    _cachedCompetitorLeads(userId),
   ]);
+
+  let existingTotalActiveCount = 0;
+  let existingTotalActiveAmount = 0;
+  let existingRenewingCount = 0;
+  let existingExpiredCount = 0;
+  let existingExpiringIn60Count = 0;
+  for (const t of lifecycleTenancies) {
+    const stage = defaultLifecycleStage(t, businessToday);
+    if (!stage || stage === "closed" || stage === "reserved") continue;
+    if (stage === "active") {
+      existingTotalActiveCount++;
+      existingTotalActiveAmount += t.amount ?? 0;
+    } else if (stage === "renewing") {
+      existingRenewingCount++;
+    } else {
+      // pinged/stalled/headsup/ending/replacing all fold into the board's
+      // single "headsup" bucket, which then splits into Expired vs Expiring
+      // by whether contract_end has already passed — same as lifecycle-board.tsx.
+      if (t.contract_end && daysUntil(t.contract_end, businessToday) < 0) existingExpiredCount++;
+      else existingExpiringIn60Count++;
+    }
+  }
+
+  let targetTotalCount = 0;
+  let targetWatchingCount = 0;
+  let targetExpiringIn60Count = 0;
+  for (const lead of competitorLeads) {
+    targetTotalCount++;
+    const col = effectiveColumn(lead, businessToday);
+    if (col === "watching") targetWatchingCount++;
+    else if (col === "reach_out") targetExpiringIn60Count++;
+  }
 
   return {
     totalUploaded: totalUploaded ?? 0,
@@ -2869,20 +2897,20 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     repliedRentAmount: sumExpectedRent(repliedRent),
     repliedSaleCount: repliedSale?.length ?? 0,
     repliedSaleAmount: sumExpectedRent(repliedSale),
-    existingTotalActiveCount: existingActive?.length ?? 0,
-    existingTotalActiveAmount: sumAmount(existingActive),
+    existingTotalActiveCount,
+    existingTotalActiveAmount,
     existingExpiringCount: existingExpiring?.length ?? 0,
     existingExpiringAmount: sumAmount(existingExpiring),
-    existingRenewingCount: existingRenewing?.length ?? 0,
-    existingExpiringIn60Count: existingExpiring60?.length ?? 0,
-    existingExpiredCount: existingExpired ?? 0,
-    targetTotalCount: targetTotal ?? 0,
+    existingRenewingCount,
+    existingExpiringIn60Count,
+    existingExpiredCount,
+    targetTotalCount,
     targetTotalActiveCount: targetActive?.length ?? 0,
     targetTotalActiveAmount: sumExpectedRent(targetActive),
     targetExpiringCount: targetExpiring?.length ?? 0,
     targetExpiringAmount: sumExpectedRent(targetExpiring),
-    targetWatchingCount: targetWatching?.length ?? 0,
-    targetExpiringIn60Count: targetExpiring60?.length ?? 0,
+    targetWatchingCount,
+    targetExpiringIn60Count,
   };
 }
 
