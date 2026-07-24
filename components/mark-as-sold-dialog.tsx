@@ -128,9 +128,7 @@ export function MarkAsSoldDialog({ lead, open, onClose, onSold, defaultCommissio
 
           {/* Destination hint */}
           <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-            This card will move to{" "}
-            <span className="font-semibold" style={{ color: "var(--kk-ink-mute)" }}>Sold</span>
-            {" "}and the sale details above will be saved.
+            The sale details above will be saved and this card will be removed from the board.
           </p>
 
           {/* Actions */}

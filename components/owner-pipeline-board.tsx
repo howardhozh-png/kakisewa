@@ -44,7 +44,6 @@ interface ColMeta {
 const COLUMNS: ColMeta[] = [
   { stage: "listed",   label: "Listed",     hint: "Build the tenant pack. Find the right tenant and close the deal.", ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Megaphone },
   { stage: "matched",  label: "Rented",     hint: "Well done, proud of you!",                                         ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Check     },
-  { stage: "sold",     label: "Sold",       hint: "Nice! Sale commission recorded.",                                  ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Banknote  },
 ];
 
 
@@ -247,12 +246,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     // Gate on Matched — open tenancy creation dialog instead of moving directly
     if (target === "matched") {
       setMatchingLead(lead);
-      return;
-    }
-
-    // Gate on Sold — open the sale commission dialog instead of moving directly
-    if (target === "sold") {
-      setSoldLead(lead);
       return;
     }
 
