@@ -17,6 +17,7 @@ import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import Link from "next/link";
 import { EditOwnerLeadDialog } from "@/components/edit-owner-lead-dialog";
 import { ConvertToTenancyDialog } from "@/components/convert-to-tenancy-dialog";
+import { MarkAsSoldDialog } from "@/components/mark-as-sold-dialog";
 import { CommissionConfirmDialog } from "@/components/commission-confirm-dialog";
 import { ConfirmListedDialog } from "@/components/confirm-listed-dialog";
 import { CompetitorRentedDialog } from "@/components/competitor-rented-dialog";
@@ -43,6 +44,7 @@ interface ColMeta {
 const COLUMNS: ColMeta[] = [
   { stage: "listed",   label: "Listed",     hint: "Build the tenant pack. Find the right tenant and close the deal.", ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Megaphone },
   { stage: "matched",  label: "Rented",     hint: "Well done, proud of you!",                                         ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Check     },
+  { stage: "sold",     label: "Sold",       hint: "Nice! Sale commission recorded.",                                  ink: "var(--kk-theme-dark)", soft: "var(--kk-theme-light)", dot: "var(--kk-theme-dark)", Icon: Banknote  },
 ];
 
 
@@ -65,9 +67,10 @@ interface Props {
   tenantsByLeadId?: Record<string, TenantInfo>;
   rankedLeadIds?: Set<string>;
   capStatus?: CapCheckResult;
+  defaultSaleCommissionPct?: number | null;
 }
 
-export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus }: Props) {
+export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus, defaultSaleCommissionPct = null }: Props) {
   const router = useRouter();
   const ph = usePostHog();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -75,6 +78,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
   const [activeLead, setActiveLead] = useState<OwnerLead | null>(null);
   const [editingLead, setEditingLead] = useState<OwnerLead | null>(null);
   const [matchingLead, setMatchingLead] = useState<OwnerLead | null>(null);
+  const [soldLead, setSoldLead] = useState<OwnerLead | null>(null);
   const [commissionLead, setCommissionLead] = useState<{ lead: OwnerLead; tenancyId: string } | null>(null);
   const [confirmedMovedIn, setConfirmedMovedIn] = useState<{ lead: OwnerLead; info: TenantInfo } | null>(null);
   const [competitorRentedLead, setCompetitorRentedLead] = useState<OwnerLead | null>(null);
@@ -184,7 +188,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
   const byStage = useMemo(() => {
     const out: Record<Stage, OwnerLead[]> = {
-      imported: [], replied: [], wants_rent: [], listed: [], matched: [], own_stay: [], archived: [],
+      imported: [], replied: [], wants_rent: [], listed: [], matched: [], own_stay: [], archived: [], sold: [],
     };
     filtered.forEach((l) => {
       // Imported leads belong in the Outreach tab, not the Pipeline board
@@ -219,12 +223,23 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       return;
     }
 
-    // Gate on Listed — require property details + availability date before allowing move
+    // Gate on Listed — require property details + availability date before allowing move.
+    // Price requirement depends on purpose: a sale-only listing needs the
+    // asking price + commission, not a rent figure, and vice versa.
     if (target === "listed") {
-      const hasRequired = lead.property_name && lead.expected_rent && lead.available_from && lead.bedrooms != null && lead.bathrooms != null;
+      const hasPriceForPurpose = lead.listing_purpose === "sell"
+        ? (lead.expected_sale_price != null && lead.expected_sale_commission_pct != null)
+        : lead.listing_purpose === "both"
+          ? (lead.expected_rent != null && lead.expected_sale_price != null && lead.expected_sale_commission_pct != null)
+          : lead.expected_rent != null;
+      const hasRequired = lead.property_name && hasPriceForPurpose && lead.available_from && lead.bedrooms != null && lead.bathrooms != null;
       if (!hasRequired) {
         setEditingLead(lead);
-        toast.error("Fill in property name, rent, availability date, bedrooms and bathrooms before marking as Listed.");
+        toast.error(
+          lead.listing_purpose === "sell"
+            ? "Fill in property name, asking price, commission %, availability date, bedrooms and bathrooms before marking as Listed."
+            : "Fill in property name, rent, availability date, bedrooms and bathrooms before marking as Listed."
+        );
         return;
       }
     }
@@ -232,6 +247,12 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
     // Gate on Matched — open tenancy creation dialog instead of moving directly
     if (target === "matched") {
       setMatchingLead(lead);
+      return;
+    }
+
+    // Gate on Sold — open the sale commission dialog instead of moving directly
+    if (target === "sold") {
+      setSoldLead(lead);
       return;
     }
 
@@ -377,6 +398,7 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
                     onTenantConfirmed={() => setMatchingLead(l)}
                     onCompetitorRented={() => setCompetitorRentedLead(l)}
                     onCapReached={(info) => setCapBlock(info)}
+                    onMarkSold={() => setSoldLead(l)}
                   />
                 ))
               );
@@ -440,6 +462,20 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
             prev.map((l) => (l.id === matchingLead.id ? { ...l, stage: "matched" } : l))
           );
           setMatchingLead(null);
+          router.refresh();
+        }}
+      />
+
+      <MarkAsSoldDialog
+        lead={soldLead}
+        open={!!soldLead}
+        onClose={() => setSoldLead(null)}
+        defaultCommissionPct={defaultSaleCommissionPct}
+        onSold={() => {
+          if (!soldLead) return;
+          setLocal((prev) =>
+            prev.map((l) => (l.id === soldLead.id ? { ...l, stage: "sold" } : l))
+          );
           router.refresh();
         }}
       />
@@ -627,7 +663,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
 
 
 type CapBlockInfo = { currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; remaining?: number; trying?: number };
-function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void }) {
+function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
   const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
@@ -711,7 +747,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConf
         </div>
       )}
 
-      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} />
+      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} onMarkSold={onMarkSold} />
     </>
   );
 }
@@ -722,7 +758,7 @@ function fmtDate(iso: string): string {
   return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
 }
 
-function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void }) {
+function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
   const ph = usePostHog();
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
   const [pressing, setPressing] = useState(false);
@@ -761,12 +797,12 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommi
         onEdit();
       }}
     >
-      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} />
+      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} onMarkSold={onMarkSold} />
     </div>
   );
 }
 
-function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void }) {
+function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
   const [pending, startTransition] = useTransition();
   const ph = usePostHog();
   const router = useRouter();
@@ -883,6 +919,21 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onCon
   if (stage === "listed") {
     return (
       <div className="space-y-2">
+        {(l.listing_purpose === "sell" || l.listing_purpose === "both") && (
+          <button
+            type="button"
+            data-card-action
+            onClick={(e) => { e.stopPropagation(); onMarkSold(); }}
+            className="kk-card-cta flex items-center justify-between w-full"
+            style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.30)", color: "#7C3AED" }}
+          >
+            <span className="flex items-start gap-1.5 min-w-0 flex-1">
+              <Banknote className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>Mark as sold</span>
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          </button>
+        )}
         {hasOwnerRanking && (
           <Link
             href={`/matching/${l.id}`}

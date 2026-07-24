@@ -845,7 +845,7 @@ export async function recordCommissionEvent(data: {
   id?: string;
   tenancy_id?: string | null;
   owner_lead_id?: string | null;
-  type: "new_signing" | "renewal";
+  type: "new_signing" | "renewal" | "sale";
   amount: number;
   earned_on: string;
   notes?: string | null;
@@ -2931,6 +2931,25 @@ export async function getExpandedDashboardStats(rangeMonths: number, startMonth?
     targetWatchingCount,
     targetExpiringIn60Count,
   };
+}
+
+// Raw commission events feeding the My Listing "Listing income" chart —
+// deliberately reuses the same commission_events ledger recordCommissionEvent()
+// already writes to, rather than re-deriving income from raw lead/tenancy
+// fields a second time (the exact pattern that caused the homepage-stats-vs-
+// board drift bugs fixed earlier this session).
+export type ListingIncomeEvent = { type: "new_signing" | "sale"; amount: number; earned_on: string };
+
+export async function getListingIncomeEvents(): Promise<ListingIncomeEvent[]> {
+  const userId = await getCurrentUserId();
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from("commission_events")
+    .select("type, amount, earned_on")
+    .eq("user_id", userId)
+    .in("type", ["new_signing", "sale"]);
+  if (error) throw error;
+  return (data ?? []) as ListingIncomeEvent[];
 }
 
 // ─── Property pack data ────────────────────────────────────────────────────────

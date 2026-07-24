@@ -54,6 +54,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [propertyName, setPropertyName] = useState("");
   const [unit, setUnit] = useState("");
   const [expectedRent, setExpectedRent] = useState<string>("");
+  const [expectedSalePrice, setExpectedSalePrice] = useState<string>("");
+  const [expectedSaleCommissionPct, setExpectedSaleCommissionPct] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
   const [bathrooms, setBathrooms] = useState<string>("");
   const [parking, setParking] = useState<string>("");
@@ -84,6 +86,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setPropertyName(lead.property_name ?? "");
       setUnit(lead.unit ?? "");
       setExpectedRent(lead.expected_rent != null ? String(lead.expected_rent) : "");
+      setExpectedSalePrice(lead.expected_sale_price != null ? String(lead.expected_sale_price) : "");
+      setExpectedSaleCommissionPct(lead.expected_sale_commission_pct != null ? String(lead.expected_sale_commission_pct) : "");
       setBedrooms(lead.bedrooms != null ? String(lead.bedrooms) : "");
       setBathrooms(lead.bathrooms != null ? String(lead.bathrooms) : "");
       setParking(lead.parking ?? "");
@@ -159,6 +163,8 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       property_name: propertyName || null,
       unit: unit || null,
       expected_rent: expectedRent ? parseFloat(expectedRent) : null,
+      expected_sale_price: expectedSalePrice ? parseFloat(expectedSalePrice) : null,
+      expected_sale_commission_pct: expectedSaleCommissionPct ? parseFloat(expectedSaleCommissionPct) : null,
       bedrooms: bedrooms !== "" ? parseInt(bedrooms, 10) : null,
       bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
       parking: parking.trim() || null,
@@ -369,7 +375,18 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
           <div className="grid grid-cols-2 gap-3">
             <Field label="Property name" value={propertyName} onChange={setPropertyName} placeholder="e.g. Residensi Mutiara" full required />
             <Field label="Unit" value={unit} onChange={setUnit} placeholder="e.g. A-12" />
-            <Field label="Expected rent (RM/mo)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 1,800" money required />
+            {/* Expected rent only makes sense for a rent-purpose listing — shown
+                whenever purpose isn't explicitly sale-only (covers "rent",
+                "both", and not-yet-decided/null the same way it always did). */}
+            {listingPurpose !== "sell" && (
+              <Field label="Expected rent (RM/mo)" value={expectedRent} onChange={setExpectedRent} placeholder="e.g. 1,800" money required />
+            )}
+            {(listingPurpose === "sell" || listingPurpose === "both") && (
+              <>
+                <Field label="Asking price (RM)" value={expectedSalePrice} onChange={setExpectedSalePrice} placeholder="e.g. 680,000" money required />
+                <Field label="Commission %" value={expectedSaleCommissionPct} onChange={setExpectedSaleCommissionPct} placeholder="e.g. 2" type="number" required />
+              </>
+            )}
             <BedroomPicker value={bedrooms} onChange={setBedrooms} required />
             <Field label="Bathrooms" value={bathrooms} onChange={(v) => setBathrooms(String(Math.max(0, Number(v))))} placeholder="e.g. 2" type="number" required />
             <Field label="Parking" value={parking} onChange={setParking} placeholder="e.g. A142" />

@@ -118,7 +118,7 @@ export interface OwnerLead {
   notes?: string | null;
   source?: "csv" | "auto_replacing" | "manual" | null;
   import_batch_id?: string | null;
-  stage: "imported" | "replied" | "wants_rent" | "own_stay" | "listed" | "matched" | "archived";
+  stage: "imported" | "replied" | "wants_rent" | "own_stay" | "listed" | "matched" | "archived" | "sold";
   intake_token?: string | null;
   intake_sent_at?: string | null;
   intake_completed_at?: string | null;
@@ -129,6 +129,17 @@ export interface OwnerLead {
   agreement_url?: string | null;
   outreach_count?: number | null;
   listing_purpose?: "rent" | "sell" | "both" | null;
+  // Captured at listing time, when Purpose includes "sell" — the asking
+  // price / commission the agent expects, before a deal has actually closed.
+  expected_sale_price?: number | null;
+  expected_sale_commission_pct?: number | null;
+  // Captured at "Mark as Sold" time — the real, final numbers, pre-filled
+  // from the expected_* pair above but editable since a sale can close
+  // above/below asking.
+  sale_price?: number | null;
+  sale_commission_pct?: number | null;
+  sale_commission_amount?: number | null;
+  sold_at?: string | null;
   is_managed?: boolean;
   managed_at?: string | null;
   is_competitor_target?: boolean;
@@ -175,6 +186,7 @@ export interface AgentProfile {
   photo_url?: string | null;
   accent_color?: string | null;
   commission_pct?: number;       // % of one month's rent earned per signed tenancy. Default 100 (= 1 month rent)
+  sale_commission_pct?: number | null; // default % of sale price, pre-fills the Mark as Sold dialog
   monthly_goal_rm?: number | null;
   quarterly_goal_rm?: number | null;
   today_focus?: string | null;

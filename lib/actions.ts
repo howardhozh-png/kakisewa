@@ -824,6 +824,43 @@ export async function collectRenewalCommission(
   }
 }
 
+export async function markLeadAsSoldAction(
+  leadId: string,
+  opts: { salePrice: number; commissionPct: number }
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    const lead = await getOwnerLead(leadId);
+    if (!lead) return { ok: false, message: "Listing not found." };
+
+    const commissionAmt = Math.round(opts.salePrice * opts.commissionPct / 100);
+    const soldAt = new Date().toISOString();
+
+    await updateOwnerLead(leadId, {
+      stage: "sold",
+      sale_price: opts.salePrice,
+      sale_commission_pct: opts.commissionPct,
+      sale_commission_amount: commissionAmt,
+      sold_at: soldAt,
+    });
+
+    await recordCommissionEvent({
+      owner_lead_id: leadId,
+      type: "sale",
+      amount: commissionAmt,
+      earned_on: soldAt.slice(0, 10),
+      notes: `Sale price RM${opts.salePrice.toLocaleString()} × ${opts.commissionPct}%`,
+    });
+
+    invalidateCache();
+    revalidatePath("/my-listing");
+    revalidatePath("/performance");
+    revalidatePath("/");
+    return { ok: true, message: "Sale commission recorded." };
+  } catch {
+    return { ok: false, message: "Could not record the sale." };
+  }
+}
+
 export async function moveTenantLeaving(
   tenancyId: string,
   data: { expectedRent: number; availableFrom: string | null }
@@ -1361,7 +1398,7 @@ No login needed — link is private 🙏
 
 export async function updateOwnerLeadDetails(
   id: string,
-  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "owner_whatsapp_username" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
+  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "owner_whatsapp_username" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index" | "expected_sale_price" | "expected_sale_commission_pct">>
 ) {
   await updateOwnerLead(id, data);
   invalidateCache();

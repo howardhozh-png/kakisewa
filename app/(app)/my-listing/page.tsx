@@ -1,6 +1,7 @@
-import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads, getAgentProfile } from "@/lib/db";
+import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads, getAgentProfile, getListingIncomeEvents } from "@/lib/db";
 import { checkCardCap } from "@/lib/plan-caps";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
+import { ListingIncomeTimeline } from "@/components/listing-income-timeline";
 import { AddListingButton } from "@/components/add-listing-button";
 import { PageHelpButton } from "@/components/page-help-button";
 import { DeletedOwnerLeadsPanel } from "@/components/deleted-owner-leads-panel";
@@ -42,18 +43,19 @@ interface Props {
 
 export default async function TrackListingPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const [ownerLeads, rankedLeadIds, deletedLeads, capStatus, agentProfile] = await Promise.all([
+  const [ownerLeads, rankedLeadIds, deletedLeads, capStatus, agentProfile, listingIncomeEvents] = await Promise.all([
     getOwnerLeads(),
     getRankedLeadIds(),
     getSoftDeletedMyListingLeads(),
     checkCardCap(),
     getAgentProfile(),
+    getListingIncomeEvents(),
   ]);
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
   const boardCardLeads = ownerLeads.filter((l) =>
     !l.is_competitor_target &&
-    (l.stage === "listed" || (l.stage === "matched" && !l.has_active_tenancy))
+    (l.stage === "listed" || l.stage === "sold" || (l.stage === "matched" && !l.has_active_tenancy))
   );
 
   return (
@@ -154,14 +156,22 @@ export default async function TrackListingPage({ searchParams }: Props) {
           </div>
         </div>
       ) : (
-        <OwnerPipelineBoard
-          leads={ownerLeads}
-          openLeadId={open}
-          highlightId={highlight}
-          tenantsByLeadId={tenantsByLeadId}
-          rankedLeadIds={rankedLeadIds}
-          capStatus={capStatus}
-        />
+        <>
+          {listingIncomeEvents.length > 0 && (
+            <div className="kk-card rounded-2xl p-4 lg:p-5 mb-6" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <ListingIncomeTimeline events={listingIncomeEvents} />
+            </div>
+          )}
+          <OwnerPipelineBoard
+            leads={ownerLeads}
+            openLeadId={open}
+            highlightId={highlight}
+            tenantsByLeadId={tenantsByLeadId}
+            rankedLeadIds={rankedLeadIds}
+            capStatus={capStatus}
+            defaultSaleCommissionPct={agentProfile.sale_commission_pct ?? null}
+          />
+        </>
       )}
     </div>
   );
