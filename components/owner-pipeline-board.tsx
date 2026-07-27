@@ -224,19 +224,20 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
     // Gate on Listed — require property details + availability date before allowing move.
     // Price requirement depends on purpose: a sale-only listing needs the
-    // asking price + commission, not a rent figure, and vice versa.
+    // commission amount (asking price/% are optional convenience inputs),
+    // not a rent figure, and vice versa.
     if (target === "listed") {
       const hasPriceForPurpose = lead.listing_purpose === "sell"
-        ? (lead.expected_sale_price != null && lead.expected_sale_commission_pct != null)
+        ? lead.expected_sale_commission_amount != null
         : lead.listing_purpose === "both"
-          ? (lead.expected_rent != null && lead.expected_sale_price != null && lead.expected_sale_commission_pct != null)
+          ? (lead.expected_rent != null && lead.expected_sale_commission_amount != null)
           : lead.expected_rent != null;
       const hasRequired = lead.property_name && hasPriceForPurpose && lead.available_from && lead.bedrooms != null && lead.bathrooms != null;
       if (!hasRequired) {
         setEditingLead(lead);
         toast.error(
           lead.listing_purpose === "sell"
-            ? "Fill in property name, asking price, commission %, availability date, bedrooms and bathrooms before marking as Listed."
+            ? "Fill in property name, commission amount, availability date, bedrooms and bathrooms before marking as Listed."
             : "Fill in property name, rent, availability date, bedrooms and bathrooms before marking as Listed."
         );
         return;

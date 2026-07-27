@@ -1398,7 +1398,7 @@ No login needed — link is private 🙏
 
 export async function updateOwnerLeadDetails(
   id: string,
-  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "owner_whatsapp_username" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index" | "expected_sale_price" | "expected_sale_commission_pct">>
+  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "owner_whatsapp_username" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index" | "expected_sale_price" | "expected_sale_commission_pct" | "expected_sale_commission_amount">>
 ) {
   await updateOwnerLead(id, data);
   invalidateCache();

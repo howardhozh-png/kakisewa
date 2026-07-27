@@ -56,6 +56,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   const [expectedRent, setExpectedRent] = useState<string>("");
   const [expectedSalePrice, setExpectedSalePrice] = useState<string>("");
   const [expectedSaleCommissionPct, setExpectedSaleCommissionPct] = useState<string>("");
+  const [expectedSaleCommissionAmount, setExpectedSaleCommissionAmount] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
   const [bathrooms, setBathrooms] = useState<string>("");
   const [parking, setParking] = useState<string>("");
@@ -88,6 +89,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setExpectedRent(lead.expected_rent != null ? String(lead.expected_rent) : "");
       setExpectedSalePrice(lead.expected_sale_price != null ? String(lead.expected_sale_price) : "");
       setExpectedSaleCommissionPct(lead.expected_sale_commission_pct != null ? String(lead.expected_sale_commission_pct) : "");
+      setExpectedSaleCommissionAmount(lead.expected_sale_commission_amount != null ? String(lead.expected_sale_commission_amount) : "");
       setBedrooms(lead.bedrooms != null ? String(lead.bedrooms) : "");
       setBathrooms(lead.bathrooms != null ? String(lead.bathrooms) : "");
       setParking(lead.parking ?? "");
@@ -109,6 +111,20 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setContractDuration(tenantInfo.contract_duration_months != null ? String(tenantInfo.contract_duration_months) : "");
     }
   }, [tenantInfo?.tenancy_id, open]);
+
+  // Asking price + commission % are optional convenience inputs — when an
+  // agent has just typed both, auto-calculate the commission amount for
+  // them. Deliberately wired to onChange (not a useEffect on the two
+  // values) so it only fires on a genuine edit, never as a side effect of
+  // the reset-on-open above silently overwriting a manually-entered amount
+  // that doesn't mathematically match price × %.
+  function recalcSaleCommissionAmount(priceStr: string, pctStr: string) {
+    const price = parseFloat(priceStr.replace(/,/g, ""));
+    const pct = parseFloat(pctStr);
+    if (!isNaN(price) && price > 0 && !isNaN(pct) && pct > 0) {
+      setExpectedSaleCommissionAmount(String(Math.round(price * pct / 100)));
+    }
+  }
 
   if (!lead) return null;
 
@@ -165,6 +181,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       expected_rent: expectedRent ? parseFloat(expectedRent) : null,
       expected_sale_price: expectedSalePrice ? parseFloat(expectedSalePrice) : null,
       expected_sale_commission_pct: expectedSaleCommissionPct ? parseFloat(expectedSaleCommissionPct) : null,
+      expected_sale_commission_amount: expectedSaleCommissionAmount ? parseFloat(expectedSaleCommissionAmount) : null,
       bedrooms: bedrooms !== "" ? parseInt(bedrooms, 10) : null,
       bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
       parking: parking.trim() || null,
@@ -383,8 +400,18 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             )}
             {(listingPurpose === "sell" || listingPurpose === "both") && (
               <>
-                <Field label="Asking price (RM)" value={expectedSalePrice} onChange={setExpectedSalePrice} placeholder="e.g. 680,000" money required />
-                <Field label="Commission %" value={expectedSaleCommissionPct} onChange={setExpectedSaleCommissionPct} placeholder="e.g. 2" type="number" required />
+                <Field label="Asking price (RM)" value={expectedSalePrice} onChange={(v) => { setExpectedSalePrice(v); recalcSaleCommissionAmount(v, expectedSaleCommissionPct); }} placeholder="e.g. 680,000" money />
+                <Field label="Commission %" value={expectedSaleCommissionPct} onChange={(v) => { setExpectedSaleCommissionPct(v); recalcSaleCommissionAmount(expectedSalePrice, v); }} placeholder="e.g. 2" type="number" />
+                <Field
+                  label="Commission amount (RM)"
+                  value={expectedSaleCommissionAmount}
+                  onChange={setExpectedSaleCommissionAmount}
+                  placeholder="e.g. 13,600"
+                  money
+                  required
+                  full
+                  hint="What you expect to earn. Auto-calculated from asking price × commission % if you fill those in — or just enter it directly."
+                />
               </>
             )}
             <BedroomPicker value={bedrooms} onChange={setBedrooms} required />
@@ -619,8 +646,8 @@ export function getDocumentName(url: string): string {
   return part.replace(/^\d{13}-/, '') || 'Document';
 }
 
-function Field({ label, value, onChange, placeholder, type = "text", full, money, highlight, required }: {
-  label: string; value: string; onChange: (s: string) => void; placeholder?: string; type?: string; full?: boolean; money?: boolean; highlight?: boolean; required?: boolean;
+function Field({ label, value, onChange, placeholder, type = "text", full, money, highlight, required, hint }: {
+  label: string; value: string; onChange: (s: string) => void; placeholder?: string; type?: string; full?: boolean; money?: boolean; highlight?: boolean; required?: boolean; hint?: string;
 }) {
   const cls = "w-full text-[14px] px-3 py-2 rounded-xl";
   const sty = highlight
@@ -637,6 +664,7 @@ function Field({ label, value, onChange, placeholder, type = "text", full, money
         ? <DateInput value={value} onChange={onChange} className={cls} style={sty} />
         : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onWheel={type === "number" ? (e) => e.currentTarget.blur() : undefined} placeholder={placeholder} className={cls} style={sty} />
       }
+      {hint && <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{hint}</p>}
     </div>
   );
 }

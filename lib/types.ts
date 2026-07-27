@@ -129,10 +129,14 @@ export interface OwnerLead {
   agreement_url?: string | null;
   outreach_count?: number | null;
   listing_purpose?: "rent" | "sell" | "both" | null;
-  // Captured at listing time, when Purpose includes "sell" — the asking
-  // price / commission the agent expects, before a deal has actually closed.
+  // Captured at listing time, when Purpose includes "sell" — the commission
+  // amount is the only required field (what the agent expects to earn);
+  // asking price and % are optional and, when both present, auto-calculate
+  // the amount. The amount is what powers income charts, since price/% may
+  // not be filled in at all.
   expected_sale_price?: number | null;
   expected_sale_commission_pct?: number | null;
+  expected_sale_commission_amount?: number | null;
   // Captured at "Mark as Sold" time — the real, final numbers, pre-filled
   // from the expected_* pair above but editable since a sale can close
   // above/below asking.

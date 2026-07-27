@@ -57,13 +57,16 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
       const cur = map.get(key)!;
       cur.count++;
       // Sale-purpose listings have no expected_rent, and rent-purpose
-      // listings have no expected_sale_price — a "both" listing (rare, but
-      // possible) contributes to both segments of the same bar.
+      // listings have no sale commission — a "both" listing (rare, but
+      // possible) contributes to both segments of the same bar. Sale uses
+      // expected_sale_commission_amount directly (not price × %) since
+      // asking price and commission % are optional — the amount is the
+      // only field the agent is required to fill in.
       if (l.listing_purpose !== "sell") {
         cur.rentPotential += (l.expected_rent ?? 0) * (commissionPct / 100);
       }
       if (l.listing_purpose === "sell" || l.listing_purpose === "both") {
-        cur.salePotential += (l.expected_sale_price ?? 0) * ((l.expected_sale_commission_pct ?? 0) / 100);
+        cur.salePotential += l.expected_sale_commission_amount ?? 0;
       }
       cur.items.push(l);
     });
