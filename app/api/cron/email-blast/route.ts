@@ -22,9 +22,27 @@ const DAILY_LIMIT = 60;
 const SEND_INTERVAL_MS = 500; // 2 req/s — Resend's rate limit
 const SEQ2_AFTER_DAYS = 4;
 
-// "rent" | "sale" | null (null = no filter). Kept in sync with Howard's
-// 2026-07-12 decision to target rent-listing agents only.
-const TARGET_LISTING_TYPE = "rent";
+// Rent-tagged contacts (Howard's 2026-07-12 decision) drain first; once that
+// pool is exhausted the queue automatically fills from sale/unknown contacts
+// instead of going empty. See listingPriority below.
+const RENT_TAGGED = "rent";
+
+// Large public webmail providers are exempt from the per-domain cap below —
+// a burst of Gmail/Yahoo/Outlook sends carries no batching risk since each
+// address is one mailbox on a massive multi-tenant ESP, not one company's
+// mail server reacting to a cluster of near-identical messages.
+const PUBLIC_EMAIL_PROVIDERS = new Set([
+  "gmail.com", "googlemail.com",
+  "yahoo.com", "yahoo.com.my", "yahoo.co.uk", "yahoo.com.sg", "ymail.com",
+  "hotmail.com", "hotmail.my", "outlook.com", "live.com",
+  "icloud.com", "me.com", "mac.com",
+]);
+// Root cause of the 2026-07-27 42% bounce spike: one run sent to every
+// propnex.com.my (6/6), casarealty.com.my (9/9), and renstar.my (4/4)
+// address at once — a burst of near-identical mail hitting many mailboxes on
+// the same small company's mail tenant trips its spam engine. Capping
+// non-public domains per run spreads a company's agents across multiple days.
+const MAX_PER_DOMAIN_PER_RUN = 2;
 
 const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
@@ -155,21 +173,20 @@ export async function GET(req: NextRequest) {
   const blockedDomains = new Set(suppressedRows.filter(r => r.type === "blocked_domain").map(r => r.value));
   const deferredDomains = new Set(suppressedRows.filter(r => r.type === "deferred_domain").map(r => r.value));
 
-  let query = supabase
+  const query = supabase
     .from("email_blast_contacts")
-    .select("email, seq1_sent_at, seq2_sent_at, seq1_opened")
+    .select("email, listing_type, seq1_sent_at, seq2_sent_at, seq1_opened")
     .is("seq3_sent_at", null); // seq3 disabled per Howard
-  if (TARGET_LISTING_TYPE) query = query.eq("listing_type", TARGET_LISTING_TYPE);
 
-  let contacts: { email: string; seq1_sent_at: string | null; seq2_sent_at: string | null; seq1_opened: boolean }[];
+  let contacts: { email: string; listing_type: string | null; seq1_sent_at: string | null; seq2_sent_at: string | null; seq1_opened: boolean }[];
   try {
     contacts = await fetchAllRows(query);
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 
-  let skippedBounce = 0, skippedDeferred = 0, skippedNotOpened = 0;
-  const candidates: { email: string; seq: string; tier: number }[] = [];
+  let skippedBounce = 0, skippedDeferred = 0, skippedNotOpened = 0, skippedDomainCap = 0;
+  const candidates: { email: string; seq: string; tier: number; listingPriority: number }[] = [];
 
   for (const c of contacts ?? []) {
     const email = c.email as string;
@@ -185,11 +202,25 @@ export async function GET(req: NextRequest) {
       if (c.seq1_opened) seq = "seq2";
       else skippedNotOpened++;
     }
-    if (seq) candidates.push({ email, seq, tier: domainTier(email) });
+    if (seq) candidates.push({ email, seq, tier: domainTier(email), listingPriority: c.listing_type === RENT_TAGGED ? 0 : 1 });
   }
 
-  candidates.sort((a, b) => a.tier - b.tier);
-  const queue = candidates.slice(0, DAILY_LIMIT);
+  // Rent-tagged contacts first (within that, big providers before small
+  // domains); once rent is exhausted this naturally drains into sale/unknown.
+  candidates.sort((a, b) => a.listingPriority - b.listingPriority || a.tier - b.tier);
+
+  const domainSendCounts: Record<string, number> = {};
+  const queue: typeof candidates = [];
+  for (const cand of candidates) {
+    if (queue.length >= DAILY_LIMIT) break;
+    const domain = cand.email.split("@")[1] ?? "";
+    if (!PUBLIC_EMAIL_PROVIDERS.has(domain)) {
+      const used = domainSendCounts[domain] ?? 0;
+      if (used >= MAX_PER_DOMAIN_PER_RUN) { skippedDomainCap++; continue; }
+      domainSendCounts[domain] = used + 1;
+    }
+    queue.push(cand);
+  }
   const counts = { seq1: queue.filter(q => q.seq === "seq1").length, seq2: queue.filter(q => q.seq === "seq2").length };
 
   const summary = {
@@ -198,6 +229,7 @@ export async function GET(req: NextRequest) {
     skippedBounce,
     skippedDeferred,
     skippedNotOpened,
+    skippedDomainCap,
     queueSize: queue.length,
     counts,
     sample: queue.slice(0, 5).map(q => ({ email: q.email, seq: q.seq })),
