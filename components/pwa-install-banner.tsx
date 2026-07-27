@@ -25,10 +25,6 @@ export function PwaInstallBanner() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (standalone) return;
 
-    // Only show on mobile (touch device, no fine pointer / mouse)
-    if (window.matchMedia("(pointer: fine)").matches) return;
-    if (window.innerWidth > 1024) return;
-
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     setIsIos(ios);
     setShow(true);
@@ -125,7 +121,7 @@ export function PwaInstallBanner() {
                   opacity: installing ? 0.7 : 1,
                 }}
               >
-                {installing ? "Installing…" : "Add to Home Screen"}
+                {installing ? "Installing…" : "Install app"}
               </button>
             )}
           </>

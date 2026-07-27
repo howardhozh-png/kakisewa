@@ -23,11 +23,19 @@ export function PushTopBanner({ hasPushEnabled }: Props) {
 
   useEffect(() => {
     if (hasPushEnabled) return;
-    if (typeof Notification !== "undefined" && Notification.permission === "denied") return;
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (!standalone) return;
+    // Push isn't available in the browser at all on this platform.
+    if (typeof Notification === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (Notification.permission === "denied") return;
+    // iOS Safari only exposes Notification/Push once the site is added to
+    // the home screen — that's an OS restriction, not a general web one.
+    // Desktop and Android support push directly in a normal browser tab.
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isIos) {
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      if (!standalone) return;
+    }
     setShow(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

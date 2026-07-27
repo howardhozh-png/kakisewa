@@ -26,18 +26,26 @@ export function PushNudge({ hasPushEnabled }: Props) {
   useEffect(() => {
     const isTest = new URLSearchParams(window.location.search).get("test_nudge") === "1";
 
-    // Only show in standalone PWA mode (or when ?test_nudge=1 bypasses all checks)
+    // Only show where push actually works (or when ?test_nudge=1 bypasses
+    // all checks). iOS Safari only exposes Notification/Push once the site
+    // is added to the home screen — an OS restriction, not a general web
+    // one — so desktop and Android can show this directly in a normal tab.
     if (!isTest) {
-      const standalone =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        (navigator as Navigator & { standalone?: boolean }).standalone === true;
-      if (!standalone) return;
+      if (typeof Notification === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (isIos) {
+        const standalone =
+          window.matchMedia("(display-mode: standalone)").matches ||
+          (navigator as Navigator & { standalone?: boolean }).standalone === true;
+        if (!standalone) return;
+      }
 
       // Already subscribed
       if (hasPushEnabled) return;
 
       // User explicitly blocked notifications — don't nag
-      if (typeof Notification !== "undefined" && Notification.permission === "denied") return;
+      if (Notification.permission === "denied") return;
 
       // Already dismissed this session
       if (sessionStorage.getItem(SESSION_KEY)) return;
