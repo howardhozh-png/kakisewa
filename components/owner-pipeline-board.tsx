@@ -66,10 +66,9 @@ interface Props {
   tenantsByLeadId?: Record<string, TenantInfo>;
   rankedLeadIds?: Set<string>;
   capStatus?: CapCheckResult;
-  defaultSaleCommissionPct?: number | null;
 }
 
-export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus, defaultSaleCommissionPct = null }: Props) {
+export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus }: Props) {
   const router = useRouter();
   const ph = usePostHog();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -464,7 +463,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
         lead={soldLead}
         open={!!soldLead}
         onClose={() => setSoldLead(null)}
-        defaultCommissionPct={defaultSaleCommissionPct}
         onSold={() => {
           if (!soldLead) return;
           setLocal((prev) =>

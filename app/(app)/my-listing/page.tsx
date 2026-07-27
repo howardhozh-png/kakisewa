@@ -161,7 +161,6 @@ export default async function TrackListingPage({ searchParams }: Props) {
           tenantsByLeadId={tenantsByLeadId}
           rankedLeadIds={rankedLeadIds}
           capStatus={capStatus}
-          defaultSaleCommissionPct={agentProfile.sale_commission_pct ?? null}
         />
       )}
     </div>

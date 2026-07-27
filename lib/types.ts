@@ -190,7 +190,6 @@ export interface AgentProfile {
   photo_url?: string | null;
   accent_color?: string | null;
   commission_pct?: number;       // % of one month's rent earned per signed tenancy. Default 100 (= 1 month rent)
-  sale_commission_pct?: number | null; // default % of sale price, pre-fills the Mark as Sold dialog
   monthly_goal_rm?: number | null;
   quarterly_goal_rm?: number | null;
   today_focus?: string | null;

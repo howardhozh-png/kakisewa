@@ -14,31 +14,23 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSold?: () => void;
-  defaultCommissionPct?: number | null;
 }
 
-export function MarkAsSoldDialog({ lead, open, onClose, onSold, defaultCommissionPct }: Props) {
+export function MarkAsSoldDialog({ lead, open, onClose, onSold }: Props) {
   const [pending, startTransition] = useTransition();
   const ph = usePostHog();
 
-  const defaultPrice = lead?.expected_sale_price ?? null;
-  const defaultPct = lead?.expected_sale_commission_pct ?? defaultCommissionPct ?? null;
-
-  const [priceVal, setPriceVal] = useState(defaultPrice != null ? String(defaultPrice) : "");
-  const [pctVal, setPctVal] = useState(defaultPct != null ? String(defaultPct) : "");
+  // Deliberately never pre-filled — the agent types the real, final numbers
+  // at close time, regardless of whatever was estimated at listing time.
+  const [priceVal, setPriceVal] = useState("");
+  const [pctVal, setPctVal] = useState("");
 
   // Reset fields whenever a different lead opens the dialog
   const [openedForId, setOpenedForId] = useState<string | null>(null);
   if (lead && lead.id !== openedForId && open) {
     setOpenedForId(lead.id);
-    setPriceVal(lead.expected_sale_price != null ? String(lead.expected_sale_price) : "");
-    setPctVal(
-      lead.expected_sale_commission_pct != null
-        ? String(lead.expected_sale_commission_pct)
-        : defaultCommissionPct != null
-          ? String(defaultCommissionPct)
-          : ""
-    );
+    setPriceVal("");
+    setPctVal("");
   }
 
   const price = parseFloat(priceVal) || 0;
@@ -94,11 +86,6 @@ export function MarkAsSoldDialog({ lead, open, onClose, onSold, defaultCommissio
                 className="kk-input"
                 style={{ fontSize: 14 }}
               />
-              {defaultPrice != null && (
-                <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-                  Pre-filled from your listed asking price — edit to match what it actually sold for.
-                </p>
-              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>Commission %</label>
