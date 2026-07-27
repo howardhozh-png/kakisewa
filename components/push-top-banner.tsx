@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Bell, X } from "lucide-react";
+import { saveNotifPrefs } from "@/lib/actions";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -50,6 +51,10 @@ export function PushTopBanner({ hasPushEnabled }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sub),
       });
+      // Re-subscribing the browser alone doesn't resume sends — the cron
+      // and real-time push triggers check notif_push, not subscription
+      // existence, so a previously-toggled-off user needs this flipped too.
+      await saveNotifPrefs({ notif_push: true });
       localStorage.setItem("kk_push_subscribed", "1");
       setDone(true);
       setTimeout(() => setDismissed(true), 2000);

@@ -114,7 +114,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {status === "trial" && agent.referral_slug && !agent.stripe_subscription_id && (
           <ReferralTopBanner referralSlug={agent.referral_slug} />
         )}
-        <PushTopBanner hasPushEnabled={(pushSubCount ?? 0) > 0} />
+        <PushTopBanner hasPushEnabled={(pushSubCount ?? 0) > 0 && agent.notif_push !== false} />
 
         <ProfileProvider profile={agent}>
           <main className="flex-1">{children}</main>
@@ -130,7 +130,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Overlays & dialogs */}
       <PwaGate />
-      <PushNudge hasPushEnabled={(pushSubCount ?? 0) > 0} />
+      <PushNudge hasPushEnabled={(pushSubCount ?? 0) > 0 && agent.notif_push !== false} />
       <OnboardingDemoDialog />
       <TrialDowngradeNotice archivedCount={agent.trial_downgrade_archived_count ?? null} />
       <ProfileSetupDialog

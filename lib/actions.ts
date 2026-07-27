@@ -1466,10 +1466,14 @@ export async function saveWhatsAppTemplatesAction(overrides: TemplateOverrides):
   return { ok: true };
 }
 
-export async function saveNotifPrefs(prefs: { notif_push: boolean; notif_email: boolean }): Promise<{ ok: boolean }> {
+export async function saveNotifPrefs(prefs: Partial<{ notif_push: boolean; notif_email: boolean }>): Promise<{ ok: boolean }> {
   try {
     await updateAgentProfile(prefs);
     revalidatePath("/settings/account");
+    // Re-enabling push from the top banner / bottom sheet needs the app
+    // layout (which gates those prompts) to see the fresh notif_push value
+    // on the very next navigation, not just the settings page.
+    revalidatePath("/", "layout");
     return { ok: true };
   } catch {
     return { ok: false };
