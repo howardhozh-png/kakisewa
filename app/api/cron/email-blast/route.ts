@@ -27,6 +27,11 @@ const SEQ2_AFTER_DAYS = 4;
 // instead of going empty. See listingPriority below.
 const RENT_TAGGED = "rent";
 
+// One-off: 2026-07-31's run only sends seq2 follow-ups (people who already
+// opened seq1) — no fresh seq1 outreach that day. Howard's call, one day
+// only. Safe to delete this block after that date passes.
+const SEQ2_ONLY_DATE = "2026-07-31";
+
 // Large public webmail providers are exempt from the per-domain cap below —
 // a burst of Gmail/Yahoo/Outlook sends carries no batching risk since each
 // address is one mailbox on a massive multi-tenant ESP, not one company's
@@ -176,7 +181,12 @@ export async function GET(req: NextRequest) {
   const query = supabase
     .from("email_blast_contacts")
     .select("email, listing_type, seq1_sent_at, seq2_sent_at, seq1_opened")
-    .is("seq3_sent_at", null); // seq3 disabled per Howard
+    .is("seq3_sent_at", null) // seq3 disabled per Howard
+    // A contact with seq2_sent_at set has permanently nothing left to send
+    // (no seq3) — skip re-fetching/re-processing them every single day
+    // forever. Doesn't change who's eligible; just stops paying for rows
+    // that can never become candidates again.
+    .is("seq2_sent_at", null);
 
   let contacts: { email: string; listing_type: string | null; seq1_sent_at: string | null; seq2_sent_at: string | null; seq1_opened: boolean }[];
   try {
@@ -197,7 +207,7 @@ export async function GET(req: NextRequest) {
 
     let seq: string | null = null;
     if (!c.seq1_sent_at) {
-      seq = "seq1";
+      if (today !== SEQ2_ONLY_DATE) seq = "seq1";
     } else if (!c.seq2_sent_at && daysDiff(c.seq1_sent_at) >= SEQ2_AFTER_DAYS) {
       if (c.seq1_opened) seq = "seq2";
       else skippedNotOpened++;

@@ -1491,10 +1491,22 @@ export interface ImportResult {
   message: string;
 }
 
+// XLSX.read() is genuine CPU-bound work (unzipping + XML parsing), not I/O
+// wait — an unbounded file size means an unbounded active-CPU cost on Vercel's
+// Fluid Compute billing. 15MB comfortably covers any realistic owner list.
+const MAX_IMPORT_FILE_BYTES = 15 * 1024 * 1024;
+// Defense in depth in case a small file somehow unpacks into a huge row
+// count. 10,000 comfortably covers the largest real imports seen so far
+// (low thousands) with real headroom.
+const MAX_IMPORT_ROWS = 10_000;
+
 export async function importOwnerCsv(formData: FormData): Promise<ImportResult> {
   const file = formData.get("file");
   if (!(file instanceof File)) {
     return { ok: false, imported: 0, skipped: 0, errors: [], total: 0, message: "No file uploaded." };
+  }
+  if (file.size > MAX_IMPORT_FILE_BYTES) {
+    return { ok: false, imported: 0, skipped: 0, errors: [], total: 0, message: `File is too large (max ${MAX_IMPORT_FILE_BYTES / 1024 / 1024}MB). Split it into smaller files and import separately.` };
   }
   const isExcel = /\.(xlsx|xls)$/i.test(file.name);
   let rawRows: Record<string, string>[];
@@ -1509,6 +1521,9 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
     const text = await file.text();
     const parsed = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true });
     rawRows = parsed.data;
+  }
+  if (rawRows.length > MAX_IMPORT_ROWS) {
+    return { ok: false, imported: 0, skipped: 0, errors: [], total: rawRows.length, message: `File has ${rawRows.length.toLocaleString()} rows (max ${MAX_IMPORT_ROWS.toLocaleString()}). Split it into smaller files and import separately.` };
   }
 
   const mappingRaw = formData.get("mapping");
@@ -1572,6 +1587,10 @@ export async function importParsedOwnerLeads(
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const userId = session!.user.id;
+
+  if (rows.length > MAX_IMPORT_ROWS) {
+    return { ok: false, imported: 0, skipped: 0, errors: [], total: rows.length, message: `File has ${rows.length.toLocaleString()} rows (max ${MAX_IMPORT_ROWS.toLocaleString()}). Split it into smaller files and import separately.` };
+  }
 
   const parsed: ImportRow[] = rows.map((r, i) => canonicaliseWithMapping(r, mapping, i + 2));
   const valid = parsed.filter((r) => r.errors.length === 0);
