@@ -27,10 +27,12 @@ const SEQ2_AFTER_DAYS = 4;
 // instead of going empty. See listingPriority below.
 const RENT_TAGGED = "rent";
 
-// One-off: 2026-07-31's run only sends seq2 follow-ups (people who already
-// opened seq1) — no fresh seq1 outreach that day. Howard's call, one day
-// only. Safe to delete this block after that date passes.
-const SEQ2_ONLY_DATE = "2026-07-31";
+// Paused 2026-08-03 after the sale/unknown pool's first-contact bounce rate
+// came in at 8% (all genuine dead addresses, not a reputation/spam-filter
+// issue — but Howard wants to hold off on fresh seq1 outreach regardless).
+// seq2 keeps running for people who already opened seq1. Flip back to false
+// to resume fresh outreach.
+const SEQ1_PAUSED = true;
 
 // Large public webmail providers are exempt from the per-domain cap below —
 // a burst of Gmail/Yahoo/Outlook sends carries no batching risk since each
@@ -207,7 +209,7 @@ export async function GET(req: NextRequest) {
 
     let seq: string | null = null;
     if (!c.seq1_sent_at) {
-      if (today !== SEQ2_ONLY_DATE) seq = "seq1";
+      if (!SEQ1_PAUSED) seq = "seq1";
     } else if (!c.seq2_sent_at && daysDiff(c.seq1_sent_at) >= SEQ2_AFTER_DAYS) {
       if (c.seq1_opened) seq = "seq2";
       else skippedNotOpened++;
