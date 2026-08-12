@@ -34,7 +34,9 @@ export function PhotoLightbox({ url, onClose }: Props) {
       a.href = objectUrl;
       a.download = `photo.${ext}`;
       a.click();
-      URL.revokeObjectURL(objectUrl);
+      // Revoking immediately can race the browser's download start on some
+      // browsers and silently cancel it — give it a moment first.
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch {
       window.open(url, "_blank", "noopener,noreferrer");
     }
@@ -45,7 +47,10 @@ export function PhotoLightbox({ url, onClose }: Props) {
   return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center"
-      style={{ zIndex: 9999, background: "rgba(0,0,0,0.88)" }}
+      // Always opened from inside a shadcn Dialog (z-[10001]) — must stay
+      // above every dialog/popover z-index in the app (highest other value
+      // is 10003) or it renders behind its own parent, unclickable.
+      style={{ zIndex: 10010, background: "rgba(0,0,0,0.88)" }}
       onClick={onClose}
     >
       <div className="absolute top-4 right-4 flex items-center gap-2">
