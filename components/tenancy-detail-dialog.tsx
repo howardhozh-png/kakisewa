@@ -7,7 +7,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { Tenancy, daysUntil } from "@/lib/types";
 import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, CalendarPlus } from "lucide-react";
-import { normalizePhone, toE164Display } from "@/lib/phone";
+import { normalizePhone, toE164Display, buildWaLink } from "@/lib/phone";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 
@@ -92,6 +92,7 @@ function TenancyForm({
   // Owner info (editable but locked behind pencil)
   const [ownerName, setOwnerName] = useState(tenancy.property?.owner_name ?? "");
   const [ownerPhone, setOwnerPhone] = useState(tenancy.property?.owner_phone ?? "");
+  const [ownerWhatsappUsername, setOwnerWhatsappUsername] = useState(tenancy.property?.owner_whatsapp_username ?? "");
   const [editingOwner, setEditingOwner] = useState(false);
 
   // Property specs (bedrooms/bathrooms live on owner_leads)
@@ -105,6 +106,7 @@ function TenancyForm({
   // Basic info fields — prefer proposed values from owner form if available
   const [tenantName, setTenantName] = useState(tenancy.tenant_name ?? "");
   const [tenantPhone, setTenantPhone] = useState(tenancy.tenant_phone ?? "");
+  const [tenantWhatsappUsername, setTenantWhatsappUsername] = useState(tenancy.tenant_whatsapp_username ?? "");
   const [amount, setAmount] = useState((tenancy.renewal_proposed_rent ?? tenancy.amount)?.toString() ?? "");
 
   // Reply chips
@@ -131,6 +133,7 @@ function TenancyForm({
     setAgreementUrls(parseAgreementUrls(tenancy.agreement_url ?? null));
     setOwnerName(tenancy.property?.owner_name ?? "");
     setOwnerPhone(tenancy.property?.owner_phone ?? "");
+    setOwnerWhatsappUsername(tenancy.property?.owner_whatsapp_username ?? "");
     setEditingOwner(false);
     setPropertyName(tenancy.property_name ?? "");
     setUnit(tenancy.property?.unit ?? "");
@@ -138,6 +141,7 @@ function TenancyForm({
     setBathrooms(tenancy.property?.bathrooms != null ? String(tenancy.property.bathrooms) : "");
     setTenantName(tenancy.tenant_name ?? "");
     setTenantPhone(tenancy.tenant_phone ?? "");
+    setTenantWhatsappUsername(tenancy.tenant_whatsapp_username ?? "");
     setAmount((tenancy.renewal_proposed_rent ?? tenancy.amount)?.toString() ?? "");
     setRepliedTenant(tenancy.replied_tenant ?? "pending");
     setRepliedOwner(tenancy.replied_owner ?? "pending");
@@ -197,6 +201,7 @@ function TenancyForm({
         updateTenancyBasicInfo(tenancy.id, {
           tenant_name: tenantName || undefined,
           tenant_phone: tenantPhone || undefined,
+          tenant_whatsapp_username: tenantWhatsappUsername.trim() || null,
           amount: amount ? parseFloat(amount) : undefined,
         }),
         updateTenancyContract(tenancy.id, {
@@ -220,6 +225,7 @@ function TenancyForm({
         if (editingOwner) {
           ownerUpdates.owner_name = ownerName || undefined;
           ownerUpdates.owner_phone = ownerPhone || undefined;
+          ownerUpdates.owner_whatsapp_username = ownerWhatsappUsername.trim() || null;
         }
         if (propertyName !== (tenancy.property_name ?? "")) {
           ownerUpdates.property_name = propertyName || undefined;
@@ -261,6 +267,7 @@ function TenancyForm({
             ...tenancy.property,
             owner_name: ownerName || tenancy.property?.owner_name,
             owner_phone: ownerPhone || tenancy.property?.owner_phone,
+            owner_whatsapp_username: ownerWhatsappUsername.trim() || tenancy.property?.owner_whatsapp_username,
           } : tenancy.property,
         });
         onClose();
@@ -297,6 +304,14 @@ function TenancyForm({
                 style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
               />
               <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+              <input
+                type="text"
+                value={ownerWhatsappUsername}
+                onChange={(e) => setOwnerWhatsappUsername(e.target.value)}
+                placeholder="WhatsApp username (optional), e.g. @jane_owner"
+                className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
+                style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
+              />
             </div>
           ) : (
             <div>
@@ -317,9 +332,9 @@ function TenancyForm({
               {(ownerPhone || tenancy.tenant_phone) ? (
                 <div className="flex items-center gap-0.5 mt-1">
                   <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
-                    {ownerPhone || tenancy.tenant_phone}
+                    {ownerWhatsappUsername ? `@${ownerWhatsappUsername.replace(/^@/, "")}` : (ownerPhone || tenancy.tenant_phone)}
                   </p>
-                  <a href={`https://wa.me/${normalizePhone(ownerPhone || tenancy.tenant_phone || "")}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
+                  <a href={buildWaLink(ownerPhone || tenancy.tenant_phone || "", undefined, ownerWhatsappUsername || tenancy.tenant_whatsapp_username)} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
                   <a href={`tel:${toE164Display(ownerPhone || tenancy.tenant_phone || "")}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
@@ -373,9 +388,9 @@ function TenancyForm({
           <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Phone (with country code)</label>
           <div className="flex items-center gap-1">
             <input type="text" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} onBlur={(e) => setTenantPhone(normalizePhone(e.target.value))} placeholder="e.g. 60123456789" className="flex-1 min-w-0 text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
-            {tenantPhone && (
+            {(tenantPhone || tenantWhatsappUsername) && (
               <>
-                <a href={`https://wa.me/${normalizePhone(tenantPhone)}`} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
+                <a href={buildWaLink(tenantPhone, undefined, tenantWhatsappUsername)} target="_blank" rel="noopener" className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                   <WhatsAppIcon className="w-4 h-4" />
                 </a>
                 <a href={`tel:${toE164Display(tenantPhone)}`} className="p-2 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
@@ -385,6 +400,10 @@ function TenancyForm({
             )}
           </div>
           <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+        </div>
+        <div className="space-y-1.5 col-span-2">
+          <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>WhatsApp username (optional)</label>
+          <input type="text" value={tenantWhatsappUsername} onChange={(e) => setTenantWhatsappUsername(e.target.value)} placeholder="e.g. @john_tenant" className="w-full text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
         </div>
         <Field label="Monthly rent (RM)" value={amount} onChange={setAmount} placeholder="e.g. 1,500" money />
         <div /> {/* spacer so rent stays left */}

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { OwnerLead } from "@/lib/types";
 import { Phone, X, Pencil, Building2, ImagePlus, FileSignature, Loader2, Trash2, Star, FileText, Upload, CalendarPlus } from "lucide-react";
-import { normalizePhone, toE164Display } from "@/lib/phone";
+import { normalizePhone, toE164Display, buildWaLink } from "@/lib/phone";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -63,6 +63,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
   const [editingOwner, setEditingOwner] = useState(false);
   const [ownerName, setOwnerName] = useState(lead.owner_name ?? "");
   const [ownerPhone, setOwnerPhone] = useState(lead.owner_phone ?? "");
+  const [ownerWhatsappUsername, setOwnerWhatsappUsername] = useState(lead.owner_whatsapp_username ?? "");
   const [propertyName, setPropertyName] = useState(lead.property_name ?? "");
   const [unit, setUnit] = useState(lead.unit ?? "");
   const [expectedRent, setExpectedRent] = useState(lead.expected_rent != null ? String(lead.expected_rent) : "");
@@ -112,6 +113,7 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
         unit: unit || undefined,
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
+        owner_whatsapp_username: ownerWhatsappUsername.trim() || null,
         expected_rent: expectedRent ? parseFloat(expectedRent) : null,
         bedrooms: bedrooms !== "" ? parseInt(bedrooms, 10) : null,
         bathrooms: bathrooms ? parseInt(bathrooms, 10) : null,
@@ -226,6 +228,14 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
                   />
                   <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                  <input
+                    type="text"
+                    value={ownerWhatsappUsername}
+                    onChange={(e) => setOwnerWhatsappUsername(e.target.value)}
+                    placeholder="WhatsApp username (optional), e.g. @jane_owner"
+                    className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
+                    style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
+                  />
                 </div>
               ) : (
                 <div>
@@ -239,8 +249,10 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                   </div>
                   {ownerPhone ? (
                     <div className="flex items-center gap-0.5 mt-1">
-                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(ownerPhone)}</p>
-                      <a href={`https://wa.me/${normalizePhone(ownerPhone)}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
+                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+                        {ownerWhatsappUsername ? `@${ownerWhatsappUsername.replace(/^@/, "")}` : toE164Display(ownerPhone)}
+                      </p>
+                      <a href={buildWaLink(ownerPhone, undefined, ownerWhatsappUsername)} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                         <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
                       <a href={`tel:${toE164Display(ownerPhone)}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">

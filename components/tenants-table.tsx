@@ -16,12 +16,13 @@ import { toast } from "sonner";
 import { FilterSelect } from "@/components/filter-select";
 import { AddTenantButton } from "@/components/add-tenant-button";
 import { DateRangeFilter } from "@/components/date-range-filter";
-import { normalizePhone } from "@/lib/phone";
+import { normalizePhone, buildWaLink } from "@/lib/phone";
 
 export interface PropertyTenant {
   tenancy_id: string;
   tenant_name: string;
   tenant_phone: string;
+  tenant_whatsapp_username?: string | null;
   property_name?: string;
   unit?: string;
   expected_rent?: number;
@@ -39,6 +40,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName]                   = useState(profile.name);
   const [phone, setPhone]                 = useState(profile.phone ?? "");
+  const [whatsappUsername, setWhatsappUsername] = useState(profile.whatsapp_username ?? "");
   const [occupation, setOccupation]       = useState(profile.occupation ?? "");
   const [nationality, setNationality]     = useState(profile.nationality ?? "");
   const [budgetMax, setBudgetMax]         = useState(profile.budget_max != null ? String(profile.budget_max) : "");
@@ -58,6 +60,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
       const res = await updateTenantProfileAction(profile.id, {
         name: name || profile.name,
         phone: phone || null,
+        whatsapp_username: whatsappUsername.trim() || null,
         occupation: occupation || null,
         nationality: nationality || null,
         budget_max: budgetMax ? parseFloat(budgetMax) : null,
@@ -129,6 +132,10 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
             <div>
               <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Phone</label>
               <input className={inputCls} style={inputStyle} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+60…" />
+            </div>
+            <div>
+              <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>WhatsApp username (optional)</label>
+              <input className={inputCls} style={inputStyle} value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @siti_r" />
             </div>
             <div>
               <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Occupation</label>
@@ -216,6 +223,7 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(t.tenant_name);
   const [phone, setPhone] = useState(t.tenant_phone ?? "");
+  const [whatsappUsername, setWhatsappUsername] = useState(t.tenant_whatsapp_username ?? "");
 
   const inputCls = "w-full rounded-xl px-3 py-2 text-[13px] outline-none";
   const inputStyle = { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
@@ -223,7 +231,7 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
 
   function handleSave() {
     startTransition(async () => {
-      const res = await updateRentedTenantAction(t.tenancy_id, t.tenant_phone ?? null, name.trim(), phone.trim());
+      const res = await updateRentedTenantAction(t.tenancy_id, t.tenant_phone ?? null, name.trim(), phone.trim(), whatsappUsername.trim() || null);
       if (res.ok) { toast.success("Saved"); router.refresh(); onClose(); }
       else toast.error(res.message ?? "Could not save");
     });
@@ -282,9 +290,9 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Phone</label>
             <div className="flex items-center gap-2">
               <input className={inputCls} style={{ ...inputStyle, flex: 1 }} value={phone} onChange={(e) => setPhone(e.target.value)} />
-              {phone && (
+              {(phone || whatsappUsername) && (
                 <div className="flex items-center gap-1 shrink-0">
-                  <a href={`https://wa.me/${normalizePhone(phone)}`} target="_blank" rel="noopener"
+                  <a href={buildWaLink(phone, undefined, whatsappUsername)} target="_blank" rel="noopener"
                     className="w-8 h-8 rounded-xl flex items-center justify-center"
                     style={{ background: "var(--kk-surface-2)", color: "var(--kk-whatsapp)" }}>
                     <WhatsAppIcon className="w-4 h-4" />
@@ -296,6 +304,10 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
                 </div>
               )}
             </div>
+          </div>
+          <div>
+            <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>WhatsApp username (optional)</label>
+            <input className={inputCls} style={inputStyle} value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @john_tenant" />
           </div>
           {t.expected_rent != null && (
             <div className="rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
@@ -491,10 +503,10 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {p.phone ? (
+                      {(p.phone || p.whatsapp_username) ? (
                         <div className="flex items-center justify-end gap-1">
                           <a
-                            href={`https://wa.me/${normalizePhone(p.phone)}`}
+                            href={buildWaLink(p.phone ?? "", undefined, p.whatsapp_username)}
                             target="_blank" rel="noopener"
                             onClick={(e) => e.stopPropagation()}
                             className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -503,15 +515,17 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                           >
                             <WhatsAppIcon className="w-4 h-4" />
                           </a>
-                          <a
-                            href={`tel:${p.phone}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-8 h-8 rounded-full flex items-center justify-center"
-                            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                            aria-label="Call"
-                          >
-                            <Phone className="w-4 h-4" />
-                          </a>
+                          {p.phone && (
+                            <a
+                              href={`tel:${p.phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 h-8 rounded-full flex items-center justify-center"
+                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                              aria-label="Call"
+                            >
+                              <Phone className="w-4 h-4" />
+                            </a>
+                          )}
                         </div>
                       ) : (
                         <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" style={{ color: "var(--kk-ink-mute)" }} />
@@ -555,10 +569,10 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                       <span className="text-[13px]" style={{ color: "var(--kk-ink-faint)" }}>—</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {t.tenant_phone ? (
+                      {(t.tenant_phone || t.tenant_whatsapp_username) ? (
                         <div className="flex items-center justify-end gap-1">
                           <a
-                            href={`https://wa.me/${normalizePhone(t.tenant_phone)}`}
+                            href={buildWaLink(t.tenant_phone, undefined, t.tenant_whatsapp_username)}
                             target="_blank" rel="noopener"
                             onClick={(e) => e.stopPropagation()}
                             className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -567,15 +581,17 @@ export function TenantsTable({ profiles, propertyTenants = [] }: { profiles: Ten
                           >
                             <WhatsAppIcon className="w-4 h-4" />
                           </a>
-                          <a
-                            href={`tel:${t.tenant_phone}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-8 h-8 rounded-full flex items-center justify-center"
-                            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
-                            aria-label="Call"
-                          >
-                            <Phone className="w-4 h-4" />
-                          </a>
+                          {t.tenant_phone && (
+                            <a
+                              href={`tel:${t.tenant_phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 h-8 rounded-full flex items-center justify-center"
+                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                              aria-label="Call"
+                            >
+                              <Phone className="w-4 h-4" />
+                            </a>
+                          )}
                         </div>
                       ) : (
                         <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" style={{ color: "var(--kk-ink-mute)" }} />

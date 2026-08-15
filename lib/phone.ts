@@ -52,10 +52,13 @@ export function toE164Display(phone: string): string {
 
 /**
  * Build a wa.me URL for opening a WhatsApp chat.
+ * If a WhatsApp username is given, it takes priority over the phone number
+ * (WhatsApp resolves wa.me/<username> the same way it resolves wa.me/<phone>).
  * Phone is normalised before being embedded. Message is URL-encoded.
  */
-export function buildWaLink(phone: string, message?: string): string {
-  const normalized = normalizePhone(phone);
-  if (message) return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
-  return `https://wa.me/${normalized}`;
+export function buildWaLink(phone: string, message?: string, username?: string | null): string {
+  const handle = username?.trim().replace(/^@/, "");
+  const identifier = handle ? handle : normalizePhone(phone);
+  if (message) return `https://wa.me/${identifier}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${identifier}`;
 }

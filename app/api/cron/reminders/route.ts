@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
       const { data: expiringContracts } = await supabase
         .from("tenancies")
-        .select("id, tenant_name, tenant_phone, amount, contract_end, tenant_renewal_token, owner_leads!owner_lead_id(property_name)")
+        .select("id, tenant_name, tenant_phone, tenant_whatsapp_username, amount, contract_end, tenant_renewal_token, owner_leads!owner_lead_id(property_name)")
         .eq("user_id", userId)
         .eq("contract_end", targetStr)
         .neq("lifecycle_stage", "closed");
@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
 
         const tenantName = contract.tenant_name as string;
         const tenantPhone = contract.tenant_phone as string;
+        const tenantWhatsappUsername = contract.tenant_whatsapp_username as string | null;
         const ownerLead = contract.owner_leads as { property_name: string | null } | null;
         const propertyName = ownerLead?.property_name ?? "your property";
         const expiryWhen = daysBefore === 60 ? "in 2 months" : daysBefore === 30 ? "in 1 month" : "in 7 days";
@@ -98,7 +99,8 @@ export async function GET(req: NextRequest) {
           renewalForm,
         });
 
-        const waUrl = `https://wa.me/${normalisePhone(tenantPhone)}?text=${encodeURIComponent(body)}`;
+        const tenantWaHandle = tenantWhatsappUsername?.trim().replace(/^@/, "") || normalisePhone(tenantPhone);
+        const waUrl = `https://wa.me/${tenantWaHandle}?text=${encodeURIComponent(body)}`;
 
         await supabase.from("whatsapp_log").insert({
           id: `auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -119,7 +121,7 @@ export async function GET(req: NextRequest) {
 
       const { data: availableLeads } = await supabase
         .from("owner_leads")
-        .select("id, owner_name, owner_phone, expected_rent, property_name, unit, available_from")
+        .select("id, owner_name, owner_phone, owner_whatsapp_username, expected_rent, property_name, unit, available_from")
         .eq("user_id", userId)
         .eq("available_from", targetStr)
         .in("stage", ["wants_rent", "listed", "replied"]);
@@ -141,7 +143,8 @@ export async function GET(req: NextRequest) {
 
         const ownerName = (lead.owner_name as string | null) ?? "Owner";
         const ownerPhone = (lead.owner_phone as string | null) ?? "";
-        if (!ownerPhone) continue;
+        const ownerWhatsappUsername = (lead.owner_whatsapp_username as string | null) ?? null;
+        if (!ownerPhone && !ownerWhatsappUsername) continue;
 
         const propertyName = [lead.property_name, lead.unit].filter(Boolean).join(" · ") || "your property";
         const availableFrom = lead.available_from as string;
@@ -157,7 +160,8 @@ export async function GET(req: NextRequest) {
           agentAgency,
         });
 
-        const waUrl = `https://wa.me/${normalisePhone(ownerPhone)}?text=${encodeURIComponent(body)}`;
+        const ownerWaHandle = ownerWhatsappUsername?.trim().replace(/^@/, "") || normalisePhone(ownerPhone);
+        const waUrl = `https://wa.me/${ownerWaHandle}?text=${encodeURIComponent(body)}`;
 
         await supabase.from("whatsapp_log").insert({
           id: `auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,

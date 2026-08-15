@@ -13,6 +13,7 @@ export function AddSupportButton() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [whatsappUsername, setWhatsappUsername] = useState("");
   const [types, setTypes] = useState<SupportType[]>(["other"]);
   const [area, setArea] = useState("");
   const [notes, setNotes] = useState("");
@@ -26,7 +27,7 @@ export function AddSupportButton() {
   }
 
   function reset() {
-    setName(""); setPhone(""); setTypes(["other"]); setArea(""); setNotes("");
+    setName(""); setPhone(""); setWhatsappUsername(""); setTypes(["other"]); setArea(""); setNotes("");
   }
 
   function close() { reset(); setOpen(false); }
@@ -44,6 +45,7 @@ export function AddSupportButton() {
       const res = await savePropertySupport({
         name: name.trim(),
         phone: phone.trim(),
+        whatsapp_username: whatsappUsername.trim() || null,
         type: types[0],
         types,
         area: area.trim() || null,
@@ -130,6 +132,11 @@ export function AddSupportButton() {
               <div>
                 <p className="kk-overline mb-1.5">Phone (WhatsApp)</p>
                 <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s-]/g, ""))} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
+              </div>
+
+              <div>
+                <p className="kk-overline mb-1.5">WhatsApp username (optional)</p>
+                <input type="text" value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @ahmad_plumbing" style={INPUT_STYLE} />
               </div>
 
               <div>

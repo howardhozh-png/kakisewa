@@ -49,6 +49,7 @@ const COLUMNS: ColMeta[] = [
 type TenantInfo = {
   tenant_name: string;
   tenant_phone: string;
+  tenant_whatsapp_username?: string | null;
   tenancy_id: string;
   lifecycle_stage: string | null;
   contract_start: string | null;

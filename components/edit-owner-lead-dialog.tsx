@@ -7,7 +7,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce, updateMatchedTenancyDetails } from "@/lib/actions";
-import { normalizePhone, phoneError, toE164Display } from "@/lib/phone";
+import { normalizePhone, phoneError, toE164Display, buildWaLink } from "@/lib/phone";
 import { Loader2, X, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, Building2, CalendarPlus } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { PhotoLightbox } from "@/components/photo-lightbox";
@@ -24,6 +24,7 @@ interface Props {
   tenantInfo?: {
     tenant_name: string;
     tenant_phone: string;
+    tenant_whatsapp_username?: string | null;
     tenancy_id: string;
     lifecycle_stage?: string | null;
     contract_start?: string | null;
@@ -47,6 +48,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
 
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
+  const [ownerWhatsappUsername, setOwnerWhatsappUsername] = useState("");
   const [editingOwner, setEditingOwner] = useState(false);
   const [propertyName, setPropertyName] = useState("");
   const [unit, setUnit] = useState("");
@@ -64,6 +66,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
   // Tenancy fields (only for matched/Rented cards)
   const [tenantName, setTenantName] = useState("");
   const [tenantPhone, setTenantPhone] = useState("");
+  const [tenantWhatsappUsername, setTenantWhatsappUsername] = useState("");
   const [tenancyAmount, setTenancyAmount] = useState("");
   const [contractStart, setContractStart] = useState("");
   const [contractDuration, setContractDuration] = useState("");
@@ -75,6 +78,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
       setAgreementUrls(parseAgreementUrls(lead.agreement_url ?? null));
       setOwnerName(lead.owner_name ?? "");
       setOwnerPhone(lead.owner_phone ?? "");
+      setOwnerWhatsappUsername(lead.owner_whatsapp_username ?? "");
       setEditingOwner(false);
       setPropertyName(lead.property_name ?? "");
       setUnit(lead.unit ?? "");
@@ -94,6 +98,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
     if (tenantInfo) {
       setTenantName(tenantInfo.tenant_name ?? "");
       setTenantPhone(tenantInfo.tenant_phone ?? "");
+      setTenantWhatsappUsername(tenantInfo.tenant_whatsapp_username ?? "");
       setTenancyAmount(tenantInfo.amount != null ? String(tenantInfo.amount) : "");
       setContractStart(tenantInfo.contract_start ?? "");
       setContractDuration(tenantInfo.contract_duration_months != null ? String(tenantInfo.contract_duration_months) : "");
@@ -149,6 +154,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
     const updates = {
       owner_name: ownerName || undefined,
       owner_phone: ownerPhone || undefined,
+      owner_whatsapp_username: ownerWhatsappUsername.trim() || null,
       property_name: propertyName || null,
       unit: unit || null,
       expected_rent: expectedRent ? parseFloat(expectedRent) : null,
@@ -168,6 +174,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
         const tenancyUpdates = {
           tenant_name: tenantName || undefined,
           tenant_phone: tenantPhone || undefined,
+          tenant_whatsapp_username: tenantWhatsappUsername.trim() || null,
           amount: tenancyAmount ? parseFloat(tenancyAmount) : undefined,
           contract_start: contractStart || undefined,
           contract_duration_months: contractDuration ? parseInt(contractDuration, 10) : undefined,
@@ -218,6 +225,14 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   ) : (
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                   )}
+                  <input
+                    type="text"
+                    value={ownerWhatsappUsername}
+                    onChange={(e) => setOwnerWhatsappUsername(e.target.value)}
+                    placeholder="WhatsApp username (optional), e.g. @jane_owner"
+                    className="w-full text-[12px] mt-1 bg-transparent outline-none border-b pb-0.5"
+                    style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
+                  />
                 </div>
               ) : (
                 <div>
@@ -237,8 +252,10 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   </div>
                   {ownerPhone ? (
                     <div className="flex items-center gap-0.5 mt-1">
-                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{toE164Display(ownerPhone)}</p>
-                      <a href={`https://wa.me/${normalizePhone(ownerPhone)}`} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
+                      <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>
+                        {ownerWhatsappUsername ? `@${ownerWhatsappUsername.replace(/^@/, "")}` : toE164Display(ownerPhone)}
+                      </p>
+                      <a href={buildWaLink(ownerPhone, undefined, ownerWhatsappUsername)} target="_blank" rel="noopener" className="p-1 rounded-full" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                         <WhatsAppIcon className="w-3.5 h-3.5" />
                       </a>
                       <a href={`tel:${toE164Display(ownerPhone)}`} className="p-1 rounded-full" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
@@ -280,6 +297,17 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                     type="tel"
                     value={tenantPhone}
                     onChange={(e) => setTenantPhone(e.target.value)}
+                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
+                    style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
+                  />
+                </div>
+                <div className="space-y-0.5 col-span-2">
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>WhatsApp username (optional)</label>
+                  <input
+                    type="text"
+                    value={tenantWhatsappUsername}
+                    onChange={(e) => setTenantWhatsappUsername(e.target.value)}
+                    placeholder="e.g. @john_tenant"
                     className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
                     style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
                   />

@@ -28,6 +28,7 @@ export interface Tenancy {
   property_name?: string;
   tenant_name: string | null;
   tenant_phone: string | null;
+  tenant_whatsapp_username?: string | null;
   due_day: number;
   amount: number;
   current_month_paid: boolean;
@@ -60,6 +61,7 @@ export interface Tenancy {
   property?: {
     owner_name?: string;
     owner_phone?: string;
+    owner_whatsapp_username?: string | null;
     address?: string;
     unit?: string;
     photo_urls?: string[];
@@ -105,6 +107,7 @@ export interface OwnerLead {
   user_id?: string | null;
   owner_name: string;
   owner_phone: string;
+  owner_whatsapp_username?: string | null;
   property_name?: string | null;
   unit?: string | null;
   address?: string | null;
@@ -166,6 +169,7 @@ export interface AgentProfile {
   id: number;
   name?: string | null;
   phone?: string | null;
+  whatsapp_username?: string | null;
   agency?: string | null;
   ren_number?: string | null;
   photo_url?: string | null;
@@ -238,6 +242,7 @@ export interface TenantProfile {
   id: string;
   name: string;
   phone?: string | null;
+  whatsapp_username?: string | null;
   age?: number | null;
   occupation?: string | null;
   employer?: string | null;
@@ -339,6 +344,7 @@ export interface PropertySupport {
   name: string;
   contact_name: string | null;
   phone: string;
+  whatsapp_username: string | null;
   type: SupportType;
   types: SupportType[];
   area: string | null;

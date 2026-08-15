@@ -537,6 +537,7 @@ function TenantDetailModal({
   // Edit form state
   const [name, setName]               = useState(t.name);
   const [phone, setPhone]             = useState(t.phone ?? "");
+  const [whatsappUsername, setWhatsappUsername] = useState(t.whatsapp_username ?? "");
   const [occupation, setOccupation]   = useState(t.occupation ?? "");
   const [nationality, setNationality] = useState(t.nationality ?? "");
   const [budgetMax, setBudgetMax]     = useState(t.budget_max != null ? String(t.budget_max) : "");
@@ -557,6 +558,7 @@ function TenantDetailModal({
       const data = {
         name: name.trim() || t.name,
         phone: phone.trim() || null,
+        whatsapp_username: whatsappUsername.trim() || null,
         occupation: occupation.trim() || null,
         nationality: nationality.trim() || null,
         budget_max: budgetMax ? parseFloat(budgetMax) : null,
@@ -578,14 +580,14 @@ function TenantDetailModal({
     ? `up to RM ${t.budget_max.toLocaleString()}/mo`
     : t.budget_min ? `from RM ${t.budget_min.toLocaleString()}/mo` : null;
 
-  const waPhone = t.phone ? normalizePhone(t.phone) : "";
+  const waHandle = t.whatsapp_username?.trim().replace(/^@/, "") || (t.phone ? normalizePhone(t.phone) : "");
   // Use everything after the first space as "first name" (handles Chinese surname-first format)
   const givenName = t.name.includes(" ") ? t.name.slice(t.name.indexOf(" ") + 1) : t.name;
   const property = propertyLabel ?? "the property";
   const waMsg = encodeURIComponent(
     `Hi ${givenName}! I'd like to arrange a house viewing for you at ${property}. When would be a good time?`
   );
-  const waUrl = waPhone ? `https://wa.me/${waPhone}?text=${waMsg}` : null;
+  const waUrl = waHandle ? `https://wa.me/${waHandle}?text=${waMsg}` : null;
 
   const inputCls = "w-full text-[13px] px-3 py-2 rounded-xl outline-none";
   const inputStyle = { background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" };
@@ -661,6 +663,10 @@ function TenantDetailModal({
                 <div>
                   <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Phone</label>
                   <input className={inputCls} style={inputStyle} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+60…" />
+                </div>
+                <div>
+                  <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>WhatsApp username (optional)</label>
+                  <input className={inputCls} style={inputStyle} value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @siti_r" />
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Nationality</label>

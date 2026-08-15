@@ -94,6 +94,8 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
   const propertyNameFromForm = (formData.get("property_name") as string)?.trim() || null;
   const ownerNameFromForm    = (formData.get("owner_name") as string)?.trim() || "";
   const ownerPhoneFromForm   = (formData.get("owner_phone") as string)?.trim() || "";
+  const ownerWhatsappUsernameFromForm = (formData.get("owner_whatsapp_username") as string)?.trim() || null;
+  const tenantWhatsappUsernameFromForm = (formData.get("tenant_whatsapp_username") as string)?.trim() || null;
   const photoUrls: string[] = [];
   for (let i = 0; i < 10; i++) {
     const u = (formData.get(`photo_url_${i}`) as string) || "";
@@ -112,6 +114,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     const newLead = await createOwnerLead({
       owner_name: ownerNameFromForm,
       owner_phone: ownerPhoneFromForm,
+      owner_whatsapp_username: ownerWhatsappUsernameFromForm,
       property_name: propertyNameFromForm,
       unit: propertyUnit,
       bedrooms: bedroomsRaw !== "" && bedroomsRaw != null ? parseInt(bedroomsRaw, 10) : undefined,
@@ -157,6 +160,7 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     owner_lead_id: ownerLeadId,
     tenant_name: formData.get("tenant_name") as string,
     tenant_phone: formData.get("tenant_phone") as string,
+    tenant_whatsapp_username: tenantWhatsappUsernameFromForm,
     due_day: parseInt(formData.get("due_day") as string, 10) || 1,
     amount: parseFloat(formData.get("amount") as string),
     current_month_paid: false,
@@ -500,7 +504,7 @@ async function maybeFireExpiryNotification(
 
 export async function updateTenancyBasicInfo(
   id: string,
-  data: { tenant_name?: string; tenant_phone?: string; amount?: number; due_day?: number }
+  data: { tenant_name?: string; tenant_phone?: string; tenant_whatsapp_username?: string | null; amount?: number; due_day?: number }
 ): Promise<{ ok: boolean; message: string }> {
   try {
     await updateTenancy(id, data);
@@ -518,6 +522,7 @@ export async function updateMatchedTenancyDetails(
   data: {
     tenant_name?: string;
     tenant_phone?: string;
+    tenant_whatsapp_username?: string | null;
     amount?: number;
     contract_start?: string;
     contract_duration_months?: number;
@@ -527,6 +532,7 @@ export async function updateMatchedTenancyDetails(
     const updates: Partial<Tenancy> = {};
     if (data.tenant_name !== undefined) updates.tenant_name = data.tenant_name;
     if (data.tenant_phone !== undefined) updates.tenant_phone = data.tenant_phone;
+    if (data.tenant_whatsapp_username !== undefined) updates.tenant_whatsapp_username = data.tenant_whatsapp_username;
     if (data.amount !== undefined) updates.amount = data.amount;
     if (data.contract_start && data.contract_duration_months) {
       const [y, m, d] = data.contract_start.split("-").map(Number);
@@ -1350,7 +1356,7 @@ No login needed — link is private 🙏
 
 export async function updateOwnerLeadDetails(
   id: string,
-  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
+  data: Partial<Pick<import("./types").OwnerLead, "owner_name" | "owner_phone" | "owner_whatsapp_username" | "property_name" | "unit" | "expected_rent" | "bedrooms" | "bathrooms" | "parking" | "notes" | "available_from" | "listing_purpose" | "cover_photo_index">>
 ) {
   await updateOwnerLead(id, data);
   invalidateCache();
@@ -1449,7 +1455,7 @@ export async function saveTodayChecklist(items: { id: string; text: string; done
   return { ok: true };
 }
 
-export async function saveProfileDetails(p: { name?: string; phone?: string; agency?: string; ren_number?: string | null; photo_url?: string | null; accent_color?: string | null; motivation_photo_url?: string | null }) {
+export async function saveProfileDetails(p: { name?: string; phone?: string; whatsapp_username?: string | null; agency?: string; ren_number?: string | null; photo_url?: string | null; accent_color?: string | null; motivation_photo_url?: string | null }) {
   try {
     await updateAgentProfile(p);
     revalidatePath("/settings/account");
@@ -1912,11 +1918,12 @@ export async function updateRentedTenantAction(
   tenancyId: string,
   oldPhone: string | null,
   name: string,
-  phone: string
+  phone: string,
+  whatsappUsername?: string | null
 ): Promise<{ ok: boolean; message?: string }> {
   try {
     const { updateTenancy } = await import("@/lib/db");
-    await updateTenancy(tenancyId, { tenant_name: name, tenant_phone: phone || null });
+    await updateTenancy(tenancyId, { tenant_name: name, tenant_phone: phone || null, tenant_whatsapp_username: whatsappUsername ?? null });
 
     // Sync the tenant_profiles row that matches the old phone
     if (oldPhone?.trim()) {
@@ -1928,7 +1935,7 @@ export async function updateRentedTenantAction(
         .eq("phone", oldPhone.trim())
         .maybeSingle();
       if (profile) {
-        await supabase.from("tenant_profiles").update({ name, phone: phone || null }).eq("id", profile.id);
+        await supabase.from("tenant_profiles").update({ name, phone: phone || null, whatsapp_username: whatsappUsername ?? null }).eq("id", profile.id);
       }
     }
 
@@ -2080,6 +2087,7 @@ export async function savePropertySupport(data: {
   name: string;
   contact_name?: string | null;
   phone: string;
+  whatsapp_username?: string | null;
   type: SupportType;
   types?: SupportType[];
   area?: string | null;
@@ -2092,14 +2100,14 @@ export async function savePropertySupport(data: {
     if (data.id) {
       await updatePropertySupport(data.id, {
         name: data.name, contact_name: data.contact_name ?? null,
-        phone: data.phone, type: effectiveTypes[0], types: effectiveTypes,
+        phone: data.phone, whatsapp_username: data.whatsapp_username ?? null, type: effectiveTypes[0], types: effectiveTypes,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred,
       });
     } else {
       await createPropertySupport({
         name: data.name, contact_name: data.contact_name ?? null,
-        phone: data.phone, type: effectiveTypes[0], types: effectiveTypes,
+        phone: data.phone, whatsapp_username: data.whatsapp_username ?? null, type: effectiveTypes[0], types: effectiveTypes,
         area: data.area ?? null, notes: data.notes ?? null,
         starred: data.starred ?? 0,
       });
@@ -2265,6 +2273,7 @@ export async function updateCompetitorLeadAction(
   data: {
     owner_name?: string;
     owner_phone?: string;
+    owner_whatsapp_username?: string | null;
     property_name?: string;
     unit?: string;
     expected_rent?: number | null;

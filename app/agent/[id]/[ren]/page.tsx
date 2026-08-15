@@ -20,6 +20,7 @@ interface AgentRow {
   photo_url: string | null;
   ren_number: string | null;
   phone: string | null;
+  whatsapp_username: string | null;
   subscription_plan: "silver" | "platinum" | "elite" | null;
   subscription_status: string | null;
   profile_strengths: ProfileStrengthItem[] | null;
@@ -31,7 +32,7 @@ async function getPublicAgentByRen(id: string, ren: string): Promise<AgentRow | 
   const decodedRen = decodeURIComponent(ren);
   const { data } = await supabase
     .from("agent_profiles")
-    .select("id, name, agency, photo_url, ren_number, phone, subscription_plan, subscription_status, profile_strengths, profile_verbatim")
+    .select("id, name, agency, photo_url, ren_number, phone, whatsapp_username, subscription_plan, subscription_status, profile_strengths, profile_verbatim")
     .ilike("ren_number", decodedRen);
 
   if (!data || data.length === 0) return null;
@@ -163,8 +164,9 @@ export default async function AgentProfilePage({ params, searchParams }: Props) 
   }
 
   const stats = await getAgentStats(agent.id);
-  const waUrl = agent.phone
-    ? `https://wa.me/${normalisePhone(agent.phone)}?text=${encodeURIComponent(`Hi ${agent.name ?? "there"}, I found your profile on kakisewa and would like to inquire about a property.`)}`
+  const waHandle = agent.whatsapp_username?.trim().replace(/^@/, "") || (agent.phone ? normalisePhone(agent.phone) : null);
+  const waUrl = waHandle
+    ? `https://wa.me/${waHandle}?text=${encodeURIComponent(`Hi ${agent.name ?? "there"}, I found your profile on kakisewa and would like to inquire about a property.`)}`
     : null;
 
   const tierGradient = isElite

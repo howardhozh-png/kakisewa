@@ -81,6 +81,7 @@ export default async function NetworkPage({ searchParams }: Props) {
     tenancy_id:     t.tenancy_id,
     tenant_name:    t.tenant_name,
     tenant_phone:   t.tenant_phone ?? "",
+    tenant_whatsapp_username: t.tenant_whatsapp_username,
     property_name:  t.property_name ?? undefined,
     unit:           t.unit ?? undefined,
     expected_rent:  t.amount ?? undefined,

@@ -56,6 +56,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
     ? {
         owner_name: (ol.owner_name as string) ?? "",
         owner_phone: (ol.owner_phone as string) ?? "",
+        owner_whatsapp_username: (ol.owner_whatsapp_username as string | null) ?? null,
         address: (ol.address as string | null) ?? undefined,
         unit: (ol.unit as string | null) ?? undefined,
         photo_urls: parsePhotoUrls(ol.photo_urls),
@@ -71,6 +72,7 @@ function toTenancy(r: Record<string, unknown>): Tenancy {
 
     tenant_name: r.tenant_name as string,
     tenant_phone: r.tenant_phone as string,
+    tenant_whatsapp_username: (r.tenant_whatsapp_username as string | null) ?? null,
     due_day: r.due_day as number,
     amount: r.amount as number,
     current_month_paid: !!(r.current_month_paid),
@@ -206,7 +208,7 @@ const _cachedAllTenantProfiles = unstable_cache(
 const _cachedPropertySupports = unstable_cache(
   async (userId: string): Promise<PropertySupport[]> => {
     const svc = createServiceClient();
-    const { data, error } = await svc.from("property_supports").select("id, name, contact_name, phone, type, types, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("source", { ascending: false }).order("name", { ascending: true });
+    const { data, error } = await svc.from("property_supports").select("id, name, contact_name, phone, whatsapp_username, type, types, area, notes, starred, source, created_at").eq("user_id", userId).order("starred", { ascending: false }).order("source", { ascending: false }).order("name", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PropertySupport[];
   },
@@ -253,7 +255,7 @@ const _cachedAllActiveTenants = unstable_cache(
     const svc = createServiceClient();
     const { data, error } = await svc
       .from("tenancies")
-      .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
+      .select("id, tenant_name, tenant_phone, tenant_whatsapp_username, amount, lifecycle_stage, owner_lead_id")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .not("tenant_name", "is", null)
@@ -280,6 +282,7 @@ const _cachedAllActiveTenants = unstable_cache(
         tenancy_id:      row.id as string,
         tenant_name:     row.tenant_name as string,
         tenant_phone:    row.tenant_phone as string | null,
+        tenant_whatsapp_username: (row.tenant_whatsapp_username as string | null) ?? null,
         property_name:   (ol?.property_name ?? null) as string | null,
         unit:            (ol?.unit ?? null) as string | null,
         amount:          row.amount as number | null,
@@ -392,7 +395,7 @@ ${credentialsBlock}
 
 // ─── Tenancies ────────────────────────────────────────────────────────────────
 
-const TENANCY_SELECT = "*, owner_leads!owner_lead_id(id, owner_name, owner_phone, property_name, unit, address, photo_urls, cover_photo_index, bedrooms, bathrooms, is_managed)";
+const TENANCY_SELECT = "*, owner_leads!owner_lead_id(id, owner_name, owner_phone, owner_whatsapp_username, property_name, unit, address, photo_urls, cover_photo_index, bedrooms, bathrooms, is_managed)";
 
 export async function getTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();
@@ -431,6 +434,7 @@ export async function createTenancy(
 
       tenant_name: data.tenant_name,
       tenant_phone: data.tenant_phone,
+      tenant_whatsapp_username: data.tenant_whatsapp_username ?? null,
       due_day: data.due_day,
       amount: data.amount,
       current_month_paid: data.current_month_paid,
@@ -489,6 +493,7 @@ export async function updateTenancy(id: string, data: Partial<Tenancy>): Promise
   if (data.amount !== undefined)                    updates.amount = data.amount;
   if (data.tenant_name !== undefined)               updates.tenant_name = data.tenant_name;
   if (data.tenant_phone !== undefined)              updates.tenant_phone = data.tenant_phone;
+  if (data.tenant_whatsapp_username !== undefined)  updates.tenant_whatsapp_username = data.tenant_whatsapp_username;
   if (data.forwarded_at !== undefined)              updates.forwarded_at = data.forwarded_at;
   if (data.contract_start !== undefined)            updates.contract_start = data.contract_start;
   if (data.contract_end !== undefined)              updates.contract_end = data.contract_end;
@@ -1037,6 +1042,7 @@ export async function updateAgentProfile(p: Partial<AgentProfile>): Promise<void
   const updates: Record<string, unknown> = {};
   if (p.name !== undefined)                    updates.name = p.name;
   if (p.phone !== undefined)                   updates.phone = p.phone;
+  if (p.whatsapp_username !== undefined)       updates.whatsapp_username = p.whatsapp_username;
   if (p.agency !== undefined)                  updates.agency = p.agency;
   if (p.photo_url !== undefined)               updates.photo_url = p.photo_url;
   if (p.accent_color !== undefined)            updates.accent_color = p.accent_color;
@@ -1213,6 +1219,7 @@ export async function createOwnerLead(data: Omit<OwnerLead, "id" | "created_at">
     user_id: user!.id,
     owner_name: data.owner_name,
     owner_phone: data.owner_phone,
+    owner_whatsapp_username: data.owner_whatsapp_username ?? null,
     property_name: data.property_name ?? null,
     unit: data.unit ?? null,
     address: data.address ?? null,
@@ -2334,6 +2341,7 @@ export async function updateTenantProfile(id: string, data: Partial<Omit<TenantP
   const updates: Record<string, unknown> = {};
   if (data.name !== undefined)               updates.name = data.name;
   if (data.phone !== undefined)              updates.phone = data.phone;
+  if (data.whatsapp_username !== undefined)  updates.whatsapp_username = data.whatsapp_username;
   if (data.age !== undefined)                updates.age = data.age;
   if (data.occupation !== undefined)         updates.occupation = data.occupation;
   if (data.employer !== undefined)           updates.employer = data.employer;
@@ -2420,6 +2428,7 @@ export async function getAllActiveTenants(): Promise<Array<{
   tenancy_id: string;
   tenant_name: string;
   tenant_phone: string | null;
+  tenant_whatsapp_username: string | null;
   property_name: string | null;
   unit: string | null;
   amount: number | null;
@@ -2431,7 +2440,7 @@ export async function getAllActiveTenants(): Promise<Array<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, tenant_phone, amount, lifecycle_stage, owner_lead_id")
+    .select("id, tenant_name, tenant_phone, tenant_whatsapp_username, amount, lifecycle_stage, owner_lead_id")
     .not("tenant_name", "is", null)
     .neq("tenant_name", "")
     .not("tenant_name", "ilike", "unknown")
@@ -2456,6 +2465,7 @@ export async function getAllActiveTenants(): Promise<Array<{
       tenancy_id:     row.id as string,
       tenant_name:    row.tenant_name as string,
       tenant_phone:   row.tenant_phone as string | null,
+      tenant_whatsapp_username: (row.tenant_whatsapp_username as string | null) ?? null,
       property_name:  (ol?.property_name ?? null) as string | null,
       unit:           (ol?.unit ?? null) as string | null,
       amount:         row.amount as number | null,
@@ -2481,6 +2491,7 @@ export async function getTenantForOwnerLead(ownerLeadId: string): Promise<{ tena
 export type TenantByLead = {
   tenant_name: string;
   tenant_phone: string;
+  tenant_whatsapp_username?: string | null;
   tenancy_id: string;
   lifecycle_stage: string | null;
   contract_start: string | null;
@@ -2494,7 +2505,7 @@ export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<R
   const supabase = await createClient();
   const { data } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, tenant_phone, owner_lead_id, lifecycle_stage, contract_start, contract_end, contract_duration_months, amount")
+    .select("id, tenant_name, tenant_phone, tenant_whatsapp_username, owner_lead_id, lifecycle_stage, contract_start, contract_end, contract_duration_months, amount")
     .in("owner_lead_id", ownerLeadIds)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
@@ -2508,6 +2519,7 @@ export async function getTenantsForOwnerLeads(ownerLeadIds: string[]): Promise<R
         tenancy_id: row.id as string,
         tenant_name: row.tenant_name as string,
         tenant_phone: row.tenant_phone as string,
+        tenant_whatsapp_username: (row.tenant_whatsapp_username as string | null) ?? null,
         lifecycle_stage: row.lifecycle_stage as string | null,
         contract_start: row.contract_start as string | null,
         contract_end: row.contract_end as string | null,
@@ -2525,7 +2537,7 @@ export async function getPropertySupports(): Promise<PropertySupport[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("property_supports").select("id, name, contact_name, phone, type, types, area, notes, starred, source, created_at").order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
+    const { data, error } = await supabase.from("property_supports").select("id, name, contact_name, phone, whatsapp_username, type, types, area, notes, starred, source, created_at").order("starred", { ascending: false }).order("type", { ascending: true }).order("name", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PropertySupport[];
   }
@@ -2533,7 +2545,7 @@ export async function getPropertySupports(): Promise<PropertySupport[]> {
 }
 
 export async function createPropertySupport(data: {
-  name: string; contact_name?: string | null; phone: string; type: SupportType; types?: SupportType[];
+  name: string; contact_name?: string | null; phone: string; whatsapp_username?: string | null; type: SupportType; types?: SupportType[];
   area?: string | null; notes?: string | null; starred?: number;
 }): Promise<PropertySupport> {
   const supabase = await createClient();
@@ -2547,6 +2559,7 @@ export async function createPropertySupport(data: {
     name: data.name,
     contact_name: data.contact_name ?? null,
     phone: data.phone,
+    whatsapp_username: data.whatsapp_username ?? null,
     type: effectiveTypes[0],
     types: effectiveTypes,
     area: data.area ?? null,
@@ -2557,20 +2570,21 @@ export async function createPropertySupport(data: {
   if (error) throw error;
   const { data: fresh } = await supabase
     .from("property_supports")
-    .select("id, name, contact_name, phone, type, types, area, notes, starred, source, created_at")
+    .select("id, name, contact_name, phone, whatsapp_username, type, types, area, notes, starred, source, created_at")
     .eq("id", id)
     .single();
   return fresh as PropertySupport;
 }
 
 export async function updatePropertySupport(id: string, data: Partial<{
-  name: string; contact_name: string | null; phone: string; type: SupportType; types: SupportType[];
+  name: string; contact_name: string | null; phone: string; whatsapp_username: string | null; type: SupportType; types: SupportType[];
   area: string | null; notes: string | null; starred: number;
 }>): Promise<void> {
   const updates: Record<string, unknown> = {};
   if (data.name         !== undefined) updates.name         = data.name;
   if (data.contact_name !== undefined) updates.contact_name = data.contact_name;
   if (data.phone        !== undefined) updates.phone        = data.phone;
+  if (data.whatsapp_username !== undefined) updates.whatsapp_username = data.whatsapp_username;
   if (data.type         !== undefined) updates.type         = data.type;
   if (data.types        !== undefined) updates.types        = data.types;
   if (data.area         !== undefined) updates.area         = data.area;

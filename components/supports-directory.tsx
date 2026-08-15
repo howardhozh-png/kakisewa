@@ -305,6 +305,7 @@ function ContactForm({ initial, onClose, onSaved }: {
   const [name, setName]               = useState(initial?.name ?? "");
   const [contactName, setContactName] = useState(initial?.contact_name ?? "");
   const [phone, setPhone]             = useState(initial?.phone ?? "");
+  const [whatsappUsername, setWhatsappUsername] = useState(initial?.whatsapp_username ?? "");
   const [types, setTypes]             = useState<SupportType[]>(initialTypes);
   const [area, setArea]               = useState(initial?.area ?? "");
   const [notes, setNotes]             = useState(initial?.notes ?? "");
@@ -325,6 +326,7 @@ function ContactForm({ initial, onClose, onSaved }: {
         name: name.trim(),
         contact_name: contactName.trim() || null,
         phone: phone.trim(),
+        whatsapp_username: whatsappUsername.trim() || null,
         type: types[0],
         types,
         area: area.trim() || null,
@@ -338,6 +340,7 @@ function ContactForm({ initial, onClose, onSaved }: {
           name: name.trim(),
           contact_name: contactName.trim() || null,
           phone: phone.trim(),
+          whatsapp_username: whatsappUsername.trim() || null,
           type: types[0], types,
           area: area.trim() || null,
           notes: notes.trim() || null,
@@ -405,6 +408,10 @@ function ContactForm({ initial, onClose, onSaved }: {
           <div>
             <p className="kk-overline mb-1.5">Phone (WhatsApp)</p>
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 60123456789" style={INPUT_STYLE} />
+          </div>
+          <div>
+            <p className="kk-overline mb-1.5">WhatsApp username (optional)</p>
+            <input type="text" value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @ahmad_plumbing" style={INPUT_STYLE} />
           </div>
           <div>
             <p className="kk-overline mb-1.5">Area covered</p>

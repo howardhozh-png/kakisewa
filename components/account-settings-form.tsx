@@ -934,6 +934,7 @@ function WhatsAppIntegrationSection({ agent }: { agent: AgentProfile }) {
 export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const [name, setName] = useState(agent.name ?? "");
   const [phone, setPhone] = useState(agent.phone ?? "");
+  const [whatsappUsername, setWhatsappUsername] = useState(agent.whatsapp_username ?? "");
   const [agency, setAgency] = useState(agent.agency ?? "");
   const [renNumber, setRenNumber] = useState(agent.ren_number ?? "");
   const [pending, startTransition] = useTransition();
@@ -971,12 +972,13 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
   const dirty =
     name !== (agent.name ?? "") ||
     phone !== (agent.phone ?? "") ||
+    whatsappUsername !== (agent.whatsapp_username ?? "") ||
     agency !== (agent.agency ?? "") ||
     renNumber !== (agent.ren_number ?? "");
 
   function handleSave() {
     startTransition(async () => {
-      const res = await saveProfileDetails({ name: name.trim(), phone: phone.trim(), agency: agency.trim(), ren_number: renNumber.trim() || null });
+      const res = await saveProfileDetails({ name: name.trim(), phone: phone.trim(), whatsapp_username: whatsappUsername.trim() || null, agency: agency.trim(), ren_number: renNumber.trim() || null });
       if (res.ok) toast.success("Profile saved");
       else toast.error("Failed to save");
     });
@@ -1030,6 +1032,13 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s-]/g, ""))} placeholder="e.g. 60107609699" style={INPUT_STYLE} />
             <p className="text-[11px] mt-1.5" style={{ color: "var(--kk-ink-faint)" }}>
               Used as the sender in WhatsApp message templates.
+            </p>
+          </div>
+          <div>
+            <p className="kk-overline mb-1.5">WhatsApp username (optional)</p>
+            <input type="text" value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @howardho" style={INPUT_STYLE} />
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--kk-ink-faint)" }}>
+              If set, your public agent profile links to this instead of your phone number.
             </p>
           </div>
           <div>

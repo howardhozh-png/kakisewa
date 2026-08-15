@@ -14,7 +14,7 @@ async function getPublicAgentProfile(id: string) {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("agent_profiles")
-    .select("id, name, agency, photo_url, ren_number, phone, subscription_plan, subscription_status")
+    .select("id, name, agency, photo_url, ren_number, phone, whatsapp_username, subscription_plan, subscription_status")
     .eq("id", id)
     .maybeSingle();
   return data as {
@@ -24,6 +24,7 @@ async function getPublicAgentProfile(id: string) {
     photo_url: string | null;
     ren_number: string | null;
     phone: string | null;
+    whatsapp_username: string | null;
     subscription_plan: "silver" | "platinum" | "elite" | null;
     subscription_status: string | null;
   } | null;
@@ -113,8 +114,9 @@ export default async function AgentProfilePage({ params }: Props) {
   }
 
   const stats = await getAgentStats(id);
-  const waUrl = agent.phone
-    ? `https://wa.me/${normalisePhone(agent.phone)}?text=${encodeURIComponent(`Hi ${agent.name ?? "there"}, I found your profile on kakisewa and would like to inquire about a property.`)}`
+  const waHandle = agent.whatsapp_username?.trim().replace(/^@/, "") || (agent.phone ? normalisePhone(agent.phone) : null);
+  const waUrl = waHandle
+    ? `https://wa.me/${waHandle}?text=${encodeURIComponent(`Hi ${agent.name ?? "there"}, I found your profile on kakisewa and would like to inquire about a property.`)}`
     : null;
 
   return (

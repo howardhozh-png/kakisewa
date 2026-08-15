@@ -54,7 +54,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   return [count, increment, cap, updateCap];
 }
 import { OwnerLead } from "@/lib/types";
-import { toE164Display, normalizePhone } from "@/lib/phone";
+import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -274,6 +274,7 @@ function LeadPopup({
   const [form, setForm] = useState({
     owner_name: lead.owner_name ?? "",
     owner_phone: lead.owner_phone ?? "",
+    owner_whatsapp_username: lead.owner_whatsapp_username ?? "",
     property_name: lead.property_name ?? "",
     unit: lead.unit ?? "",
     listing_purpose: lead.listing_purpose ?? null as "rent" | "sell" | "both" | null,
@@ -305,6 +306,7 @@ function LeadPopup({
   const dirty =
     form.owner_name !== (lead.owner_name ?? "") ||
     form.owner_phone !== (lead.owner_phone ?? "") ||
+    form.owner_whatsapp_username !== (lead.owner_whatsapp_username ?? "") ||
     form.property_name !== (lead.property_name ?? "") ||
     form.unit !== (lead.unit ?? "") ||
     form.expected_rent !== (lead.expected_rent != null ? String(lead.expected_rent) : "") ||
@@ -334,6 +336,7 @@ function LeadPopup({
       const updates: Partial<OwnerLead> = {
         owner_name: form.owner_name || undefined,
         owner_phone: form.owner_phone || undefined,
+        owner_whatsapp_username: form.owner_whatsapp_username.trim() || null,
         property_name: form.property_name || undefined,
         unit: form.unit || undefined,
         expected_rent: form.expected_rent ? Number(form.expected_rent) : undefined,
@@ -493,17 +496,26 @@ function LeadPopup({
                 style={{ color: "var(--kk-ink-mute)", width: form.owner_phone ? `${form.owner_phone.length + 1}ch` : "6ch", minWidth: "6ch", maxWidth: "100%" }}
                 placeholder="Phone"
               />
-              {form.owner_phone && (
+              {(form.owner_phone || form.owner_whatsapp_username) && (
                 <>
-                  <a href={`https://wa.me/${normalizePhone(form.owner_phone ?? "")}`} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
+                  <a href={buildWaLink(form.owner_phone ?? "", undefined, form.owner_whatsapp_username)} target="_blank" rel="noopener" className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-whatsapp)" }} aria-label="WhatsApp">
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                   </a>
-                  <a href={`tel:${toE164Display(form.owner_phone)}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
-                    <Phone className="w-3.5 h-3.5" />
-                  </a>
+                  {form.owner_phone && (
+                    <a href={`tel:${toE164Display(form.owner_phone)}`} className="p-1 rounded-full shrink-0" style={{ color: "var(--kk-ink-faint)" }} aria-label="Call">
+                      <Phone className="w-3.5 h-3.5" />
+                    </a>
+                  )}
                 </>
               )}
             </div>
+            <input
+              value={form.owner_whatsapp_username}
+              onChange={(e) => set("owner_whatsapp_username", e.target.value)}
+              className="text-[11px] bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] mt-0.5"
+              style={{ color: "var(--kk-ink-faint)", width: form.owner_whatsapp_username ? `${form.owner_whatsapp_username.length + 1}ch` : "16ch", minWidth: "16ch", maxWidth: "100%" }}
+              placeholder="WhatsApp username (optional)"
+            />
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <StatusBadge lead={lead} />

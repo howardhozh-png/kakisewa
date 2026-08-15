@@ -72,10 +72,12 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
   // Owner
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
+  const [ownerWhatsappUsername, setOwnerWhatsappUsername] = useState("");
 
   // Tenant
   const [tenantName, setTenantName] = useState("");
   const [tenantPhone, setTenantPhone] = useState("");
+  const [tenantWhatsappUsername, setTenantWhatsappUsername] = useState("");
 
   // Media
   const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; preview: string }>>([]);
@@ -129,11 +131,11 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
   function reset() {
     setPropertyName(""); setUnit("");
     setAmount(""); setBedrooms(""); setBathrooms(""); setParking(""); setNotes("");
-    setOwnerName(""); setOwnerPhone("");
+    setOwnerName(""); setOwnerPhone(""); setOwnerWhatsappUsername("");
     setContractStart(""); setDurationMonths(""); setContractEndDirect("");
     photoFiles.forEach((p) => URL.revokeObjectURL(p.preview));
     setPhotoFiles([]); setAgreementFiles([]);
-    setTenantName(""); setTenantPhone("");
+    setTenantName(""); setTenantPhone(""); setTenantWhatsappUsername("");
     setShowSugg(false);
   }
 
@@ -154,6 +156,7 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
         fd.set("property_unit", unit.trim());
         fd.set("owner_name", ownerName.trim());
         fd.set("owner_phone", normalizePhone(ownerPhone.trim()));
+        if (ownerWhatsappUsername.trim()) fd.set("owner_whatsapp_username", ownerWhatsappUsername.trim());
         fd.set("amount", amount);
         fd.set("due_day", "1");
         fd.set("contract_end_direct", contractEnd);
@@ -161,6 +164,7 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
         if (durationMonths) fd.set("contract_duration_months", durationMonths);
         fd.set("tenant_name", tenantName.trim());
         fd.set("tenant_phone", normalizePhone(tenantPhone.trim()));
+        if (tenantWhatsappUsername.trim()) fd.set("tenant_whatsapp_username", tenantWhatsappUsername.trim());
         if (bedrooms !== "") fd.set("bedrooms", bedrooms);
         if (bathrooms !== "") fd.set("bathrooms", bathrooms);
         if (parking.trim()) fd.set("parking", parking.trim());
@@ -351,6 +355,10 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
                   <TextInput type="tel" value={ownerPhone} onChange={setOwnerPhone} onBlur={(v) => setOwnerPhone(normalizePhone(v))} placeholder="601XXXXXXXX" />
                   <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                 </div>
+                <div className="col-span-2">
+                  <FieldLabel>WhatsApp username (optional)</FieldLabel>
+                  <TextInput value={ownerWhatsappUsername} onChange={setOwnerWhatsappUsername} placeholder="e.g. @jane_owner" />
+                </div>
               </div>
             </div>
 
@@ -363,6 +371,10 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
                   <FieldLabel>WhatsApp number</FieldLabel>
                   <TextInput type="tel" value={tenantPhone} onChange={setTenantPhone} onBlur={(v) => setTenantPhone(normalizePhone(v))} placeholder="601XXXXXXXX" />
                   <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                </div>
+                <div className="col-span-2">
+                  <FieldLabel>WhatsApp username (optional)</FieldLabel>
+                  <TextInput value={tenantWhatsappUsername} onChange={setTenantWhatsappUsername} placeholder="e.g. @john_tenant" />
                 </div>
               </div>
             </div>
