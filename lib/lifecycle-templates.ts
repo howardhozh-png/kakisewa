@@ -13,8 +13,10 @@ export interface TemplateContext {
 interface Resolved {
   tenant_name: string;
   tenant_phone: string;
+  tenant_username: string | null;
   owner_name: string;
   owner_phone: string;
+  owner_username: string | null;
   property_name: string;
   unit: string;          // "Unit A-12" or "" if no unit
   rent: string;          // "RM 1,800"
@@ -46,8 +48,10 @@ function resolve(ctx: TemplateContext): Resolved {
   return {
     tenant_name: t.tenant_name ?? "",
     tenant_phone: t.tenant_phone ?? "",
+    tenant_username: t.tenant_whatsapp_username ?? null,
     owner_name: t.property?.owner_name ?? "Owner",
     owner_phone: t.property?.owner_phone ?? "",
+    owner_username: t.property?.owner_whatsapp_username ?? null,
     property_name: t.property_name ?? t.owner_lead_id ?? "",
     unit: unitLabel,
     rent: `RM ${t.amount.toLocaleString()}`,
@@ -144,6 +148,7 @@ I'll coordinate the handover, key return, and deposit refund process closer to t
 export interface OutboundPlan {
   to: "tenant" | "owner";
   phone: string;
+  username: string | null;
   body: string;
 }
 
@@ -155,22 +160,22 @@ export function plansForStage(
   switch (stage) {
     case "pinged":
       return [
-        { to: "tenant", phone: v.tenant_phone, body: tplHeadsupTenant(ctx) },
-        { to: "owner",  phone: v.owner_phone,  body: tplHeadsupOwner(ctx)  },
+        { to: "tenant", phone: v.tenant_phone, username: v.tenant_username, body: tplHeadsupTenant(ctx) },
+        { to: "owner",  phone: v.owner_phone,  username: v.owner_username,  body: tplHeadsupOwner(ctx)  },
       ];
     case "renewing":
       return [
-        { to: "tenant", phone: v.tenant_phone, body: tplRenewalConfirmation(ctx) },
-        { to: "owner",  phone: v.owner_phone,  body: tplRenewalConfirmation(ctx) },
+        { to: "tenant", phone: v.tenant_phone, username: v.tenant_username, body: tplRenewalConfirmation(ctx) },
+        { to: "owner",  phone: v.owner_phone,  username: v.owner_username,  body: tplRenewalConfirmation(ctx) },
       ];
     case "replacing":
       return [
-        { to: "owner",  phone: v.owner_phone,  body: tplReplacingTenantToOwner(ctx) },
+        { to: "owner",  phone: v.owner_phone,  username: v.owner_username,  body: tplReplacingTenantToOwner(ctx) },
       ];
     case "ending":
       // Owner ended → notify tenant
       return [
-        { to: "tenant", phone: v.tenant_phone, body: tplOwnerEndingToTenant(ctx) },
+        { to: "tenant", phone: v.tenant_phone, username: v.tenant_username, body: tplOwnerEndingToTenant(ctx) },
       ];
     default:
       return [];

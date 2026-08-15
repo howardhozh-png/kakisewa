@@ -658,7 +658,7 @@ export async function buildExpiryPingTenant(tenancyId: string): Promise<{ url: s
     expiryWhen,
     renewalForm: formUrl,
   });
-  const out = buildOutbound({ template: "expiry_check_tenant", toPhone: t.tenant_phone ?? "", body });
+  const out = buildOutbound({ template: "expiry_check_tenant", toPhone: t.tenant_phone ?? "", toUsername: t.tenant_whatsapp_username, body });
   await Promise.all([
     logWhatsApp({
       related_id: t.id,
@@ -742,6 +742,7 @@ export async function sendLifecycleTemplate(
     const out = buildOutbound({
       template: stage === "pinged" ? (p.to === "tenant" ? "expiry_check_tenant" : "expiry_check_owner") : "expiry_check_tenant",
       toPhone: p.phone,
+      toUsername: p.username,
       body: p.body,
     });
     urls.push(out.url);
@@ -954,7 +955,7 @@ export async function buildExpiryPingOwner(tenancyId: string): Promise<{ url: st
     expiryWhen,
     renewalForm: formUrl,
   });
-  const out = buildOutbound({ template: "expiry_check_owner", toPhone: t.property?.owner_phone ?? "", body });
+  const out = buildOutbound({ template: "expiry_check_owner", toPhone: t.property?.owner_phone ?? "", toUsername: t.property?.owner_whatsapp_username, body });
   await Promise.all([
     logWhatsApp({
       related_id: t.id,
@@ -1339,7 +1340,7 @@ ${shareUrl}
 No login needed — link is private 🙏
 — ${agent.name ?? "Your agent"}${agent.agency ? `, ${agent.agency}` : ""}`;
 
-  const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, body });
+  const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, toUsername: owner.owner_whatsapp_username, body });
   await Promise.all([
     logWhatsApp({
       related_id: ownerLeadId,
@@ -1408,7 +1409,7 @@ Reply here or I can send you a quick form — takes about 2 minutes 🙏
 — ${agent.name ?? "Your agent"}${agent.agency ? `, ${agent.agency}` : ""}`;
   }
 
-  const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, body });
+  const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, toUsername: owner.owner_whatsapp_username, body });
   await Promise.all([
     logWhatsApp({
       related_id: owner.id,
@@ -1668,7 +1669,7 @@ export async function generateOwnerIntakeLink(ownerLeadId: string): Promise<{ ok
   });
 
   const { buildOutbound } = await import("./whatsapp");
-  const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, body });
+  const out = buildOutbound({ template: "owner_outreach", toPhone: owner.owner_phone, toUsername: owner.owner_whatsapp_username, body });
   await Promise.all([
     logWhatsApp({
       related_id: ownerLeadId,
@@ -2317,7 +2318,7 @@ export async function buildCompetitorOwnerPing(leadId: string): Promise<{ url: s
     expiryWhen,
     renewalForm: intakeUrl,
   });
-  const out = buildOutbound({ template: "expiry_check_owner", toPhone: lead.owner_phone, body });
+  const out = buildOutbound({ template: "expiry_check_owner", toPhone: lead.owner_phone, toUsername: lead.owner_whatsapp_username, body });
   await logWhatsApp({
     related_id: leadId,
     related_type: "owner_lead",

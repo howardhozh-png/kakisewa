@@ -7,6 +7,7 @@ import type { WhatsAppTemplate } from "./types";
 export interface OutboundParams {
   template: WhatsAppTemplate;
   toPhone: string;
+  toUsername?: string | null;
   body: string;
 }
 
@@ -16,8 +17,10 @@ export interface OutboundResult {
 }
 
 export function buildOutbound(p: OutboundParams): OutboundResult {
+  const handle = p.toUsername?.trim().replace(/^@/, "");
+  const identifier = handle ? handle : normalisePhone(p.toPhone);
   return {
-    url: `https://wa.me/${normalisePhone(p.toPhone)}?text=${encodeURIComponent(p.body)}`,
+    url: `https://wa.me/${identifier}?text=${encodeURIComponent(p.body)}`,
     body: p.body,
   };
 }
