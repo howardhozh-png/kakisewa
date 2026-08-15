@@ -512,8 +512,8 @@ function LeadPopup({
             <input
               value={form.owner_whatsapp_username}
               onChange={(e) => set("owner_whatsapp_username", e.target.value)}
-              className="text-[11px] bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] mt-0.5"
-              style={{ color: "var(--kk-ink-faint)", width: form.owner_whatsapp_username ? `${form.owner_whatsapp_username.length + 1}ch` : "16ch", minWidth: "16ch", maxWidth: "100%" }}
+              className="w-full text-[11px] bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] mt-0.5"
+              style={{ color: "var(--kk-ink-faint)" }}
               placeholder="WhatsApp username (optional)"
             />
           </div>
