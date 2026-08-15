@@ -12,6 +12,7 @@ import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { daysUntil } from "@/lib/types";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { CalendarEventDialog } from "@/components/calendar-event-dialog";
@@ -228,12 +229,11 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
                   />
                   <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
-                  <input
-                    type="text"
+                  <WhatsAppUsernameInput
                     value={ownerWhatsappUsername}
-                    onChange={(e) => setOwnerWhatsappUsername(e.target.value)}
-                    placeholder="WhatsApp username (optional), e.g. @jane_owner"
-                    className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
+                    onChange={setOwnerWhatsappUsername}
+                    placeholder="WhatsApp username (optional)"
+                    className="w-full text-[12px] border-b pb-0.5"
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
                   />
                 </div>

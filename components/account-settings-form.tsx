@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { Loader2, ChevronDown, RotateCcw, Eye, X, Info, CheckCircle2, MessageCircle, Bell, Mail } from "lucide-react";
 import { INPUT_STYLE } from "@/lib/styles";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 
 // camelCase → "Title Case", with URL suffix fix
 function tokenLabel(key: string): string {
@@ -1036,7 +1037,7 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           </div>
           <div>
             <p className="kk-overline mb-1.5">WhatsApp username (optional)</p>
-            <input type="text" value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @howardho" style={INPUT_STYLE} />
+            <WhatsAppUsernameInput value={whatsappUsername} onChange={setWhatsappUsername} style={INPUT_STYLE} />
             <p className="text-[11px] mt-1.5" style={{ color: "var(--kk-ink-faint)" }}>
               If set, your public agent profile links to this instead of your phone number.
             </p>

@@ -7,6 +7,7 @@ import { savePropertySupport, toggleSupportStar, removeSupportContact } from "@/
 import { resolveTemplate, parseTemplateOverrides, type TemplateOverrides } from "@/lib/whatsapp-templates";
 import { normalizePhone } from "@/lib/phone";
 import { INPUT_STYLE } from "@/lib/styles";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { toast } from "sonner";
 
 interface Props {
@@ -411,7 +412,7 @@ function ContactForm({ initial, onClose, onSaved }: {
           </div>
           <div>
             <p className="kk-overline mb-1.5">WhatsApp username (optional)</p>
-            <input type="text" value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @ahmad_plumbing" style={INPUT_STYLE} />
+            <WhatsAppUsernameInput value={whatsappUsername} onChange={setWhatsappUsername} style={INPUT_STYLE} />
           </div>
           <div>
             <p className="kk-overline mb-1.5">Area covered</p>

@@ -7,6 +7,7 @@ import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
@@ -357,7 +358,7 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
                 </div>
                 <div className="col-span-2">
                   <FieldLabel>WhatsApp username (optional)</FieldLabel>
-                  <TextInput value={ownerWhatsappUsername} onChange={setOwnerWhatsappUsername} placeholder="e.g. @jane_owner" />
+                  <WhatsAppUsernameInput value={ownerWhatsappUsername} onChange={setOwnerWhatsappUsername} className="w-full px-3 py-2 rounded-xl text-[13px]" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                 </div>
               </div>
             </div>
@@ -374,7 +375,7 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
                 </div>
                 <div className="col-span-2">
                   <FieldLabel>WhatsApp username (optional)</FieldLabel>
-                  <TextInput value={tenantWhatsappUsername} onChange={setTenantWhatsappUsername} placeholder="e.g. @john_tenant" />
+                  <WhatsAppUsernameInput value={tenantWhatsappUsername} onChange={setTenantWhatsappUsername} className="w-full px-3 py-2 rounded-xl text-[13px]" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                 </div>
               </div>
             </div>

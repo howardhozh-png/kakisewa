@@ -7,6 +7,7 @@ import { PropertySupport, SupportType, SUPPORT_TYPES, SUPPORT_LABELS, SUPPORT_IC
 import { savePropertySupport } from "@/lib/actions";
 import { toast } from "sonner";
 import { INPUT_STYLE } from "@/lib/styles";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 
 export function AddSupportButton() {
   const router = useRouter();
@@ -136,7 +137,7 @@ export function AddSupportButton() {
 
               <div>
                 <p className="kk-overline mb-1.5">WhatsApp username (optional)</p>
-                <input type="text" value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @ahmad_plumbing" style={INPUT_STYLE} />
+                <WhatsAppUsernameInput value={whatsappUsername} onChange={setWhatsappUsername} style={INPUT_STYLE} />
               </div>
 
               <div>

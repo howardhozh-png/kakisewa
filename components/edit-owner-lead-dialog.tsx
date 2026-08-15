@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { OwnerLead } from "@/lib/types";
 import { updateOwnerLeadDetails, saveOwnerLeadAgreementUrl, removeOwnerLeadForce, updateMatchedTenancyDetails } from "@/lib/actions";
 import { normalizePhone, phoneError, toE164Display, buildWaLink } from "@/lib/phone";
@@ -225,12 +226,11 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   ) : (
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                   )}
-                  <input
-                    type="text"
+                  <WhatsAppUsernameInput
                     value={ownerWhatsappUsername}
-                    onChange={(e) => setOwnerWhatsappUsername(e.target.value)}
-                    placeholder="WhatsApp username (optional), e.g. @jane_owner"
-                    className="w-full text-[12px] mt-1 bg-transparent outline-none border-b pb-0.5"
+                    onChange={setOwnerWhatsappUsername}
+                    placeholder="WhatsApp username (optional)"
+                    className="w-full text-[12px] mt-1 border-b pb-0.5"
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
                   />
                 </div>
@@ -303,12 +303,10 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                 </div>
                 <div className="space-y-0.5 col-span-2">
                   <label className="text-[11px]" style={{ color: "#1F8B4C" }}>WhatsApp username (optional)</label>
-                  <input
-                    type="text"
+                  <WhatsAppUsernameInput
                     value={tenantWhatsappUsername}
-                    onChange={(e) => setTenantWhatsappUsername(e.target.value)}
-                    placeholder="e.g. @john_tenant"
-                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5 outline-none"
+                    onChange={setTenantWhatsappUsername}
+                    className="w-full text-[13px] rounded-lg px-2.5 py-1.5"
                     style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-ink)" }}
                   />
                 </div>

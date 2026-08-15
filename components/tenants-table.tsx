@@ -6,6 +6,7 @@ import Link from "next/link";
 import { TenantProfile } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import {
   Search, User, X as XIcon, Loader2, CheckCircle2, ArrowRight, Home, Trash2, Phone, Send, ExternalLink,
 } from "lucide-react";
@@ -135,7 +136,7 @@ function ProfileDrawer({ profile, onClose }: { profile: TenantProfile; onClose: 
             </div>
             <div>
               <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>WhatsApp username (optional)</label>
-              <input className={inputCls} style={inputStyle} value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @siti_r" />
+              <WhatsAppUsernameInput className={inputCls} style={inputStyle} value={whatsappUsername} onChange={setWhatsappUsername} />
             </div>
             <div>
               <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Occupation</label>
@@ -307,7 +308,7 @@ function RentedTenantDialog({ t, onClose }: { t: PropertyTenant; onClose: () => 
           </div>
           <div>
             <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>WhatsApp username (optional)</label>
-            <input className={inputCls} style={inputStyle} value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @john_tenant" />
+            <WhatsAppUsernameInput className={inputCls} style={inputStyle} value={whatsappUsername} onChange={setWhatsappUsername} />
           </div>
           {t.expected_rent != null && (
             <div className="rounded-2xl p-3" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>

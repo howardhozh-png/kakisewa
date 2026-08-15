@@ -64,6 +64,7 @@ import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { toast } from "sonner";
 import { useProfile } from "@/components/profile-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -509,10 +510,10 @@ function LeadPopup({
                 </>
               )}
             </div>
-            <input
+            <WhatsAppUsernameInput
               value={form.owner_whatsapp_username}
-              onChange={(e) => set("owner_whatsapp_username", e.target.value)}
-              className="w-full text-[11px] bg-transparent outline-none border-b border-transparent focus:border-[var(--kk-line)] mt-0.5"
+              onChange={(v) => set("owner_whatsapp_username", v)}
+              className="w-full text-[11px] border-b border-transparent has-[:focus]:border-[var(--kk-line)] mt-0.5"
               style={{ color: "var(--kk-ink-faint)" }}
               placeholder="WhatsApp username (optional)"
             />

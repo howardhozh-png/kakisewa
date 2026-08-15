@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { Tenancy, daysUntil } from "@/lib/types";
 import { updateTenancyContract, updateTenancyBasicInfo, setReplyChip, updateOwnerLeadDetails, saveAgreementUrl, removeTenancy } from "@/lib/actions";
 import { Building2, X, FileSignature, Loader2, Pencil, ImagePlus, FileText, Upload, Trash2, Star, Phone, CalendarPlus } from "lucide-react";
@@ -304,12 +305,11 @@ function TenancyForm({
                 style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
               />
               <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
-              <input
-                type="text"
+              <WhatsAppUsernameInput
                 value={ownerWhatsappUsername}
-                onChange={(e) => setOwnerWhatsappUsername(e.target.value)}
-                placeholder="WhatsApp username (optional), e.g. @jane_owner"
-                className="w-full text-[12px] bg-transparent outline-none border-b pb-0.5"
+                onChange={setOwnerWhatsappUsername}
+                placeholder="WhatsApp username (optional)"
+                className="w-full text-[12px] border-b pb-0.5"
                 style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
               />
             </div>
@@ -403,7 +403,7 @@ function TenancyForm({
         </div>
         <div className="space-y-1.5 col-span-2">
           <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>WhatsApp username (optional)</label>
-          <input type="text" value={tenantWhatsappUsername} onChange={(e) => setTenantWhatsappUsername(e.target.value)} placeholder="e.g. @john_tenant" className="w-full text-[14px] px-3 py-2 rounded-xl outline-none" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
+          <WhatsAppUsernameInput value={tenantWhatsappUsername} onChange={setTenantWhatsappUsername} className="w-full text-[14px] px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
         </div>
         <Field label="Monthly rent (RM)" value={amount} onChange={setAmount} placeholder="e.g. 1,500" money />
         <div /> {/* spacer so rent stays left */}

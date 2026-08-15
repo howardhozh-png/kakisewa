@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo, useEffect, useCallback } from "react"
 import { MatchPack, PackTenant, TenantProfile, PendingIntake } from "@/lib/types";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import {
   quickAddTenantToPack,
   detachTenantFromPack,
@@ -666,7 +667,7 @@ function TenantDetailModal({
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>WhatsApp username (optional)</label>
-                  <input className={inputCls} style={inputStyle} value={whatsappUsername} onChange={(e) => setWhatsappUsername(e.target.value)} placeholder="e.g. @siti_r" />
+                  <WhatsAppUsernameInput className={inputCls} style={inputStyle} value={whatsappUsername} onChange={setWhatsappUsername} />
                 </div>
                 <div>
                   <label className={labelCls} style={{ color: "var(--kk-ink-faint)" }}>Nationality</label>
