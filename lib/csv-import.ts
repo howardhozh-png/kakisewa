@@ -30,6 +30,10 @@ const HEADER_ALIASES: Record<string, keyof CanonicalRow> = {
   "no. telefon":      "owner_phone",
   "nombor telefon":   "owner_phone",
   "hp":               "owner_phone",
+  // whatsapp username
+  "whatsapp username":       "owner_whatsapp_username",
+  "owner_whatsapp_username": "owner_whatsapp_username",
+  "owner whatsapp username": "owner_whatsapp_username",
   // property
   "property":         "property_name",
   "property name":    "property_name",
@@ -82,6 +86,7 @@ const STREET_KEYWORDS = new Set([
 export interface CanonicalRow {
   owner_name: string;
   owner_phone: string;
+  owner_whatsapp_username?: string | null;
   property_name?: string | null;
   unit?: string | null;
   address?: string | null;
@@ -101,6 +106,7 @@ export interface ImportRow extends CanonicalRow {
 export interface ColumnMapping {
   owner_name: string | null;
   owner_phone: string | null;
+  owner_whatsapp_username: string | null;
   address: string | null;
   property_name: string | null;
   unit: string | null;
@@ -155,7 +161,7 @@ export function detectColumns(
   sampleRows: Record<string, string>[]
 ): ColumnMapping {
   const mapping: ColumnMapping = {
-    owner_name: null, owner_phone: null, address: null,
+    owner_name: null, owner_phone: null, owner_whatsapp_username: null, address: null,
     property_name: null, unit: null, expected_rent: null,
     bedrooms: null, bathrooms: null, notes: null,
     contract_start: null, contract_end: null, contract_duration_months: null,
@@ -357,6 +363,9 @@ export function canonicaliseWithMapping(
   out.owner_phone = col("owner_phone");
   const wasInternational = isInternationalPhone(out.owner_phone);
   normalisePhone(out);
+
+  const username = col("owner_whatsapp_username");
+  if (username) out.owner_whatsapp_username = username.replace(/^@/, "");
 
   const rawAddress = col("address");
   if (rawAddress) {

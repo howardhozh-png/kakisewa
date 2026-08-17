@@ -39,8 +39,10 @@ const COLUMNS: ColDef[] = [
   { field: "unit",                     label: "Unit",          width: 90,  type: "text",   critical: false },
   { field: "owner_name",               label: "Owner Name",    width: 140, type: "text",   critical: false },
   { field: "owner_phone",              label: "Owner Phone",   width: 130, type: "text",   critical: false },
+  { field: "owner_whatsapp_username",  label: "Owner WA @",    width: 120, type: "text",   critical: false },
   { field: "tenant_name",              label: "Tenant Name",   width: 140, type: "text",   critical: false },
   { field: "tenant_phone",             label: "Tenant Phone",  width: 130, type: "text",   critical: false },
+  { field: "tenant_whatsapp_username", label: "Tenant WA @",   width: 120, type: "text",   critical: false },
   { field: "amount",                   label: "Rent (RM)",     width: 100, type: "number", critical: false },
   { field: "contract_start",           label: "Start Date",    width: 115, type: "date",   critical: true },
   { field: "contract_end",             label: "End Date",      width: 115, type: "date",   critical: false },
@@ -57,9 +59,11 @@ interface TenancyColumnMapping {
   unit: string | null;
   owner_name: string | null;
   owner_phone: string | null;
+  owner_whatsapp_username: string | null;
   amount: string | null;
   tenant_name: string | null;
   tenant_phone: string | null;
+  tenant_whatsapp_username: string | null;
   contract_end: string | null;
   contract_duration_months: string | null;
   due_day: string | null;
@@ -74,9 +78,11 @@ const FIELD_LABELS: Record<TenancyMappingField, string> = {
   address:                  "Address (unit + property)",
   owner_name:               "Owner name",
   owner_phone:              "Owner phone",
+  owner_whatsapp_username:  "Owner WhatsApp username",
   amount:                   "Monthly rent (RM)",
   tenant_name:              "Tenant name",
   tenant_phone:             "Tenant phone",
+  tenant_whatsapp_username: "Tenant WhatsApp username",
   property_name:            "Property name",
   unit:                     "Unit number",
   contract_end:             "Contract end",
@@ -85,8 +91,8 @@ const FIELD_LABELS: Record<TenancyMappingField, string> = {
 };
 
 const DISPLAY_ORDER: TenancyMappingField[] = [
-  "contract_start", "contract_end", "address", "owner_name", "owner_phone", "amount",
-  "tenant_name", "tenant_phone", "property_name", "unit",
+  "contract_start", "contract_end", "address", "owner_name", "owner_phone", "owner_whatsapp_username", "amount",
+  "tenant_name", "tenant_phone", "tenant_whatsapp_username", "property_name", "unit",
   "contract_duration_months", "due_day",
 ];
 
@@ -119,9 +125,11 @@ function detectTenancyMapping(
     unit:                     ownerMap.unit ?? tenancyMap.unit ?? null,
     owner_name:               ownerMap.owner_name,
     owner_phone:              ownerMap.owner_phone,
+    owner_whatsapp_username:  tenancyMap.owner_whatsapp_username ?? null,
     amount:                   tenancyMap.amount ?? null,
     tenant_name:              tenancyMap.tenant_name ?? null,
     tenant_phone:             tenancyMap.tenant_phone ?? null,
+    tenant_whatsapp_username: tenancyMap.tenant_whatsapp_username ?? null,
     contract_end:             tenancyMap.contract_end ?? null,
     contract_duration_months: tenancyMap.contract_duration_months ?? null,
     due_day:                  tenancyMap.due_day ?? null,
@@ -518,8 +526,10 @@ export function UploadTenancyCsvDialog({ trigger, onImported }: Props) {
         unit: r.unit,
         owner_name: r.owner_name,
         owner_phone: r.owner_phone,
+        owner_whatsapp_username: r.owner_whatsapp_username || null,
         tenant_name: r.tenant_name,
         tenant_phone: r.tenant_phone,
+        tenant_whatsapp_username: r.tenant_whatsapp_username || null,
         amount: r.amount,
         contract_start: r.contract_start,
         contract_end: r.contract_end,

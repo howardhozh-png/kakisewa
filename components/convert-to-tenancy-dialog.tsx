@@ -9,6 +9,7 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { convertLeadToTenancy } from "@/lib/actions";
 import { OwnerLead } from "@/lib/types";
 import { toast } from "sonner";
@@ -23,10 +24,12 @@ interface Props {
 export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }: Props) {
   const [pending, startTransition] = useTransition();
   const [amount, setAmount] = useState(lead?.expected_rent != null ? String(lead.expected_rent) : "");
+  const [tenantWhatsappUsername, setTenantWhatsappUsername] = useState("");
   const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; nearestExpiryDays: number | null } | null>(null);
 
   useEffect(() => {
     setAmount(lead?.expected_rent != null ? String(lead.expected_rent) : "");
+    setTenantWhatsappUsername("");
   }, [lead?.id, open]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -37,6 +40,7 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
     const data = {
       tenant_name: fd.get("tenant_name") as string,
       tenant_phone: fd.get("tenant_phone") as string,
+      tenant_whatsapp_username: (fd.get("tenant_whatsapp_username") as string) || null,
       due_day: parseInt(fd.get("due_day") as string, 10),
       amount: parseFloat(amount),
       contract_start: fd.get("contract_start") as string,
@@ -88,6 +92,16 @@ export function ConvertToTenancyDialog({ lead, open, onOpenChange, onConverted }
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           <Field label="Tenant name" name="tenant_name" placeholder="Full name" required />
           <Field label="Tenant phone (WhatsApp)" name="tenant_phone" placeholder="601XXXXXXXX" required />
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>WhatsApp username (optional)</Label>
+            <WhatsAppUsernameInput
+              value={tenantWhatsappUsername}
+              onChange={setTenantWhatsappUsername}
+              name="tenant_whatsapp_username"
+              className="h-9 w-full min-w-0 rounded-3xl border px-3 py-1 text-base outline-none md:text-sm"
+              style={{ background: "var(--kk-surface-2)", borderColor: "var(--kk-line)", color: "var(--kk-ink)" }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Due day (1–28)" name="due_day" placeholder="1" type="number" required />
             <div className="space-y-1.5">

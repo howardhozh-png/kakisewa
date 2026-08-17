@@ -1250,6 +1250,7 @@ export async function bulkCreateOwnerLeads(
     user_id: userId,
     owner_name: data.owner_name,
     owner_phone: data.owner_phone,
+    owner_whatsapp_username: data.owner_whatsapp_username ?? null,
     property_name: data.property_name ?? null,
     unit: data.unit ?? null,
     address: data.address ?? null,
@@ -1275,8 +1276,10 @@ export interface BulkImportTenancyRow {
   unit: string;
   owner_name: string;
   owner_phone: string;
+  owner_whatsapp_username?: string | null;
   tenant_name: string;
   tenant_phone: string;
+  tenant_whatsapp_username?: string | null;
   amount: number | null;
   contract_start: string;
   contract_end: string;
@@ -1301,6 +1304,7 @@ export async function bulkImportTenancies(
     user_id: userId,
     owner_name: row.owner_name || "Unknown",
     owner_phone: row.owner_phone || "",
+    owner_whatsapp_username: row.owner_whatsapp_username || null,
     property_name: row.property_name || null,
     unit: row.unit || null,
     source: "csv" as const,
@@ -1319,6 +1323,7 @@ export async function bulkImportTenancies(
     owner_lead_id: ownerLeadRecords[i].id,
     tenant_name: row.tenant_name || "Unknown",
     tenant_phone: row.tenant_phone || "",
+    tenant_whatsapp_username: row.tenant_whatsapp_username || null,
     amount: row.amount ?? 0,
     due_day: row.due_day ?? 1,
     current_month_paid: false,

@@ -7,6 +7,7 @@ import { track } from "@/lib/analytics";
 import { FileText as ListingIcon, Loader2, Camera, FileText, X } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { normalizePhone, phoneError } from "@/lib/phone";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
@@ -23,6 +24,7 @@ interface Form {
   unit: string;
   owner_name: string;
   owner_phone: string;
+  owner_whatsapp_username: string;
   listing_purpose: "rent" | "sell" | "both" | null;
   expected_rent: string;
   available_from: string;
@@ -33,7 +35,7 @@ interface Form {
 }
 
 const EMPTY: Form = {
-  property_name: "", unit: "", owner_name: "", owner_phone: "",
+  property_name: "", unit: "", owner_name: "", owner_phone: "", owner_whatsapp_username: "",
   listing_purpose: null, expected_rent: "", available_from: "",
   bedrooms: "", bathrooms: "", parking: "", notes: "",
 };
@@ -124,6 +126,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         unit: form.unit.trim() || null,
         owner_name: form.owner_name.trim(),
         owner_phone: form.owner_phone.trim(),
+        owner_whatsapp_username: form.owner_whatsapp_username.trim() || null,
         listing_purpose: form.listing_purpose,
         expected_rent: parseFloat(form.expected_rent) || null,
         available_from: form.available_from || null,
@@ -264,6 +267,10 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
                     ) : (
                       <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                     )}
+                  </div>
+                  <div className="col-span-2">
+                    <FieldLabel>WhatsApp username (optional)</FieldLabel>
+                    <WhatsAppUsernameInput value={form.owner_whatsapp_username} onChange={(v) => setForm((f) => ({ ...f, owner_whatsapp_username: v }))} className="w-full px-3 py-2 rounded-xl text-[13px]" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                   </div>
                 </div>
               </div>

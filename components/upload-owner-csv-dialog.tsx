@@ -21,6 +21,7 @@ type Step = "pick" | "map" | "result";
 const FIELD_LABELS: Record<string, string> = {
   owner_name:    "Owner name",
   owner_phone:   "Phone number",
+  owner_whatsapp_username: "WhatsApp username",
   address:       "Address",
   property_name: "Property / condo name",
   unit:          "Unit number",
@@ -32,7 +33,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 const REQUIRED_FIELDS = ["owner_name", "owner_phone"] as const;
 const DISPLAY_FIELDS = [
-  "owner_name", "owner_phone", "address",
+  "owner_name", "owner_phone", "owner_whatsapp_username", "address",
   "property_name", "unit", "expected_rent", "bedrooms", "bathrooms", "notes",
 ] as const;
 const AI_MAPPABLE_FIELDS = DISPLAY_FIELDS;

@@ -7,6 +7,7 @@ import { track } from "@/lib/analytics";
 import { Users, Loader2, ChevronDown, MessageCircle, PenLine, Camera, FileText, X } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { toast } from "sonner";
 import { useWhatsAppGate } from "@/hooks/use-whatsapp-gate";
 import { WhatsAppGateDialog } from "@/components/whatsapp-gate-dialog";
@@ -16,10 +17,10 @@ const PHOTO_MAX = 10;
 
 interface Props { ownerLeads?: OwnerLead[] }
 
-type WaForm = { property_name: string; unit: string; owner_name: string; owner_phone: string };
-type ManualForm = { property_name: string; unit: string; owner_name: string; owner_phone: string; notes: string };
-const EMPTY_WA: WaForm = { property_name: "", unit: "", owner_name: "", owner_phone: "" };
-const EMPTY_MANUAL: ManualForm = { property_name: "", unit: "", owner_name: "", owner_phone: "", notes: "" };
+type WaForm = { property_name: string; unit: string; owner_name: string; owner_phone: string; owner_whatsapp_username: string };
+type ManualForm = { property_name: string; unit: string; owner_name: string; owner_phone: string; owner_whatsapp_username: string; notes: string };
+const EMPTY_WA: WaForm = { property_name: "", unit: "", owner_name: "", owner_phone: "", owner_whatsapp_username: "" };
+const EMPTY_MANUAL: ManualForm = { property_name: "", unit: "", owner_name: "", owner_phone: "", owner_whatsapp_username: "", notes: "" };
 
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -130,6 +131,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
           unit: waForm.unit.trim() || null,
           owner_name: waForm.owner_name.trim(),
           owner_phone: normalizePhone(waForm.owner_phone.trim()),
+          owner_whatsapp_username: waForm.owner_whatsapp_username.trim() || null,
           expected_rent: null, stage: "imported",
         });
         if (!res.ok) { toast.error(res.message ?? "Could not save"); return; }
@@ -153,6 +155,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
         unit: manualForm.unit.trim() || null,
         owner_name: manualForm.owner_name.trim(),
         owner_phone: normalizePhone(manualForm.owner_phone.trim()),
+        owner_whatsapp_username: manualForm.owner_whatsapp_username.trim() || null,
         notes: manualForm.notes.trim() || null,
         expected_rent: null, stage: "imported",
       });
@@ -224,6 +227,10 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
                 <TextInput type="tel" value={waForm.owner_phone} onChange={(v) => setWaForm((f) => ({ ...f, owner_phone: v }))} onBlur={(v) => setWaForm((f) => ({ ...f, owner_phone: normalizePhone(v) }))} placeholder="e.g. 601XXXXXXXX" />
                 <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
               </div>
+              <div>
+                <FieldLabel>WhatsApp username (optional)</FieldLabel>
+                <WhatsAppUsernameInput value={waForm.owner_whatsapp_username} onChange={(v) => setWaForm((f) => ({ ...f, owner_whatsapp_username: v }))} className="w-full px-3 py-2 rounded-xl text-[13px]" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
+              </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setWaOpen(false)} disabled={busy} className="flex-1 py-2.5 rounded-xl text-[13px] font-medium" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}>Cancel</button>
                 <button type="button" onClick={handleWaSend} disabled={busy} className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2" style={{ background: "var(--kk-green)", color: "#fff" }}>
@@ -282,6 +289,10 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
                     <FieldLabel required>Phone</FieldLabel>
                     <TextInput type="tel" value={manualForm.owner_phone} onChange={(v) => setManualForm((f) => ({ ...f, owner_phone: v }))} onBlur={(v) => setManualForm((f) => ({ ...f, owner_phone: normalizePhone(v) }))} placeholder="601XXXXXXXX" />
                     <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
+                  </div>
+                  <div className="col-span-2">
+                    <FieldLabel>WhatsApp username (optional)</FieldLabel>
+                    <WhatsAppUsernameInput value={manualForm.owner_whatsapp_username} onChange={(v) => setManualForm((f) => ({ ...f, owner_whatsapp_username: v }))} className="w-full px-3 py-2 rounded-xl text-[13px]" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
                   </div>
                 </div>
               </div>

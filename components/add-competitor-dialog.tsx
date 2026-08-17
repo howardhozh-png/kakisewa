@@ -6,6 +6,7 @@ import { track } from "@/lib/analytics";
 import { Camera, FileText, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DateInput } from "@/components/ui/date-input";
+import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
 import { addOwnerLeadAction, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, checkTargetCapAction } from "@/lib/actions";
 import { CAP_WARN_THRESHOLD } from "@/lib/cap-constants";
 import { BedroomPicker } from "@/components/edit-owner-lead-dialog";
@@ -54,7 +55,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
   const [uploading, setUploading] = useState(false);
   const [capBlock, setCapBlock] = useState<{ currentPlan: string; currentCount: number; currentCap: number; upgradeToId?: string; upgradeCap: number | null } | null>(null);
   const [form, setForm] = useState({
-    property_name: "", unit: "", owner_name: "", owner_phone: "",
+    property_name: "", unit: "", owner_name: "", owner_phone: "", owner_whatsapp_username: "",
     expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "",
     rented_on: "",
     duration: "",
@@ -121,7 +122,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
 
   useEffect(() => {
     if (!open) {
-      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: "", duration: "" });
+      setForm({ property_name: "", unit: "", owner_name: "", owner_phone: "", owner_whatsapp_username: "", expected_rent: "", bedrooms: "", bathrooms: "", parking: "", notes: "", rented_on: "", duration: "" });
       setEndDate("");
       setPhoneErr(null);
       setShowSugg(false);
@@ -150,6 +151,7 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
         const res = await addOwnerLeadAction({
           owner_name: form.owner_name || "Unknown",
           owner_phone: form.owner_phone || "0",
+          owner_whatsapp_username: form.owner_whatsapp_username.trim() || null,
           property_name: form.property_name.trim(),
           unit: form.unit || null,
           expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
@@ -317,6 +319,10 @@ export function AddCompetitorDialog({ open, onOpenChange, ownerLeads = [] }: Pro
               ) : (
                 <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
               )}
+            </div>
+            <div className="space-y-1.5 col-span-2">
+              <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>WhatsApp username (optional)</label>
+              <WhatsAppUsernameInput value={form.owner_whatsapp_username} onChange={(v) => set("owner_whatsapp_username", v)} className={field} style={fs} />
             </div>
           </div>
 

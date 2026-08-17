@@ -13,8 +13,10 @@ export interface TenancyImportRow {
   unit: string;
   owner_name: string;
   owner_phone: string;
+  owner_whatsapp_username: string;
   tenant_name: string;
   tenant_phone: string;
+  tenant_whatsapp_username: string;
   amount: number | null;           // rental amount in RM
   contract_start: string;          // YYYY-MM-DD or ""
   contract_end: string;            // YYYY-MM-DD or ""
@@ -74,6 +76,11 @@ const ALIASES: Record<string, CanonicalField> = {
   "tuan phone": "owner_phone",
   "tel pemilik": "owner_phone",
   "no pemilik": "owner_phone",
+  // owner_whatsapp_username
+  "owner whatsapp username": "owner_whatsapp_username",
+  owner_whatsapp_username: "owner_whatsapp_username",
+  "owner whatsapp": "owner_whatsapp_username",
+  "owner username": "owner_whatsapp_username",
   // tenant_name
   tenant: "tenant_name",
   "tenant name": "tenant_name",
@@ -90,6 +97,11 @@ const ALIASES: Record<string, CanonicalField> = {
   "tenant number": "tenant_phone",
   "tenant hp": "tenant_phone",
   "tel penyewa": "tenant_phone",
+  // tenant_whatsapp_username
+  "tenant whatsapp username": "tenant_whatsapp_username",
+  tenant_whatsapp_username: "tenant_whatsapp_username",
+  "tenant whatsapp": "tenant_whatsapp_username",
+  "tenant username": "tenant_whatsapp_username",
   // amount
   amount: "amount",
   rent: "amount",
@@ -264,9 +276,11 @@ function buildRow(
   const owner_name = get("owner_name");
   const owner_phone_raw = get("owner_phone");
   const owner_phone = owner_phone_raw ? normalisePhone(owner_phone_raw) : "";
+  const owner_whatsapp_username = get("owner_whatsapp_username").replace(/^@/, "");
   const tenant_name = get("tenant_name");
   const tenant_phone_raw = get("tenant_phone");
   const tenant_phone = tenant_phone_raw ? normalisePhone(tenant_phone_raw) : "";
+  const tenant_whatsapp_username = get("tenant_whatsapp_username").replace(/^@/, "");
 
   const amountRaw = get("amount");
   const amount = amountRaw ? parseFloat(amountRaw.replace(/[^0-9.]/g, "")) || null : null;
@@ -303,8 +317,10 @@ function buildRow(
     unit,
     owner_name,
     owner_phone,
+    owner_whatsapp_username,
     tenant_name,
     tenant_phone,
+    tenant_whatsapp_username,
     amount,
     contract_start,
     contract_end,

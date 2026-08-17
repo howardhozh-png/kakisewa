@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 const DAILY_LIMIT = 10;
 
-const SYSTEM_PROMPT = `You map spreadsheet column headers to these fields: owner_name, owner_phone, address, property_name, unit, expected_rent, bedrooms, bathrooms, notes, contract_start, contract_end, contract_duration_months, amount, tenant_name, tenant_phone, due_day.
+const SYSTEM_PROMPT = `You map spreadsheet column headers to these fields: owner_name, owner_phone, owner_whatsapp_username, address, property_name, unit, expected_rent, bedrooms, bathrooms, notes, contract_start, contract_end, contract_duration_months, amount, tenant_name, tenant_phone, tenant_whatsapp_username, due_day.
+owner_whatsapp_username / tenant_whatsapp_username are WhatsApp handles (e.g. "@jane_doe"), not phone numbers — only map a column to these if it clearly contains handles/usernames, not digits.
 Given headers and sample rows, return ONLY JSON: {"mapping": {"0": "owner_name", "1": "owner_phone", ...}, "confidence": "high"|"medium"|"low"}.
 Map only columns you're reasonably sure about. Omit columns that don't match any field. No prose, no markdown, JSON only.`;
 

@@ -511,6 +511,7 @@ export async function updateTenancyBasicInfo(
     invalidateCache();
     revalidatePath("/existing-listing");
     revalidatePath("/");
+    revalidatePath("/directory"); revalidatePath("/matching");
     return { ok: true, message: "Tenancy updated" };
   } catch {
     return { ok: false, message: "Could not update tenancy" };
@@ -545,6 +546,7 @@ export async function updateMatchedTenancyDetails(
     invalidateCache();
     revalidatePath("/my-listing");
     revalidatePath("/");
+    revalidatePath("/existing-listing"); revalidatePath("/property-leads"); revalidatePath("/matching");
     return { ok: true, message: "Tenancy updated." };
   } catch {
     return { ok: false, message: "Could not update tenancy." };
@@ -1128,6 +1130,7 @@ export async function convertLeadToTenancy(
   data: {
     tenant_name: string;
     tenant_phone: string;
+    tenant_whatsapp_username?: string | null;
     due_day: number;
     amount: number;
     contract_start: string;
@@ -1159,6 +1162,7 @@ export async function convertLeadToTenancy(
       owner_lead_id: ownerLeadId,
       tenant_name: data.tenant_name,
       tenant_phone: data.tenant_phone,
+      tenant_whatsapp_username: data.tenant_whatsapp_username ?? null,
       due_day: data.due_day,
       amount: data.amount,
       current_month_paid: false,
@@ -1363,6 +1367,7 @@ export async function updateOwnerLeadDetails(
   invalidateCache();
   revalidatePath("/property-leads"); revalidatePath("/my-listing");
   revalidatePath("/matching");
+  revalidatePath("/existing-listing"); revalidatePath("/");
   return { ok: true, promoted: false, message: "Details updated." };
 }
 
@@ -1557,6 +1562,7 @@ export async function importOwnerCsv(formData: FormData): Promise<ImportResult> 
     valid.map(row => ({
       owner_name: row.owner_name,
       owner_phone: row.owner_phone,
+      owner_whatsapp_username: row.owner_whatsapp_username ?? null,
       property_name: row.property_name ?? null,
       unit: row.unit ?? null,
       address: row.address ?? null,
@@ -1612,6 +1618,7 @@ export async function importParsedOwnerLeads(
     valid.map((row) => ({
       owner_name: row.owner_name,
       owner_phone: row.owner_phone,
+      owner_whatsapp_username: row.owner_whatsapp_username ?? null,
       property_name: row.property_name ?? null,
       unit: row.unit ?? null,
       address: row.address ?? null,
@@ -1793,6 +1800,7 @@ If you're keen, tap the link to view the details and let me know 🏠`;
 export async function addOwnerLeadAction(data: {
   owner_name: string;
   owner_phone: string;
+  owner_whatsapp_username?: string | null;
   property_name: string | null;
   unit: string | null;
   expected_rent: number | null;
@@ -1825,6 +1833,7 @@ export async function addOwnerLeadAction(data: {
     const lead = await createOwnerLead({
       owner_name: data.owner_name,
       owner_phone: data.owner_phone,
+      owner_whatsapp_username: data.owner_whatsapp_username ?? null,
       property_name: data.property_name,
       unit: data.unit,
       address: null,
@@ -1908,6 +1917,7 @@ export async function updateTenantProfileAction(
     await updateTenantProfile(id, data);
     invalidateCache();
     revalidatePath("/directory");
+    revalidatePath("/matching");
     return { ok: true };
   } catch (e) {
     return { ok: false, message: String(e) };
