@@ -3015,30 +3015,30 @@ export async function getListedLeadsForPropertyPack(): Promise<PropertyPackLead[
     .sort((a, b) => (a.property_name ?? "").localeCompare(b.property_name ?? ""));
 }
 
-export async function getTenantProfileById(id: string): Promise<{ id: string; name: string; phone: string | null } | null> {
+export async function getTenantProfileById(id: string): Promise<{ id: string; name: string; phone: string | null; whatsapp_username: string | null } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("tenant_profiles")
-    .select("id, name, phone")
+    .select("id, name, phone, whatsapp_username")
     .eq("id", id)
     .single();
   if (!data) return null;
   const r = data as Record<string, unknown>;
-  return { id: r.id as string, name: r.name as string, phone: (r.phone as string | null) ?? null };
+  return { id: r.id as string, name: r.name as string, phone: (r.phone as string | null) ?? null, whatsapp_username: (r.whatsapp_username as string | null) ?? null };
 }
 
-export async function getTenantFromTenancy(tenancyId: string): Promise<{ id: string; name: string; phone: string | null } | null> {
+export async function getTenantFromTenancy(tenancyId: string): Promise<{ id: string; name: string; phone: string | null; whatsapp_username: string | null } | null> {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("tenancies")
-    .select("id, tenant_name, tenant_phone")
+    .select("id, tenant_name, tenant_phone, tenant_whatsapp_username")
     .eq("id", tenancyId)
     .single();
   if (!data) return null;
   const r = data as Record<string, unknown>;
   const name = (r.tenant_name as string | null) ?? "";
   if (!name) return null;
-  return { id: r.id as string, name, phone: (r.tenant_phone as string | null) ?? null };
+  return { id: r.id as string, name, phone: (r.tenant_phone as string | null) ?? null, whatsapp_username: (r.tenant_whatsapp_username as string | null) ?? null };
 }
 
 // ─── Property Pack Share ──────────────────────────────────────────────────────

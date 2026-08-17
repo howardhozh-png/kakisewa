@@ -949,6 +949,7 @@ function RentReminderAction({ t, today }: { t: Tenancy; today: Date }) {
       t.tenant_phone ?? "", t.tenant_name ?? "",
       t.property_name ?? "your property", t.amount,
       `${window.location.origin}/upload/${t.id}`,
+      t.tenant_whatsapp_username,
     ));
   }, [t, today]);
 

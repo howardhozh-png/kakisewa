@@ -25,6 +25,7 @@ export default async function ProfileSettingsPage() {
         agentAgency={agent.agency ?? null}
         agentPhoto={agent.photo_url ?? null}
         agentPhone={agent.phone ?? null}
+        agentWhatsappUsername={agent.whatsapp_username ?? null}
         subscriptionPlan={agent.subscription_plan ?? null}
         stats={stats}
       />

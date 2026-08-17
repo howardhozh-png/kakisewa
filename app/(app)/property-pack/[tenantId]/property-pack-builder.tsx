@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import type { PropertyPackLead } from "@/lib/db";
 import { buildWaLink } from "@/lib/phone";
 
-interface Tenant { id: string; name: string; phone: string | null }
+interface Tenant { id: string; name: string; phone: string | null; whatsapp_username: string | null }
 
 function buildWaMessage(tenant: Tenant, selected: PropertyPackLead[], shareUrl: string): string {
   const header = `Hi ${tenant.name}, here are some properties I've selected for you:\n\n`;
@@ -163,7 +163,7 @@ export function PropertyPackBuilder({ tenant, leads }: { tenant: Tenant; leads: 
     const url = (packUrl && !packDirty) ? packUrl : await generateLink();
     if (!url) return;
     const msg = buildWaMessage(tenant, selectedLeads, url);
-    window.open(buildWaLink(tenant.phone, msg), "_blank", "noopener,noreferrer");
+    window.open(buildWaLink(tenant.phone, msg, tenant.whatsapp_username), "_blank", "noopener,noreferrer");
   }
 
   function handleCopy() {

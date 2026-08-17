@@ -93,11 +93,13 @@ export function buildWhatsAppPingUrl(
   tenantName: string,
   propertyName: string,
   amount: number,
-  uploadUrl: string
+  uploadUrl: string,
+  tenantWhatsappUsername?: string | null
 ): string {
   return buildOutbound({
     template: "rent_reminder",
     toPhone: tenantPhone,
+    toUsername: tenantWhatsappUsername,
     body: templateRentReminder({ tenantName, propertyName, amount, uploadUrl }),
   }).url;
 }
@@ -107,11 +109,13 @@ export function buildWhatsAppForwardUrl(
   tenantName: string,
   propertyName: string,
   amount: number,
-  receiptUrl: string
+  receiptUrl: string,
+  ownerWhatsappUsername?: string | null
 ): string {
   return buildOutbound({
     template: "forward_receipt_to_owner",
     toPhone: ownerPhone,
+    toUsername: ownerWhatsappUsername,
     body: templateForwardReceiptToOwner({ tenantName, propertyName, amount, receiptUrl }),
   }).url;
 }

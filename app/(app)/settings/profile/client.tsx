@@ -116,13 +116,14 @@ interface Props {
   agentAgency: string | null;
   agentPhoto: string | null;
   agentPhone: string | null;
+  agentWhatsappUsername: string | null;
   subscriptionPlan: string | null;
   stats: Stats;
 }
 
 export function ProfileSettingsClient({
   initialStrengths, initialVerbatim,
-  agentId, agentName, agentRen, agentAgency, agentPhoto, agentPhone,
+  agentId, agentName, agentRen, agentAgency, agentPhoto, agentPhone, agentWhatsappUsername,
   subscriptionPlan, stats,
 }: Props) {
   const pool = seededShuffle<string>(STRENGTH_POOL, agentId);
@@ -144,7 +145,8 @@ export function ProfileSettingsClient({
       : "linear-gradient(135deg, #3A3A3C 0%, #636366 50%, #3A3A3C 100%)";
   const tierLabel = isElite ? "Elite" : isPlatinum ? "Platinum" : "Silver";
 
-  const waUrl = agentPhone ? `https://wa.me/${normalisePhone(agentPhone)}` : null;
+  const waHandle = agentWhatsappUsername?.trim().replace(/^@/, "") || (agentPhone ? normalisePhone(agentPhone) : null);
+  const waUrl = waHandle ? `https://wa.me/${waHandle}` : null;
 
   // Last name (not first) in the URL — first names collide far more often
   // (many "Ahmad"s, "Tan"s), and this slug is also how the server
