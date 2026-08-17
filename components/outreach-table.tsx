@@ -510,13 +510,6 @@ function LeadPopup({
                 </>
               )}
             </div>
-            <WhatsAppUsernameInput
-              value={form.owner_whatsapp_username}
-              onChange={(v) => set("owner_whatsapp_username", v)}
-              className="w-full text-[11px] border-b border-transparent has-[:focus]:border-[var(--kk-line)] mt-0.5"
-              style={{ color: "var(--kk-ink-faint)" }}
-              placeholder="WhatsApp username (optional)"
-            />
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <StatusBadge lead={lead} />
@@ -528,6 +521,11 @@ function LeadPopup({
 
         {/* Editable fields */}
         <div className="px-5 py-4 grid grid-cols-2 gap-x-4 gap-y-3">
+          {/* WhatsApp username — full width */}
+          <div className="col-span-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--kk-ink-faint)" }}>Owner&rsquo;s WhatsApp username (optional)</p>
+            <WhatsAppUsernameInput value={form.owner_whatsapp_username} onChange={(v) => set("owner_whatsapp_username", v)} style={FIELD_STYLE} />
+          </div>
           {/* Property — full width */}
           <div className="col-span-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: fieldErrors.has("property_name") ? "#ef4444" : "var(--kk-ink-faint)" }}>Property</p>

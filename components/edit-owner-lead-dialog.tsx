@@ -226,13 +226,6 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   ) : (
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
                   )}
-                  <WhatsAppUsernameInput
-                    value={ownerWhatsappUsername}
-                    onChange={setOwnerWhatsappUsername}
-                    placeholder="WhatsApp username (optional)"
-                    className="w-full text-[12px] mt-1 border-b pb-0.5"
-                    style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
-                  />
                 </div>
               ) : (
                 <div>
@@ -277,6 +270,16 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
             </button>
           </div>
 
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Owner&rsquo;s WhatsApp username (optional)</label>
+            <WhatsAppUsernameInput
+              value={ownerWhatsappUsername}
+              onChange={setOwnerWhatsappUsername}
+              className="w-full text-[14px] px-3 py-2 rounded-xl"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            />
+          </div>
+
           {lead.stage === "matched" && tenantInfo && (
             <div className="rounded-xl p-3 space-y-3" style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.20)" }}>
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#1F8B4C" }}>Tenant details</p>
@@ -302,7 +305,7 @@ export function EditOwnerLeadDialog({ lead, open, onOpenChange, onSaved, tenantI
                   />
                 </div>
                 <div className="space-y-0.5 col-span-2">
-                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>WhatsApp username (optional)</label>
+                  <label className="text-[11px]" style={{ color: "#1F8B4C" }}>Tenant&rsquo;s WhatsApp username (optional)</label>
                   <WhatsAppUsernameInput
                     value={tenantWhatsappUsername}
                     onChange={setTenantWhatsappUsername}

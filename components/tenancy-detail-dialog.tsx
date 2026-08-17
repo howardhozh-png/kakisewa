@@ -305,13 +305,6 @@ function TenancyForm({
                 style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
               />
               <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
-              <WhatsAppUsernameInput
-                value={ownerWhatsappUsername}
-                onChange={setOwnerWhatsappUsername}
-                placeholder="WhatsApp username (optional)"
-                className="w-full text-[12px] border-b pb-0.5"
-                style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
-              />
             </div>
           ) : (
             <div>
@@ -358,6 +351,16 @@ function TenancyForm({
         </button>
       </div>
 
+      <div className="space-y-1.5">
+        <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Owner&rsquo;s WhatsApp username (optional)</label>
+        <WhatsAppUsernameInput
+          value={ownerWhatsappUsername}
+          onChange={setOwnerWhatsappUsername}
+          className="w-full text-[14px] px-3 py-2 rounded-xl"
+          style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+        />
+      </div>
+
       {/* Property name + unit (editable) */}
       <div className="flex gap-2">
         <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl min-w-0" style={{ background: "var(--kk-surface-2)", flex: 2 }}>
@@ -402,7 +405,7 @@ function TenancyForm({
           <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
         </div>
         <div className="space-y-1.5 col-span-2">
-          <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>WhatsApp username (optional)</label>
+          <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Tenant&rsquo;s WhatsApp username (optional)</label>
           <WhatsAppUsernameInput value={tenantWhatsappUsername} onChange={setTenantWhatsappUsername} className="w-full text-[14px] px-3 py-2 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }} />
         </div>
         <Field label="Monthly rent (RM)" value={amount} onChange={setAmount} placeholder="e.g. 1,500" money />

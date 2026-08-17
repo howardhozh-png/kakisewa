@@ -229,13 +229,6 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
                     style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
                   />
                   <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>For overseas numbers, include the country code, e.g. +44 7911 123456</p>
-                  <WhatsAppUsernameInput
-                    value={ownerWhatsappUsername}
-                    onChange={setOwnerWhatsappUsername}
-                    placeholder="WhatsApp username (optional)"
-                    className="w-full text-[12px] border-b pb-0.5"
-                    style={{ color: "var(--kk-ink-faint)", borderColor: "var(--kk-line)" }}
-                  />
                 </div>
               ) : (
                 <div>
@@ -268,6 +261,16 @@ export function EditCompetitorDialog({ lead, open, onOpenChange }: Props) {
             <button type="button" onClick={() => onOpenChange(false)} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }} aria-label="Close">
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium" style={{ color: "var(--kk-ink-soft)" }}>Owner&rsquo;s WhatsApp username (optional)</label>
+            <WhatsAppUsernameInput
+              value={ownerWhatsappUsername}
+              onChange={setOwnerWhatsappUsername}
+              className="w-full text-[14px] px-3 py-2 rounded-xl"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}
+            />
           </div>
 
           {/* Property pill */}
