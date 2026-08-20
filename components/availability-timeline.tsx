@@ -10,6 +10,7 @@ import { OwnerLead } from "@/lib/types";
 interface Props {
   leads: OwnerLead[];
   commissionPct?: number;
+  purposeFilter?: "" | "rent" | "sell";
   onMonthClick?: (key: string) => void;
   selectedMonth?: string;
 }
@@ -21,13 +22,13 @@ function todayMonthValue() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// Same color-mix technique used by listing-income-timeline.tsx — rent and
-// sale segments are two shades of the agent's own --kk-theme-dark accent,
-// not a second color, so it stays "on brand" regardless of custom accent_color.
+// Rent and sale segments are two shades of the agent's own --kk-theme-dark
+// accent, not a second color, so it stays "on brand" regardless of custom
+// accent_color.
 const RENT_SHADE = "color-mix(in srgb, var(--kk-theme-dark) 55%, transparent)";
 const SALE_SHADE = "color-mix(in srgb, var(--kk-theme-dark) 90%, transparent)";
 
-export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick, selectedMonth }: Props) {
+export function AvailabilityTimeline({ leads, commissionPct = 100, purposeFilter = "", onMonthClick, selectedMonth }: Props) {
   const today = useMemo(() => new Date(), []);
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const [windowMonths, setWindowMonths] = useState(12);
@@ -56,22 +57,32 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
       if (!map.has(key)) return;
       const cur = map.get(key)!;
       cur.count++;
-      // Sale-purpose listings have no expected_rent, and rent-purpose
-      // listings have no sale commission — a "both" listing (rare, but
-      // possible) contributes to both segments of the same bar. Sale uses
-      // expected_sale_commission_amount directly (not price × %) since
-      // asking price and commission % are optional — the amount is the
-      // only field the agent is required to fill in.
-      if (l.listing_purpose !== "sell") {
+      // Sale uses expected_sale_commission_amount directly (not price × %)
+      // since asking price and commission % are optional convenience inputs.
+      //
+      // Filtered to one purpose: a "both" listing counts fully as that
+      // purpose (matches the kanban filter it's shown under, no split).
+      //
+      // Unfiltered: a "both" listing counts toward rent AND sale, since
+      // either could happen — this is a deliberate ceiling, not a sum the
+      // agent will actually collect on any one property. See the "Up to"
+      // headline below.
+      if (purposeFilter === "rent") {
         cur.rentPotential += (l.expected_rent ?? 0) * (commissionPct / 100);
-      }
-      if (l.listing_purpose === "sell" || l.listing_purpose === "both") {
+      } else if (purposeFilter === "sell") {
         cur.salePotential += l.expected_sale_commission_amount ?? 0;
+      } else {
+        if (l.listing_purpose !== "sell") {
+          cur.rentPotential += (l.expected_rent ?? 0) * (commissionPct / 100);
+        }
+        if (l.listing_purpose === "sell" || l.listing_purpose === "both") {
+          cur.salePotential += l.expected_sale_commission_amount ?? 0;
+        }
       }
       cur.items.push(l);
     });
     return map;
-  }, [leads, months, commissionPct, todayKey]);
+  }, [leads, months, commissionPct, purposeFilter, todayKey]);
 
   const maxCount = useMemo(() => {
     let max = 1;
@@ -92,11 +103,11 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
             Property availability · {windowMonths} month{windowMonths === 1 ? "" : "s"}
           </p>
           <p style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.025em", color: "var(--kk-theme-dark)", fontVariantNumeric: "tabular-nums" }}>
-            RM {Math.round(total.rentPotential + total.salePotential).toLocaleString()}
+            {purposeFilter === "" ? "Up to " : ""}RM {Math.round(total.rentPotential + total.salePotential).toLocaleString()}
           </p>
           <p className="flex items-center gap-3 flex-wrap" style={{ fontSize: 11, marginTop: 2, color: "var(--kk-ink-faint)" }}>
             <span>{total.count} propert{total.count === 1 ? "y" : "ies"}</span>
-            {total.salePotential > 0 && (
+            {purposeFilter === "" && total.salePotential > 0 && (
               <>
                 <span className="flex items-center gap-1">
                   <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: RENT_SHADE }} />
@@ -108,7 +119,16 @@ export function AvailabilityTimeline({ leads, commissionPct = 100, onMonthClick,
                 </span>
               </>
             )}
-            <Hint text="You earn 1 full month's rent per successful rental placement, or your set commission % per sale." side="right" />
+            <Hint
+              text={
+                purposeFilter === "rent"
+                  ? "You earn 1 full month's rent per successful placement."
+                  : purposeFilter === "sell"
+                  ? "You earn your set commission per successful sale."
+                  : "Both-purpose listings count twice — a ceiling, not a guarantee."
+              }
+              side="right"
+            />
           </p>
         </div>
         <div className="kk-chart-ctrl flex items-center gap-1 shrink-0">

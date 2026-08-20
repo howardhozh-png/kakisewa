@@ -291,9 +291,11 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
               const matchNamed = propertyFilter !== "__no_name__" && l.property_name === propertyFilter;
               if (!matchUnnamed && !matchNamed) return false;
             }
+            if (purposeFilter && l.listing_purpose !== purposeFilter && l.listing_purpose !== "both") return false;
             return l.stage === "listed" || l.stage === "wants_rent" || l.stage === "replied" || (l.stage === "matched" && !l.has_active_tenancy);
           })}
           commissionPct={100}
+          purposeFilter={purposeFilter}
           selectedMonth={monthFilter}
           onMonthClick={(key) => setMonthFilter((prev) => (prev === key ? "" : key))}
         />
