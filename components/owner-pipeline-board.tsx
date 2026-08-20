@@ -657,7 +657,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
             {rentLabel(l) && (
               <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>{rentLabel(l)}</span>
             )}
-            {rentLabel(l) && saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}> + </span>}
+            {rentLabel(l) && saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}> OR </span>}
             {saleCommLabel(l) && (
               <span className="font-semibold" style={{ color: "#7C3AED" }}>{saleCommLabel(l)}</span>
             )}
@@ -702,7 +702,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConf
             {rentLabel(l) && (
               <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>{rentLabel(l)}</span>
             )}
-            {rentLabel(l) && saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}> + </span>}
+            {rentLabel(l) && saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}> OR </span>}
             {saleCommLabel(l) && (
               <span className="font-semibold" style={{ color: "#7C3AED" }}>{saleCommLabel(l)}</span>
             )}
