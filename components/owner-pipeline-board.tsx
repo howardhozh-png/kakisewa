@@ -538,6 +538,20 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
 
 function colMeta(s: Stage): ColMeta { return COLUMNS.find((c) => c.stage === s)!; }
 
+// Gated on listing_purpose, not just the raw field being non-null — a
+// sale-only lead can have a stray expected_rent of 0 from an old form
+// state, which previously rendered as a misleading "RM 0/mo".
+function rentLabel(l: OwnerLead): string | null {
+  if (l.listing_purpose === "sell") return null;
+  if (!l.expected_rent) return null;
+  return `RM ${l.expected_rent.toLocaleString()}/mo`;
+}
+function saleCommLabel(l: OwnerLead): string | null {
+  if (l.listing_purpose !== "sell" && l.listing_purpose !== "both") return null;
+  if (!l.expected_sale_commission_amount) return null;
+  return `RM ${l.expected_sale_commission_amount.toLocaleString()} comm`;
+}
+
 function formatMonthKey(key: string): string {
   const [y, m] = key.split("-").map(Number);
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -639,11 +653,15 @@ function CardPreview({ l }: { l: OwnerLead }) {
             {propName || "—"}
           </p>
           <p className="text-[11px] leading-tight">
-            {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{l.expected_rent != null ? " · " : ""}</span>}
-            {l.expected_rent != null && (
-              <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>
+            {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{(rentLabel(l) || saleCommLabel(l)) ? " · " : ""}</span>}
+            {rentLabel(l) && (
+              <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>{rentLabel(l)}</span>
             )}
-            {!l.unit && !l.expected_rent && <span style={{ color: "var(--kk-ink-faint)" }}>—</span>}
+            {rentLabel(l) && saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}> + </span>}
+            {saleCommLabel(l) && (
+              <span className="font-semibold" style={{ color: "#7C3AED" }}>{saleCommLabel(l)}</span>
+            )}
+            {!l.unit && !rentLabel(l) && !saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}>—</span>}
           </p>
           <div className="flex items-center gap-1 min-w-0">
             <User className="w-3 h-3 shrink-0" style={{ color: "var(--kk-ink-faint)" }} />
@@ -680,11 +698,15 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConf
           </p>
 
           <p className="text-[11px] leading-tight">
-            {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{l.expected_rent != null ? " · " : ""}</span>}
-            {l.expected_rent != null && (
-              <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>RM {l.expected_rent.toLocaleString()}/mo</span>
+            {l.unit && <span style={{ color: "var(--kk-ink-soft)" }}>Unit {l.unit}{(rentLabel(l) || saleCommLabel(l)) ? " · " : ""}</span>}
+            {rentLabel(l) && (
+              <span className="font-semibold" style={{ color: "var(--kk-ink)" }}>{rentLabel(l)}</span>
             )}
-            {!l.unit && !l.expected_rent && (
+            {rentLabel(l) && saleCommLabel(l) && <span style={{ color: "var(--kk-ink-faint)" }}> + </span>}
+            {saleCommLabel(l) && (
+              <span className="font-semibold" style={{ color: "#7C3AED" }}>{saleCommLabel(l)}</span>
+            )}
+            {!l.unit && !rentLabel(l) && !saleCommLabel(l) && (
               <span style={{ color: "var(--kk-ink-faint)" }}>—</span>
             )}
           </p>
