@@ -57,7 +57,7 @@ import { OwnerLead } from "@/lib/types";
 import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction, queueOwnerWaBlast, removeOwnerWaBlast, bulkQueueOwnerWaBlast } from "@/lib/actions";
 import { WaBlastPanel } from "@/components/wa-blast-panel";
-import type { WaBlastConfig } from "@/lib/db";
+import type { WaBlastConfig, WaBlastQueueItem } from "@/lib/db";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
@@ -937,12 +937,11 @@ interface Props {
   leads: OwnerLead[];
   declinedLeads?: OwnerLead[];
   deletedLeads?: OwnerLead[];
-  queuedLeadIds?: Set<string>;
   waBlastConfig?: WaBlastConfig;
-  waBlastQueueSize?: number;
+  initialWaBlastQueue?: WaBlastQueueItem[];
 }
 
-export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], queuedLeadIds = new Set(), waBlastConfig, waBlastQueueSize = 0 }: Props) {
+export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], waBlastConfig, initialWaBlastQueue = [] }: Props) {
   const router = useRouter();
   const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
@@ -952,6 +951,8 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], qu
   const [sentDateFilter, setSentDateFilter] = useState<SentDateFilter>(null);
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
+  const [waBlastQueue, setWaBlastQueue] = useState<WaBlastQueueItem[]>(initialWaBlastQueue);
+  const queuedLeadIds = new Set(waBlastQueue.map((q) => q.owner_lead_id));
   const [queueing, setQueueing] = useState<string | null>(null);
   const [bulkBlasting, setBulkBlasting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -1184,7 +1185,25 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], qu
       if (res.skipped > 0) parts.push(`${res.skipped} already queued`);
       if (res.noPhone > 0) parts.push(`${res.noPhone} skipped (no phone)`);
       toast.success(parts.join(" · ") || "Done.");
-      router.refresh();
+      // Optimistically add newly queued leads to local state
+      const alreadyQueued = new Set(waBlastQueue.map((q) => q.owner_lead_id));
+      const now = new Date().toISOString();
+      const newItems: WaBlastQueueItem[] = [];
+      const allLeads = [...leads, ...declinedLeads, ...deletedLeads];
+      for (const id of ids) {
+        if (!alreadyQueued.has(id)) {
+          const lead = allLeads.find((l) => l.id === id);
+          newItems.push({
+            id: `${id}-${Date.now()}`,
+            owner_lead_id: id,
+            phone: lead?.owner_phone ?? "",
+            created_at: now,
+          });
+        }
+      }
+      if (newItems.length > 0) {
+        setWaBlastQueue((q) => [...q, ...newItems]);
+      }
     } finally {
       setBulkBlasting(false);
     }
@@ -1197,13 +1216,20 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], qu
     try {
       if (queuedLeadIds.has(lead.id)) {
         await removeOwnerWaBlast(lead.id);
+        setWaBlastQueue((q) => q.filter((item) => item.owner_lead_id !== lead.id));
         toast.success("Removed from WA blast queue.");
       } else {
         const res = await queueOwnerWaBlast(lead.id);
         if (!res.ok) { toast.error(res.message); return; }
+        const phone = lead.owner_phone ?? "";
+        setWaBlastQueue((q) => [...q, {
+          id: `${lead.id}-${Date.now()}`,
+          owner_lead_id: lead.id,
+          phone,
+          created_at: new Date().toISOString(),
+        }]);
         toast.success("Added to WA blast queue.");
       }
-      router.refresh();
     } finally {
       setQueueing(null);
     }
@@ -1462,7 +1488,12 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], qu
 
       {/* WA Auto-Blast panel */}
       {waBlastConfig && (
-        <WaBlastPanel initialConfig={waBlastConfig} queueSize={waBlastQueueSize} />
+        <WaBlastPanel
+          initialConfig={waBlastConfig}
+          queue={waBlastQueue}
+          leads={[...leads, ...declinedLeads, ...deletedLeads]}
+          onRemove={(ownerId) => setWaBlastQueue((q) => q.filter((item) => item.owner_lead_id !== ownerId))}
+        />
       )}
 
       {/* Table */}

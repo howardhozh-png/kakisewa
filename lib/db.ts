@@ -1973,17 +1973,22 @@ export async function getRankedLeadIds(): Promise<Set<string>> {
   return ids;
 }
 
-export async function getWaBlastQueuedLeadIds(): Promise<Set<string>> {
+export type WaBlastQueueItem = {
+  id: string;
+  owner_lead_id: string;
+  phone: string;
+  created_at: string;
+};
+
+export async function getWaBlastQueue(): Promise<WaBlastQueueItem[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("wa_blast_queue")
-    .select("owner_lead_id")
-    .eq("status", "pending");
-  const ids = new Set<string>();
-  for (const r of data ?? []) {
-    if (r.owner_lead_id) ids.add(r.owner_lead_id as string);
-  }
-  return ids;
+    .select("id, owner_lead_id, phone, created_at")
+    .eq("status", "pending")
+    .order("position", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+  return (data ?? []) as WaBlastQueueItem[];
 }
 
 export type WaBlastConfig = {
