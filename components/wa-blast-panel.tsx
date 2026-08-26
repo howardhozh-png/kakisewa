@@ -381,7 +381,6 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
       const res = await fetch("/api/wa-blast/session");
       const data = await res.json() as WaSession;
       setSession(data);
-      if (data.is_authenticated) stopPolling();
     } catch { /* ignore */ }
   }
 
@@ -398,16 +397,20 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
           if (res.ok) setTokens(await res.json());
         } catch { /* ignore */ }
       }
-      if (!connected) {
-        fetchSession();
-        pollRef.current = setInterval(fetchSession, 4000);
-      }
+      // Always poll when open — detects both QR appearance and disconnection
+      fetchSession();
+      pollRef.current = setInterval(fetchSession, 4000);
     } else {
       stopPolling();
     }
   }
 
-  useEffect(() => () => stopPolling(), []);
+  // Background poll (slow) — keeps status dot current even when dialog is closed
+  useEffect(() => {
+    const bg = setInterval(fetchSession, 20000);
+    return () => { clearInterval(bg); stopPolling(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function copy() {
     if (!tokens) return;
@@ -470,9 +473,13 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
               </button>
             ) : (
               <button type="button" style={{
-                fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 20, cursor: "pointer",
-                background: "none", border: "none", color: "var(--kk-ink-faint)", flexShrink: 0,
-              }}>Relink</button>
+                fontSize: 11, fontWeight: 600, padding: "4px 11px", borderRadius: 20, cursor: "pointer",
+                background: "rgba(110,110,115,0.09)", border: "1px solid rgba(110,110,115,0.22)",
+                color: "var(--kk-ink-mute)", flexShrink: 0,
+              }}>
+                <QrCode style={{ width: 10, height: 10, display: "inline", marginRight: 4, verticalAlign: "middle" }} />
+                Relink
+              </button>
             )
           } />
 
