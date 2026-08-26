@@ -56,7 +56,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
 import { OwnerLead } from "@/lib/types";
 import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction, queueOwnerWaBlast, removeOwnerWaBlast, bulkQueueOwnerWaBlast } from "@/lib/actions";
-import { WaBlastPanel } from "@/components/wa-blast-panel";
+import { WaBlastPanel, calcMaxPerDay } from "@/components/wa-blast-panel";
 import type { WaBlastConfig, WaBlastQueueItem } from "@/lib/db";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -953,6 +953,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
   const [sending, setSending] = useState<string | null>(null);
   const [waBlastQueue, setWaBlastQueue] = useState<WaBlastQueueItem[]>(initialWaBlastQueue);
   const queuedLeadIds = new Set(waBlastQueue.map((q) => q.owner_lead_id));
+  const blastMax = waBlastConfig ? calcMaxPerDay(waBlastConfig) : 0;
   const [queueing, setQueueing] = useState<string | null>(null);
   const [bulkBlasting, setBulkBlasting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -1130,7 +1131,9 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
   }
 
   function selectAllMatching() {
-    setSelectedIds(new Set(visible.map((l) => l.id)));
+    const ids = visible.map((l) => l.id);
+    const toSelect = blastMax > 0 ? ids.slice(0, blastMax) : ids;
+    setSelectedIds(new Set(toSelect));
   }
 
   async function bulkMoveToDeclined() {
@@ -1517,7 +1520,10 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                 onClick={selectAllMatching}
                 style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-blue)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
               >
-                Select all {visible.length} matching properties
+                {blastMax > 0 && blastMax < visible.length
+                  ? `Select ${blastMax} / ${visible.length} matching properties`
+                  : `Select all ${visible.length} matching properties`
+                }
               </button>
             </div>
           )}
