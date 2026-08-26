@@ -63,37 +63,24 @@ function validateWindows(windows: { start: string; end: string }[]): string | nu
 // ─── time input (free H + M number fields) ────────────────────────────────────
 
 function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [h, m] = value.split(":").map(Number);
-
-  function setH(raw: string) {
-    const n = Math.max(0, Math.min(23, parseInt(raw) || 0));
-    onChange(`${fmt2(n)}:${fmt2(m)}`);
-  }
-  function setM(raw: string) {
-    const n = Math.max(0, Math.min(59, parseInt(raw) || 0));
-    onChange(`${fmt2(h)}:${fmt2(n)}`);
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: 28, fontSize: 13, fontWeight: 600, textAlign: "center",
-    background: "transparent", border: "none", outline: "none",
-    color: "var(--kk-ink)", padding: 0, MozAppearance: "textfield",
-  };
-
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 1,
-      background: "var(--kk-bg)", borderRadius: 9,
-      padding: "4px 8px", border: "1px solid var(--kk-line)",
-    }}>
-      <input type="number" min={0} max={23} value={h}
-        onChange={(e) => setH(e.target.value)}
-        style={inputStyle} />
-      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink-mute)" }}>:</span>
-      <input type="number" min={0} max={59} value={m}
-        onChange={(e) => setM(e.target.value)}
-        style={inputStyle} />
-    </div>
+    <input
+      type="time"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        fontSize: 13,
+        fontWeight: 600,
+        color: "var(--kk-ink)",
+        background: "var(--kk-bg)",
+        border: "1px solid var(--kk-line)",
+        borderRadius: 9,
+        padding: "4px 8px",
+        outline: "none",
+        cursor: "pointer",
+        minWidth: 0,
+      }}
+    />
   );
 }
 
@@ -104,22 +91,22 @@ function SetupInfo({ onClose }: { onClose: () => void }) {
     {
       icon: <Laptop style={{ width: 15, height: 15 }} />,
       title: "Keep your laptop awake",
-      body: "The blaster runs locally on your machine. Sleep mode stops it. Disable sleep or plug in while blasting.",
+      body: "Messages send from your laptop in the background. Make sure it stays on, connected to the internet, and not in sleep mode while a blast is running.",
     },
     {
       icon: <QrCode style={{ width: 15, height: 15 }} />,
-      title: "First-time WhatsApp setup",
-      body: "Open Terminal and run: node scripts/blaster.mjs\nA QR code appears. Scan it in WhatsApp: Settings → Linked Devices → Link a device.",
+      title: "Link your WhatsApp (first time only)",
+      body: "On your phone, open WhatsApp and go to Settings → Linked Devices → Link a Device. Scan the QR code shown on your laptop screen.",
     },
     {
       icon: <Wifi style={{ width: 15, height: 15 }} />,
-      title: "Session is saved",
-      body: "After first scan, auth is stored in scripts/blaster-auth/. No re-scan unless you log out of the linked device.",
+      title: "Stays connected automatically",
+      body: "Once linked, your WhatsApp session is remembered. No need to scan again unless you manually unlink the device.",
     },
     {
       icon: <Timer style={{ width: 15, height: 15 }} />,
-      title: "How it sends",
-      body: "The blaster polls your queue every minute. It only fires during your configured time windows. Press Ctrl+C to stop; re-run the same command to resume.",
+      title: "Sends within your time windows",
+      body: "Messages go out automatically during the windows you set below. Outside those hours, the queue pauses and resumes the next day.",
     },
   ];
 
@@ -127,7 +114,7 @@ function SetupInfo({ onClose }: { onClose: () => void }) {
     <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.08)", padding: "12px 14px 10px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)" }}>
-          How to use WA Auto-Blast
+          How WA Auto-Blast works
         </span>
         <button type="button" onClick={onClose}
           style={{ background: "none", border: "none", cursor: "pointer", color: "var(--kk-ink-faint)", display: "flex", padding: 0 }}>
@@ -143,19 +130,11 @@ function SetupInfo({ onClose }: { onClose: () => void }) {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>{s.icon}</div>
             <div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", marginBottom: 2 }}>{s.title}</p>
-              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.5, whiteSpace: "pre-line" }}>{s.body}</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", marginBottom: 2, margin: "0 0 2px" }}>{s.title}</p>
+              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.5, margin: 0 }}>{s.body}</p>
             </div>
           </div>
         ))}
-      </div>
-      <div style={{
-        marginTop: 12, padding: "8px 10px", borderRadius: 8,
-        background: "rgba(0,113,227,0.05)", border: "1px solid rgba(0,113,227,0.12)",
-      }}>
-        <p style={{ fontSize: 11, fontFamily: "monospace", color: "var(--kk-blue)", margin: 0 }}>
-          $ node scripts/blaster.mjs
-        </p>
       </div>
     </div>
   );
@@ -385,9 +364,6 @@ function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
           Save
         </button>
 
-        <span style={{ fontSize: 10, color: "var(--kk-ink-faint)", marginLeft: "auto" }}>
-          <code style={{ fontFamily: "monospace" }}>node scripts/blaster.mjs</code>
-        </span>
       </div>
     </div>
   );
@@ -448,14 +424,14 @@ export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, w
       {/* ── header (always visible) ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
 
-        {/* left: blast info — clickable to expand */}
+        {/* left: title + status — clickable to expand */}
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          style={{ flex: 1, display: "flex", alignItems: "center", gap: 7, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0 }}
+          style={{ flex: 1, display: "flex", alignItems: "center", gap: 7, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden" }}
         >
           <Clock style={{ width: 13, height: 13, color: isActive ? "var(--kk-green)" : "var(--kk-blue)", flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", whiteSpace: "nowrap" }}>WA Auto-Blast</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>WA Auto-Blast</span>
           <span style={{
             fontSize: 9, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase",
             padding: "2px 6px", borderRadius: 99, flexShrink: 0,
@@ -464,14 +440,6 @@ export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, w
           }}>
             {isActive ? "Active" : "Paused"}
           </span>
-          <span style={{ fontSize: 11, color: "var(--kk-ink-mute)", whiteSpace: "nowrap" }}>
-            {queueSize > 0 ? `${queueSize} queued` : "Empty"}
-          </span>
-          {max > 0 && (
-            <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", whiteSpace: "nowrap" }}>
-              · <strong style={{ color: "var(--kk-ink)" }}>{max}</strong>/day
-            </span>
-          )}
           <span style={{ color: "var(--kk-ink-faint)", display: "flex", alignItems: "center", flexShrink: 0 }}>
             {expanded ? <ChevronUp style={{ width: 13, height: 13 }} /> : <ChevronDown style={{ width: 13, height: 13 }} />}
           </span>
