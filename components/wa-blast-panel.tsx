@@ -92,27 +92,35 @@ function NumberInput({ value, onChange, min, max, width }: {
   );
 }
 
-// ─── time input (native iOS wheel picker) ─────────────────────────────────────
+// ─── time input — two bounded selects (HH + MM) ───────────────────────────────
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const MINS  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+
+const SEL: React.CSSProperties = {
+  fontSize: 13, fontWeight: 600, color: "var(--kk-ink)",
+  background: "var(--kk-bg)", border: "none", outline: "none",
+  cursor: "pointer", padding: "2px 0", appearance: "none",
+  WebkitAppearance: "none",
+};
 
 function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [hh, mm] = value.split(":") as [string, string];
+  const set = (newHH: string, newMM: string) => onChange(`${newHH}:${newMM}`);
   return (
-    <input
-      type="time"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        fontSize: 13,
-        fontWeight: 600,
-        color: "var(--kk-ink)",
-        background: "var(--kk-bg)",
-        border: "1px solid var(--kk-line)",
-        borderRadius: 9,
-        padding: "4px 8px",
-        outline: "none",
-        cursor: "pointer",
-        minWidth: 0,
-      }}
-    />
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 1,
+      background: "var(--kk-bg)", border: "1px solid var(--kk-line)",
+      borderRadius: 9, padding: "4px 8px", cursor: "pointer",
+    }}>
+      <select value={hh} onChange={e => set(e.target.value, mm)} style={SEL}>
+        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", userSelect: "none" }}>:</span>
+      <select value={mm} onChange={e => set(hh, e.target.value)} style={SEL}>
+        {MINS.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+    </div>
   );
 }
 
