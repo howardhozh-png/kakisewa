@@ -397,6 +397,11 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
           if (res.ok) setTokens(await res.json());
         } catch { /* ignore */ }
       }
+      // If currently connected, signal the blaster to logout the old session
+      // before we show the dialog — this disconnects the old WhatsApp link
+      if (connected) {
+        fetch("/api/wa-blast/relink", { method: "POST" }).catch(() => {});
+      }
       // Always poll when open — detects both QR appearance and disconnection
       fetchSession();
       pollRef.current = setInterval(fetchSession, 4000);

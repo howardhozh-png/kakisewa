@@ -244,7 +244,27 @@ async function sendWA(phone, message) {
 
 // ── Poll loop ─────────────────────────────────────────────────────────────────
 
+async function checkRelink() {
+  try {
+    const { data } = await db
+      .from("wa_sessions")
+      .select("relink_requested")
+      .eq("user_id", USER_ID)
+      .maybeSingle();
+    if (data?.relink_requested) {
+      console.log("\n↩ Relink requested from app — logging out old session...\n");
+      await db.from("wa_sessions").upsert(
+        { user_id: USER_ID, relink_requested: false, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+      if (sock) await sock.logout();
+      // loggedOut event will clear auth files and exit
+    }
+  } catch { /* ignore */ }
+}
+
 async function poll() {
+  await checkRelink();
   const config = await fetchConfig();
 
   if (!config.is_active) {
