@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getOwnerLeads, getSoftDeletedOwnerLeads, getWaBlastQueue, getWaBlastConfig, getWaSession } from "@/lib/db";
+import { getOwnerLeads, getSoftDeletedOwnerLeads, getWaBlastQueue, getSentWaBlastQueue, getWaBlastConfig, getWaSession } from "@/lib/db";
 import { UploadOwnerCsvDialog } from "@/components/upload-owner-csv-dialog";
 import { AddOutreachButton } from "@/components/add-outreach-button";
 import { OutreachTable } from "@/components/outreach-table";
@@ -10,10 +10,11 @@ import { TourSpotlight } from "@/components/tour-spotlight";
 export const dynamic = "force-dynamic";
 
 export default async function MessageOwnersPage() {
-  const [ownerLeads, deletedLeads, waBlastQueue, waBlastConfig, waSession] = await Promise.all([
+  const [ownerLeads, deletedLeads, waBlastQueue, waSentQueue, waBlastConfig, waSession] = await Promise.all([
     getOwnerLeads(),
     getSoftDeletedOwnerLeads(),
     getWaBlastQueue(),
+    getSentWaBlastQueue(),
     getWaBlastConfig(),
     getWaSession(),
   ]);
@@ -51,7 +52,7 @@ export default async function MessageOwnersPage() {
     const declinedLeads = ownerLeads.filter((l) => l.stage === "archived" || l.stage === "own_stay");
     return activeLeads.length === 0 && deletedLeads.length === 0 && declinedLeads.length === 0
       ? <OutreachEmptyState />
-      : <OutreachTable leads={activeLeads} declinedLeads={declinedLeads} deletedLeads={deletedLeads} waBlastConfig={waBlastConfig} initialWaBlastQueue={waBlastQueue} initialWaSession={waSession} />;
+      : <OutreachTable leads={activeLeads} declinedLeads={declinedLeads} deletedLeads={deletedLeads} waBlastConfig={waBlastConfig} initialWaBlastQueue={waBlastQueue} initialWaSentQueue={waSentQueue} initialWaSession={waSession} />;
   })()}
 
       <Suspense fallback={null}>

@@ -1980,6 +1980,13 @@ export type WaBlastQueueItem = {
   created_at: string;
 };
 
+export type WaBlastSentItem = {
+  id: string;
+  owner_lead_id: string;
+  phone: string;
+  sent_at: string;
+};
+
 export async function getWaBlastQueue(): Promise<WaBlastQueueItem[]> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -1989,6 +1996,23 @@ export async function getWaBlastQueue(): Promise<WaBlastQueueItem[]> {
     .order("position", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true });
   return (data ?? []) as WaBlastQueueItem[];
+}
+
+export async function getSentWaBlastQueue(): Promise<WaBlastSentItem[]> {
+  const supabase = await createClient();
+  // Today's MYT midnight expressed as UTC
+  const mytNowMs = Date.now() + 8 * 60 * 60 * 1000;
+  const d = new Date(mytNowMs);
+  const mytMidnightUtc = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - 8 * 60 * 60 * 1000
+  ).toISOString();
+  const { data } = await supabase
+    .from("wa_blast_queue")
+    .select("id, owner_lead_id, phone, sent_at")
+    .eq("status", "sent")
+    .gte("sent_at", mytMidnightUtc)
+    .order("sent_at", { ascending: false });
+  return (data ?? []) as WaBlastSentItem[];
 }
 
 export type WaBlastConfig = {

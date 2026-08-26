@@ -1526,6 +1526,12 @@ export async function removeOwnerWaBlast(leadId: string): Promise<{ ok: boolean 
   return { ok: true };
 }
 
+export async function acknowledgeWaSent(id: string): Promise<void> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  await supabase.from("wa_blast_queue").delete().eq("id", id).eq("status", "sent");
+}
+
 export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued: number; skipped: number; noPhone: number }> {
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();

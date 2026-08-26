@@ -7,15 +7,17 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { saveWaBlastConfig, removeOwnerWaBlast } from "@/lib/actions";
-import type { WaBlastConfig, WaBlastQueueItem, WaSession } from "@/lib/db";
+import { saveWaBlastConfig, removeOwnerWaBlast, acknowledgeWaSent } from "@/lib/actions";
+import type { WaBlastConfig, WaBlastQueueItem, WaBlastSentItem, WaSession } from "@/lib/db";
 import type { OwnerLead } from "@/lib/types";
 
 interface Props {
   initialConfig: WaBlastConfig;
   queue: WaBlastQueueItem[];
+  sentQueue: WaBlastSentItem[];
   leads: OwnerLead[];
   onRemove: (ownerId: string) => void;
+  onAcknowledge: (id: string) => void;
   waCount: number;
   waCap: number;
   onCapChange: (n: number) => void;
@@ -182,12 +184,23 @@ function SetupInfo({ onClose }: { onClose: () => void }) {
 
 // ─── queue tab ────────────────────────────────────────────────────────────────
 
-function QueueTab({ queue, leads, onRemove }: {
+function fmtMYT(iso: string) {
+  const d = new Date(iso);
+  const myt = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  const hh = String(myt.getUTCHours()).padStart(2, "0");
+  const mm = String(myt.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge }: {
   queue: WaBlastQueueItem[];
+  sentQueue: WaBlastSentItem[];
   leads: OwnerLead[];
   onRemove: (ownerId: string) => void;
+  onAcknowledge: (id: string) => void;
 }) {
   const [removing, setRemoving] = useState<string | null>(null);
+  const [acking, setAcking] = useState<string | null>(null);
   const leadMap = new Map(leads.map((l) => [l.id, l]));
 
   async function handleRemove(item: WaBlastQueueItem) {
@@ -200,7 +213,17 @@ function QueueTab({ queue, leads, onRemove }: {
     }
   }
 
-  if (queue.length === 0) {
+  async function handleAck(item: WaBlastSentItem) {
+    setAcking(item.id);
+    try {
+      await acknowledgeWaSent(item.id);
+      onAcknowledge(item.id);
+    } finally {
+      setAcking(null);
+    }
+  }
+
+  if (queue.length === 0 && sentQueue.length === 0) {
     return (
       <div style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
         <Clock style={{ width: 26, height: 26, color: "var(--kk-ink-faint)", opacity: 0.35 }} />
@@ -214,47 +237,95 @@ function QueueTab({ queue, leads, onRemove }: {
 
   return (
     <div>
-      <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", padding: "8px 14px 4px", fontWeight: 500, margin: 0 }}>
-        {queue.length} lead{queue.length !== 1 ? "s" : ""} — sent in order
-      </p>
-      <div style={{ maxHeight: 224, overflowY: "auto" }}>
-        {queue.map((item, i) => {
-          const lead = leadMap.get(item.owner_lead_id);
-          const name = lead?.owner_name ?? "Unknown";
-          const sub = lead?.property_name
-            ? (lead.unit ? `${lead.unit} · ${lead.property_name}` : lead.property_name)
-            : item.phone;
-          return (
-            <div key={item.id} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "7px 14px", borderTop: "0.5px solid rgba(0,0,0,0.07)",
-            }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--kk-ink-faint)", minWidth: 16, textAlign: "right" }}>{i + 1}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
-                <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
-              </div>
-              <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{item.phone}</span>
-              <button
-                type="button"
-                disabled={removing === item.owner_lead_id}
-                onClick={() => handleRemove(item)}
-                style={{
-                  width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer",
-                  background: "rgba(255,59,48,0.10)", color: "#FF3B30",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  opacity: removing === item.owner_lead_id ? 0.4 : 1,
-                }}
-              >
-                {removing === item.owner_lead_id
-                  ? <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} />
-                  : <X style={{ width: 11, height: 11 }} />
-                }
-              </button>
-            </div>
-          );
-        })}
-      </div>
+      {/* Pending */}
+      {queue.length > 0 && (
+        <>
+          <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", padding: "8px 14px 4px", fontWeight: 500, margin: 0 }}>
+            {queue.length} lead{queue.length !== 1 ? "s" : ""} — sent in order
+          </p>
+          <div style={{ maxHeight: 200, overflowY: "auto" }}>
+            {queue.map((item, i) => {
+              const lead = leadMap.get(item.owner_lead_id);
+              const name = lead?.owner_name ?? "Unknown";
+              const sub = lead?.property_name
+                ? (lead.unit ? `${lead.unit} · ${lead.property_name}` : lead.property_name)
+                : item.phone;
+              return (
+                <div key={item.id} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "7px 14px", borderTop: "0.5px solid rgba(0,0,0,0.07)",
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--kk-ink-faint)", minWidth: 16, textAlign: "right" }}>{i + 1}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+                    <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
+                  </div>
+                  <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{item.phone}</span>
+                  <button type="button" disabled={removing === item.owner_lead_id} onClick={() => handleRemove(item)}
+                    style={{
+                      width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer",
+                      background: "rgba(255,59,48,0.10)", color: "#FF3B30",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      opacity: removing === item.owner_lead_id ? 0.4 : 1,
+                    }}>
+                    {removing === item.owner_lead_id
+                      ? <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} />
+                      : <X style={{ width: 11, height: 11 }} />}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Sent today */}
+      {sentQueue.length > 0 && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-green-ink)", letterSpacing: "0.04em" }}>
+              SENT TODAY ({sentQueue.length})
+            </span>
+            <span style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>Tap tick to dismiss</span>
+          </div>
+          <div style={{ maxHeight: 180, overflowY: "auto" }}>
+            {sentQueue.map((item) => {
+              const lead = leadMap.get(item.owner_lead_id);
+              const name = lead?.owner_name ?? "Unknown";
+              const sub = lead?.property_name
+                ? (lead.unit ? `${lead.unit} · ${lead.property_name}` : lead.property_name)
+                : item.phone;
+              return (
+                <div key={item.id} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "6px 14px", borderTop: "0.5px solid rgba(52,199,89,0.12)",
+                  background: "rgba(52,199,89,0.04)",
+                }}>
+                  <CheckCircle2 style={{ width: 13, height: 13, color: "var(--kk-green-ink)", flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
+                    <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
+                  </div>
+                  <span style={{ fontSize: 11, color: "var(--kk-green-ink)", flexShrink: 0, fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
+                    {fmtMYT(item.sent_at)} MYT
+                  </span>
+                  <button type="button" disabled={acking === item.id} onClick={() => handleAck(item)}
+                    style={{
+                      width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--kk-green-ink)", cursor: "pointer",
+                      background: acking === item.id ? "rgba(52,199,89,0.3)" : "rgba(52,199,89,0.12)",
+                      color: "var(--kk-green-ink)",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                    {acking === item.id
+                      ? <Loader2 style={{ width: 10, height: 10, animation: "spin 1s linear infinite" }} />
+                      : <CheckCircle2 style={{ width: 11, height: 11 }} />}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -667,7 +738,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
 
 // ─── main panel ───────────────────────────────────────────────────────────────
 
-export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, waCap, onCapChange, initialWaSession }: Props) {
+export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, waCount, waCap, onCapChange, initialWaSession }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
   const [saving, setSaving] = useState(false);
@@ -814,7 +885,7 @@ export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, w
 
           {tab === "schedule"
             ? <ScheduleTab cfg={cfg} saving={saving} waSession={initialWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} />
-            : <QueueTab queue={queue} leads={leads} onRemove={onRemove} />
+            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} />
           }
         </div>
       )}
