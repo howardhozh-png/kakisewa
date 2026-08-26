@@ -274,17 +274,17 @@ function mask(s: string) {
 function buildCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
   if (os === "mac") {
-    return `KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node scripts/blaster.mjs`;
+    return `cd ~/kakisewa && KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node scripts/blaster.mjs`;
   }
-  return `set KAKI_TOKEN=${at} && set KAKI_REFRESH=${rt} && node scripts/blaster.mjs`;
+  return `cd %USERPROFILE%\\kakisewa && set KAKI_TOKEN=${at} && set KAKI_REFRESH=${rt} && node scripts/blaster.mjs`;
 }
 
 function buildMaskedCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
   if (os === "mac") {
-    return `KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node scripts/blaster.mjs`;
+    return `cd ~/kakisewa && KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node scripts/blaster.mjs`;
   }
-  return `set KAKI_TOKEN=${mask(at)} && set KAKI_REFRESH=${mask(rt)} && node scripts/blaster.mjs`;
+  return `cd %USERPROFILE%\\kakisewa && set KAKI_TOKEN=${mask(at)} && set KAKI_REFRESH=${mask(rt)} && node scripts/blaster.mjs`;
 }
 
 function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
