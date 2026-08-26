@@ -250,6 +250,35 @@ function QueueTab({ queue, leads, onRemove }: {
   );
 }
 
+// ─── copy command helper ──────────────────────────────────────────────────────
+
+function CopyCommand() {
+  const [copied, setCopied] = useState(false);
+  const cmd = "SUPABASE_SERVICE_ROLE_KEY=<your-key> node scripts/blaster.mjs";
+
+  function copy() {
+    navigator.clipboard.writeText(cmd).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <button type="button" onClick={copy}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+        background: "#1D1D1F", borderRadius: 8, padding: "7px 10px", border: "none", cursor: "pointer", width: "100%",
+      }}>
+      <code style={{ fontSize: 10, color: "#A8FF78", fontFamily: "monospace", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {cmd}
+      </code>
+      <span style={{ fontSize: 10, color: copied ? "#A8FF78" : "#6E6E73", flexShrink: 0, fontWeight: 600 }}>
+        {copied ? "Copied!" : "Copy"}
+      </span>
+    </button>
+  );
+}
+
 // ─── whatsapp link row ────────────────────────────────────────────────────────
 
 function WaLinkRow({ initialSession }: { initialSession: WaSession | null }) {
@@ -325,16 +354,36 @@ function WaLinkRow({ initialSession }: { initialSession: WaSession | null }) {
               <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0 }}>
                 Open WhatsApp on your phone, go to <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>, then scan this code.
               </p>
-              <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", margin: 0 }}>Refreshes automatically every 4 seconds</p>
+              <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", margin: 0 }}>Refreshes automatically</p>
             </>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px 0" }}>
-              <Loader2 style={{ width: 20, height: 20, color: "var(--kk-ink-faint)", animation: "spin 1s linear infinite" }} />
-              <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, textAlign: "center" }}>
-                Waiting for the blaster to start...
+            <div style={{
+              width: "100%", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)",
+              background: "var(--kk-bg)", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10,
+            }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>
+                One-time setup required
               </p>
-              <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: 0, textAlign: "center", maxWidth: 220 }}>
-                Make sure your laptop is running the blaster in the background.
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[
+                  { n: "1", text: "On your laptop, open Terminal and paste this command:" },
+                  { n: "2", text: "A QR code will appear on this page automatically." },
+                  { n: "3", text: "Scan it with your phone's WhatsApp to connect." },
+                ].map(({ n, text }) => (
+                  <div key={n} style={{ display: "flex", gap: 8 }}>
+                    <span style={{
+                      width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                      background: "rgba(0,113,227,0.12)", color: "var(--kk-blue)",
+                      fontSize: 10, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>{n}</span>
+                    <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{text}</p>
+                  </div>
+                ))}
+              </div>
+              <CopyCommand />
+              <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", margin: 0 }}>
+                This page refreshes automatically once the QR appears.
               </p>
             </div>
           )}
