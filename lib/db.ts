@@ -1986,6 +1986,44 @@ export async function getWaBlastQueuedLeadIds(): Promise<Set<string>> {
   return ids;
 }
 
+export type WaBlastConfig = {
+  interval_minutes: number;
+  daily_cap: number;
+  windows: { start: string; end: string }[];
+  is_active: boolean;
+};
+
+export const WA_BLAST_DEFAULTS: WaBlastConfig = {
+  interval_minutes: 10,
+  daily_cap: 1,
+  windows: [{ start: "08:00", end: "22:00" }],
+  is_active: false,
+};
+
+export async function getWaBlastConfig(): Promise<WaBlastConfig> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("wa_blast_config")
+    .select("interval_minutes, daily_cap, windows, is_active")
+    .maybeSingle();
+  if (!data) return WA_BLAST_DEFAULTS;
+  return {
+    interval_minutes: data.interval_minutes ?? WA_BLAST_DEFAULTS.interval_minutes,
+    daily_cap: data.daily_cap ?? WA_BLAST_DEFAULTS.daily_cap,
+    windows: (data.windows as WaBlastConfig["windows"]) ?? WA_BLAST_DEFAULTS.windows,
+    is_active: data.is_active ?? WA_BLAST_DEFAULTS.is_active,
+  };
+}
+
+export async function getWaBlastQueueSize(): Promise<number> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("wa_blast_queue")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+  return count ?? 0;
+}
+
 // ─── Account / Tier ───────────────────────────────────────────────────────────
 
 export async function getAccountTier(): Promise<Tier> {

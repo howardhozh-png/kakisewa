@@ -1514,7 +1514,7 @@ export async function queueOwnerWaBlast(leadId: string): Promise<{ ok: boolean; 
   });
   if (error) return { ok: false, message: error.message };
 
-  revalidatePath("/my-listing");
+  revalidatePath("/property-leads");
   return { ok: true, message: "Added to WA blast queue." };
 }
 
@@ -1522,7 +1522,74 @@ export async function removeOwnerWaBlast(leadId: string): Promise<{ ok: boolean 
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
   await supabase.from("wa_blast_queue").delete().eq("owner_lead_id", leadId).eq("status", "pending");
-  revalidatePath("/my-listing");
+  revalidatePath("/property-leads");
+  return { ok: true };
+}
+
+export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued: number; skipped: number; noPhone: number }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { queued: 0, skipped: 0, noPhone: 0 };
+
+  const all = await getOwnerLeads();
+  const agent = await getAgentProfile();
+  const overrides = parseTemplateOverrides(agent.whatsapp_templates);
+
+  // Fetch already-queued lead IDs to avoid duplicates
+  const { data: existing } = await supabase
+    .from("wa_blast_queue")
+    .select("owner_lead_id")
+    .eq("user_id", user.id)
+    .eq("status", "pending")
+    .in("owner_lead_id", leadIds);
+  const alreadyQueued = new Set((existing ?? []).map((r: { owner_lead_id: string }) => r.owner_lead_id));
+
+  const rows: { user_id: string; owner_lead_id: string; phone: string; message: string }[] = [];
+  let skipped = 0, noPhone = 0;
+
+  for (const leadId of leadIds) {
+    if (alreadyQueued.has(leadId)) { skipped++; continue; }
+    const owner = all.find((o) => o.id === leadId);
+    if (!owner?.owner_phone) { noPhone++; continue; }
+
+    const propertyLabel = owner.property_name
+      ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : owner.property_name
+      : "your property";
+    const message = resolveTemplate("owner_outreach_initial", overrides, {
+      ownerName: owner.owner_name,
+      agentName: agent.name ?? "Your agent",
+      renNumber: agent.ren_number ?? "",
+      agencyLine: agent.agency ? ` from ${agent.agency}` : "",
+      propertyName: propertyLabel,
+    });
+    rows.push({ user_id: user.id, owner_lead_id: leadId, phone: owner.owner_phone, message });
+  }
+
+  if (rows.length > 0) {
+    await supabase.from("wa_blast_queue").insert(rows);
+  }
+
+  revalidatePath("/property-leads");
+  return { queued: rows.length, skipped, noPhone };
+}
+
+export async function saveWaBlastConfig(config: {
+  interval_minutes: number;
+  daily_cap: number;
+  windows: { start: string; end: string }[];
+  is_active: boolean;
+}): Promise<{ ok: boolean }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  await supabase.from("wa_blast_config").upsert(
+    { user_id: user.id, ...config },
+    { onConflict: "user_id" }
+  );
+  revalidatePath("/property-leads");
   return { ok: true };
 }
 
