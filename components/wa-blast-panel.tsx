@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, X, Plus, Info,
-  Laptop, QrCode, Wifi, Timer,
+  Laptop, QrCode, Wifi, Timer, Terminal, CheckCircle2,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { saveWaBlastConfig, removeOwnerWaBlast } from "@/lib/actions";
 import type { WaBlastConfig, WaBlastQueueItem, WaSession } from "@/lib/db";
@@ -250,69 +251,64 @@ function QueueTab({ queue, leads, onRemove }: {
   );
 }
 
-// ─── copy command helper ──────────────────────────────────────────────────────
+// ─── wa setup dialog ──────────────────────────────────────────────────────────
 
-function CopyCommand() {
-  const [copied, setCopied] = useState(false);
-  const cmd = "SUPABASE_SERVICE_ROLE_KEY=<your-key> node scripts/blaster.mjs";
+type SetupCmd = { access_token: string; refresh_token: string; user_id: string };
 
-  function copy() {
-    navigator.clipboard.writeText(cmd).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  return (
-    <button type="button" onClick={copy}
-      style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-        background: "#1D1D1F", borderRadius: 8, padding: "7px 10px", border: "none", cursor: "pointer", width: "100%",
-      }}>
-      <code style={{ fontSize: 10, color: "#A8FF78", fontFamily: "monospace", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {cmd}
-      </code>
-      <span style={{ fontSize: 10, color: copied ? "#A8FF78" : "#6E6E73", flexShrink: 0, fontWeight: 600 }}>
-        {copied ? "Copied!" : "Copy"}
-      </span>
-    </button>
-  );
-}
-
-// ─── whatsapp link row ────────────────────────────────────────────────────────
-
-function WaLinkRow({ initialSession }: { initialSession: WaSession | null }) {
+function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
+  const [open, setOpen] = useState(false);
   const [session, setSession] = useState<WaSession | null>(initialSession);
-  const [showQr, setShowQr] = useState(false);
+  const [cmd, setCmd] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const connected = session?.is_authenticated;
 
   async function fetchSession() {
     try {
       const res = await fetch("/api/wa-blast/session");
       const data = await res.json() as WaSession;
       setSession(data);
-      if (data.is_authenticated) stopPolling();
+      if (data.is_authenticated) {
+        stopPolling();
+      }
     } catch { /* ignore */ }
-  }
-
-  function startPolling() {
-    setShowQr(true);
-    fetchSession();
-    pollRef.current = setInterval(fetchSession, 4000);
   }
 
   function stopPolling() {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   }
 
-  function handleClick() {
-    if (session?.is_authenticated) return;
-    if (showQr) { setShowQr(false); stopPolling(); } else { startPolling(); }
+  async function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (next && !connected) {
+      // Fetch personal command
+      if (!cmd) {
+        try {
+          const res = await fetch("/api/wa-blast/setup-token");
+          if (res.ok) {
+            const { access_token, refresh_token }: SetupCmd = await res.json();
+            setCmd(`KAKI_TOKEN="${access_token}" KAKI_REFRESH="${refresh_token}" node scripts/blaster.mjs`);
+          }
+        } catch { /* ignore */ }
+      }
+      // Start polling for QR
+      fetchSession();
+      pollRef.current = setInterval(fetchSession, 4000);
+    } else {
+      stopPolling();
+    }
   }
 
   useEffect(() => () => stopPolling(), []);
 
-  const connected = session?.is_authenticated;
+  function copy() {
+    if (!cmd) return;
+    navigator.clipboard.writeText(cmd).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
 
   return (
     <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
@@ -328,67 +324,162 @@ function WaLinkRow({ initialSession }: { initialSession: WaSession | null }) {
             </strong>
           </span>
         </div>
-        {!connected && (
-          <button type="button" onClick={handleClick}
-            style={{
-              fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20, cursor: "pointer",
-              background: showQr ? "rgba(0,0,0,0.06)" : "rgba(0,113,227,0.09)",
-              border: showQr ? "1px solid rgba(0,0,0,0.10)" : "1px solid rgba(0,113,227,0.22)",
-              color: showQr ? "var(--kk-ink-mute)" : "var(--kk-blue)",
-            }}>
-            <QrCode style={{ width: 11, height: 11, display: "inline", marginRight: 4, verticalAlign: "middle" }} />
-            {showQr ? "Hide QR" : "Link WhatsApp"}
-          </button>
-        )}
-      </div>
 
-      {showQr && !connected && (
-        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-          {session?.qr_data_url ? (
-            <>
-              <img
-                src={session.qr_data_url}
-                alt="WhatsApp QR code"
-                style={{ width: 180, height: 180, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)" }}
-              />
-              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0 }}>
-                Open WhatsApp on your phone, go to <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>, then scan this code.
-              </p>
-              <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", margin: 0 }}>Refreshes automatically</p>
-            </>
-          ) : (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogTrigger render={
+            !connected ? (
+              <button type="button" style={{
+                fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20, cursor: "pointer",
+                background: "rgba(0,113,227,0.09)", border: "1px solid rgba(0,113,227,0.22)", color: "var(--kk-blue)",
+              }}>
+                <QrCode style={{ width: 11, height: 11, display: "inline", marginRight: 4, verticalAlign: "middle" }} />
+                Link WhatsApp
+              </button>
+            ) : (
+              <button type="button" style={{
+                fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 20, cursor: "pointer",
+                background: "none", border: "none", color: "var(--kk-ink-faint)",
+              }}>Relink</button>
+            )
+          } />
+
+          <DialogContent className="max-w-md" style={{ padding: 0, borderRadius: 22, overflow: "hidden" }}>
+            {/* Header */}
             <div style={{
-              width: "100%", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)",
-              background: "var(--kk-bg)", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10,
+              background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
+              padding: "24px 24px 20px",
             }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>
-                One-time setup required
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[
-                  { n: "1", text: "On your laptop, open Terminal and paste this command:" },
-                  { n: "2", text: "A QR code will appear on this page automatically." },
-                  { n: "3", text: "Scan it with your phone's WhatsApp to connect." },
-                ].map(({ n, text }) => (
-                  <div key={n} style={{ display: "flex", gap: 8 }}>
-                    <span style={{
-                      width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
-                      background: "rgba(0,113,227,0.12)", color: "var(--kk-blue)",
-                      fontSize: 10, fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>{n}</span>
-                    <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{text}</p>
-                  </div>
-                ))}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <QrCode style={{ width: 20, height: 20, color: "#fff" }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: 0 }}>Link WhatsApp</p>
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", margin: 0 }}>Free auto-blast from your own number</p>
+                </div>
               </div>
-              <CopyCommand />
-              <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", margin: 0 }}>
-                This page refreshes automatically once the QR appears.
-              </p>
+              <div style={{
+                background: "rgba(255,255,255,0.15)", borderRadius: 10, padding: "10px 12px",
+                fontSize: 12, color: "#fff", lineHeight: 1.5,
+              }}>
+                Messages send from your own WhatsApp number at no cost. You keep full control, owners see a message from you personally.
+              </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Body */}
+            <div style={{ padding: "20px 24px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
+
+              {/* Steps */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+                {/* Step 1 */}
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                    background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)",
+                    fontSize: 12, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>1</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 3px" }}>Open Terminal on your Mac</p>
+                    <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>
+                      Press <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 5px", fontSize: 11 }}>Cmd</kbd>{" "}+{" "}
+                      <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 5px", fontSize: 11 }}>Space</kbd>, type <strong>Terminal</strong>, press Enter.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                    background: "rgba(0,113,227,0.10)", color: "var(--kk-blue)",
+                    fontSize: 12, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>2</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 6px" }}>Paste this command and press Enter</p>
+                    <div style={{
+                      background: "#1D1D1F", borderRadius: 10, padding: "10px 12px",
+                      display: "flex", alignItems: "center", gap: 8, overflow: "hidden",
+                    }}>
+                      <Terminal style={{ width: 13, height: 13, color: "#A8FF78", flexShrink: 0 }} />
+                      <code style={{
+                        fontSize: 10.5, color: "#A8FF78", fontFamily: "monospace",
+                        flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {cmd ? cmd.replace(/KAKI_TOKEN="[^"]{20}[^"]*"/, 'KAKI_TOKEN="••••••••"').replace(/KAKI_REFRESH="[^"]{20}[^"]*"/, 'KAKI_REFRESH="••••••••"') : "Generating your command..."}
+                      </code>
+                      <button type="button" onClick={copy} disabled={!cmd}
+                        style={{
+                          fontSize: 11, fontWeight: 700, color: copied ? "#A8FF78" : "#6E6E73",
+                          border: "none", cursor: cmd ? "pointer" : "default",
+                          flexShrink: 0, padding: "2px 6px", borderRadius: 5,
+                          background: copied ? "rgba(168,255,120,0.12)" : "rgba(255,255,255,0.07)",
+                        }}>
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                    <p style={{ fontSize: 10.5, color: "var(--kk-ink-faint)", margin: "5px 0 0" }}>
+                      This command is personal to your account. Do not share it.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 3 — QR */}
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                    background: session?.qr_data_url ? "rgba(52,199,89,0.12)" : "rgba(0,113,227,0.10)",
+                    color: session?.qr_data_url ? "var(--kk-green-ink)" : "var(--kk-blue)",
+                    fontSize: 12, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {connected ? <CheckCircle2 style={{ width: 14, height: 14 }} /> : "3"}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 8px" }}>
+                      {connected ? "WhatsApp connected!" : "Scan the QR code with WhatsApp"}
+                    </p>
+
+                    {connected ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "rgba(52,199,89,0.08)", borderRadius: 10, border: "1px solid rgba(52,199,89,0.2)" }}>
+                        <CheckCircle2 style={{ width: 16, height: 16, color: "var(--kk-green-ink)", flexShrink: 0 }} />
+                        <p style={{ fontSize: 12, color: "var(--kk-green-ink)", margin: 0, fontWeight: 600 }}>
+                          You&apos;re all set. Auto-blast will send from your WhatsApp.
+                        </p>
+                      </div>
+                    ) : session?.qr_data_url ? (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                        <img
+                          src={session.qr_data_url}
+                          alt="WhatsApp QR code"
+                          style={{ width: 180, height: 180, borderRadius: 12, border: "1px solid rgba(0,0,0,0.08)" }}
+                        />
+                        <p style={{ fontSize: 11.5, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0, lineHeight: 1.5 }}>
+                          Open <strong>WhatsApp</strong> on your phone → <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>
+                        </p>
+                        <p style={{ fontSize: 10.5, color: "var(--kk-ink-faint)", margin: 0 }}>Refreshes every 4 seconds</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "var(--kk-bg)", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)" }}>
+                        <Loader2 style={{ width: 15, height: 15, color: "var(--kk-ink-faint)", animation: "spin 1s linear infinite", flexShrink: 0 }} />
+                        <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0 }}>
+                          Waiting for the command to run... The QR appears here automatically.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
@@ -501,7 +592,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
       </div>
 
       {/* WhatsApp link */}
-      <WaLinkRow initialSession={waSession} />
+      <SetupDialog initialSession={waSession} />
 
       {/* Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

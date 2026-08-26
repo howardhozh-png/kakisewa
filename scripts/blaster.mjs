@@ -32,17 +32,47 @@ import { fileURLToPath } from "url";
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const SUPABASE_URL  = "https://binqdtfvyhipgwpiarkb.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpbnFkdGZ2eWhpcGd3cGlhcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTgxODQsImV4cCI6MjA5NTU3NDE4NH0.yxf1i4d-rI2G4MHq6bv4zVc89MBjJDQezoJ8QhVGBqQ";
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const KAKI_TOKEN    = process.env.KAKI_TOKEN;    // user access token
+const KAKI_REFRESH  = process.env.KAKI_REFRESH;  // user refresh token
 const AUTH_FOLDER   = join(dirname(fileURLToPath(import.meta.url)), "blaster-auth");
 const MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
 
-// Derive user_id from CLI arg or env, with fallback to Howard's id for testing
-const USER_ID = (() => {
-  const idx = process.argv.indexOf("--user-id");
-  if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1];
-  if (process.env.BLASTER_USER_ID) return process.env.BLASTER_USER_ID;
-  return "ccf39c9b-fe61-4d63-b008-bdc0ce952187"; // Howard (test default)
-})();
+if (!SERVICE_KEY && !KAKI_TOKEN) {
+  console.error("✗ No auth credentials found.");
+  console.error("  Get your personal command from kakisewa.com → Property Leads → WA Blast → Link WhatsApp.");
+  process.exit(1);
+}
+
+// ── Supabase client ───────────────────────────────────────────────────────────
+
+let db;
+let USER_ID;
+
+if (SERVICE_KEY) {
+  // Developer / admin mode — full access, USER_ID from arg/env/default
+  db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+  USER_ID = (() => {
+    const idx = process.argv.indexOf("--user-id");
+    if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1];
+    if (process.env.BLASTER_USER_ID) return process.env.BLASTER_USER_ID;
+    return "ccf39c9b-fe61-4d63-b008-bdc0ce952187";
+  })();
+} else {
+  // User mode — authenticate with personal token
+  db = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false } });
+  const { data, error } = await db.auth.setSession({
+    access_token: KAKI_TOKEN,
+    refresh_token: KAKI_REFRESH || KAKI_TOKEN,
+  });
+  if (error || !data.user) {
+    console.error("✗ Token invalid or expired. Get a fresh command from kakisewa.com → Link WhatsApp.");
+    process.exit(1);
+  }
+  USER_ID = data.user.id;
+  console.log(`✓ Authenticated as ${data.user.email}\n`);
+}
 
 const DEFAULT_CONFIG = {
   interval_minutes: 10,
@@ -51,17 +81,6 @@ const DEFAULT_CONFIG = {
   is_active: true,
 };
 
-// ── Supabase ──────────────────────────────────────────────────────────────────
-
-if (!SERVICE_KEY) {
-  console.error("✗ SUPABASE_SERVICE_ROLE_KEY not set. Pass it as an env var.");
-  console.error("  Example: SUPABASE_SERVICE_ROLE_KEY=... node scripts/blaster.mjs");
-  process.exit(1);
-}
-
-const db = createClient(SUPABASE_URL, SERVICE_KEY, {
-  auth: { persistSession: false },
-});
 
 // ── Time window check ─────────────────────────────────────────────────────────
 
