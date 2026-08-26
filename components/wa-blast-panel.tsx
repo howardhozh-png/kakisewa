@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-  Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, X, Plus, Info,
+  Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, PauseCircle, X, Plus, Info,
   Laptop, QrCode, Wifi, Timer, Terminal, CheckCircle2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -631,6 +631,15 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
 }) {
   const max = calcMaxPerDay(cfg);
   const winErr = validateWindows(cfg.windows);
+  const waLinked = !!waSession?.is_authenticated;
+  // Blaster is offline if it hasn't written a heartbeat in (interval + 5) minutes
+  const STALE_MS = ((cfg.interval_minutes ?? 10) + 5) * 60 * 1000;
+  const blasterOffline = waLinked && !!waSession?.updated_at &&
+    (Date.now() - new Date(waSession.updated_at).getTime() > STALE_MS);
+  // Only block Activate when WA not linked; always allow Pause
+  const cantActivate = !!winErr || (!waLinked && !cfg.is_active);
+  // When the blaster goes offline while active, show it as effectively paused
+  const effectivelyPaused = blasterOffline && cfg.is_active;
 
   function setWindow(i: number, field: "start" | "end", val: string) {
     onChange({ ...cfg, windows: cfg.windows.map((w, idx) => idx === i ? { ...w, [field]: val } : w) });
@@ -729,21 +738,44 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
       {/* WhatsApp link */}
       <SetupDialog initialSession={waSession} />
 
+      {/* Offline / not-linked hints */}
+      {blasterOffline && cfg.is_active && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8,
+          background: "rgba(255,149,0,0.10)", border: "1px solid rgba(255,149,0,0.30)",
+          borderRadius: 8, padding: "8px 11px" }}>
+          <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
+          <p style={{ fontSize: 12, color: "#C47800", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
+            Blaster is offline. Your laptop may be asleep or the Terminal was closed. Reopen Terminal and paste the command to resume.
+          </p>
+        </div>
+      )}
+      {!waLinked && !cfg.is_active && (
+        <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: 0 }}>
+          Link WhatsApp above before activating.
+        </p>
+      )}
+
       {/* Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={onToggleActive} disabled={!!winErr}
+        <button type="button" onClick={effectivelyPaused ? undefined : onToggleActive}
+          disabled={cantActivate || effectivelyPaused}
           style={{
             display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600,
-            padding: "6px 14px", borderRadius: 20, cursor: winErr ? "not-allowed" : "pointer",
-            ...(winErr
+            padding: "6px 14px", borderRadius: 20,
+            cursor: (cantActivate || effectivelyPaused) ? "not-allowed" : "pointer",
+            ...(cantActivate || effectivelyPaused
               ? { background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--kk-ink-faint)" }
               : cfg.is_active
                 ? { background: "rgba(255,59,48,0.08)", border: "1px solid rgba(255,59,48,0.20)", color: "#DC2626" }
                 : { background: "rgba(52,199,89,0.09)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-green-ink)" }
             ),
           }}>
-          {cfg.is_active ? <Pause style={{ width: 11, height: 11 }} /> : <Play style={{ width: 11, height: 11 }} />}
-          {cfg.is_active ? "Pause" : "Activate"}
+          {effectivelyPaused
+            ? <><PauseCircle style={{ width: 11, height: 11 }} /> Paused (offline)</>
+            : cfg.is_active
+              ? <><Pause style={{ width: 11, height: 11 }} /> Pause</>
+              : <><Play style={{ width: 11, height: 11 }} /> Activate</>
+          }
         </button>
 
         <button type="button" onClick={onSave} disabled={saving || !!winErr}

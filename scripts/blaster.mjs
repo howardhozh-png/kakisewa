@@ -265,6 +265,15 @@ async function checkRelink() {
 
 async function poll() {
   await checkRelink();
+  // Heartbeat — web UI uses updated_at to detect offline blaster
+  if (isConnected) {
+    try {
+      await db.from("wa_sessions").upsert(
+        { user_id: USER_ID, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+    } catch { /* ignore */ }
+  }
   const config = await fetchConfig();
 
   if (!config.is_active) {
