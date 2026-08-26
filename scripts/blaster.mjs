@@ -201,10 +201,12 @@ async function connect() {
     if (connection === "open") {
       isConnected = true;
       console.log(`\n✓ WhatsApp connected  [user: ${USER_ID.slice(0, 8)}...]\n`);
-      await db.from("wa_sessions").upsert(
-        { user_id: USER_ID, qr_data_url: null, is_authenticated: true, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" }
-      ).catch(() => {});
+      try {
+        await db.from("wa_sessions").upsert(
+          { user_id: USER_ID, qr_data_url: null, is_authenticated: true, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      } catch { /* ignore */ }
     }
 
     if (connection === "close") {
@@ -212,10 +214,12 @@ async function connect() {
       const code = lastDisconnect?.error?.output?.statusCode;
       if (code === DisconnectReason.loggedOut) {
         console.log("\nLogged out. Reconnect via Link WhatsApp in the app.\n");
-        await db.from("wa_sessions").upsert(
-          { user_id: USER_ID, qr_data_url: null, is_authenticated: false, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        ).catch(() => {});
+        try {
+          await db.from("wa_sessions").upsert(
+            { user_id: USER_ID, qr_data_url: null, is_authenticated: false, updated_at: new Date().toISOString() },
+            { onConflict: "user_id" }
+          );
+        } catch { /* ignore */ }
         process.exit(1);
       }
       console.log("  Connection dropped — reconnecting in 5s...");
