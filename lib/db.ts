@@ -3403,3 +3403,20 @@ export async function getListedLeadsByUserId(userId: string): Promise<OwnerLead[
     created_at: "",
   }));
 }
+
+// ── WA Sessions ───────────────────────────────────────────────────────────────
+
+export type WaSession = {
+  qr_data_url: string | null;
+  is_authenticated: boolean;
+  updated_at: string;
+};
+
+export async function getWaSession(): Promise<WaSession | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("wa_sessions")
+    .select("qr_data_url, is_authenticated, updated_at")
+    .maybeSingle();
+  return (data as WaSession | null) ?? null;
+}

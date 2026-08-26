@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveWaBlastConfig, removeOwnerWaBlast } from "@/lib/actions";
-import type { WaBlastConfig, WaBlastQueueItem } from "@/lib/db";
+import type { WaBlastConfig, WaBlastQueueItem, WaSession } from "@/lib/db";
 import type { OwnerLead } from "@/lib/types";
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
   waCount: number;
   waCap: number;
   onCapChange: (n: number) => void;
+  initialWaSession: WaSession | null;
 }
 
 type Tab = "schedule" | "queue";
@@ -249,11 +250,106 @@ function QueueTab({ queue, leads, onRemove }: {
   );
 }
 
+// ─── whatsapp link row ────────────────────────────────────────────────────────
+
+function WaLinkRow({ initialSession }: { initialSession: WaSession | null }) {
+  const [session, setSession] = useState<WaSession | null>(initialSession);
+  const [showQr, setShowQr] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function fetchSession() {
+    try {
+      const res = await fetch("/api/wa-blast/session");
+      const data = await res.json() as WaSession;
+      setSession(data);
+      if (data.is_authenticated) stopPolling();
+    } catch { /* ignore */ }
+  }
+
+  function startPolling() {
+    setShowQr(true);
+    fetchSession();
+    pollRef.current = setInterval(fetchSession, 4000);
+  }
+
+  function stopPolling() {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  }
+
+  function handleClick() {
+    if (session?.is_authenticated) return;
+    if (showQr) { setShowQr(false); stopPolling(); } else { startPolling(); }
+  }
+
+  useEffect(() => () => stopPolling(), []);
+
+  const connected = session?.is_authenticated;
+
+  return (
+    <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+            background: connected ? "var(--kk-green)" : "#F59E0B",
+          }} />
+          <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>
+            WhatsApp: <strong style={{ color: connected ? "var(--kk-green-ink)" : "var(--kk-ink)" }}>
+              {connected ? "Connected" : "Not linked"}
+            </strong>
+          </span>
+        </div>
+        {!connected && (
+          <button type="button" onClick={handleClick}
+            style={{
+              fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20, cursor: "pointer",
+              background: showQr ? "rgba(0,0,0,0.06)" : "rgba(0,113,227,0.09)",
+              border: showQr ? "1px solid rgba(0,0,0,0.10)" : "1px solid rgba(0,113,227,0.22)",
+              color: showQr ? "var(--kk-ink-mute)" : "var(--kk-blue)",
+            }}>
+            <QrCode style={{ width: 11, height: 11, display: "inline", marginRight: 4, verticalAlign: "middle" }} />
+            {showQr ? "Hide QR" : "Link WhatsApp"}
+          </button>
+        )}
+      </div>
+
+      {showQr && !connected && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+          {session?.qr_data_url ? (
+            <>
+              <img
+                src={session.qr_data_url}
+                alt="WhatsApp QR code"
+                style={{ width: 180, height: 180, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)" }}
+              />
+              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0 }}>
+                Open WhatsApp on your phone, go to <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>, then scan this code.
+              </p>
+              <p style={{ fontSize: 10, color: "var(--kk-ink-faint)", margin: 0 }}>Refreshes automatically every 4 seconds</p>
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px 0" }}>
+              <Loader2 style={{ width: 20, height: 20, color: "var(--kk-ink-faint)", animation: "spin 1s linear infinite" }} />
+              <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, textAlign: "center" }}>
+                Waiting for the blaster to start...
+              </p>
+              <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: 0, textAlign: "center", maxWidth: 220 }}>
+                Make sure your laptop is running the blaster in the background.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── schedule tab ─────────────────────────────────────────────────────────────
 
-function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
+function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave }: {
   cfg: WaBlastConfig;
   saving: boolean;
+  waSession: WaSession | null;
   onChange: (next: WaBlastConfig) => void;
   onToggleActive: () => void;
   onSave: () => void;
@@ -355,6 +451,9 @@ function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
         </div>
       </div>
 
+      {/* WhatsApp link */}
+      <WaLinkRow initialSession={waSession} />
+
       {/* Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={onToggleActive} disabled={!!winErr}
@@ -391,7 +490,7 @@ function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
 
 // ─── main panel ───────────────────────────────────────────────────────────────
 
-export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, waCap, onCapChange }: Props) {
+export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, waCap, onCapChange, initialWaSession }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
   const [saving, setSaving] = useState(false);
@@ -537,7 +636,7 @@ export function WaBlastPanel({ initialConfig, queue, leads, onRemove, waCount, w
           </div>
 
           {tab === "schedule"
-            ? <ScheduleTab cfg={cfg} saving={saving} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} />
+            ? <ScheduleTab cfg={cfg} saving={saving} waSession={initialWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} />
             : <QueueTab queue={queue} leads={leads} onRemove={onRemove} />
           }
         </div>

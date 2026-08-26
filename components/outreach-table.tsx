@@ -57,7 +57,7 @@ import { OwnerLead } from "@/lib/types";
 import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
 import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction, queueOwnerWaBlast, removeOwnerWaBlast, bulkQueueOwnerWaBlast } from "@/lib/actions";
 import { WaBlastPanel, calcMaxPerDay } from "@/components/wa-blast-panel";
-import type { WaBlastConfig, WaBlastQueueItem } from "@/lib/db";
+import type { WaBlastConfig, WaBlastQueueItem, WaSession } from "@/lib/db";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
@@ -939,9 +939,10 @@ interface Props {
   deletedLeads?: OwnerLead[];
   waBlastConfig?: WaBlastConfig;
   initialWaBlastQueue?: WaBlastQueueItem[];
+  initialWaSession?: WaSession | null;
 }
 
-export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], waBlastConfig, initialWaBlastQueue = [] }: Props) {
+export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], waBlastConfig, initialWaBlastQueue = [], initialWaSession = null }: Props) {
   const router = useRouter();
   const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
@@ -1496,6 +1497,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           waCount={waCount}
           waCap={waCap}
           onCapChange={updateWaCap}
+          initialWaSession={initialWaSession}
         />
       ) : (
         <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />

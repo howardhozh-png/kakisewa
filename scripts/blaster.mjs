@@ -24,6 +24,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
 } from "@whiskeysockets/baileys";
 import qrcode from "qrcode-terminal";
+import QRCode from "qrcode";
 import { createClient } from "@supabase/supabase-js";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -160,26 +161,42 @@ async function connect() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("connection.update", ({ connection, lastDisconnect, qr }) => {
+  sock.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       console.clear();
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log("  kakisewa WA Blaster — scan to connect");
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
       qrcode.generate(qr, { small: true });
-      console.log("\n  Open WhatsApp → Linked Devices → +\n");
+      console.log("\n  Open kakisewa → WA Blast → Link WhatsApp to scan\n");
+      // Write QR to Supabase so the web UI can display it
+      try {
+        const dataUrl = await QRCode.toDataURL(qr, { width: 256, margin: 2 });
+        await db.from("wa_sessions").upsert(
+          { user_id: USER_ID, qr_data_url: dataUrl, is_authenticated: false, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      } catch (e) { console.error("QR upload error:", e.message); }
     }
 
     if (connection === "open") {
       isConnected = true;
       console.log(`\n✓ WhatsApp connected  [user: ${USER_ID.slice(0, 8)}...]\n`);
+      await db.from("wa_sessions").upsert(
+        { user_id: USER_ID, qr_data_url: null, is_authenticated: true, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      ).catch(() => {});
     }
 
     if (connection === "close") {
       isConnected = false;
       const code = lastDisconnect?.error?.output?.statusCode;
       if (code === DisconnectReason.loggedOut) {
-        console.log("\nLogged out. Delete scripts/blaster-auth/ and re-run.\n");
+        console.log("\nLogged out. Reconnect via Link WhatsApp in the app.\n");
+        await db.from("wa_sessions").upsert(
+          { user_id: USER_ID, qr_data_url: null, is_authenticated: false, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        ).catch(() => {});
         process.exit(1);
       }
       console.log("  Connection dropped — reconnecting in 5s...");
