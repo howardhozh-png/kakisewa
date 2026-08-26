@@ -2001,7 +2001,7 @@ export type WaBlastConfig = {
 export const WA_BLAST_DEFAULTS: WaBlastConfig = {
   interval_minutes: 10,
   daily_cap: 1,
-  windows: [{ start: "08:00", end: "22:00" }],
+  windows: [{ start: "10:00", end: "19:00" }],
   is_active: false,
 };
 

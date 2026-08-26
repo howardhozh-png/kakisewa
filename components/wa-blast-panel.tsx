@@ -360,7 +360,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
   return (
     <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{
             width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
             background: connected ? "var(--kk-green)" : "#F59E0B",
