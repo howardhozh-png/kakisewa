@@ -1486,17 +1486,19 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
 
       </div>
 
-      {/* Daily WA counter */}
-      <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />
-
-      {/* WA Auto-Blast panel */}
-      {waBlastConfig && (
+      {/* WA panel (includes daily counter) */}
+      {waBlastConfig ? (
         <WaBlastPanel
           initialConfig={waBlastConfig}
           queue={waBlastQueue}
           leads={[...leads, ...declinedLeads, ...deletedLeads]}
           onRemove={(ownerId) => setWaBlastQueue((q) => q.filter((item) => item.owner_lead_id !== ownerId))}
+          waCount={waCount}
+          waCap={waCap}
+          onCapChange={updateWaCap}
         />
+      ) : (
+        <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />
       )}
 
       {/* Table */}
