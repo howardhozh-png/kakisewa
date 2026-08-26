@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics";
 import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead } from "@/lib/types";
-import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink, queueOwnerWaBlast, removeOwnerWaBlast } from "@/lib/actions";
+import { setOwnerLeadStage, sendOwnerOutreach, markCommissionCollected, generateOwnerIntakeLink } from "@/lib/actions";
 import { PlanCapDialog } from "@/components/plan-cap-dialog";
 import { CAP_WARN_THRESHOLD } from "@/lib/cap-constants";
 import type { CapCheckResult } from "@/lib/plan-caps";
@@ -66,10 +66,9 @@ interface Props {
   tenantsByLeadId?: Record<string, TenantInfo>;
   rankedLeadIds?: Set<string>;
   capStatus?: CapCheckResult;
-  queuedLeadIds?: Set<string>;
 }
 
-export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus, queuedLeadIds = new Set() }: Props) {
+export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLeadId = {}, rankedLeadIds = new Set(), capStatus }: Props) {
   const router = useRouter();
   const ph = usePostHog();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -389,7 +388,6 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
                     onEdit={() => setEditingLead(l)}
                     tenantInfo={tenantsByLeadId[l.id]}
                     hasOwnerRanking={rankedLeadIds.has(l.id)}
-                    isQueued={queuedLeadIds.has(l.id)}
                     onCommission={(tenancyId) => setCommissionLead({ lead: l, tenancyId })}
                     onConfirmMovedIn={(info) => setConfirmedMovedIn({ lead: l, info })}
                     onTenantConfirmed={() => setMatchingLead(l)}
@@ -677,7 +675,7 @@ function CardPreview({ l }: { l: OwnerLead }) {
 
 
 type CapBlockInfo = { currentPlan: string; currentCount: number; currentCap: number; upgradeToId: string; upgradeCap: number | null; remaining?: number; trying?: number };
-function CardContent({ l, col, tenantInfo, hasOwnerRanking, isQueued, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; isQueued: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
+function CardContent({ l, col, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; col: ColMeta; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
   const photo = l.photo_urls?.[l.cover_photo_index ?? 0];
   const propName = l.property_name ?? l.address ?? "";
   return (
@@ -765,7 +763,7 @@ function CardContent({ l, col, tenantInfo, hasOwnerRanking, isQueued, onCommissi
         </div>
       )}
 
-      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} isQueued={isQueued} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} onMarkSold={onMarkSold} />
+      <CardAction l={l} stage={col.stage} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} onMarkSold={onMarkSold} />
     </>
   );
 }
@@ -776,7 +774,7 @@ function fmtDate(iso: string): string {
   return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
 }
 
-function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, isQueued, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; isQueued: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
+function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; col: ColMeta; isDragging: boolean; onEdit: () => void; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
   const ph = usePostHog();
   const { attributes, listeners, setNodeRef } = useDraggable({ id: l.id });
   const [pressing, setPressing] = useState(false);
@@ -815,12 +813,12 @@ function Card({ l, col, isDragging, onEdit, tenantInfo, hasOwnerRanking, isQueue
         onEdit();
       }}
     >
-      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} isQueued={isQueued} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} onMarkSold={onMarkSold} />
+      <CardContent l={l} col={col} tenantInfo={tenantInfo} hasOwnerRanking={hasOwnerRanking} onCommission={onCommission} onConfirmMovedIn={onConfirmMovedIn} onTenantConfirmed={onTenantConfirmed} onCompetitorRented={onCompetitorRented} onCapReached={onCapReached} onMarkSold={onMarkSold} />
     </div>
   );
 }
 
-function CardAction({ l, stage, tenantInfo, hasOwnerRanking, isQueued, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; isQueued: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
+function CardAction({ l, stage, tenantInfo, hasOwnerRanking, onCommission, onConfirmMovedIn, onTenantConfirmed, onCompetitorRented, onCapReached, onMarkSold }: { l: OwnerLead; stage: Stage; tenantInfo?: TenantInfo; hasOwnerRanking: boolean; onCommission: (tenancyId: string) => void; onConfirmMovedIn: (info: TenantInfo) => void; onTenantConfirmed: () => void; onCompetitorRented: () => void; onCapReached: (info: CapBlockInfo) => void; onMarkSold: () => void }) {
   const [pending, startTransition] = useTransition();
   const ph = usePostHog();
   const router = useRouter();
@@ -935,20 +933,6 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, isQueued, onCommiss
     );
   }
   if (stage === "listed") {
-    function handleQueueToggle(e: React.MouseEvent) {
-      e.stopPropagation();
-      startTransition(async () => {
-        if (isQueued) {
-          await removeOwnerWaBlast(l.id);
-          toast.success("Removed from WA blast queue.");
-        } else {
-          const res = await queueOwnerWaBlast(l.id);
-          if (!res.ok) { toast.error(res.message); return; }
-          toast.success("Added to WA blast queue.");
-        }
-      });
-    }
-
     return (
       <div className="space-y-2">
         {(l.listing_purpose === "sell" || l.listing_purpose === "both") && (
@@ -981,23 +965,6 @@ function CardAction({ l, stage, tenantInfo, hasOwnerRanking, isQueued, onCommiss
             <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           </Link>
         )}
-        <button
-          type="button"
-          data-card-action
-          onClick={handleQueueToggle}
-          disabled={pending}
-          className="kk-card-cta flex items-center justify-between w-full"
-          style={isQueued
-            ? { background: "rgba(0,113,227,0.08)", border: "1px solid rgba(0,113,227,0.25)", color: "var(--kk-blue)" }
-            : { background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.20)", color: "var(--kk-blue)" }
-          }
-        >
-          <span className="flex items-start gap-1.5 min-w-0 flex-1">
-            {pending ? <Loader2 className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-spin" /> : <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
-            <span>{isQueued ? "In WA queue (tap to remove)" : "Queue WA blast"}</span>
-          </span>
-          {!isQueued && <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
-        </button>
         <button
           type="button"
           data-card-action

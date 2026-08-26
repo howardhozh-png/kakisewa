@@ -55,11 +55,11 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
 }
 import { OwnerLead } from "@/lib/types";
 import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction, queueOwnerWaBlast, removeOwnerWaBlast } from "@/lib/actions";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, SquarePen, Search, Phone, Trash2, RotateCcw, Upload } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, SquarePen, Search, Phone, Trash2, RotateCcw, Upload, Clock } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -935,9 +935,10 @@ interface Props {
   leads: OwnerLead[];
   declinedLeads?: OwnerLead[];
   deletedLeads?: OwnerLead[];
+  queuedLeadIds?: Set<string>;
 }
 
-export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: Props) {
+export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], queuedLeadIds = new Set() }: Props) {
   const router = useRouter();
   const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
   const [filter, setFilter] = useState<Filter>("all");
@@ -947,6 +948,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
   const [sentDateFilter, setSentDateFilter] = useState<SentDateFilter>(null);
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState<string | null>(null);
+  const [queueing, setQueueing] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [bulkContacting, setBulkContacting] = useState(false);
@@ -1163,6 +1165,25 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
       toast.error("Failed to generate link");
     } finally {
       setSending(null);
+    }
+  }
+
+  async function handleQueueToggle(lead: OwnerLead, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (queueing) return;
+    setQueueing(lead.id);
+    try {
+      if (queuedLeadIds.has(lead.id)) {
+        await removeOwnerWaBlast(lead.id);
+        toast.success("Removed from WA blast queue.");
+      } else {
+        const res = await queueOwnerWaBlast(lead.id);
+        if (!res.ok) { toast.error(res.message); return; }
+        toast.success("Added to WA blast queue.");
+      }
+      router.refresh();
+    } finally {
+      setQueueing(null);
     }
   }
 
@@ -1708,6 +1729,22 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [] }: 
                                   <RotateCcw className="w-3.5 h-3.5" />
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                disabled={queueing === lead.id}
+                                onClick={(e) => handleQueueToggle(lead, e)}
+                                className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
+                                style={queuedLeadIds.has(lead.id)
+                                  ? { background: "var(--kk-blue)", color: "#fff" }
+                                  : { background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }
+                                }
+                                title={queuedLeadIds.has(lead.id) ? "In WA blast queue — click to remove" : "Add to WA blast queue"}
+                              >
+                                {queueing === lead.id
+                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  : <Clock className="w-3.5 h-3.5" />
+                                }
+                              </button>
                               <button
                                 type="button"
                                 disabled={sending === lead.id}
