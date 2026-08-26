@@ -213,7 +213,15 @@ async function connect() {
       isConnected = false;
       const code = lastDisconnect?.error?.output?.statusCode;
       if (code === DisconnectReason.loggedOut) {
-        console.log("\nLogged out. Reconnect via Link WhatsApp in the app.\n");
+        console.log("\nLogged out — clearing saved session so next run shows a fresh QR.\n");
+        // Delete stale auth files so next run generates a new QR instead of
+        // trying to restore an invalid session
+        try {
+          const { readdir, unlink } = await import("fs/promises");
+          const files = await readdir(AUTH_FOLDER);
+          await Promise.all(files.map(f => unlink(join(AUTH_FOLDER, f))));
+          console.log("  Session cleared. Run the command again to get a new QR.\n");
+        } catch { /* ignore */ }
         try {
           await db.from("wa_sessions").upsert(
             { user_id: USER_ID, qr_data_url: null, is_authenticated: false, updated_at: new Date().toISOString() },
