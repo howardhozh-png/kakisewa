@@ -60,7 +60,37 @@ function validateWindows(windows: { start: string; end: string }[]): string | nu
   return null;
 }
 
-// ─── time input (free H + M number fields) ────────────────────────────────────
+// ─── number input with draft (allows clearing to retype) ─────────────────────
+
+function NumberInput({ value, onChange, min, max, width }: {
+  value: number; onChange: (v: number) => void; min: number; max: number; width: number;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => { setDraft(String(value)); }, [value]);
+
+  function commit(raw: string) {
+    const n = parseInt(raw, 10);
+    const clamped = isNaN(n) ? min : Math.max(min, Math.min(max, n));
+    onChange(clamped);
+    setDraft(String(clamped));
+  }
+
+  return (
+    <input
+      type="number" min={min} max={max}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={(e) => commit(e.target.value)}
+      style={{
+        width, fontSize: 13, fontWeight: 600, textAlign: "center",
+        background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 9,
+        padding: "4px 6px", outline: "none", color: "var(--kk-ink)",
+      }}
+    />
+  );
+}
+
+// ─── time input (native iOS wheel picker) ─────────────────────────────────────
 
 function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -295,15 +325,9 @@ function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>every</span>
-            <input
-              type="number" min={1} max={120}
-              value={cfg.interval_minutes}
-              onChange={(e) => onChange({ ...cfg, interval_minutes: Math.max(1, Math.min(120, parseInt(e.target.value) || 1)) })}
-              style={{
-                width: 46, fontSize: 13, fontWeight: 600, textAlign: "center",
-                background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 9,
-                padding: "4px 6px", outline: "none", color: "var(--kk-ink)",
-              }}
+            <NumberInput
+              value={cfg.interval_minutes} min={1} max={120} width={46}
+              onChange={(v) => onChange({ ...cfg, interval_minutes: v })}
             />
             <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>min</span>
           </div>
@@ -311,15 +335,9 @@ function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
           <span style={{ color: "var(--kk-line)", fontSize: 14, lineHeight: 1 }}>·</span>
 
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <input
-              type="number" min={1} max={20}
-              value={cfg.daily_cap}
-              onChange={(e) => onChange({ ...cfg, daily_cap: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)) })}
-              style={{
-                width: 40, fontSize: 13, fontWeight: 600, textAlign: "center",
-                background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 9,
-                padding: "4px 6px", outline: "none", color: "var(--kk-ink)",
-              }}
+            <NumberInput
+              value={cfg.daily_cap} min={1} max={20} width={40}
+              onChange={(v) => onChange({ ...cfg, daily_cap: v })}
             />
             <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>per send</span>
           </div>
@@ -339,13 +357,15 @@ function ScheduleTab({ cfg, saving, onChange, onToggleActive, onSave }: {
 
       {/* Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={onToggleActive}
+        <button type="button" onClick={onToggleActive} disabled={!!winErr}
           style={{
             display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600,
-            padding: "6px 14px", borderRadius: 20, cursor: "pointer",
-            ...(cfg.is_active
-              ? { background: "rgba(255,59,48,0.08)", border: "1px solid rgba(255,59,48,0.20)", color: "#DC2626" }
-              : { background: "rgba(52,199,89,0.09)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-green-ink)" }
+            padding: "6px 14px", borderRadius: 20, cursor: winErr ? "not-allowed" : "pointer",
+            ...(winErr
+              ? { background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--kk-ink-faint)" }
+              : cfg.is_active
+                ? { background: "rgba(255,59,48,0.08)", border: "1px solid rgba(255,59,48,0.20)", color: "#DC2626" }
+                : { background: "rgba(52,199,89,0.09)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-green-ink)" }
             ),
           }}>
           {cfg.is_active ? <Pause style={{ width: 11, height: 11 }} /> : <Play style={{ width: 11, height: 11 }} />}
