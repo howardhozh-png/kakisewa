@@ -131,24 +131,24 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
 function SetupInfo({ onClose }: { onClose: () => void }) {
   const steps = [
     {
-      icon: <Laptop style={{ width: 15, height: 15 }} />,
-      title: "Keep your laptop awake",
-      body: "Messages send from your laptop in the background. Make sure it stays on, connected to the internet, and not in sleep mode while a blast is running.",
+      icon: <QrCode style={{ width: 15, height: 15 }} />,
+      title: "Scan QR once, then you're set",
+      body: "Link your WhatsApp the first time by scanning the QR code. After that, just rerun the command — no rescanning needed, even after restarts.",
     },
     {
-      icon: <QrCode style={{ width: 15, height: 15 }} />,
-      title: "Link your WhatsApp (first time only)",
-      body: "On your phone, open WhatsApp and go to Settings → Linked Devices → Link a Device. Scan the QR code shown on your laptop screen.",
+      icon: <Laptop style={{ width: 15, height: 15 }} />,
+      title: "Rerun the command after every laptop restart",
+      body: "The blast stops when your laptop shuts down or the Terminal is closed. Reopen Terminal and paste the command again — your WhatsApp stays linked.",
     },
     {
       icon: <Wifi style={{ width: 15, height: 15 }} />,
-      title: "Stays connected automatically",
-      body: "Once linked, your WhatsApp session is remembered. No need to scan again unless you manually unlink the device.",
+      title: "Keep your laptop awake during blast hours",
+      body: "Sleep mode pauses the blast. On Mac, go to System Settings → Battery and turn off \"Prevent automatic sleeping\" while a blast is active. Or leave your laptop plugged in and lid open.",
     },
     {
       icon: <Timer style={{ width: 15, height: 15 }} />,
-      title: "Sends within your time windows",
-      body: "Messages go out automatically during the windows you set below. Outside those hours, the queue pauses and resumes the next day.",
+      title: "Sends only within your set windows",
+      body: "Messages go out during the hours you configured. Outside those windows the queue pauses and resumes automatically.",
     },
   ];
 
@@ -864,7 +864,12 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
                 <button
                   type="button"
                   onClick={() => { setCapDraft(String(waCap)); setEditingCap(true); }}
-                  style={{ fontSize: 11, fontWeight: 700, color: "var(--kk-ink-mute)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  title="Tap to change daily limit"
+                  style={{
+                    fontSize: 11, fontWeight: 700, color: "var(--kk-ink)", background: "rgba(0,0,0,0.06)",
+                    border: "1px dashed rgba(0,0,0,0.22)", cursor: "pointer",
+                    padding: "0 4px", borderRadius: 4, lineHeight: "16px",
+                  }}
                 >{waCap}</button>
               )}
               <span style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>sent</span>
