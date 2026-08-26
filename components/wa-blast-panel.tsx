@@ -419,17 +419,23 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
 
   const step1Mac = (
     <>
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Terminal</p>
+      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Terminal and keep it running</p>
       <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
         Press <kbd style={KBD}>Cmd</kbd> + <kbd style={KBD}>Space</kbd>, type <strong>Terminal</strong>, press Enter.
+      </p>
+      <p style={{ fontSize: 11, color: "var(--kk-amber)", margin: "5px 0 0", lineHeight: 1.5, fontWeight: 500 }}>
+        Keep this Terminal window open the whole time. Closing it stops the blast.
       </p>
     </>
   );
   const step1Win = (
     <>
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Command Prompt</p>
+      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Command Prompt and keep it running</p>
       <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
         Press <kbd style={KBD}>Win</kbd> + <kbd style={KBD}>R</kbd>, type <strong>cmd</strong>, press Enter.
+      </p>
+      <p style={{ fontSize: 11, color: "var(--kk-amber)", margin: "5px 0 0", lineHeight: 1.5, fontWeight: 500 }}>
+        Keep this Command Prompt window open the whole time. Closing it stops the blast.
       </p>
     </>
   );
