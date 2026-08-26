@@ -32,7 +32,10 @@ const RENT_TAGGED = "rent";
 // issue — but Howard wants to hold off on fresh seq1 outreach regardless).
 // seq2 keeps running for people who already opened seq1. Flip back to false
 // to resume fresh outreach.
+// Global seq1 pause (sale/unknown bounce rate). PropNex contacts are exempt —
+// they're a verified, active agency roster with a low bounce expectation.
 const SEQ1_PAUSED = true;
+const SEQ1_PROPNEX_EXEMPT = true; // allow PropNex untouched contacts through even while paused
 
 // Large public webmail providers are exempt from the per-domain cap below —
 // a burst of Gmail/Yahoo/Outlook sends carries no batching risk since each
@@ -50,6 +53,9 @@ const PUBLIC_EMAIL_PROVIDERS = new Set([
 // the same small company's mail tenant trips its spam engine. Capping
 // non-public domains per run spreads a company's agents across multiple days.
 const MAX_PER_DOMAIN_PER_RUN = 2;
+// PropNex has thousands of agents on their domain — 10/run is safe and
+// lets us clear their 425 propnex.com.my addresses in ~43 days instead of ~213.
+const MAX_PER_DOMAIN_PROPNEX = 10;
 
 const EMAIL_RE = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
@@ -182,7 +188,7 @@ export async function GET(req: NextRequest) {
 
   const query = supabase
     .from("email_blast_contacts")
-    .select("email, listing_type, seq1_sent_at, seq2_sent_at, seq1_opened")
+    .select("email, agency, listing_type, seq1_sent_at, seq2_sent_at, seq1_opened")
     .is("seq3_sent_at", null) // seq3 disabled per Howard
     // A contact with seq2_sent_at set has permanently nothing left to send
     // (no seq3) — skip re-fetching/re-processing them every single day
@@ -190,7 +196,7 @@ export async function GET(req: NextRequest) {
     // that can never become candidates again.
     .is("seq2_sent_at", null);
 
-  let contacts: { email: string; listing_type: string | null; seq1_sent_at: string | null; seq2_sent_at: string | null; seq1_opened: boolean }[];
+  let contacts: { email: string; agency: string | null; listing_type: string | null; seq1_sent_at: string | null; seq2_sent_at: string | null; seq1_opened: boolean }[];
   try {
     contacts = await fetchAllRows(query);
   } catch (err) {
@@ -198,7 +204,7 @@ export async function GET(req: NextRequest) {
   }
 
   let skippedBounce = 0, skippedDeferred = 0, skippedNotOpened = 0, skippedDomainCap = 0;
-  const candidates: { email: string; seq: string; tier: number; listingPriority: number }[] = [];
+  const candidates: { email: string; seq: string; tier: number; agencyPriority: number; listingPriority: number }[] = [];
 
   for (const c of contacts ?? []) {
     const email = c.email as string;
@@ -207,19 +213,20 @@ export async function GET(req: NextRequest) {
     if (bounced.has(email) || blockedDomains.has(domain)) { skippedBounce++; continue; }
     if (deferredDomains.has(domain)) { skippedDeferred++; continue; }
 
+    const isPropnex = c.agency?.toUpperCase().includes("PROPNEX") ?? false;
     let seq: string | null = null;
     if (!c.seq1_sent_at) {
-      if (!SEQ1_PAUSED) seq = "seq1";
+      if (!SEQ1_PAUSED || (SEQ1_PROPNEX_EXEMPT && isPropnex)) seq = "seq1";
     } else if (!c.seq2_sent_at && daysDiff(c.seq1_sent_at) >= SEQ2_AFTER_DAYS) {
       if (c.seq1_opened) seq = "seq2";
       else skippedNotOpened++;
     }
-    if (seq) candidates.push({ email, seq, tier: domainTier(email), listingPriority: c.listing_type === RENT_TAGGED ? 0 : 1 });
+    if (seq) candidates.push({ email, seq, tier: domainTier(email), agencyPriority: isPropnex ? 0 : 1, listingPriority: c.listing_type === RENT_TAGGED ? 0 : 1 });
   }
 
-  // Rent-tagged contacts first (within that, big providers before small
-  // domains); once rent is exhausted this naturally drains into sale/unknown.
-  candidates.sort((a, b) => a.listingPriority - b.listingPriority || a.tier - b.tier);
+  // PropNex first, then rent-tagged, then everyone else. Within each group,
+  // big public providers (Gmail) before small corporate domains.
+  candidates.sort((a, b) => a.agencyPriority - b.agencyPriority || a.listingPriority - b.listingPriority || a.tier - b.tier);
 
   const domainSendCounts: Record<string, number> = {};
   const queue: typeof candidates = [];
@@ -227,8 +234,9 @@ export async function GET(req: NextRequest) {
     if (queue.length >= DAILY_LIMIT) break;
     const domain = cand.email.split("@")[1] ?? "";
     if (!PUBLIC_EMAIL_PROVIDERS.has(domain)) {
+      const cap = domain === "propnex.com.my" ? MAX_PER_DOMAIN_PROPNEX : MAX_PER_DOMAIN_PER_RUN;
       const used = domainSendCounts[domain] ?? 0;
-      if (used >= MAX_PER_DOMAIN_PER_RUN) { skippedDomainCap++; continue; }
+      if (used >= cap) { skippedDomainCap++; continue; }
       domainSendCounts[domain] = used + 1;
     }
     queue.push(cand);
