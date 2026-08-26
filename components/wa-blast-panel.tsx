@@ -6,6 +6,7 @@ import {
   Laptop, QrCode, Wifi, Timer, Terminal, CheckCircle2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { saveWaBlastConfig, removeOwnerWaBlast, acknowledgeWaSent } from "@/lib/actions";
 import type { WaBlastConfig, WaBlastQueueItem, WaBlastSentItem, WaSession } from "@/lib/db";
@@ -99,29 +100,72 @@ function NumberInput({ value, onChange, min, max, width }: {
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINS  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 
-const SEL: React.CSSProperties = {
-  fontSize: 13, fontWeight: 600, color: "var(--kk-ink)",
-  background: "var(--kk-bg)", border: "none", outline: "none",
-  cursor: "pointer", padding: "2px 0", appearance: "none",
-  WebkitAppearance: "none",
-};
+// Custom scroll picker — shows 5 items at a time
+function TimePart({ options, value, onChange }: {
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Scroll selected item into view when popover opens
+  useEffect(() => {
+    if (!open || !listRef.current) return;
+    const idx = options.indexOf(value);
+    const ITEM_H = 32;
+    listRef.current.scrollTop = Math.max(0, idx * ITEM_H - ITEM_H * 2);
+  }, [open, value, options]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" style={{
+          fontSize: 13, fontWeight: 600, color: "var(--kk-ink)",
+          background: "none", border: "none", outline: "none",
+          cursor: "pointer", padding: "2px 4px", minWidth: 24, textAlign: "center",
+        }}>
+          {value}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="center" sideOffset={6} style={{
+        width: 64, padding: 4, borderRadius: 10,
+      }}>
+        <div ref={listRef} style={{ maxHeight: 160, overflowY: "auto", overflowX: "hidden" }}>
+          {options.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false); }}
+              style={{
+                display: "block", width: "100%", textAlign: "center",
+                fontSize: 13, fontWeight: opt === value ? 700 : 400,
+                color: opt === value ? "var(--kk-blue)" : "var(--kk-ink)",
+                background: opt === value ? "rgba(0,113,227,0.08)" : "none",
+                border: "none", borderRadius: 6, padding: "6px 0",
+                cursor: "pointer", height: 32, lineHeight: "20px",
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [hh, mm] = value.split(":") as [string, string];
-  const set = (newHH: string, newMM: string) => onChange(`${newHH}:${newMM}`);
   return (
     <div style={{
       display: "inline-flex", alignItems: "center", gap: 1,
       background: "var(--kk-bg)", border: "1px solid var(--kk-line)",
-      borderRadius: 9, padding: "4px 8px", cursor: "pointer",
+      borderRadius: 9, padding: "4px 6px",
     }}>
-      <select value={hh} onChange={e => set(e.target.value, mm)} style={SEL}>
-        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-      </select>
+      <TimePart options={HOURS} value={hh} onChange={h => onChange(`${h}:${mm}`)} />
       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", userSelect: "none" }}>:</span>
-      <select value={mm} onChange={e => set(hh, e.target.value)} style={SEL}>
-        {MINS.map(m => <option key={m} value={m}>{m}</option>)}
-      </select>
+      <TimePart options={MINS} value={mm} onChange={m => onChange(`${hh}:${m}`)} />
     </div>
   );
 }
@@ -425,16 +469,34 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
     });
   }
 
-  const keepOpenAlert = (window: string) => (
+  const requirementsAlert = (windowLabel: string, sleepPath: string) => (
     <div style={{
-      display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8,
-      background: "rgba(255,149,0,0.10)", border: "1px solid rgba(255,149,0,0.30)",
-      borderRadius: 8, padding: "8px 11px",
+      marginTop: 10, borderRadius: 10, overflow: "hidden",
+      border: "1px solid rgba(255,149,0,0.30)",
     }}>
-      <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
-      <p style={{ fontSize: 12, color: "#C47800", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
-        Keep the {window} open the whole time. Closing it stops the blast.
-      </p>
+      {/* amber header */}
+      <div style={{
+        display: "flex", alignItems: "flex-start", gap: 8,
+        background: "rgba(255,149,0,0.10)", padding: "8px 11px",
+      }}>
+        <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
+        <p style={{ fontSize: 12, color: "#C47800", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
+          Keep this running for auto-blast to work
+        </p>
+      </div>
+      {/* requirements list */}
+      <div style={{ background: "rgba(255,149,0,0.05)", padding: "8px 11px 9px" }}>
+        {[
+          { icon: "🖥️", text: `Keep the ${windowLabel} open the whole time. Closing it stops the blast.` },
+          { icon: "😴", text: `Disable sleep mode. Go to ${sleepPath} and set sleep to Never.` },
+          { icon: "🔌", text: "Keep your laptop plugged in, or at minimum keep the lid open." },
+        ].map(({ icon, text }) => (
+          <div key={icon} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.3 }}>{icon}</span>
+            <p style={{ fontSize: 11, color: "#A06000", fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{text}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
@@ -444,7 +506,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
       <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
         Press <kbd style={KBD}>Cmd</kbd> + <kbd style={KBD}>Space</kbd>, type <strong>Terminal</strong>, press Enter.
       </p>
-      {keepOpenAlert("Terminal window")}
+      {requirementsAlert("Terminal window", "System Settings > Battery > Options")}
     </>
   );
   const step1Win = (
@@ -453,7 +515,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
       <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
         Press <kbd style={KBD}>Win</kbd> + <kbd style={KBD}>R</kbd>, type <strong>cmd</strong>, press Enter.
       </p>
-      {keepOpenAlert("Command Prompt window")}
+      {requirementsAlert("Command Prompt window", "Settings > System > Power and Sleep")}
     </>
   );
 
