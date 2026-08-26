@@ -1471,6 +1471,61 @@ Reply here or I can send you a quick form — takes about 2 minutes 🙏
   return { ok: true, url: out.url, message: "Message ready" };
 }
 
+// ─── WA Blast queue ──────────────────────────────────────────────────────────
+
+export async function queueOwnerWaBlast(leadId: string): Promise<{ ok: boolean; message: string }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Not authenticated." };
+
+  const all = await getOwnerLeads();
+  const owner = all.find((o) => o.id === leadId);
+  if (!owner) return { ok: false, message: "Lead not found." };
+  if (!owner.owner_phone) return { ok: false, message: "No phone number on this lead." };
+
+  const agent = await getAgentProfile();
+  const overrides = parseTemplateOverrides(agent.whatsapp_templates);
+  const propertyLabel = owner.property_name
+    ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : owner.property_name
+    : "your property";
+  const message = resolveTemplate("owner_outreach_initial", overrides, {
+    ownerName: owner.owner_name,
+    agentName: agent.name ?? "Your agent",
+    renNumber: agent.ren_number ?? "",
+    agencyLine: agent.agency ? ` from ${agent.agency}` : "",
+    propertyName: propertyLabel,
+  });
+
+  // Check not already queued
+  const { data: existing } = await supabase
+    .from("wa_blast_queue")
+    .select("id")
+    .eq("owner_lead_id", leadId)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (existing) return { ok: false, message: "Already in queue." };
+
+  const { error } = await supabase.from("wa_blast_queue").insert({
+    user_id: user.id,
+    owner_lead_id: leadId,
+    phone: owner.owner_phone,
+    message,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/my-listing");
+  return { ok: true, message: "Added to WA blast queue." };
+}
+
+export async function removeOwnerWaBlast(leadId: string): Promise<{ ok: boolean }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  await supabase.from("wa_blast_queue").delete().eq("owner_lead_id", leadId).eq("status", "pending");
+  revalidatePath("/my-listing");
+  return { ok: true };
+}
+
 // ─── Agent profile + goals ───────────────────────────────────────────────────
 
 export async function updateAgentGoals(p: {

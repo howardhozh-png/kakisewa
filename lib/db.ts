@@ -1973,6 +1973,19 @@ export async function getRankedLeadIds(): Promise<Set<string>> {
   return ids;
 }
 
+export async function getWaBlastQueuedLeadIds(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("wa_blast_queue")
+    .select("owner_lead_id")
+    .eq("status", "pending");
+  const ids = new Set<string>();
+  for (const r of data ?? []) {
+    if (r.owner_lead_id) ids.add(r.owner_lead_id as string);
+  }
+  return ids;
+}
+
 // ─── Account / Tier ───────────────────────────────────────────────────────────
 
 export async function getAccountTier(): Promise<Tier> {

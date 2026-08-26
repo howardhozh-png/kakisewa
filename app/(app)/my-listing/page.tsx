@@ -1,4 +1,4 @@
-import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads, getAgentProfile } from "@/lib/db";
+import { getOwnerLeads, getTenantsForOwnerLeads, getRankedLeadIds, getSoftDeletedMyListingLeads, getAgentProfile, getWaBlastQueuedLeadIds } from "@/lib/db";
 import { checkCardCap } from "@/lib/plan-caps";
 import { OwnerPipelineBoard } from "@/components/owner-pipeline-board";
 import { AddListingButton } from "@/components/add-listing-button";
@@ -42,12 +42,13 @@ interface Props {
 
 export default async function TrackListingPage({ searchParams }: Props) {
   const { open, highlight } = await searchParams;
-  const [ownerLeads, rankedLeadIds, deletedLeads, capStatus, agentProfile] = await Promise.all([
+  const [ownerLeads, rankedLeadIds, deletedLeads, capStatus, agentProfile, queuedLeadIds] = await Promise.all([
     getOwnerLeads(),
     getRankedLeadIds(),
     getSoftDeletedMyListingLeads(),
     checkCardCap(),
     getAgentProfile(),
+    getWaBlastQueuedLeadIds(),
   ]);
   const matchedLeadIds = ownerLeads.filter((l) => l.stage === "matched").map((l) => l.id);
   const tenantsByLeadId = await getTenantsForOwnerLeads(matchedLeadIds);
@@ -161,6 +162,7 @@ export default async function TrackListingPage({ searchParams }: Props) {
           tenantsByLeadId={tenantsByLeadId}
           rankedLeadIds={rankedLeadIds}
           capStatus={capStatus}
+          queuedLeadIds={queuedLeadIds}
         />
       )}
     </div>
