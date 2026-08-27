@@ -728,7 +728,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
       {/* Risk caveat */}
       <div style={{
         display: "flex", alignItems: "flex-start", gap: 8,
-        background: "rgba(0,0,0,0.03)", border: "1px solid var(--kk-line)",
+        background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.18)",
         borderRadius: 9, padding: "9px 12px",
       }}>
         <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1.2 }}>🚨</span>
