@@ -183,24 +183,24 @@ const STEP_DURATION = 5000;
 
 const WT_STEPS = [
   {
-    label: "Run the blaster command",
-    desc: "Open Terminal (Mac) or Command Prompt (Windows), paste the command from 'Link WhatsApp'. Keep the window open while blasting.",
+    label: "Click 'Link WhatsApp'",
+    desc: "In the Schedule tab, click 'Link WhatsApp'. A dialog opens with a command to run — copy it.",
+    Visual: WtClickLink,
+  },
+  {
+    label: "Open Terminal and run the command",
+    desc: "On Mac: press Cmd+Space, type Terminal, hit Enter. On Windows: press Win+R, type cmd. Paste the command and press Enter. Keep this window open.",
     Visual: WtTerminal,
   },
   {
-    label: "Scan the QR code",
-    desc: "Click 'Link WhatsApp', scan the QR code once with your phone camera. No re-scanning needed after restarts.",
+    label: "Scan the QR code with your phone",
+    desc: "A QR code appears in the terminal. Open WhatsApp on your phone, go to Settings > Linked Devices > Link a device, and scan it.",
     Visual: WtLinkWa,
   },
   {
-    label: "Set your schedule",
-    desc: "Pick a send window (e.g. 10AM to 8PM) and the gap between messages. 10 minutes per send is a safe pace.",
-    Visual: WtSchedule,
-  },
-  {
-    label: "Add leads to queue",
-    desc: "Filter to 'Uncontacted', tick the owners you want to reach, then click 'Add to WA Blast' in the action bar.",
-    Visual: WtSelectLeads,
+    label: "Set schedule and add leads",
+    desc: "Set your send window (e.g. 10AM to 8PM), save it, then select leads from the table and click 'Add to WA Blast' in the action bar.",
+    Visual: WtScheduleAndLeads,
   },
   {
     label: "Activate",
@@ -208,6 +208,38 @@ const WT_STEPS = [
     Visual: WtActivate,
   },
 ];
+
+function WtClickLink() {
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPulse(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: "0.5px solid rgba(0,0,0,0.07)" }}>
+        <Clock style={{ width: 13, height: 13, color: "var(--kk-blue)" }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)" }}>WA Auto-Blast</span>
+        <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", padding: "2px 6px", borderRadius: 99, background: "rgba(0,0,0,0.06)", color: "var(--kk-ink-faint)" }}>Paused</span>
+      </div>
+      <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#F59E0B" }} />
+          <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>WhatsApp: <strong>Not linked</strong></span>
+        </div>
+        <div style={{
+          fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 20, cursor: "pointer",
+          background: "rgba(0,113,227,0.09)", border: "1px solid rgba(0,113,227,0.22)", color: "var(--kk-blue)",
+          display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+          boxShadow: pulse ? "0 0 0 4px rgba(0,113,227,0.18)" : "none",
+          transition: "box-shadow 0.4s",
+        }}>
+          <QrCode style={{ width: 11, height: 11 }} /> Link WhatsApp
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function WtSelectLeads() {
   const [ticked, setTicked] = useState(0);
@@ -302,49 +334,35 @@ function WtSchedule() {
 }
 
 function WtLinkWa() {
-  const [phase, setPhase] = useState<"button" | "qr" | "done">("button");
+  const [done, setDone] = useState(false);
+  // Fixed QR grid seeded deterministically so it doesn't re-randomize on re-render
+  const qrCells = useRef(Array.from({ length: 64 }, (_, i) => [0,7,8,14,15,48,49,55,56,63,1,6,9,13,50,54,57,62].includes(i) || Math.sin(i * 7.3) > 0));
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("qr"), 800);
-    const t2 = setTimeout(() => setPhase("done"), 2800);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t = setTimeout(() => setDone(true), 2500);
+    return () => clearTimeout(t);
   }, []);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {phase === "button" && (
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(0,0,0,0.2)" }} />
-          <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>WhatsApp: <strong>Not linked</strong></span>
-          <div style={{ background: "rgba(0,113,227,0.08)", border: "1px solid rgba(0,113,227,0.2)", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 600, color: "var(--kk-blue)", display: "flex", gap: 5, alignItems: "center" }}>
-            <QrCode style={{ width: 11, height: 11 }} /> Link WhatsApp
+    <div style={{ border: `1px solid ${done ? "rgba(52,199,89,0.3)" : "rgba(0,0,0,0.09)"}`, borderRadius: 10, overflow: "hidden", transition: "border-color 0.4s" }}>
+      <div style={{ background: "linear-gradient(135deg,#25D366,#128C7E)", padding: "10px 14px" }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>Link WhatsApp</p>
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: "2px 0 0" }}>
+          {done ? "WhatsApp connected!" : "Scan the QR code with your phone"}
+        </p>
+      </div>
+      {!done ? (
+        <div style={{ padding: 12, display: "flex", justifyContent: "center" }}>
+          <div style={{ width: 80, height: 80, background: "#1D1D1F", borderRadius: 6, display: "grid", gridTemplateColumns: "repeat(8,1fr)", gap: 1, padding: 6 }}>
+            {qrCells.current.map((on, i) => (
+              <div key={i} style={{ background: on ? "#fff" : "transparent", borderRadius: 1 }} />
+            ))}
           </div>
         </div>
-      )}
-      {phase === "qr" && (
-        <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 10, overflow: "hidden" }}>
-          <div style={{ background: "linear-gradient(135deg,#25D366,#128C7E)", padding: "10px 14px" }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>Link WhatsApp</p>
-            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: "2px 0 0" }}>Scan with your phone camera</p>
-          </div>
-          <div style={{ padding: 12, display: "flex", justifyContent: "center" }}>
-            <div style={{ width: 80, height: 80, background: "#1D1D1F", borderRadius: 6, display: "grid", gridTemplateColumns: "repeat(8,1fr)", gap: 1, padding: 6 }}>
-              {Array.from({ length: 64 }).map((_, i) => (
-                <div key={i} style={{ background: Math.random() > 0.5 ? "#fff" : "transparent", borderRadius: 1 }} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-      {phase === "done" && (
-        <div style={{ border: "1px solid rgba(52,199,89,0.3)", borderRadius: 10, overflow: "hidden" }}>
-          <div style={{ background: "linear-gradient(135deg,#25D366,#128C7E)", padding: "10px 14px" }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>Link WhatsApp</p>
-          </div>
-          <div style={{ padding: "14px 16px", background: "rgba(52,199,89,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
-            <CheckCircle2 style={{ width: 18, height: 18, color: "var(--kk-green-ink)", flexShrink: 0 }} />
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-green-ink)", margin: 0 }}>WhatsApp connected!</p>
-              <p style={{ fontSize: 11, color: "var(--kk-green-ink)", opacity: 0.8, margin: "1px 0 0" }}>All set. Auto-blast sends from your WhatsApp.</p>
-            </div>
+      ) : (
+        <div style={{ padding: "14px 16px", background: "rgba(52,199,89,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
+          <CheckCircle2 style={{ width: 18, height: 18, color: "var(--kk-green-ink)", flexShrink: 0 }} />
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-green-ink)", margin: 0 }}>WhatsApp connected!</p>
+            <p style={{ fontSize: 11, color: "var(--kk-green-ink)", opacity: 0.8, margin: "1px 0 0" }}>All set. Auto-blast sends from your WhatsApp.</p>
           </div>
         </div>
       )}
@@ -376,6 +394,59 @@ function WtTerminal() {
         <span style={{ display: "inline-block", width: 7, height: 13, background: "#A0A0A0", animation: "kk-blink 1s step-end infinite" }} />
       )}
       <style>{`@keyframes kk-blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+    </div>
+  );
+}
+
+function WtScheduleAndLeads() {
+  const [phase, setPhase] = useState<"schedule" | "leads">("schedule");
+  useEffect(() => {
+    const t = setTimeout(() => setPhase("leads"), 2400);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div>
+      {phase === "schedule" && (
+        <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-ink-faint)" }}>Send windows (MYT)</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {["10 : 00", "20 : 00"].map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                {i === 1 && <span style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginRight: 4 }}>–</span>}
+                <div style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 8, padding: "5px 10px", fontSize: 14, fontWeight: 700, color: "var(--kk-ink)" }}>{t}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>every</span>
+            <div style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 6, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>10</div>
+            <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>min per send</span>
+            <div style={{ marginLeft: "auto", background: "var(--kk-blue)", color: "#fff", border: "none", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 700 }}>Save</div>
+          </div>
+        </div>
+      )}
+      {phase === "leads" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 10, overflow: "hidden" }}>
+            {[{ name: "Ahmad Rashid", prop: "Kelana Jaya" }, { name: "Siti Norziah", prop: "Mont Kiara" }].map((r, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: i === 0 ? "0.5px solid rgba(0,0,0,0.06)" : "none" }}>
+                <div style={{ width: 16, height: 16, borderRadius: 4, border: "none", background: "var(--kk-blue)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckCircle2 style={{ width: 10, height: 10, color: "#fff" }} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", flex: 1 }}>{r.name}</span>
+                <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>{r.prop}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: "#1D1D1F", borderRadius: 12, padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>2 selected</span>
+            <div style={{ flex: 1 }} />
+            <div style={{ background: "var(--kk-blue)", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, color: "#fff", boxShadow: "0 0 0 3px rgba(0,113,227,0.35)" }}>
+              Add to WA Blast
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
