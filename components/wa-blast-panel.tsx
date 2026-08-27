@@ -472,20 +472,21 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
   const requirementsAlert = (windowLabel: string, sleepPath: string) => (
     <div style={{
       marginTop: 10, borderRadius: 10, overflow: "hidden",
-      border: "1px solid rgba(255,149,0,0.30)",
+      border: "1px solid var(--kk-line)",
     }}>
-      {/* amber header */}
+      {/* header */}
       <div style={{
         display: "flex", alignItems: "flex-start", gap: 8,
-        background: "rgba(255,149,0,0.10)", padding: "8px 11px",
+        background: "var(--kk-surface-raised, rgba(0,0,0,0.04))", padding: "8px 11px",
+        borderBottom: "1px solid var(--kk-line)",
       }}>
         <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
-        <p style={{ fontSize: 12, color: "#C47800", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
+        <p style={{ fontSize: 12, color: "var(--kk-ink)", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
           Keep this running for auto-blast to work
         </p>
       </div>
       {/* requirements list */}
-      <div style={{ background: "rgba(255,149,0,0.05)", padding: "8px 11px 9px" }}>
+      <div style={{ background: "rgba(0,0,0,0.02)", padding: "8px 11px 9px" }}>
         {[
           { icon: "🖥️", text: `Keep the ${windowLabel} open the whole time. Closing it stops the blast.` },
           { icon: "😴", text: `Disable sleep mode. Go to ${sleepPath} and set sleep to Never.` },
@@ -493,7 +494,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
         ].map(({ icon, text }) => (
           <div key={icon} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 6 }}>
             <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.3 }}>{icon}</span>
-            <p style={{ fontSize: 11, color: "#A06000", fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{text}</p>
+            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{text}</p>
           </div>
         ))}
       </div>
@@ -575,23 +576,6 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", margin: 0, lineHeight: 1.55, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 11px" }}>
                 Messages send from your own WhatsApp at no cost. Owners see a personal message from you directly.
               </p>
-            </div>
-
-            {/* Risk caveat */}
-            <div style={{
-              display: "flex", alignItems: "flex-start", gap: 9,
-              background: "rgba(255,59,48,0.06)", borderBottom: "1px solid rgba(255,59,48,0.14)",
-              padding: "10px 16px",
-            }}>
-              <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.2, marginTop: 1 }}>🚨</span>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-red)", margin: "0 0 2px" }}>
-                  WhatsApp may still block your number
-                </p>
-                <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55 }}>
-                  This tool automates what you would do manually. The risk of getting flagged is the same as sending messages yourself. Keep your daily volume low and your messages personal to stay under the radar.
-                </p>
-              </div>
             </div>
 
             {/* OS tabs */}
@@ -741,6 +725,18 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
   return (
     <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 14 }}>
 
+      {/* Risk caveat */}
+      <div style={{
+        display: "flex", alignItems: "flex-start", gap: 8,
+        background: "rgba(0,0,0,0.03)", border: "1px solid var(--kk-line)",
+        borderRadius: 9, padding: "9px 12px",
+      }}>
+        <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1.2 }}>🚨</span>
+        <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55 }}>
+          <strong style={{ color: "var(--kk-ink)" }}>WhatsApp may still block your number.</strong> This tool automates what you would do manually. The risk is the same as sending yourself. Keep volume low and messages personal.
+        </p>
+      </div>
+
       {/* Send windows */}
       <div>
         <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-ink-faint)", margin: "0 0 8px" }}>
@@ -871,9 +867,6 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
 
       </div>
 
-      <p style={{ fontSize: 10.5, color: "var(--kk-ink-faint)", margin: 0, lineHeight: 1.5 }}>
-        🚨 WhatsApp may block your number for bulk sending. This tool automates what you would do manually. The risk is the same. Keep volumes low.
-      </p>
     </div>
   );
 }
