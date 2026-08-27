@@ -90,8 +90,8 @@ function NumberInput({ value, onChange, min, max, width }: {
       onBlur={(e) => commit(e.target.value)}
       style={{
         width, fontSize: 13, fontWeight: 600, textAlign: "center",
-        background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 9,
-        padding: "4px 6px", outline: "none", color: "var(--kk-ink)",
+        background: "#F5F5F7", border: "1px solid #D1D1D6", borderRadius: 9,
+        padding: "4px 6px", outline: "none", color: "#1D1D1F",
       }}
     />
   );
@@ -167,7 +167,7 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
   return (
     <div style={{
       display: "inline-flex", alignItems: "center", gap: 1,
-      background: "var(--kk-bg)", border: "1px solid var(--kk-line)",
+      background: "#F5F5F7", border: "1px solid #D1D1D6",
       borderRadius: 9, padding: "4px 6px",
     }}>
       <TimePart options={HOURS} value={hh} onChange={h => onChange(`${h}:${mm}`)} />
@@ -513,14 +513,14 @@ function HowToSetupDialog() {
       <DialogTrigger render={
         <button type="button" style={{
           width: "100%", textAlign: "left", cursor: "pointer",
-          background: "rgba(0,113,227,0.06)",
-          border: "1px solid rgba(0,113,227,0.16)",
+          background: "rgba(37,211,102,0.08)",
+          border: "1px solid rgba(37,211,102,0.28)",
           borderRadius: 12, padding: "11px 13px",
           display: "flex", alignItems: "center", gap: 12,
         }}>
           <div style={{
             width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-            background: "var(--kk-blue)", display: "flex", alignItems: "center", justifyContent: "center",
+            background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <Play style={{ width: 14, height: 14, color: "#fff", marginLeft: 2 }} />
           </div>
@@ -528,7 +528,7 @@ function HowToSetupDialog() {
             <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>How to set up WA Auto-Blast</p>
             <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: "1px 0 0" }}>5-step walkthrough — takes 2 minutes</p>
           </div>
-          <ChevronRight style={{ width: 15, height: 15, color: "var(--kk-blue)", flexShrink: 0 }} />
+          <ChevronRight style={{ width: 15, height: 15, color: "#25D366", flexShrink: 0 }} />
         </button>
       } />
       <DialogContent style={{ maxWidth: 400, padding: 0, borderRadius: 18, overflow: "hidden", border: "none" }}>
