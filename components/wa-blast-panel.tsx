@@ -512,11 +512,23 @@ function HowToSetupDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={
         <button type="button" style={{
-          fontSize: 11, fontWeight: 600, color: "var(--kk-blue)",
-          background: "none", border: "none", cursor: "pointer", padding: 0,
-          textDecoration: "underline", textUnderlineOffset: 2,
+          width: "100%", textAlign: "left", cursor: "pointer",
+          background: "rgba(0,113,227,0.06)",
+          border: "1px solid rgba(0,113,227,0.16)",
+          borderRadius: 12, padding: "11px 13px",
+          display: "flex", alignItems: "center", gap: 12,
         }}>
-          How to set up
+          <div style={{
+            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+            background: "var(--kk-blue)", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Play style={{ width: 14, height: 14, color: "#fff", marginLeft: 2 }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>How to set up WA Auto-Blast</p>
+            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: "1px 0 0" }}>5-step walkthrough — takes 2 minutes</p>
+          </div>
+          <ChevronRight style={{ width: 15, height: 15, color: "var(--kk-blue)", flexShrink: 0 }} />
         </button>
       } />
       <DialogContent style={{ maxWidth: 400, padding: 0, borderRadius: 18, overflow: "hidden", border: "none" }}>
@@ -1094,17 +1106,23 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
   }
 
   return (
-    <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
 
-      {/* Risk caveat */}
+      {/* Setup guide card — primary CTA */}
+      <HowToSetupDialog />
+
+      {/* Risk callout */}
       <div style={{
-        display: "flex", alignItems: "flex-start", gap: 8,
-        background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.18)",
-        borderRadius: 9, padding: "9px 12px",
+        display: "flex", alignItems: "flex-start", gap: 9,
+        borderLeft: "3px solid rgba(255,59,48,0.45)",
+        background: "rgba(255,59,48,0.04)",
+        borderRadius: "0 8px 8px 0",
+        padding: "9px 12px",
       }}>
-        <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1.2 }}>🚨</span>
-        <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55 }}>
-          <strong style={{ color: "var(--kk-ink)" }}>WhatsApp may still block your number.</strong> This tool automates what you would do manually. The risk is the same as sending yourself. Keep volume low and messages personal.
+        <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.3 }}>⚠️</span>
+        <p style={{ fontSize: 11.5, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55 }}>
+          <strong style={{ color: "var(--kk-ink)", fontWeight: 700 }}>WhatsApp may still block your number.</strong>{" "}
+          Keep volume low and messages personal. Same risk as sending manually.
         </p>
       </div>
 
@@ -1236,9 +1254,6 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
           Save
         </button>
 
-        <div style={{ marginLeft: "auto" }}>
-          <HowToSetupDialog />
-        </div>
       </div>
 
     </div>
