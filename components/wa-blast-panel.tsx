@@ -577,6 +577,23 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
               </p>
             </div>
 
+            {/* Risk caveat */}
+            <div style={{
+              display: "flex", alignItems: "flex-start", gap: 9,
+              background: "rgba(255,59,48,0.06)", borderBottom: "1px solid rgba(255,59,48,0.14)",
+              padding: "10px 16px",
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.2, marginTop: 1 }}>🚨</span>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-red)", margin: "0 0 2px" }}>
+                  WhatsApp may still block your number
+                </p>
+                <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55 }}>
+                  This tool automates what you would do manually. The risk of getting flagged is the same as sending messages yourself. Keep your daily volume low and your messages personal to stay under the radar.
+                </p>
+              </div>
+            </div>
+
             {/* OS tabs */}
             <div style={{ display: "flex", borderBottom: "0.5px solid rgba(0,0,0,0.08)", background: "var(--kk-bg)" }}>
               {(["mac", "windows"] as OS[]).map((o) => (
@@ -853,6 +870,10 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
         </button>
 
       </div>
+
+      <p style={{ fontSize: 10.5, color: "var(--kk-ink-faint)", margin: 0, lineHeight: 1.5 }}>
+        🚨 WhatsApp may block your number for bulk sending. This tool automates what you would do manually. The risk is the same. Keep volumes low.
+      </p>
     </div>
   );
 }
