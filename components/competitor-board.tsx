@@ -144,7 +144,12 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
         out[effectiveColumn(l, today)].push(l);
       });
     Object.values(out).forEach((arr) =>
-      arr.sort((a, b) => (a.competitor_contract_end ?? "").localeCompare(b.competitor_contract_end ?? ""))
+      arr.sort((a, b) => {
+        if (!a.competitor_contract_end && !b.competitor_contract_end) return 0;
+        if (!a.competitor_contract_end) return 1;
+        if (!b.competitor_contract_end) return -1;
+        return a.competitor_contract_end.localeCompare(b.competitor_contract_end);
+      })
     );
     return out;
   }, [local, today, propertyFilter, monthFilter, search]);

@@ -197,13 +197,15 @@ export function OwnerPipelineBoard({ leads, openLeadId, highlightId, tenantsByLe
       if (stage === "matched" && l.has_active_tenancy) return;
       out[stage].push(l);
     });
-    // Sort "listed" by availability date ascending, no-date cards last
-    out["listed"].sort((a, b) => {
+    // Sort by availability date ascending, no-date cards last
+    const byAvailFrom = (a: OwnerLead, b: OwnerLead) => {
       if (!a.available_from && !b.available_from) return 0;
       if (!a.available_from) return 1;
       if (!b.available_from) return -1;
       return a.available_from.localeCompare(b.available_from);
-    });
+    };
+    out["listed"].sort(byAvailFrom);
+    out["matched"].sort(byAvailFrom);
     return out;
   }, [filtered, tenantsByLeadId]);
 
