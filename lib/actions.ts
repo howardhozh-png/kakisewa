@@ -1532,11 +1532,21 @@ export async function acknowledgeWaSent(id: string): Promise<void> {
   await supabase.from("wa_blast_queue").delete().eq("id", id).eq("status", "sent");
 }
 
-export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued: number; skipped: number; noPhone: number }> {
+export async function clearWaBlastQueue(): Promise<{ ok: boolean }> {
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { queued: 0, skipped: 0, noPhone: 0 };
+  if (!user) return { ok: false };
+  await supabase.from("wa_blast_queue").delete().eq("user_id", user.id).eq("status", "pending");
+  revalidatePath("/property-leads");
+  return { ok: true };
+}
+
+export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued: number; skipped: number; noPhone: number; noPhoneNames: string[] }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { queued: 0, skipped: 0, noPhone: 0, noPhoneNames: [] };
 
   const all = await getOwnerLeads();
   const agent = await getAgentProfile();
@@ -1553,11 +1563,12 @@ export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued
 
   const rows: { user_id: string; owner_lead_id: string; phone: string; message: string }[] = [];
   let skipped = 0, noPhone = 0;
+  const noPhoneNames: string[] = [];
 
   for (const leadId of leadIds) {
     if (alreadyQueued.has(leadId)) { skipped++; continue; }
     const owner = all.find((o) => o.id === leadId);
-    if (!owner?.owner_phone) { noPhone++; continue; }
+    if (!owner?.owner_phone) { noPhone++; noPhoneNames.push(owner?.owner_name ?? "Unknown"); continue; }
 
     const propertyLabel = owner.property_name
       ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : owner.property_name
@@ -1577,7 +1588,7 @@ export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued
   }
 
   revalidatePath("/property-leads");
-  return { queued: rows.length, skipped, noPhone };
+  return { queued: rows.length, skipped, noPhone, noPhoneNames };
 }
 
 export async function saveWaBlastConfig(config: {

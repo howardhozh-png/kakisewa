@@ -22,6 +22,8 @@ function todayStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
 }
 
+const WA_BC = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("kk_wa_count") : null;
+
 function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
   const [count, setCount] = useState(0);
   const [cap, setCap] = useState(WA_DEFAULT_CAP);
@@ -36,12 +38,23 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
       const savedCap = localStorage.getItem(WA_CAP_KEY);
       if (savedCap) setCap(parseInt(savedCap, 10) || WA_DEFAULT_CAP);
     } catch {}
+
+    const bc = WA_BC;
+    if (!bc) return;
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "count" && typeof e.data.count === "number") setCount(e.data.count);
+    };
+    bc.addEventListener("message", handler);
+    return () => bc.removeEventListener("message", handler);
   }, []);
 
   const increment = useCallback(() => {
     setCount((prev) => {
       const next = prev + 1;
-      try { localStorage.setItem(WA_DAILY_KEY, JSON.stringify({ date: todayStr(), count: next })); } catch {}
+      try {
+        localStorage.setItem(WA_DAILY_KEY, JSON.stringify({ date: todayStr(), count: next }));
+        WA_BC?.postMessage({ type: "count", count: next });
+      } catch {}
       return next;
     });
   }, []);
@@ -55,13 +68,13 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
 }
 import { OwnerLead } from "@/lib/types";
 import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
-import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction, queueOwnerWaBlast, removeOwnerWaBlast, bulkQueueOwnerWaBlast } from "@/lib/actions";
+import { generateOwnerIntakeLink, bulkExportOwnerLeads, bulkMarkOwnerLeadsContacted, setOwnerLeadStage, bulkSetOwnerLeadStage, updateOwnerLeadDetails, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl, removeOwnerLead, bulkDeleteOwnerLeads, renamePropertyGroupAction, assignPropertyNameAction, restoreOwnerLeadAction, hardDeleteOwnerLeadAction, bulkHardDeleteOwnerLeadsAction, logManualContactAction, queueOwnerWaBlast, removeOwnerWaBlast, bulkQueueOwnerWaBlast, clearWaBlastQueue } from "@/lib/actions";
 import { WaBlastPanel, calcMaxPerDay } from "@/components/wa-blast-panel";
 import type { WaBlastConfig, WaBlastQueueItem, WaBlastSentItem, WaSession } from "@/lib/db";
 import { BedroomPicker, getDocumentName } from "@/components/edit-owner-lead-dialog";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { FilterSelect } from "@/components/filter-select";
-import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, SquarePen, Search, Phone, Trash2, RotateCcw, Upload, Clock } from "lucide-react";
+import { Loader2, X, ChevronDown, Check, Camera, ArrowRight, Download, FileSpreadsheet, FileText, MessageCircle, Pencil, SquarePen, Search, Phone, Trash2, RotateCcw, Upload, Clock, ListPlus } from "lucide-react";
 import { UploadRing } from "@/components/ui/upload-ring";
 import { compressImage } from "@/lib/compress-image";
 import { uploadWithProgress } from "@/lib/upload-with-progress";
@@ -959,6 +972,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
   const blastMax = waBlastConfig ? calcMaxPerDay(waBlastConfig) : 0;
   const [queueing, setQueueing] = useState<string | null>(null);
   const [bulkBlasting, setBulkBlasting] = useState(false);
+  const [blastSignal, setBlastSignal] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [bulkContacting, setBulkContacting] = useState(false);
@@ -1187,9 +1201,13 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
       const ids = Array.from(selectedIds);
       const res = await bulkQueueOwnerWaBlast(ids);
       const parts: string[] = [];
-      if (res.queued > 0) parts.push(`${res.queued} added to blast queue`);
+      if (res.queued > 0) parts.push(`${res.queued} added to queue`);
       if (res.skipped > 0) parts.push(`${res.skipped} already queued`);
-      if (res.noPhone > 0) parts.push(`${res.noPhone} skipped (no phone)`);
+      if (res.noPhone > 0) {
+        const names = res.noPhoneNames.slice(0, 3).join(", ");
+        const extra = res.noPhoneNames.length > 3 ? ` and ${res.noPhoneNames.length - 3} more` : "";
+        parts.push(`${res.noPhone} skipped — no phone (${names}${extra})`);
+      }
       toast.success(parts.join(" · ") || "Done.");
       // Optimistically add newly queued leads to local state
       const alreadyQueued = new Set(waBlastQueue.map((q) => q.owner_lead_id));
@@ -1209,10 +1227,16 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
       }
       if (newItems.length > 0) {
         setWaBlastQueue((q) => [...q, ...newItems]);
+        setBlastSignal((n) => n + 1);
       }
     } finally {
       setBulkBlasting(false);
     }
+  }
+
+  async function handleClearQueue() {
+    await clearWaBlastQueue();
+    setWaBlastQueue([]);
   }
 
   async function handleQueueToggle(lead: OwnerLead, e: React.MouseEvent) {
@@ -1498,10 +1522,12 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           leads={[...leads, ...declinedLeads, ...deletedLeads]}
           onRemove={(ownerId) => setWaBlastQueue((q) => q.filter((item) => item.owner_lead_id !== ownerId))}
           onAcknowledge={(id) => setWaSentQueue((q) => q.filter((item) => item.id !== id))}
+          onClearAll={handleClearQueue}
           waCount={waCount}
           waCap={waCap}
           onCapChange={updateWaCap}
           initialWaSession={initialWaSession}
+          openQueueSignal={blastSignal}
         />
       ) : (
         <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />
@@ -1521,16 +1547,17 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           {allPageSelected && !allMatchingSelected && visible.length > PAGE_SIZE && (
             <div style={{ padding: "8px 18px", background: "rgba(0,113,227,0.05)", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={{ fontSize: 13, color: "var(--kk-ink-mute)" }}>
-                {selectedIds.size} owners on this page selected.
+                {selectedIds.size} leads on this page selected.
               </span>
               <button
                 type="button"
                 onClick={selectAllMatching}
+                title={blastMax > 0 && blastMax < visible.length ? `Capped at your max sends per day (${blastMax}) based on your schedule` : undefined}
                 style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-blue)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
               >
                 {blastMax > 0 && blastMax < visible.length
-                  ? `Select ${blastMax} / ${visible.length} matching properties`
-                  : `Select all ${visible.length} matching properties`
+                  ? `Select ${blastMax} / ${visible.length} matching leads`
+                  : `Select all ${visible.length} matching leads`
                 }
               </button>
             </div>
@@ -1538,7 +1565,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           {allMatchingSelected && visible.length > PAGE_SIZE && (
             <div style={{ padding: "8px 18px", background: "rgba(0,113,227,0.05)", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 13, color: "var(--kk-blue)", fontWeight: 500 }}>
-                All {visible.length} matching properties selected.
+                All {visible.length} matching leads selected.
               </span>
               <button
                 type="button"
@@ -1814,7 +1841,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                               >
                                 {queueing === lead.id
                                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  : <Clock className="w-3.5 h-3.5" />
+                                  : <ListPlus className="w-3.5 h-3.5" />
                                 }
                               </button>
                               <button
@@ -1902,6 +1929,21 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
         >
           <span className="text-[13px] font-medium tabular-nums mr-1 shrink-0">{selectedIds.size} selected</span>
 
+          {/* Add to WA Blast — primary action, always visible */}
+          <button
+            type="button"
+            disabled={bulkBlasting || !waBlastConfig}
+            onClick={handleBulkAddToBlast}
+            title={!waBlastConfig ? "Set up WA Auto-Blast schedule first" : undefined}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+            style={{ background: waBlastConfig ? "var(--kk-blue)" : "rgba(255,255,255,0.12)", color: "#fff" }}
+          >
+            {bulkBlasting ? <Loader2 className="w-3 h-3 animate-spin" /> : <ListPlus className="w-3 h-3" />}
+            Add to WA Blast
+          </button>
+
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />
+
           {/* Mark as Contacted */}
           <button
             type="button"
@@ -1975,20 +2017,6 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
               </div>
             )}
           </div>
-
-          {/* Add to WA Blast */}
-          {waBlastConfig && (
-            <button
-              type="button"
-              disabled={bulkBlasting}
-              onClick={handleBulkAddToBlast}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
-              style={{ background: "rgba(0,113,227,0.30)", color: "#fff" }}
-            >
-              {bulkBlasting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Clock className="w-3 h-3" />}
-              Add to WA Blast
-            </button>
-          )}
 
           {/* Delete selected */}
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 2px" }} />

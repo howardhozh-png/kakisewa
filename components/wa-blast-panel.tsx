@@ -8,7 +8,7 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { saveWaBlastConfig, removeOwnerWaBlast, acknowledgeWaSent } from "@/lib/actions";
+import { saveWaBlastConfig, removeOwnerWaBlast, acknowledgeWaSent, clearWaBlastQueue } from "@/lib/actions";
 import type { WaBlastConfig, WaBlastQueueItem, WaBlastSentItem, WaSession } from "@/lib/db";
 import type { OwnerLead } from "@/lib/types";
 
@@ -19,10 +19,12 @@ interface Props {
   leads: OwnerLead[];
   onRemove: (ownerId: string) => void;
   onAcknowledge: (id: string) => void;
+  onClearAll?: () => void;
   waCount: number;
   waCap: number;
   onCapChange: (n: number) => void;
   initialWaSession: WaSession | null;
+  openQueueSignal?: number;
 }
 
 type Tab = "schedule" | "queue";
@@ -236,15 +238,28 @@ function fmtMYT(iso: string) {
   return `${hh}:${mm}`;
 }
 
-function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge }: {
+function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll }: {
   queue: WaBlastQueueItem[];
   sentQueue: WaBlastSentItem[];
   leads: OwnerLead[];
   onRemove: (ownerId: string) => void;
   onAcknowledge: (id: string) => void;
+  onClearAll?: () => void;
 }) {
   const [removing, setRemoving] = useState<string | null>(null);
   const [acking, setAcking] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+
+  async function handleClearAll() {
+    if (!onClearAll || clearing) return;
+    setClearing(true);
+    try {
+      await clearWaBlastQueue();
+      onClearAll();
+    } finally {
+      setClearing(false);
+    }
+  }
   const leadMap = new Map(leads.map((l) => [l.id, l]));
 
   async function handleRemove(item: WaBlastQueueItem) {
@@ -284,9 +299,17 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge }: {
       {/* Pending */}
       {queue.length > 0 && (
         <>
-          <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", padding: "8px 14px 4px", fontWeight: 500, margin: 0 }}>
-            {queue.length} lead{queue.length !== 1 ? "s" : ""} — sent in order
-          </p>
+          <div style={{ display: "flex", alignItems: "center", padding: "8px 14px 4px" }}>
+            <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", fontWeight: 500, margin: 0, flex: 1 }}>
+              {queue.length} lead{queue.length !== 1 ? "s" : ""} — sent in order
+            </p>
+            {onClearAll && (
+              <button type="button" onClick={handleClearAll} disabled={clearing}
+                style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-red)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearing ? 0.4 : 1 }}>
+                Clear all
+              </button>
+            )}
+          </div>
           <div style={{ maxHeight: 200, overflowY: "auto" }}>
             {queue.map((item, i) => {
               const lead = leadMap.get(item.owner_lead_id);
@@ -304,7 +327,9 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge }: {
                     <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
                     <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
                   </div>
-                  <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{item.phone}</span>
+                  {!lead?.property_name && (
+                    <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{item.phone}</span>
+                  )}
                   <button type="button" disabled={removing === item.owner_lead_id} onClick={() => handleRemove(item)}
                     style={{
                       width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer",
@@ -873,9 +898,15 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
 
 // ─── main panel ───────────────────────────────────────────────────────────────
 
-export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, waCount, waCap, onCapChange, initialWaSession }: Props) {
+export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, waCount, waCap, onCapChange, initialWaSession, openQueueSignal }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
+
+  useEffect(() => {
+    if (!openQueueSignal) return;
+    setExpanded(true);
+    setTab("queue");
+  }, [openQueueSignal]);
   const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<WaBlastConfig>(initialConfig);
   const [showInfo, setShowInfo] = useState(false);
@@ -1032,7 +1063,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
 
           {tab === "schedule"
             ? <ScheduleTab cfg={cfg} saving={saving} waSession={initialWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} />
-            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} />
+            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} onClearAll={onClearAll} />
           }
         </div>
       )}
