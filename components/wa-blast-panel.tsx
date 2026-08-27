@@ -59,7 +59,7 @@ function validateWindows(windows: { start: string; end: string }[]): string | nu
     const e = toMin(sorted[i].end);
     const s2 = toMin(sorted[i + 1].start);
     if (e > s2) {
-      return `Windows overlap — adjust or remove a duplicate window`;
+      return `Windows overlap. Adjust or remove a duplicate window.`;
     }
   }
   return null;
@@ -273,7 +273,7 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge }: {
         <Clock style={{ width: 26, height: 26, color: "var(--kk-ink-faint)", opacity: 0.35 }} />
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink-mute)", margin: 0 }}>Queue is empty</p>
         <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", textAlign: "center", maxWidth: 240, margin: 0 }}>
-          Filter the table, select leads, then tap "Add to WA Blast" in the bar below.
+          Select leads from the table below, then click "Add to WA Blast" in the action bar.
         </p>
       </div>
     );
@@ -330,7 +330,7 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge }: {
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-green-ink)", letterSpacing: "0.04em" }}>
               SENT TODAY ({sentQueue.length})
             </span>
-            <span style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>Tap tick to dismiss</span>
+            <span style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>Tick to remove</span>
           </div>
           <div style={{ maxHeight: 180, overflowY: "auto" }}>
             {sentQueue.map((item) => {
@@ -574,7 +574,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
                 </div>
               </div>
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", margin: 0, lineHeight: 1.55, background: "rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 11px" }}>
-                Messages send from your own WhatsApp at no cost. Owners see a personal message from you directly.
+                Messages are sent from your own WhatsApp at no cost. Owners see a personal message from you directly.
               </p>
             </div>
 
@@ -620,7 +620,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
                       </code>
                     </div>
                     <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 10, color: "#6E6E73" }}>Personal to your account — do not share</span>
+                      <span style={{ fontSize: 10, color: "#6E6E73" }}>Personal to your account. Do not share.</span>
                       <button type="button" onClick={copy} disabled={!tokens}
                         style={{
                           fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6,
@@ -820,7 +820,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
           borderRadius: 8, padding: "8px 11px" }}>
           <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
           <p style={{ fontSize: 12, color: "#C47800", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
-            Blaster is offline. Your laptop may be asleep or the Terminal was closed. Reopen Terminal and paste the command to resume.
+            Auto-blast is offline. Your laptop may be asleep or Terminal was closed. Reopen Terminal or Command Prompt and paste the command again to resume.
           </p>
         </div>
       )}
@@ -889,6 +889,13 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
   const queueSize = queue.length;
   const max = calcMaxPerDay(cfg);
 
+  // Mirror effectivelyPaused for header chip
+  const waLinkedMain = !!initialWaSession?.is_authenticated;
+  const STALE_MS_MAIN = ((cfg.interval_minutes ?? 10) + 5) * 60 * 1000;
+  const blasterOfflineMain = waLinkedMain && !!initialWaSession?.updated_at &&
+    (Date.now() - new Date(initialWaSession.updated_at).getTime() > STALE_MS_MAIN);
+  const effectivelyPausedMain = blasterOfflineMain && isActive;
+
   // Daily counter colours
   const pct = Math.min((waCount / waCap) * 100, 100);
   const warn = Math.round(waCap * 0.75);
@@ -911,7 +918,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
     const next = { ...cfg, is_active: !cfg.is_active };
     setCfg(next);
     await saveWaBlastConfig(next);
-    toast.success(next.is_active ? "Blaster activated." : "Blaster paused.");
+    toast.success(next.is_active ? "Auto-blast activated." : "Auto-blast paused.");
   }
 
   function commitCap() {
@@ -937,10 +944,10 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
           <span style={{
             fontSize: 9, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase",
             padding: "2px 6px", borderRadius: 99, flexShrink: 0,
-            background: isActive ? "rgba(52,199,89,0.13)" : "rgba(0,0,0,0.06)",
-            color: isActive ? "var(--kk-green-ink)" : "var(--kk-ink-mute)",
+            background: (isActive && !effectivelyPausedMain) ? "rgba(52,199,89,0.13)" : "rgba(0,0,0,0.06)",
+            color: (isActive && !effectivelyPausedMain) ? "var(--kk-green-ink)" : "var(--kk-ink-mute)",
           }}>
-            {isActive ? "Active" : "Paused"}
+            {(isActive && !effectivelyPausedMain) ? "Active" : "Paused"}
           </span>
           <span style={{ color: "var(--kk-ink-faint)", display: "flex", alignItems: "center", flexShrink: 0 }}>
             {expanded ? <ChevronUp style={{ width: 13, height: 13 }} /> : <ChevronDown style={{ width: 13, height: 13 }} />}
@@ -974,8 +981,8 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
                   onClick={() => { setCapDraft(String(waCap)); setEditingCap(true); }}
                   title="Tap to change daily limit"
                   style={{
-                    fontSize: 11, fontWeight: 700, color: "var(--kk-ink)", background: "rgba(0,0,0,0.06)",
-                    border: "1px dashed rgba(0,0,0,0.22)", cursor: "pointer",
+                    fontSize: 11, fontWeight: 700, color: "var(--kk-ink)", background: "var(--kk-bg)",
+                    border: "1px solid var(--kk-line)", cursor: "pointer",
                     padding: "0 4px", borderRadius: 4, lineHeight: "16px",
                   }}
                 >{waCap}</button>
