@@ -183,9 +183,14 @@ const STEP_DURATION = 5000;
 
 const WT_STEPS = [
   {
-    label: "Add leads to queue",
-    desc: "Filter to 'Uncontacted', tick the owners you want to reach, then click 'Add to WA Blast' in the action bar.",
-    Visual: WtSelectLeads,
+    label: "Run the blaster command",
+    desc: "Open Terminal (Mac) or Command Prompt (Windows), paste the command from 'Link WhatsApp'. Keep the window open while blasting.",
+    Visual: WtTerminal,
+  },
+  {
+    label: "Scan the QR code",
+    desc: "Click 'Link WhatsApp', scan the QR code once with your phone camera. No re-scanning needed after restarts.",
+    Visual: WtLinkWa,
   },
   {
     label: "Set your schedule",
@@ -193,18 +198,13 @@ const WT_STEPS = [
     Visual: WtSchedule,
   },
   {
-    label: "Link WhatsApp",
-    desc: "Click 'Link WhatsApp', scan the QR code once with your phone. No re-scanning needed after restarts.",
-    Visual: WtLinkWa,
-  },
-  {
-    label: "Run the blaster",
-    desc: "Open Terminal (Mac) or Command Prompt (Windows), paste the command shown. Keep the window open while blasting.",
-    Visual: WtTerminal,
+    label: "Add leads to queue",
+    desc: "Filter to 'Uncontacted', tick the owners you want to reach, then click 'Add to WA Blast' in the action bar.",
+    Visual: WtSelectLeads,
   },
   {
     label: "Activate",
-    desc: "Once WhatsApp shows 'Connected', hit Activate. Messages go out automatically. Pause any time.",
+    desc: "Once WhatsApp shows 'Connected', hit Activate. Messages go out automatically within your schedule. Pause any time.",
     Visual: WtActivate,
   },
 ];
