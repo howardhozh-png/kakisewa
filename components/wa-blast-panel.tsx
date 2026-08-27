@@ -111,12 +111,17 @@ function TimePart({ options, value, onChange }: {
   const [open, setOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Scroll selected item into view when popover opens
+  // Scroll selected item into view when popover opens.
+  // PopoverContent mounts in a portal after the open state change, so defer to next tick.
   useEffect(() => {
-    if (!open || !listRef.current) return;
-    const idx = options.indexOf(value);
-    const ITEM_H = 32;
-    listRef.current.scrollTop = Math.max(0, idx * ITEM_H - ITEM_H * 2);
+    if (!open) return;
+    const t = setTimeout(() => {
+      if (!listRef.current) return;
+      const idx = options.indexOf(value);
+      const ITEM_H = 32;
+      listRef.current.scrollTop = Math.max(0, idx * ITEM_H - ITEM_H * 2);
+    }, 10);
+    return () => clearTimeout(t);
   }, [open, value, options]);
 
   return (
@@ -435,7 +440,7 @@ function buildMaskedCmd(tokens: SetupTokens, os: OS) {
   return `cd %USERPROFILE%\\kakisewa && set KAKI_TOKEN=${mask(at)} && set KAKI_REFRESH=${mask(rt)} && node scripts/blaster.mjs`;
 }
 
-function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
+function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSession | null; onSessionChange?: (s: WaSession) => void }) {
   const [open, setOpen] = useState(false);
   const [os, setOs] = useState<OS>("mac");
   const [session, setSession] = useState<WaSession | null>(initialSession);
@@ -450,6 +455,7 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
       const res = await fetch("/api/wa-blast/session");
       const data = await res.json() as WaSession;
       setSession(data);
+      onSessionChange?.(data);
     } catch { /* ignore */ }
   }
 
@@ -709,13 +715,14 @@ function SetupDialog({ initialSession }: { initialSession: WaSession | null }) {
 
 // ─── schedule tab ─────────────────────────────────────────────────────────────
 
-function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave }: {
+function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave, onSessionChange }: {
   cfg: WaBlastConfig;
   saving: boolean;
   waSession: WaSession | null;
   onChange: (next: WaBlastConfig) => void;
   onToggleActive: () => void;
   onSave: () => void;
+  onSessionChange?: (s: WaSession) => void;
 }) {
   const max = calcMaxPerDay(cfg);
   const winErr = validateWindows(cfg.windows);
@@ -836,7 +843,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
       </div>
 
       {/* WhatsApp link */}
-      <SetupDialog initialSession={waSession} />
+      <SetupDialog initialSession={waSession} onSessionChange={onSessionChange} />
 
       {/* Offline / not-linked hints */}
       {blasterOffline && cfg.is_active && (
@@ -901,6 +908,8 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave 
 export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, waCount, waCap, onCapChange, initialWaSession, openQueueSignal }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
+  // Live session state — updated by SetupDialog polling so ScheduleTab sees current auth status
+  const [liveWaSession, setLiveWaSession] = useState<WaSession | null>(initialWaSession);
 
   useEffect(() => {
     if (!openQueueSignal) return;
@@ -920,11 +929,11 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
   const queueSize = queue.length;
   const max = calcMaxPerDay(cfg);
 
-  // Mirror effectivelyPaused for header chip
-  const waLinkedMain = !!initialWaSession?.is_authenticated;
+  // Mirror effectivelyPaused for header chip — use liveWaSession so it updates after connect
+  const waLinkedMain = !!liveWaSession?.is_authenticated;
   const STALE_MS_MAIN = ((cfg.interval_minutes ?? 10) + 5) * 60 * 1000;
-  const blasterOfflineMain = waLinkedMain && !!initialWaSession?.updated_at &&
-    (Date.now() - new Date(initialWaSession.updated_at).getTime() > STALE_MS_MAIN);
+  const blasterOfflineMain = waLinkedMain && !!liveWaSession?.updated_at &&
+    (Date.now() - new Date(liveWaSession.updated_at).getTime() > STALE_MS_MAIN);
   const effectivelyPausedMain = blasterOfflineMain && isActive;
 
   // Daily counter colours
@@ -1062,7 +1071,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
           </div>
 
           {tab === "schedule"
-            ? <ScheduleTab cfg={cfg} saving={saving} waSession={initialWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} />
+            ? <ScheduleTab cfg={cfg} saving={saving} waSession={liveWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} onSessionChange={setLiveWaSession} />
             : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} onClearAll={onClearAll} />
           }
         </div>
