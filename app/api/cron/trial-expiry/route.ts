@@ -19,10 +19,9 @@ export async function GET(req: NextRequest) {
     return { start: start.toISOString(), end: end.toISOString() };
   }
 
-  const w1  = dayWindow(1);
-  const w3  = dayWindow(3);
-  const w7  = dayWindow(7);
-  const w14 = dayWindow(14);
+  const w1 = dayWindow(1);
+  const w3 = dayWindow(3);
+  const w7 = dayWindow(7);
 
   type AgentRow = { id: string; name: string | null; stripe_subscription_id: string | null };
 
@@ -43,14 +42,13 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  const [ex1, ex3, ex7, ex14] = await Promise.all([
+  const [ex1, ex3, ex7] = await Promise.all([
     fetchExpiring(1, w1),
     fetchExpiring(3, w3),
     fetchExpiring(7, w7),
-    fetchExpiring(14, w14),
   ]);
 
-  const expiring = [...ex1, ...ex3, ...ex7, ...ex14];
+  const expiring = [...ex1, ...ex3, ...ex7];
 
   if (expiring.length === 0) {
     return NextResponse.json({ sent: 0 });
@@ -72,25 +70,21 @@ export async function GET(req: NextRequest) {
     const periodLabel = isBeta ? "beta period" : "trial";
 
     const subject =
-      days === 1  ? `Your ${periodLabel} ends tomorrow` :
-      days === 3  ? `Your ${periodLabel} ends in 3 days` :
-      days === 7  ? `Your ${periodLabel} ends in 7 days` :
-                    `Your ${periodLabel} ends in 14 days`;
+      days === 1 ? `Your ${periodLabel} ends tomorrow` :
+      days === 3 ? `Your ${periodLabel} ends in 3 days` :
+                   `Your ${periodLabel} ends in 7 days`;
 
     const headline =
-      days === 1  ? `Hi ${firstName}, your ${periodLabel} ends tomorrow` :
-      days === 3  ? `Hi ${firstName}, 3 days left on your ${periodLabel}` :
-      days === 7  ? `Hi ${firstName}, 7 days left on your ${periodLabel}` :
-                    `Hi ${firstName}, 14 days left on your ${periodLabel}`;
+      days === 1 ? `Hi ${firstName}, your ${periodLabel} ends tomorrow` :
+      days === 3 ? `Hi ${firstName}, 3 days left on your ${periodLabel}` :
+                   `Hi ${firstName}, 7 days left on your ${periodLabel}`;
 
     const body =
       days === 1
         ? `Your ${isBeta ? "beta" : "1-month"} access ends tomorrow. Subscribe now to keep tracking your contracts, commissions, and tenants without interruption.`
         : days === 3
         ? `You have 3 days left on your kakisewa ${periodLabel}. Subscribe to keep everything running — contracts, renewals, tenant packs, and commissions.`
-        : days === 7
-        ? `You have 7 days left on your kakisewa ${periodLabel}. Lock in your plan now to keep everything running seamlessly.`
-        : `You have 14 days left on your kakisewa ${periodLabel}. Save your card now — you won't be charged until your trial ends, and you can cancel anytime before then.`;
+        : `You have 7 days left on your kakisewa ${periodLabel}. Lock in your plan now to keep everything running seamlessly.`;
 
     await fetch("https://api.resend.com/emails", {
       method: "POST",
