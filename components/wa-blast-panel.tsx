@@ -540,12 +540,12 @@ function HowToSetupDialog() {
           <p style={{ fontSize: 16, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>{label}</p>
         </div>
 
-        {/* visual */}
-        <div style={{ padding: "16px 18px" }}>
-          <div key={step} style={{ marginBottom: 14 }}>
+        {/* visual — fixed height so dialog never resizes between steps */}
+        <div style={{ padding: "16px 18px 0" }}>
+          <div key={step} style={{ height: 180, overflow: "hidden", marginBottom: 12 }}>
             <Visual />
           </div>
-          <p style={{ fontSize: 13, color: "var(--kk-ink-mute)", lineHeight: 1.6, margin: 0 }}>{desc}</p>
+          <p style={{ fontSize: 13, color: "var(--kk-ink-mute)", lineHeight: 1.6, margin: "0 0 14px", minHeight: 78 }}>{desc}</p>
         </div>
 
         {/* progress bar */}
