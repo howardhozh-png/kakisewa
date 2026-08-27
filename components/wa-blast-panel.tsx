@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, PauseCircle, X, Plus, Info,
-  Laptop, QrCode, Wifi, Timer, Terminal, CheckCircle2,
+  Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, PauseCircle, X, Plus,
+  Laptop, QrCode, Wifi, Timer, Terminal, CheckCircle2, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -177,59 +177,327 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
-// ─── setup info panel ─────────────────────────────────────────────────────────
+// ─── how to set up walkthrough dialog ────────────────────────────────────────
 
-function SetupInfo({ onClose }: { onClose: () => void }) {
-  const steps = [
-    {
-      icon: <QrCode style={{ width: 15, height: 15 }} />,
-      title: "Scan QR once, then you're set",
-      body: "Link your WhatsApp the first time by scanning the QR code. After that, just rerun the command — no rescanning needed, even after restarts.",
-    },
-    {
-      icon: <Laptop style={{ width: 15, height: 15 }} />,
-      title: "Rerun the command after every laptop restart",
-      body: "The blast stops when your laptop shuts down or the Terminal is closed. Reopen Terminal and paste the command again — your WhatsApp stays linked.",
-    },
-    {
-      icon: <Wifi style={{ width: 15, height: 15 }} />,
-      title: "Keep your laptop awake during blast hours",
-      body: "Sleep mode pauses the blast. On Mac, go to System Settings → Battery and turn off \"Prevent automatic sleeping\" while a blast is active. Or leave your laptop plugged in and lid open.",
-    },
-    {
-      icon: <Timer style={{ width: 15, height: 15 }} />,
-      title: "Sends only within your set windows",
-      body: "Messages go out during the hours you configured. Outside those windows the queue pauses and resumes automatically.",
-    },
+const STEP_DURATION = 5000;
+
+const WT_STEPS = [
+  {
+    label: "Add leads to queue",
+    desc: "Filter to 'Uncontacted', tick the owners you want to reach, then click 'Add to WA Blast' in the action bar.",
+    Visual: WtSelectLeads,
+  },
+  {
+    label: "Set your schedule",
+    desc: "Pick a send window (e.g. 10AM to 8PM) and the gap between messages. 10 minutes per send is a safe pace.",
+    Visual: WtSchedule,
+  },
+  {
+    label: "Link WhatsApp",
+    desc: "Click 'Link WhatsApp', scan the QR code once with your phone. No re-scanning needed after restarts.",
+    Visual: WtLinkWa,
+  },
+  {
+    label: "Run the blaster",
+    desc: "Open Terminal (Mac) or Command Prompt (Windows), paste the command shown. Keep the window open while blasting.",
+    Visual: WtTerminal,
+  },
+  {
+    label: "Activate",
+    desc: "Once WhatsApp shows 'Connected', hit Activate. Messages go out automatically. Pause any time.",
+    Visual: WtActivate,
+  },
+];
+
+function WtSelectLeads() {
+  const [ticked, setTicked] = useState(0);
+  const [barUp, setBarUp] = useState(false);
+  useEffect(() => {
+    const t1 = setTimeout(() => setTicked(1), 400);
+    const t2 = setTimeout(() => setTicked(2), 900);
+    const t3 = setTimeout(() => setTicked(3), 1400);
+    const t4 = setTimeout(() => setBarUp(true), 1800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, []);
+  const rows = [
+    { name: "Ahmad Rashid", prop: "Kelana Jaya" },
+    { name: "Siti Norziah", prop: "Mont Kiara" },
+    { name: "David Lee", prop: "Damansara" },
   ];
-
   return (
-    <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.08)", padding: "12px 14px 10px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)" }}>
-          How WA Auto-Blast works
-        </span>
-        <button type="button" onClick={onClose}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--kk-ink-faint)", display: "flex", padding: 0 }}>
-          <X style={{ width: 13, height: 13 }} />
-        </button>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {steps.map((s, i) => (
-          <div key={i} style={{ display: "flex", gap: 10 }}>
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 10, overflow: "hidden" }}>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: i < 2 ? "0.5px solid rgba(0,0,0,0.06)" : "none" }}>
             <div style={{
-              width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-              background: "rgba(0,113,227,0.08)", color: "var(--kk-blue)",
+              width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${ticked > i ? "var(--kk-blue)" : "rgba(0,0,0,0.2)"}`,
+              background: ticked > i ? "var(--kk-blue)" : "transparent",
               display: "flex", alignItems: "center", justifyContent: "center",
-            }}>{s.icon}</div>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", marginBottom: 2, margin: "0 0 2px" }}>{s.title}</p>
-              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.5, margin: 0 }}>{s.body}</p>
+              transition: "all 0.2s",
+            }}>
+              {ticked > i && <CheckCircle2 style={{ width: 10, height: 10, color: "#fff" }} />}
             </div>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", flex: 1 }}>{r.name}</span>
+            <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>{r.prop}</span>
           </div>
         ))}
       </div>
+      <div style={{
+        marginTop: 8,
+        transform: barUp ? "translateY(0)" : "translateY(48px)",
+        transition: "transform 0.3s ease",
+        background: "#1D1D1F", borderRadius: 12, padding: "8px 12px",
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>3 selected</span>
+        <div style={{ flex: 1 }} />
+        <div style={{
+          background: "var(--kk-blue)", borderRadius: 8, padding: "4px 10px",
+          fontSize: 11, fontWeight: 700, color: "#fff",
+          boxShadow: barUp ? "0 0 0 3px rgba(0,113,227,0.35)" : "none",
+          transition: "box-shadow 0.5s 0.4s",
+        }}>
+          Add to WA Blast
+        </div>
+      </div>
     </div>
+  );
+}
+
+function WtSchedule() {
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSaved(true), 2200);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-ink-faint)" }}>Send windows (MYT)</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {["10 : 00", "20 : 00"].map((t, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {i === 1 && <span style={{ fontSize: 12, color: "var(--kk-ink-faint)", marginRight: 4 }}>–</span>}
+              <div style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 8, padding: "5px 10px", fontSize: 14, fontWeight: 700, color: "var(--kk-ink)" }}>{t}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>every</span>
+          <div style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 6, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>10</div>
+          <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>min</span>
+          <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", marginLeft: 4 }}>Max 60/day</span>
+        </div>
+      </div>
+      <button type="button" style={{
+        alignSelf: "flex-start", background: saved ? "var(--kk-green)" : "var(--kk-blue)",
+        color: "#fff", border: "none", borderRadius: 20, padding: "6px 18px",
+        fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "background 0.4s",
+        display: "flex", alignItems: "center", gap: 5,
+      }}>
+        {saved ? <><CheckCircle2 style={{ width: 11, height: 11 }} /> Saved</> : "Save"}
+      </button>
+    </div>
+  );
+}
+
+function WtLinkWa() {
+  const [phase, setPhase] = useState<"button" | "qr" | "done">("button");
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase("qr"), 800);
+    const t2 = setTimeout(() => setPhase("done"), 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {phase === "button" && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(0,0,0,0.2)" }} />
+          <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>WhatsApp: <strong>Not linked</strong></span>
+          <div style={{ background: "rgba(0,113,227,0.08)", border: "1px solid rgba(0,113,227,0.2)", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 600, color: "var(--kk-blue)", display: "flex", gap: 5, alignItems: "center" }}>
+            <QrCode style={{ width: 11, height: 11 }} /> Link WhatsApp
+          </div>
+        </div>
+      )}
+      {phase === "qr" && (
+        <div style={{ border: "1px solid rgba(0,0,0,0.09)", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ background: "linear-gradient(135deg,#25D366,#128C7E)", padding: "10px 14px" }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>Link WhatsApp</p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: "2px 0 0" }}>Scan with your phone camera</p>
+          </div>
+          <div style={{ padding: 12, display: "flex", justifyContent: "center" }}>
+            <div style={{ width: 80, height: 80, background: "#1D1D1F", borderRadius: 6, display: "grid", gridTemplateColumns: "repeat(8,1fr)", gap: 1, padding: 6 }}>
+              {Array.from({ length: 64 }).map((_, i) => (
+                <div key={i} style={{ background: Math.random() > 0.5 ? "#fff" : "transparent", borderRadius: 1 }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {phase === "done" && (
+        <div style={{ border: "1px solid rgba(52,199,89,0.3)", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ background: "linear-gradient(135deg,#25D366,#128C7E)", padding: "10px 14px" }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>Link WhatsApp</p>
+          </div>
+          <div style={{ padding: "14px 16px", background: "rgba(52,199,89,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckCircle2 style={{ width: 18, height: 18, color: "var(--kk-green-ink)", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-green-ink)", margin: 0 }}>WhatsApp connected!</p>
+              <p style={{ fontSize: 11, color: "var(--kk-green-ink)", opacity: 0.8, margin: "1px 0 0" }}>All set. Auto-blast sends from your WhatsApp.</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WtTerminal() {
+  const lines = [
+    { t: 0, text: "$ cd ~/kakisewa && KAKI_TOKEN=\"eyJhb...\" node scripts/blaster.mjs", color: "#E8E8E8" },
+    { t: 700, text: "Initializing WhatsApp session...", color: "#A0A0A0" },
+    { t: 1600, text: "Session restored. No QR needed.", color: "#A0A0A0" },
+    { t: 2400, text: "✓  Connected. Polling queue every 10 min.", color: "#34C759" },
+  ];
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    const timers = lines.map((l, i) => setTimeout(() => setShown(i + 1), l.t));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  return (
+    <div style={{ background: "#1D1D1F", borderRadius: 10, padding: "12px 14px", fontFamily: "monospace", display: "flex", flexDirection: "column", gap: 5 }}>
+      <div style={{ display: "flex", gap: 5, marginBottom: 6 }}>
+        {["#FF5F56","#FFBD2E","#27C93F"].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />)}
+      </div>
+      {lines.slice(0, shown).map((l, i) => (
+        <p key={i} style={{ fontSize: 11, color: l.color, margin: 0, lineHeight: 1.6 }}>{l.text}</p>
+      ))}
+      {shown > 0 && shown < lines.length && (
+        <span style={{ display: "inline-block", width: 7, height: 13, background: "#A0A0A0", animation: "kk-blink 1s step-end infinite" }} />
+      )}
+      <style>{`@keyframes kk-blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+    </div>
+  );
+}
+
+function WtActivate() {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setActive(true), 1400);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{ border: `1px solid ${active ? "rgba(52,199,89,0.3)" : "rgba(0,0,0,0.1)"}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.5s" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: active ? "rgba(52,199,89,0.04)" : "transparent", transition: "background 0.5s" }}>
+        <Clock style={{ width: 13, height: 13, color: active ? "var(--kk-green)" : "var(--kk-blue)" }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", flex: 1 }}>WA Auto-Blast</span>
+        <span style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase",
+          padding: "2px 8px", borderRadius: 99,
+          background: active ? "rgba(52,199,89,0.15)" : "rgba(0,0,0,0.06)",
+          color: active ? "var(--kk-green-ink)" : "var(--kk-ink-faint)",
+          transition: "all 0.5s", boxShadow: active ? "0 0 0 3px rgba(52,199,89,0.15)" : "none",
+        }}>
+          {active ? "Active" : "Paused"}
+        </span>
+      </div>
+      <div style={{ padding: "10px 14px", borderTop: "0.5px solid rgba(0,0,0,0.07)", display: "flex", gap: 8 }}>
+        <button type="button" style={{
+          fontSize: 12, fontWeight: 600, padding: "5px 14px", borderRadius: 20, border: "none", cursor: "pointer",
+          background: active ? "rgba(255,59,48,0.08)" : "rgba(52,199,89,0.09)",
+          color: active ? "#DC2626" : "var(--kk-green-ink)",
+          transition: "all 0.5s",
+          display: "flex", alignItems: "center", gap: 5,
+        }}>
+          {active ? <><Pause style={{ width: 11, height: 11 }} /> Pause</> : <><Play style={{ width: 11, height: 11 }} /> Activate</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HowToSetupDialog() {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const total = WT_STEPS.length;
+
+  const next = useCallback(() => setStep(s => (s + 1) % total), [total]);
+  const prev = useCallback(() => setStep(s => (s - 1 + total) % total), [total]);
+
+  useEffect(() => {
+    if (!open || paused) return;
+    const t = setTimeout(next, STEP_DURATION);
+    return () => clearTimeout(t);
+  }, [open, step, paused, next]);
+
+  useEffect(() => {
+    if (!open) setStep(0);
+  }, [open]);
+
+  const { label, desc, Visual } = WT_STEPS[step];
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={
+        <button type="button" style={{
+          fontSize: 11, fontWeight: 600, color: "var(--kk-blue)",
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          textDecoration: "underline", textUnderlineOffset: 2,
+        }}>
+          How to set up
+        </button>
+      } />
+      <DialogContent style={{ maxWidth: 400, padding: 0, borderRadius: 18, overflow: "hidden", border: "none" }}>
+        {/* header */}
+        <div style={{ padding: "16px 18px 12px", borderBottom: "0.5px solid rgba(0,0,0,0.07)" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)", margin: "0 0 4px" }}>
+            Step {step + 1} of {total}
+          </p>
+          <p style={{ fontSize: 16, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>{label}</p>
+        </div>
+
+        {/* visual */}
+        <div style={{ padding: "16px 18px" }}>
+          <div key={step} style={{ marginBottom: 14 }}>
+            <Visual />
+          </div>
+          <p style={{ fontSize: 13, color: "var(--kk-ink-mute)", lineHeight: 1.6, margin: 0 }}>{desc}</p>
+        </div>
+
+        {/* progress bar */}
+        <div style={{ height: 3, background: "rgba(0,0,0,0.06)", margin: "0 18px" }}>
+          <div key={`${step}-${paused}`} style={{
+            height: "100%", background: "var(--kk-blue)", borderRadius: 99,
+            transformOrigin: "left",
+            animation: paused ? "none" : `kk-wt-bar ${STEP_DURATION}ms linear forwards`,
+          }} />
+        </div>
+        <style>{`@keyframes kk-wt-bar{from{width:0%}to{width:100%}}`}</style>
+
+        {/* controls */}
+        <div style={{ display: "flex", alignItems: "center", padding: "10px 18px 16px", gap: 8 }}>
+          <button type="button" onClick={prev}
+            style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--kk-line)", background: "var(--kk-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--kk-ink-mute)" }}>
+            <ChevronLeft style={{ width: 14, height: 14 }} />
+          </button>
+          <button type="button" onClick={() => setPaused(v => !v)}
+            style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-ink-mute)", background: "none", border: "none", cursor: "pointer", padding: "0 4px" }}>
+            {paused ? "Resume" : "Pause"}
+          </button>
+          <div style={{ flex: 1, display: "flex", justifyContent: "center", gap: 5 }}>
+            {WT_STEPS.map((_, i) => (
+              <button key={i} type="button" onClick={() => { setStep(i); setPaused(false); }}
+                style={{ width: i === step ? 16 : 6, height: 6, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i === step ? "var(--kk-blue)" : "rgba(0,0,0,0.12)", transition: "all 0.3s" }} />
+            ))}
+          </div>
+          <button type="button" onClick={next}
+            style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "var(--kk-blue)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <ChevronRight style={{ width: 14, height: 14 }} />
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -897,6 +1165,9 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
           Save
         </button>
 
+        <div style={{ marginLeft: "auto" }}>
+          <HowToSetupDialog />
+        </div>
       </div>
 
     </div>
@@ -918,7 +1189,6 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
   }, [openQueueSignal]);
   const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<WaBlastConfig>(initialConfig);
-  const [showInfo, setShowInfo] = useState(false);
   const [editingCap, setEditingCap] = useState(false);
   const [capDraft, setCapDraft] = useState(String(waCap));
   const capInputRef = useRef<HTMLInputElement>(null);
@@ -1031,28 +1301,12 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
             </div>
           </div>
 
-          {/* info button */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setShowInfo((v) => !v); if (!expanded) setExpanded(true); }}
-            style={{
-              width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              background: showInfo ? "rgba(0,113,227,0.12)" : "rgba(0,0,0,0.05)",
-              color: showInfo ? "var(--kk-blue)" : "var(--kk-ink-faint)",
-            }}
-            title="Setup guide"
-          >
-            <Info style={{ width: 12, height: 12 }} />
-          </button>
         </div>
       </div>
 
       {/* ── expanded body ── */}
       {expanded && (
         <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.07)" }}>
-
-          {/* setup info (if open) */}
-          {showInfo && <SetupInfo onClose={() => setShowInfo(false)} />}
 
           {/* tab bar */}
           <div style={{ display: "flex", borderBottom: "0.5px solid rgba(0,0,0,0.07)" }}>
