@@ -342,11 +342,11 @@ export async function sendWelcomeEmail(email: string, firstName: string, isBeta 
 
   const subject = isBeta
     ? `You're in — exclusive beta access`
-    : `You're in — 2-month free trial started`;
+    : `You're in — 1-month free trial started`;
 
   const heroCopy = isBeta
     ? `You've been invited to kakisewa's exclusive beta program.`
-    : `Your 2-month free trial is live. kakisewa is built for Malaysian rental agents — track tenancies, send tenant packs, and never miss a renewal.`;
+    : `Your 1-month free trial is live. kakisewa is built for Malaysian rental agents — track tenancies, send tenant packs, and never miss a renewal.`;
 
   const credentialsBlock = passcode ? `
       <div style="background:#F2F2F7;border-radius:14px;padding:16px 18px;margin:0 0 24px;">

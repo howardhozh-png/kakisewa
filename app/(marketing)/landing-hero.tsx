@@ -656,7 +656,7 @@ export function LandingHero() {
             kakisewa starts at <span style={{ color: "#34C759" }}>RM1/day.</span>
           </h2>
           <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[2]) }}>
-            2 months free to start. Cancel anytime.
+            1 month free to start. Cancel anytime.
           </p>
           <div style={delay(0.4, revealed[2])}>
             <Link

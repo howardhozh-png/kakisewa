@@ -89,7 +89,7 @@ Chief Marketing Officer, kakisewa`,
 
 Every message gets tracked automatically, from first contact to renewal.
 
-RM1/day. Free for 2 months. ${LINK_TEXT}
+RM1/day. Free for 1 month. ${LINK_TEXT}
 
 Tell us what's holding you back? We'd really appreciate it.
 

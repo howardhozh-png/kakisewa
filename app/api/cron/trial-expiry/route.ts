@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
 
     const body =
       days === 1
-        ? `Your ${isBeta ? "beta" : "2-month"} access ends tomorrow. Subscribe now to keep tracking your contracts, commissions, and tenants without interruption.`
+        ? `Your ${isBeta ? "beta" : "1-month"} access ends tomorrow. Subscribe now to keep tracking your contracts, commissions, and tenants without interruption.`
         : days === 3
         ? `You have 3 days left on your kakisewa ${periodLabel}. Subscribe to keep everything running — contracts, renewals, tenant packs, and commissions.`
         : days === 7

@@ -28,7 +28,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "What is the trial period?",
-        a: "New accounts get a 2-month free trial (61 days) with full Elite plan access — no card required. You will see a banner when your trial is near expiry. To keep access after the trial, go to Subscription and save your card. You can cancel before the trial ends at no charge.",
+        a: "New accounts get a 1-month free trial (30 days) with full Elite plan access — no card required. You will see a banner when your trial is near expiry. To keep access after the trial, go to Subscription and save your card. You can cancel before the trial ends at no charge.",
       },
     ],
   },

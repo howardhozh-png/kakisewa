@@ -79,7 +79,7 @@ export default function TermsPage() {
 
           <Section title="4. Trial Period and Subscription">
             <p>
-              New users may access the Service under a <strong>2-month free trial</strong>. No payment is required to start your trial. After the trial period, continued access requires an active paid subscription. If you do not subscribe before your trial expires, your account will be placed in read-only mode — your data will be preserved, but you will not be able to add or edit records until you activate a plan.
+              New users may access the Service under a <strong>1-month free trial</strong>. No payment is required to start your trial. After the trial period, continued access requires an active paid subscription. If you do not subscribe before your trial expires, your account will be placed in read-only mode — your data will be preserved, but you will not be able to add or edit records until you activate a plan.
             </p>
             <p>
               Available plans:
