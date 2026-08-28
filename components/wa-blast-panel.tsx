@@ -776,18 +776,23 @@ type OS = "mac" | "windows";
 
 function mask(s: string) { return s.slice(0, 6) + "••••••••"; }
 
-const RUN_BASE = "https://kakisewa.com/api/wa-blast/run";
+function getRunBase() {
+  if (typeof window === "undefined") return "https://kakisewa.com/api/wa-blast/run";
+  return `${window.location.origin}/api/wa-blast/run`;
+}
 
 function buildCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
-  if (os === "mac") return `KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" bash <(curl -sL ${RUN_BASE})`;
-  return `$env:KAKI_TOKEN="${at}"; $env:KAKI_REFRESH="${rt}"; irm ${RUN_BASE}?platform=win | iex`;
+  const base = getRunBase();
+  if (os === "mac") return `KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" bash <(curl -sL ${base})`;
+  return `$env:KAKI_TOKEN="${at}"; $env:KAKI_REFRESH="${rt}"; irm ${base}?platform=win | iex`;
 }
 
 function buildMaskedCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
-  if (os === "mac") return `KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" bash <(curl -sL ${RUN_BASE})`;
-  return `$env:KAKI_TOKEN="${mask(at)}"; $env:KAKI_REFRESH="${mask(rt)}"; irm ${RUN_BASE}?platform=win | iex`;
+  const base = getRunBase();
+  if (os === "mac") return `KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" bash <(curl -sL ${base})`;
+  return `$env:KAKI_TOKEN="${mask(at)}"; $env:KAKI_REFRESH="${mask(rt)}"; irm ${base}?platform=win | iex`;
 }
 
 const NUM = {
