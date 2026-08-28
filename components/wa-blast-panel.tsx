@@ -1087,7 +1087,7 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 13px", background: "var(--kk-bg)", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)" }}>
                       <Loader2 style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", animation: "spin 1s linear infinite", flexShrink: 0 }} />
-                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0 }}>QR appears here once the setup file runs.</p>
+                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0 }}>QR appears here once the command runs.</p>
                     </div>
                   )}
                 </div>
