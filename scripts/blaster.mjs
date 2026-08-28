@@ -275,6 +275,7 @@ async function poll() {
     } catch { /* ignore */ }
   }
   const config = await fetchConfig();
+  lastKnownIsActive = config.is_active; // keep fast-check in sync
 
   if (!config.is_active) {
     console.log(`[${nowMYT()} MYT] Blaster paused (is_active=false). Sleeping.`);
@@ -315,10 +316,48 @@ async function poll() {
   schedule(config.interval_minutes);
 }
 
+// Stored so fastCheck can cancel it when activation is detected
+let pendingPollTimer = null;
+
 function schedule(intervalMinutes) {
   const ms = intervalMinutes * 60 * 1000;
   console.log(`  Next poll in ${intervalMinutes} min.\n`);
-  setTimeout(poll, ms);
+  pendingPollTimer = setTimeout(poll, ms);
+  // Keep the fast-check loop running between polls
+  scheduleFastCheck();
+}
+
+// ── Fast-check: detects Activate click within ~30s ────────────────────────────
+
+let lastKnownIsActive = null; // null = not yet established
+let fastCheckTimer = null;
+
+function scheduleFastCheck() {
+  if (fastCheckTimer) clearTimeout(fastCheckTimer);
+  fastCheckTimer = setTimeout(fastCheck, 30 * 1000);
+}
+
+async function fastCheck() {
+  fastCheckTimer = null;
+  try {
+    const { data } = await db
+      .from("wa_blast_config")
+      .select("is_active")
+      .eq("user_id", USER_ID)
+      .maybeSingle();
+    const isActive = data?.is_active ?? false;
+
+    if (lastKnownIsActive === false && isActive === true) {
+      // User just clicked Activate — fire immediately
+      console.log(`[${nowMYT()} MYT] Activation detected — firing immediately.`);
+      if (pendingPollTimer) { clearTimeout(pendingPollTimer); pendingPollTimer = null; }
+      lastKnownIsActive = true;
+      poll(); // poll() calls schedule() which restarts fast-check
+      return;
+    }
+    lastKnownIsActive = isActive;
+  } catch { /* ignore */ }
+  scheduleFastCheck();
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -330,5 +369,13 @@ console.log("━━━━━━━━━━━━━━━━━━━━━━�
 
 await connect();
 
-// Give WA socket 2s to restore session before first poll
-setTimeout(poll, 2000);
+// Give WA socket 2s to restore session, then poll + start fast-check loop
+setTimeout(async () => {
+  // Establish baseline is_active state before starting fast-check
+  try {
+    const { data } = await db.from("wa_blast_config").select("is_active").eq("user_id", USER_ID).maybeSingle();
+    lastKnownIsActive = data?.is_active ?? false;
+  } catch { lastKnownIsActive = false; }
+  poll();
+  scheduleFastCheck();
+}, 2000);
