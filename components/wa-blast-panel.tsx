@@ -529,7 +529,6 @@ function HowToSetupDialog() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>How to set up WA Auto-Blast</p>
-            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: "1px 0 0" }}>5-step walkthrough — takes 2 minutes</p>
           </div>
           <ChevronRight style={{ width: 15, height: 15, color: "#25D366", flexShrink: 0 }} />
         </button>
