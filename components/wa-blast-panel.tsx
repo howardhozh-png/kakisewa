@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, PauseCircle, X, Plus,
-  Laptop, QrCode, Wifi, Timer, Download, CheckCircle2, ChevronLeft, ChevronRight,
+  Laptop, QrCode, Wifi, Timer, CheckCircle2, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -191,8 +191,8 @@ const WT_STEPS = [
     duration: 3300,
   },
   {
-    label: "Open Terminal and run the command (Mac) or double-click the setup file (Windows)",
-    desc: "Mac: open Terminal, paste the command and press Enter. Windows: download the setup file and double-click it. A terminal opens automatically.",
+    label: "Open Terminal (Mac) or PowerShell (Windows) and run the command",
+    desc: "Paste the command from the Link WhatsApp dialog and press Enter. It sets everything up automatically — no downloads needed.",
     Visual: WtTerminal,
   },
   {
@@ -776,16 +776,18 @@ type OS = "mac" | "windows";
 
 function mask(s: string) { return s.slice(0, 6) + "••••••••"; }
 
-const MAC_RUN_URL = "https://kakisewa.com/api/wa-blast/run";
+const RUN_BASE = "https://kakisewa.com/api/wa-blast/run";
 
-function buildMacCmd(tokens: SetupTokens) {
+function buildCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
-  return `KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" bash <(curl -sL ${MAC_RUN_URL})`;
+  if (os === "mac") return `KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" bash <(curl -sL ${RUN_BASE})`;
+  return `$env:KAKI_TOKEN="${at}"; $env:KAKI_REFRESH="${rt}"; irm ${RUN_BASE}?platform=win | iex`;
 }
 
-function buildMaskedMacCmd(tokens: SetupTokens) {
+function buildMaskedCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
-  return `KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" bash <(curl -sL ${MAC_RUN_URL})`;
+  if (os === "mac") return `KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" bash <(curl -sL ${RUN_BASE})`;
+  return `$env:KAKI_TOKEN="${mask(at)}"; $env:KAKI_REFRESH="${mask(rt)}"; irm ${RUN_BASE}?platform=win | iex`;
 }
 
 const NUM = {
@@ -841,7 +843,7 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
 
   function copy() {
     if (!tokens) return;
-    navigator.clipboard.writeText(buildMacCmd(tokens)).then(() => {
+    navigator.clipboard.writeText(buildCmd(tokens, os)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
@@ -984,7 +986,7 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                             flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             display: "block",
                           }}>
-                            {tokens ? buildMaskedMacCmd(tokens) : "Generating your command..."}
+                            {tokens ? buildMaskedCmd(tokens, os) : "Generating your command..."}
                           </code>
                         </div>
                         <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1005,37 +1007,48 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                 </>
               ) : (
                 <>
-                  {/* Windows Step 1 — Download */}
+                  {/* Windows Step 1 — Open PowerShell */}
                   <div style={{ display: "flex", gap: 11 }}>
                     <div style={NUM}>1</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 8px" }}>Download the setup file</p>
-                      <a href="/api/wa-blast/installer?platform=win" style={{ textDecoration: "none", display: "block" }}>
-                        <button type="button" style={{
-                          width: "100%", padding: "10px 16px", borderRadius: 10, cursor: "pointer",
-                          background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
-                          border: "none", color: "#fff", fontSize: 13, fontWeight: 700,
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                        }}>
-                          <Download style={{ width: 14, height: 14 }} />
-                          Download kakisewa-blaster.bat
-                        </button>
-                      </a>
-                      <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "6px 0 0", lineHeight: 1.5 }}>
-                        Personal to your account. Do not share this file.
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open PowerShell</p>
+                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
+                        Press <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>Win</kbd>{" "}+{" "}
+                        <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>X</kbd>, choose <strong>Windows PowerShell</strong> or <strong>Terminal</strong>.
                       </p>
+                      {requirementsAlert("Settings > System > Power and Sleep")}
                     </div>
                   </div>
 
-                  {/* Windows Step 2 — Run */}
+                  {/* Windows Step 2 — Paste command */}
                   <div style={{ display: "flex", gap: 11 }}>
                     <div style={NUM}>2</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Double-click the downloaded file</p>
-                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
-                        A command window opens automatically. If Windows shows a security warning, click <strong>More info</strong> → <strong>Run anyway</strong>.
-                      </p>
-                      {requirementsAlert("Settings > System > Power and Sleep")}
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>Paste this command and press Enter</p>
+                      <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "0 0 6px" }}>First run installs packages (~1 min). Instant on re-runs.</p>
+                      <div style={{ background: "#1D1D1F", borderRadius: 9, overflow: "hidden" }}>
+                        <div style={{ padding: "9px 12px" }}>
+                          <code style={{
+                            fontSize: 10.5, color: "#A8FF78", fontFamily: "monospace",
+                            flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            display: "block",
+                          }}>
+                            {tokens ? buildMaskedCmd(tokens, os) : "Generating your command..."}
+                          </code>
+                        </div>
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 10, color: "#6E6E73" }}>Personal to your account. Do not share.</span>
+                          <button type="button" onClick={copy} disabled={!tokens}
+                            style={{
+                              fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6,
+                              background: copied ? "rgba(168,255,120,0.18)" : "rgba(255,255,255,0.10)",
+                              border: "none", cursor: tokens ? "pointer" : "default",
+                              color: copied ? "#A8FF78" : "#AEAEB2",
+                            }}>
+                            {copied ? "Copied!" : "Copy"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </>
