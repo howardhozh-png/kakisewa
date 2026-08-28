@@ -789,20 +789,23 @@ function mask(s: string) {
   return s.slice(0, 6) + "••••••••";
 }
 
+const BLASTER_URL = "https://kakisewa.com/api/wa-blast/blaster";
+
 function buildCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
   if (os === "mac") {
-    return `cd ~/kakisewa && KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node scripts/blaster.mjs`;
+    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -sO ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node blaster`;
   }
-  return `cd %USERPROFILE%\\kakisewa && set KAKI_TOKEN=${at} && set KAKI_REFRESH=${rt} && node scripts/blaster.mjs`;
+  // Windows — PowerShell
+  return `New-Item -ItemType Directory -Force -Path "$HOME\\kakisewa-blaster" | Out-Null; Set-Location "$HOME\\kakisewa-blaster"; Invoke-WebRequest ${BLASTER_URL} -OutFile blaster.mjs; if (!(Test-Path node_modules)) { npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent }; $env:KAKI_TOKEN="${at}"; $env:KAKI_REFRESH="${rt}"; node blaster.mjs`;
 }
 
 function buildMaskedCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
   if (os === "mac") {
-    return `cd ~/kakisewa && KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node scripts/blaster.mjs`;
+    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -sO ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node blaster`;
   }
-  return `cd %USERPROFILE%\\kakisewa && set KAKI_TOKEN=${mask(at)} && set KAKI_REFRESH=${mask(rt)} && node scripts/blaster.mjs`;
+  return `New-Item -ItemType Directory -Force -Path "$HOME\\kakisewa-blaster" | Out-Null; Set-Location "$HOME\\kakisewa-blaster"; Invoke-WebRequest ${BLASTER_URL} -OutFile blaster.mjs; if (!(Test-Path node_modules)) { npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent }; $env:KAKI_TOKEN="${mask(at)}"; $env:KAKI_REFRESH="${mask(rt)}"; node blaster.mjs`;
 }
 
 function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSession | null; onSessionChange?: (s: WaSession) => void }) {
@@ -908,11 +911,11 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   );
   const step1Win = (
     <>
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Command Prompt</p>
+      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open PowerShell</p>
       <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
-        Press <kbd style={KBD}>Win</kbd> + <kbd style={KBD}>R</kbd>, type <strong>cmd</strong>, press Enter.
+        Press <kbd style={KBD}>Win</kbd> + <kbd style={KBD}>X</kbd>, choose <strong>Windows PowerShell</strong> (or <strong>Terminal</strong>). Do not use Command Prompt.
       </p>
-      {requirementsAlert("Command Prompt window", "Settings > System > Power and Sleep")}
+      {requirementsAlert("PowerShell window", "Settings > System > Power and Sleep")}
     </>
   );
 
@@ -1003,7 +1006,8 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
               <div style={{ display: "flex", gap: 11 }}>
                 <div style={NUM}>2</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 6px" }}>Paste this command and press Enter</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>Paste this command and press Enter</p>
+                  <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "0 0 6px" }}>First run downloads packages (~1 min). Runs instantly after that.</p>
                   <div style={{ background: "#1D1D1F", borderRadius: 9, overflow: "hidden" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "9px 12px" }}>
                       <Terminal style={{ width: 12, height: 12, color: "#A8FF78", flexShrink: 0, marginRight: 7 }} />
