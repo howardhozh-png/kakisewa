@@ -1532,6 +1532,15 @@ export async function acknowledgeWaSent(id: string): Promise<void> {
   await supabase.from("wa_blast_queue").delete().eq("id", id).eq("status", "sent");
 }
 
+export async function clearAllWaSent(): Promise<{ ok: boolean }> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  await supabase.from("wa_blast_queue").delete().eq("user_id", user.id).eq("status", "sent");
+  return { ok: true };
+}
+
 export async function clearWaBlastQueue(): Promise<{ ok: boolean }> {
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();

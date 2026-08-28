@@ -8,7 +8,7 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { saveWaBlastConfig, removeOwnerWaBlast, acknowledgeWaSent, clearWaBlastQueue } from "@/lib/actions";
+import { saveWaBlastConfig, removeOwnerWaBlast, acknowledgeWaSent, clearWaBlastQueue, clearAllWaSent } from "@/lib/actions";
 import type { WaBlastConfig, WaBlastQueueItem, WaBlastSentItem, WaSession } from "@/lib/db";
 import type { OwnerLead } from "@/lib/types";
 
@@ -26,6 +26,7 @@ interface Props {
   initialWaSession: WaSession | null;
   openQueueSignal?: number;
   onLeadClick?: (leadId: string) => void;
+  onClearSent?: () => void;
 }
 
 type Tab = "schedule" | "queue";
@@ -597,18 +598,20 @@ function fmtMYT(iso: string) {
   return `${hh}:${mm}`;
 }
 
-function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, onLeadClick }: {
+function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, onClearSent, onLeadClick }: {
   queue: WaBlastQueueItem[];
   sentQueue: WaBlastSentItem[];
   leads: OwnerLead[];
   onRemove: (ownerId: string) => void;
   onAcknowledge: (id: string) => void;
   onClearAll?: () => void;
+  onClearSent?: () => void;
   onLeadClick?: (leadId: string) => void;
 }) {
   const [removing, setRemoving] = useState<string | null>(null);
   const [acking, setAcking] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [clearingSent, setClearingSent] = useState(false);
 
   async function handleClearAll() {
     if (!onClearAll || clearing) return;
@@ -620,6 +623,18 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
       setClearing(false);
     }
   }
+
+  async function handleClearSent() {
+    if (!onClearSent || clearingSent) return;
+    setClearingSent(true);
+    try {
+      await clearAllWaSent();
+      onClearSent();
+    } finally {
+      setClearingSent(false);
+    }
+  }
+
   const leadMap = new Map(leads.map((l) => [l.id, l]));
 
   async function handleRemove(item: WaBlastQueueItem) {
@@ -712,11 +727,16 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
       {/* Sent today */}
       {sentQueue.length > 0 && (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px" }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-green-ink)", letterSpacing: "0.04em" }}>
+          <div style={{ display: "flex", alignItems: "center", padding: "8px 14px 4px" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-green-ink)", letterSpacing: "0.04em", flex: 1 }}>
               SENT TODAY ({sentQueue.length})
             </span>
-            <span style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>Tick to remove</span>
+            {onClearSent && (
+              <button type="button" onClick={handleClearSent} disabled={clearingSent}
+                style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink-mute)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearingSent ? 0.4 : 1 }}>
+                {clearingSent ? "Clearing..." : "Clear sent"}
+              </button>
+            )}
           </div>
           <div style={{ maxHeight: 180, overflowY: "auto" }}>
             {sentQueue.map((item) => {
@@ -739,17 +759,6 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
                   <span style={{ fontSize: 11, color: "var(--kk-green-ink)", flexShrink: 0, fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
                     {fmtMYT(item.sent_at)} MYT
                   </span>
-                  <button type="button" disabled={acking === item.id} onClick={() => handleAck(item)}
-                    style={{
-                      width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--kk-green-ink)", cursor: "pointer",
-                      background: acking === item.id ? "rgba(52,199,89,0.3)" : "rgba(52,199,89,0.12)",
-                      color: "var(--kk-green-ink)",
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    }}>
-                    {acking === item.id
-                      ? <Loader2 style={{ width: 10, height: 10, animation: "spin 1s linear infinite" }} />
-                      : <CheckCircle2 style={{ width: 11, height: 11 }} />}
-                  </button>
                 </div>
               );
             })}
@@ -1267,7 +1276,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
 
 // ─── main panel ───────────────────────────────────────────────────────────────
 
-export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, waCount, waCap, onCapChange, initialWaSession, openQueueSignal, onLeadClick }: Props) {
+export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, onClearSent, waCount, waCap, onCapChange, initialWaSession, openQueueSignal, onLeadClick }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
   // Live session state — updated by SetupDialog polling so ScheduleTab sees current auth status
@@ -1417,7 +1426,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
 
           {tab === "schedule"
             ? <ScheduleTab cfg={cfg} saving={saving} waSession={liveWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} onSessionChange={setLiveWaSession} />
-            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} onClearAll={onClearAll} onLeadClick={onLeadClick} />
+            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} onClearAll={onClearAll} onClearSent={onClearSent} onLeadClick={onLeadClick} />
           }
         </div>
       )}

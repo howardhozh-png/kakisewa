@@ -1523,6 +1523,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           onRemove={(ownerId) => setWaBlastQueue((q) => q.filter((item) => item.owner_lead_id !== ownerId))}
           onAcknowledge={(id) => setWaSentQueue((q) => q.filter((item) => item.id !== id))}
           onClearAll={handleClearQueue}
+          onClearSent={() => setWaSentQueue([])}
           waCount={waCount}
           waCap={waCap}
           onCapChange={updateWaCap}
