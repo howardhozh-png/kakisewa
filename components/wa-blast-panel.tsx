@@ -186,6 +186,7 @@ const WT_STEPS = [
     label: "Click 'Link WhatsApp'",
     desc: "In the Schedule tab, click 'Link WhatsApp'. A dialog opens with a command to run — copy it.",
     Visual: WtClickLink,
+    duration: 3300,
   },
   {
     label: "Open Terminal and run the command",
@@ -496,11 +497,13 @@ function HowToSetupDialog() {
   const next = useCallback(() => setStep(s => (s + 1) % total), [total]);
   const prev = useCallback(() => setStep(s => (s - 1 + total) % total), [total]);
 
+  const stepDuration = WT_STEPS[step].duration ?? STEP_DURATION;
+
   useEffect(() => {
     if (!open || paused) return;
-    const t = setTimeout(next, STEP_DURATION);
+    const t = setTimeout(next, stepDuration);
     return () => clearTimeout(t);
-  }, [open, step, paused, next]);
+  }, [open, step, paused, next, stepDuration]);
 
   useEffect(() => {
     if (!open) setStep(0);
@@ -553,7 +556,7 @@ function HowToSetupDialog() {
           <div key={`${step}-${paused}`} style={{
             height: "100%", background: "var(--kk-blue)", borderRadius: 99,
             transformOrigin: "left",
-            animation: paused ? "none" : `kk-wt-bar ${STEP_DURATION}ms linear forwards`,
+            animation: paused ? "none" : `kk-wt-bar ${stepDuration}ms linear forwards`,
           }} />
         </div>
         <style>{`@keyframes kk-wt-bar{from{width:0%}to{width:100%}}`}</style>
