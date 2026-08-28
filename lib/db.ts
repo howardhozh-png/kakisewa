@@ -951,11 +951,19 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
   const user = session?.user;
   if (!user) return { id: 0 } as AgentProfile;
 
-  const { data: row } = await supabase
+  const { data: row, error: rowError } = await supabase
     .from("agent_profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
+
+  // If the query errored (transient DB issue), bail out rather than re-creating the profile.
+  // Silently swallowing the error here would treat a DB hiccup as "first login" and
+  // reset subscription_status/trial dates for existing users.
+  if (rowError) {
+    console.error("[getAgentProfile] profile query error:", rowError.message);
+    return { id: 0 } as AgentProfile;
+  }
 
   if (!row) {
     // First login — seed profile from user_metadata and start trial
@@ -993,8 +1001,11 @@ export const getAgentProfile = cache(async (): Promise<AgentProfile> => {
         .is("used_at", null)
         .then(() => {});
     }
-    // Send welcome email non-blocking
-    if (user.email) {
+    // Only send welcome email for genuinely new accounts (< 10 min since auth creation).
+    // Guards against spurious profile re-creations for existing users when the DB query
+    // above returns null due to a transient error or RLS race condition.
+    const accountAgeMs = Date.now() - new Date(user.created_at).getTime();
+    if (user.email && accountAgeMs < 10 * 60 * 1000) {
       const firstName = ((meta.full_name as string | null) ?? "").split(" ")[0] || "there";
       sendWelcomeEmail(user.email, firstName).catch(() => {});
     }
