@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Mac: tokens passed via KAKI_TOKEN / KAKI_REFRESH env vars. Safe to serve publicly.
-const MAC_SCRIPT = `#!/bin/bash
+function macScript(origin: string): string {
+  return `#!/bin/bash
 if [ -z "$KAKI_TOKEN" ]; then
   echo "Error: missing token. Copy the full command from kakisewa.com."
   exit 1
@@ -33,7 +33,7 @@ fi
 
 mkdir -p "$HOME/.kakisewa" && cd "$HOME/.kakisewa"
 echo "Downloading latest blaster..."
-curl -sfL "https://kakisewa.com/api/wa-blast/blaster" -o blaster.mjs
+curl -sfL "${origin}/api/wa-blast/blaster" -o blaster.mjs
 
 if [ ! -d node_modules ]; then
   echo "Installing packages (first time only, ~1 min)..."
@@ -43,10 +43,10 @@ fi
 echo ""
 exec node blaster.mjs
 `;
+}
 
-// Windows PowerShell: tokens passed via $env:KAKI_TOKEN / $env:KAKI_REFRESH.
-// Run with: $env:KAKI_TOKEN="..."; $env:KAKI_REFRESH="..."; irm kakisewa.com/api/wa-blast/run?platform=win | iex
-const WIN_SCRIPT = `
+function winScript(origin: string): string {
+  return `
 if (-not $env:KAKI_TOKEN) {
   Write-Error "Missing token. Copy the full command from kakisewa.com."; exit 1
 }
@@ -73,7 +73,7 @@ if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null 
 Set-Location $dir
 
 Write-Host "Downloading latest blaster..."
-Invoke-WebRequest "https://kakisewa.com/api/wa-blast/blaster" -OutFile blaster.mjs
+Invoke-WebRequest "${origin}/api/wa-blast/blaster" -OutFile blaster.mjs
 
 if (-not (Test-Path node_modules)) {
   Write-Host "Installing packages (first time only, ~1 min)..."
@@ -83,12 +83,15 @@ if (-not (Test-Path node_modules)) {
 Write-Host ""
 node blaster.mjs
 `;
+}
 
 export async function GET(req: Request) {
-  const platform = new URL(req.url).searchParams.get("platform") ?? "mac";
+  const url = new URL(req.url);
+  const origin = url.origin;
+  const platform = url.searchParams.get("platform") ?? "mac";
 
   if (platform === "win") {
-    return new NextResponse(WIN_SCRIPT, {
+    return new NextResponse(winScript(origin), {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-store",
@@ -96,7 +99,7 @@ export async function GET(req: Request) {
     });
   }
 
-  return new NextResponse(MAC_SCRIPT, {
+  return new NextResponse(macScript(origin), {
     headers: {
       "Content-Type": "text/x-sh; charset=utf-8",
       "Cache-Control": "no-store",
