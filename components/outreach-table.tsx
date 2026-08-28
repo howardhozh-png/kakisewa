@@ -1528,6 +1528,11 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           onCapChange={updateWaCap}
           initialWaSession={initialWaSession}
           openQueueSignal={blastSignal}
+          onLeadClick={(leadId) => {
+            const all = [...leads, ...declinedLeads, ...deletedLeads];
+            const found = all.find((l) => l.id === leadId);
+            if (found) setSelectedLead(found);
+          }}
         />
       ) : (
         <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />

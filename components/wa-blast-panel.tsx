@@ -25,6 +25,7 @@ interface Props {
   onCapChange: (n: number) => void;
   initialWaSession: WaSession | null;
   openQueueSignal?: number;
+  onLeadClick?: (leadId: string) => void;
 }
 
 type Tab = "schedule" | "queue";
@@ -596,13 +597,14 @@ function fmtMYT(iso: string) {
   return `${hh}:${mm}`;
 }
 
-function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll }: {
+function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, onLeadClick }: {
   queue: WaBlastQueueItem[];
   sentQueue: WaBlastSentItem[];
   leads: OwnerLead[];
   onRemove: (ownerId: string) => void;
   onAcknowledge: (id: string) => void;
   onClearAll?: () => void;
+  onLeadClick?: (leadId: string) => void;
 }) {
   const [removing, setRemoving] = useState<string | null>(null);
   const [acking, setAcking] = useState<string | null>(null);
@@ -681,10 +683,11 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
                   padding: "7px 14px", borderTop: "0.5px solid rgba(0,0,0,0.07)",
                 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: "var(--kk-ink-faint)", minWidth: 16, textAlign: "right" }}>{i + 1}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <button type="button" onClick={() => lead && onLeadClick?.(lead.id)}
+                    style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: lead && onLeadClick ? "pointer" : "default" }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
                     <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
-                  </div>
+                  </button>
                   {!lead?.property_name && (
                     <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{item.phone}</span>
                   )}
@@ -1264,7 +1267,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
 
 // ─── main panel ───────────────────────────────────────────────────────────────
 
-export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, waCount, waCap, onCapChange, initialWaSession, openQueueSignal }: Props) {
+export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll, waCount, waCap, onCapChange, initialWaSession, openQueueSignal, onLeadClick }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<Tab>("schedule");
   // Live session state — updated by SetupDialog polling so ScheduleTab sees current auth status
@@ -1414,7 +1417,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
 
           {tab === "schedule"
             ? <ScheduleTab cfg={cfg} saving={saving} waSession={liveWaSession} onChange={setCfg} onToggleActive={handleToggleActive} onSave={handleSave} onSessionChange={setLiveWaSession} />
-            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} onClearAll={onClearAll} />
+            : <QueueTab queue={queue} sentQueue={sentQueue} leads={leads} onRemove={onRemove} onAcknowledge={onAcknowledge} onClearAll={onClearAll} onLeadClick={onLeadClick} />
           }
         </div>
       )}
