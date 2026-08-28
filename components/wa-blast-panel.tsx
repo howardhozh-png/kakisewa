@@ -794,7 +794,7 @@ const BLASTER_URL = "https://kakisewa.com/api/wa-blast/blaster";
 function buildCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
   if (os === "mac") {
-    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -sO ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node blaster`;
+    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -s -o blaster.mjs ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node blaster.mjs`;
   }
   // Windows — PowerShell
   return `New-Item -ItemType Directory -Force -Path "$HOME\\kakisewa-blaster" | Out-Null; Set-Location "$HOME\\kakisewa-blaster"; Invoke-WebRequest ${BLASTER_URL} -OutFile blaster.mjs; if (!(Test-Path node_modules)) { npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent }; $env:KAKI_TOKEN="${at}"; $env:KAKI_REFRESH="${rt}"; node blaster.mjs`;
@@ -803,7 +803,7 @@ function buildCmd(tokens: SetupTokens, os: OS) {
 function buildMaskedCmd(tokens: SetupTokens, os: OS) {
   const { access_token: at, refresh_token: rt } = tokens;
   if (os === "mac") {
-    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -sO ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node blaster`;
+    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -s -o blaster.mjs ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node blaster.mjs`;
   }
   return `New-Item -ItemType Directory -Force -Path "$HOME\\kakisewa-blaster" | Out-Null; Set-Location "$HOME\\kakisewa-blaster"; Invoke-WebRequest ${BLASTER_URL} -OutFile blaster.mjs; if (!(Test-Path node_modules)) { npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent }; $env:KAKI_TOKEN="${mask(at)}"; $env:KAKI_REFRESH="${mask(rt)}"; node blaster.mjs`;
 }
@@ -995,6 +995,15 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
 
             {/* Steps */}
             <div style={{ padding: "18px 20px 22px", display: "flex", flexDirection: "column", gap: 16, overflowX: "hidden" }}>
+
+              {/* Prerequisite */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 11px", background: "rgba(0,0,0,0.03)", borderRadius: 9, border: "1px solid rgba(0,0,0,0.07)" }}>
+                <span style={{ fontSize: 13 }}>📦</span>
+                <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>
+                  Requires <strong style={{ color: "var(--kk-ink)" }}>Node.js</strong> installed.{" "}
+                  <a href="https://nodejs.org" target="_blank" rel="noreferrer" style={{ color: "var(--kk-blue)", textDecoration: "none", fontWeight: 600 }}>Download at nodejs.org</a> if you don't have it yet.
+                </p>
+              </div>
 
               {/* Step 1 */}
               <div style={{ display: "flex", gap: 11 }}>
