@@ -191,8 +191,8 @@ const WT_STEPS = [
     duration: 3300,
   },
   {
-    label: "Download and run the setup file",
-    desc: "Click 'Download setup file' and double-click the downloaded file. A terminal opens automatically and starts the blaster.",
+    label: "Open Terminal and run the command (Mac) or double-click the setup file (Windows)",
+    desc: "Mac: open Terminal, paste the command and press Enter. Windows: download the setup file and double-click it. A terminal opens automatically.",
     Visual: WtTerminal,
   },
   {
@@ -771,7 +771,22 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
 
 // ─── wa setup dialog ──────────────────────────────────────────────────────────
 
+type SetupTokens = { access_token: string; refresh_token: string };
 type OS = "mac" | "windows";
+
+function mask(s: string) { return s.slice(0, 6) + "••••••••"; }
+
+const MAC_RUN_URL = "https://kakisewa.com/api/wa-blast/run";
+
+function buildMacCmd(tokens: SetupTokens) {
+  const { access_token: at, refresh_token: rt } = tokens;
+  return `KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" bash <(curl -sL ${MAC_RUN_URL})`;
+}
+
+function buildMaskedMacCmd(tokens: SetupTokens) {
+  const { access_token: at, refresh_token: rt } = tokens;
+  return `KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" bash <(curl -sL ${MAC_RUN_URL})`;
+}
 
 const NUM = {
   width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
@@ -785,6 +800,8 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   const [open, setOpen] = useState(false);
   const [os, setOs] = useState<OS>("mac");
   const [session, setSession] = useState<WaSession | null>(initialSession);
+  const [tokens, setTokens] = useState<SetupTokens | null>(null);
+  const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const connected = session?.is_authenticated;
@@ -805,6 +822,12 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   async function onOpenChange(next: boolean) {
     setOpen(next);
     if (next) {
+      if (!tokens) {
+        try {
+          const res = await fetch("/api/wa-blast/setup-token");
+          if (res.ok) setTokens(await res.json());
+        } catch { /* ignore */ }
+      }
       // If currently connected, signal the blaster to logout the old session
       if (connected) {
         fetch("/api/wa-blast/relink", { method: "POST" }).catch(() => {});
@@ -814,6 +837,14 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
     } else {
       stopPolling();
     }
+  }
+
+  function copy() {
+    if (!tokens) return;
+    navigator.clipboard.writeText(buildMacCmd(tokens)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
   }
 
   // Background poll (slow) — keeps status dot current even when dialog is closed
@@ -925,45 +956,90 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
             {/* Steps */}
             <div style={{ padding: "18px 20px 22px", display: "flex", flexDirection: "column", gap: 16, overflowX: "hidden" }}>
 
-              {/* Step 1 — Download */}
-              <div style={{ display: "flex", gap: 11 }}>
-                <div style={NUM}>1</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 8px" }}>Download the setup file</p>
-                  <a href={`/api/wa-blast/installer?platform=${os === "mac" ? "mac" : "win"}`}
-                    style={{ textDecoration: "none", display: "block" }}>
-                    <button type="button" style={{
-                      width: "100%", padding: "10px 16px", borderRadius: 10, cursor: "pointer",
-                      background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
-                      border: "none", color: "#fff", fontSize: 13, fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                    }}>
-                      <Download style={{ width: 14, height: 14 }} />
-                      Download kakisewa-blaster{os === "mac" ? ".command" : ".bat"}
-                    </button>
-                  </a>
-                  <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "6px 0 0", lineHeight: 1.5 }}>
-                    Personal to your account. Do not share this file.
-                  </p>
-                </div>
-              </div>
+              {os === "mac" ? (
+                <>
+                  {/* Mac Step 1 — Open Terminal */}
+                  <div style={{ display: "flex", gap: 11 }}>
+                    <div style={NUM}>1</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Terminal</p>
+                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
+                        Press <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>Cmd</kbd>{" "}+{" "}
+                        <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>Space</kbd>, type <strong>Terminal</strong>, press Enter.
+                      </p>
+                      {requirementsAlert("System Settings > Battery > Options")}
+                    </div>
+                  </div>
 
-              {/* Step 2 — Run */}
-              <div style={{ display: "flex", gap: 11 }}>
-                <div style={NUM}>2</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>
-                    Double-click the downloaded file
-                  </p>
-                  <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: "0 0 0", lineHeight: 1.6 }}>
-                    {os === "mac"
-                      ? <>A terminal opens automatically. If macOS blocks it, right-click the file → <strong>Open</strong> → <strong>Open</strong>.</>
-                      : <>A command window opens automatically. If Windows shows a warning, click <strong>More info</strong> → <strong>Run anyway</strong>.</>
-                    }
-                  </p>
-                  {requirementsAlert(os === "mac" ? "System Settings > Battery > Options" : "Settings > System > Power and Sleep")}
-                </div>
-              </div>
+                  {/* Mac Step 2 — Paste command */}
+                  <div style={{ display: "flex", gap: 11 }}>
+                    <div style={NUM}>2</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>Paste this command and press Enter</p>
+                      <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "0 0 6px" }}>First run installs packages (~1 min). Instant on re-runs.</p>
+                      <div style={{ background: "#1D1D1F", borderRadius: 9, overflow: "hidden" }}>
+                        <div style={{ padding: "9px 12px" }}>
+                          <code style={{
+                            fontSize: 10.5, color: "#A8FF78", fontFamily: "monospace",
+                            flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            display: "block",
+                          }}>
+                            {tokens ? buildMaskedMacCmd(tokens) : "Generating your command..."}
+                          </code>
+                        </div>
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 10, color: "#6E6E73" }}>Personal to your account. Do not share.</span>
+                          <button type="button" onClick={copy} disabled={!tokens}
+                            style={{
+                              fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6,
+                              background: copied ? "rgba(168,255,120,0.18)" : "rgba(255,255,255,0.10)",
+                              border: "none", cursor: tokens ? "pointer" : "default",
+                              color: copied ? "#A8FF78" : "#AEAEB2",
+                            }}>
+                            {copied ? "Copied!" : "Copy"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Windows Step 1 — Download */}
+                  <div style={{ display: "flex", gap: 11 }}>
+                    <div style={NUM}>1</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 8px" }}>Download the setup file</p>
+                      <a href="/api/wa-blast/installer?platform=win" style={{ textDecoration: "none", display: "block" }}>
+                        <button type="button" style={{
+                          width: "100%", padding: "10px 16px", borderRadius: 10, cursor: "pointer",
+                          background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
+                          border: "none", color: "#fff", fontSize: 13, fontWeight: 700,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                        }}>
+                          <Download style={{ width: 14, height: 14 }} />
+                          Download kakisewa-blaster.bat
+                        </button>
+                      </a>
+                      <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "6px 0 0", lineHeight: 1.5 }}>
+                        Personal to your account. Do not share this file.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Windows Step 2 — Run */}
+                  <div style={{ display: "flex", gap: 11 }}>
+                    <div style={NUM}>2</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Double-click the downloaded file</p>
+                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
+                        A command window opens automatically. If Windows shows a security warning, click <strong>More info</strong> → <strong>Run anyway</strong>.
+                      </p>
+                      {requirementsAlert("Settings > System > Power and Sleep")}
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Step 3 — QR / status */}
               <div style={{ display: "flex", gap: 11 }}>

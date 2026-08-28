@@ -10,6 +10,9 @@ function isPublicPath(pathname: string): boolean {
   if (pathname === "/forgot-password" || pathname === "/reset-password") return true
   if (pathname.startsWith("/auth/")) return true
   if (pathname.startsWith("/api/intake")) return true
+  // WA blaster script is public — agents download it without being logged into the web app
+  if (pathname === "/api/wa-blast/blaster") return true
+  if (pathname === "/api/wa-blast/run") return true
   if (pathname.startsWith("/api/share")) return true
   if (pathname.startsWith("/api/r/")) return true
   if (pathname.startsWith("/api/auth/")) return true
