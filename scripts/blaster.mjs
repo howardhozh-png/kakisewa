@@ -26,8 +26,8 @@ import makeWASocket, {
 import qrcode from "qrcode-terminal";
 import QRCode from "qrcode";
 import { createClient } from "@supabase/supabase-js";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
+import os from "os";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const KAKI_TOKEN    = process.env.KAKI_TOKEN;    // user access token
 const KAKI_REFRESH  = process.env.KAKI_REFRESH;  // user refresh token
-const AUTH_FOLDER   = join(dirname(fileURLToPath(import.meta.url)), "blaster-auth");
+const AUTH_FOLDER   = join(os.homedir(), ".kakisewa", "blaster-auth");
 const MYT_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
 
 if (!SERVICE_KEY && !KAKI_TOKEN) {

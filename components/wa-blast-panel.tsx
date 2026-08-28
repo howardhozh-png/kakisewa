@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, PauseCircle, X, Plus,
-  Laptop, QrCode, Wifi, Timer, Terminal, CheckCircle2, ChevronLeft, ChevronRight,
+  Laptop, QrCode, Wifi, Timer, Download, CheckCircle2, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -191,8 +191,8 @@ const WT_STEPS = [
     duration: 3300,
   },
   {
-    label: "Open Terminal and run the command",
-    desc: "On Mac: press Cmd+Space, type Terminal, hit Enter. On Windows: press Win+R, type cmd. Paste the command and press Enter. Keep this window open.",
+    label: "Download and run the setup file",
+    desc: "Click 'Download setup file' and double-click the downloaded file. A terminal opens automatically and starts the blaster.",
     Visual: WtTerminal,
   },
   {
@@ -771,7 +771,6 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
 
 // ─── wa setup dialog ──────────────────────────────────────────────────────────
 
-type SetupTokens = { access_token: string; refresh_token: string };
 type OS = "mac" | "windows";
 
 const NUM = {
@@ -780,40 +779,12 @@ const NUM = {
   fontSize: 11, fontWeight: 700 as const,
   display: "flex", alignItems: "center", justifyContent: "center",
 };
-const KBD: React.CSSProperties = {
-  background: "var(--kk-bg)", border: "1px solid var(--kk-line)",
-  borderRadius: 5, padding: "1px 6px", fontSize: 11, fontFamily: "inherit",
-};
 
-function mask(s: string) {
-  return s.slice(0, 6) + "••••••••";
-}
-
-const BLASTER_URL = "https://kakisewa.com/api/wa-blast/blaster";
-
-function buildCmd(tokens: SetupTokens, os: OS) {
-  const { access_token: at, refresh_token: rt } = tokens;
-  if (os === "mac") {
-    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -s -o blaster.mjs ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${at}" KAKI_REFRESH="${rt}" node blaster.mjs`;
-  }
-  // Windows — PowerShell
-  return `New-Item -ItemType Directory -Force -Path "$HOME\\kakisewa-blaster" | Out-Null; Set-Location "$HOME\\kakisewa-blaster"; Invoke-WebRequest ${BLASTER_URL} -OutFile blaster.mjs; if (!(Test-Path node_modules)) { npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent }; $env:KAKI_TOKEN="${at}"; $env:KAKI_REFRESH="${rt}"; node blaster.mjs`;
-}
-
-function buildMaskedCmd(tokens: SetupTokens, os: OS) {
-  const { access_token: at, refresh_token: rt } = tokens;
-  if (os === "mac") {
-    return `mkdir -p ~/kakisewa-blaster && cd ~/kakisewa-blaster && curl -s -o blaster.mjs ${BLASTER_URL} && ([ -d node_modules ] || npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent) && KAKI_TOKEN="${mask(at)}" KAKI_REFRESH="${mask(rt)}" node blaster.mjs`;
-  }
-  return `New-Item -ItemType Directory -Force -Path "$HOME\\kakisewa-blaster" | Out-Null; Set-Location "$HOME\\kakisewa-blaster"; Invoke-WebRequest ${BLASTER_URL} -OutFile blaster.mjs; if (!(Test-Path node_modules)) { npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent }; $env:KAKI_TOKEN="${mask(at)}"; $env:KAKI_REFRESH="${mask(rt)}"; node blaster.mjs`;
-}
 
 function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSession | null; onSessionChange?: (s: WaSession) => void }) {
   const [open, setOpen] = useState(false);
   const [os, setOs] = useState<OS>("mac");
   const [session, setSession] = useState<WaSession | null>(initialSession);
-  const [tokens, setTokens] = useState<SetupTokens | null>(null);
-  const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const connected = session?.is_authenticated;
@@ -834,18 +805,10 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   async function onOpenChange(next: boolean) {
     setOpen(next);
     if (next) {
-      if (!tokens) {
-        try {
-          const res = await fetch("/api/wa-blast/setup-token");
-          if (res.ok) setTokens(await res.json());
-        } catch { /* ignore */ }
-      }
       // If currently connected, signal the blaster to logout the old session
-      // before we show the dialog — this disconnects the old WhatsApp link
       if (connected) {
         fetch("/api/wa-blast/relink", { method: "POST" }).catch(() => {});
       }
-      // Always poll when open — detects both QR appearance and disconnection
       fetchSession();
       pollRef.current = setInterval(fetchSession, 4000);
     } else {
@@ -860,20 +823,8 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function copy() {
-    if (!tokens) return;
-    navigator.clipboard.writeText(buildCmd(tokens, os)).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
-  }
-
-  const requirementsAlert = (windowLabel: string, sleepPath: string) => (
-    <div style={{
-      marginTop: 10, borderRadius: 10, overflow: "hidden",
-      border: "1px solid var(--kk-line)",
-    }}>
-      {/* header */}
+  const requirementsAlert = (sleepPath: string) => (
+    <div style={{ marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid var(--kk-line)" }}>
       <div style={{
         display: "flex", alignItems: "flex-start", gap: 8,
         background: "var(--kk-surface-raised, rgba(0,0,0,0.04))", padding: "8px 11px",
@@ -884,10 +835,9 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
           Keep this running for auto-blast to work
         </p>
       </div>
-      {/* requirements list */}
       <div style={{ background: "rgba(0,0,0,0.02)", padding: "8px 11px 9px" }}>
         {[
-          { icon: "🖥️", text: `Keep the ${windowLabel} open the whole time. Closing it stops the blast.` },
+          { icon: "🖥️", text: "Keep the terminal window open the whole time. Closing it stops the blast." },
           { icon: "😴", text: `Disable sleep mode. Go to ${sleepPath} and set sleep to Never.` },
           { icon: "🔌", text: "Keep your laptop plugged in, or at minimum keep the lid open." },
         ].map(({ icon, text }) => (
@@ -899,27 +849,6 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
       </div>
     </div>
   );
-
-  const step1Mac = (
-    <>
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open Terminal</p>
-      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
-        Press <kbd style={KBD}>Cmd</kbd> + <kbd style={KBD}>Space</kbd>, type <strong>Terminal</strong>, press Enter.
-      </p>
-      {requirementsAlert("Terminal window", "System Settings > Battery > Options")}
-    </>
-  );
-  const step1Win = (
-    <>
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>Open PowerShell</p>
-      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.6 }}>
-        Press <kbd style={KBD}>Win</kbd> + <kbd style={KBD}>X</kbd>, choose <strong>Windows PowerShell</strong> (or <strong>Terminal</strong>). Do not use Command Prompt.
-      </p>
-      {requirementsAlert("PowerShell window", "Settings > System > Power and Sleep")}
-    </>
-  );
-
-  const maskedCmd = tokens ? buildMaskedCmd(tokens, os) : null;
 
   return (
     <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
@@ -996,51 +925,43 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
             {/* Steps */}
             <div style={{ padding: "18px 20px 22px", display: "flex", flexDirection: "column", gap: 16, overflowX: "hidden" }}>
 
-              {/* Prerequisite */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 11px", background: "rgba(0,0,0,0.03)", borderRadius: 9, border: "1px solid rgba(0,0,0,0.07)" }}>
-                <span style={{ fontSize: 13 }}>📦</span>
-                <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>
-                  Requires <strong style={{ color: "var(--kk-ink)" }}>Node.js</strong> installed.{" "}
-                  <a href="https://nodejs.org" target="_blank" rel="noreferrer" style={{ color: "var(--kk-blue)", textDecoration: "none", fontWeight: 600 }}>Download at nodejs.org</a> if you don't have it yet.
-                </p>
-              </div>
-
-              {/* Step 1 */}
+              {/* Step 1 — Download */}
               <div style={{ display: "flex", gap: 11 }}>
                 <div style={NUM}>1</div>
-                <div style={{ flex: 1, minWidth: 0 }}>{os === "mac" ? step1Mac : step1Win}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 8px" }}>Download the setup file</p>
+                  <a href={`/api/wa-blast/installer?platform=${os === "mac" ? "mac" : "win"}`}
+                    style={{ textDecoration: "none", display: "block" }}>
+                    <button type="button" style={{
+                      width: "100%", padding: "10px 16px", borderRadius: 10, cursor: "pointer",
+                      background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
+                      border: "none", color: "#fff", fontSize: 13, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    }}>
+                      <Download style={{ width: 14, height: 14 }} />
+                      Download kakisewa-blaster{os === "mac" ? ".command" : ".bat"}
+                    </button>
+                  </a>
+                  <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "6px 0 0", lineHeight: 1.5 }}>
+                    Personal to your account. Do not share this file.
+                  </p>
+                </div>
               </div>
 
-              {/* Step 2 */}
+              {/* Step 2 — Run */}
               <div style={{ display: "flex", gap: 11 }}>
                 <div style={NUM}>2</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>Paste this command and press Enter</p>
-                  <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", margin: "0 0 6px" }}>First run downloads packages (~1 min). Runs instantly after that.</p>
-                  <div style={{ background: "#1D1D1F", borderRadius: 9, overflow: "hidden" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "9px 12px" }}>
-                      <Terminal style={{ width: 12, height: 12, color: "#A8FF78", flexShrink: 0, marginRight: 7 }} />
-                      <code style={{
-                        fontSize: 10.5, color: "#A8FF78", fontFamily: "monospace",
-                        flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                        display: "block",
-                      }}>
-                        {maskedCmd ?? "Generating your command..."}
-                      </code>
-                    </div>
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 10, color: "#6E6E73" }}>Personal to your account. Do not share.</span>
-                      <button type="button" onClick={copy} disabled={!tokens}
-                        style={{
-                          fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6,
-                          background: copied ? "rgba(168,255,120,0.18)" : "rgba(255,255,255,0.10)",
-                          border: "none", cursor: tokens ? "pointer" : "default",
-                          color: copied ? "#A8FF78" : "#AEAEB2",
-                        }}>
-                        {copied ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 4px" }}>
+                    Double-click the downloaded file
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: "0 0 0", lineHeight: 1.6 }}>
+                    {os === "mac"
+                      ? <>A terminal opens automatically. If macOS blocks it, right-click the file → <strong>Open</strong> → <strong>Open</strong>.</>
+                      : <>A command window opens automatically. If Windows shows a warning, click <strong>More info</strong> → <strong>Run anyway</strong>.</>
+                    }
+                  </p>
+                  {requirementsAlert(os === "mac" ? "System Settings > Battery > Options" : "Settings > System > Power and Sleep")}
                 </div>
               </div>
 
@@ -1077,7 +998,7 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 13px", background: "var(--kk-bg)", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)" }}>
                       <Loader2 style={{ width: 14, height: 14, color: "var(--kk-ink-faint)", animation: "spin 1s linear infinite", flexShrink: 0 }} />
-                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0 }}>QR appears here automatically once the command runs.</p>
+                      <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0 }}>QR appears here once the setup file runs.</p>
                     </div>
                   )}
                 </div>
@@ -1236,7 +1157,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
           borderRadius: 8, padding: "8px 11px" }}>
           <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
           <p style={{ fontSize: 12, color: "#C47800", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
-            Auto-blast is offline. Your laptop may be asleep or Terminal was closed. Reopen Terminal or Command Prompt and paste the command again to resume.
+            Auto-blast is offline. Your laptop may be asleep or the terminal window was closed. Double-click the setup file again to resume.
           </p>
         </div>
       )}
