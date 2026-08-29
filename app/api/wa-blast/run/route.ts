@@ -15,29 +15,30 @@ echo "  kakisewa WA Blaster"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if ! command -v node &>/dev/null; then
-  echo "Node.js not found. Installing automatically..."
-  if command -v brew &>/dev/null; then
-    brew install node
-    export PATH="$(brew --prefix)/bin:$PATH"
-  else
-    NTMP=$(mktemp -d)
-    echo "Downloading Node.js installer (~30s)..."
-    curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0.pkg" -o "$NTMP/node.pkg"
-    echo "Installing Node.js. Your Mac may ask for your password."
-    sudo installer -pkg "$NTMP/node.pkg" -target /
-    rm -rf "$NTMP"
-    export PATH="/usr/local/bin:$PATH"
-  fi
-  if ! command -v node &>/dev/null; then
-    echo ""
-    echo "Could not install Node.js automatically."
-    echo "Please install it from https://nodejs.org and run this command again."
-    exit 1
-  fi
-  echo ""
+# Find or install Node.js — no password required
+KAKI_NODE_HOME="$HOME/.kakisewa/node"
+if [ -f "$KAKI_NODE_HOME/bin/node" ]; then
+  export PATH="$KAKI_NODE_HOME/bin:$PATH"
+elif command -v node &>/dev/null; then
+  : # system node is fine
+elif command -v brew &>/dev/null; then
+  echo "Installing Node.js via Homebrew..."
+  brew install node
+  export PATH="$(brew --prefix)/bin:$PATH"
+else
+  echo "Downloading Node.js (no password needed)..."
+  ARCH=$(uname -m)
+  [ "$ARCH" = "arm64" ] && NARCH="arm64" || NARCH="x64"
+  mkdir -p "$KAKI_NODE_HOME"
+  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0-darwin-${NARCH}.tar.gz" \
+    | tar -xz -C "$KAKI_NODE_HOME" --strip-components=1
+  export PATH="$KAKI_NODE_HOME/bin:$PATH"
 fi
 
+if ! command -v node &>/dev/null; then
+  echo "Could not find or install Node.js. Visit https://nodejs.org and try again."
+  exit 1
+fi
 echo "Node.js $(node --version) ready."
 echo ""
 
@@ -72,17 +73,24 @@ Write-Host "  kakisewa WA Blaster"
 Write-Host "================================================"
 Write-Host ""
 
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-  Write-Host "Node.js not found. Installing automatically..."
-  winget install OpenJS.NodeJS.LTS -e --silent --accept-package-agreements --accept-source-agreements
-  if ($LASTEXITCODE -ne 0) {
-    Write-Host "Could not install Node.js automatically. Please visit https://nodejs.org and install it, then run this command again."
-    exit 1
+$kakinode = "$env:USERPROFILE\.kakisewa\node"
+if (Get-Command node -ErrorAction SilentlyContinue) {
+  # system node available
+} elseif (Test-Path "$kakinode\node.exe") {
+  $env:PATH = "$kakinode;$env:PATH"
+} else {
+  Write-Host "Downloading Node.js (no admin rights needed)..."
+  $nodeZip = "$env:TEMP\node.zip"
+  Invoke-WebRequest "https://nodejs.org/dist/v20.18.0/node-v20.18.0-win-x64.zip" -OutFile $nodeZip
+  Expand-Archive $nodeZip -DestinationPath "$env:USERPROFILE\.kakisewa" -Force
+  if (Test-Path "$env:USERPROFILE\.kakisewa\node-v20.18.0-win-x64") {
+    Rename-Item "$env:USERPROFILE\.kakisewa\node-v20.18.0-win-x64" "node"
   }
-  $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
+  Remove-Item $nodeZip -ErrorAction SilentlyContinue
+  $env:PATH = "$kakinode;$env:PATH"
   if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "Node.js installed. Please close this window, reopen PowerShell, and run the command again."
-    exit 0
+    Write-Host "Could not install Node.js. Visit https://nodejs.org and install manually, then run again."
+    exit 1
   }
   Write-Host "Node.js installed!"
   Write-Host ""

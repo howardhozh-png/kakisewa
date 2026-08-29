@@ -16,26 +16,41 @@ echo "  kakisewa WA Blaster"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Install Node.js if missing
-if ! command -v node &>/dev/null; then
-  echo "Node.js not found. Installing automatically..."
-  if command -v brew &>/dev/null; then
-    brew install node
-  else
-    TMPDIR=$(mktemp -d)
-    echo "Downloading Node.js installer (~30s)..."
-    curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0.pkg" -o "$TMPDIR/node.pkg"
-    echo "Installing. Your Mac may ask for your password."
-    sudo installer -pkg "$TMPDIR/node.pkg" -target /
-    rm -rf "$TMPDIR"
-    export PATH="/usr/local/bin:/usr/bin:$PATH"
-  fi
-  echo ""
+# Find or install Node.js — no password required
+KAKI_NODE_HOME="$HOME/.kakisewa/node"
+if [ -f "$KAKI_NODE_HOME/bin/node" ]; then
+  export PATH="$KAKI_NODE_HOME/bin:$PATH"
+elif command -v node &>/dev/null; then
+  : # system node is fine
+elif command -v brew &>/dev/null; then
+  echo "Installing Node.js via Homebrew..."
+  brew install node
+  export PATH="$(brew --prefix)/bin:$PATH"
+else
+  echo "Downloading Node.js (no password needed)..."
+  ARCH=$(uname -m)
+  [ "$ARCH" = "arm64" ] && NARCH="arm64" || NARCH="x64"
+  mkdir -p "$KAKI_NODE_HOME"
+  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0-darwin-${NARCH}.tar.gz" \\
+    | tar -xz -C "$KAKI_NODE_HOME" --strip-components=1
+  export PATH="$KAKI_NODE_HOME/bin:$PATH"
 fi
+
+if ! command -v node &>/dev/null; then
+  echo "Could not find or install Node.js. Visit https://nodejs.org and try again."
+  exit 1
+fi
+echo "Node.js $(node --version) ready."
+echo ""
 
 mkdir -p "$HOME/.kakisewa" && cd "$HOME/.kakisewa"
 echo "Downloading latest blaster..."
 curl -sfL "${BLASTER_URL}" -o blaster.mjs
+FIRST=$(head -c 1 blaster.mjs 2>/dev/null)
+if [ ! -s blaster.mjs ] || [ "$FIRST" = "<" ] || [ "$FIRST" = "{" ]; then
+  echo "Download failed. Check your connection and try again."
+  exit 1
+fi
 
 if [ ! -d node_modules ]; then
   echo "Installing packages (first time only, ~1 min)..."
@@ -56,29 +71,42 @@ echo   kakisewa WA Blaster
 echo ================================================
 echo.
 
+set "KAKI_NODE=%USERPROFILE%\\.kakisewa\\node"
+
+where node >nul 2>&1
+if %errorlevel% equ 0 goto node_ready
+
+if exist "%KAKI_NODE%\\node.exe" (
+    set "PATH=%KAKI_NODE%;%PATH%"
+    goto node_ready
+)
+
+echo Node.js not found. Downloading (no admin rights needed)...
+if not exist "%USERPROFILE%\\.kakisewa" mkdir "%USERPROFILE%\\.kakisewa"
+powershell -NoProfile -Command "& { $url='https://nodejs.org/dist/v20.18.0/node-v20.18.0-win-x64.zip'; $zip=$env:TEMP+'\\node.zip'; Invoke-WebRequest $url -OutFile $zip; Expand-Archive $zip -DestinationPath ($env:USERPROFILE+'\\.kakisewa') -Force; if (Test-Path ($env:USERPROFILE+'\\.kakisewa\\node-v20.18.0-win-x64')) { Rename-Item ($env:USERPROFILE+'\\.kakisewa\\node-v20.18.0-win-x64') 'node' }; Remove-Item $zip -ErrorAction SilentlyContinue }"
+set "PATH=%KAKI_NODE%;%PATH%"
 where node >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Node.js not found. Installing automatically...
-    winget install OpenJS.NodeJS.LTS -e --silent --accept-package-agreements --accept-source-agreements
-    if %errorlevel% neq 0 (
-        echo.
-        echo Could not install Node.js automatically.
-        echo Please visit https://nodejs.org and install Node.js manually.
-        echo Then close this window and double-click this file again.
-        pause
-        exit /b 1
-    )
-    echo.
-    echo Node.js installed! Close this window and double-click this file again.
+    echo Could not install Node.js. Visit https://nodejs.org and install it manually.
     pause
-    exit /b 0
+    exit /b 1
 )
+echo Node.js installed!
+
+:node_ready
+echo Node.js ready.
+echo.
 
 if not exist "%USERPROFILE%\\.kakisewa" mkdir "%USERPROFILE%\\.kakisewa"
 cd /d "%USERPROFILE%\\.kakisewa"
 
 echo Downloading latest blaster...
 curl -sfL "${BLASTER_URL}" -o blaster.mjs
+if not exist blaster.mjs (
+    echo Download failed. Check your connection and try again.
+    pause
+    exit /b 1
+)
 
 if not exist node_modules (
     echo Installing packages (first time only, ~1 min)...
