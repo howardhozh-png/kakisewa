@@ -156,7 +156,8 @@ function buildLiveMessage(agentProfile, lead) {
     ? (lead.unit ? `${lead.property_name}, Unit ${lead.unit}` : lead.property_name)
     : "your property";
   const listingForm = lead.intake_token ? `${SITE_URL}/o/${lead.intake_token}` : SITE_URL;
-  return resolveMsg(templateBody, {
+  const ownerFirst = lead.owner_name ? lead.owner_name.trim().split(/\s+/)[0] : null;
+  const body = resolveMsg(templateBody, {
     firstName,
     ownerName: lead.owner_name ?? "",
     renNumber,
@@ -168,6 +169,8 @@ function buildLiveMessage(agentProfile, lead) {
     agentName: name,
     agencyLine: agency ? ` from ${agency}` : "",
   });
+  // Prepend owner greeting when name is available
+  return ownerFirst ? `Hi ${ownerFirst},\n\n${body}` : body;
 }
 
 // ── Queue operations ───────────────────────────────────────────────────────────
