@@ -1600,7 +1600,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                 <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 120, color: "var(--kk-accent)" }}>Pipeline</th>
                 <th className="px-2 py-2 lg:py-3 text-left text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide" style={{ width: 95, color: "var(--kk-accent)" }}>Status</th>
                 <th className="hidden lg:table-cell px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" style={{ width: 84, color: "var(--kk-accent)" }}>Last sent</th>
-                <th className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ width: 68, background: "var(--kk-surface)" }}></th>
+                <th className="sticky right-0 lg:static py-2 lg:py-3" style={{ width: 112, background: "var(--kk-surface)", paddingLeft: 4, paddingRight: 4 }}></th>
               </tr>
             </thead>
             <tbody>
@@ -1744,7 +1744,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                     </td>
 
                     {/* Action */}
-                    <td className="sticky right-0 lg:static px-2 py-2 lg:py-3" style={{ background: "var(--kk-surface)", width: isDeleted ? 180 : undefined }} onClick={(e) => e.stopPropagation()}>
+                    <td className="sticky right-0 lg:static py-2 lg:py-3" style={{ background: "var(--kk-surface)", width: isDeleted ? 180 : undefined, paddingLeft: 4, paddingRight: 4 }} onClick={(e) => e.stopPropagation()}>
                       {isDeleted ? (
                         <div className="flex items-center gap-1.5 justify-end">
                           {!isHardDeleteConfirming ? (
@@ -1798,21 +1798,21 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); router.push(`/existing-listing?owner_lead_id=${lead.id}`); }}
-                              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                              className="rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", width: 32, height: 32, flexShrink: 0 }}
                               title="Go to card"
                             >
-                              <ArrowRight className="w-3.5 h-3.5" />
+                              <ArrowRight className="w-4 h-4" />
                             </button>
                           ) : (status === "listed" || status === "rented") ? (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); router.push(`/my-listing?highlight=${lead.id}`); }}
-                              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                              className="rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", width: 32, height: 32, flexShrink: 0 }}
                               title="Go to card"
                             >
-                              <ArrowRight className="w-3.5 h-3.5" />
+                              <ArrowRight className="w-4 h-4" />
                             </button>
                           ) : (
                             <>
@@ -1820,51 +1820,51 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                                 <button
                                   type="button"
                                   onClick={async (e) => { e.stopPropagation(); await handleReactivate(lead.id); }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                                  className="rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", width: 32, height: 32, flexShrink: 0 }}
                                   title="Move to My Listing"
                                 >
-                                  <RotateCcw className="w-3.5 h-3.5" />
+                                  <RotateCcw className="w-4 h-4" />
                                 </button>
                               )}
                               <button
                                 type="button"
                                 disabled={queueing === lead.id}
                                 onClick={(e) => handleQueueToggle(lead, e)}
-                                className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
+                                className="rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
                                 style={queuedLeadIds.has(lead.id)
-                                  ? { background: "var(--kk-blue)", color: "#fff" }
-                                  : { background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }
+                                  ? { background: "var(--kk-blue)", color: "#fff", width: 32, height: 32, flexShrink: 0 }
+                                  : { background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", width: 32, height: 32, flexShrink: 0 }
                                 }
                                 title={queuedLeadIds.has(lead.id) ? "In WA blast queue — click to remove" : "Add to WA blast queue"}
                               >
                                 {queueing === lead.id
-                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  : <ListPlus className="w-3.5 h-3.5" />
+                                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                                  : <ListPlus className="w-4 h-4" />
                                 }
                               </button>
                               <button
                                 type="button"
                                 disabled={sending === lead.id}
                                 onClick={(e) => handleSend(lead, e)}
-                                className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
-                                style={{ background: "var(--kk-whatsapp)", color: "#fff" }}
+                                className="rounded-full flex items-center justify-center transition-opacity hover:opacity-80 disabled:opacity-50"
+                                style={{ background: "var(--kk-whatsapp)", color: "#fff", width: 32, height: 32, flexShrink: 0 }}
                                 title="Send WhatsApp"
                               >
                                 {sending === lead.id
-                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  : <WhatsAppIcon className="w-3.5 h-3.5" />
+                                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                                  : <WhatsAppIcon className="w-4 h-4" />
                                 }
                               </button>
                               {lead.owner_phone && (
                                 <a
                                   href={`tel:${toE164Display(lead.owner_phone)}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)" }}
+                                  className="rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                                  style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", width: 32, height: 32, flexShrink: 0 }}
                                   title="Call"
                                 >
-                                  <Phone className="w-3.5 h-3.5" />
+                                  <Phone className="w-4 h-4" />
                                 </a>
                               )}
                             </>
