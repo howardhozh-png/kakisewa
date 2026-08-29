@@ -1205,56 +1205,42 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       {/* Setup guide card — primary CTA */}
       <HowToSetupDialog />
 
-      {/* 4 things to note */}
-      <div style={{ borderRadius: 12, border: "1px solid rgba(255,149,0,0.28)", overflow: "hidden" }}>
-        <div style={{
-          background: "rgba(255,149,0,0.11)", padding: "9px 13px",
-          borderBottom: "1px solid rgba(255,149,0,0.2)",
-          display: "flex", alignItems: "center", gap: 7,
-        }}>
-          <span style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>⚠️</span>
-          <p style={{ fontSize: 12, fontWeight: 700, color: "#92400E", margin: 0 }}>
-            Blasting stops if any of these 4 are off
+      {/* Requirements — 5 items */}
+      <div style={{
+        borderLeft: "3px solid rgba(255,149,0,0.5)",
+        borderRadius: "0 10px 10px 0",
+        border: "1px solid rgba(255,149,0,0.18)",
+        borderLeftWidth: 3,
+        background: "rgba(255,149,0,0.025)",
+        overflow: "hidden",
+      }}>
+        <div style={{ padding: "8px 13px", borderBottom: "0.5px solid rgba(0,0,0,0.07)" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)", margin: 0 }}>
+            Blasting stops if any of these are off
           </p>
         </div>
-        <div style={{ padding: "11px 13px 12px", display: "flex", flexDirection: "column", gap: 9 }}>
-          {[
-            { n: 1, icon: "🖥️", title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
-            { n: 2, icon: "😴", title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
-            { n: 3, icon: "🔌", title: "Keep laptop open and plugged in", desc: "Closing the lid suspends the blaster process." },
-            { n: 4, icon: "📱", title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
-          ].map(({ n, icon, title, desc }) => (
-            <div key={n} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1,
-                background: "rgba(255,149,0,0.18)", color: "#92400E",
-                fontSize: 10, fontWeight: 800,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>{n}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "#78350F", margin: "0 0 1px" }}>
-                  {icon} {title}
-                </p>
-                <p style={{ fontSize: 11, color: "#92400E", opacity: 0.85, margin: 0, lineHeight: 1.55 }}>{desc}</p>
-              </div>
+        {[
+          { n: 1, title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
+          { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
+          { n: 3, title: "Keep laptop open and plugged in", desc: "Closing the lid suspends the blaster." },
+          { n: 4, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
+          { n: 5, title: "Keep message volume low", desc: "WhatsApp may still block your number. Same risk as sending manually." },
+        ].map(({ n, title, desc }, i) => (
+          <div key={n} style={{
+            display: "flex", gap: 11, padding: "9px 13px",
+            borderTop: i > 0 ? "0.5px solid rgba(0,0,0,0.06)" : "none",
+          }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: "#D97706",
+              minWidth: 14, flexShrink: 0, paddingTop: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}>{n}</span>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>{title}</p>
+              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{desc}</p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Risk callout */}
-      <div style={{
-        display: "flex", alignItems: "flex-start", gap: 9,
-        borderLeft: "3px solid rgba(255,59,48,0.45)",
-        background: "rgba(255,59,48,0.04)",
-        borderRadius: "0 8px 8px 0",
-        padding: "9px 12px",
-      }}>
-        <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.3 }}>⚠️</span>
-        <p style={{ fontSize: 11.5, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55 }}>
-          <strong style={{ color: "var(--kk-ink)", fontWeight: 700 }}>WhatsApp may still block your number.</strong>{" "}
-          Keep volume low and messages personal. Same risk as sending manually.
-        </p>
+          </div>
+        ))}
       </div>
 
       {/* Send windows */}
