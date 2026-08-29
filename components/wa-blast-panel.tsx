@@ -1162,9 +1162,9 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
 
 const REQ_ITEMS = [
   { n: 1, title: "Keep laptop open and plugged in", desc: "Closing the lid or unplugging suspends the blaster." },
-  { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
+  { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Windows: Settings > System > Power and Sleep. Set sleep to Never." },
   { n: 3, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
-  { n: 4, title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
+  { n: 4, title: "Keep Terminal (Mac) or PowerShell (Windows) open", desc: "Closing the window stops the blast immediately." },
   { n: 5, title: "Disclaimer", desc: "WhatsApp may still block your number. We're helping you execute the outreach — the same risk applies whether you send manually or through kakisewa." },
 ];
 
