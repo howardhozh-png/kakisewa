@@ -30,7 +30,7 @@ else
   ARCH=$(uname -m)
   [ "$ARCH" = "arm64" ] && NARCH="arm64" || NARCH="x64"
   mkdir -p "$KAKI_NODE_HOME"
-  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0-darwin-\${NARCH}.tar.gz" \
+  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v22.17.1-darwin-\${NARCH}.tar.gz" \
     | tar -xz -C "$KAKI_NODE_HOME" --strip-components=1
   export PATH="$KAKI_NODE_HOME/bin:$PATH"
 fi
@@ -51,9 +51,9 @@ if [ ! -s blaster.mjs ] || [ "$FIRST" = "<" ] || [ "$FIRST" = "{" ]; then
   exit 1
 fi
 
-if [ ! -d node_modules ]; then
+if [ ! -d node_modules ] || [ ! -d node_modules/ws ]; then
   echo "Installing packages (first time only, ~1 min)..."
-  npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent
+  npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js ws --silent
 fi
 
 echo ""
@@ -81,10 +81,10 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
 } else {
   Write-Host "Downloading Node.js (no admin rights needed)..."
   $nodeZip = "$env:TEMP\node.zip"
-  Invoke-WebRequest "https://nodejs.org/dist/v20.18.0/node-v20.18.0-win-x64.zip" -OutFile $nodeZip
+  Invoke-WebRequest "https://nodejs.org/dist/v20.18.0/node-v22.17.1-win-x64.zip" -OutFile $nodeZip
   Expand-Archive $nodeZip -DestinationPath "$env:USERPROFILE\.kakisewa" -Force
-  if (Test-Path "$env:USERPROFILE\.kakisewa\node-v20.18.0-win-x64") {
-    Rename-Item "$env:USERPROFILE\.kakisewa\node-v20.18.0-win-x64" "node"
+  if (Test-Path "$env:USERPROFILE\.kakisewa\node-v22.17.1-win-x64") {
+    Rename-Item "$env:USERPROFILE\.kakisewa\node-v22.17.1-win-x64" "node"
   }
   Remove-Item $nodeZip -ErrorAction SilentlyContinue
   $env:PATH = "$kakinode;$env:PATH"
@@ -117,9 +117,9 @@ if (-not $firstChar -or $firstChar[0] -eq '<' -or $firstChar[0] -eq '{') {
   exit 1
 }
 
-if (-not (Test-Path node_modules)) {
+if (-not (Test-Path node_modules\ws)) {
   Write-Host "Installing packages (first time only, ~1 min)..."
-  npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js --silent
+  npm install @whiskeysockets/baileys qrcode-terminal qrcode @supabase/supabase-js ws --silent
 }
 
 Write-Host ""

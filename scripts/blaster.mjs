@@ -29,6 +29,16 @@ import { createClient } from "@supabase/supabase-js";
 import { join } from "path";
 import os from "os";
 
+// Node.js < 22 has no stable native WebSocket — pass ws as transport to Supabase
+let wsTransport = null;
+if (parseInt(process.versions.node) < 22) {
+  try {
+    const { default: ws } = await import("ws");
+    wsTransport = ws;
+  } catch { /* ws not installed — realtime will fail on Node 20 */ }
+}
+const supabaseRealtime = wsTransport ? { realtime: { transport: wsTransport } } : {};
+
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const SUPABASE_URL  = "https://binqdtfvyhipgwpiarkb.supabase.co";
@@ -52,7 +62,7 @@ let USER_ID;
 
 if (SERVICE_KEY) {
   // Developer / admin mode — full access, USER_ID from arg/env/default
-  db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+  db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false }, ...supabaseRealtime });
   USER_ID = (() => {
     const idx = process.argv.indexOf("--user-id");
     if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1];
@@ -61,7 +71,7 @@ if (SERVICE_KEY) {
   })();
 } else {
   // User mode — authenticate with personal token
-  db = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false } });
+  db = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false }, ...supabaseRealtime });
   const { data, error } = await db.auth.setSession({
     access_token: KAKI_TOKEN,
     refresh_token: KAKI_REFRESH || KAKI_TOKEN,
