@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { ReferralBanner } from "@/components/referral-banner";
 import { BetaSurveyModal } from "@/components/beta-survey-modal";
+import { AnnouncementCard } from "@/components/announcement-card";
+import { getUnreadAnnouncements } from "@/lib/announcements";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +96,8 @@ export default async function HomePage() {
     getPerformanceSummary(),
     getUpcomingViewings(14),
   ]);
+  // Reuse cached agent profile -- getUnreadAnnouncements reads profile data already in memory
+  const unreadAnnouncements = await getUnreadAnnouncements(agent).catch(() => []);
   const monthEvents = spansNextMonth ? [...monthEventsBase, ...nextMonthEvents] : monthEventsBase;
   const firstName = agent.name ? agent.name.trim().split(" ")[0] : null;
 
@@ -113,6 +117,7 @@ export default async function HomePage() {
     <div className="mx-auto max-w-[1440px] px-4 lg:px-8 py-6 lg:py-16">
       <BetaSurveyModal surveyCompleted={!!agent.survey_completed_at || !!agent.is_test_account} />
       <ReferralBanner />
+      <AnnouncementCard announcements={unreadAnnouncements} />
       <ActiveState
         firstName={firstName}
         stats={stats}

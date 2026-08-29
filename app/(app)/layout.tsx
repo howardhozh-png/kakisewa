@@ -19,6 +19,7 @@ import { FaqChatbot } from "@/components/faq-chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/feedback-button";
 import { getAgentProfile, recordLoginStreak, countPushSubscriptions, countLifecycleTenancies, getMostRecentTenancyId } from "@/lib/db";
+import { getUnreadAnnouncements, listAnnouncements } from "@/lib/announcements";
 import { getTotalCardCount } from "@/lib/plan-caps";
 import { createClient } from "@/lib/supabase/server";
 import { PushNudge } from "@/components/push-nudge";
@@ -32,9 +33,11 @@ import { Suspense } from "react";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const agent = await getAgentProfile();
   if (agent.id === 0) redirect("/login");
-  const [pushSubCount, lifecycleTenancyCount] = await Promise.all([
+  const [pushSubCount, lifecycleTenancyCount, unreadAnnouncements, allAnnouncements] = await Promise.all([
     countPushSubscriptions().catch(() => null),
     countLifecycleTenancies().catch(() => null),
+    getUnreadAnnouncements(agent).catch(() => []),
+    listAnnouncements().catch(() => []),
   ]);
   const contractsComplete = (lifecycleTenancyCount ?? 0) > 0;
   const tourPending = contractsComplete && !agent.onboarding_tour_completed_at;
@@ -100,7 +103,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="kk-top-bar sticky top-0 z-50">
           {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} urgent={cardNudgeUrgent} />}
           {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={false} currentCardCount={trialCardCount} />}
-          <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs />
+          <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs unreadAnnouncements={unreadAnnouncements} allAnnouncements={allAnnouncements} />
           <PwaInstallBanner />
         </div>
 

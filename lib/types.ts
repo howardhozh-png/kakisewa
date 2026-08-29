@@ -225,7 +225,22 @@ export interface AgentProfile {
   board_passcode?: string | null;
   survey_response?: Record<string, unknown> | null;
   is_test_account?: boolean | null;
+  is_beta_user?: boolean | null;
   onboarding_tour_completed_at?: string | null;
+  dismissed_announcement_ids?: string[] | null;
+}
+
+export interface Announcement {
+  id: string;
+  created_at: string;
+  title: string;
+  body: string;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  target_status?: string[] | null;
+  target_plan?: string[] | null;
+  send_push: boolean;
+  published_at?: string | null;
 }
 
 export interface ProfileStrengthItem {

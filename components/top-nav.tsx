@@ -6,6 +6,8 @@ import { useRef, useState, useEffect, useTransition } from "react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { CreditCard, HelpCircle, LogOut, User, ChevronDown, X, Check, Loader2, MessageCircle, Camera, Menu, Compass, ShieldCheck } from "lucide-react";
+import { AnnouncementBell } from "@/components/announcement-panel";
+import type { Announcement } from "@/lib/types";
 import { TOUR_EVENT } from "@/components/spotlight-tour";
 import { DEMO_EVENT } from "@/components/onboarding-demo-dialog";
 import { THEMES, getTheme, applyTheme, type Theme } from "@/components/accent-provider";
@@ -642,11 +644,13 @@ interface TopNavProps {
   isAdmin?: boolean;
   trialDaysLeft?: number | null;
   hideTabs?: boolean;
+  unreadAnnouncements?: Announcement[];
+  allAnnouncements?: Announcement[];
 }
 
 type ActiveModal = "account" | "billing" | null;
 
-export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps) {
+export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnouncements = [], allAnnouncements = [] }: TopNavProps) {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -825,6 +829,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
 
           {/* Right cluster — desktop only */}
           <div className="kk-topnav-desktop ml-auto items-center gap-3">
+            <AnnouncementBell unreadCount={unreadAnnouncements.length} announcements={unreadAnnouncements} allAnnouncements={allAnnouncements} />
             <NotificationBell />
             <TierBadge plan={agent.subscription_plan} isOnTrial={trialDaysLeft != null && trialDaysLeft > 0} isAdmin={isAdmin} isBeta={agent.subscription_status === "beta"} />
 
@@ -885,6 +890,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs }: TopNavProps)
 
           {/* Right cluster — mobile only */}
           <div className="kk-topnav-hamburger ml-auto items-center gap-1">
+            <AnnouncementBell unreadCount={unreadAnnouncements.length} announcements={unreadAnnouncements} allAnnouncements={allAnnouncements} />
             <NotificationBell />
             <button
               ref={mobileBtnRef}

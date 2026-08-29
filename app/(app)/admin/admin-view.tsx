@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Plus, Copy, Check, ExternalLink, Edit2, ChevronRight, CheckCircle2,
   ChevronUp, ChevronDown, Search, X as XIcon, Users, Activity,
@@ -1114,7 +1114,7 @@ function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initi
   links: LinkRow[]; feedback: FeedbackRow[]; invites: InviteRow[]; waitlist: WaitlistRow[];
   surveyResponses: SurveyRow[]; openFeedbackCount: number;
 }) {
-  const [sub, setSub] = useState<"links" | "feedback" | "survey" | "invites" | "waitlist" | "dev">("links");
+  const [sub, setSub] = useState<"links" | "feedback" | "survey" | "invites" | "waitlist" | "dev" | "announcements">("links");
   const [links, setLinks] = useState<LinkRow[]>(initialLinks);
   const [feedback, setFeedback] = useState<FeedbackRow[]>(initialFeedback);
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites);
@@ -1178,6 +1178,7 @@ function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initi
   }
 
   const subTabs: [typeof sub, string][] = [
+    ["announcements", "Announcements"],
     ["links", `Links (${links.length})`],
     ["feedback", `Feedback${openFeedbackCount ? ` (${openFeedbackCount})` : ""}`],
     ["survey", `Survey (${surveyResponses.length})`],
@@ -1459,6 +1460,172 @@ function OpsTab({ links: initialLinks, feedback: initialFeedback, invites: initi
           }} disabled={resetting} className="px-4 py-2 rounded-xl font-semibold text-[13px] transition-opacity hover:opacity-80 disabled:opacity-40" style={{ background: "#DC2626", color: "#fff" }}>
             {resetting ? "Resetting…" : "Reset my account"}
           </button>
+        </div>
+      )}
+      {sub === "announcements" && <AnnouncementsSubTab />}
+    </div>
+  );
+}
+
+// ─── Announcements Sub-Tab ─────────────────────────────────────────────────────
+
+type AnnRow = { id: string; title: string; body: string; cta_label: string | null; cta_url: string | null; target_status: string[] | null; target_plan: string[] | null; send_push: boolean; published_at: string | null; created_at: string };
+
+const STATUS_OPTIONS = ["trial", "beta", "active"];
+const PLAN_OPTIONS = ["silver", "gold", "platinum", "elite"];
+
+function AnnouncementsSubTab() {
+  const [list, setList] = useState<AnnRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
+  const [ctaUrl, setCtaUrl] = useState("");
+  const [targetStatus, setTargetStatus] = useState<string[]>([]);
+  const [targetPlan, setTargetPlan] = useState<string[]>([]);
+  const [sendPush, setSendPush] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [publishing, setPublishing] = useState<string | null>(null);
+  const [readCounts, setReadCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch("/api/admin/announcements").then(r => r.json()).then(d => { setList(d); setLoading(false); });
+  }, []);
+
+  function toggleArr(arr: string[], set: (v: string[]) => void, val: string) {
+    set(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
+  }
+
+  async function handleCreate() {
+    if (!title.trim() || !body.trim()) return;
+    setCreating(true);
+    const res = await fetch("/api/admin/announcements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: title.trim(), body: body.trim(),
+        cta_label: ctaLabel.trim() || undefined,
+        cta_url: ctaUrl.trim() || undefined,
+        target_status: targetStatus.length ? targetStatus : undefined,
+        target_plan: targetPlan.length ? targetPlan : undefined,
+        send_push: sendPush,
+      }),
+    });
+    if (res.ok) {
+      const ann = await res.json();
+      setList(prev => [ann, ...prev]);
+      setTitle(""); setBody(""); setCtaLabel(""); setCtaUrl(""); setTargetStatus([]); setTargetPlan([]); setSendPush(false);
+      toast.success("Draft saved");
+    } else toast.error("Failed to create");
+    setCreating(false);
+  }
+
+  async function handlePublish(id: string) {
+    setPublishing(id);
+    const res = await fetch(`/api/admin/announcements/${id}`, { method: "PATCH" });
+    if (res.ok) {
+      const { read_count } = await res.json();
+      setList(prev => prev.map(a => a.id === id ? { ...a, published_at: new Date().toISOString() } : a));
+      setReadCounts(prev => ({ ...prev, [id]: read_count }));
+      toast.success("Published and push sent to targets");
+    } else toast.error("Failed to publish");
+    setPublishing(null);
+  }
+
+  const inputStyle = { fontSize: 13, border: "1px solid var(--kk-line-strong)", borderRadius: 10, padding: "8px 12px", background: "var(--kk-bg)", color: "var(--kk-ink)", width: "100%", outline: "none" };
+
+  return (
+    <div className="space-y-6">
+      {/* Create form */}
+      <div className="rounded-2xl p-5 space-y-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+        <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>New announcement</p>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" style={inputStyle} />
+        <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Body — describe what's new" rows={3} style={{ ...inputStyle, resize: "vertical" }} />
+        <div className="flex gap-3 flex-wrap">
+          <input value={ctaLabel} onChange={e => setCtaLabel(e.target.value)} placeholder="CTA label (optional)" style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+          <input value={ctaUrl} onChange={e => setCtaUrl(e.target.value)} placeholder="CTA URL e.g. /wa-blast" style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+        </div>
+
+        {/* Targeting */}
+        <div className="space-y-2">
+          <p className="text-[11px] font-600 uppercase tracking-widest" style={{ color: "var(--kk-ink-faint)" }}>Who to notify — status</p>
+          <div className="flex gap-2 flex-wrap">
+            {STATUS_OPTIONS.map(s => (
+              <button key={s} onClick={() => toggleArr(targetStatus, setTargetStatus, s)}
+                className="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all capitalize"
+                style={{ background: targetStatus.includes(s) ? "var(--kk-ink)" : "var(--kk-surface-2)", color: targetStatus.includes(s) ? "#fff" : "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
+                {s}
+              </button>
+            ))}
+            <span className="text-[11px] self-center" style={{ color: "var(--kk-ink-faint)" }}>{targetStatus.length === 0 ? "(all statuses)" : ""}</span>
+          </div>
+
+          <p className="text-[11px] font-600 uppercase tracking-widest mt-3" style={{ color: "var(--kk-ink-faint)" }}>Plan tier</p>
+          <div className="flex gap-2 flex-wrap">
+            {PLAN_OPTIONS.map(p => (
+              <button key={p} onClick={() => toggleArr(targetPlan, setTargetPlan, p)}
+                className="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all capitalize"
+                style={{ background: targetPlan.includes(p) ? "var(--kk-ink)" : "var(--kk-surface-2)", color: targetPlan.includes(p) ? "#fff" : "var(--kk-ink-mute)", border: "1px solid var(--kk-line)" }}>
+                {p}
+              </button>
+            ))}
+            <span className="text-[11px] self-center" style={{ color: "var(--kk-ink-faint)" }}>{targetPlan.length === 0 ? "(all tiers)" : ""}</span>
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "var(--kk-ink)" }}>
+          <input type="checkbox" checked={sendPush} onChange={e => setSendPush(e.target.checked)} />
+          Send push notification on publish
+        </label>
+
+        <button onClick={handleCreate} disabled={creating || !title.trim() || !body.trim()}
+          className="px-4 py-2 rounded-xl font-semibold text-[13px] transition-opacity hover:opacity-85 disabled:opacity-40"
+          style={{ background: "var(--kk-ink)", color: "#fff" }}>
+          {creating ? "Saving..." : "Save draft"}
+        </button>
+      </div>
+
+      {/* List */}
+      {loading ? <p style={{ fontSize: 13, color: "var(--kk-ink-faint)" }}>Loading...</p> : list.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--kk-ink-faint)" }}>No announcements yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {list.map(ann => (
+            <div key={ann.id} className="rounded-2xl p-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+              <div className="flex items-start gap-3 mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{ann.title}</span>
+                    {ann.published_at ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--kk-green-soft, #DCFCE7)", color: "var(--kk-green-ink)" }}>Live</span>
+                    ) : (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink-faint)" }}>Draft</span>
+                    )}
+                  </div>
+                  <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{ann.body}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+                  {ann.target_status?.length ? `Status: ${ann.target_status.join(", ")}` : "All statuses"}{" "}
+                  {ann.target_plan?.length ? `| Tier: ${ann.target_plan.join(", ")}` : ""}
+                  {ann.send_push ? " | Push" : ""}
+                </span>
+                {ann.published_at && (
+                  <span className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+                    {readCounts[ann.id] !== undefined ? `${readCounts[ann.id]} dismissed` : ""}
+                  </span>
+                )}
+                {!ann.published_at && (
+                  <button onClick={() => handlePublish(ann.id)} disabled={publishing === ann.id}
+                    className="px-3 py-1 rounded-lg text-[12px] font-semibold transition-opacity hover:opacity-85 disabled:opacity-40"
+                    style={{ background: "var(--kk-blue)", color: "#fff" }}>
+                    {publishing === ann.id ? "Publishing..." : "Publish"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

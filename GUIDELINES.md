@@ -41,8 +41,14 @@ Key rules (memorise these):
 | Serif font | DM Serif Display — hero headings only, with `.serif` class |
 | Sans font | Inter — everything else |
 | Overline style | 11px · 600 · uppercase · ls 0.08em · `var(--kk-ink-faint)` |
-| No em/en dashes | Never in user-facing copy |
+| No em/en dashes | **NEVER, anywhere, ever** — not in copy, not in code comments, not in commit messages, not in docs |
 | Soft tints | Pair bg soft token with matching ink token (e.g. `--kk-green-soft` + `--kk-green-ink`) |
+
+---
+
+## Copy Rules (non-negotiable)
+
+- **No em dashes (—) or en dashes (–). Ever. Anywhere.** Not in UI copy, emails, comments, docs, commit messages, or any other text. Use a comma, period, or rewrite the sentence. This is an absolute rule with no exceptions.
 
 ---
 
