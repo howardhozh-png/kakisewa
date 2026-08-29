@@ -30,7 +30,7 @@ else
   ARCH=$(uname -m)
   [ "$ARCH" = "arm64" ] && NARCH="arm64" || NARCH="x64"
   mkdir -p "$KAKI_NODE_HOME"
-  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0-darwin-${NARCH}.tar.gz" \
+  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v20.18.0-darwin-\${NARCH}.tar.gz" \
     | tar -xz -C "$KAKI_NODE_HOME" --strip-components=1
   export PATH="$KAKI_NODE_HOME/bin:$PATH"
 fi
