@@ -200,7 +200,7 @@ async function fetchPending(limit) {
   return data ?? [];
 }
 
-async function markSent(queueId, ownerLeadId, phone) {
+async function markSent(queueId, ownerLeadId, phone, recipientName, body) {
   const now = new Date().toISOString();
   await db.from("wa_blast_queue").update({ status: "sent", sent_at: now }).eq("id", queueId);
   // Log to whatsapp_log
@@ -210,8 +210,10 @@ async function markSent(queueId, ownerLeadId, phone) {
     user_id: USER_ID,
     related_id: ownerLeadId,
     related_type: "owner_lead",
-    template: "owner_outreach_initial",
+    template: "owner_intake_form",
     recipient_phone: phone,
+    recipient_name: recipientName ?? null,
+    body: body ?? null,
     channel: "wa_blaster",
   });
   // Increment outreach_count and stamp last_outreach_at (drives "Last Sent" column)
@@ -379,12 +381,13 @@ async function poll() {
     try {
       // Resolve message from live template at send time so changes take effect immediately
       let message = row.message; // fallback: baked message stored at queue time
+      let lead = null;
       if (agentProfile) {
-        const lead = await fetchLeadData(row.owner_lead_id).catch(() => null);
+        lead = await fetchLeadData(row.owner_lead_id).catch(() => null);
         if (lead) message = buildLiveMessage(agentProfile, lead);
       }
       await sendWA(row.phone, message);
-      await markSent(row.id, row.owner_lead_id, row.phone);
+      await markSent(row.id, row.owner_lead_id, row.phone, lead?.owner_name ?? null, message);
       console.log(`  ✓ Sent to ${row.phone}  (lead: ${row.owner_lead_id})`);
       // Brief gap between messages to avoid WA rate limits
       if (rows.length > 1) await new Promise(r => setTimeout(r, 3000));
