@@ -1205,6 +1205,43 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       {/* Setup guide card — primary CTA */}
       <HowToSetupDialog />
 
+      {/* 4 things to note */}
+      <div style={{ borderRadius: 12, border: "1px solid rgba(255,149,0,0.28)", overflow: "hidden" }}>
+        <div style={{
+          background: "rgba(255,149,0,0.11)", padding: "9px 13px",
+          borderBottom: "1px solid rgba(255,149,0,0.2)",
+          display: "flex", alignItems: "center", gap: 7,
+        }}>
+          <span style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>⚠️</span>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "#92400E", margin: 0 }}>
+            4 things to note before you start
+          </p>
+        </div>
+        <div style={{ padding: "11px 13px 12px", display: "flex", flexDirection: "column", gap: 9 }}>
+          {[
+            { n: 1, icon: "🖥️", title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
+            { n: 2, icon: "😴", title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
+            { n: 3, icon: "🔌", title: "Keep laptop open and plugged in", desc: "Closing the lid suspends the blaster process." },
+            { n: 4, icon: "📱", title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
+          ].map(({ n, icon, title, desc }) => (
+            <div key={n} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1,
+                background: "rgba(255,149,0,0.18)", color: "#92400E",
+                fontSize: 10, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{n}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#78350F", margin: "0 0 1px" }}>
+                  {icon} {title}
+                </p>
+                <p style={{ fontSize: 11, color: "#92400E", opacity: 0.85, margin: 0, lineHeight: 1.55 }}>{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Risk callout */}
       <div style={{
         display: "flex", alignItems: "flex-start", gap: 9,
@@ -1295,33 +1332,6 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
 
       {/* WhatsApp link */}
       <SetupDialog initialSession={waSession} onSessionChange={onSessionChange} />
-
-      {/* Persistent requirements reminder — shown once WA is linked */}
-      {waLinked && (
-        <div style={{
-          display: "flex", flexDirection: "column", gap: 5,
-          padding: "9px 12px",
-          background: "rgba(255,149,0,0.06)",
-          border: "1px solid rgba(255,149,0,0.28)",
-          borderRadius: 9,
-        }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#92400E", margin: 0 }}>
-            Keep all three on or blasting stops:
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 14px" }}>
-            {[
-              { icon: "🖥️", label: "Terminal open" },
-              { icon: "😴", label: "Sleep: Never" },
-              { icon: "📱", label: "WA linked" },
-              { icon: "🔌", label: "Lid open" },
-            ].map(({ icon, label }) => (
-              <span key={label} style={{ fontSize: 11, color: "#78350F", display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 12 }}>{icon}</span> {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Offline / not-linked hints */}
       {blasterOffline && cfg.is_active && (
