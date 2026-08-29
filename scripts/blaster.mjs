@@ -105,7 +105,7 @@ const SITE_URL = "https://kakisewa.com";
 
 // Default body for owner_intake_form — mirrors lib/whatsapp-templates.ts
 const DEFAULT_INTAKE_BODY =
-`I'm {{firstName}} ({{renNumber}}) from {{company}}. If you're looking to rent out {{propertyName}}, I have quality tenants ready.
+`{{ownerGreeting}}I'm {{firstName}} ({{renNumber}}) from {{company}}. If you're looking to rent out {{propertyName}}, I have quality tenants ready.
 
 Please reply *YES* if you're interested and I'll get started right away, or *NO* if not.
 
@@ -157,7 +157,8 @@ function buildLiveMessage(agentProfile, lead) {
     : "your property";
   const listingForm = lead.intake_token ? `${SITE_URL}/o/${lead.intake_token}` : SITE_URL;
   const ownerFirst = lead.owner_name ? lead.owner_name.trim().split(/\s+/)[0] : null;
-  const body = resolveMsg(templateBody, {
+  return resolveMsg(templateBody, {
+    ownerGreeting: ownerFirst ? `Hi ${ownerFirst},\n\n` : "",
     firstName,
     ownerName: lead.owner_name ?? "",
     renNumber,
@@ -169,8 +170,6 @@ function buildLiveMessage(agentProfile, lead) {
     agentName: name,
     agencyLine: agency ? ` from ${agency}` : "",
   });
-  // Prepend owner greeting when name is available
-  return ownerFirst ? `Hi ${ownerFirst},\n\n${body}` : body;
 }
 
 // ── Queue operations ───────────────────────────────────────────────────────────

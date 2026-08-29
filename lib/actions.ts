@@ -1492,7 +1492,8 @@ export async function queueOwnerWaBlast(leadId: string): Promise<{ ok: boolean; 
   const firstName = (agent.name ?? "Your agent").trim().split(" ")[0];
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
   const ownerFirst = owner.owner_name ? owner.owner_name.trim().split(/\s+/)[0] : null;
-  const resolved = resolveTemplate("owner_intake_form", overrides, {
+  const message = resolveTemplate("owner_intake_form", overrides, {
+    ownerGreeting: ownerFirst ? `Hi ${ownerFirst},\n\n` : "",
     firstName,
     ownerName: owner.owner_name,
     renNumber: agent.ren_number ?? "",
@@ -1501,7 +1502,6 @@ export async function queueOwnerWaBlast(leadId: string): Promise<{ ok: boolean; 
     tenantSamplePack: `${siteUrl}/sample-pack`,
     listingForm: siteUrl, // blaster replaces with the real per-owner URL at send time
   });
-  const message = ownerFirst ? `Hi ${ownerFirst},\n\n${resolved}` : resolved;
 
   // Check not already queued
   const { data: existing } = await supabase
@@ -1591,7 +1591,8 @@ export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued
       ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : owner.property_name
       : "your property";
     const ownerFirst = owner.owner_name ? owner.owner_name.trim().split(/\s+/)[0] : null;
-    const resolved = resolveTemplate("owner_intake_form", overrides, {
+    const message = resolveTemplate("owner_intake_form", overrides, {
+      ownerGreeting: ownerFirst ? `Hi ${ownerFirst},\n\n` : "",
       firstName,
       ownerName: owner.owner_name,
       renNumber: agent.ren_number ?? "",
@@ -1600,7 +1601,6 @@ export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued
       tenantSamplePack: `${siteUrl}/sample-pack`,
       listingForm: siteUrl, // blaster replaces with real per-owner URL at send time
     });
-    const message = ownerFirst ? `Hi ${ownerFirst},\n\n${resolved}` : resolved;
     rows.push({ user_id: user.id, owner_lead_id: leadId, phone: owner.owner_phone, message });
   }
 
