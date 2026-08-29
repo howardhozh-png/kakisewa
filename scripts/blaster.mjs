@@ -26,16 +26,26 @@ import makeWASocket, {
 import qrcode from "qrcode-terminal";
 import QRCode from "qrcode";
 import { createClient } from "@supabase/supabase-js";
+import { createRequire } from "module";
 import { join } from "path";
 import os from "os";
 
-// Node.js < 22 has no stable native WebSocket — pass ws as transport to Supabase
+// Node.js < 22 has no stable native WebSocket — load ws as transport for Supabase.
+// Auto-installs ws if missing so this works even with an old setup.
+const _require = createRequire(import.meta.url);
 let wsTransport = null;
 if (parseInt(process.versions.node) < 22) {
   try {
-    const { default: ws } = await import("ws");
-    wsTransport = ws;
-  } catch { /* ws not installed — realtime will fail on Node 20 */ }
+    wsTransport = _require("ws");
+  } catch {
+    const { execSync } = _require("child_process");
+    console.log("Installing ws package for WebSocket support...");
+    execSync("npm install ws --silent", {
+      cwd: join(os.homedir(), ".kakisewa"),
+      stdio: ["pipe", "pipe", "inherit"],
+    });
+    wsTransport = _require("ws");
+  }
 }
 const supabaseRealtime = wsTransport ? { realtime: { transport: wsTransport } } : {};
 
