@@ -1214,7 +1214,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
         }}>
           <span style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>⚠️</span>
           <p style={{ fontSize: 12, fontWeight: 700, color: "#92400E", margin: 0 }}>
-            4 things to note before you start
+            Blasting stops if any of these 4 are off
           </p>
         </div>
         <div style={{ padding: "11px 13px 12px", display: "flex", flexDirection: "column", gap: 9 }}>
