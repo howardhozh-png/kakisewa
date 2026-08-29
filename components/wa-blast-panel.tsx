@@ -882,34 +882,6 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
     : 0;
   const showConnecting = !connected && !!session?.qr_data_url && secondsWithQr >= 12;
 
-  const requirementsAlert = (sleepPath: string) => (
-    <div style={{ marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,149,0,0.35)", background: "rgba(255,149,0,0.05)" }}>
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        background: "rgba(255,149,0,0.12)", padding: "8px 11px",
-        borderBottom: "1px solid rgba(255,149,0,0.25)",
-      }}>
-        <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1 }}>⚠️</span>
-        <p style={{ fontSize: 12, color: "#92400E", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
-          Auto-blast stops the moment any of these are off
-        </p>
-      </div>
-      <div style={{ padding: "9px 11px 10px", display: "flex", flexDirection: "column", gap: 7 }}>
-        {[
-          { icon: "🖥️", text: "Keep Terminal open the entire time. Closing the window stops the blast immediately." },
-          { icon: "😴", text: `Turn off sleep mode now. ${sleepPath} → set display and computer sleep to Never.` },
-          { icon: "🔌", text: "Keep the laptop open and plugged in. Closing the lid suspends the process." },
-          { icon: "📱", text: "Keep WhatsApp linked. If you remove kakisewa from Linked Devices on your phone, blasting stops." },
-        ].map(({ icon, text }) => (
-          <div key={icon} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
-            <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.4 }}>{icon}</span>
-            <p style={{ fontSize: 11, color: "#78350F", fontWeight: 500, margin: 0, lineHeight: 1.55 }}>{text}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -996,7 +968,6 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                         Press <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>Cmd</kbd>{" "}+{" "}
                         <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>Space</kbd>, type <strong>Terminal</strong>, press Enter.
                       </p>
-                      {requirementsAlert("System Settings > Battery > Options")}
                     </div>
                   </div>
 
@@ -1043,7 +1014,6 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                         Press <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>Win</kbd>{" "}+{" "}
                         <kbd style={{ background: "var(--kk-bg)", border: "1px solid var(--kk-line)", borderRadius: 5, padding: "1px 6px", fontSize: 11 }}>X</kbd>, choose <strong>Windows PowerShell</strong> or <strong>Terminal</strong>.
                       </p>
-                      {requirementsAlert("Settings > System > Power and Sleep")}
                     </div>
                   </div>
 
@@ -1164,7 +1134,7 @@ const REQ_ITEMS = [
   { n: 1, title: "Keep laptop open and plugged in", desc: "Closing the lid or unplugging suspends the blaster." },
   { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Windows: Settings > System > Power and Sleep. Set sleep to Never." },
   { n: 3, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
-  { n: 4, title: "Keep Terminal (Mac) or PowerShell (Windows) open", desc: "Closing the window stops the blast immediately." },
+  { n: 4, title: "Keep the terminal window open", desc: "Closing the window stops the blast immediately." },
   { n: 5, title: "Disclaimer", desc: "WhatsApp may still block your number. We're helping you execute the outreach — the same risk applies whether you send manually or through kakisewa." },
 ];
 
