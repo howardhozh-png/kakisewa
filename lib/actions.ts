@@ -1489,12 +1489,16 @@ export async function queueOwnerWaBlast(leadId: string): Promise<{ ok: boolean; 
   const propertyLabel = owner.property_name
     ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : owner.property_name
     : "your property";
-  const message = resolveTemplate("owner_outreach_initial", overrides, {
+  const firstName = (agent.name ?? "Your agent").trim().split(" ")[0];
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
+  const message = resolveTemplate("owner_intake_form", overrides, {
+    firstName,
     ownerName: owner.owner_name,
-    agentName: agent.name ?? "Your agent",
     renNumber: agent.ren_number ?? "",
-    agencyLine: agent.agency ? ` from ${agent.agency}` : "",
+    company: agent.agency ?? "",
     propertyName: propertyLabel,
+    tenantSamplePack: `${siteUrl}/sample-pack`,
+    listingForm: siteUrl, // blaster replaces with the real per-owner URL at send time
   });
 
   // Check not already queued
@@ -1560,6 +1564,8 @@ export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued
   const all = await getOwnerLeads();
   const agent = await getAgentProfile();
   const overrides = parseTemplateOverrides(agent.whatsapp_templates);
+  const firstName = (agent.name ?? "Your agent").trim().split(" ")[0];
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://kakisewa.com";
 
   // Fetch already-queued lead IDs to avoid duplicates
   const { data: existing } = await supabase
@@ -1582,12 +1588,14 @@ export async function bulkQueueOwnerWaBlast(leadIds: string[]): Promise<{ queued
     const propertyLabel = owner.property_name
       ? owner.unit ? `${owner.property_name}, Unit ${owner.unit}` : owner.property_name
       : "your property";
-    const message = resolveTemplate("owner_outreach_initial", overrides, {
+    const message = resolveTemplate("owner_intake_form", overrides, {
+      firstName,
       ownerName: owner.owner_name,
-      agentName: agent.name ?? "Your agent",
       renNumber: agent.ren_number ?? "",
-      agencyLine: agent.agency ? ` from ${agent.agency}` : "",
+      company: agent.agency ?? "",
       propertyName: propertyLabel,
+      tenantSamplePack: `${siteUrl}/sample-pack`,
+      listingForm: siteUrl, // blaster replaces with real per-owner URL at send time
     });
     rows.push({ user_id: user.id, owner_lead_id: leadId, phone: owner.owner_phone, message });
   }

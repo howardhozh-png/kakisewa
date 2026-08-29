@@ -101,6 +101,75 @@ function isInWindow(windows) {
   return false;
 }
 
+const SITE_URL = "https://kakisewa.com";
+
+// Default body for owner_intake_form — mirrors lib/whatsapp-templates.ts
+const DEFAULT_INTAKE_BODY =
+`I'm {{firstName}} ({{renNumber}}) from {{company}}. If you're looking to rent out {{propertyName}}, I have quality tenants ready.
+
+Please reply *YES* if you're interested and I'll get started right away, or *NO* if not.
+
+Alternatively, for a much faster response you can use our protected kakisewa link:
+{{listingForm}}
+
+Here's a sample tenant package I put together for you:
+{{tenantSamplePack}}`;
+
+// Inline template resolver — mirrors resolveTemplate() in lib/whatsapp-templates.ts
+function resolveMsg(body, vars) {
+  return body.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? `{{${k}}}`);
+}
+
+// Fetch agent profile (name, REN, agency, custom templates) — called once per poll
+async function fetchAgentProfile() {
+  const { data } = await db
+    .from("agent_profiles")
+    .select("name, ren_number, agency, whatsapp_templates")
+    .eq("id", USER_ID)
+    .maybeSingle();
+  if (!data) return null;
+  let overrides = {};
+  try { if (data.whatsapp_templates) overrides = JSON.parse(data.whatsapp_templates); } catch {}
+  return {
+    name: data.name ?? "",
+    renNumber: data.ren_number ?? "",
+    agency: data.agency ?? "",
+    templateBody: overrides.owner_intake_form ?? DEFAULT_INTAKE_BODY,
+  };
+}
+
+// Fetch lead data needed to resolve the template
+async function fetchLeadData(ownerLeadId) {
+  const { data } = await db
+    .from("owner_leads")
+    .select("owner_name, property_name, unit, intake_token")
+    .eq("id", ownerLeadId)
+    .maybeSingle();
+  return data ?? null;
+}
+
+// Build the send-time message from the agent's live template
+function buildLiveMessage(agentProfile, lead) {
+  const { name, renNumber, agency, templateBody } = agentProfile;
+  const firstName = name.trim().split(/\s+/)[0] ?? name;
+  const propertyLabel = lead.property_name
+    ? (lead.unit ? `${lead.property_name}, Unit ${lead.unit}` : lead.property_name)
+    : "your property";
+  const listingForm = lead.intake_token ? `${SITE_URL}/o/${lead.intake_token}` : SITE_URL;
+  return resolveMsg(templateBody, {
+    firstName,
+    ownerName: lead.owner_name ?? "",
+    renNumber,
+    company: agency,
+    propertyName: propertyLabel,
+    listingForm,
+    tenantSamplePack: `${SITE_URL}/sample-pack`,
+    // Legacy fallback vars for any old custom text using owner_outreach_initial tokens
+    agentName: name,
+    agencyLine: agency ? ` from ${agency}` : "",
+  });
+}
+
 // ── Queue operations ───────────────────────────────────────────────────────────
 
 async function fetchConfig() {
@@ -145,14 +214,16 @@ async function markSent(queueId, ownerLeadId, phone) {
     recipient_phone: phone,
     channel: "wa_blaster",
   });
-  // Increment outreach_count (fetch + update)
+  // Increment outreach_count and stamp last_outreach_at (drives "Last Sent" column)
   const { data: lead } = await db
     .from("owner_leads")
     .select("outreach_count")
     .eq("id", ownerLeadId)
     .maybeSingle();
   const cur = lead?.outreach_count ?? 0;
-  await db.from("owner_leads").update({ outreach_count: cur + 1 }).eq("id", ownerLeadId);
+  await db.from("owner_leads")
+    .update({ outreach_count: cur + 1, last_outreach_at: now })
+    .eq("id", ownerLeadId);
 }
 
 async function markFailed(queueId, reason) {
@@ -299,11 +370,20 @@ async function poll() {
     return schedule(config.interval_minutes);
   }
 
+  // Fetch live template once per poll — always uses the agent's latest saved version
+  const agentProfile = await fetchAgentProfile().catch(() => null);
+
   console.log(`[${nowMYT()} MYT] Sending ${rows.length} message(s)...`);
 
   for (const row of rows) {
     try {
-      await sendWA(row.phone, row.message);
+      // Resolve message from live template at send time so changes take effect immediately
+      let message = row.message; // fallback: baked message stored at queue time
+      if (agentProfile) {
+        const lead = await fetchLeadData(row.owner_lead_id).catch(() => null);
+        if (lead) message = buildLiveMessage(agentProfile, lead);
+      }
+      await sendWA(row.phone, message);
       await markSent(row.id, row.owner_lead_id, row.phone);
       console.log(`  ✓ Sent to ${row.phone}  (lead: ${row.owner_lead_id})`);
       // Brief gap between messages to avoid WA rate limits
