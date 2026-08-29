@@ -1158,6 +1158,62 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   );
 }
 
+// ─── requirements list ────────────────────────────────────────────────────────
+
+const REQ_ITEMS = [
+  { n: 1, title: "Keep laptop open and plugged in", desc: "Closing the lid or unplugging suspends the blaster." },
+  { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
+  { n: 3, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
+  { n: 4, title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
+  { n: 5, title: "Disclaimer", desc: "WhatsApp may still block your number. We're helping you execute the outreach — the same risk applies whether you send manually or through kakisewa." },
+];
+
+function RequirementsList() {
+  const [open, setOpen] = useState(true);
+  return (
+    <div style={{
+      borderLeft: "3px solid rgba(255,149,0,0.5)",
+      borderRadius: "0 10px 10px 0",
+      border: "1px solid rgba(255,149,0,0.18)",
+      borderLeftWidth: 3,
+      background: "rgba(255,149,0,0.025)",
+      overflow: "hidden",
+    }}>
+      <button type="button" onClick={() => setOpen(v => !v)} style={{
+        width: "100%", display: "flex", alignItems: "center", gap: 6,
+        padding: "8px 13px", background: "none", border: "none", cursor: "pointer",
+        borderBottom: open ? "0.5px solid rgba(0,0,0,0.07)" : "none",
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF3B30" stroke="none" style={{ flexShrink: 0 }}>
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="12" y1="17" x2="12.01" y2="17" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+        </svg>
+        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)", margin: 0, flex: 1, textAlign: "left" }}>
+          Blasting stops if any of these are off
+        </p>
+        <ChevronDown style={{ width: 12, height: 12, color: "var(--kk-ink-faint)", flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+      </button>
+      {open && REQ_ITEMS.map(({ n, title, desc }, i) => (
+        <div key={n} style={{
+          display: "flex", gap: 11, padding: "9px 13px",
+          borderTop: i > 0 ? "0.5px solid rgba(0,0,0,0.06)" : "none",
+        }}>
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: "#D97706",
+            minWidth: 14, flexShrink: 0, paddingTop: 1,
+            fontVariantNumeric: "tabular-nums",
+          }}>{n}</span>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>{title}</p>
+            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── schedule tab ─────────────────────────────────────────────────────────────
 
 function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave, onSessionChange }: {
@@ -1205,50 +1261,8 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       {/* Setup guide card — primary CTA */}
       <HowToSetupDialog />
 
-      {/* Requirements — 5 items */}
-      <div style={{
-        borderLeft: "3px solid rgba(255,149,0,0.5)",
-        borderRadius: "0 10px 10px 0",
-        border: "1px solid rgba(255,149,0,0.18)",
-        borderLeftWidth: 3,
-        background: "rgba(255,149,0,0.025)",
-        overflow: "hidden",
-      }}>
-        <div style={{ padding: "8px 13px", borderBottom: "0.5px solid rgba(0,0,0,0.07)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF3B30" stroke="none" style={{ flexShrink: 0 }}>
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
-              <line x1="12" y1="17" x2="12.01" y2="17" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
-            <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)", margin: 0 }}>
-              Blasting stops if any of these are off
-            </p>
-          </div>
-        </div>
-        {[
-          { n: 1, title: "Keep laptop open and plugged in", desc: "Closing the lid or unplugging suspends the blaster." },
-          { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
-          { n: 3, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
-          { n: 4, title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
-          { n: 5, title: "Disclaimer", desc: "WhatsApp may still block your number. We're helping you execute the outreach — the same risk applies whether you send manually or through kakisewa." },
-        ].map(({ n, title, desc }, i) => (
-          <div key={n} style={{
-            display: "flex", gap: 11, padding: "9px 13px",
-            borderTop: i > 0 ? "0.5px solid rgba(0,0,0,0.06)" : "none",
-          }}>
-            <span style={{
-              fontSize: 11, fontWeight: 700, color: "#D97706",
-              minWidth: 14, flexShrink: 0, paddingTop: 1,
-              fontVariantNumeric: "tabular-nums",
-            }}>{n}</span>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>{title}</p>
-              <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Requirements — 5 items, expandable */}
+      <RequirementsList />
 
       {/* Send windows */}
       <div>
