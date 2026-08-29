@@ -883,26 +883,27 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   const showConnecting = !connected && !!session?.qr_data_url && secondsWithQr >= 12;
 
   const requirementsAlert = (sleepPath: string) => (
-    <div style={{ marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid var(--kk-line)" }}>
+    <div style={{ marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,149,0,0.35)", background: "rgba(255,149,0,0.05)" }}>
       <div style={{
-        display: "flex", alignItems: "flex-start", gap: 8,
-        background: "var(--kk-surface-raised, rgba(0,0,0,0.04))", padding: "8px 11px",
-        borderBottom: "1px solid var(--kk-line)",
+        display: "flex", alignItems: "center", gap: 8,
+        background: "rgba(255,149,0,0.12)", padding: "8px 11px",
+        borderBottom: "1px solid rgba(255,149,0,0.25)",
       }}>
-        <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
-        <p style={{ fontSize: 12, color: "var(--kk-ink)", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
-          Keep this running for auto-blast to work
+        <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1 }}>⚠️</span>
+        <p style={{ fontSize: 12, color: "#92400E", fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
+          Auto-blast stops the moment any of these are off
         </p>
       </div>
-      <div style={{ background: "rgba(0,0,0,0.02)", padding: "8px 11px 9px" }}>
+      <div style={{ padding: "9px 11px 10px", display: "flex", flexDirection: "column", gap: 7 }}>
         {[
-          { icon: "🖥️", text: "Keep the terminal window open the whole time. Closing it stops the blast." },
-          { icon: "😴", text: `Disable sleep mode. Go to ${sleepPath} and set sleep to Never.` },
-          { icon: "🔌", text: "Keep your laptop plugged in, or at minimum keep the lid open." },
+          { icon: "🖥️", text: "Keep Terminal open the entire time. Closing the window stops the blast immediately." },
+          { icon: "😴", text: `Turn off sleep mode now. ${sleepPath} → set display and computer sleep to Never.` },
+          { icon: "🔌", text: "Keep the laptop open and plugged in. Closing the lid suspends the process." },
+          { icon: "📱", text: "Keep WhatsApp linked. If you remove kakisewa from Linked Devices on your phone, blasting stops." },
         ].map(({ icon, text }) => (
-          <div key={icon} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 6 }}>
-            <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.3 }}>{icon}</span>
-            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{text}</p>
+          <div key={icon} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.4 }}>{icon}</span>
+            <p style={{ fontSize: 11, color: "#78350F", fontWeight: 500, margin: 0, lineHeight: 1.55 }}>{text}</p>
           </div>
         ))}
       </div>
@@ -1294,6 +1295,33 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
 
       {/* WhatsApp link */}
       <SetupDialog initialSession={waSession} onSessionChange={onSessionChange} />
+
+      {/* Persistent requirements reminder — shown once WA is linked */}
+      {waLinked && (
+        <div style={{
+          display: "flex", flexDirection: "column", gap: 5,
+          padding: "9px 12px",
+          background: "rgba(255,149,0,0.06)",
+          border: "1px solid rgba(255,149,0,0.28)",
+          borderRadius: 9,
+        }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#92400E", margin: 0 }}>
+            Keep all three on or blasting stops:
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 14px" }}>
+            {[
+              { icon: "🖥️", label: "Terminal open" },
+              { icon: "😴", label: "Sleep: Never" },
+              { icon: "📱", label: "WA linked" },
+              { icon: "🔌", label: "Lid open" },
+            ].map(({ icon, label }) => (
+              <span key={label} style={{ fontSize: 11, color: "#78350F", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 12 }}>{icon}</span> {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Offline / not-linked hints */}
       {blasterOffline && cfg.is_active && (
