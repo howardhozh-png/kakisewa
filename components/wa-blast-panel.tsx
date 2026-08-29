@@ -1368,11 +1368,6 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
   }, [openQueueSignal]);
   const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<WaBlastConfig>(initialConfig);
-  const [editingCap, setEditingCap] = useState(false);
-  const [capDraft, setCapDraft] = useState(String(waCap));
-  const capInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { if (editingCap) capInputRef.current?.focus(); }, [editingCap]);
 
   const isActive = cfg.is_active;
   const queueSize = queue.length;
@@ -1385,10 +1380,10 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
     (Date.now() - new Date(liveWaSession.updated_at).getTime() > STALE_MS_MAIN);
   const effectivelyPausedMain = blasterOfflineMain && isActive;
 
-  // Daily counter colours
-  const pct = Math.min((waCount / waCap) * 100, 100);
-  const warn = Math.round(waCap * 0.75);
-  const ctrColor = waCount >= waCap ? "#DC2626" : waCount >= warn ? "#D97706" : "#1F8B4C";
+  // Daily counter colours — use computed max so counter matches schedule
+  const pct = max > 0 ? Math.min((waCount / max) * 100, 100) : 0;
+  const warn = Math.round(max * 0.75);
+  const ctrColor = waCount >= max ? "#DC2626" : waCount >= warn ? "#D97706" : "#1F8B4C";
 
   const accentBorder = isActive ? "rgba(52,199,89,0.22)" : "rgba(0,0,0,0.10)";
 
@@ -1396,8 +1391,12 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
     setSaving(true);
     try {
       const res = await saveWaBlastConfig(cfg);
-      if (res.ok) toast.success("Schedule saved.");
-      else toast.error("Failed to save.");
+      if (res.ok) {
+        toast.success("Schedule saved.");
+        onCapChange(calcMaxPerDay(cfg)); // sync counter cap to saved schedule
+      } else {
+        toast.error("Failed to save.");
+      }
     } finally {
       setSaving(false);
     }
@@ -1408,12 +1407,6 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
     setCfg(next);
     await saveWaBlastConfig(next);
     toast.success(next.is_active ? "Auto-blast activated." : "Auto-blast paused.");
-  }
-
-  function commitCap() {
-    const n = parseInt(capDraft, 10);
-    if (n > 0) onCapChange(n);
-    setEditingCap(false);
   }
 
   return (
@@ -1453,29 +1446,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
             <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: ctrColor, fontVariantNumeric: "tabular-nums" }}>{waCount}</span>
               <span style={{ fontSize: 11, color: "var(--kk-ink-faint)" }}>/</span>
-              {editingCap ? (
-                <input
-                  ref={capInputRef}
-                  type="text"
-                  inputMode="numeric"
-                  value={capDraft}
-                  onChange={(e) => setCapDraft(e.target.value.replace(/\D/g, ""))}
-                  onBlur={commitCap}
-                  onKeyDown={(e) => { if (e.key === "Enter") commitCap(); if (e.key === "Escape") setEditingCap(false); }}
-                  style={{ width: 30, fontSize: 11, fontWeight: 700, textAlign: "center", background: "#fff", border: "1px solid rgba(0,0,0,0.15)", borderRadius: 5, color: "var(--kk-ink)", outline: "none", padding: "0 2px" }}
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => { setCapDraft(String(waCap)); setEditingCap(true); }}
-                  title="Tap to change daily limit"
-                  style={{
-                    fontSize: 11, fontWeight: 700, color: "var(--kk-ink)", background: "var(--kk-bg)",
-                    border: "1px solid var(--kk-line)", cursor: "pointer",
-                    padding: "0 4px", borderRadius: 4, lineHeight: "16px",
-                  }}
-                >{waCap}</button>
-              )}
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--kk-ink)", fontVariantNumeric: "tabular-nums" }}>{max}</span>
               <span style={{ fontSize: 10, color: "var(--kk-ink-faint)" }}>sent</span>
             </div>
           </div>

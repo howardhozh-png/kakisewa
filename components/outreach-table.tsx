@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 const WA_DAILY_KEY = "kk_wa_daily";
-const WA_CAP_KEY   = "kk_wa_cap";
 const WA_DEFAULT_CAP = 40;
 const PAGE_SIZE = 20;
 
@@ -24,9 +23,8 @@ function todayStr() {
 
 const WA_BC = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("kk_wa_count") : null;
 
-function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
+function useDailyWaCount(): [number, () => void] {
   const [count, setCount] = useState(0);
-  const [cap, setCap] = useState(WA_DEFAULT_CAP);
 
   useEffect(() => {
     try {
@@ -35,8 +33,6 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
         const { date, count: n } = JSON.parse(raw);
         if (date === todayStr()) setCount(n);
       }
-      const savedCap = localStorage.getItem(WA_CAP_KEY);
-      if (savedCap) setCap(parseInt(savedCap, 10) || WA_DEFAULT_CAP);
     } catch {}
 
     const bc = WA_BC;
@@ -59,12 +55,7 @@ function useDailyWaCount(): [number, () => void, number, (n: number) => void] {
     });
   }, []);
 
-  const updateCap = useCallback((n: number) => {
-    setCap(n);
-    try { localStorage.setItem(WA_CAP_KEY, String(n)); } catch {}
-  }, []);
-
-  return [count, increment, cap, updateCap];
+  return [count, increment];
 }
 import { OwnerLead } from "@/lib/types";
 import { toE164Display, normalizePhone, buildWaLink } from "@/lib/phone";
@@ -958,7 +949,9 @@ interface Props {
 
 export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], waBlastConfig, initialWaBlastQueue = [], initialWaSentQueue = [], initialWaSession = null }: Props) {
   const router = useRouter();
-  const [waCount, incrementWaCount, waCap, updateWaCap] = useDailyWaCount();
+  const [waCount, incrementWaCount] = useDailyWaCount();
+  // Cap is derived from the saved schedule (Max /day), not a manually set number
+  const [waCap, setWaCap] = useState(() => waBlastConfig ? calcMaxPerDay(waBlastConfig) : WA_DEFAULT_CAP);
   const [filter, setFilter] = useState<Filter>("all");
   const [purposeFilter, setPurposeFilter] = useState<PurposeFilter>("all");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
@@ -969,7 +962,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
   const [waBlastQueue, setWaBlastQueue] = useState<WaBlastQueueItem[]>(initialWaBlastQueue);
   const [waSentQueue, setWaSentQueue] = useState<WaBlastSentItem[]>(initialWaSentQueue);
   const queuedLeadIds = new Set(waBlastQueue.map((q) => q.owner_lead_id));
-  const blastMax = waBlastConfig ? calcMaxPerDay(waBlastConfig) : 0;
+  const blastMax = waCap;
   const [queueing, setQueueing] = useState<string | null>(null);
   const [bulkBlasting, setBulkBlasting] = useState(false);
   const [blastSignal, setBlastSignal] = useState(0);
@@ -1526,7 +1519,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           onClearSent={() => setWaSentQueue([])}
           waCount={waCount}
           waCap={waCap}
-          onCapChange={updateWaCap}
+          onCapChange={setWaCap}
           initialWaSession={initialWaSession}
           openQueueSignal={blastSignal}
           onLeadClick={(leadId) => {
@@ -1536,7 +1529,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           }}
         />
       ) : (
-        <WaDailyCounter count={waCount} cap={waCap} onCapChange={updateWaCap} />
+        <WaDailyCounter count={waCount} cap={waCap} onCapChange={setWaCap} />
       )}
 
       {/* Table */}
