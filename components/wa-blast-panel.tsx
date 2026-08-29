@@ -1220,11 +1220,11 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
           </p>
         </div>
         {[
-          { n: 1, title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
+          { n: 1, title: "Keep laptop open and plugged in", desc: "Closing the lid or unplugging suspends the blaster." },
           { n: 2, title: "Turn off sleep mode", desc: "Mac: System Settings > Battery > Options. Set display and computer sleep to Never." },
-          { n: 3, title: "Keep laptop open and plugged in", desc: "Closing the lid suspends the blaster." },
-          { n: 4, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
-          { n: 5, title: "Keep message volume low", desc: "WhatsApp may still block your number. Same risk as sending manually." },
+          { n: 3, title: "Keep WhatsApp linked", desc: "If you remove kakisewa from Linked Devices on your phone, blasting stops." },
+          { n: 4, title: "Keep Terminal open", desc: "Closing the window stops the blast immediately." },
+          { n: 5, title: "Disclaimer", desc: "WhatsApp may still block your number. We're helping you execute the outreach — the same risk applies whether you send manually or through kakisewa." },
         ].map(({ n, title, desc }, i) => (
           <div key={n} style={{
             display: "flex", gap: 11, padding: "9px 13px",
