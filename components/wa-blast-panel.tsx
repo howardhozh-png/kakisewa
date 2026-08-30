@@ -1365,6 +1365,12 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
 
       </div>
 
+      {cfg.is_active && (
+        <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: "6px 0 0", lineHeight: 1.6 }}>
+          Messages take a few minutes to start sending after you activate. Each message after that follows the same pattern. This is normal.
+        </p>
+      )}
+
     </div>
   );
 }
