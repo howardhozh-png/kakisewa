@@ -748,6 +748,16 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
               </button>
             )}
           </div>
+          <div style={{ padding: "6px 14px 4px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "5px 10px", borderRadius: 8,
+              background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.14)",
+              fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4,
+            }}>
+              WA sent. Status and Last Sent take a few moments to update.
+            </div>
+          </div>
           <div style={{ maxHeight: 180, overflowY: "auto" }}>
             {sentQueue.map((item) => {
               const lead = leadMap.get(item.owner_lead_id);
