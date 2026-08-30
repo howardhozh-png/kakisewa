@@ -676,13 +676,21 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
       {/* Pending */}
       {queue.length > 0 && (
         <>
-          <div style={{ display: "flex", alignItems: "center", padding: "8px 14px 4px" }}>
-            <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", fontWeight: 500, margin: 0, flex: 1 }}>
-              {queue.length} lead{queue.length !== 1 ? "s" : ""} — sent in order
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px", flexWrap: "wrap" }}>
+            <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", fontWeight: 500, margin: 0, flexShrink: 0 }}>
+              Sent in order
             </p>
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", gap: 5,
+              padding: "3px 8px", borderRadius: 8,
+              background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.14)",
+              fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4, minWidth: 0,
+            }}>
+              When message is sent, status takes a few moments to update.
+            </div>
             {onClearAll && (
               <button type="button" onClick={handleClearAll} disabled={clearing}
-                style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-red)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearing ? 0.4 : 1 }}>
+                style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-red)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearing ? 0.4 : 1, flexShrink: 0 }}>
                 Clear all
               </button>
             )}
@@ -747,16 +755,6 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
                 {clearingSent ? "Clearing..." : "Clear sent"}
               </button>
             )}
-          </div>
-          <div style={{ padding: "6px 14px 4px" }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              padding: "5px 10px", borderRadius: 8,
-              background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.14)",
-              fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4,
-            }}>
-              WA sent. Status and Last Sent take a few moments to update.
-            </div>
           </div>
           <div style={{ maxHeight: 180, overflowY: "auto" }}>
             {sentQueue.map((item) => {
