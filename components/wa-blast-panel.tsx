@@ -681,10 +681,9 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
               Sent in order
             </p>
             <div style={{
-              flex: 1, display: "flex", alignItems: "center", gap: 5,
               padding: "3px 8px", borderRadius: 8,
               background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.14)",
-              fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4, minWidth: 0,
+              fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4,
             }}>
               When message is sent, status takes a few moments to update.
             </div>
