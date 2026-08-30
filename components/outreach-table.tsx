@@ -961,6 +961,8 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
   const [sending, setSending] = useState<string | null>(null);
   const [waBlastQueue, setWaBlastQueue] = useState<WaBlastQueueItem[]>(initialWaBlastQueue);
   const [waSentQueue, setWaSentQueue] = useState<WaBlastSentItem[]>(initialWaSentQueue);
+  useEffect(() => { setWaBlastQueue(initialWaBlastQueue); }, [initialWaBlastQueue]);
+  useEffect(() => { setWaSentQueue(initialWaSentQueue); }, [initialWaSentQueue]);
   const queuedLeadIds = new Set(waBlastQueue.map((q) => q.owner_lead_id));
   const blastMax = waCap;
   const [queueing, setQueueing] = useState<string | null>(null);

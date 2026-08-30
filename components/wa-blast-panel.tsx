@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Clock, ChevronDown, ChevronUp, Loader2, Play, Pause, PauseCircle, X, Plus,
   Laptop, QrCode, Wifi, Timer, CheckCircle2, ChevronLeft, ChevronRight,
@@ -1384,9 +1385,17 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
   const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<WaBlastConfig>(initialConfig);
 
+  const router = useRouter();
   const isActive = cfg.is_active;
   const queueSize = queue.length;
   const max = calcMaxPerDay(cfg);
+
+  // Auto-refresh the page while blast is active so sent items appear without manual F5
+  useEffect(() => {
+    if (!isActive) return;
+    const t = setInterval(() => router.refresh(), 60_000);
+    return () => clearInterval(t);
+  }, [isActive, router]);
 
   // Mirror effectivelyPaused for header chip — use liveWaSession so it updates after connect
   const waLinkedMain = !!liveWaSession?.is_authenticated;
