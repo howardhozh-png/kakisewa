@@ -32,7 +32,8 @@ export function AnnouncementBell({ unreadCount, announcements, allAnnouncements 
       <button
         onClick={() => setOpen(true)}
         aria-label={`Feature announcements${showBadge ? `, ${localUnread} unread` : ""}`}
-        style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, border: "1px solid var(--kk-line)", background: "var(--kk-surface-2)", color: "var(--kk-ink-mute)", flexShrink: 0 }}
+        className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+        style={{ background: "color-mix(in srgb, var(--kk-topnav-ink) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--kk-topnav-ink) 22%, transparent)", color: "var(--kk-topnav-ink)", flexShrink: 0 }}
       >
         <Megaphone style={{ width: 16, height: 16 }} />
         {showBadge && (
