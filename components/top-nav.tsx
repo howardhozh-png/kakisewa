@@ -895,7 +895,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
             <button
               ref={mobileBtnRef}
               onClick={handleMobileAccountToggle}
-              className="flex items-center justify-center w-11 h-11 rounded-full"
+              className="flex items-center justify-center w-9 h-9 rounded-full"
               style={{ color: "var(--kk-topnav-ink)" }}
               aria-label="Account"
             >
