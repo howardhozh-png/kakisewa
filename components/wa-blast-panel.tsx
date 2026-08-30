@@ -676,7 +676,7 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
       {/* Pending */}
       {queue.length > 0 && (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px" }}>
             <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", fontWeight: 500, margin: 0, flexShrink: 0 }}>
               Sent in order
             </p>
@@ -687,10 +687,12 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
             }}>
               When message is sent, status takes a few moments to update.
             </div>
+            <div style={{ flex: 1 }} />
             {onClearAll && (
               <button type="button" onClick={handleClearAll} disabled={clearing}
-                style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-red)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearing ? 0.4 : 1, flexShrink: 0 }}>
-                Clear all
+                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, color: "var(--kk-red)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearing ? 0.4 : 1, flexShrink: 0 }}>
+                <X style={{ width: 10, height: 10 }} />
+                Clear queue
               </button>
             )}
           </div>
@@ -750,7 +752,8 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
             </span>
             {onClearSent && (
               <button type="button" onClick={handleClearSent} disabled={clearingSent}
-                style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink-mute)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearingSent ? 0.4 : 1 }}>
+                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, color: "var(--kk-red)", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: clearingSent ? 0.4 : 1 }}>
+                {!clearingSent && <X style={{ width: 10, height: 10 }} />}
                 {clearingSent ? "Clearing..." : "Clear sent"}
               </button>
             )}
