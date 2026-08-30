@@ -1760,7 +1760,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                     {/* Last sent */}
                     <td className="hidden lg:table-cell px-2 py-3">
                       <span className="text-[11px]" style={{ color: "var(--kk-ink-mute)" }}>
-                        {status === "unsent" ? "—" : relativeTime(lead.intake_sent_at)}
+                        {status === "unsent" ? "—" : relativeTime(lead.last_outreach_at ?? lead.intake_sent_at)}
                       </span>
                     </td>
 

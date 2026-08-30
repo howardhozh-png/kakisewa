@@ -762,10 +762,19 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
                   background: "rgba(52,199,89,0.04)",
                 }}>
                   <CheckCircle2 style={{ width: 13, height: 13, color: "var(--kk-green-ink)", flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <button type="button" onClick={() => {
+                    if (!lead || !onLeadClick) return;
+                    const found = onLeadClick(lead.id);
+                    if (found === false) {
+                      setShakingLeadId(lead.id);
+                      setTimeout(() => setShakingLeadId(null), 600);
+                    }
+                  }}
+                    className={shakingLeadId === lead?.id ? "kk-queue-shake" : undefined}
+                    style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: lead && onLeadClick ? "pointer" : "default" }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
                     <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
-                  </div>
+                  </button>
                   <span style={{ fontSize: 11, color: "var(--kk-green-ink)", flexShrink: 0, fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
                     {fmtMYT(item.sent_at)} MYT
                   </span>
