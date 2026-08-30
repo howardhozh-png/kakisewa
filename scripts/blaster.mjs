@@ -224,10 +224,11 @@ async function fetchPending(limit) {
 
 async function markSent(queueId, ownerLeadId, phone, recipientName, body) {
   const now = new Date().toISOString();
-  await db.from("wa_blast_queue").update({ status: "sent", sent_at: now }).eq("id", queueId);
+  const { error: qErr } = await db.from("wa_blast_queue").update({ status: "sent", sent_at: now }).eq("id", queueId);
+  if (qErr) console.error("  ✗ Queue update failed:", qErr.message);
   // Log to whatsapp_log
   const logId = `wa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  await db.from("whatsapp_log").insert({
+  const { error: logErr } = await db.from("whatsapp_log").insert({
     id: logId,
     user_id: USER_ID,
     related_id: ownerLeadId,
@@ -238,16 +239,19 @@ async function markSent(queueId, ownerLeadId, phone, recipientName, body) {
     body: body ?? null,
     channel: "wa_blaster",
   });
+  if (logErr) console.error("  ✗ Log insert failed:", logErr.message);
   // Increment outreach_count and stamp last_outreach_at (drives "Last Sent" column)
-  const { data: lead } = await db
+  const { data: lead, error: leadFetchErr } = await db
     .from("owner_leads")
     .select("outreach_count")
     .eq("id", ownerLeadId)
     .maybeSingle();
+  if (leadFetchErr) { console.error("  ✗ Lead fetch failed:", leadFetchErr.message); return; }
   const cur = lead?.outreach_count ?? 0;
-  await db.from("owner_leads")
+  const { error: leadUpdateErr } = await db.from("owner_leads")
     .update({ outreach_count: cur + 1, last_outreach_at: now })
     .eq("id", ownerLeadId);
+  if (leadUpdateErr) console.error("  ✗ Lead update failed:", leadUpdateErr.message);
 }
 
 async function markFailed(queueId, reason) {
@@ -260,6 +264,18 @@ async function markFailed(queueId, reason) {
 let sock = null;
 let isConnected = false;
 let reconnectTimer = null;
+
+async function safeConnect(delayMs = 5_000) {
+  reconnectTimer = setTimeout(async () => {
+    reconnectTimer = null;
+    try {
+      await connect();
+    } catch (e) {
+      console.error("  Reconnect attempt failed:", e.message, "— retrying in 15s...");
+      safeConnect(15_000);
+    }
+  }, delayMs);
+}
 
 async function connect() {
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
@@ -302,6 +318,14 @@ async function connect() {
           { onConflict: "user_id" }
         );
       } catch { /* ignore */ }
+      // Fire first poll immediately on initial connect; on reconnect cancel the
+      // scheduled poll and fire right away so messages go out without waiting
+      if (!firstPollFired) {
+        startFirstPoll();
+      } else {
+        if (pendingPollTimer) { clearTimeout(pendingPollTimer); pendingPollTimer = null; }
+        poll();
+      }
     }
 
     if (connection === "close") {
@@ -326,7 +350,7 @@ async function connect() {
         process.exit(1);
       }
       console.log("  Connection dropped — reconnecting in 5s...");
-      reconnectTimer = setTimeout(connect, 5000);
+      safeConnect(5_000);
     }
   });
 }
@@ -472,15 +496,23 @@ console.log("  kakisewa WA Blaster");
 console.log(`  User: ${USER_ID}`);
 console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
-await connect();
-
-// Give WA socket 2s to restore session, then poll + start fast-check loop
-setTimeout(async () => {
-  // Establish baseline is_active state before starting fast-check
+// Fired once when WA is first connected (either by QR scan or session restore).
+// connection.open triggers this immediately; the 30s fallback catches the slow-scan case.
+let firstPollFired = false;
+async function startFirstPoll() {
+  if (firstPollFired) return;
+  firstPollFired = true;
   try {
     const { data } = await db.from("wa_blast_config").select("is_active").eq("user_id", USER_ID).maybeSingle();
     lastKnownIsActive = data?.is_active ?? false;
   } catch { lastKnownIsActive = false; }
   poll();
   scheduleFastCheck();
-}, 2000);
+}
+
+await connect();
+
+// 30s fallback: if WA hasn't connected yet (user scanning QR), start polling anyway
+// so the fast-check loop is alive. connection.open fires startFirstPoll() sooner
+// when session restores automatically (typically 3-10s).
+setTimeout(startFirstPoll, 30_000);
