@@ -1329,7 +1329,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       )}
 
       {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", rowGap: 6 }}>
         <button type="button" onClick={effectivelyPaused ? undefined : onToggleActive}
           disabled={cantActivate || effectivelyPaused}
           style={{
@@ -1363,13 +1363,18 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
           Save
         </button>
 
-      </div>
+        {cfg.is_active && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "5px 10px", borderRadius: 8,
+            background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.14)",
+            fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4,
+          }}>
+            Messages take a few minutes to start. This is normal.
+          </div>
+        )}
 
-      {cfg.is_active && (
-        <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: "6px 0 0", lineHeight: 1.6 }}>
-          Messages take a few minutes to start sending after you activate. Each message after that follows the same pattern. This is normal.
-        </p>
-      )}
+      </div>
 
     </div>
   );

@@ -977,6 +977,8 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
   const [bulkHardDeleting, setBulkHardDeleting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [selectedLead, setSelectedLead] = useState<OwnerLead | null>(null);
+  const [highlightedLeadId, setHighlightedLeadId] = useState<string | null>(null);
+  const [pendingScrollLeadId, setPendingScrollLeadId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const profile = useProfile();
   const [restoringId, setRestoringId] = useState<string | null>(null);
@@ -986,6 +988,19 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
 
   useEffect(() => { setSelectedIds(new Set()); }, [filter, purposeFilter, propertyFilter, sentDateFilter, search]);
   useEffect(() => { setPage(1); }, [filter, purposeFilter, propertyFilter, sentDateFilter, search]);
+
+  // After a page change triggered by queue-click, scroll to and highlight the target row.
+  // Depends on `page` (not derived currentPage) so it's safe to declare before currentPage is computed.
+  useEffect(() => {
+    if (!pendingScrollLeadId) return;
+    const el = document.querySelector(`[data-lead-id="${pendingScrollLeadId}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedLeadId(pendingScrollLeadId);
+    setPendingScrollLeadId(null);
+    const t = setTimeout(() => setHighlightedLeadId(null), 2000);
+    return () => clearTimeout(t);
+  }, [page, pendingScrollLeadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!exportOpen) return;
@@ -1525,9 +1540,11 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           initialWaSession={initialWaSession}
           openQueueSignal={blastSignal}
           onLeadClick={(leadId) => {
-            const all = [...leads, ...declinedLeads, ...deletedLeads];
-            const found = all.find((l) => l.id === leadId);
-            if (found) setSelectedLead(found);
+            const leadIndex = visible.findIndex((l) => l.id === leadId);
+            if (leadIndex === -1) return; // lead is filtered out — can't navigate
+            const targetPage = Math.ceil((leadIndex + 1) / PAGE_SIZE);
+            setPage(targetPage);         // no-op if already on correct page
+            setPendingScrollLeadId(leadId); // useEffect scrolls after render
           }}
         />
       ) : (
@@ -1645,15 +1662,17 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                 return (
                   <tr
                     key={lead.id}
+                    data-lead-id={lead.id}
                     onClick={() => !isDeleted && setSelectedLead(lead)}
                     className={`group transition-colors ${isDeleted ? "cursor-default" : "cursor-pointer"}`}
                     style={{
                       borderBottom: isLast ? "none" : "1px solid var(--kk-line)",
-                      background: selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : undefined,
+                      background: highlightedLeadId === lead.id ? "rgba(52,199,89,0.10)" : selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : undefined,
                       opacity: isDeleted ? 0.6 : 1,
+                      transition: "background 0.4s ease",
                     }}
                     onMouseEnter={(e) => { if (!isDeleted) (e.currentTarget as HTMLElement).style.background = "var(--kk-surface-2)"; }}
-                    onMouseLeave={(e) => { if (!isDeleted) (e.currentTarget as HTMLElement).style.background = selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : "transparent"; }}
+                    onMouseLeave={(e) => { if (!isDeleted) (e.currentTarget as HTMLElement).style.background = highlightedLeadId === lead.id ? "rgba(52,199,89,0.10)" : selectedIds.has(lead.id) ? "rgba(0,113,227,0.04)" : "transparent"; }}
                   >
                     {/* Checkbox */}
                     <td className="px-2 lg:px-3 py-2 lg:py-3" style={{ verticalAlign: "middle" }} onClick={(e) => e.stopPropagation()}>
