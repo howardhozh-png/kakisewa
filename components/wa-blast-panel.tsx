@@ -26,7 +26,7 @@ interface Props {
   onCapChange: (n: number) => void;
   initialWaSession: WaSession | null;
   openQueueSignal?: number;
-  onLeadClick?: (leadId: string) => void;
+  onLeadClick?: (leadId: string) => boolean | void;
   onClearSent?: () => void;
 }
 
@@ -607,12 +607,13 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
   onAcknowledge: (id: string) => void;
   onClearAll?: () => void;
   onClearSent?: () => void;
-  onLeadClick?: (leadId: string) => void;
+  onLeadClick?: (leadId: string) => boolean | void;
 }) {
   const [removing, setRemoving] = useState<string | null>(null);
   const [acking, setAcking] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [clearingSent, setClearingSent] = useState(false);
+  const [shakingLeadId, setShakingLeadId] = useState<string | null>(null);
 
   async function handleClearAll() {
     if (!onClearAll || clearing) return;
@@ -699,7 +700,15 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
                   padding: "7px 14px", borderTop: "0.5px solid rgba(0,0,0,0.07)",
                 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: "var(--kk-ink-faint)", minWidth: 16, textAlign: "right" }}>{i + 1}</span>
-                  <button type="button" onClick={() => lead && onLeadClick?.(lead.id)}
+                  <button type="button" onClick={() => {
+                    if (!lead || !onLeadClick) return;
+                    const found = onLeadClick(lead.id);
+                    if (found === false) {
+                      setShakingLeadId(lead.id);
+                      setTimeout(() => setShakingLeadId(null), 600);
+                    }
+                  }}
+                    className={shakingLeadId === lead?.id ? "kk-queue-shake" : undefined}
                     style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: lead && onLeadClick ? "pointer" : "default" }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
                     <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>

@@ -1541,10 +1541,10 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           openQueueSignal={blastSignal}
           onLeadClick={(leadId) => {
             const leadIndex = visible.findIndex((l) => l.id === leadId);
-            if (leadIndex === -1) return; // lead is filtered out — can't navigate
+            if (leadIndex === -1) return false; // filtered out — signal shake
             const targetPage = Math.ceil((leadIndex + 1) / PAGE_SIZE);
-            setPage(targetPage);         // no-op if already on correct page
-            setPendingScrollLeadId(leadId); // useEffect scrolls after render
+            setPage(targetPage);
+            setPendingScrollLeadId(leadId);
           }}
         />
       ) : (
