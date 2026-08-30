@@ -1346,7 +1346,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
           borderRadius: 8, padding: "8px 11px" }}>
           <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
           <p style={{ fontSize: 12, color: "#C47800", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
-            Auto-blast is offline. Your laptop may be asleep or the terminal window was closed. Double-click the setup file again to resume.
+            Auto-blast is offline. Your laptop may be asleep or the terminal window was closed. Double-click the setup file again to resume. Relink again if required.
           </p>
         </div>
       )}
