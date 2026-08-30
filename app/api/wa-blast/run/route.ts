@@ -57,7 +57,18 @@ if [ ! -d node_modules ] || [ ! -d node_modules/ws ]; then
 fi
 
 echo ""
-exec node blaster.mjs
+while true; do
+  node blaster.mjs
+  EC=$?
+  if [ $EC -eq 2 ]; then
+    echo ""
+    echo "Relinked — showing new QR..."
+    echo ""
+    sleep 1
+  else
+    break
+  fi
+done
 `;
 }
 
@@ -123,7 +134,17 @@ if (-not (Test-Path node_modules\ws)) {
 }
 
 Write-Host ""
-node blaster.mjs
+while ($true) {
+  node blaster.mjs
+  if ($LASTEXITCODE -eq 2) {
+    Write-Host ""
+    Write-Host "Relinked -- showing new QR..."
+    Write-Host ""
+    Start-Sleep 1
+  } else {
+    break
+  }
+}
 `;
 }
 

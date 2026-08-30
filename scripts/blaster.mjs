@@ -339,7 +339,7 @@ async function connect() {
           const { readdir, unlink } = await import("fs/promises");
           const files = await readdir(AUTH_FOLDER);
           await Promise.all(files.map(f => unlink(join(AUTH_FOLDER, f))));
-          console.log("  Session cleared. Run the command again to get a new QR.\n");
+          console.log("  Session cleared — restarting for QR scan...\n");
         } catch { /* ignore */ }
         try {
           await db.from("wa_sessions").upsert(
@@ -347,7 +347,7 @@ async function connect() {
             { onConflict: "user_id" }
           );
         } catch { /* ignore */ }
-        process.exit(1);
+        process.exit(2); // exit code 2 = relink requested; shell wrapper restarts automatically
       }
       console.log("  Connection dropped — reconnecting in 5s...");
       safeConnect(5_000);
@@ -456,14 +456,14 @@ function schedule(intervalMinutes) {
   scheduleFastCheck();
 }
 
-// ── Fast-check: detects Activate click within ~30s ────────────────────────────
+// ── Fast-check: detects Activate click within ~10s ────────────────────────────
 
 let lastKnownIsActive = null; // null = not yet established
 let fastCheckTimer = null;
 
 function scheduleFastCheck() {
   if (fastCheckTimer) clearTimeout(fastCheckTimer);
-  fastCheckTimer = setTimeout(fastCheck, 30 * 1000);
+  fastCheckTimer = setTimeout(fastCheck, 10 * 1000);
 }
 
 async function fastCheck() {
