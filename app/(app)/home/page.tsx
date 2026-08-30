@@ -8,6 +8,7 @@ import { ReferralBanner } from "@/components/referral-banner";
 import { BetaSurveyModal } from "@/components/beta-survey-modal";
 import { AnnouncementCard } from "@/components/announcement-card";
 import { getUnreadAnnouncements } from "@/lib/announcements";
+import { WaBlastFeatureModal } from "@/components/wa-blast-feature-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +117,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-[1440px] px-4 lg:px-8 py-6 lg:py-16">
       <BetaSurveyModal surveyCompleted={!!agent.survey_completed_at || !!agent.is_test_account} />
+      <WaBlastFeatureModal />
       <ReferralBanner />
       <AnnouncementCard announcements={unreadAnnouncements} />
       <ActiveState

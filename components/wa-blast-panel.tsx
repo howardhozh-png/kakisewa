@@ -661,7 +661,7 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
 
   if (queue.length === 0 && sentQueue.length === 0) {
     return (
-      <div style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+      <div id="tour-wa-blast-queue-content" style={{ padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
         <Clock style={{ width: 26, height: 26, color: "var(--kk-ink-faint)", opacity: 0.35 }} />
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--kk-ink-mute)", margin: 0 }}>Queue is empty</p>
         <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", textAlign: "center", maxWidth: 240, margin: 0 }}>
@@ -672,11 +672,11 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
   }
 
   return (
-    <div>
+    <div id="tour-wa-blast-queue-content">
       {/* Pending */}
       {queue.length > 0 && (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px" }}>
+          <div id="tour-wa-blast-sent-header" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 4px" }}>
             <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", fontWeight: 500, margin: 0, flexShrink: 0 }}>
               Sent in order
             </p>
@@ -1358,7 +1358,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
 
       {/* Actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", rowGap: 6 }}>
-        <button type="button" onClick={effectivelyPaused ? undefined : onToggleActive}
+        <button id="tour-wa-blast-activate" type="button" onClick={effectivelyPaused ? undefined : onToggleActive}
           disabled={cantActivate || effectivelyPaused}
           style={{
             display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600,
@@ -1480,6 +1480,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
 
         {/* left: title + status — clickable to expand */}
         <button
+          id="tour-wa-blast-header"
           type="button"
           onClick={() => setExpanded((v) => !v)}
           style={{ flex: 1, display: "flex", alignItems: "center", gap: 7, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden" }}
@@ -1524,7 +1525,7 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
           {/* tab bar */}
           <div style={{ display: "flex", borderBottom: "0.5px solid rgba(0,0,0,0.07)" }}>
             {(["schedule", "queue"] as Tab[]).map((t) => (
-              <button key={t} type="button" onClick={() => setTab(t)}
+              <button key={t} id={t === "queue" ? "tour-wa-blast-queue-tab" : undefined} type="button" onClick={() => setTab(t)}
                 style={{
                   padding: "7px 14px", fontSize: 12, fontWeight: tab === t ? 700 : 500,
                   background: "none", border: "none", cursor: "pointer",

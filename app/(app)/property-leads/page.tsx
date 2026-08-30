@@ -6,6 +6,7 @@ import { OutreachTable } from "@/components/outreach-table";
 import { OutreachEmptyState } from "@/components/outreach-empty-state";
 import { PageHelpButton } from "@/components/page-help-button";
 import { TourSpotlight } from "@/components/tour-spotlight";
+import { TourRunner } from "@/components/tour-runner";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ export default async function MessageOwnersPage() {
           title="Add your first owner lead"
           body="Tap the highlighted button to add an owner you want to approach for rental management."
         />
+        <TourRunner />
       </Suspense>
     </div>
   );
