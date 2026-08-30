@@ -383,6 +383,7 @@ async function checkRelink() {
 }
 
 async function poll() {
+  stopBar();
   await checkRelink();
   // Heartbeat — web UI uses updated_at to detect offline blaster
   if (isConnected) {
@@ -464,6 +465,7 @@ let fastCheckTimer = null;
 function scheduleFastCheck() {
   if (fastCheckTimer) clearTimeout(fastCheckTimer);
   fastCheckTimer = setTimeout(fastCheck, 10 * 1000);
+  startBar(10_000, 'until next check');
 }
 
 async function fastCheck() {
@@ -477,6 +479,7 @@ async function fastCheck() {
     const isActive = data?.is_active ?? false;
 
     if (lastKnownIsActive === false && isActive === true) {
+      stopBar();
       // User just clicked Activate — fire immediately
       console.log(`[${nowMYT()} MYT] Activation detected — firing immediately.`);
       if (pendingPollTimer) { clearTimeout(pendingPollTimer); pendingPollTimer = null; }
@@ -489,7 +492,56 @@ async function fastCheck() {
   scheduleFastCheck();
 }
 
+// ── Terminal countdown bar ────────────────────────────────────────────────────
+// Renders a live progress bar on one line using \r rewrites.
+// Accurate: tracks real wall-clock start time and computes remaining ms directly.
+
+let barTimer = null;
+let barStartMs = null;
+let barTotalMs = null;
+let barLabel = '';
+const BAR_W = 20;
+
+function renderBar() {
+  if (barStartMs === null) return;
+  const elapsed = Date.now() - barStartMs;
+  const remaining = Math.max(0, barTotalMs - elapsed);
+  const frac = Math.min(1, elapsed / barTotalMs);
+  const filled = Math.round(frac * BAR_W);
+  const arrow = filled < BAR_W ? '>' : '';
+  const bar = '='.repeat(filled) + arrow + ' '.repeat(Math.max(0, BAR_W - filled - arrow.length));
+  const s = Math.ceil(remaining / 1000);
+  const timeStr = s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
+  process.stdout.write(`\r  [${bar}] ${timeStr} ${barLabel}  `);
+}
+
+function clearBarLine() {
+  if (barStartMs !== null) process.stdout.write('\r' + ' '.repeat(60) + '\r');
+}
+
+function startBar(ms, label) {
+  stopBar();
+  barStartMs = Date.now();
+  barTotalMs = ms;
+  barLabel = label;
+  renderBar();
+  barTimer = setInterval(renderBar, 1000);
+}
+
+function stopBar() {
+  if (barTimer) { clearInterval(barTimer); barTimer = null; }
+  clearBarLine();
+  barStartMs = null;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
+
+// Route all console output through clearBarLine so log lines always appear
+// above the countdown bar without overwriting it.
+const _log = console.log.bind(console);
+const _err = console.error.bind(console);
+console.log = (...a) => { clearBarLine(); _log(...a); };
+console.error = (...a) => { clearBarLine(); _err(...a); };
 
 console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 console.log("  kakisewa WA Blaster");
