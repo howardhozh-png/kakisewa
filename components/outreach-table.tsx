@@ -1481,7 +1481,7 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           <button
             key={key}
             type="button"
-            onClick={() => setFilter(key)}
+            onClick={() => setFilter(filter === key ? "all" : key)}
             className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all shrink-0"
             style={{
               background: filter === key ? "var(--kk-ink)" : "var(--kk-surface-2)",
