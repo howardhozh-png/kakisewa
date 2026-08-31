@@ -1,13 +1,123 @@
 "use client";
 
 import { useState } from "react";
-import { Megaphone, X, ExternalLink } from "lucide-react";
+import { Megaphone, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Announcement } from "@/lib/types";
 
 interface AnnouncementPanelProps {
-  announcements: Announcement[];          // all unread (for unread count)
-  allAnnouncements: Announcement[];       // full history for display
+  announcements: Announcement[];
+  allAnnouncements: Announcement[];
+}
+
+function NotificationRow({
+  ann,
+  isUnread,
+  onDismiss,
+  dismissing,
+}: {
+  ann: Announcement;
+  isUnread: boolean;
+  onDismiss: (id: string) => void;
+  dismissing: string | null;
+}) {
+  const router = useRouter();
+  const [hovered, setHovered] = useState(false);
+
+  const dateLabel = ann.published_at
+    ? new Date(ann.published_at).toLocaleDateString("en-MY", { day: "numeric", month: "short" })
+    : "";
+
+  function handleClick() {
+    if (ann.cta_url) {
+      // internal paths navigate directly; external open in new tab
+      if (ann.cta_url.startsWith("/")) {
+        router.push(ann.cta_url);
+      } else {
+        window.open(ann.cta_url, "_blank", "noopener");
+      }
+    }
+  }
+
+  return (
+    <div
+      role={ann.cta_url ? "button" : undefined}
+      tabIndex={ann.cta_url ? 0 : undefined}
+      onClick={ann.cta_url ? handleClick : undefined}
+      onKeyDown={ann.cta_url ? (e) => { if (e.key === "Enter" || e.key === " ") handleClick(); } : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: "12px 16px",
+        borderBottom: "1px solid var(--kk-line)",
+        cursor: ann.cta_url ? "pointer" : "default",
+        background: hovered
+          ? "rgba(0,113,227,0.04)"
+          : isUnread
+            ? "rgba(0,113,227,0.03)"
+            : "transparent",
+        transform: hovered ? "scale(1.005)" : "scale(1)",
+        transition: "background 0.15s, transform 0.15s, box-shadow 0.15s",
+        boxShadow: hovered ? "0 2px 12px rgba(0,0,0,0.06)" : "none",
+        borderRadius: hovered ? 10 : 0,
+        position: "relative",
+        display: "flex",
+        gap: 10,
+        alignItems: "flex-start",
+      }}
+    >
+      {/* unread dot */}
+      {isUnread && (
+        <span style={{
+          width: 7, height: 7, borderRadius: "50%",
+          background: "var(--kk-blue)", flexShrink: 0, marginTop: 5,
+        }} />
+      )}
+      {!isUnread && <span style={{ width: 7, flexShrink: 0 }} />}
+
+      {/* content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1.3 }}>
+            {ann.title}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0 }}>{dateLabel}</span>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.55,
+          display: "-webkit-box", WebkitLineClamp: hovered ? 10 : 2,
+          WebkitBoxOrient: "vertical", overflow: "hidden",
+          transition: "all 0.2s",
+        }}>
+          {ann.body}
+        </p>
+        {ann.cta_label && hovered && (
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--kk-blue)", display: "block", marginTop: 6 }}>
+            {ann.cta_label} →
+          </span>
+        )}
+      </div>
+
+      {/* dismiss */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onDismiss(ann.id); }}
+        disabled={dismissing === ann.id}
+        aria-label="Dismiss"
+        style={{
+          width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+          background: hovered ? "rgba(0,0,0,0.07)" : "transparent",
+          border: "none", cursor: "pointer", padding: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--kk-ink-faint)", opacity: dismissing === ann.id ? 0.4 : (hovered ? 1 : 0),
+          transition: "opacity 0.15s, background 0.15s",
+          pointerEvents: hovered ? "auto" : "none",
+          marginTop: 1,
+        }}
+      >
+        <X style={{ width: 11, height: 11 }} />
+      </button>
+    </div>
+  );
 }
 
 export function AnnouncementBell({ unreadCount, announcements, allAnnouncements }: AnnouncementPanelProps & { unreadCount: number }) {
@@ -16,7 +126,7 @@ export function AnnouncementBell({ unreadCount, announcements, allAnnouncements 
   const [localDismissed, setLocalDismissed] = useState<Set<string>>(new Set());
 
   const displayList = allAnnouncements.filter(a => a.published_at);
-  const localUnread = unreadCount - localDismissed.size;
+  const localUnread = Math.max(0, unreadCount - localDismissed.size);
   const showBadge = localUnread > 0;
 
   async function archive(id: string) {
@@ -42,66 +152,34 @@ export function AnnouncementBell({ unreadCount, announcements, allAnnouncements 
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent style={{ maxWidth: 480, padding: 0, borderRadius: 20, overflow: "hidden" }}>
-          <div style={{ padding: "20px 20px 0", borderBottom: "1px solid var(--kk-line)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <DialogTitle style={{ fontSize: 16, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>
-                What&apos;s new
-              </DialogTitle>
-              <button onClick={() => setOpen(false)} aria-label="Close" style={{ color: "var(--kk-ink-faint)", padding: 4 }}>
-                <X style={{ width: 18, height: 18 }} />
-              </button>
-            </div>
+        <DialogContent style={{ maxWidth: 400, padding: 0, borderRadius: 18, overflow: "hidden", gap: 0 }}>
+          {/* header */}
+          <div style={{ padding: "16px 16px 14px", borderBottom: "1px solid var(--kk-line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <DialogTitle style={{ fontSize: 15, fontWeight: 700, color: "var(--kk-ink)", margin: 0 }}>
+              What&apos;s new
+            </DialogTitle>
+            <button onClick={() => setOpen(false)} aria-label="Close" style={{ color: "var(--kk-ink-faint)", padding: 4, background: "none", border: "none", cursor: "pointer" }}>
+              <X style={{ width: 16, height: 16 }} />
+            </button>
           </div>
 
-          <div style={{ maxHeight: "60vh", overflowY: "auto", padding: "4px 0 20px" }}>
+          {/* list */}
+          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
             {displayList.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--kk-ink-faint)", padding: "20px 20px", textAlign: "center" }}>
-                No announcements yet.
+              <p style={{ fontSize: 13, color: "var(--kk-ink-faint)", padding: "28px 20px", textAlign: "center" }}>
+                Nothing new right now.
               </p>
             ) : (
               displayList.map(ann => {
                 const isUnread = !localDismissed.has(ann.id) && announcements.some(a => a.id === ann.id);
                 return (
-                  <div
+                  <NotificationRow
                     key={ann.id}
-                    style={{
-                      padding: "14px 20px",
-                      borderBottom: "1px solid var(--kk-line)",
-                      background: isUnread ? "var(--kk-blue-soft, #EFF6FF)" : "transparent",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        {isUnread && (
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-blue)", display: "block", marginBottom: 2 }}>
-                            New
-                          </span>
-                        )}
-                        <p style={{ fontSize: 14, fontWeight: 600, color: "var(--kk-ink)", margin: 0, lineHeight: 1.35 }}>{ann.title}</p>
-                      </div>
-                      <span style={{ fontSize: 11, color: "var(--kk-ink-faint)", flexShrink: 0, marginTop: 2 }}>
-                        {new Date(ann.published_at!).toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: 13, color: "var(--kk-ink-mute)", margin: "0 0 10px", lineHeight: 1.55 }}>{ann.body}</p>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      {ann.cta_url && ann.cta_label && (
-                        <a href={ann.cta_url} style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-blue)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
-                          {ann.cta_label} <ExternalLink style={{ width: 11, height: 11 }} />
-                        </a>
-                      )}
-                      {isUnread && (
-                        <button
-                          onClick={() => archive(ann.id)}
-                          disabled={dismissing === ann.id}
-                          style={{ fontSize: 12, color: "var(--kk-ink-faint)", background: "none", border: "none", padding: 0, cursor: "pointer", opacity: dismissing === ann.id ? 0.5 : 1 }}
-                        >
-                          {dismissing === ann.id ? "Archiving..." : "Archive"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    ann={ann}
+                    isUnread={isUnread}
+                    onDismiss={archive}
+                    dismissing={dismissing}
+                  />
                 );
               })
             )}
