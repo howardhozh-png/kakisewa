@@ -287,6 +287,7 @@ async function connect() {
     auth: state,
     printQRInTerminal: false,
     logger: { level: "silent", trace(){}, debug(){}, info(){}, warn(){}, error(){}, fatal(){}, child(){ return this; } },
+    markOnlineOnConnect: false, // prevents WA from suppressing phone notifications
   });
 
   sock.ev.on("creds.update", saveCreds);
