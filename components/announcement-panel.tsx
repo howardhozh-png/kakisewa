@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Megaphone, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Announcement } from "@/lib/types";
 
@@ -38,14 +37,14 @@ function NotificationRow({
   dismissing: string | null;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const [hovered, setHovered] = useState(false);
 
   function handleClick() {
     if (!ann.cta_url) return;
     if (isUnread) onDismiss(ann.id);
     onClose();
-    if (ann.cta_url.startsWith("/")) router.push(ann.cta_url);
+    // Full reload ensures tour always restarts cleanly from step 1
+    if (ann.cta_url.startsWith("/")) window.location.href = ann.cta_url;
     else window.open(ann.cta_url, "_blank", "noopener");
   }
 

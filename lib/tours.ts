@@ -24,33 +24,30 @@ export const TOURS: Record<string, TourDef> = {
     steps: [
       {
         key: "1",
-        targetId: "tour-wa-blast-header",
-        title: "Meet WA AutoBlast",
-        body: "Automatically send WhatsApp messages to your owner leads while you focus on closing deals.",
-        nextLabel: "Open it",
-        clickTargetOnNext: true,   // expands the panel
+        targetId: "tour-wa-blast-link-wa",
+        title: "Link your WhatsApp",
+        body: "Tap 'Link WhatsApp' and scan the QR code with your phone. Keep the app open on your laptop while blasting.",
+        nextLabel: "Next",
       },
       {
         key: "2",
-        targetId: "tour-wa-blast-activate",
-        title: "Activate the blast",
-        body: "Once your schedule is set and WhatsApp is linked, tap this to start. Messages go out in order during your sending windows.",
-        nextLabel: "See the queue",
-        // no clickTargetOnNext — do NOT click the activate button
+        targetId: "tour-wa-blast-send-windows",
+        title: "Set your sending times",
+        body: "Choose the hours you want messages to go out. Stays quiet outside those windows automatically.",
+        nextLabel: "Next",
       },
       {
         key: "3",
         targetId: "tour-wa-blast-queue-tab",
-        title: "Your outreach queue",
-        body: "Every lead here gets a WhatsApp in order. Add leads from the table or bulk-select to queue them all at once.",
+        title: "Add leads to the queue",
+        body: "Add leads from the table below using the WA icon on each row. They line up here and go out in order.",
         nextLabel: "Next",
-        clickTargetOnNext: true,   // switches to the queue tab so step 4's element exists
       },
       {
         key: "4",
-        targetId: "tour-wa-blast-queue-content",
-        title: "Track who was contacted",
-        body: "Leads that received a message show up here with the exact time it was sent. No more guessing who was contacted.",
+        targetId: "tour-wa-blast-activate",
+        title: "Activate and let it run",
+        body: "Hit Activate once your schedule is set and WhatsApp is linked. Messages go out in order, one by one.",
         nextLabel: "Done",
       },
     ],

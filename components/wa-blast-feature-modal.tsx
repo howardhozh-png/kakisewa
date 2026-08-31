@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { TOURS } from "@/lib/tours";
@@ -10,7 +9,6 @@ const TOUR = TOURS["wa-blast"];
 const NEVER_KEY = TOUR.storageKey;
 
 export function WaBlastFeatureModal() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -35,7 +33,7 @@ export function WaBlastFeatureModal() {
     try { localStorage.setItem(NEVER_KEY, "1"); } catch {}
     setOpen(false);
     const firstStep = TOUR.steps[0];
-    router.push(`${TOUR.startPath}?tour=${TOUR.id}&step=${firstStep.key}`);
+    window.location.href = `${TOUR.startPath}?tour=${TOUR.id}&step=${firstStep.key}`;
   }
 
   return (

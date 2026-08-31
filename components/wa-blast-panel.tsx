@@ -912,7 +912,7 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
   const showConnecting = !connected && !!session?.qr_data_url && secondsWithQr >= 12;
 
   return (
-    <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
+    <div id="tour-wa-blast-link-wa" style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{
@@ -1264,7 +1264,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       <RequirementsList />
 
       {/* Send windows */}
-      <div>
+      <div id="tour-wa-blast-send-windows">
         <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-ink-faint)", margin: "0 0 8px" }}>
           Send windows (MYT)
         </p>
@@ -1421,6 +1421,12 @@ export function WaBlastPanel({ initialConfig, queue, sentQueue, leads, onRemove,
     setExpanded(true);
     setTab("queue");
   }, [openQueueSignal]);
+
+  // Auto-expand when a WA blast tour is active (avoids needing useSearchParams + Suspense)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tour") === "wa-blast") setExpanded(true);
+  }, []);
   const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<WaBlastConfig>(initialConfig);
 
