@@ -4,8 +4,8 @@ export interface TourStep {
   title: string;
   body: string;
   nextLabel: string;
-  // If true, programmatically clicks the target element when the user
-  // hits Next — so the tour itself opens/activates the UI, not the user
+  // Programmatically clicks the target element when the user presses Next,
+  // so the tour itself performs the UI action (expand panel, switch tab, etc.)
   clickTargetOnNext?: boolean;
 }
 
@@ -28,7 +28,7 @@ export const TOURS: Record<string, TourDef> = {
         title: "Meet WA AutoBlast",
         body: "Automatically send WhatsApp messages to your owner leads while you focus on closing deals.",
         nextLabel: "Open it",
-        clickTargetOnNext: true, // expands the panel
+        clickTargetOnNext: true,   // expands the panel
       },
       {
         key: "2",
@@ -36,7 +36,7 @@ export const TOURS: Record<string, TourDef> = {
         title: "Activate the blast",
         body: "Once your schedule is set and WhatsApp is linked, tap this to start. Messages go out in order during your sending windows.",
         nextLabel: "See the queue",
-        clickTargetOnNext: true, // switches to queue tab
+        // no clickTargetOnNext — do NOT click the activate button
       },
       {
         key: "3",
@@ -44,6 +44,7 @@ export const TOURS: Record<string, TourDef> = {
         title: "Your outreach queue",
         body: "Every lead here gets a WhatsApp in order. Add leads from the table or bulk-select to queue them all at once.",
         nextLabel: "Next",
+        clickTargetOnNext: true,   // switches to the queue tab so step 4's element exists
       },
       {
         key: "4",
