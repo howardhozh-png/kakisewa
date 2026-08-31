@@ -578,54 +578,6 @@ export function StatsSection({
   return (
     <div>
 
-      {/* Top metric row — 4 white cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <MetricCard
-          icon={Layers}
-          iconBg="rgba(0,113,227,0.10)"
-          iconColor="#004FAD"
-          label="Card Usage"
-          value={safeCardCount.toLocaleString()}
-          subValue={safeCardCap.toLocaleString()}
-          subLabel={(planName ?? "") + " plan"}
-          progress={cardUsagePct}
-          progressColor="#004FAD"
-          progressLabel={`${Math.round(Math.max(0, 100 - cardUsagePct))}% remaining`}
-          href="/subscription"
-        />
-        <MetricCard
-          icon={Banknote}
-          iconBg="rgba(52,199,89,0.12)"
-          iconColor="#1F8B4C"
-          label="Commission This Month"
-          value={"RM " + commFormatted}
-          subLabel="earned this month"
-          href="/performance"
-          sparkline={<CommissionSparkline />}
-        />
-        <MetricCard
-          icon={CalendarDays}
-          iconBg="rgba(0,113,227,0.10)"
-          iconColor="#004FAD"
-          label="Viewings Today"
-          value={String(viewingsToday)}
-          subValue="3"
-          subLabel="daily goal"
-          progress={(viewingsToday / 3) * 100}
-          progressColor="#004FAD"
-          href="/calendar"
-        />
-        <MetricCard
-          icon={TrendingUp}
-          iconBg="rgba(52,199,89,0.12)"
-          iconColor="#145E33"
-          label="Closed Deal This Month"
-          value={String(closedThisMonth ?? 0)}
-          subLabel="deals closed"
-          href="/performance"
-        />
-      </div>
-
       {/* Pipeline funnel panel */}
       <div ref={gridRef} className="mb-6">
         {/* Desktop: single white card */}
@@ -693,15 +645,56 @@ export function StatsSection({
         </div>
       </div>
 
-      {/* Week calendar + Upcoming Viewings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3" style={{ minHeight: 420 }}>
-        <div className="lg:col-span-2">
-          <WeekCalendar events={calendarEvents} />
-        </div>
-        <div>
-          <UpcomingViewings viewings={upcomingViewings} />
-        </div>
+      {/* Metric row — 4 white cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <MetricCard
+          icon={Layers}
+          iconBg="rgba(0,113,227,0.10)"
+          iconColor="#004FAD"
+          label="Card Usage"
+          value={safeCardCount.toLocaleString()}
+          subValue={safeCardCap.toLocaleString()}
+          subLabel={(planName ?? "") + " plan"}
+          progress={cardUsagePct}
+          progressColor="#004FAD"
+          progressLabel={`${Math.round(cardUsagePct)}% used`}
+          href="/subscription"
+        />
+        <MetricCard
+          icon={Banknote}
+          iconBg="rgba(52,199,89,0.12)"
+          iconColor="#1F8B4C"
+          label="Commission This Month"
+          value={"RM " + commFormatted}
+          subLabel="earned this month"
+          href="/performance"
+          sparkline={<CommissionSparkline />}
+        />
+        <MetricCard
+          icon={CalendarDays}
+          iconBg="rgba(0,113,227,0.10)"
+          iconColor="#004FAD"
+          label="Viewings Today"
+          value={String(viewingsToday)}
+          subValue="3"
+          subLabel="daily goal"
+          progress={(viewingsToday / 3) * 100}
+          progressColor="#004FAD"
+          href="/calendar"
+        />
+        <MetricCard
+          icon={TrendingUp}
+          iconBg="rgba(52,199,89,0.12)"
+          iconColor="#145E33"
+          label="Closed Deal This Month"
+          value={String(closedThisMonth ?? 0)}
+          subLabel="deals closed"
+          href="/performance"
+        />
       </div>
+
+      {/* Week calendar — full width */}
+      <WeekCalendar events={calendarEvents} />
     </div>
   );
 }
