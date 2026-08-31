@@ -30,11 +30,13 @@ function NotificationRow({
   isUnread,
   onDismiss,
   dismissing,
+  onClose,
 }: {
   ann: Announcement;
   isUnread: boolean;
   onDismiss: (id: string) => void;
   dismissing: string | null;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const [hovered, setHovered] = useState(false);
@@ -42,6 +44,7 @@ function NotificationRow({
   function handleClick() {
     if (!ann.cta_url) return;
     if (isUnread) onDismiss(ann.id);
+    onClose();
     if (ann.cta_url.startsWith("/")) router.push(ann.cta_url);
     else window.open(ann.cta_url, "_blank", "noopener");
   }
@@ -179,6 +182,7 @@ export function AnnouncementBell({ unreadCount, announcements, allAnnouncements 
                     isUnread={isUnread}
                     onDismiss={archive}
                     dismissing={dismissing}
+                    onClose={() => setOpen(false)}
                   />
                 );
               })
