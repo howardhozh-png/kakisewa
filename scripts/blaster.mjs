@@ -414,7 +414,23 @@ async function poll() {
     return schedule(config.interval_minutes);
   }
 
-  const rows = await fetchPending(config.daily_cap);
+  // Enforce true daily cap — count messages already sent today via blaster
+  if (config.daily_cap > 0) {
+    const todayMYT = new Date(Date.now() + MYT_OFFSET_MS).toISOString().slice(0, 10); // YYYY-MM-DD in MYT
+    const { count: sentToday } = await db
+      .from("whatsapp_log")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", USER_ID)
+      .eq("channel", "wa_blaster")
+      .gte("created_at", `${todayMYT}T00:00:00+08:00`);
+    if ((sentToday ?? 0) >= config.daily_cap) {
+      console.log(`[${nowMYT()} MYT] Daily cap of ${config.daily_cap} reached (sent ${sentToday} today). Sleeping.`);
+      return schedule(config.interval_minutes);
+    }
+  }
+
+  // Always send 1 per poll — interval_minutes is the per-message gap
+  const rows = await fetchPending(1);
   if (rows.length === 0) {
     console.log(`[${nowMYT()} MYT] Queue empty. Sleeping.`);
     return schedule(config.interval_minutes);
@@ -437,8 +453,6 @@ async function poll() {
       await sendWA(row.phone, message);
       await markSent(row.id, row.owner_lead_id, row.phone, lead?.owner_name ?? null, message);
       console.log(`  ✓ Sent to ${row.phone}  (lead: ${row.owner_lead_id})`);
-      // Brief gap between messages to avoid WA rate limits
-      if (rows.length > 1) await new Promise(r => setTimeout(r, 3000));
     } catch (err) {
       await markFailed(row.id, err.message);
     }

@@ -1320,7 +1320,7 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
               value={cfg.daily_cap} min={1} max={20} width={40}
               onChange={(v) => onChange({ ...cfg, daily_cap: v })}
             />
-            <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>per send</span>
+            <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>per day</span>
           </div>
 
           {!winErr && (
