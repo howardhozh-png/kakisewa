@@ -20,9 +20,9 @@ const PIPELINE_ITEMS = [
 ] as const;
 
 const BOTTOM_ITEMS = [
-  { href: "/calendar",    icon: CalendarDays, label: "My Calendar", matchPaths: ["/calendar"], minPlan: null },
-  { href: "/directory",   icon: BookOpen,    label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: null },
-  { href: "/performance", icon: BarChart2,   label: "Performance", matchPaths: ["/performance"], minPlan: "elite" },
+  { href: "/calendar",    icon: CalendarDays, label: "My Calendar", matchPaths: ["/calendar"], minPlan: null, adminOnly: false },
+  { href: "/directory",   icon: BookOpen,    label: "Directory",   matchPaths: ["/directory", "/network", "/database", "/supports", "/tenants"], minPlan: null, adminOnly: true },
+  { href: "/performance", icon: BarChart2,   label: "Performance", matchPaths: ["/performance"], minPlan: "elite", adminOnly: true },
 ] as const;
 
 const PLAN_RANK: Record<string, number> = { silver: 1, gold: 2, platinum: 3, elite: 4 };
@@ -241,7 +241,7 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
                 My desk
               </div>
             )}
-            {BOTTOM_ITEMS.map(item => {
+            {BOTTOM_ITEMS.filter(item => !item.adminOnly || isAdmin).map(item => {
               const active = item.matchPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));
               const accessible = hasAccess(item.minPlan, plan, status, isAdmin);
               return navButton(item.href, item.icon, item.label, active, accessible, true);
