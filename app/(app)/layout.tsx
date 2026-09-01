@@ -60,14 +60,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
   const isCancelled = !isAdmin && status === "cancelled";
   const showTrialBanner = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7;
-  // Fetch card count once for trial banner (only when banner will show)
-  let trialCardCount: number | undefined;
-  if (showTrialBanner && userId) {
+  // Fetch card count for trial banner + account modal usage display
+  let cardCount = 0;
+  if (userId) {
     try {
       const supabase = await createClient();
-      trialCardCount = await getTotalCardCount(supabase, userId);
+      cardCount = await getTotalCardCount(supabase, userId);
     } catch {}
   }
+  const trialCardCount = showTrialBanner ? cardCount : undefined;
   // Show card nudge 8-30 days before trial ends (distinct from the urgent 7-day banner);
   // escalates to a red/urgent style once 15 days or fewer remain
   const showCardNudge = !isTrialExpired && !isBetaFrozen && status === "trial" && trialDaysLeft !== null && trialDaysLeft > 7 && trialDaysLeft <= 30 && !agent.stripe_subscription_id;
@@ -103,7 +104,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="kk-top-bar sticky top-0 z-50">
           {showCardNudge && <TrialCardNudge daysLeft={trialDaysLeft!} urgent={cardNudgeUrgent} />}
           {showTrialBanner && <TrialBanner daysLeft={trialDaysLeft!} isBeta={false} currentCardCount={trialCardCount} />}
-          <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs unreadAnnouncements={unreadAnnouncements} allAnnouncements={allAnnouncements} />
+          <TopNav agent={agent} isAdmin={isAdmin} trialDaysLeft={trialDaysLeft} hideTabs unreadAnnouncements={unreadAnnouncements} allAnnouncements={allAnnouncements} cardCount={cardCount} />
           <PwaInstallBanner />
         </div>
 

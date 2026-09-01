@@ -16,6 +16,7 @@ import { saveProfileDetails } from "@/lib/actions";
 import { PhotoCropDialog } from "@/components/photo-crop-dialog";
 import { toast } from "sonner";
 import { INPUT_STYLE } from "@/lib/styles";
+import { TOTAL_CARD_CAP } from "@/lib/plan-caps";
 import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [
@@ -114,7 +115,7 @@ function splitName(full?: string | null): [string, string] {
   return [parts[0], parts.slice(1).join(" ")];
 }
 
-function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => void }) {
+function AccountModal({ agent, cardCount = 0, onClose }: { agent: AgentProfile; cardCount?: number; onClose: () => void }) {
   const [firstName, lastName] = splitName(agent.name);
   const [first, setFirst] = useState(firstName);
   const [last, setLast] = useState(lastName);
@@ -198,8 +199,9 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
         <p className="text-[18px] font-semibold" style={{ color: "var(--kk-ink)" }}>Account settings</p>
       </div>
       <div className="px-6 py-5 space-y-5">
-        {/* Avatar picker */}
+        {/* Avatar + card usage row */}
         <div className="flex items-center gap-4">
+          {/* Avatar picker */}
           <div className="relative shrink-0">
             <AvatarCircle src={displaySrc} name={fullName} size={72} />
             <button
@@ -212,7 +214,8 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
             </button>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
           </div>
-          <div className="min-w-0">
+          {/* Name + agency */}
+          <div className="min-w-0 flex-1">
             <p className="text-[14px] font-semibold" style={{ color: "var(--kk-ink)" }}>{fullName || "Your name"}</p>
             <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>{agency || "Your agency"}</p>
             <button
@@ -223,6 +226,36 @@ function AccountModal({ agent, onClose }: { agent: AgentProfile; onClose: () => 
               {displaySrc ? "Change photo" : "Upload photo"}
             </button>
           </div>
+          {/* Card usage — compact ring */}
+          {(() => {
+            const plan = agent.subscription_plan ?? "silver";
+            const cap = TOTAL_CARD_CAP[plan] ?? 50;
+            const pct = cap > 0 ? Math.min((cardCount / cap) * 100, 100) : 0;
+            const r = 22; const stroke = 5; const cx = 28; const circ = 2 * Math.PI * r;
+            const dash = (pct / 100) * circ;
+            return (
+              <Link href="/subscription" style={{ textDecoration: "none", flexShrink: 0 }} title="Card usage">
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                  <div style={{ position: "relative", width: 56, height: 56 }}>
+                    <svg width={56} height={56} style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx={cx} cy={cx} r={r} fill="none" stroke="var(--kk-line)" strokeWidth={stroke} />
+                      <circle cx={cx} cy={cx} r={r} fill="none" stroke="#004FAD" strokeWidth={stroke}
+                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+                        style={{ transition: "stroke-dasharray 0.4s ease" }}
+                      />
+                    </svg>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--kk-ink)", lineHeight: 1 }}>{Math.round(pct)}%</span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: "var(--kk-ink)", lineHeight: 1 }}>{cardCount.toLocaleString()} / {cap.toLocaleString()}</p>
+                    <p style={{ fontSize: 9, color: "var(--kk-ink-faint)", marginTop: 2, textTransform: "capitalize" }}>{plan} plan</p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })()}
         </div>
 
         <div style={{ borderTop: "1px solid var(--kk-line)" }} />
@@ -646,11 +679,12 @@ interface TopNavProps {
   hideTabs?: boolean;
   unreadAnnouncements?: Announcement[];
   allAnnouncements?: Announcement[];
+  cardCount?: number;
 }
 
 type ActiveModal = "account" | "billing" | null;
 
-export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnouncements = [], allAnnouncements = [] }: TopNavProps) {
+export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnouncements = [], allAnnouncements = [], cardCount = 0 }: TopNavProps) {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1125,7 +1159,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
       {/* Modals */}
       {activeModal === "account" && (
         <Modal onClose={() => setActiveModal(null)}>
-          <AccountModal agent={agent} onClose={() => setActiveModal(null)} />
+          <AccountModal agent={agent} cardCount={cardCount} onClose={() => setActiveModal(null)} />
         </Modal>
       )}
       {activeModal === "billing" && (

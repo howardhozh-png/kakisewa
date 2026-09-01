@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { RadialBarChart, RadialBar, PolarRadiusAxis, Label } from "recharts";
 import type { ExpandedDashboardStats, CalendarEvent } from "@/lib/db";
-import { Layers, Banknote, CalendarDays, Building2, TrendingUp } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -558,9 +558,6 @@ export function StatsSection({
   mtdCommission,
   closedThisMonth,
   upcomingViewings,
-  cardCount,
-  cardCap,
-  planName,
 }: {
   initialStats: ExpandedDashboardStats;
   monthEvents: CalendarEvent[];
@@ -568,9 +565,6 @@ export function StatsSection({
   mtdCommission: number;
   closedThisMonth: number;
   upcomingViewings: CalendarEvent[];
-  cardCount: number;
-  cardCap: number;
-  planName: string;
 }) {
   const [startMonth, setStartMonth] = useState(currentMonth);
   const [calendarEvents, setCalendarEvents] = useState(monthEvents);
@@ -579,11 +573,6 @@ export function StatsSection({
   const gridRef = useRef<HTMLDivElement>(null);
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
-  const viewingsToday = (monthEvents ?? []).filter(e => e.event_date === today && e.event_type === "viewing").length;
-  const safeCardCount = cardCount ?? 0;
-  const safeCardCap = cardCap ?? 400;
-  const cardUsagePct = safeCardCap > 0 ? (safeCardCount / safeCardCap) * 100 : 0;
-  const cardUsageColor = cardUsagePct >= 100 ? "var(--kk-red)" : cardUsagePct >= 80 ? "var(--kk-amber)" : "var(--kk-green)";
   const commFormatted = (mtdCommission ?? 0).toLocaleString("en-MY", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const contactedPct = stats.totalUploaded > 0 ? Math.round((stats.totalContacted / stats.totalUploaded) * 100) : 0;
@@ -662,54 +651,6 @@ export function StatsSection({
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Metric row — 4 white cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <MetricCard
-          icon={Layers}
-          iconBg="rgba(0,113,227,0.10)"
-          iconColor="#004FAD"
-          label="Card Usage"
-          value={safeCardCount.toLocaleString()}
-          subValue={safeCardCap.toLocaleString()}
-          subLabel={(planName ?? "") + " plan"}
-          progress={cardUsagePct}
-          progressColor="#004FAD"
-          progressLabel={`${Math.round(cardUsagePct)}% used`}
-          href="/subscription"
-        />
-        <MetricCard
-          icon={Banknote}
-          iconBg="rgba(52,199,89,0.12)"
-          iconColor="#1F8B4C"
-          label="Commission This Month"
-          value={"RM " + commFormatted}
-          subLabel="earned this month"
-          href="/performance"
-          sparkline={<CommissionSparkline />}
-        />
-        <MetricCard
-          icon={CalendarDays}
-          iconBg="rgba(0,113,227,0.10)"
-          iconColor="#004FAD"
-          label="Viewings Today"
-          value={String(viewingsToday)}
-          subValue="3"
-          subLabel="daily goal"
-          progress={(viewingsToday / 3) * 100}
-          progressColor="#004FAD"
-          href="/calendar"
-        />
-        <MetricCard
-          icon={TrendingUp}
-          iconBg="rgba(52,199,89,0.12)"
-          iconColor="#145E33"
-          label="Closed Deal This Month"
-          value={String(closedThisMonth ?? 0)}
-          subLabel="deals closed"
-          href="/performance"
-        />
       </div>
 
       {/* Week calendar — full width */}
