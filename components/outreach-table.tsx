@@ -213,7 +213,7 @@ function OwnerLeadWaBadge({ lead }: { lead: OwnerLead }) {
     return (
       <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#B45309" }}>
         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#F59E0B", display: "inline-block", flexShrink: 0 }} />
-        Sent
+        Queued
       </span>
     );
   }
