@@ -197,7 +197,7 @@ function WeekCalendar({ events }: { events: CalendarEvent[] }) {
                       {dayNum}
                     </span>
                   ) : (
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)" }}>{dayNum}</span>
+                    <span style={{ width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "var(--kk-ink)" }}>{dayNum}</span>
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 3, overflow: "hidden" }}>
