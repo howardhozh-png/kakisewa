@@ -313,6 +313,9 @@ async function connect() {
     if (connection === "open") {
       isConnected = true;
       console.log(`\n✓ WhatsApp connected  [user: ${USER_ID.slice(0, 8)}...]\n`);
+      // Tell WA this linked device is offline so incoming reply notifications
+      // route to the phone, not the blaster session
+      try { await sock.sendPresenceUpdate("unavailable"); } catch { /* ignore */ }
       try {
         await db.from("wa_sessions").upsert(
           { user_id: USER_ID, qr_data_url: null, is_authenticated: true, updated_at: new Date().toISOString() },
@@ -360,6 +363,8 @@ async function sendWA(phone, message) {
   if (!isConnected || !sock) throw new Error("Not connected");
   const jid = `${phone}@s.whatsapp.net`;
   await sock.sendMessage(jid, { text: message });
+  // Re-assert unavailable so WA routes incoming notifications to the phone
+  try { await sock.sendPresenceUpdate("unavailable"); } catch { /* ignore */ }
 }
 
 // ── Poll loop ─────────────────────────────────────────────────────────────────
