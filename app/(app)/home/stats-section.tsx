@@ -418,16 +418,35 @@ function FunnelItem({
   color: string; donutPct: number;
   stats: FunnelStat[];
 }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <Link href={href} style={{ textDecoration: "none", flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "0 8px" }}>
-      {/* Segment title — colored, title case */}
+    <Link
+      href={href}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        textDecoration: "none", flex: 1, minWidth: 0,
+        display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
+        padding: "10px 8px 14px", borderRadius: 14,
+        background: hovered ? `color-mix(in srgb, ${color} 6%, transparent)` : "transparent",
+        transition: "background 0.18s ease",
+      }}
+    >
+      {/* Segment title */}
       <p style={{ fontSize: 13, fontWeight: 600, color, marginBottom: 14 }}>
         {title}
       </p>
-      {/* Donut with count + arcLabel inside */}
-      <FunnelDonut pct={donutPct} color={color} count={count} countLabel={countLabel} arcLabel={arcLabel} size={160} />
-      {/* Sub-stats as pill boxes */}
-      <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 14 }}>
+      {/* Donut — scales on hover */}
+      <div style={{ transform: hovered ? "scale(1.09)" : "scale(1)", transition: "transform 0.2s ease", transformOrigin: "center" }}>
+        <FunnelDonut pct={donutPct} color={color} count={count} countLabel={countLabel} arcLabel={arcLabel} size={160} />
+      </div>
+      {/* Sub-stats pills — lift slightly on hover */}
+      <div style={{
+        display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap",
+        marginTop: 14,
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
+        transition: "transform 0.2s ease",
+      }}>
         {stats.map((s) => (
           <div key={s.label} style={{
             display: "inline-flex", alignItems: "center", gap: 5,
