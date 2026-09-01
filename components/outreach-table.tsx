@@ -1124,16 +1124,12 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
           return true;
         })
         .sort((a, b) => {
-          const sa = getStatus(a), sb = getStatus(b);
-          const order: Record<ContactStatus, number> = { unsent: 0, contacted: 1, listed: 2, rented: 3, declined: 4 };
-          if (order[sa] !== order[sb]) return order[sa] - order[sb];
-          // Within "contacted": sort by last sent descending (most recent first)
-          if (sa === "contacted" && sb === "contacted") {
-            const ta = a.intake_sent_at ?? "";
-            const tb = b.intake_sent_at ?? "";
-            if (ta || tb) return tb.localeCompare(ta);
-          }
-          return a.created_at.localeCompare(b.created_at);
+          const ta = a.last_outreach_at ?? a.intake_sent_at ?? "";
+          const tb = b.last_outreach_at ?? b.intake_sent_at ?? "";
+          if (!ta && !tb) return 0;
+          if (!ta) return 1;
+          if (!tb) return -1;
+          return tb.localeCompare(ta);
         });
 
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
