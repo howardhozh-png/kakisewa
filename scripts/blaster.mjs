@@ -264,6 +264,7 @@ async function markFailed(queueId, reason) {
 let sock = null;
 let isConnected = false;
 let reconnectTimer = null;
+let plannedDisconnect = false; // set before sock.end() so close handler doesn't auto-reconnect
 
 async function safeConnect(delayMs = 5_000) {
   reconnectTimer = setTimeout(async () => {
@@ -353,8 +354,14 @@ async function connect() {
         } catch { /* ignore */ }
         process.exit(2); // exit code 2 = relink requested; shell wrapper restarts automatically
       }
-      console.log("  Connection dropped — reconnecting in 5s...");
-      safeConnect(5_000);
+      if (plannedDisconnect) {
+        plannedDisconnect = false;
+        console.log("  Disconnected after sends — will reconnect at next poll.\n");
+        // Do NOT reconnect now; the next poll timer will call connect()
+      } else {
+        console.log("  Connection dropped — reconnecting in 5s...");
+        safeConnect(5_000);
+      }
     }
   });
 }
@@ -428,8 +435,12 @@ async function _poll() {
   }
 
   if (!isConnected) {
-    console.log(`[${nowMYT()} MYT] WA not connected. Waiting for connection.`);
-    return schedule(config.interval_minutes);
+    console.log(`[${nowMYT()} MYT] WA not connected. Connecting...`);
+    connect().catch(e => {
+      console.error("Connect error:", e.message, "— retrying in 30s...");
+      schedule(0.5);
+    });
+    return; // poll will be re-triggered by the "open" handler on connect
   }
 
   const rows = await fetchPending(config.daily_cap);
@@ -461,6 +472,12 @@ async function _poll() {
       await markFailed(row.id, err.message);
     }
   }
+
+  // Disconnect after sends so WA routes incoming notifications to the phone.
+  // The session reconnects fresh at the next poll cycle.
+  plannedDisconnect = true;
+  isConnected = false;
+  if (sock) sock.end(undefined);
 
   schedule(config.interval_minutes);
 }
