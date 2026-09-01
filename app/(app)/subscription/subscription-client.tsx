@@ -783,23 +783,21 @@ export function SubscriptionClient({
           </div>
         )}
 
-        {/* Manage billing — any subscribed user or admin */}
-        {(hasStripeCustomer || isAdmin) && (
-          <div className="text-center">
-            <button
-              onClick={openPortal}
-              disabled={portalLoading}
-              className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-85"
-              style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line-strong)", opacity: portalLoading ? 0.6 : 1 }}
-            >
-              {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {portalLoading ? "Opening…" : "Manage billing"}
-            </button>
-            <p className="mt-3 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-              Secure payment via Stripe · No lock-in · Cancel anytime
-            </p>
-          </div>
-        )}
+        {/* Manage billing — always visible; API returns a clear error for non-subscribed users */}
+        <div className="text-center">
+          <button
+            onClick={openPortal}
+            disabled={portalLoading}
+            className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl font-semibold text-[14px] transition-opacity hover:opacity-85"
+            style={{ background: "var(--kk-surface-2)", color: "var(--kk-ink)", border: "1px solid var(--kk-line-strong)", opacity: portalLoading ? 0.6 : 1 }}
+          >
+            {portalLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {portalLoading ? "Opening…" : "Manage billing"}
+          </button>
+          <p className="mt-3 text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+            Secure payment via Stripe · No lock-in · Cancel anytime
+          </p>
+        </div>
       </div>
     </>
   );
