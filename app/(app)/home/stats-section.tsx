@@ -178,7 +178,7 @@ function WeekCalendar({ events }: { events: CalendarEvent[] }) {
             </div>
           ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", flex: 1, minHeight: 80, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", flex: 1, minHeight: 180, overflow: "hidden" }}>
           {weekDays.map((dateStr, i) => {
             const isToday = dateStr === today;
             const dayNum = parseInt(dateStr.split("-")[2]);
@@ -229,7 +229,7 @@ function WeekCalendar({ events }: { events: CalendarEvent[] }) {
       </div>
 
       {/* Mobile: agenda-style list with full event cards */}
-      <div className="lg:hidden" style={{ flex: 1, overflowY: "auto" }}>
+      <div className="lg:hidden" style={{ flex: 1, overflowY: "auto", minHeight: 280 }}>
         {weekDays.map((dateStr, i) => {
           const isToday = dateStr === today;
           const dayNum = parseInt(dateStr.split("-")[2]);
