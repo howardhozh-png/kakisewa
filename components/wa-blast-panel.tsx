@@ -1103,42 +1103,17 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                     </div>
                   ) : session?.qr_data_url ? (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                      {/* QR image with "connecting" overlay after 12 s */}
+                      {/* QR always fully visible — no fade, user may not have scanned yet */}
                       <div style={{ position: "relative", width: 176, height: 176, flexShrink: 0 }}>
                         <img src={session.qr_data_url} alt="WhatsApp QR code"
-                          style={{ width: 176, height: 176, borderRadius: 12, border: "1px solid rgba(0,0,0,0.08)", display: "block", opacity: showConnecting ? 0.18 : 1, transition: "opacity 0.5s" }} />
-                        {showConnecting && (
-                          <div style={{
-                            position: "absolute", inset: 0, borderRadius: 12,
-                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                            gap: 10, background: "rgba(255,255,255,0.88)",
-                          }}>
-                            <Loader2 style={{ width: 28, height: 28, color: "var(--kk-blue)", animation: "spin 1s linear infinite" }} />
-                            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: 0, textAlign: "center", padding: "0 12px" }}>
-                              Connecting...
-                            </p>
-                          </div>
-                        )}
+                          style={{ width: 176, height: 176, borderRadius: 12, border: "1px solid rgba(0,0,0,0.08)", display: "block" }} />
                       </div>
-                      {showConnecting ? (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                          <p style={{ fontSize: 12, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0, lineHeight: 1.55 }}>
-                            QR scanned. WhatsApp is connecting your account.
-                          </p>
-                          <p style={{ fontSize: 11, color: "var(--kk-ink-faint)", textAlign: "center", margin: 0 }}>
-                            This can take up to 30 seconds. Stay on this screen.
-                          </p>
-                        </div>
-                      ) : (
-                        <>
-                          <p style={{ fontSize: 11.5, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0, lineHeight: 1.5 }}>
-                            Open <strong>WhatsApp</strong> on your phone → <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>
-                          </p>
-                          <p style={{ fontSize: 10.5, color: "var(--kk-ink-faint)", margin: 0 }}>
-                            After scanning, connecting takes up to 30 seconds
-                          </p>
-                        </>
-                      )}
+                      <p style={{ fontSize: 11.5, color: "var(--kk-ink-mute)", textAlign: "center", margin: 0, lineHeight: 1.5 }}>
+                        Open <strong>WhatsApp</strong> on your phone → <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>
+                      </p>
+                      <p style={{ fontSize: 10.5, color: "var(--kk-ink-faint)", margin: 0 }}>
+                        After scanning, connecting takes up to 30 seconds
+                      </p>
                     </div>
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 13px", background: "var(--kk-bg)", borderRadius: 10, border: "1px solid rgba(0,0,0,0.07)" }}>
