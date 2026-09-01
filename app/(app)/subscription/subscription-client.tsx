@@ -410,6 +410,7 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
 interface Props {
   isAdmin?: boolean;
   isBetaUser?: boolean;
+  hasStripeCustomer?: boolean;
   status: string | null;
   trialDaysLeft: number | null;
   currentPlan: string | null;
@@ -424,7 +425,7 @@ interface Props {
 }
 
 export function SubscriptionClient({
-  isAdmin, isBetaUser, status, trialDaysLeft, currentPlan,
+  isAdmin, isBetaUser, hasStripeCustomer, status, trialDaysLeft, currentPlan,
   subscriptionYear, currentCardCount, referralCode, referralCount, referralPaidCount,
   creditBalanceMyr, pendingCreditMyr = 0, totalCreditEarnedMyr = 0,
 }: Props) {
@@ -782,8 +783,8 @@ export function SubscriptionClient({
           </div>
         )}
 
-        {/* Manage billing — admin only */}
-        {isAdmin && (
+        {/* Manage billing — any subscribed user or admin */}
+        {(hasStripeCustomer || isAdmin) && (
           <div className="text-center">
             <button
               onClick={openPortal}

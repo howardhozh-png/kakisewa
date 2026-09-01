@@ -100,6 +100,7 @@ export default async function SubscriptionPage() {
       creditBalanceMyr={creditBalanceMyr}
       pendingCreditMyr={pendingCreditMyr}
       totalCreditEarnedMyr={totalCreditEarnedMyr}
+      hasStripeCustomer={!!agent.stripe_customer_id}
     />
   );
 }
