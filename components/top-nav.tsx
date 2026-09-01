@@ -16,7 +16,7 @@ import { saveProfileDetails } from "@/lib/actions";
 import { PhotoCropDialog } from "@/components/photo-crop-dialog";
 import { toast } from "sonner";
 import { INPUT_STYLE } from "@/lib/styles";
-import { TOTAL_CARD_CAP } from "@/lib/plan-caps";
+import { TOTAL_CARD_CAP } from "@/lib/cap-constants";
 import { NotificationBell } from "@/components/notification-bell";
 
 const NAV = [

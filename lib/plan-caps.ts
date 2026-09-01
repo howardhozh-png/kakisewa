@@ -4,6 +4,7 @@ import { PLAN_CONFIG, PLAN_ORDER, minimumPlanFor, type PlanId } from "./plans";
 
 export type { PlanId };
 export { CAP_WARN_THRESHOLD } from "./cap-constants";
+import { TOTAL_CARD_CAP } from "./cap-constants";
 export { minimumPlanFor };
 
 export type ProfileRow = {
@@ -52,13 +53,7 @@ export function effectivePlan(p: ProfileRow | null): string {
   return "frozen";
 }
 
-export const TOTAL_CARD_CAP: Record<string, number> = {
-  frozen: 0,
-  silver: 50,
-  gold: 150,
-  platinum: 400,
-  elite: 1000,
-};
+export { TOTAL_CARD_CAP } from "./cap-constants";
 
 function nextTier(plan: string): { id: PlanId; cap: number } | null {
   const idx = PLAN_ORDER.indexOf(plan as PlanId);
