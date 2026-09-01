@@ -727,6 +727,8 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
                     User <SortIcon col="name" sortCol={sortCol} sortDir={sortDir} />
                   </span>
                 </th>
+                {/* Activity — second column so it's visible on mobile */}
+                <Th col="days_inactive" label="Last seen" />
                 {/* Card columns */}
                 <Th col="potential" label="Potl" right />
                 <Th col="listed" label="Listed" right />
@@ -735,8 +737,6 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
                 {/* Message columns */}
                 <Th col="outreach_wa" label="Owner WA" right />
                 <Th col="renewal_wa" label="Renewal WA" right />
-                {/* Activity */}
-                <Th col="days_inactive" label="Last seen" />
                 <Th col="health" label="Health" right />
                 {/* Expand */}
                 <th style={{ ...TH_BASE, width: 36, padding: "10px 8px" }} />
@@ -779,6 +779,10 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
                           </div>
                         </div>
                       </td>
+                      {/* Activity — second column so it's visible on mobile */}
+                      <td style={{ ...TD, padding: "10px 12px", whiteSpace: "nowrap" }}>
+                        <LastSeenBadge iso={a.last_login_at} />
+                      </td>
                       {/* Card counts */}
                       <NumCell val={a.potential_listing_count} />
                       <NumCell val={a.my_listing_count} />
@@ -787,10 +791,6 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
                       {/* Message counts */}
                       <NumCell val={a.outreaches_sent} />
                       <NumCell val={a.renewal_wa_count} />
-                      {/* Activity */}
-                      <td style={{ ...TD, padding: "10px 12px", whiteSpace: "nowrap" }}>
-                        <LastSeenBadge iso={a.last_login_at} />
-                      </td>
                       {/* Health */}
                       <td style={{ ...TD, padding: "10px 12px", minWidth: 100 }}>
                         <HealthBar score={a.health} />
