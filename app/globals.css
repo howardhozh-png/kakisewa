@@ -158,6 +158,8 @@
 
 @layer base {
   * { @apply border-border outline-ring/50; }
+  /* Remove focus ring on mouse/touch click; keep it for keyboard nav */
+  :focus:not(:focus-visible) { outline: none; }
   html {
     font-feature-settings: "ss01", "cv11";
     overflow-y: auto;

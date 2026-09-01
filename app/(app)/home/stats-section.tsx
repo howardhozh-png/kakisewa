@@ -367,11 +367,11 @@ function FunnelDonut({ pct, color, count, countLabel, arcLabel, size = 160 }: {
   const numFontSize = numStr.length <= 2 ? 30 : numStr.length <= 3 ? 24 : numStr.length <= 5 ? 19 : 16;
 
   return (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0, cursor: "pointer" }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
         <circle cx={r} cy={r} r={trackR} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={trackSW} />
       </svg>
-      <div style={{ position: "absolute", top: 0, left: 0 }}>
+      <div style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
         <RadialBarChart width={size} height={size} data={[{ value: 1 }]} startAngle={90} endAngle={endAngle} innerRadius={innerR} outerRadius={outerR}>
           <RadialBar dataKey="value" fill={color} cornerRadius={8} isAnimationActive={true} />
           <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
@@ -427,7 +427,7 @@ function FunnelItem({
       style={{
         textDecoration: "none", flex: 1, minWidth: 0,
         display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
-        padding: "10px 8px 14px", borderRadius: 14,
+        padding: "10px 8px 14px", borderRadius: 14, cursor: "pointer",
         background: hovered ? `color-mix(in srgb, ${color} 6%, transparent)` : "transparent",
         transition: "background 0.18s ease",
       }}
