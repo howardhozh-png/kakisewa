@@ -41,6 +41,46 @@ function isPipelineActive(href: string, pathname: string, _tab: string | null): 
   return false;
 }
 
+function NavBtn({
+  href, icon: Icon, label, active, accessible, indent = false, showLabels, onClick, onPrefetch,
+}: {
+  href: string; icon: React.ElementType; label: string;
+  active: boolean; accessible: boolean; indent?: boolean;
+  showLabels: boolean; onClick: () => void; onPrefetch: () => void;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      key={href}
+      onClick={onClick}
+      onMouseEnter={() => { setHov(true); onPrefetch(); }}
+      onMouseLeave={() => setHov(false)}
+      title={!showLabels ? label : undefined}
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: showLabels ? `9px 12px 9px ${indent ? 18 : 12}px` : "9px 12px",
+        justifyContent: showLabels ? "flex-start" : "center",
+        borderRadius: 8,
+        background: active ? "var(--kk-surface-2)" : hov ? "var(--kk-surface-2)" : "transparent",
+        color: active ? "var(--kk-ink)" : accessible ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
+        border: "none", cursor: "pointer", width: "100%",
+        whiteSpace: "nowrap", overflow: "hidden", textAlign: "left" as const,
+        flexShrink: 0, transition: "background 0.1s",
+      }}
+    >
+      <Icon style={{ width: 18, height: 18, flexShrink: 0, strokeWidth: active ? 2.2 : 1.7 }} />
+      {showLabels && (
+        <>
+          <span style={{ fontSize: 13, fontWeight: active ? 600 : 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
+            {label}
+          </span>
+          {!accessible && <Lock style={{ width: 10, height: 10, flexShrink: 0, opacity: 0.4 }} />}
+        </>
+      )}
+    </button>
+  );
+}
+
 interface Props { plan: string | null; status: string | null; isAdmin: boolean; }
 
 export function SidebarNav({ plan, status, isAdmin }: Props) {
@@ -77,52 +117,20 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
   const sidebarWidth = showLabels ? W_OPEN : W_CLOSED;
   const isOverlay = hovered && !pinned && !mobileOpen;
 
-  function navButton(
-    href: string,
-    icon: React.ElementType,
-    label: string,
-    active: boolean,
-    accessible: boolean,
-    indent = false,
-  ) {
-    const Icon = icon;
+  function navButton(href: string, icon: React.ElementType, label: string, active: boolean, accessible: boolean, indent = false) {
     return (
-      <button
+      <NavBtn
         key={href}
+        href={href}
+        icon={icon}
+        label={label}
+        active={active}
+        accessible={accessible}
+        indent={indent}
+        showLabels={showLabels}
         onClick={() => { router.push(accessible ? href : "/subscription"); setMobileOpen(false); }}
-        onMouseEnter={() => router.prefetch(accessible ? href : "/subscription")}
-        title={!showLabels ? label : undefined}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: showLabels
-            ? `9px 12px 9px ${indent ? 18 : 12}px`
-            : "9px 12px",
-          justifyContent: showLabels ? "flex-start" : "center",
-          borderRadius: 8,
-          background: active ? "var(--kk-surface-2)" : "transparent",
-          color: active ? "var(--kk-ink)" : accessible ? "var(--kk-ink-mute)" : "var(--kk-ink-faint)",
-          border: "none",
-          cursor: "pointer",
-          width: "100%",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textAlign: "left",
-          flexShrink: 0,
-          transition: "background 0.1s",
-        }}
-      >
-        <Icon style={{ width: 18, height: 18, flexShrink: 0, strokeWidth: active ? 2.2 : 1.7 }} />
-        {showLabels && (
-          <>
-            <span style={{ fontSize: 13, fontWeight: active ? 600 : 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
-              {label}
-            </span>
-            {!accessible && <Lock style={{ width: 10, height: 10, flexShrink: 0, opacity: 0.4 }} />}
-          </>
-        )}
-      </button>
+        onPrefetch={() => router.prefetch(accessible ? href : "/subscription")}
+      />
     );
   }
 

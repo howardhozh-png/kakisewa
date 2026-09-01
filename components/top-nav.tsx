@@ -791,7 +791,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
   const MENU_ITEMS = [
     { icon: Compass,     label: "Getting started",  action: () => { setMenuOpen(false); setMobileMenuOpen(false); document.dispatchEvent(new CustomEvent(DEMO_EVENT)); } },
     { divider: true },
-    ...(profilePath ? [{ icon: User, label: "Agent profile", highlight: true, action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/settings/profile"); } }] : []),
+    ...(isAdmin && profilePath ? [{ icon: User, label: "Agent profile", highlight: true, action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/settings/profile"); } }] : []),
     { icon: User,        label: "Account settings", action: () => openModal("account") },
     { icon: CreditCard,  label: "Subscription",     action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/subscription"); } },
     { icon: HelpCircle,  label: "Help & support",   action: () => { setMenuOpen(false); setMobileMenuOpen(false); router.push("/faq"); } },
