@@ -331,7 +331,7 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
   const effectiveYear: 1 | 2 = billingYear;
   const monthlyPrice = effectiveYear === 1 ? plan.y1Monthly : plan.y2Monthly;
   const annualTotal  = betaPrice ? betaPrice * 12 : (effectiveYear === 1 ? plan.y1Annual : plan.y2Annual);
-  const price = betaPrice ?? (interval === "annual" ? Math.round(annualTotal / 12) : monthlyPrice);
+  const price = interval === "annual" ? annualTotal : (betaPrice ?? monthlyPrice);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape" && !loading) onCancel(); }
@@ -353,12 +353,11 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
           <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: s.faint }}>Confirm subscription</p>
           <p className="text-[26px] font-bold leading-tight mb-5" style={{ color: s.ink }}>kakisewa {plan.name}</p>
           <div className="flex items-end gap-2 mb-2">
-            <span className="text-[38px] font-black leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>RM {price}</span>
-            <span className="text-[15px] pb-1.5" style={{ color: s.mute }}>/month</span>
+            <span className="text-[38px] font-black leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>RM {price.toLocaleString()}</span>
+            <span className="text-[15px] pb-1.5" style={{ color: s.mute }}>{interval === "annual" ? "/year" : "/month"}</span>
           </div>
           {interval === "annual" ? (
             <div className="space-y-1 mt-3">
-              <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {annualTotal.toLocaleString()} billed annually</p>
               {!betaPrice && effectiveYear === 1 && plan.planId !== "silver" && (
                 <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Pay 12 months, get 14 months</p>
               )}
