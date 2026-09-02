@@ -6,10 +6,10 @@ import { ArrowRight, Snowflake } from "lucide-react";
 const ALLOWED_PATHS = ["/home", "/subscription", "/faq", "/support"];
 
 const PLANS = [
-  { name: "Silver",   price: 29,  desc: "Start building your pipeline and renewal tracking." },
-  { name: "Gold",     price: 49,  desc: "Scale your portfolio with full renewal history." },
-  { name: "Platinum", price: 99,  desc: "Never miss a renewal. 400 active contracts.", featured: true },
-  { name: "Elite",    price: 159, desc: "Your all-in-one hub. Up to 1,000 contracts + public profile." },
+  { name: "Silver",   price: 19,  desc: "Start building your pipeline and renewal tracking." },
+  { name: "Gold",     price: 29,  desc: "Scale your portfolio with full renewal history." },
+  { name: "Platinum", price: 39,  desc: "Never miss a renewal. 400 active contracts.", featured: true },
+  { name: "Elite",    price: 69,  desc: "Your all-in-one hub. Up to 1,000 contracts + public profile." },
 ];
 
 export function BetaFrozenGate() {

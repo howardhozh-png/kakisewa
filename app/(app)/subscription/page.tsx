@@ -17,7 +17,7 @@ export default async function SubscriptionPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const status = (agent.subscription_status ?? null) as string | null;
-  const isBetaUser = !!(agent as { is_beta_user?: boolean }).is_beta_user;
+  const isBetaUser = !!(agent as { is_beta_user?: boolean }).is_beta_user || status === "beta_frozen";
   const trialEndsAt = agent.trial_ends_at ? new Date(agent.trial_ends_at) : null;
   const now = new Date();
   const trialDaysLeft = trialEndsAt
