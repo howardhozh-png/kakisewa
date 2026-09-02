@@ -31,7 +31,7 @@ else
   ARCH=$(uname -m)
   [ "$ARCH" = "arm64" ] && NARCH="arm64" || NARCH="x64"
   mkdir -p "$KAKI_NODE_HOME"
-  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v22.17.1-darwin-\${NARCH}.tar.gz" \\
+  curl -fsSL "https://nodejs.org/dist/v22.17.1/node-v22.17.1-darwin-\${NARCH}.tar.gz" \\
     | tar -xz -C "$KAKI_NODE_HOME" --strip-components=1
   export PATH="$KAKI_NODE_HOME/bin:$PATH"
 fi
@@ -83,7 +83,7 @@ if exist "%KAKI_NODE%\\node.exe" (
 
 echo Node.js not found. Downloading (no admin rights needed)...
 if not exist "%USERPROFILE%\\.kakisewa" mkdir "%USERPROFILE%\\.kakisewa"
-powershell -NoProfile -Command "& { $url='https://nodejs.org/dist/v20.18.0/node-v22.17.1-win-x64.zip'; $zip=$env:TEMP+'\\node.zip'; Invoke-WebRequest $url -OutFile $zip; Expand-Archive $zip -DestinationPath ($env:USERPROFILE+'\\.kakisewa') -Force; if (Test-Path ($env:USERPROFILE+'\\.kakisewa\\node-v22.17.1-win-x64')) { Rename-Item ($env:USERPROFILE+'\\.kakisewa\\node-v22.17.1-win-x64') 'node' }; Remove-Item $zip -ErrorAction SilentlyContinue }"
+powershell -NoProfile -Command "& { $url='https://nodejs.org/dist/v22.17.1/node-v22.17.1-win-x64.zip'; $zip=$env:TEMP+'\\node.zip'; Invoke-WebRequest $url -OutFile $zip; Expand-Archive $zip -DestinationPath ($env:USERPROFILE+'\\.kakisewa') -Force; if (Test-Path ($env:USERPROFILE+'\\.kakisewa\\node-v22.17.1-win-x64')) { Rename-Item ($env:USERPROFILE+'\\.kakisewa\\node-v22.17.1-win-x64') 'node' }; Remove-Item $zip -ErrorAction SilentlyContinue }"
 set "PATH=%KAKI_NODE%;%PATH%"
 where node >nul 2>&1
 if %errorlevel% neq 0 (

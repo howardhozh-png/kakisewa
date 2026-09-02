@@ -30,7 +30,7 @@ else
   ARCH=$(uname -m)
   [ "$ARCH" = "arm64" ] && NARCH="arm64" || NARCH="x64"
   mkdir -p "$KAKI_NODE_HOME"
-  curl -fsSL "https://nodejs.org/dist/v20.18.0/node-v22.17.1-darwin-\${NARCH}.tar.gz" \
+  curl -fsSL "https://nodejs.org/dist/v22.17.1/node-v22.17.1-darwin-\${NARCH}.tar.gz" \
     | tar -xz -C "$KAKI_NODE_HOME" --strip-components=1
   export PATH="$KAKI_NODE_HOME/bin:$PATH"
 fi
@@ -92,7 +92,7 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
 } else {
   Write-Host "Downloading Node.js (no admin rights needed)..."
   $nodeZip = "$env:TEMP\node.zip"
-  Invoke-WebRequest "https://nodejs.org/dist/v20.18.0/node-v22.17.1-win-x64.zip" -OutFile $nodeZip
+  Invoke-WebRequest "https://nodejs.org/dist/v22.17.1/node-v22.17.1-win-x64.zip" -OutFile $nodeZip
   Expand-Archive $nodeZip -DestinationPath "$env:USERPROFILE\.kakisewa" -Force
   if (Test-Path "$env:USERPROFILE\.kakisewa\node-v22.17.1-win-x64") {
     Rename-Item "$env:USERPROFILE\.kakisewa\node-v22.17.1-win-x64" "node"
