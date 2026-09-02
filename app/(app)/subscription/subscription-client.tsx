@@ -143,8 +143,8 @@ function PricingCard({
   const disabled = tooManyCards;
 
   const monthlyPrice = billingYear === 1 ? plan.y1Monthly : plan.y2Monthly;
-  const annualTotal  = billingYear === 1 ? plan.y1Annual  : plan.y2Annual;
-  const annualMonthly = Math.round(annualTotal / 12);
+  const annualTotal  = betaPrice ? betaPrice * 12 : (billingYear === 1 ? plan.y1Annual : plan.y2Annual);
+  const annualMonthly = betaPrice ?? Math.round(annualTotal / 12);
   const price = betaPrice ?? (interval === "annual" ? annualMonthly : monthlyPrice);
   const showFreeMonths = !betaPrice && interval === "annual" && billingYear === 1 && plan.planId !== "silver";
   const y2PriceDisplay = interval === "annual" ? Math.round(plan.y2Annual / 12) : plan.y2Monthly;
@@ -328,10 +328,9 @@ interface ConfirmProps {
 
 function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onConfirm, loading, isOnTrial, trialDaysLeft, betaPrice }: ConfirmProps) {
   const s = TIER_STYLES[plan.name];
-  // Upgrades always use Y2 rate regardless of current subscriptionYear
-  const effectiveYear: 1 | 2 = isUpgrade ? 2 : billingYear;
+  const effectiveYear: 1 | 2 = billingYear;
   const monthlyPrice = effectiveYear === 1 ? plan.y1Monthly : plan.y2Monthly;
-  const annualTotal  = effectiveYear === 1 ? plan.y1Annual  : plan.y2Annual;
+  const annualTotal  = betaPrice ? betaPrice * 12 : (effectiveYear === 1 ? plan.y1Annual : plan.y2Annual);
   const price = betaPrice ?? (interval === "annual" ? Math.round(annualTotal / 12) : monthlyPrice);
 
   useEffect(() => {
@@ -366,9 +365,6 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
             </div>
           ) : (
             <p className="text-[13px] mt-3" style={{ color: s.mute }}>RM {betaPrice ?? monthlyPrice}/month · cancel anytime</p>
-          )}
-          {isUpgrade && (
-            <p className="text-[11px] mt-3 font-semibold" style={{ color: s.faint }}>Year 2 rate applies on plan upgrades</p>
           )}
         </div>
         <div className="px-6 pt-4 pb-5 space-y-4">
@@ -554,7 +550,7 @@ export function SubscriptionClient({
         </div>
 
         {/* Pricing */}
-        <><div className="flex justify-center mb-10" style={{ display: isBetaUser ? "none" : undefined }}>
+        <><div className="flex justify-center mb-10">
           <div className="inline-flex rounded-full p-1"
             style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line-strong)" }}>
             <button
@@ -570,7 +566,7 @@ export function SubscriptionClient({
               style={{ background: interval === "annual" ? "var(--kk-ink)" : "transparent", color: interval === "annual" ? "#fff" : "var(--kk-ink-mute)" }}
             >
               Annual
-              {effectiveBillingYear === 1 && (
+              {!isBetaUser && effectiveBillingYear === 1 && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
                   style={{ background: interval === "annual" ? "#16a34a" : "var(--kk-line)", color: interval === "annual" ? "#fff" : "var(--kk-ink-faint)" }}>
                   2mo free
@@ -586,7 +582,7 @@ export function SubscriptionClient({
             <PricingCard
               key={plan.name}
               plan={plan}
-              interval={isBetaUser ? "monthly" : interval}
+              interval={interval}
               billingYear={effectiveBillingYear}
               isCurrentPlan={currentPlan === plan.planId}
               isSelected={selectedPlanId === plan.planId}

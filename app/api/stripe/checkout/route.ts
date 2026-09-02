@@ -47,13 +47,13 @@ export async function POST(req: NextRequest) {
     const itemId = sub.items.data[0]?.id;
     if (!itemId) return NextResponse.json({ error: "Subscription item not found" }, { status: 400 });
 
-    // Upgrades always use Y2 rate
-    const upgradePriceId = priceId(plan, interval, 2);
+    const isBetaActive = !!(profile as { is_beta_user?: boolean })?.is_beta_user;
+    const subYear = ((profile as { subscription_year?: number })?.subscription_year ?? 1) as 1 | 2;
+    const changePriceId = isBetaActive ? betaPriceId(plan, interval) : priceId(plan, interval, subYear);
     await stripe.subscriptions.update(profile.stripe_subscription_id, {
-      items: [{ id: itemId, price: upgradePriceId }],
+      items: [{ id: itemId, price: changePriceId }],
       proration_behavior: "create_prorations",
     });
-    await admin.from("agent_profiles").update({ subscription_year: 2 }).eq("id", userId);
 
     return NextResponse.json({ upgraded: true });
   }
@@ -97,9 +97,9 @@ export async function POST(req: NextRequest) {
 
   const trialDays = typeof trialDaysLeft === "number" && trialDaysLeft > 0 ? trialDaysLeft : undefined;
 
-  // Beta users always pay their locked-in beta price regardless of interval sent
+  // Beta users pay their locked-in beta price (monthly or annual)
   const isBetaUser = !!(profile as { is_beta_user?: boolean } | null)?.is_beta_user;
-  const newPriceId = isBetaUser ? betaPriceId(plan) : priceId(plan, interval, 1);
+  const newPriceId = isBetaUser ? betaPriceId(plan, interval) : priceId(plan, interval, 1);
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,

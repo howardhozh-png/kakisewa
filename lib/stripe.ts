@@ -9,16 +9,16 @@ export type { PlanId, BillingYear, BillingInterval };
 export type Plan = PlanId;
 export type Interval = BillingInterval;
 
-// Beta prices — flat monthly, no annual, no Y2
-export const BETA_PRICES: Record<PlanId, string> = {
-  silver:   process.env.STRIPE_PRICE_BETA_SILVER_MONTHLY   ?? "",
-  gold:     process.env.STRIPE_PRICE_BETA_GOLD_MONTHLY     ?? "",
-  platinum: process.env.STRIPE_PRICE_BETA_PLATINUM_MONTHLY ?? "",
-  elite:    process.env.STRIPE_PRICE_BETA_ELITE_MONTHLY    ?? "",
+// Beta prices — flat monthly or annual (monthly * 12, no bonus months)
+export const BETA_PRICES: Record<PlanId, { monthly: string; annual: string }> = {
+  silver:   { monthly: process.env.STRIPE_PRICE_BETA_SILVER_MONTHLY   ?? "", annual: process.env.STRIPE_PRICE_BETA_SILVER_ANNUAL   ?? "" },
+  gold:     { monthly: process.env.STRIPE_PRICE_BETA_GOLD_MONTHLY     ?? "", annual: process.env.STRIPE_PRICE_BETA_GOLD_ANNUAL     ?? "" },
+  platinum: { monthly: process.env.STRIPE_PRICE_BETA_PLATINUM_MONTHLY ?? "", annual: process.env.STRIPE_PRICE_BETA_PLATINUM_ANNUAL ?? "" },
+  elite:    { monthly: process.env.STRIPE_PRICE_BETA_ELITE_MONTHLY    ?? "", annual: process.env.STRIPE_PRICE_BETA_ELITE_ANNUAL    ?? "" },
 };
 
-export function betaPriceId(plan: PlanId): string {
-  return BETA_PRICES[plan];
+export function betaPriceId(plan: PlanId, interval: BillingInterval = "monthly"): string {
+  return BETA_PRICES[plan][interval];
 }
 
 // Silver has same price for Y1 and Y2
@@ -65,8 +65,9 @@ export function priceId(plan: PlanId, interval: BillingInterval, year: BillingYe
 // Reverse lookup: price ID → { plan, year, interval }
 export function planFromPriceId(pid: string): { plan: PlanId; year: BillingYear; interval: BillingInterval } | null {
   // Check beta prices first
-  for (const [plan, betaPid] of Object.entries(BETA_PRICES) as [PlanId, string][]) {
-    if (betaPid && pid === betaPid) return { plan, year: 1, interval: "monthly" };
+  for (const [plan, betaP] of Object.entries(BETA_PRICES) as [PlanId, { monthly: string; annual: string }][]) {
+    if (betaP.monthly && pid === betaP.monthly) return { plan, year: 1, interval: "monthly" };
+    if (betaP.annual  && pid === betaP.annual)  return { plan, year: 1, interval: "annual" };
   }
   for (const [plan, p] of Object.entries(PRICES) as [PlanId, typeof PRICES[PlanId]][]) {
     if (pid === p.y1Monthly) return { plan, year: 1, interval: "monthly" };
@@ -85,7 +86,9 @@ export const ALL_PRICE_IDS: Record<string, PlanId> = Object.fromEntries([
     [p.y1Annual, plan],
     [p.y2Annual, plan],
   ]),
-  ...(Object.entries(BETA_PRICES) as [PlanId, string][])
-    .filter(([, pid]) => pid)
-    .map(([plan, pid]) => [pid, plan]),
+  ...(Object.entries(BETA_PRICES) as [PlanId, { monthly: string; annual: string }][])
+    .flatMap(([plan, p]) => [
+      ...(p.monthly ? [[p.monthly, plan]] : []),
+      ...(p.annual  ? [[p.annual,  plan]] : []),
+    ]),
 ]);
