@@ -500,7 +500,7 @@ export function LandingHero() {
               fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
               marginBottom: 12, lineHeight: 1.1,
             }}>
-              Blast WhatsApp to every owner. Automatically.
+              Blast WhatsApp to every owner.{" "}<span style={{ color: "#34C759" }}>Automatically.</span>
             </h3>
             <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
               Set a send window. Set an interval. Pick who to send to. kakisewa runs it on its own — no babysitting, no one by one.
@@ -632,15 +632,14 @@ export function LandingHero() {
         </div>
       </section>
 
-      {/* ── JOURNEY TIMELINE — the full pipeline, after WhatsApp sending has
-             already been shown concretely, this zooms out to the whole story ── */}
-      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
-        <JourneyTimeline />
-      </section>
-
       {/* ── COMPARISON SLIDER ────────────────────────────────────────────────── */}
       <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "56px 40px 72px" }}>
         <ComparisonSlider />
+      </section>
+
+      {/* ── JOURNEY TIMELINE ─────────────────────────────────────────────────── */}
+      <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
+        <JourneyTimeline />
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
