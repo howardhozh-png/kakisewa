@@ -42,10 +42,9 @@ export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
       { text: "Invest ", small: true },
-      { text: "RM1/day,", color: "#34C759" },
-      { text: " get back ", small: true },
-      { text: "RM10,000 to RM20,000", color: "#34C759" },
-      { text: " a month.", small: true },
+      { text: "RM1/day", color: "#34C759" },
+      { text: " and kakisewa ", small: true },
+      { text: "solves everything.", color: "#34C759" },
     ],
     sub: "RM3,000 average commission. Protected, automatically.",
   },
