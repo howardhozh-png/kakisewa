@@ -356,10 +356,10 @@ function ConfirmDialog({ plan, interval, billingYear, isUpgrade, onCancel, onCon
             <span className="text-[38px] font-black leading-none tabular-nums" style={{ color: s.ink, letterSpacing: "-0.03em" }}>RM {price}</span>
             <span className="text-[15px] pb-1.5" style={{ color: s.mute }}>/month</span>
           </div>
-          {!betaPrice && interval === "annual" ? (
+          {interval === "annual" ? (
             <div className="space-y-1 mt-3">
               <p className="text-[14px] font-semibold" style={{ color: s.mute }}>RM {annualTotal.toLocaleString()} billed annually</p>
-              {effectiveYear === 1 && plan.planId !== "silver" && (
+              {!betaPrice && effectiveYear === 1 && plan.planId !== "silver" && (
                 <p className="text-[13px] font-semibold" style={{ color: s.accent }}>Pay 12 months, get 14 months</p>
               )}
             </div>
@@ -452,7 +452,7 @@ export function SubscriptionClient({
 
   function handleSelectPlan(plan: PlanData, betaPrice?: number) {
     const isUpgrade = status === "active" && currentPlan !== null && plan.planId !== currentPlan;
-    setPending({ plan, interval: betaPrice ? "monthly" : interval, isUpgrade, betaPrice });
+    setPending({ plan, interval, isUpgrade, betaPrice });
   }
 
   async function handleConfirm() {
