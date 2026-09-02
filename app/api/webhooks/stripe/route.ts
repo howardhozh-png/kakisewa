@@ -155,10 +155,10 @@ export async function POST(req: NextRequest) {
       .eq("stripe_customer_id", customerId)
       .maybeSingle();
 
-    const isFirstPayment = (invoice as { billing_reason?: string }).billing_reason === "subscription_create";
-
-    // Referral credit: first payment only, and only if referred
-    if (isFirstPayment && referrerProfile?.referred_by_slug) {
+    // Referral credit: first actual payment (amount > 0), only if referred and not yet credited.
+    // We do not gate on billing_reason because trial subscribers pay on "subscription_cycle" not
+    // "subscription_create" — the !existing check below prevents double-crediting.
+    if (referrerProfile?.referred_by_slug) {
       const { data: existing } = await db
         .from("referral_credits")
         .select("id")
