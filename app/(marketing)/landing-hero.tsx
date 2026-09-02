@@ -192,7 +192,7 @@ export function LandingHero() {
   useEffect(() => {
     if (ch0AutoStopped.current) return;
     if (ch0Slide >= CH0_SLIDES - 1) return;
-    const delay = ch0Slide === 0 ? 3500 : 4000;
+    const delay = 4000;
     const t = setTimeout(() => setCh0Slide(s => Math.min(s + 1, CH0_SLIDES - 1)), delay);
     return () => clearTimeout(t);
   }, [ch0Slide]);
