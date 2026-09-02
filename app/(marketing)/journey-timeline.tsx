@@ -6,9 +6,9 @@ import { MessageCircle, Handshake, FileCheck, RefreshCw } from "lucide-react";
 const STAGES = [
   {
     icon: MessageCircle,
-    title: "Message owner",
-    desc: "Reach out the moment you find a lead. Branded templates, one tap to send.",
-    descShort: "One tap to reach out.",
+    title: "Auto-blast owners",
+    desc: "kakisewa blasts every owner on your list automatically. Set a window, set an interval, pick who to send — done.",
+    descShort: "Auto-blasted for you.",
     when: "Day 1",
   },
   {

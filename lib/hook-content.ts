@@ -18,33 +18,33 @@ export interface StoryBeat {
 export const STORY_BEATS: StoryBeat[] = [
   {
     parts: [
-      { text: "You messaged the owner. ", small: true },
-      { text: "Then lost track.", color: "#FF3B30" },
-    ],
-    sub: "kakisewa tracks every owner you reach out to today, and keeps protecting the renewal income once that lead becomes a tenancy.",
-  },
-  {
-    parts: [
-      { text: "The best agents send ", small: true },
-      { text: "700+", color: "#34C759" },
-      { text: " WhatsApp messages to owners a month.", small: true },
-    ],
-    sub: "kakisewa remembers every single one, even the ones from three weeks ago.",
-  },
-  {
-    parts: [
-      { text: "That's how the average agent loses ", small: true },
-      { text: "70%", color: "#FF3B30" },
-      { text: " of their existing listings.", small: true },
+      { text: "You're sending WhatsApp to ", small: true },
+      { text: "100 owners.", color: "#FF3B30" },
+      { text: " One by one. Manually.", small: true },
     ],
   },
   {
     parts: [
-      { text: "RM1/day", color: "#34C759" },
-      { text: " gets back the ", small: true },
-      { text: "RM150,000" },
-      { text: " a year at stake.", small: true },
+      { text: "You lost track of ", small: true },
+      { text: "100 listings.", color: "#FF3B30" },
+      { text: " Lost the renewal income.", small: true },
     ],
-    sub: "RM3,000 average commission x 50 listings a year.",
+    sub: "On average, agents lose 50 to 70% of their contract renewals every year.",
+  },
+  {
+    parts: [
+      { text: "Photos, contracts, expiry dates — ", small: true },
+      { text: "no one place to store them.", color: "#FF3B30" },
+    ],
+  },
+  {
+    parts: [
+      { text: "At ", small: true },
+      { text: "RM1/day,", color: "#34C759" },
+      { text: " get back ", small: true },
+      { text: "RM5,000 to RM10,000", color: "#34C759" },
+      { text: " a month.", small: true },
+    ],
+    sub: "RM3,000 average commission. Protected, automatically.",
   },
 ];

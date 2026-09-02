@@ -493,17 +493,17 @@ export function LandingHero() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ textAlign: "center", maxWidth: 480, margin: "0 auto 40px" }}>
             <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
-              On your own schedule
+              Auto-blast
             </span>
             <h3 style={{
               fontFamily: "'DM Serif Display', Georgia, serif",
               fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
               marginBottom: 12, lineHeight: 1.1,
             }}>
-              Send WhatsApp outreach whenever you are free.
+              Blast WhatsApp to every owner. Automatically.
             </h3>
             <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
-              Branded templates, ready whenever you open the app. No pressure to reply instantly, no one waiting on you.
+              Set a send window. Set an interval. Pick who to send to. kakisewa runs it on its own — no babysitting, no one by one.
             </p>
           </div>
 
@@ -523,15 +523,17 @@ export function LandingHero() {
                     <div style={{ position: "absolute", top: -2, right: -2, width: 5, height: 5, background: "#FF3B30", borderRadius: "50%" }} />
                   </div>
                 </div>
-                {/* Sent-today banner */}
+                {/* Blast-in-progress banner */}
                 <div style={{ background: "#E4F7E9", margin: 5, borderRadius: 6, padding: "5px 6px", flexShrink: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 5.5, fontWeight: 700 }}>
                     <MessageCircle style={{ width: 6, height: 6, color: "#1F8B4C" }} />
-                    <span style={{ color: "#1F8B4C" }}>0 sent today</span>
+                    <span style={{ color: "#1F8B4C" }}>Blasting... 24 / 100</span>
                     <span style={{ flex: 1 }} />
-                    <span style={{ color: "#6E6E73", fontWeight: 500 }}>50 remaining</span>
+                    <span style={{ color: "#6E6E73", fontWeight: 500 }}>auto</span>
                   </div>
-                  <div style={{ height: 2, background: "rgba(31,139,76,0.15)", borderRadius: 2, marginTop: 3 }} />
+                  <div style={{ height: 2, background: "rgba(31,139,76,0.15)", borderRadius: 2, marginTop: 3, overflow: "hidden" }}>
+                    <div style={{ width: "24%", height: "100%", background: "#34C759", borderRadius: 2 }} />
+                  </div>
                 </div>
                 {/* Owner rows */}
                 <div style={{ flex: 1, overflow: "hidden" }}>
@@ -561,7 +563,7 @@ export function LandingHero() {
 
             {/* Connector — tap the pulsing icon, land in the chat */}
             <div className="kk-land-wa-arrow" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-              <span className="kk-land-wa-arrow-label" style={{ fontSize: 9.5, fontWeight: 700, color: "#25D366", whiteSpace: "nowrap" }}>Tap WhatsApp</span>
+              <span className="kk-land-wa-arrow-label" style={{ fontSize: 9.5, fontWeight: 700, color: "#25D366", whiteSpace: "nowrap" }}>Auto-blasting</span>
               <svg className="kk-land-wa-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" />
                 <path d="M13 6l6 6-6 6" />
@@ -636,8 +638,8 @@ export function LandingHero() {
         <JourneyTimeline />
       </section>
 
-      {/* ── COMPARISON SLIDER — the experience, not a description of it ───────── */}
-      <section style={{ background: "#fff", padding: "40px 40px 56px" }}>
+      {/* ── COMPARISON SLIDER ────────────────────────────────────────────────── */}
+      <section style={{ background: "#FBFBFD", borderTop: "1px solid #E5E5EA", padding: "56px 40px 72px" }}>
         <ComparisonSlider />
       </section>
 
@@ -656,7 +658,7 @@ export function LandingHero() {
             kakisewa starts at <span style={{ color: "#34C759" }}>RM1/day.</span>
           </h2>
           <p style={{ fontSize: 17, color: "#AEAEB2", marginBottom: 52, lineHeight: 1.5, ...delay(0.26, revealed[2]) }}>
-            1 month free to start. Cancel anytime.
+            Get back RM5,000 to RM10,000 a month. 1 month free, cancel anytime.
           </p>
           <div style={delay(0.4, revealed[2])}>
             <Link
