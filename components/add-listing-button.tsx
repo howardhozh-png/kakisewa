@@ -4,7 +4,7 @@ import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
-import { FileText as ListingIcon, Loader2, Camera, FileText, X } from "lucide-react";
+import { Plus, Loader2, Camera, FileText, X } from "lucide-react";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
 import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
@@ -209,7 +209,7 @@ export function AddListingButton({ ownerLeads = [] }: Props) {
         className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"
         style={{ fontSize: "13px", fontWeight: 500, background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}
       >
-        <ListingIcon className="w-4 h-4" />
+        <Plus className="w-3.5 h-3.5" />
         Add listing
       </button>
 

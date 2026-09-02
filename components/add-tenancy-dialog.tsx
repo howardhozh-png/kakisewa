@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo, useRef } from "react";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
-import { Camera, FileText, X, Loader2 } from "lucide-react";
+import { Plus, Camera, FileText, X, Loader2 } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { MoneyInput } from "@/components/ui/money-input";
 import { DateInput } from "@/components/ui/date-input";
@@ -233,7 +233,8 @@ export function AddTenancyDialog({ ownerLeads, triggerLabel }: { ownerLeads: Own
       <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); setOpen(o); }}>
         <DialogTrigger
           render={
-            <button id="tour-add-tenancy" className="kk-pill kk-pill-white" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
+            <button id="tour-add-tenancy" className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2" style={{ fontSize: "13px", fontWeight: 500, background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
+              <Plus className="w-3.5 h-3.5" />
               {triggerLabel ?? "Add tenancy"}
             </button>
           }

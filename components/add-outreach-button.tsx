@@ -4,7 +4,7 @@ import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { track } from "@/lib/analytics";
-import { Users, Loader2, ChevronDown, MessageCircle, PenLine, Camera, FileText, X } from "lucide-react";
+import { Plus, Users, Loader2, ChevronDown, MessageCircle, PenLine, Camera, FileText, X } from "lucide-react";
 import { normalizePhone } from "@/lib/phone";
 import { addOwnerLeadAction, generateOwnerIntakeLink, saveOwnerLeadPhotos, saveOwnerLeadAgreementUrl } from "@/lib/actions";
 import { WhatsAppUsernameInput } from "@/components/ui/whatsapp-username-input";
@@ -180,7 +180,7 @@ export function AddOutreachButton({ ownerLeads = [] }: Props) {
           className="kk-pill kk-pill-white flex items-center gap-2 px-4 py-2"
           style={{ fontSize: "13px", fontWeight: 500, background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}
         >
-          <Users className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           Add to outreach
           <ChevronDown className="w-3.5 h-3.5" />
         </button>
