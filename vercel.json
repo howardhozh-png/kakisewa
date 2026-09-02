@@ -9,7 +9,6 @@
     { "path": "/api/cron/trial-expiry",        "schedule": "0 4 * * *" },
     { "path": "/api/cron/trial-downgrade",     "schedule": "0 5 * * *" },
     { "path": "/api/cron/purge-deleted-leads", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/email-blast-sync",    "schedule": "30 4 * * *" },
-    { "path": "/api/cron/email-blast",         "schedule": "0 5 * * *" }
+    { "path": "/api/cron/email-blast-sync",    "schedule": "30 4 * * *" }
   ]
 }
