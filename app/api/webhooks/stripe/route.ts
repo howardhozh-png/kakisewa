@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       // Card count gate: if total cards exceed new plan limit, freeze account
       const { data: profile } = await db
         .from("agent_profiles")
-        .select("id")
+        .select("id, is_beta_user")
         .eq("id", userId)
         .single();
       if (profile) {
@@ -76,8 +76,9 @@ export async function POST(req: NextRequest) {
 
       await db.from("agent_profiles").update(updates).eq("id", userId);
 
-      // For monthly Y1: create Subscription Schedule for auto Y1→Y2 switch after 12 cycles
-      if (!isStripeTrial && interval === "monthly" && plan !== "silver") {
+      // For monthly Y1: create Subscription Schedule for auto Y1→Y2 switch after 12 cycles.
+      // Beta users stay on beta pricing forever — skip the schedule for them.
+      if (!isStripeTrial && interval === "monthly" && plan !== "silver" && !profile?.is_beta_user) {
         try {
           const y2PriceId = priceId(plan as never, "monthly", 2);
           const schedule = await stripe.subscriptionSchedules.create({
@@ -235,15 +236,16 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await db
       .from("agent_profiles")
-      .select("subscription_year, subscription_interval, subscription_plan, subscription_status")
+      .select("subscription_year, subscription_interval, subscription_plan, subscription_status, is_beta_user")
       .eq("id", userId)
       .maybeSingle();
 
-    // Only apply to Y1 annual non-beta active subscribers
+    // Only apply to Y1 annual non-beta active subscribers. Beta users stay on beta pricing forever.
     const isY1Annual = profile?.subscription_year === 1
       && profile?.subscription_interval === "annual"
       && profile?.subscription_status === "active"
-      && profile?.subscription_plan !== null;
+      && profile?.subscription_plan !== null
+      && !profile?.is_beta_user;
 
     if (isY1Annual && profile.subscription_plan) {
       const plan = profile.subscription_plan as never;
