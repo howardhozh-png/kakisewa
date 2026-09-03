@@ -571,6 +571,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
   const [agents, setAgents] = useState<AgentRow[]>(initialAgents);
   const [search, setSearch] = useState("");
   const [hideTest, setHideTest] = useState(true);
+  const [activeOnly, setActiveOnly] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortCol, setSortCol] = useState<SortCol>("days_inactive");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -597,6 +598,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
   const filtered = useMemo(() => {
     let rows = enriched;
     if (hideTest) rows = rows.filter(a => !a.is_test_account);
+    if (activeOnly) rows = rows.filter(a => a.days_inactive !== null && a.days_inactive <= 4);
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(a => (a.name ?? "").toLowerCase().includes(q) || (a.email ?? "").toLowerCase().includes(q) || (a.agency ?? "").toLowerCase().includes(q));
@@ -620,7 +622,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
-  }, [enriched, search, hideTest, statusFilter, sortCol, sortDir]);
+  }, [enriched, search, hideTest, activeOnly, statusFilter, sortCol, sortDir]);
 
   function exportCsv() {
     const rows = [
@@ -686,6 +688,16 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
           <option value="active">Paid</option>
           <option value="expired">Expired</option>
         </select>
+        <button
+          onClick={() => setActiveOnly(v => !v)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
+          style={{
+            background: activeOnly ? "var(--kk-green)" : "var(--kk-surface-2)",
+            border: "1px solid var(--kk-line)",
+            color: activeOnly ? "#fff" : "var(--kk-ink-mute)",
+          }}>
+          <Activity className="w-3 h-3" /> Active 5d
+        </button>
         <button
           onClick={() => setHideTest(h => !h)}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
