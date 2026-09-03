@@ -497,7 +497,7 @@ export function LandingHero() {
               Blast WhatsApp to every owner.{" "}<span style={{ color: "#34C759" }}>Automatically.</span>
             </h3>
             <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
-              Set a send window. Set an interval. Pick who to send to. kakisewa runs it on its own — no babysitting, no one by one.
+              Set a send window. Set an interval. Pick who to send to. kakisewa runs it on its own. No babysitting, no one by one.
             </p>
           </div>
 

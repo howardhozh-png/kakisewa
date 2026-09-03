@@ -33,7 +33,7 @@ export const STORY_BEATS: StoryBeat[] = [
   },
   {
     parts: [
-      { text: "Photos, contracts, expiry dates — ", small: true },
+      { text: "Photos, contracts, expiry dates.", small: true },
       { text: "messily stored", color: "#FF3B30" },
       { text: " all over ", small: true },
       { text: "WhatsApp.", color: "#FF3B30" },
