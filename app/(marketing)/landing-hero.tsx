@@ -9,6 +9,7 @@ import { Faq } from "./faq";
 import { ComparisonSlider } from "./comparison-slider";
 import { MessageCircle } from "lucide-react";
 import { JourneyTimeline } from "./journey-timeline";
+import { TrustBand } from "./trust-band";
 
 /* ── PixelTrail ──────────────────────────────────────────────────────────────
    Builds a grid of divs over a chapter and lights cells on mousemove.
@@ -691,6 +692,9 @@ export function LandingHero() {
       <section style={{ background: "#fff", borderTop: "1px solid #E5E5EA", padding: "56px 40px 56px" }}>
         <JourneyTimeline />
       </section>
+
+      {/* ── TRUST BAND ───────────────────────────────────────────────────────── */}
+      <TrustBand />
 
       {/* ══════════════════════════════════════════════════════════════════════
           CH3 — CTA
