@@ -501,6 +501,50 @@ export function LandingHero() {
             </p>
           </div>
 
+          {/* Blast config peek */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 36 }}>
+            <div style={{
+              background: "#fff",
+              border: "1px solid #E5E5EA",
+              borderRadius: 16,
+              padding: "14px 20px",
+              display: "inline-flex",
+              flexDirection: "column",
+              gap: 10,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+              minWidth: 280,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
+                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#AEAEB2" }}>Active blast</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: "#1F8B4C", background: "#E4F7E9", padding: "2px 8px", borderRadius: 20 }}>Running</span>
+              </div>
+              <div style={{ width: "100%", height: 1, background: "#F0F0F2" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span style={{ fontSize: 13, color: "#6E6E73" }}>Blast window</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1D1D1F" }}>9:00 am to 6:00 pm</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+                    <span style={{ fontSize: 13, color: "#6E6E73" }}>Interval</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1D1D1F" }}>Every 10 minutes</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span style={{ fontSize: 13, color: "#6E6E73" }}>Recipients</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1D1D1F" }}>100 active owners</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Real product screens, not a staged mockup — tap an owner's WhatsApp
               icon in the outreach list, land straight in the chat. Two frames
               show that flow rather than describing it. */}
