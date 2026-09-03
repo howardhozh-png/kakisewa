@@ -21,36 +21,23 @@ export function TrustBand() {
     }}>
       <div style={{ maxWidth: 1040, margin: "0 auto", textAlign: "center" }}>
 
-        {/* Overline — grey label, matches "THE JOURNEY" pattern */}
-        <p style={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--kk-ink-mute)",
-          margin: "0 0 18px",
-        }}>
-          Your data
-        </p>
-
-        {/* Big serif heading */}
+        {/* Full-sentence serif heading */}
         <h2 className="serif" style={{
-          fontSize: "clamp(36px, 4.5vw, 52px)",
+          fontSize: "clamp(34px, 4.5vw, 52px)",
           color: "#1D1D1F",
-          lineHeight: 1.05,
-          margin: "0 0 18px",
+          lineHeight: 1.1,
+          margin: "0 0 20px",
           fontWeight: 400,
         }}>
-          {"is hosted on "}
-          <span style={{ whiteSpace: "nowrap" }}>
-            <svg
-              width="0.85em" height="0.85em" viewBox="0 0 24 24" fill="none"
-              style={{ display: "inline", verticalAlign: "middle", position: "relative", top: "-0.08em" }}
-              aria-label="Supabase"
-            >
-              <path d="M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.375.113-3.403-1.645-3.403h-9.642z" fill="#3FCF8E" />
-            </svg>
-            {" Supabase"}
+          {"Your data is hosted on "}
+          <span style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "0.22em", verticalAlign: "middle" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/supabase.svg"
+              alt=""
+              style={{ display: "inline", height: "0.82em", width: "auto", verticalAlign: "middle", position: "relative", top: "-0.04em" }}
+            />
+            Supabase
           </span>
         </h2>
 
