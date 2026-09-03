@@ -486,7 +486,7 @@ export function LandingHero() {
              page zooms out to the full pipeline and the tracking pitch ── */}
       <section style={{ background: "#FBFBFD", padding: "56px 40px 88px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", maxWidth: 480, margin: "0 auto 40px" }}>
+          <div style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 40px" }}>
             <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
               Auto-blast
             </span>
@@ -495,7 +495,7 @@ export function LandingHero() {
               fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
               marginBottom: 12, lineHeight: 1.1,
             }}>
-              <span style={{ color: "#34C759" }}>01 </span>Blast WhatsApp to every owner.<br /><span style={{ color: "#34C759" }}>Automatically.</span>
+              <span style={{ color: "#34C759" }}>01 </span>Blast WhatsApp to every <span style={{ whiteSpace: "nowrap" }}>owner. Automatically.</span>
             </h3>
             <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
               Set a send window. Set an interval. Pick who to send to. kakisewa runs it on its own. No babysitting, no one by one.
