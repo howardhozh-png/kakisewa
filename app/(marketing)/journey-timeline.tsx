@@ -62,13 +62,13 @@ export function JourneyTimeline() {
           className="uppercase font-semibold mb-4"
           style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
         >
-          03 The journey
+          The journey
         </p>
         <h2
           className="serif mx-auto"
           style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1, letterSpacing: "-0.022em", maxWidth: "26ch", color: "#1D1D1F" }}
         >
-          From first message to protected income.
+          <span style={{ color: "#C7C7CC" }}>03 </span>From first message to protected income.
         </h2>
         <p style={{ fontSize: 13, color: "var(--kk-ink-faint)", marginTop: 10, maxWidth: 440, marginLeft: "auto", marginRight: "auto" }}>
           <span className="kk-journey-full">One pipeline, whether you're chasing your first lead or protecting a book of a hundred.</span>

@@ -455,10 +455,10 @@ export function ComparisonSlider() {
       {/* Section header */}
       <div className="text-center mb-10">
         <p className="uppercase font-semibold mb-5" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}>
-          02 Never lose track
+          Never lose track
         </p>
         <h2 className="serif mx-auto" style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", lineHeight: 1.1, letterSpacing: "-0.022em", maxWidth: "28ch", color: "#1D1D1F" }}>
-          kakisewa tracks everything, forever
+          <span style={{ color: "#C7C7CC" }}>02 </span>kakisewa tracks everything, forever
         </h2>
       </div>
 
