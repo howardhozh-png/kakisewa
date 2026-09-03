@@ -815,9 +815,8 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
           </button>
 
           {/* Brand */}
-          <Link href="/home" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity shrink-0" style={{ color: "var(--kk-topnav-ink)" }} aria-label="kakisewa home">
-            <Logo size={32} />
-            <span className="serif text-[20px] tracking-tight leading-none">kakisewa</span>
+          <Link href="/home" className="flex items-center hover:opacity-80 transition-opacity shrink-0" style={{ color: "var(--kk-topnav-ink)" }} aria-label="kakisewa home">
+            <span style={{ fontFamily: "var(--font-journal)", fontSize: 26, fontWeight: 400, lineHeight: 1 }}>kakisewa</span>
           </Link>
 
           {/* Tier badge — mobile only, compact size */}
@@ -1028,9 +1027,8 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
         <div className="kk-topnav-hamburger fixed inset-0 flex-col" style={{ zIndex: tourMenuActive ? 950 : 900, background: "var(--kk-topnav-bg)" }}>
           {/* Top row */}
           <div className="flex items-center justify-between h-16 px-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-            <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5" style={{ color: "var(--kk-topnav-ink)" }}>
-              <Logo size={32} />
-              <span className="serif text-[20px] tracking-tight leading-none">kakisewa</span>
+            <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center" style={{ color: "var(--kk-topnav-ink)" }}>
+              <span style={{ fontFamily: "var(--font-journal)", fontSize: 26, fontWeight: 400, lineHeight: 1 }}>kakisewa</span>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(false)}

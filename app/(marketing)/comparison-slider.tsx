@@ -190,10 +190,7 @@ function KakiSewaPanel() {
             fontFamily: "Georgia, 'Times New Roman', serif",
             fontSize: 20, color: "#1D1D1F", lineHeight: 1, letterSpacing: "-0.02em",
           }}>k</span>
-          <span style={{
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: 12, color: "#1D1D1F", letterSpacing: "-0.02em", lineHeight: 1,
-          }}>kakisewa</span>
+          <span style={{ fontFamily: "var(--font-journal)", fontSize: 14, fontWeight: 400, color: "#1D1D1F", lineHeight: 1 }}>kakisewa</span>
         </div>
         <div style={{ width: 1, height: 14, background: "rgba(0,0,0,0.1)", flexShrink: 0 }} />
         {[

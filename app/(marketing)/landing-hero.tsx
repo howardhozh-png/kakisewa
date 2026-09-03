@@ -296,9 +296,8 @@ export function LandingHero() {
         backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(0,0,0,0.07)",
       }}>
-        <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", color: "#1D1D1F" }}>
-          <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 35, lineHeight: 1 }}>k</span>
-          <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 24, letterSpacing: "-0.02em", lineHeight: 1 }}>kakisewa</span>
+        <Link href="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none", color: "#1D1D1F" }}>
+          <span style={{ fontFamily: "var(--font-journal)", fontSize: 30, fontWeight: 400, lineHeight: 1 }}>kakisewa</span>
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 500, color: "#6E6E73", background: "transparent", padding: "7px 15px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "sign_in", location: "header" })}>

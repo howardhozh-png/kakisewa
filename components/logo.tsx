@@ -11,14 +11,11 @@ interface LogoProps {
 export function Logo({ variant = "mark", size = 28, className }: LogoProps) {
   if (variant === "wordmark") {
     return (
-      <span className={cn("inline-flex items-center gap-2.5", className)}>
-        <LogoMark size={size} />
-        <span
-          className="serif tracking-tight leading-none"
-          style={{ fontSize: size * 0.86, color: "currentColor" }}
-        >
-          kakisewa
-        </span>
+      <span
+        className={cn("leading-none", className)}
+        style={{ fontSize: size * 1.05, color: "currentColor", fontFamily: "var(--font-journal)", fontWeight: 400 }}
+      >
+        kakisewa
       </span>
     );
   }
