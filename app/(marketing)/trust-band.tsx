@@ -42,7 +42,7 @@ export function TrustBand() {
           margin: "0 0 20px",
           fontWeight: 400,
         }}>
-          <span style={{ color: "#C7C7CC" }}>04 </span>{"Your data is hosted on "}
+          <span style={{ color: "#34C759" }}>04 </span>{"Your data is hosted on "}
           <span style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "0.22em", verticalAlign: "middle" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

@@ -495,7 +495,7 @@ export function LandingHero() {
               fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)", letterSpacing: "-0.022em", color: "#1D1D1F",
               marginBottom: 12, lineHeight: 1.1,
             }}>
-              <span style={{ color: "#C7C7CC" }}>01 </span>Blast WhatsApp to every owner.{" "}<span style={{ color: "#34C759" }}>Automatically.</span>
+              <span style={{ color: "#34C759" }}>01 </span>Blast WhatsApp to every owner.<br /><span style={{ color: "#34C759" }}>Automatically.</span>
             </h3>
             <p style={{ fontSize: 14, color: "#6E6E73", lineHeight: 1.6 }}>
               Set a send window. Set an interval. Pick who to send to. kakisewa runs it on its own. No babysitting, no one by one.
