@@ -488,7 +488,7 @@ export function LandingHero() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ textAlign: "center", maxWidth: 480, margin: "0 auto 40px" }}>
             <span style={{ display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C7C7CC", marginBottom: 14 }}>
-              Auto-blast
+              01 Auto-blast
             </span>
             <h3 style={{
               fontFamily: "'DM Serif Display', Georgia, serif",

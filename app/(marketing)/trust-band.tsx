@@ -21,6 +21,18 @@ export function TrustBand() {
     }}>
       <div style={{ maxWidth: 1040, margin: "0 auto", textAlign: "center" }}>
 
+        {/* Overline number */}
+        <p style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "#C7C7CC",
+          margin: "0 0 14px",
+        }}>
+          04 Your data
+        </p>
+
         {/* Full-sentence serif heading */}
         <h2 className="serif" style={{
           fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)",

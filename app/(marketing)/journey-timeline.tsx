@@ -62,7 +62,7 @@ export function JourneyTimeline() {
           className="uppercase font-semibold mb-4"
           style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", letterSpacing: "0.14em" }}
         >
-          The journey
+          03 The journey
         </p>
         <h2
           className="serif mx-auto"
