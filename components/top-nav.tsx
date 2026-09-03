@@ -817,12 +817,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
           {/* Brand */}
           <Link href="/home" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity shrink-0" style={{ color: "var(--kk-topnav-ink)" }} aria-label="kakisewa home">
             <Logo size={32} />
-            <span className="flex flex-col leading-none gap-[3px]">
-              <span className="serif text-[20px] tracking-tight leading-none">kakisewa</span>
-              <span className="flex justify-between leading-none font-semibold" style={{ fontSize: 9, opacity: 0.65, fontFamily: "'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif" }}>
-                {"カキセワ".split("").map((c, i) => <span key={i}>{c}</span>)}
-              </span>
-            </span>
+            <span className="serif text-[20px] tracking-tight leading-none">kakisewa</span>
           </Link>
 
           {/* Tier badge — mobile only, compact size */}
@@ -1035,12 +1030,7 @@ export function TopNav({ agent, isAdmin, trialDaysLeft, hideTabs, unreadAnnounce
           <div className="flex items-center justify-between h-16 px-3 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
             <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5" style={{ color: "var(--kk-topnav-ink)" }}>
               <Logo size={32} />
-              <span className="flex flex-col leading-none gap-[3px]">
-                <span className="serif text-[20px] tracking-tight leading-none">kakisewa</span>
-                <span className="flex justify-between leading-none font-semibold" style={{ fontSize: 9, opacity: 0.65, fontFamily: "'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif" }}>
-                  {"カキセワ".split("").map((c, i) => <span key={i}>{c}</span>)}
-                </span>
-              </span>
+              <span className="serif text-[20px] tracking-tight leading-none">kakisewa</span>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(false)}

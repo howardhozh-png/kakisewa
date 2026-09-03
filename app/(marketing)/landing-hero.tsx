@@ -298,12 +298,7 @@ export function LandingHero() {
       }}>
         <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", color: "#1D1D1F" }}>
           <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 35, lineHeight: 1 }}>k</span>
-          <span style={{ display: "flex", flexDirection: "column", gap: 2, lineHeight: 1 }}>
-            <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 24, letterSpacing: "-0.02em", lineHeight: 1 }}>kakisewa</span>
-            <span style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontWeight: 600, opacity: 0.45, fontFamily: "'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif" }}>
-              <span>カ</span><span>キ</span><span>セ</span><span>ワ</span>
-            </span>
-          </span>
+          <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 24, letterSpacing: "-0.02em", lineHeight: 1 }}>kakisewa</span>
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 500, color: "#6E6E73", background: "transparent", padding: "7px 15px", borderRadius: 99, textDecoration: "none" }} onClick={() => track(ph, "landing_cta_clicked", { cta: "sign_in", location: "header" })}>

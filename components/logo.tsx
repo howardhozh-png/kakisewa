@@ -13,19 +13,11 @@ export function Logo({ variant = "mark", size = 28, className }: LogoProps) {
     return (
       <span className={cn("inline-flex items-center gap-2.5", className)}>
         <LogoMark size={size} />
-        <span className="flex flex-col leading-none gap-0.5">
-          <span
-            className="serif tracking-tight leading-none"
-            style={{ fontSize: size * 0.86, color: "currentColor" }}
-          >
-            kakisewa
-          </span>
-          <span
-            className="flex justify-between leading-none font-semibold"
-            style={{ fontSize: size * 0.28, color: "currentColor", opacity: 0.45, fontFamily: "'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif" }}
-          >
-            {"カキセワ".split("").map((c, i) => <span key={i}>{c}</span>)}
-          </span>
+        <span
+          className="serif tracking-tight leading-none"
+          style={{ fontSize: size * 0.86, color: "currentColor" }}
+        >
+          kakisewa
         </span>
       </span>
     );

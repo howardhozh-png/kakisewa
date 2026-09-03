@@ -514,9 +514,6 @@ async function buildExportCanvas(startMonth: string, gridEl: HTMLElement): Promi
   ctx.fillText("k", lx, logoBaseY);
   ctx.font = `${24 * S}px Georgia, 'DM Serif Display', serif`;
   ctx.fillText("kakisewa", lx + kW + 8 * S, logoBaseY);
-  ctx.fillStyle = "rgba(29,29,31,0.42)";
-  ctx.font = `600 ${8 * S}px 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif`;
-  "カキセワ".split("").forEach((c, i) => { ctx.fillText(c, lx + kW + 8 * S + i * 11 * S, logoBaseY + 14 * S); });
   ctx.fillStyle = "rgba(29,29,31,0.30)";
   ctx.font = `${9 * S}px Arial, sans-serif`;
   ctx.fillText(`PROPERTY SNAPSHOT  ·  ${fmtMonthLabel(startMonth)}`, lx, logoBaseY + 28 * S);

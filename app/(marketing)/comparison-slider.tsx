@@ -190,19 +190,10 @@ function KakiSewaPanel() {
             fontFamily: "Georgia, 'Times New Roman', serif",
             fontSize: 20, color: "#1D1D1F", lineHeight: 1, letterSpacing: "-0.02em",
           }}>k</span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <span style={{
-              fontFamily: "Georgia, 'Times New Roman', serif",
-              fontSize: 12, color: "#1D1D1F", letterSpacing: "-0.02em", lineHeight: 1,
-            }}>kakisewa</span>
-            <span style={{
-              fontSize: 6.5, color: "#1D1D1F", opacity: 0.4, letterSpacing: "0.22em",
-              fontFamily: "'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
-              display: "flex", gap: 1,
-            }}>
-              {["カ","キ","セ","ワ"].map((c, i) => <span key={i}>{c}</span>)}
-            </span>
-          </div>
+          <span style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: 12, color: "#1D1D1F", letterSpacing: "-0.02em", lineHeight: 1,
+          }}>kakisewa</span>
         </div>
         <div style={{ width: 1, height: 14, background: "rgba(0,0,0,0.1)", flexShrink: 0 }} />
         {[
