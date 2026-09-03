@@ -23,9 +23,10 @@ export function TrustBand() {
 
         {/* Full-sentence serif heading */}
         <h2 className="serif" style={{
-          fontSize: "clamp(34px, 4.5vw, 52px)",
+          fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)",
           color: "#1D1D1F",
           lineHeight: 1.1,
+          letterSpacing: "-0.022em",
           margin: "0 0 20px",
           fontWeight: 400,
         }}>
