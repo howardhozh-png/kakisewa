@@ -1143,47 +1143,48 @@ const REQ_ITEMS = [
 ];
 
 function RequirementsList() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div style={{
-      borderLeft: "3px solid rgba(255,149,0,0.5)",
-      borderRadius: "0 10px 10px 0",
-      border: "1px solid rgba(255,149,0,0.18)",
-      borderLeftWidth: 3,
-      background: "rgba(255,149,0,0.025)",
+      border: "1px solid rgba(0,0,0,0.08)",
+      borderRadius: 12,
       overflow: "hidden",
+      background: "var(--kk-surface)",
     }}>
       <button type="button" onClick={() => setOpen(v => !v)} style={{
-        width: "100%", display: "flex", alignItems: "center", gap: 6,
-        padding: "8px 13px", background: "none", border: "none", cursor: "pointer",
-        borderBottom: open ? "0.5px solid rgba(0,0,0,0.07)" : "none",
+        width: "100%", display: "flex", alignItems: "center", gap: 8,
+        padding: "11px 14px", background: "none", border: "none", cursor: "pointer",
       }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF3B30" stroke="none" style={{ flexShrink: 0 }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(255,149,0,0.9)" stroke="none" style={{ flexShrink: 0 }}>
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
           <line x1="12" y1="17" x2="12.01" y2="17" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
         </svg>
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--kk-ink-faint)", margin: 0, flex: 1, textAlign: "left" }}>
-          Blasting stops if any of these are off
-        </p>
-        <ChevronDown style={{ width: 12, height: 12, color: "var(--kk-ink-faint)", flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", flex: 1, textAlign: "left" }}>
+          Requirements to keep blasting
+        </span>
+        <ChevronDown style={{ width: 13, height: 13, color: "var(--kk-ink-faint)", flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
       </button>
-      {open && REQ_ITEMS.map(({ n, title, desc }, i) => (
-        <div key={n} style={{
-          display: "flex", gap: 11, padding: "9px 13px",
-          borderTop: i > 0 ? "0.5px solid rgba(0,0,0,0.06)" : "none",
-        }}>
-          <span style={{
-            fontSize: 11, fontWeight: 700, color: "#D97706",
-            minWidth: 14, flexShrink: 0, paddingTop: 1,
-            fontVariantNumeric: "tabular-nums",
-          }}>{n}</span>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--kk-ink)", margin: "0 0 2px" }}>{title}</p>
-            <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{desc}</p>
-          </div>
+      {open && (
+        <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+          {REQ_ITEMS.map(({ n, title, desc }, i) => (
+            <div key={n} style={{
+              display: "flex", gap: 11, padding: "10px 14px",
+              borderTop: i > 0 ? "1px solid rgba(0,0,0,0.05)" : "none",
+            }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700, color: "rgba(217,119,6,0.9)",
+                minWidth: 14, flexShrink: 0, paddingTop: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}>{n}</span>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--kk-ink)", margin: "0 0 2px" }}>{title}</p>
+                <p style={{ fontSize: 11, color: "var(--kk-ink-mute)", margin: 0, lineHeight: 1.5 }}>{desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -1230,84 +1231,87 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
   }
 
   return (
-    <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ padding: "14px", display: "flex", flexDirection: "column", gap: 12 }}>
 
-      {/* Setup guide card — primary CTA */}
+      {/* Setup guide card */}
       <HowToSetupDialog />
 
-      {/* Requirements — 5 items, expandable */}
+      {/* Requirements — collapsed by default */}
       <RequirementsList />
 
-      {/* Send windows */}
-      <div id="tour-wa-blast-send-windows">
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-ink-faint)", margin: "0 0 8px" }}>
-          Send windows (MYT)
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {cfg.windows.map((w, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <TimeInput value={w.start} onChange={(v) => setWindow(i, "start", v)} />
-              <span style={{ fontSize: 12, color: "var(--kk-ink-faint)" }}>–</span>
-              <TimeInput value={w.end} onChange={(v) => setWindow(i, "end", v)} />
-              {cfg.windows.length > 1 && (
-                <button type="button" onClick={() => removeWindow(i)}
-                  style={{ width: 20, height: 20, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(255,59,48,0.12)", color: "#FF3B30", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <X style={{ width: 10, height: 10 }} />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Validation error */}
-          {winErr && (
-            <p style={{ fontSize: 11, color: "#DC2626", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
-              <X style={{ width: 11, height: 11, flexShrink: 0 }} /> {winErr}
-            </p>
-          )}
-
-          <button type="button" onClick={addWindow}
-            style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: "var(--kk-blue)", background: "none", border: "none", cursor: "pointer", padding: 0, width: "fit-content", marginTop: 2 }}>
-            <Plus style={{ width: 13, height: 13 }} />
-            Add window
-          </button>
+      {/* Settings card: send windows + interval grouped */}
+      <div id="tour-wa-blast-send-windows" style={{
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: 16,
+        overflow: "hidden",
+      }}>
+        {/* Send windows */}
+        <div style={{ padding: "14px 16px" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--kk-ink-faint)", margin: "0 0 10px" }}>
+            Send windows (MYT)
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {cfg.windows.map((w, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <TimeInput value={w.start} onChange={(v) => setWindow(i, "start", v)} />
+                <span style={{ fontSize: 12, color: "var(--kk-ink-faint)" }}>to</span>
+                <TimeInput value={w.end} onChange={(v) => setWindow(i, "end", v)} />
+                {cfg.windows.length > 1 && (
+                  <button type="button" onClick={() => removeWindow(i)}
+                    style={{ width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(255,59,48,0.10)", color: "#FF3B30", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <X style={{ width: 10, height: 10 }} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {winErr && (
+              <p style={{ fontSize: 11, color: "#DC2626", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+                <X style={{ width: 11, height: 11, flexShrink: 0 }} /> {winErr}
+              </p>
+            )}
+            <button type="button" onClick={addWindow}
+              style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: "var(--kk-blue)", background: "none", border: "none", cursor: "pointer", padding: 0, width: "fit-content", marginTop: 2 }}>
+              <Plus style={{ width: 13, height: 13 }} />
+              Add window
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Interval */}
-      <div>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--kk-ink-faint)", margin: "0 0 8px" }}>
-          Interval
-        </p>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>every</span>
-            <NumberInput
-              value={cfg.interval_minutes} min={1} max={120} width={46}
-              onChange={(v) => onChange({ ...cfg, interval_minutes: v })}
-            />
-            <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>min</span>
+        {/* Hairline divider */}
+        <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
+
+        {/* Interval */}
+        <div style={{ padding: "14px 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--kk-ink-faint)", margin: 0 }}>
+              Interval
+            </p>
+            {!winErr && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(0,113,227,0.07)", borderRadius: 8, padding: "3px 10px" }}>
+                <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>Max</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--kk-blue)", fontVariantNumeric: "tabular-nums" }}>{max}</span>
+                <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>/day</span>
+              </div>
+            )}
           </div>
-
-          <span style={{ color: "var(--kk-line)", fontSize: 14, lineHeight: 1 }}>·</span>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <NumberInput
-              value={cfg.daily_cap} min={1} max={20} width={40}
-              onChange={(v) => onChange({ ...cfg, daily_cap: v })}
-            />
-            <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>per send</span>
-          </div>
-
-          {!winErr && (
-            <div style={{
-              marginLeft: "auto", display: "flex", alignItems: "center", gap: 4,
-              background: "rgba(0,113,227,0.07)", borderRadius: 8, padding: "3px 10px",
-            }}>
-              <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>Max</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--kk-blue)", fontVariantNumeric: "tabular-nums" }}>{max}</span>
-              <span style={{ fontSize: 11, color: "var(--kk-ink-mute)" }}>/day</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>every</span>
+              <NumberInput
+                value={cfg.interval_minutes} min={1} max={120} width={46}
+                onChange={(v) => onChange({ ...cfg, interval_minutes: v })}
+              />
+              <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>min</span>
             </div>
-          )}
+            <span style={{ color: "var(--kk-line)", fontSize: 14, lineHeight: 1 }}>·</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <NumberInput
+                value={cfg.daily_cap} min={1} max={20} width={40}
+                onChange={(v) => onChange({ ...cfg, daily_cap: v })}
+              />
+              <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>per send</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1317,8 +1321,8 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       {/* Offline / not-linked hints */}
       {blasterOffline && cfg.is_active && (
         <div style={{ display: "flex", alignItems: "flex-start", gap: 8,
-          background: "rgba(255,149,0,0.10)", border: "1px solid rgba(255,149,0,0.30)",
-          borderRadius: 8, padding: "8px 11px" }}>
+          background: "rgba(255,149,0,0.08)", border: "1px solid rgba(255,149,0,0.20)",
+          borderRadius: 12, padding: "10px 13px" }}>
           <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.2 }}>⚠️</span>
           <p style={{ fontSize: 12, color: "#C47800", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
             Auto-blast is offline. Your laptop may be asleep or the terminal window was closed. Double-click the setup file again to resume. Relink again if required.
@@ -1332,51 +1336,53 @@ function ScheduleTab({ cfg, saving, waSession, onChange, onToggleActive, onSave,
       )}
 
       {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", rowGap: 6 }}>
-        <button id="tour-wa-blast-activate" type="button" onClick={effectivelyPaused ? undefined : onToggleActive}
-          disabled={cantActivate || effectivelyPaused}
-          style={{
-            display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600,
-            padding: "6px 14px", borderRadius: 20,
-            cursor: (cantActivate || effectivelyPaused) ? "not-allowed" : "pointer",
-            ...(cantActivate || effectivelyPaused
-              ? { background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--kk-ink-faint)" }
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button id="tour-wa-blast-activate" type="button" onClick={effectivelyPaused ? undefined : onToggleActive}
+            disabled={cantActivate || effectivelyPaused}
+            style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 12,
+              cursor: (cantActivate || effectivelyPaused) ? "not-allowed" : "pointer",
+              ...(cantActivate || effectivelyPaused
+                ? { background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--kk-ink-faint)" }
+                : cfg.is_active
+                  ? { background: "rgba(255,59,48,0.08)", border: "1px solid rgba(255,59,48,0.18)", color: "#DC2626" }
+                  : { background: "rgba(52,199,89,0.10)", border: "1px solid rgba(52,199,89,0.22)", color: "var(--kk-green-ink)" }
+              ),
+            }}>
+            {effectivelyPaused
+              ? <><PauseCircle style={{ width: 13, height: 13 }} /> Paused (offline)</>
               : cfg.is_active
-                ? { background: "rgba(255,59,48,0.08)", border: "1px solid rgba(255,59,48,0.20)", color: "#DC2626" }
-                : { background: "rgba(52,199,89,0.09)", border: "1px solid rgba(52,199,89,0.25)", color: "var(--kk-green-ink)" }
-            ),
-          }}>
-          {effectivelyPaused
-            ? <><PauseCircle style={{ width: 11, height: 11 }} /> Paused (offline)</>
-            : cfg.is_active
-              ? <><Pause style={{ width: 11, height: 11 }} /> Pause</>
-              : <><Play style={{ width: 11, height: 11 }} /> Activate</>
-          }
-        </button>
+                ? <><Pause style={{ width: 13, height: 13 }} /> Pause</>
+                : <><Play style={{ width: 13, height: 13 }} /> Activate</>
+            }
+          </button>
 
-        <button type="button" onClick={onSave} disabled={saving || !!winErr}
-          style={{
-            display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600,
-            padding: "6px 16px", borderRadius: 20, border: "none", cursor: winErr ? "not-allowed" : "pointer",
-            background: winErr ? "rgba(0,0,0,0.12)" : "var(--kk-blue)",
-            color: winErr ? "var(--kk-ink-mute)" : "#fff",
-            opacity: saving ? 0.6 : 1,
-          }}>
-          {saving && <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} />}
-          Save
-        </button>
+          <button type="button" onClick={onSave} disabled={saving || !!winErr}
+            style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 12, border: "none",
+              cursor: winErr ? "not-allowed" : "pointer",
+              background: winErr ? "rgba(0,0,0,0.08)" : "var(--kk-blue)",
+              color: winErr ? "var(--kk-ink-mute)" : "#fff",
+              opacity: saving ? 0.6 : 1,
+            }}>
+            {saving && <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />}
+            Save
+          </button>
+        </div>
 
         {cfg.is_active && (
           <div style={{
-            display: "flex", alignItems: "center", gap: 5,
-            padding: "5px 10px", borderRadius: 8,
-            background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.14)",
-            fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "7px 12px", borderRadius: 10,
+            background: "rgba(0,113,227,0.05)", border: "1px solid rgba(0,113,227,0.12)",
+            fontSize: 11, color: "var(--kk-ink-mute)", lineHeight: 1.4, textAlign: "center",
           }}>
             Messages take a few minutes to start. This is normal.
           </div>
         )}
-
       </div>
 
     </div>
