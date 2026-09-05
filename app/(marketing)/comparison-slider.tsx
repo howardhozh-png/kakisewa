@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { GripVertical, MessageCircle, ArrowRight, CheckCircle, Check, FileText } from "lucide-react";
+import { GripVertical, MessageCircle, ArrowRight, Check, Calendar, User } from "lucide-react";
 
 // ─── Excel panel data ──────────────────────────────────────────────────────────
 
@@ -129,46 +129,79 @@ function ExcelPanel() {
 
 // ─── KakiSewa panel data ───────────────────────────────────────────────────────
 
-const CHART_DATA = [750, 1250, 1750, 900, 1250, 2400, 1750, 900, 1250, 900, 1250, 900];
-const CHART_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const CHART_MAX = 2400;
-
-const KANBAN = [
+const LIFECYCLE_COLS = [
   {
-    id: "contacted",
-    title: "CONTACTED",
-    icon: "△",
-    iconColor: "#F4511E",
-    subtitle: "Outreach sent. Waiting to hear back.",
+    id: "expired",
+    title: "EXPIRED",
+    dotColor: "#C62828",
+    subtitle: "Contract ended. Act now.",
+    colBg: "#FEF2F2",
+    count: 2,
     cards: [
-      { name: "Aiman Hafiz", prop: "The Park · A5905", sub: "Sent 3 days ago", badge: "Sent", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Nur Farhana", prop: "Sri Damansara",    sub: "Sent twice", badge: "Sent twice", badgeColor: "#F4511E", photo: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      {
+        prop: "Setapak D-5", owner: "Ahmad Zamri", rent: "RM 1,600/mo", endDate: "15 Aug '26",
+        days: -14, photo: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=120&fit=crop&crop=center&auto=format&q=80",
+      },
     ],
   },
   {
-    id: "interested",
-    title: "INTERESTED",
-    icon: "✓",
-    iconColor: "#34C759",
-    subtitle: "Replied and engaged. Keep the conversation moving.",
+    id: "expiring",
+    title: "EXPIRING",
+    dotColor: "#3D3D44",
+    subtitle: "Expiring within 60 days. Reach out now.",
+    colBg: "rgba(61,61,68,0.06)",
+    count: 4,
     cards: [
-      { name: "Rajesh Kumar", prop: "Bangsar South",       sub: "Replied yesterday",  badge: "Replied", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Lee Wei",      prop: "Mutiara Damansara",   sub: "Asked for property pack",  badge: "Replied", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1585128792020-803d29415281?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      {
+        prop: "Kepong A-12", owner: "Hafiz bin Nordin", rent: "RM 1,800/mo", endDate: "5 Nov '26",
+        days: 62, photo: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=120&h=120&fit=crop&crop=center&auto=format&q=80",
+      },
+      {
+        prop: "Sri Rampai B-3", owner: "Priya Nair", rent: "RM 2,100/mo", endDate: "8 Nov '26",
+        days: 65, photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=120&fit=crop&crop=center&auto=format&q=80",
+      },
     ],
   },
   {
-    id: "listed",
-    title: "LISTED",
-    icon: "○",
-    iconColor: "#AEAEB2",
-    subtitle: "Signed on. Now finding the right tenant.",
+    id: "renewing",
+    title: "RENEWING",
+    dotColor: "#34C759",
+    subtitle: "Confirmed renewal. Contract being prepared.",
+    colBg: "rgba(52,199,89,0.08)",
+    count: 3,
     cards: [
-      { name: "Ahmad S.",  prop: "Puchong Perdana", sub: "Listed 2 weeks ago", badge: "Listed", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1665249934445-1de680641f50?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Priya N.",  prop: "Subang Mewah",    sub: "Listed 1 month ago", badge: "Listed", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
-      { name: "Hasrul",    prop: "Kepong C-12",     sub: "Listed 3 months ago", badge: "Listed", badgeColor: "#34C759", photo: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=120&h=120&fit=crop&crop=center&auto=format&q=80" },
+      {
+        prop: "Mont Kiara P-8", owner: "Chen Wei Lim", rent: "RM 3,200/mo", endDate: "31 Jan '27",
+        days: 149, photo: "https://images.unsplash.com/photo-1585128792020-803d29415281?w=120&h=120&fit=crop&crop=center&auto=format&q=80",
+      },
+    ],
+  },
+  {
+    id: "active",
+    title: "ACTIVE",
+    dotColor: "#AEAEB2",
+    subtitle: "Running. No action needed yet.",
+    colBg: "#F5F5F7",
+    count: 12,
+    cards: [
+      {
+        prop: "Ara Damansara", owner: "Lee Soo Yin", rent: "RM 2,800/mo", endDate: "15 Mar '27",
+        days: 212, photo: "https://images.unsplash.com/photo-1665249934445-1de680641f50?w=120&h=120&fit=crop&crop=center&auto=format&q=80",
+      },
+      {
+        prop: "Bukit Jalil E-2", owner: "Razif Hanafi", rent: "RM 1,900/mo", endDate: "28 Apr '27",
+        days: 256, photo: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=120&h=120&fit=crop&crop=center&auto=format&q=80",
+      },
     ],
   },
 ];
+
+function daysPill(days: number) {
+  if (days < 0)    return { bg: "rgba(0,0,0,0.05)",      color: "#86868B",  label: `${Math.abs(days)}d over` };
+  if (days <= 30)  return { bg: "rgba(255,59,48,0.10)",  color: "#C62828",  label: `${days}d` };
+  if (days <= 90)  return { bg: "rgba(255,149,0,0.12)",  color: "#B45309",  label: `${days}d` };
+  return             { bg: "rgba(52,199,89,0.10)",   color: "#1F8B4C",  label: `${days}d` };
+}
 
 function KakiSewaPanel() {
   return (
@@ -177,45 +210,35 @@ function KakiSewaPanel() {
       fontFamily: "system-ui, -apple-system, sans-serif",
       height: 510, display: "flex", flexDirection: "column",
     }}>
-      {/* Top nav — white bg, dark ink, matches actual platform */}
+      {/* Top nav */}
       <div style={{
-        background: "#fff",
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)",
         padding: "0 14px", flexShrink: 0,
         display: "flex", alignItems: "center", gap: 8, height: 44,
       }}>
-        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-          <span style={{
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: 20, color: "#1D1D1F", lineHeight: 1, letterSpacing: "-0.02em",
-          }}>k</span>
+          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 20, color: "#1D1D1F", lineHeight: 1, letterSpacing: "-0.02em" }}>k</span>
           <span style={{ fontFamily: "var(--font-journal)", fontSize: 14, fontWeight: 400, color: "#1D1D1F", lineHeight: 1 }}>kakisewa</span>
         </div>
         <div style={{ width: 1, height: 14, background: "rgba(0,0,0,0.1)", flexShrink: 0 }} />
         {[
           { label: "Home", active: false },
-          { label: "New Owners", active: true },
-          { label: "Existing Contracts", active: false },
+          { label: "New Owners", active: false },
+          { label: "Existing Contracts", active: true },
         ].map(l => (
           <span key={l.label} style={{
-            fontSize: 10.5,
-            color: l.active ? "#1D1D1F" : "#86868B",
+            fontSize: 10.5, color: l.active ? "#1D1D1F" : "#86868B",
             fontWeight: l.active ? 600 : 400,
             background: l.active ? "rgba(0,0,0,0.06)" : "transparent",
-            borderRadius: 6,
-            padding: "3px 6px",
-            whiteSpace: "nowrap",
+            borderRadius: 6, padding: "3px 6px", whiteSpace: "nowrap",
           }}>{l.label}</span>
         ))}
         <div style={{ flex: 1 }} />
-        {/* ELITE TIER badge */}
         <span style={{
           fontSize: 8, fontWeight: 800, padding: "2px 7px", borderRadius: 20,
           background: "linear-gradient(135deg, #b8962e, #e8c84a, #9a7a22)",
           color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", flexShrink: 0,
         }}>ELITE TIER</span>
-        {/* SAMPLE tag */}
         <span style={{
           fontSize: 7.5, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
           background: "rgba(0,0,0,0.08)", color: "#86868B",
@@ -235,167 +258,138 @@ function KakiSewaPanel() {
             fontSize: 22, fontWeight: 700, color: "#1D1D1F",
             letterSpacing: "-0.03em", lineHeight: 1,
             fontFamily: "Georgia, 'Times New Roman', serif",
-          }}>
-            New Owners
-          </p>
+          }}>Existing Listing</p>
           <p style={{ fontSize: 10, color: "#86868B", marginTop: 3 }}>
-            Every owner you've messaged, tracked until they list or go cold.
+            Track every tenancy. Get alerted 60 days before any contract expires.
           </p>
-          <div style={{ marginTop: 8, borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 0, display: "flex", alignItems: "flex-end" }}>
+          <div style={{ marginTop: 8, borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "flex-end" }}>
             <span style={{
               fontSize: 11, fontWeight: 600, color: "#1D1D1F",
               borderBottom: "2px solid #1D1D1F", paddingBottom: 6, display: "inline-block",
             }}>
-              New owners &nbsp;
-              <span style={{ background: "#1D1D1F", color: "#fff", borderRadius: "50%", fontSize: 9, padding: "1px 5px", fontWeight: 700 }}>127</span>
+              All contracts &nbsp;
+              <span style={{ background: "#1D1D1F", color: "#fff", borderRadius: "50%", fontSize: 9, padding: "1px 5px", fontWeight: 700 }}>47</span>
             </span>
           </div>
         </div>
 
-        {/* Chart box */}
-        <div style={{
-          background: "#fff", borderRadius: 12,
-          border: "1px solid rgba(0,0,0,0.08)",
-          padding: "10px 12px",
-        }}>
-          <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#86868B" }}>
-            OWNER OUTREACH · LAST 12 MONTHS
-          </p>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>127 owners</p>
-          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>34 replied · 12 listed this month</p>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 44, marginTop: 8 }}>
-            {CHART_DATA.map((v, i) => (
-              <div key={i} style={{ flex: 1 }}>
-                <div style={{
-                  width: "100%", borderRadius: "2px 2px 0 0",
-                  background: v === CHART_MAX ? "#636366" : "#AEAEB2",
-                  height: `${Math.round((v / CHART_MAX) * 40)}px`,
-                  minHeight: 3,
-                }} />
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 2, marginTop: 3 }}>
-            {CHART_MONTHS.map(m => (
-              <div key={m} style={{ flex: 1, textAlign: "center", fontSize: 6.5, color: "#AEAEB2" }}>{m}</div>
-            ))}
-          </div>
-        </div>
-
-        {/* Kanban */}
+        {/* Lifecycle board */}
         <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-          {/* "3 owners went quiet!" tooltip above CONTACTED */}
-          <div style={{ position: "absolute", top: -28, left: "2%", pointerEvents: "none" }}>
+          {/* "Don't forget your money!" tooltip above EXPIRING column */}
+          <div style={{ position: "absolute", top: -28, left: "26%", pointerEvents: "none" }}>
             <div style={{
-              background: "#1D1D1F", color: "#fff", borderRadius: 22,
+              background: "#3D3D44", color: "#fff", borderRadius: 22,
               padding: "6px 14px", fontSize: 8.5, fontWeight: 700,
               display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
               boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             }}>
               <MessageCircle style={{ width: 13, height: 13, color: "#fff" }} />
-              3 owners went quiet!
+              Don&#39;t forget your money!
             </div>
             <div style={{
               width: 0, height: 0,
               borderLeft: "7px solid transparent",
               borderRight: "7px solid transparent",
-              borderTop: "7px solid #1D1D1F",
+              borderTop: "7px solid #3D3D44",
               marginLeft: 20,
             }} />
           </div>
 
-          <div className="kk-land-kanban-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, flex: 1, overflow: "hidden" }}>
-            {KANBAN.map(col => (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1fr 1fr", gap: 7, flex: 1, overflow: "hidden" }}>
+            {LIFECYCLE_COLS.map(col => (
               <div key={col.id} style={{
-                background: "#F5F5F7",
-                borderRadius: 10,
+                background: col.colBg, borderRadius: 10,
                 border: "1px solid rgba(0,0,0,0.08)",
-                overflow: "hidden",
-                display: "flex", flexDirection: "column",
+                overflow: "hidden", display: "flex", flexDirection: "column",
               }}>
                 {/* Column header */}
                 <div style={{ padding: "7px 9px 4px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#1D1D1F", display: "flex", alignItems: "center", gap: 3 }}>
-                      <span style={{ color: col.iconColor }}>{col.icon}</span> {col.title}
+                    <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#1D1D1F", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: col.dotColor, display: "inline-block", flexShrink: 0 }} />
+                      {col.title}
                     </span>
-                    <span style={{ fontSize: 8.5, color: "#86868B", fontWeight: 600 }}>{col.cards.length}</span>
+                    <span style={{ fontSize: 8.5, color: "#86868B", fontWeight: 600 }}>{col.count}</span>
                   </div>
                   <p style={{
                     fontSize: 7.5, color: "#86868B", marginTop: 2, lineHeight: 1.4,
                     display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
                   }}>{col.subtitle}</p>
                 </div>
+
                 {/* Cards */}
                 <div style={{ padding: "4px 7px 7px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                  {col.cards.map(card => (
-                    <div key={card.name} style={{
-                      background: "#fff", borderRadius: 7,
-                      border: "1px solid rgba(0,0,0,0.07)",
-                      padding: "6px 7px", overflow: "hidden",
-                    }}>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {/* Unit photo */}
-                        <div style={{
-                          width: 38, height: 38, borderRadius: 6, flexShrink: 0,
-                          overflow: "hidden", background: "#F2F2F7",
-                          border: "1px solid rgba(0,0,0,0.06)",
-                        }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={card.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                        {/* Info */}
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, overflow: "hidden" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
-                            <p style={{ fontSize: 9.5, fontWeight: 600, color: "#1D1D1F", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{card.name}</p>
-                            <span style={{
-                              fontSize: 7.5, fontWeight: 600, color: card.badgeColor, flexShrink: 0, whiteSpace: "nowrap",
-                              background: `${card.badgeColor}18`, borderRadius: 20, padding: "1px 5px",
-                            }}>{card.badge}</span>
+                  {col.cards.map(card => {
+                    const pill = daysPill(card.days);
+                    return (
+                      <div key={card.prop} style={{
+                        background: "#fff", borderRadius: 7,
+                        border: "1px solid rgba(0,0,0,0.07)",
+                        padding: "6px 7px", overflow: "hidden",
+                      }}>
+                        {/* Photo + info row */}
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <div style={{
+                            width: 38, height: 38, borderRadius: 6, flexShrink: 0,
+                            overflow: "hidden", background: "#F2F2F7",
+                            border: "1px solid rgba(0,0,0,0.06)",
+                          }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={card.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
-                          <p style={{ fontSize: 8, color: "#1D1D1F", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.prop}</p>
-                          <p style={{ fontSize: 7.5, color: "#6E6E73", display: "flex", alignItems: "center", gap: 3, overflow: "hidden", whiteSpace: "nowrap" }}>
-                            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{card.sub}</span>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 1.5, color: "#86868B", flexShrink: 0 }}>
-                              · <FileText style={{ width: 8, height: 8 }} /> 3
-                            </span>
-                          </p>
+                          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, overflow: "hidden" }}>
+                            {/* Property name + days pill */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3 }}>
+                              <p style={{ fontSize: 9, fontWeight: 600, color: "#1D1D1F", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{card.prop}</p>
+                              <span style={{ fontSize: 7, fontWeight: 700, color: pill.color, background: pill.bg, borderRadius: 20, padding: "1px 4px", flexShrink: 0, whiteSpace: "nowrap" }}>{pill.label}</span>
+                            </div>
+                            {/* Rent */}
+                            <p style={{ fontSize: 8, color: "#1D1D1F", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.rent}</p>
+                            {/* Owner */}
+                            <p style={{ fontSize: 7.5, color: "#6E6E73", display: "flex", alignItems: "center", gap: 2, overflow: "hidden", whiteSpace: "nowrap" }}>
+                              <User style={{ width: 7, height: 7, flexShrink: 0 }} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{card.owner}</span>
+                            </p>
+                            {/* Contract end date */}
+                            <p style={{ fontSize: 7.5, color: "#86868B", display: "flex", alignItems: "center", gap: 2, overflow: "hidden", whiteSpace: "nowrap" }}>
+                              <Calendar style={{ width: 7, height: 7, flexShrink: 0 }} />
+                              <span>{card.endDate}</span>
+                            </p>
+                          </div>
                         </div>
+                        {/* Action CTA */}
+                        {col.id === "expired" && (
+                          <div style={{
+                            marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
+                            background: "rgba(198,40,40,0.08)", borderRadius: 6, padding: "4px 7px",
+                            fontSize: 8, fontWeight: 600, color: "#C62828", whiteSpace: "nowrap",
+                          }}>
+                            <span>Follow up now</span>
+                            <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
+                          </div>
+                        )}
+                        {col.id === "expiring" && (
+                          <div style={{
+                            marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
+                            background: "rgba(52,199,89,0.10)", borderRadius: 6, padding: "4px 7px",
+                            fontSize: 8, fontWeight: 600, color: "#1F8B4C", whiteSpace: "nowrap",
+                          }}>
+                            <span>Message owner</span>
+                            <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
+                          </div>
+                        )}
+                        {col.id === "renewing" && (
+                          <div style={{
+                            marginTop: 5, display: "flex", alignItems: "center", gap: 3,
+                            fontSize: 8, color: "#1F8B4C", whiteSpace: "nowrap",
+                          }}>
+                            <Check style={{ width: 9, height: 9, color: "#34C759", flexShrink: 0 }} />
+                            <span>Renewing</span>
+                          </div>
+                        )}
                       </div>
-                      {/* Action button per stage */}
-                      {col.id === "contacted" && (
-                        <div style={{
-                          marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
-                          background: "rgba(0,0,0,0.04)", borderRadius: 6, padding: "4px 7px",
-                          fontSize: 8, fontWeight: 600, color: "#1D1D1F", whiteSpace: "nowrap",
-                        }}>
-                          <span>Follow up?</span>
-                          <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
-                        </div>
-                      )}
-                      {col.id === "interested" && (
-                        <div style={{
-                          marginTop: 5, display: "flex", alignItems: "center", justifyContent: "space-between",
-                          background: "rgba(52,199,89,0.10)", borderRadius: 6, padding: "4px 7px",
-                          fontSize: 8, fontWeight: 600, color: "#34C759", whiteSpace: "nowrap",
-                        }}>
-                          <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                            <CheckCircle style={{ width: 9, height: 9, flexShrink: 0 }} /> Send pack
-                          </span>
-                          <ArrowRight style={{ width: 9, height: 9, flexShrink: 0 }} />
-                        </div>
-                      )}
-                      {col.id === "listed" && (
-                        <div style={{
-                          marginTop: 5, display: "flex", alignItems: "center", gap: 3,
-                          fontSize: 8, color: "#86868B", whiteSpace: "nowrap",
-                        }}>
-                          <Check style={{ width: 9, height: 9, color: "#34C759", flexShrink: 0 }} />
-                          <span>{card.badge}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
