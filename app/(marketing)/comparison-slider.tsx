@@ -129,6 +129,13 @@ function ExcelPanel() {
 
 // ─── KakiSewa panel data ───────────────────────────────────────────────────────
 
+// Contracts expiring per month (Sep–Aug), Sep+Oct highlighted as expiring soon
+const EXPIRY_DATA = [2, 4, 3, 5, 2, 3, 6, 4, 3, 5, 4, 3];
+const EXPIRY_MONTHS = ["Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug"];
+const EXPIRY_MAX = 6;
+// Sep (index 0) and Oct (index 1) are expiring within 60 days — highlighted amber
+const EXPIRY_HIGHLIGHT = new Set([0, 1]);
+
 const LIFECYCLE_COLS = [
   {
     id: "expired",
@@ -270,6 +277,32 @@ function KakiSewaPanel() {
               All contracts &nbsp;
               <span style={{ background: "#1D1D1F", color: "#fff", borderRadius: "50%", fontSize: 9, padding: "1px 5px", fontWeight: 700 }}>47</span>
             </span>
+          </div>
+        </div>
+
+        {/* Chart box */}
+        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid rgba(0,0,0,0.08)", padding: "10px 12px", flexShrink: 0 }}>
+          <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#86868B" }}>
+            CONTRACT RENEWALS · NEXT 12 MONTHS
+          </p>
+          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>47 contracts</p>
+          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>4 expiring in 60 days · RM 7,800/mo at risk</p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 36, marginTop: 8 }}>
+            {EXPIRY_DATA.map((v, i) => (
+              <div key={i} style={{ flex: 1 }}>
+                <div style={{
+                  width: "100%", borderRadius: "2px 2px 0 0",
+                  background: EXPIRY_HIGHLIGHT.has(i) ? "#B45309" : "#AEAEB2",
+                  height: `${Math.round((v / EXPIRY_MAX) * 32)}px`,
+                  minHeight: 3,
+                }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 2, marginTop: 3 }}>
+            {EXPIRY_MONTHS.map((m, i) => (
+              <div key={m} style={{ flex: 1, textAlign: "center", fontSize: 6.5, color: EXPIRY_HIGHLIGHT.has(i) ? "#B45309" : "#AEAEB2", fontWeight: EXPIRY_HIGHLIGHT.has(i) ? 700 : 400 }}>{m}</div>
+            ))}
           </div>
         </div>
 
