@@ -283,10 +283,10 @@ function KakiSewaPanel() {
         {/* Chart box */}
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid rgba(0,0,0,0.08)", padding: "10px 12px", flexShrink: 0 }}>
           <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#86868B" }}>
-            CONTRACT RENEWALS · NEXT 12 MONTHS
+            RENEWAL INCOME · 12 MONTHS
           </p>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>RM 94,000/mo</p>
-          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>47 contracts · RM 7,800/mo expiring in 60 days</p>
+          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>RM 106,680</p>
+          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>47 contracts · 1 month rent counted as renewal income</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 36, marginTop: 8 }}>
             {EXPIRY_DATA.map((v, i) => (
               <div key={i} style={{ flex: 1 }}>
