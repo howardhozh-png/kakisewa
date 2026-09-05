@@ -285,8 +285,8 @@ function KakiSewaPanel() {
           <p style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#86868B" }}>
             CONTRACT RENEWALS · NEXT 12 MONTHS
           </p>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>47 contracts</p>
-          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>4 expiring in 60 days · RM 7,800/mo at risk</p>
+          <p style={{ fontSize: 20, fontWeight: 700, color: "#1D1D1F", letterSpacing: "-0.03em", marginTop: 2, lineHeight: 1 }}>RM 94,000/mo</p>
+          <p style={{ fontSize: 9, color: "#6E6E73", marginTop: 2 }}>47 contracts · RM 7,800/mo expiring in 60 days</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 36, marginTop: 8 }}>
             {EXPIRY_DATA.map((v, i) => (
               <div key={i} style={{ flex: 1 }}>
