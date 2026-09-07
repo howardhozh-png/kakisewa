@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
@@ -127,7 +128,16 @@ export async function GET(req: Request) {
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const platform = new URL(req.url).searchParams.get("platform") ?? "mac";
-  const { access_token: at, refresh_token: rt } = session;
+
+  // Mint an independent session so the blaster's token rotation doesn't invalidate the browser session
+  let at = session.access_token;
+  let rt = session.refresh_token;
+  const admin = createServiceClient();
+  const { data: adminData } = await admin.auth.admin.createSession({ userId: session.user.id });
+  if (adminData?.session) {
+    at = adminData.session.access_token;
+    rt = adminData.session.refresh_token;
+  }
 
   if (platform === "win") {
     return new NextResponse(winScript(at, rt), {

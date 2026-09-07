@@ -194,12 +194,19 @@ function buildLiveMessage(agentProfile, lead) {
 
 // ── Queue operations ───────────────────────────────────────────────────────────
 
+function exitTokenExpired() {
+  console.error("\n✗ Your blaster token has expired (session rotated by a previous run).");
+  console.error("  Download a fresh script: kakisewa.com > WA Blast > Link WhatsApp\n");
+  process.exit(1);
+}
+
 async function fetchConfig() {
-  const { data } = await db
+  const { data, error } = await db
     .from("wa_blast_config")
     .select("interval_minutes, daily_cap, windows, is_active")
     .eq("user_id", USER_ID)
     .maybeSingle();
+  if (error?.status === 401) exitTokenExpired();
   if (!data) return DEFAULT_CONFIG;
   return {
     interval_minutes: data.interval_minutes ?? DEFAULT_CONFIG.interval_minutes,
@@ -218,6 +225,7 @@ async function fetchPending(limit) {
     .order("position", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true })
     .limit(limit);
+  if (error?.status === 401) exitTokenExpired();
   if (error) { console.error("Queue fetch error:", error.message); return []; }
   return data ?? [];
 }
