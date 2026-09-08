@@ -81,7 +81,10 @@ if (SERVICE_KEY) {
   })();
 } else {
   // User mode — authenticate with personal token
-  db = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false }, ...supabaseRealtime });
+  // autoRefreshToken: false — blaster must never rotate the shared refresh token
+  // (rotation invalidates the browser session). Access token lasts 1 hour then
+  // exitTokenExpired() fires with a clear re-download message.
+  db = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false, autoRefreshToken: false }, ...supabaseRealtime });
   const { data, error } = await db.auth.setSession({
     access_token: KAKI_TOKEN,
     refresh_token: KAKI_REFRESH || KAKI_TOKEN,
