@@ -47,6 +47,7 @@ export async function POST() {
       expected_rent: 2800,
       stage: "imported",
       source: "manual",
+      is_competitor_target: false,
       is_demo: true,
     },
     {
@@ -62,6 +63,7 @@ export async function POST() {
       stage: "replied",
       wa_status: "replied",
       source: "manual",
+      is_competitor_target: false,
       is_demo: true,
     },
     {
@@ -77,6 +79,7 @@ export async function POST() {
       stage: "wants_rent",
       wa_status: "replied",
       source: "manual",
+      is_competitor_target: false,
       is_demo: true,
     },
     // My Listing (stage: listed)
@@ -92,6 +95,7 @@ export async function POST() {
       expected_rent: 1900,
       stage: "listed",
       source: "manual",
+      is_competitor_target: false,
       is_demo: true,
     },
     // Lost Listing (is_competitor_target: true)
