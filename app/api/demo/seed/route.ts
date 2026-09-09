@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -32,9 +33,10 @@ export async function POST() {
     return NextResponse.json({ error: "Demo data already exists" }, { status: 409 });
   }
 
-  // Property Leads board (stage: imported/replied/wants_rent)
   const ownerLeads = [
+    // Property Leads (stage: imported/replied/wants_rent)
     {
+      id: randomUUID(),
       user_id: user.id,
       owner_name: "Tan Chee Keong",
       owner_phone: "60123456789",
@@ -48,6 +50,7 @@ export async function POST() {
       is_demo: true,
     },
     {
+      id: randomUUID(),
       user_id: user.id,
       owner_name: "Lim Siew Ling",
       owner_phone: "60198765432",
@@ -62,6 +65,7 @@ export async function POST() {
       is_demo: true,
     },
     {
+      id: randomUUID(),
       user_id: user.id,
       owner_name: "Ahmad Faizal",
       owner_phone: "60111234567",
@@ -75,8 +79,9 @@ export async function POST() {
       source: "manual",
       is_demo: true,
     },
-    // My Listing board (stage: listed)
+    // My Listing (stage: listed)
     {
+      id: randomUUID(),
       user_id: user.id,
       owner_name: "Priya Nair",
       owner_phone: "60167654321",
@@ -89,8 +94,9 @@ export async function POST() {
       source: "manual",
       is_demo: true,
     },
-    // Lost Listing board (is_competitor_target: true)
+    // Lost Listing (is_competitor_target: true)
     {
+      id: randomUUID(),
       user_id: user.id,
       owner_name: "Ravi Kumar",
       owner_phone: "60175551234",
@@ -107,6 +113,7 @@ export async function POST() {
       is_demo: true,
     },
     {
+      id: randomUUID(),
       user_id: user.id,
       owner_name: "Nurul Huda",
       owner_phone: "60142223344",
@@ -130,9 +137,9 @@ export async function POST() {
     return NextResponse.json({ error: leadsError.message }, { status: 500 });
   }
 
-  // Existing Listing board (tenancies)
   const tenancies = [
     {
+      id: randomUUID(),
       user_id: user.id,
       tenant_name: "David Wong",
       tenant_phone: "60123337788",
@@ -150,6 +157,7 @@ export async function POST() {
       is_demo: true,
     },
     {
+      id: randomUUID(),
       user_id: user.id,
       tenant_name: "Nurul Ain Zainudin",
       tenant_phone: "60198887766",
@@ -167,6 +175,7 @@ export async function POST() {
       is_demo: true,
     },
     {
+      id: randomUUID(),
       user_id: user.id,
       tenant_name: "Chen Wei Liang",
       tenant_phone: "60126665544",
@@ -184,6 +193,7 @@ export async function POST() {
       is_demo: true,
     },
     {
+      id: randomUUID(),
       user_id: user.id,
       tenant_name: "Siti Rahmah Bt Razak",
       tenant_phone: "60134442211",

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, MessageCircle, ClipboardList, RefreshCw, BookOpen, BarChart2, Lock, PanelLeft, Target, CalendarDays } from "lucide-react";
+import { SidebarDemoHelper } from "@/components/demo-data-controls";
 
 const STORAGE_KEY = "kk_sidebar_pinned";
 const W_OPEN = 220;
@@ -249,6 +250,11 @@ export function SidebarNav({ plan, status, isAdmin }: Props) {
           </div>
 
         </nav>
+
+        {/* Demo helper — sits just below nav, above bottom edge */}
+        <div style={{ flexShrink: 0, paddingBottom: 8 }}>
+          <SidebarDemoHelper showLabels={showLabels} />
+        </div>
       </aside>
     </>
   );

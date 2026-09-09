@@ -6,7 +6,6 @@ import { BetaSurveyModal } from "@/components/beta-survey-modal";
 import { AnnouncementCard } from "@/components/announcement-card";
 import { getUnreadAnnouncements } from "@/lib/announcements";
 import { WaBlastFeatureModal } from "@/components/wa-blast-feature-modal";
-import { DemoDataControls } from "@/components/demo-data-controls";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +93,6 @@ export default async function HomePage() {
       <WaBlastFeatureModal />
       <ReferralBanner />
       <AnnouncementCard announcements={unreadAnnouncements} />
-      <DemoDataControls />
       <ActiveState
         firstName={firstName}
         stats={stats}

@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef, useMemo, useCallback, useEffect } from "react";
 import { AgentProfile } from "@/lib/types";
+import { DemoHelperSettingsRow } from "@/components/demo-data-controls";
 import { saveProfileDetails, saveWhatsAppTemplatesAction, saveNotifPrefs } from "@/lib/actions";
 import {
   TEMPLATE_SPECS,
@@ -1182,6 +1183,11 @@ export function AccountSettingsForm({ agent }: { agent: AgentProfile }) {
           {pwPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {pwPending ? "Updating…" : isGoogleUser ? "Set passcode" : "Update passcode"}
         </button>
+      </section>
+
+      <section className="kk-section p-6">
+        <h2 className="text-[15px] font-semibold mb-4" style={{ color: "var(--kk-ink)" }}>App preferences</h2>
+        <DemoHelperSettingsRow />
       </section>
 
     </div>
