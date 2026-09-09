@@ -33,8 +33,12 @@ export async function POST() {
     return NextResponse.json({ error: "Demo data already exists" }, { status: 409 });
   }
 
-  const ownerLeads = [
-    // Property Leads (stage: imported/replied/wants_rent)
+  // Supabase infers column list from ALL objects in the array, then sends
+  // null for any column missing from a given row — overriding DB defaults.
+  // Split competitor and non-competitor inserts so each batch only knows
+  // about its own columns, and include every NOT-NULL column explicitly.
+
+  const nonCompetitorLeads = [
     {
       id: randomUUID(),
       user_id: user.id,
@@ -47,7 +51,11 @@ export async function POST() {
       expected_rent: 2800,
       stage: "imported",
       source: "manual",
+      outreach_count: 0,
+      photo_urls: [],
+      is_managed: false,
       is_competitor_target: false,
+      has_active_tenancy: false,
       is_demo: true,
     },
     {
@@ -63,7 +71,11 @@ export async function POST() {
       stage: "replied",
       wa_status: "replied",
       source: "manual",
+      outreach_count: 1,
+      photo_urls: [],
+      is_managed: false,
       is_competitor_target: false,
+      has_active_tenancy: false,
       is_demo: true,
     },
     {
@@ -79,10 +91,13 @@ export async function POST() {
       stage: "wants_rent",
       wa_status: "replied",
       source: "manual",
+      outreach_count: 1,
+      photo_urls: [],
+      is_managed: false,
       is_competitor_target: false,
+      has_active_tenancy: false,
       is_demo: true,
     },
-    // My Listing (stage: listed)
     {
       id: randomUUID(),
       user_id: user.id,
@@ -95,10 +110,16 @@ export async function POST() {
       expected_rent: 1900,
       stage: "listed",
       source: "manual",
+      outreach_count: 0,
+      photo_urls: [],
+      is_managed: false,
       is_competitor_target: false,
+      has_active_tenancy: false,
       is_demo: true,
     },
-    // Lost Listing (is_competitor_target: true)
+  ];
+
+  const competitorLeads = [
     {
       id: randomUUID(),
       user_id: user.id,
@@ -110,10 +131,14 @@ export async function POST() {
       bathrooms: 3,
       expected_rent: 3800,
       stage: "imported",
+      source: "manual",
+      outreach_count: 0,
+      photo_urls: [],
+      is_managed: false,
       is_competitor_target: true,
       competitor_stage: "watching",
       competitor_contract_end: addDays(150),
-      source: "manual",
+      has_active_tenancy: false,
       is_demo: true,
     },
     {
@@ -127,18 +152,28 @@ export async function POST() {
       bathrooms: 2,
       expected_rent: 2400,
       stage: "imported",
+      source: "manual",
+      outreach_count: 0,
+      photo_urls: [],
+      is_managed: false,
       is_competitor_target: true,
       competitor_stage: "reach_out",
       competitor_contract_end: addDays(42),
-      source: "manual",
+      has_active_tenancy: false,
       is_demo: true,
     },
   ];
 
-  const { error: leadsError } = await supabase.from("owner_leads").insert(ownerLeads);
+  const { error: leadsError } = await supabase.from("owner_leads").insert(nonCompetitorLeads);
   if (leadsError) {
-    console.error("Demo seed leads error:", leadsError);
+    console.error("Demo seed non-competitor leads error:", leadsError);
     return NextResponse.json({ error: leadsError.message }, { status: 500 });
+  }
+
+  const { error: compLeadsError } = await supabase.from("owner_leads").insert(competitorLeads);
+  if (compLeadsError) {
+    console.error("Demo seed competitor leads error:", compLeadsError);
+    return NextResponse.json({ error: compLeadsError.message }, { status: 500 });
   }
 
   const tenancies = [
