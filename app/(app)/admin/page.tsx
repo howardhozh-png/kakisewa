@@ -20,29 +20,29 @@ export default async function AdminPage() {
   const realProfiles = (profiles ?? []).filter((p: { is_test_account?: boolean | null }) => !p.is_test_account);
   const funnel = {
     total: realProfiles.length,
-    beta: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
+    beta: realProfiles.filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "beta" &&
       (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs)
     ).length,
-    beta_frozen: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
+    beta_frozen: realProfiles.filter((p: { subscription_status: string | null }) =>
       p.subscription_status === "beta_frozen"
     ).length,
-    trial: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
+    trial: realProfiles.filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "trial" &&
       (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs)
     ).length,
-    expired: (profiles ?? []).filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
+    expired: realProfiles.filter((p: { subscription_status: string | null; trial_ends_at: string | null }) =>
       p.subscription_status === "expired" ||
       (p.subscription_status === "trial" && p.trial_ends_at && new Date(p.trial_ends_at) <= nowTs)
     ).length,
-    active: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
+    active: realProfiles.filter((p: { subscription_status: string | null }) =>
       p.subscription_status === "active"
     ).length,
-    unset: (profiles ?? []).filter((p: { subscription_status: string | null }) =>
+    unset: realProfiles.filter((p: { subscription_status: string | null }) =>
       !p.subscription_status
     ).length,
     // Elite access = paid Elite subscribers + active beta/trial agents (who get full Elite features while their trial runs)
-    elite: (profiles ?? []).filter((p: { subscription_status: string | null; subscription_plan: string | null; trial_ends_at: string | null }) =>
+    elite: realProfiles.filter((p: { subscription_status: string | null; subscription_plan: string | null; trial_ends_at: string | null }) =>
       (p.subscription_status === "active" && p.subscription_plan === "elite") ||
       ((p.subscription_status === "beta" || p.subscription_status === "trial") && (!p.trial_ends_at || new Date(p.trial_ends_at) > nowTs))
     ).length,
