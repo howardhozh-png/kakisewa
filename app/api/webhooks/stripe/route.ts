@@ -135,6 +135,7 @@ export async function POST(req: NextRequest) {
       await db.from("agent_profiles").update({
         subscription_status: "cancelled",
         stripe_subscription_id: null,
+        cancelled_at: new Date().toISOString(),
       }).eq("id", userId);
     }
   }

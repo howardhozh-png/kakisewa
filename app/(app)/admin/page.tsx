@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
+import { stripe } from "@/lib/stripe";
 import { AdminView } from "./admin-view";
 
 export default async function AdminPage() {
@@ -12,7 +13,7 @@ export default async function AdminPage() {
   // Funnel + agents: all agent profiles
   const { data: profiles } = await supabase
     .from("agent_profiles")
-    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, subscription_year, subscription_interval, trial_ends_at, subscription_activated_at, is_test_account, created_at, referral_slug, last_seen_at")
+    .select("id, name, phone, agency, ren_number, subscription_status, subscription_plan, subscription_year, subscription_interval, trial_ends_at, subscription_activated_at, is_test_account, created_at, referral_slug, last_seen_at, cancelled_at")
     .order("created_at", { ascending: false });
 
   const nowTs = new Date();
@@ -185,12 +186,46 @@ export default async function AdminPage() {
     agent_id: f.agent_id, created_at: f.created_at,
   }));
 
+  // Stripe paid invoices — last 13 months for a full 12-month chart
+  const stripeInvoices: { month: string; amount: number }[] = [];
+  try {
+    const cutoff = Math.floor((Date.now() - 395 * 24 * 60 * 60 * 1000) / 1000);
+    let hasMore = true;
+    let startingAfter: string | undefined = undefined;
+    const allInvoices: { created: number; amount_paid: number }[] = [];
+    while (hasMore) {
+      const batch = await stripe.invoices.list({
+        status: "paid",
+        limit: 100,
+        created: { gte: cutoff },
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+      allInvoices.push(...batch.data.map((inv) => ({ created: inv.created, amount_paid: inv.amount_paid })));
+      hasMore = batch.has_more;
+      if (hasMore && batch.data.length > 0) {
+        startingAfter = batch.data[batch.data.length - 1].id;
+      }
+    }
+    const byMonth: Record<string, number> = {};
+    for (const inv of allInvoices) {
+      const d = new Date(inv.created * 1000);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      byMonth[key] = (byMonth[key] ?? 0) + inv.amount_paid;
+    }
+    for (const [month, total] of Object.entries(byMonth)) {
+      stripeInvoices.push({ month, amount: Math.round(total / 100) });
+    }
+    stripeInvoices.sort((a, b) => a.month.localeCompare(b.month));
+  } catch {
+    // Non-fatal: chart simply shows no data
+  }
+
   const agents = (profiles ?? []).map((p: {
     id: string; name: string | null; phone: string | null; agency: string | null;
     ren_number: string | null; subscription_status: string | null; subscription_plan: string | null;
     subscription_year: number | null; subscription_interval: string | null;
     trial_ends_at: string | null; subscription_activated_at: string | null; is_test_account: boolean | null;
-    created_at: string; last_seen_at: string | null;
+    created_at: string; last_seen_at: string | null; cancelled_at: string | null;
   }) => {
     const trialEnd = p.trial_ends_at ? new Date(p.trial_ends_at) : null;
     const trialDaysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - nowTs.getTime()) / 86400000) : null;
@@ -224,6 +259,7 @@ export default async function AdminPage() {
       existing_listing_count: tenanciesByUser[p.id]?.count ?? 0,
       renewal_wa_count: tenanciesByUser[p.id]?.renewalWa ?? 0,
       feedback_count: feedbackByUser[p.id] ?? 0,
+      cancelled_at: p.cancelled_at ?? null,
     };
   });
 
@@ -243,5 +279,5 @@ export default async function AdminPage() {
     open_feedback: (r.survey_response?.open_feedback as string | null) ?? null,
   }));
 
-  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} surveyResponses={surveyResponses} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />;
+  return <AdminView funnel={funnel} links={enrichedLinks} feedback={feedbackRows ?? []} agents={agents} invites={inviteRows ?? []} waitlist={waitlistRows ?? []} surveyResponses={surveyResponses} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} stripeInvoices={stripeInvoices} />;
 }

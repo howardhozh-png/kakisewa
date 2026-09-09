@@ -39,7 +39,9 @@ interface AgentRow {
   feedback_count: number; subscription_activated_at: string | null;
   is_test_account: boolean;
   subscription_year: number | null; subscription_interval: string | null;
+  cancelled_at: string | null;
 }
+interface StripeInvoice { month: string; amount: number; }
 interface InviteRow { id: string; email: string; invited_at: string; used_at: string | null; }
 interface WaitlistRow { id: string; name: string | null; email: string; ren_number: string | null; expected_spend: string | null; created_at: string; }
 interface SurveyRow {
@@ -832,24 +834,63 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
 
 // ─── Revenue Tab ──────────────────────────────────────────────────────────────
 
-function RevenueTab({ agents }: { agents: AgentRow[] }) {
-  const [revenueView, setRevenueView] = useState<"confirmed" | "by_plan">("confirmed");
+function MrrChart({ invoices }: { invoices: StripeInvoice[] }) {
+  if (invoices.length === 0) {
+    return (
+      <div className="rounded-2xl px-5 py-10 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+        <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No Stripe payment data yet.</p>
+      </div>
+    );
+  }
 
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const maxAmount = Math.max(...invoices.map(i => i.amount), 1);
+
+  function fmtMonth(key: string) {
+    const [y, m] = key.split("-");
+    return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-MY", { month: "short", year: "2-digit" });
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", padding: "20px 20px 12px" }}>
+      <p className="kk-overline mb-4">Monthly revenue collected (Stripe)</p>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120, overflowX: "auto" }}>
+        {invoices.map((inv) => {
+          const isCurrent = inv.month === thisMonth;
+          const pct = Math.max(4, Math.round((inv.amount / maxAmount) * 100));
+          return (
+            <div key={inv.month} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 36, flex: "1 0 36px" }}>
+              <span className="tabular-nums" style={{ fontSize: 9, color: "var(--kk-ink-faint)", fontWeight: 600 }}>
+                {inv.amount >= 1000 ? `${Math.round(inv.amount / 1000)}k` : inv.amount}
+              </span>
+              <div style={{ width: "100%", height: `${pct}%`, minHeight: 4, borderRadius: "4px 4px 0 0", background: isCurrent ? "var(--kk-blue)" : "var(--kk-line)", transition: "height 400ms ease" }} />
+              <span style={{ fontSize: 9, color: isCurrent ? "var(--kk-blue)" : "var(--kk-ink-faint)", fontWeight: isCurrent ? 700 : 500, whiteSpace: "nowrap" }}>
+                {fmtMonth(inv.month)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RevenueTab({ agents, stripeInvoices }: { agents: AgentRow[]; stripeInvoices: StripeInvoice[] }) {
   const stats = useMemo(() => {
     const realAgents = agents.filter(a => !a.is_test_account);
     const testCount = agents.length - realAgents.length;
 
-    // Confirmed paid = status strictly "active"
+    const paidUsers: AgentRow[] = [];
     const confirmedByPlan: Record<string, number> = {};
     const confirmedMrrByPlan: Record<string, number> = {};
-    let confirmedMrr = 0;
-    const paidUsers: AgentRow[] = [];
+    let estimatedMrr = 0;
     for (const a of realAgents) {
       if (a.subscription_status === "active" && a.subscription_plan) {
         confirmedByPlan[a.subscription_plan] = (confirmedByPlan[a.subscription_plan] ?? 0) + 1;
         const agentMrr = mrrForAgent(a);
         confirmedMrrByPlan[a.subscription_plan] = (confirmedMrrByPlan[a.subscription_plan] ?? 0) + agentMrr;
-        confirmedMrr += agentMrr;
+        estimatedMrr += agentMrr;
         paidUsers.push(a);
       }
     }
@@ -859,29 +900,12 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
       return db - da;
     });
 
-    // By plan = anyone with a plan name assigned, regardless of trial/beta/active
-    const byPlanAll: Record<string, number> = {};
-    const byPlanMrrByPlan: Record<string, number> = {};
-    let potentialMrr = 0;
-    const byPlanUsers: AgentRow[] = [];
-    for (const a of realAgents) {
-      if (a.subscription_plan) {
-        byPlanAll[a.subscription_plan] = (byPlanAll[a.subscription_plan] ?? 0) + 1;
-        const agentMrr = mrrForAgent(a);
-        byPlanMrrByPlan[a.subscription_plan] = (byPlanMrrByPlan[a.subscription_plan] ?? 0) + agentMrr;
-        potentialMrr += agentMrr;
-        byPlanUsers.push(a);
-      }
-    }
-    byPlanUsers.sort((a, b) => {
-      const planOrder = ["elite", "platinum", "gold", "silver"];
-      const pa = planOrder.indexOf(a.subscription_plan ?? "");
-      const pb = planOrder.indexOf(b.subscription_plan ?? "");
-      if (pa !== pb) return pa - pb;
-      return (a.name ?? "").localeCompare(b.name ?? "");
-    });
+    const droppedUsers = realAgents
+      .filter(a => a.subscription_status === "cancelled" && a.cancelled_at)
+      .sort((a, b) => new Date(b.cancelled_at!).getTime() - new Date(a.cancelled_at!).getTime());
 
-    const totalPaid = agents.filter(a => a.subscription_status === "active").length;
+    const totalPaid = paidUsers.length;
+    const totalDropped = droppedUsers.length;
     const totalTrialBeta = realAgents.filter(a => a.subscription_status === "trial" || a.subscription_status === "beta").length;
     const totalExpired = realAgents.filter(a => a.subscription_status === "expired").length;
 
@@ -893,72 +917,62 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
       ? Math.round((totalPaid / (totalPaid + totalExpired)) * 100)
       : null;
 
-    return { confirmedByPlan, confirmedMrr, confirmedMrrByPlan, byPlanAll, byPlanMrrByPlan, potentialMrr, paidUsers, byPlanUsers, totalPaid, totalTrialBeta, totalExpired, expiringTrials, conversionRate, testCount };
-  }, [agents]);
+    // Actual MRR from Stripe: use most recent full month's data
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const thisMonthStripe = stripeInvoices.find(i => i.month === thisMonth);
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
+    const prevMonthStripe = stripeInvoices.find(i => i.month === prevMonthKey);
+    const stripeMrr = thisMonthStripe?.amount ?? prevMonthStripe?.amount ?? null;
 
-  const isConfirmed = revenueView === "confirmed";
-  const displayByPlan = isConfirmed ? stats.confirmedByPlan : stats.byPlanAll;
-  const displayMrrByPlan = isConfirmed ? stats.confirmedMrrByPlan : stats.byPlanMrrByPlan;
-  const displayMrr = isConfirmed ? stats.confirmedMrr : stats.potentialMrr;
+    return { paidUsers, droppedUsers, confirmedByPlan, confirmedMrrByPlan, estimatedMrr, totalPaid, totalDropped, totalTrialBeta, totalExpired, expiringTrials, conversionRate, testCount, stripeMrr };
+  }, [agents, stripeInvoices]);
 
   return (
     <div className="space-y-8">
-      {/* Toggle + test exclusion note */}
-      <div className="flex items-center gap-3 flex-wrap">
-      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", width: "fit-content" }}>
-        {(["confirmed", "by_plan"] as const).map(v => (
-          <button
-            key={v}
-            onClick={() => setRevenueView(v)}
-            className="px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
-            style={{
-              background: revenueView === v ? "var(--kk-surface)" : "transparent",
-              color: revenueView === v ? "var(--kk-ink)" : "var(--kk-ink-mute)",
-              boxShadow: revenueView === v ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-            }}>
-            {v === "confirmed" ? "Confirmed paid" : "By plan"}
-          </button>
-        ))}
-      </div>
-      {stats.testCount > 0 && (
-        <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
-          {stats.testCount} test account{stats.testCount !== 1 ? "s" : ""} excluded
-        </p>
-      )}
-      </div>
-
-      {/* MRR breakdown */}
-      <section>
-        <div className="flex items-baseline gap-4 mb-5">
-          <div>
-            <p className="kk-overline mb-1">{isConfirmed ? "Monthly recurring revenue" : "Potential MRR (by plan)"}</p>
-            <p className="font-bold tabular-nums" style={{ fontSize: "2.2rem", lineHeight: 1, color: "var(--kk-blue)" }}>RM{displayMrr.toLocaleString()}</p>
-            <p className="text-[13px] mt-1" style={{ color: "var(--kk-ink-mute)" }}>ARR est. RM{(displayMrr * 12).toLocaleString()}</p>
-          </div>
-          <div className="ml-auto flex gap-6 text-right">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Paid</p>
-              <p className="tabular-nums font-bold text-[1.4rem]" style={{ color: "var(--kk-ink)" }}>{stats.totalPaid}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Trial/Beta</p>
-              <p className="tabular-nums font-bold text-[1.4rem]" style={{ color: "var(--kk-ink)" }}>{stats.totalTrialBeta}</p>
-            </div>
-            {stats.conversionRate !== null && (
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--kk-ink-faint)" }}>Conv. rate</p>
-                <p className="tabular-nums font-bold text-[1.4rem]" style={{ color: stats.conversionRate >= 30 ? "#1F8B4C" : "#92400E" }}>{stats.conversionRate}%</p>
-              </div>
-            )}
-          </div>
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-2xl px-4 py-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+          <p className="kk-overline mb-1">MRR collected</p>
+          <p className="font-bold tabular-nums" style={{ fontSize: "1.6rem", lineHeight: 1.1, color: "var(--kk-blue)" }}>
+            {stats.stripeMrr !== null ? `RM${stats.stripeMrr.toLocaleString()}` : "—"}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>
+            {stats.stripeMrr !== null ? "From Stripe invoices" : "No Stripe data yet"}
+          </p>
         </div>
+        <div className="rounded-2xl px-4 py-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+          <p className="kk-overline mb-1">Paying now</p>
+          <p className="font-bold tabular-nums" style={{ fontSize: "1.6rem", lineHeight: 1.1, color: "var(--kk-ink)" }}>{stats.totalPaid}</p>
+          <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>{stats.totalTrialBeta} in trial / beta</p>
+        </div>
+        <div className="rounded-2xl px-4 py-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+          <p className="kk-overline mb-1">Dropped</p>
+          <p className="font-bold tabular-nums" style={{ fontSize: "1.6rem", lineHeight: 1.1, color: stats.totalDropped > 0 ? "var(--kk-red)" : "var(--kk-ink)" }}>{stats.totalDropped}</p>
+          <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>{stats.totalExpired} expired trials</p>
+        </div>
+        <div className="rounded-2xl px-4 py-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+          <p className="kk-overline mb-1">Conversion</p>
+          <p className="font-bold tabular-nums" style={{ fontSize: "1.6rem", lineHeight: 1.1, color: stats.conversionRate !== null ? (stats.conversionRate >= 30 ? "var(--kk-green-ink)" : "var(--kk-amber)") : "var(--kk-ink)" }}>
+            {stats.conversionRate !== null ? `${stats.conversionRate}%` : "—"}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: "var(--kk-ink-faint)" }}>Trial to paid</p>
+        </div>
+      </div>
 
+      {/* Monthly MRR chart */}
+      <MrrChart invoices={stripeInvoices} />
+
+      {/* Plan breakdown */}
+      <section>
+        <p className="kk-overline mb-3">Revenue by plan (active subscribers)</p>
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
           {["silver", "gold", "platinum", "elite"].map((plan, i) => {
-            const count = displayByPlan[plan] ?? 0;
-            const planMrr = displayMrrByPlan[plan] ?? 0;
+            const count = stats.confirmedByPlan[plan] ?? 0;
+            const planMrr = stats.confirmedMrrByPlan[plan] ?? 0;
             const planMeta = PLAN_COLOR[plan];
-            const maxPlanMrr = Math.max(...["silver", "gold", "platinum", "elite"].map(p => displayMrrByPlan[p] ?? 0), 1);
+            const maxPlanMrr = Math.max(...["silver", "gold", "platinum", "elite"].map(p => stats.confirmedMrrByPlan[p] ?? 0), 1);
             return (
               <div key={plan} className="flex items-center gap-4 px-5 py-4" style={{ background: "var(--kk-surface)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
                 <div style={{ width: 72, flexShrink: 0 }}>
@@ -967,7 +981,7 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <p className="text-[12px]" style={{ color: "var(--kk-ink-mute)" }}>{count} user{count !== 1 ? "s" : ""}</p>
-                    <p className="tabular-nums font-bold text-[13px]" style={{ color: "var(--kk-ink)" }}>RM{Math.round(planMrr).toLocaleString()}</p>
+                    <p className="tabular-nums font-bold text-[13px]" style={{ color: "var(--kk-ink)" }}>RM{Math.round(planMrr).toLocaleString()}/mo est.</p>
                   </div>
                   <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: "var(--kk-line)" }}>
                     <div style={{ width: `${planMrr > 0 ? Math.max(4, Math.round((planMrr / maxPlanMrr) * 100)) : 0}%`, height: "100%", background: planMeta.bar, borderRadius: 99, transition: "width 600ms ease" }} />
@@ -977,111 +991,106 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
             );
           })}
         </div>
+        {stats.testCount > 0 && (
+          <p className="text-[11px] mt-2" style={{ color: "var(--kk-ink-faint)" }}>
+            {stats.testCount} test account{stats.testCount !== 1 ? "s" : ""} excluded
+          </p>
+        )}
       </section>
 
-      {/* Confirmed paid: show paid subscribers list */}
-      {isConfirmed && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="kk-overline">Paid subscribers ({stats.paidUsers.length})</p>
-              <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Confirmed active subscriptions, newest first.</p>
-            </div>
-            {stats.paidUsers.length > 0 && (
-              <button
-                onClick={() => { const emails = stats.paidUsers.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success("Emails copied"); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
-                style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
-                <Copy className="w-3 h-3" /> Copy all emails
-              </button>
-            )}
-          </div>
-          {stats.paidUsers.length === 0 ? (
-            <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-              <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No confirmed paid subscribers yet.</p>
-            </div>
-          ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-              {stats.paidUsers.map((a, i) => {
-                const planMeta = PLAN_COLOR[a.subscription_plan ?? ""] ?? { bg: "rgba(110,110,115,0.10)", text: "#6E6E73" };
-                return (
-                  <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                      <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
-                    </div>
-                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0" style={{ background: planMeta.bg, color: planMeta.text }}>
-                      {PLAN_LABEL[a.subscription_plan ?? ""] ?? a.subscription_plan}
-                    </span>
-                    <div className="text-right shrink-0">
-                      <p className="text-[11px] font-semibold" style={{ color: "var(--kk-ink-mute)" }}>
-                        {a.subscription_activated_at ? `Since ${fmtDate(a.subscription_activated_at)}` : "No date recorded"}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* By plan: show all users with a plan assigned */}
-      {!isConfirmed && (
-        <section>
-          <div className="mb-3">
-            <p className="kk-overline">All users with a plan ({stats.byPlanUsers.length})</p>
-            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Includes trial, beta, and paid users who have a plan assigned.</p>
-          </div>
-          {stats.byPlanUsers.length === 0 ? (
-            <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-              <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No users with a plan assigned.</p>
-            </div>
-          ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
-              {stats.byPlanUsers.map((a, i) => {
-                const planMeta = PLAN_COLOR[a.subscription_plan ?? ""] ?? { bg: "rgba(110,110,115,0.10)", text: "#6E6E73" };
-                const statusMeta = STATUS_STYLE[a.subscription_status ?? ""];
-                return (
-                  <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
-                      <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
-                    </div>
-                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0" style={{ background: planMeta.bg, color: planMeta.text }}>
-                      {PLAN_LABEL[a.subscription_plan ?? ""] ?? a.subscription_plan}
-                    </span>
-                    {statusMeta && (
-                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full shrink-0" style={{ background: statusMeta.bg, color: statusMeta.color }}>
-                        {statusMeta.label}
-                      </span>
-                    )}
-                    {a.subscription_activated_at && (
-                      <p className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-mute)" }}>
-                        Since {fmtDate(a.subscription_activated_at)}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Expiring trials — conversion window */}
+      {/* Paying subscribers */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="kk-overline">Trial / beta users ({stats.expiringTrials.length})</p>
-            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Sorted by trial expiry. These are your conversion opportunities.</p>
+            <p className="kk-overline">Paying now ({stats.paidUsers.length})</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Active subscriptions, newest first.</p>
+          </div>
+          {stats.paidUsers.length > 0 && (
+            <button
+              onClick={() => { const emails = stats.paidUsers.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success("Emails copied"); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
+              style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
+              <Copy className="w-3 h-3" /> Copy emails
+            </button>
+          )}
+        </div>
+        {stats.paidUsers.length === 0 ? (
+          <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No confirmed paid subscribers yet.</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+            {stats.paidUsers.map((a, i) => {
+              const planMeta = PLAN_COLOR[a.subscription_plan ?? ""] ?? { bg: "rgba(110,110,115,0.10)", text: "#6E6E73" };
+              return (
+                <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                    <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0" style={{ background: planMeta.bg, color: planMeta.text }}>
+                    {PLAN_LABEL[a.subscription_plan ?? ""] ?? a.subscription_plan}
+                  </span>
+                  <p className="text-[11px] shrink-0" style={{ color: "var(--kk-ink-mute)" }}>
+                    {a.subscription_activated_at ? `Since ${fmtDate(a.subscription_activated_at)}` : "No date"}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Dropped subscribers */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="kk-overline">Dropped ({stats.droppedUsers.length})</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Cancelled subscriptions, most recent first.</p>
+          </div>
+        </div>
+        {stats.droppedUsers.length === 0 ? (
+          <div className="rounded-2xl px-5 py-6 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+            <p className="text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>No cancelled subscribers yet.</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+            {stats.droppedUsers.map((a, i) => {
+              const planMeta = PLAN_COLOR[a.subscription_plan ?? ""] ?? { bg: "rgba(110,110,115,0.10)", text: "#6E6E73" };
+              return (
+                <div key={a.id} className="flex items-center gap-3 px-4 py-3" style={{ background: i % 2 === 0 ? "var(--kk-surface)" : "var(--kk-surface-2)", borderTop: i > 0 ? "1px solid var(--kk-line)" : "none" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[13px]" style={{ color: "var(--kk-ink)" }}>{a.name || "—"}</p>
+                    <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email}</p>
+                  </div>
+                  {a.subscription_plan && (
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0" style={{ background: planMeta.bg, color: planMeta.text }}>
+                      {PLAN_LABEL[a.subscription_plan] ?? a.subscription_plan}
+                    </span>
+                  )}
+                  <p className="text-[11px] shrink-0" style={{ color: "var(--kk-red)" }}>
+                    Cancelled {fmtDate(a.cancelled_at!)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Expiring trials */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="kk-overline">Trial / beta ({stats.expiringTrials.length})</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--kk-ink-mute)" }}>Sorted by trial expiry. Your conversion pipeline.</p>
           </div>
           {stats.expiringTrials.length > 0 && (
             <button
               onClick={() => { const emails = stats.expiringTrials.filter(a => a.email).map(a => a.email).join(", "); navigator.clipboard.writeText(emails); toast.success("Emails copied"); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-70"
               style={{ background: "var(--kk-surface-2)", border: "1px solid var(--kk-line)", color: "var(--kk-ink)" }}>
-              <Copy className="w-3 h-3" /> Copy all emails
+              <Copy className="w-3 h-3" /> Copy emails
             </button>
           )}
         </div>
@@ -1102,8 +1111,8 @@ function RevenueTab({ agents }: { agents: AgentRow[] }) {
                     <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>{a.email} · {a.potential_listing_count + a.existing_listing_count} cards</p>
                   </div>
                   <span className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0" style={{
-                    background: expired ? "rgba(110,110,115,0.10)" : urgent ? "rgba(220,38,38,0.10)" : "rgba(255,149,0,0.10)",
-                    color: expired ? "#6E6E73" : urgent ? "#DC2626" : "#92400E",
+                    background: expired ? "rgba(110,110,115,0.10)" : urgent ? "rgba(255,59,48,0.10)" : "rgba(255,149,0,0.10)",
+                    color: expired ? "#6E6E73" : urgent ? "var(--kk-red)" : "var(--kk-amber)",
                   }}>
                     {expired ? `Expired ${Math.abs(days!)}d ago` : days === 0 ? "Expires today" : `${days}d left`}
                   </span>
@@ -1646,10 +1655,11 @@ function AnnouncementsSubTab() {
 
 // ─── Main AdminView ────────────────────────────────────────────────────────────
 
-export function AdminView({ funnel, links, feedback, agents, invites, waitlist, surveyResponses, rawLeads, rawTenancies, rawFeedback }: {
+export function AdminView({ funnel, links, feedback, agents, invites, waitlist, surveyResponses, rawLeads, rawTenancies, rawFeedback, stripeInvoices }: {
   funnel: Funnel; links: LinkRow[]; feedback: FeedbackRow[]; agents: AgentRow[];
   invites: InviteRow[]; waitlist: WaitlistRow[]; surveyResponses: SurveyRow[];
   rawLeads: RawLead[]; rawTenancies: RawTenancy[]; rawFeedback: RawFeedbackItem[];
+  stripeInvoices: StripeInvoice[];
 }) {
   const [tab, setTab] = useState<"health" | "users" | "revenue" | "ops">("health");
   const openFeedbackCount = feedback.filter(f => !f.resolved).length;
@@ -1715,7 +1725,7 @@ export function AdminView({ funnel, links, feedback, agents, invites, waitlist, 
       {tab === "users" && (
         <UsersTab agents={agents} rawLeads={rawLeads} rawTenancies={rawTenancies} rawFeedback={rawFeedback} />
       )}
-      {tab === "revenue" && <RevenueTab agents={agents} />}
+      {tab === "revenue" && <RevenueTab agents={agents} stripeInvoices={stripeInvoices} />}
       {tab === "ops" && (
         <OpsTab links={links} feedback={feedback} invites={invites} waitlist={waitlist} surveyResponses={surveyResponses} openFeedbackCount={openFeedbackCount} />
       )}
