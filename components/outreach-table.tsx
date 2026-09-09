@@ -1692,9 +1692,16 @@ export function OutreachTable({ leads, declinedLeads = [], deletedLeads = [], wa
                         >
                           {getInitials(lead.owner_name)}
                         </div>
-                        <p className="text-[11px] lg:text-[12px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>
-                          {lead.owner_name ?? "—"}
-                        </p>
+                        <div className="min-w-0 flex flex-col">
+                          <p className="text-[11px] lg:text-[12px] font-medium truncate" style={{ color: "var(--kk-ink)" }}>
+                            {lead.owner_name ?? "—"}
+                          </p>
+                          {lead.is_demo && (
+                            <span className="text-[9px] font-bold uppercase tracking-wide px-1 rounded" style={{ background: "var(--kk-amber-soft)", color: "#B45309", width: "fit-content" }}>
+                              Demo
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
 

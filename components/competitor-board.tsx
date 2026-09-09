@@ -558,9 +558,16 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
 
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div className="flex items-start justify-between gap-1.5">
-            <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
-              {lead.property_name || "—"}
-            </p>
+            <div className="min-w-0 flex flex-col">
+              {lead.is_demo && (
+                <span className="text-[9px] font-bold uppercase tracking-wide px-1 rounded mb-0.5" style={{ background: "var(--kk-amber-soft)", color: "#B45309", width: "fit-content" }}>
+                  Demo
+                </span>
+              )}
+              <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
+                {lead.property_name || "—"}
+              </p>
+            </div>
             {days !== null && (
               <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full shrink-0"
                 style={{ background: daysBg, color: daysColor }}>

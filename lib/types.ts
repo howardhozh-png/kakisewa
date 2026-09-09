@@ -71,6 +71,7 @@ export interface Tenancy {
   };
   owner_lead_id?: string | null;
   user_id?: string | null;
+  is_demo?: boolean;
 }
 
 // Default stage for a tenancy that doesn't have lifecycle_stage explicitly
@@ -146,6 +147,7 @@ export interface OwnerLead {
   sold_at?: string | null;
   is_managed?: boolean;
   managed_at?: string | null;
+  is_demo?: boolean;
   is_competitor_target?: boolean;
   competitor_contract_start?: string | null;
   competitor_contract_duration_months?: number | null;
