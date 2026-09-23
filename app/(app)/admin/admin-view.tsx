@@ -781,7 +781,7 @@ function UsersTab({ agents: initialAgents, rawLeads, rawTenancies, rawFeedback }
                       }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, background: meta.bg, color: meta.color }}>
-                            {(a.name ?? a.email ?? "?")[0].toUpperCase()}
+                            {((a.name?.trim() || a.email?.trim() || "?").charAt(0)).toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
