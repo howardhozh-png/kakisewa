@@ -921,7 +921,7 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
           }} />
           <span style={{ fontSize: 12, color: "var(--kk-ink-mute)" }}>
             WhatsApp: <strong style={{ color: connected ? "var(--kk-green-ink)" : "var(--kk-ink)" }}>
-              {connected ? "Connected" : "Not linked"}
+              {connected ? (session?.phone_number ? `+${session.phone_number}` : "Connected") : "Not linked"}
             </strong>
           </span>
         </div>

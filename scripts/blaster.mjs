@@ -330,8 +330,10 @@ async function connect() {
       // route to the phone, not the blaster session
       try { await sock.sendPresenceUpdate("unavailable"); } catch { /* ignore */ }
       try {
+        const jid = sock.user?.id ?? "";
+        const phoneNumber = jid.replace(/@.*$/, "").replace(/:.*$/, "") || null;
         await db.from("wa_sessions").upsert(
-          { user_id: USER_ID, qr_data_url: null, is_authenticated: true, updated_at: new Date().toISOString() },
+          { user_id: USER_ID, qr_data_url: null, is_authenticated: true, updated_at: new Date().toISOString(), phone_number: phoneNumber },
           { onConflict: "user_id" }
         );
       } catch { /* ignore */ }

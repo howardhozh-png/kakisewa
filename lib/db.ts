@@ -3445,13 +3445,14 @@ export type WaSession = {
   qr_data_url: string | null;
   is_authenticated: boolean;
   updated_at: string;
+  phone_number: string | null;
 };
 
 export async function getWaSession(): Promise<WaSession | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("wa_sessions")
-    .select("qr_data_url, is_authenticated, updated_at")
+    .select("qr_data_url, is_authenticated, updated_at, phone_number")
     .maybeSingle();
   return (data as WaSession | null) ?? null;
 }
