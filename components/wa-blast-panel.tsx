@@ -803,6 +803,11 @@ function QueueTab({ queue, sentQueue, leads, onRemove, onAcknowledge, onClearAll
 type SetupTokens = { access_token: string; refresh_token: string };
 type OS = "mac" | "windows";
 
+function detectOS(): OS {
+  if (typeof navigator === "undefined") return "mac";
+  return /win/i.test(navigator.userAgent) ? "windows" : "mac";
+}
+
 function mask(s: string) { return s.slice(0, 6) + "••••••••"; }
 
 function getRunBase() {
@@ -835,6 +840,12 @@ const NUM = {
 function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSession | null; onSessionChange?: (s: WaSession) => void }) {
   const [open, setOpen] = useState(false);
   const [os, setOs] = useState<OS>("mac");
+
+  // Default to the visitor's actual OS once mounted (SSR has no navigator, so
+  // the initial render always starts at "mac" to avoid a hydration mismatch).
+  useEffect(() => {
+    setOs(detectOS());
+  }, []);
   const [session, setSession] = useState<WaSession | null>(initialSession);
   const [tokens, setTokens] = useState<SetupTokens | null>(null);
   const [copied, setCopied] = useState(false);
