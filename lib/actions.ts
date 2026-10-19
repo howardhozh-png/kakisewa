@@ -27,6 +27,7 @@ import {
   bulkCreateOwnerLeads,
   getOwnerLeads,
   updateOwnerLead,
+  setOwnerLeadHasActiveTenancy,
   getOwnerLead,
   deleteOwnerLead,
   softDeleteOwnerLeadForce,
@@ -127,9 +128,13 @@ export async function addTenancy(formData: FormData): Promise<{ ok: boolean; id?
     ownerLeadId = newLead.id;
   }
 
-  // Mark the owner_lead as managed when creating the tenancy
+  // Mark the owner_lead as managed when creating the tenancy. This tenancy is
+  // created as lifecycle_stage: "active" below, so has_active_tenancy must be
+  // set explicitly here too — it's never written by updateOwnerLead (see
+  // OWNER_LEAD_IMMUTABLE in lib/db.ts).
   if (ownerLeadId) {
     await (await import("@/lib/db")).updateOwnerLead(ownerLeadId, { is_managed: true } as Parameters<typeof import("@/lib/db").updateOwnerLead>[1]);
+    await setOwnerLeadHasActiveTenancy(ownerLeadId, true);
     if (photoUrls.length > 0) {
       await (await import("@/lib/db")).updateOwnerLeadPhotos(ownerLeadId, photoUrls);
     }
@@ -891,6 +896,7 @@ export async function moveTenantLeaving(
         available_from: data.availableFrom,
       });
       await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "tenant_leaving" });
+      await setOwnerLeadHasActiveTenancy(t.owner_lead_id, false);
       invalidateCache();
       revalidatePath("/existing-listing");
       revalidatePath("/property-leads"); revalidatePath("/my-listing");
@@ -919,8 +925,9 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     const t = await getTenancy(tenancyId);
     if (!t) return { ok: false, message: "Tenancy not found." };
 
-    if (t.owner_lead_id) {
-      await updateOwnerLead(t.owner_lead_id, { stage: "own_stay" });
+    let ownerLeadIdForLeaving = t.owner_lead_id ?? null;
+    if (ownerLeadIdForLeaving) {
+      await updateOwnerLead(ownerLeadIdForLeaving, { stage: "own_stay" });
     } else {
       // Tenancy was added manually with no owner lead — create one so it surfaces in Property Leads
       const newLead = await createOwnerLead({
@@ -933,6 +940,7 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
         source: "manual",
       } as Parameters<typeof createOwnerLead>[0]);
       await updateTenancy(t.id, { owner_lead_id: newLead.id });
+      ownerLeadIdForLeaving = newLead.id;
     }
 
     // Look up by both phone AND name to avoid updating the wrong profile
@@ -961,6 +969,7 @@ export async function moveOwnerLeaving(tenancyId: string): Promise<{ ok: boolean
     }
 
     await updateTenancy(tenancyId, { lifecycle_stage: "closed", closed_reason: "owner_leaving" });
+    if (ownerLeadIdForLeaving) await setOwnerLeadHasActiveTenancy(ownerLeadIdForLeaving, false);
     invalidateCache();
     revalidatePath("/existing-listing");
     revalidatePath("/property-leads"); revalidatePath("/my-listing");
@@ -1186,7 +1195,8 @@ export async function convertLeadToTenancy(
     const cap = await checkRenewalCardCap();
     if (!cap.allowed) return { ok: false, message: cap.reason, current_plan: cap.current_plan, current_count: cap.current_count, current_cap: cap.current_cap, upgrade_to: cap.upgrade_to ?? undefined, upgrade_cap: cap.upgrade_cap, nearest_expiry_days: cap.nearest_expiry_days };
 
-    // Close stale tenancies first so the trigger recalculates has_active_tenancy = false.
+    // Close stale tenancies first and explicitly clear has_active_tenancy —
+    // no tracked trigger reliably does this (see setOwnerLeadHasActiveTenancy).
     const { createServiceClient } = await import("@/lib/supabase/service");
     const svc = createServiceClient();
     await svc.from("tenancies")
@@ -1194,6 +1204,7 @@ export async function convertLeadToTenancy(
       .eq("owner_lead_id", ownerLeadId)
       .is("deleted_at", null)
       .or("lifecycle_stage.is.null,lifecycle_stage.not.in.(closed,reserved)");
+    await setOwnerLeadHasActiveTenancy(ownerLeadId, false);
 
     await createTenancy({
       owner_lead_id: ownerLeadId,
@@ -1268,6 +1279,7 @@ export async function confirmMovedIn(
     }
 
     await updateTenancy(tenancyId, { lifecycle_stage: "active" });
+    if (tenancy.owner_lead_id) await setOwnerLeadHasActiveTenancy(tenancy.owner_lead_id, true);
     invalidateCache();
     revalidatePath("/property-leads"); revalidatePath("/my-listing");
     revalidatePath("/existing-listing");
@@ -2277,6 +2289,7 @@ export async function markCommissionCollected(
       }
     }
     await updateTenancy(tenancyId, { lifecycle_stage: "active" });
+    if (tenancy?.owner_lead_id) await setOwnerLeadHasActiveTenancy(tenancy.owner_lead_id, true);
     invalidateCache();
     revalidatePath("/property-leads"); revalidatePath("/my-listing");
     revalidatePath("/existing-listing");
@@ -2596,6 +2609,7 @@ export async function lostContractAction(
     .update({ lifecycle_stage: "closed", closed_reason: "lost_to_competitor" })
     .eq("id", tenancyId);
   if (error) return { ok: false, message: error.message };
+  if (ownerLeadId) await setOwnerLeadHasActiveTenancy(ownerLeadId, false);
   if (ownerLeadId && competitorContractEnd) {
     await markCompetitorRented(ownerLeadId, "", undefined, competitorContractEnd);
   }

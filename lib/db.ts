@@ -144,7 +144,7 @@ async function _cachedLifecycleTenancies(userId: string): Promise<Tenancy[]> {
       .eq("user_id", userId)
       .is("deleted_at", null)
       .not("contract_end", "is", null)
-      .not("lifecycle_stage", "in", '("closed","reserved")')
+      .not("lifecycle_stage", "in", '("closed")')
       .order("contract_end", { ascending: true })
       .order("id", { ascending: true })
       .range(from, from + PAGE - 1);
@@ -666,7 +666,7 @@ export async function getLifecycleTenancies(): Promise<Tenancy[]> {
   const userId = await getCurrentUserId();
   if (!userId) {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).not("lifecycle_stage", "in", '("closed","reserved")').order("contract_end", { ascending: true });
+    const { data, error } = await supabase.from("tenancies").select(TENANCY_SELECT).not("contract_end", "is", null).not("lifecycle_stage", "in", '("closed")').order("contract_end", { ascending: true });
     if (error) throw error;
     return (data ?? []).map(r => toTenancy(r as Record<string, unknown>));
   }
@@ -699,7 +699,7 @@ export async function countLifecycleTenancies(): Promise<number> {
     .select("*", { count: "exact", head: true })
     .is("deleted_at", null)
     .not("contract_end", "is", null)
-    .not("lifecycle_stage", "in", '("closed","reserved")');
+    .not("lifecycle_stage", "in", '("closed")');
   if (userId) q = q.eq("user_id", userId);
   const { count, error } = await q;
   if (error) throw error;
@@ -717,7 +717,7 @@ export async function getMostRecentTenancyId(): Promise<string | null> {
     .from("tenancies")
     .select("id")
     .is("deleted_at", null)
-    .not("lifecycle_stage", "in", '("closed","reserved")')
+    .not("lifecycle_stage", "in", '("closed")')
     .order("created_at", { ascending: false })
     .limit(1);
   if (userId) q = q.eq("user_id", userId);
@@ -865,7 +865,13 @@ export async function recordCommissionEvent(data: {
       amount: data.amount,
       earned_on: data.earned_on,
       notes: data.notes ?? null,
-    }, { onConflict: "id", ignoreDuplicates: true });
+    // onConflict must target the real uniqueness rule (tenancy_id, type) —
+    // "id" is always freshly random and never collides, so a prior version
+    // of this upsert never actually caught duplicates: it still hit the
+    // commission_events_tenancy_id_type_key constraint and threw, aborting
+    // whatever caller was mid-flow (e.g. confirmMovedIn) before it reached
+    // its own state-transition writes.
+    }, { onConflict: "tenancy_id,type", ignoreDuplicates: true });
   if (error) throw error;
 }
 
@@ -1382,6 +1388,19 @@ export async function updateOwnerLead(id: string, data: Partial<OwnerLead>): Pro
   const { data: updated, error } = await supabase.from("owner_leads").update(updates).eq("id", id).select("id");
   if (error) throw error;
   if (!updated || updated.length === 0) throw new Error("Owner lead not found or permission denied");
+}
+
+// Deliberately bypasses OWNER_LEAD_IMMUTABLE — has_active_tenancy is excluded
+// from updateOwnerLead so arbitrary form/client data can never clobber it, but
+// the tenancy-lifecycle transition points (confirmMovedIn, convertLeadToTenancy,
+// moveTenantLeaving, etc. in lib/actions.ts) need to set it explicitly: there's
+// no tracked migration/trigger that reliably keeps it in sync, so relying on an
+// unverifiable live-only DB trigger left it permanently stuck false for leads
+// whose tenancy went reserved → active.
+export async function setOwnerLeadHasActiveTenancy(id: string, value: boolean): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("owner_leads").update({ has_active_tenancy: value }).eq("id", id);
+  if (error) throw error;
 }
 
 const PROTECTED_STAGES = new Set(["replied", "wants_rent", "listed", "matched"]);

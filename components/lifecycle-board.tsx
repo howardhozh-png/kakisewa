@@ -15,6 +15,7 @@ import { buildWhatsAppPingUrl } from "@/lib/whatsapp";
 import { TenanciesTimeline } from "@/components/tenancies-timeline";
 import { FeatureLockedState } from "@/components/feature-locked-state";
 import { RenewalCommissionDialog } from "@/components/renewal-commission-dialog";
+import { ConfirmMovedInDialog } from "@/components/confirm-moved-in-dialog";
 import { TenantLeavingDialog } from "@/components/tenant-leaving-dialog";
 import { OwnerLeavingDialog } from "@/components/owner-leaving-dialog";
 import { FilterSelect } from "@/components/filter-select";
@@ -70,6 +71,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
   const boardRef = useRef<HTMLDivElement>(null);
 
   const [commissionTenancy, setCommissionTenancy] = useState<Tenancy | null>(null);
+  const [confirmMovedInTenancy, setConfirmMovedInTenancy] = useState<Tenancy | null>(null);
   const [tenantLeavingTenancy, setTenantLeavingTenancy] = useState<Tenancy | null>(null);
   const [ownerLeavingTenancy, setOwnerLeavingTenancy] = useState<Tenancy | null>(null);
   const [lostTenancy, setLostTenancy] = useState<Tenancy | null>(null);
@@ -203,9 +205,11 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
       .forEach((t) => {
         const stage = defaultLifecycleStage(t, today);
         if (!stage) return;
-        if (stage === "closed" || stage === "reserved") return; // archived or pending move-in — not shown here
-        // All non-primary stages show in Expiring column so every card linked from home is reachable
-        const bucket: LifecycleStage = (stage === "pinged" || stage === "stalled" || stage === "ending" || stage === "replacing") ? "headsup" : stage;
+        if (stage === "closed") return; // archived — not shown here
+        // All non-primary stages show in Expiring column so every card linked from home is reachable.
+        // "reserved" (tenant matched, pending move-in confirmation) has no dedicated column —
+        // route it into Active so it's visible instead of disappearing until confirmed.
+        const bucket: LifecycleStage = (stage === "pinged" || stage === "stalled" || stage === "ending" || stage === "replacing") ? "headsup" : (stage === "reserved" ? "active" : stage);
         if (bucket in out) out[bucket].push(t);
       });
     Object.keys(out).forEach((k) => {
@@ -385,6 +389,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
                       isDragging={draggingId === t.id}
                       onOpen={() => setOpenTenancy(t)}
                       onShowCommission={() => setCommissionTenancy(t)}
+                      onShowConfirmMovedIn={() => setConfirmMovedInTenancy(t)}
                       onShowTenantLeaving={() => setTenantLeavingTenancy(t)}
                       onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
                       onShowLostContract={() => setLostTenancy(t)}
@@ -414,6 +419,7 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
                     isDragging={draggingId === t.id}
                     onOpen={() => setOpenTenancy(t)}
                     onShowCommission={() => setCommissionTenancy(t)}
+                    onShowConfirmMovedIn={() => setConfirmMovedInTenancy(t)}
                     onShowTenantLeaving={() => setTenantLeavingTenancy(t)}
                     onShowOwnerLeaving={() => setOwnerLeavingTenancy(t)}
                     onShowLostContract={() => setLostTenancy(t)}
@@ -471,6 +477,24 @@ export function LifecycleBoard({ tenancies, openTenancyId, highlightId, plan = "
           t={commissionTenancy}
           open={!!commissionTenancy}
           onClose={() => { setCommissionTenancy(null); router.refresh(); }}
+        />
+      )}
+      {confirmMovedInTenancy && (
+        <ConfirmMovedInDialog
+          open={!!confirmMovedInTenancy}
+          onOpenChange={(o) => { if (!o) setConfirmMovedInTenancy(null); }}
+          tenancyId={confirmMovedInTenancy.id}
+          tenantName={confirmMovedInTenancy.tenant_name ?? ""}
+          propertyLabel={
+            confirmMovedInTenancy.property?.unit
+              ? `${confirmMovedInTenancy.property_name ?? "Property"}, Unit ${confirmMovedInTenancy.property.unit}`
+              : (confirmMovedInTenancy.property_name ?? "Property")
+          }
+          contractStart={confirmMovedInTenancy.contract_start ?? null}
+          contractEnd={confirmMovedInTenancy.contract_end ?? null}
+          contractDurationMonths={confirmMovedInTenancy.contract_duration_months ?? null}
+          amount={confirmMovedInTenancy.amount}
+          onConfirmed={() => { setConfirmMovedInTenancy(null); router.refresh(); }}
         />
       )}
       {tenantLeavingTenancy && (
@@ -676,10 +700,11 @@ function EmptyDrop({ col }: { col: ColMeta }) {
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
-function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowTenantLeaving, onShowOwnerLeaving, onShowLostContract, onMoveToStage, selectMode, selected, onToggleSelect }: {
+function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onShowConfirmMovedIn, onShowTenantLeaving, onShowOwnerLeaving, onShowLostContract, onMoveToStage, selectMode, selected, onToggleSelect }: {
   t: Tenancy; col: ColMeta; today: Date; plan: string; isDragging: boolean;
   onOpen: () => void;
   onShowCommission: () => void;
+  onShowConfirmMovedIn: () => void;
   onShowTenantLeaving: () => void;
   onShowOwnerLeaving: () => void;
   onShowLostContract: () => void;
@@ -824,7 +849,7 @@ function Card({ t, col, today, plan, isDragging, onOpen, onShowCommission, onSho
       {/* Actions */}
       {plan !== "silver" && <RentReminderAction t={t} today={today} />}
       {!isHeadsupLike && (
-        <ColumnAction t={t} stage={col.stage as LifecycleStage} today={today} onShowCommission={onShowCommission} />
+        <ColumnAction t={t} stage={col.stage as LifecycleStage} today={today} onShowCommission={onShowCommission} onShowConfirmMovedIn={onShowConfirmMovedIn} />
       )}
       {isHeadsupLike && (
         <>
@@ -983,11 +1008,32 @@ function RentReminderAction({ t, today }: { t: Tenancy; today: Date }) {
 
 // ─── Column action ────────────────────────────────────────────────────────────
 
-function ColumnAction({ t, stage, today, onShowCommission }: {
+function ColumnAction({ t, stage, today, onShowCommission, onShowConfirmMovedIn }: {
   t: Tenancy; stage: LifecycleStage; today: Date;
   onShowCommission: () => void;
+  onShowConfirmMovedIn: () => void;
 }) {
   if (stage === "headsup") return null;
+
+  // "reserved" (tenant matched, pending move-in) is bucketed into the Active
+  // column since there's no dedicated column — but it needs its own action,
+  // not the generic "days remain" label, since the tenancy isn't confirmed yet.
+  if (stage === "active" && t.lifecycle_stage === "reserved") {
+    return (
+      <button
+        type="button"
+        data-card-action
+        onClick={(e) => { e.stopPropagation(); onShowConfirmMovedIn(); }}
+        className="kk-card-cta kk-card-cta-soft-green"
+      >
+        <span className="flex items-start gap-1.5 min-w-0 flex-1">
+          <CheckCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <span>Confirm moved in</span>
+        </span>
+        <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+      </button>
+    );
+  }
 
   if (stage === "active") {
     const days = t.contract_end ? Math.round((new Date(t.contract_end).getTime() - today.getTime()) / 86400000) : 0;

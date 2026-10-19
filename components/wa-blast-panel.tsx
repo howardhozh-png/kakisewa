@@ -840,12 +840,20 @@ const NUM = {
 function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSession | null; onSessionChange?: (s: WaSession) => void }) {
   const [open, setOpen] = useState(false);
   const [os, setOs] = useState<OS>("mac");
+  const [detectedOs, setDetectedOs] = useState<OS | null>(null);
 
   // Default to the visitor's actual OS once mounted (SSR has no navigator, so
   // the initial render always starts at "mac" to avoid a hydration mismatch).
+  // detectedOs is kept separately (never changed by manual tab clicks) so we
+  // can warn if the user switches to a tab that doesn't match their device —
+  // the copied command is OS-specific shell syntax and silently fails in the
+  // wrong shell (e.g. bash's `<(...)` throws a parser error in PowerShell).
   useEffect(() => {
-    setOs(detectOS());
+    const d = detectOS();
+    setOs(d);
+    setDetectedOs(d);
   }, []);
+  const osMismatch = detectedOs !== null && detectedOs !== os;
   const [session, setSession] = useState<WaSession | null>(initialSession);
   const [tokens, setTokens] = useState<SetupTokens | null>(null);
   const [copied, setCopied] = useState(false);
@@ -993,6 +1001,17 @@ function SetupDialog({ initialSession, onSessionChange }: { initialSession: WaSe
                 </button>
               ))}
             </div>
+
+            {osMismatch && (
+              <div style={{
+                margin: "12px 20px 0", padding: "9px 12px", borderRadius: 9,
+                background: "var(--kk-amber-soft)", border: "1px solid rgba(255,149,0,0.22)",
+                fontSize: 11.5, color: "#B45309", lineHeight: 1.5,
+              }}>
+                This command is for {os === "mac" ? "Mac" : "Windows"}. Your device looks like {detectedOs === "mac" ? "Mac" : "Windows"} — switch to the{" "}
+                <strong>{detectedOs === "mac" ? "Mac" : "Windows"}</strong> tab above or it will not run.
+              </div>
+            )}
 
             {/* Steps */}
             <div style={{ padding: "18px 20px 22px", display: "flex", flexDirection: "column", gap: 16, overflowX: "hidden" }}>

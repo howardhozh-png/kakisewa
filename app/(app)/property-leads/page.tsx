@@ -49,8 +49,14 @@ export default async function MessageOwnersPage() {
       </header>
 
       {(() => {
+    // stage: "archived" is overloaded: it means "owner declined" when set via
+    // setOwnerLeadStage/bulkSetOwnerLeadStage (never touches is_managed), but
+    // also means "now a directly-managed tenancy" when set by Add Tenancy or
+    // the pipeline's "moved in" action (both leave is_managed: true behind).
+    // Only the genuinely-declined case belongs here — a managed lead has
+    // already moved on to Existing Listing / My Listing.
     const activeLeads = ownerLeads.filter((l) => l.stage !== "archived" && l.stage !== "own_stay");
-    const declinedLeads = ownerLeads.filter((l) => l.stage === "archived" || l.stage === "own_stay");
+    const declinedLeads = ownerLeads.filter((l) => (l.stage === "archived" && !l.is_managed) || l.stage === "own_stay");
     return activeLeads.length === 0 && deletedLeads.length === 0 && declinedLeads.length === 0
       ? <OutreachEmptyState />
       : <OutreachTable leads={activeLeads} declinedLeads={declinedLeads} deletedLeads={deletedLeads} waBlastConfig={waBlastConfig} initialWaBlastQueue={waBlastQueue} initialWaSentQueue={waSentQueue} initialWaSession={waSession} />;
