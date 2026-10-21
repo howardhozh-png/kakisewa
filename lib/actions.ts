@@ -2481,6 +2481,78 @@ export async function winCompetitorUnitAction(id: string, availableFrom?: string
   return { ok: true };
 }
 
+// "Moved in" on a competitor-tracked unit (Lost Listing, Renewing column). Unlike
+// winCompetitorUnitAction (which parks the lead on My Listing with no tenancy —
+// appropriate when you still need to find a tenant), this is for the case where
+// the owner is renewing with you and the unit is already occupied: it creates a
+// real active tenancy straight away and records a commission, landing the card
+// on Existing Listing. Tenant name/phone are deliberately left blank (the agent
+// can fill them in later) since nothing upstream of this flow ever collects them.
+export async function winCompetitorUnitAsTenancyAction(
+  id: string,
+  data: { commissionType: "full_year" | "half_month"; rent: number; contractStart: string | null; contractEnd: string }
+): Promise<{ ok: boolean; reason?: string; current_plan?: string; current_count?: number; current_cap?: number; upgrade_to?: string; upgrade_cap?: number | null }> {
+  "use server";
+  const capCheck = await checkRenewalCardCap();
+  if (!capCheck.allowed) {
+    return {
+      ok: false,
+      reason: "plan_cap_reached",
+      current_plan: capCheck.current_plan,
+      current_count: capCheck.current_count,
+      current_cap: capCheck.current_cap,
+      upgrade_to: capCheck.upgrade_to ?? undefined,
+      upgrade_cap: capCheck.upgrade_cap,
+    };
+  }
+
+  const start = data.contractStart ?? new Date().toISOString().slice(0, 10);
+  let durationMonths: number | undefined;
+  const s = new Date(start), e = new Date(data.contractEnd);
+  const diff = Math.round((e.getTime() - s.getTime()) / (30.44 * 86400000));
+  if (diff > 0) durationMonths = diff;
+
+  const newTenancy = await createTenancy({
+    owner_lead_id: id,
+    tenant_name: "",
+    tenant_phone: "",
+    due_day: 1,
+    amount: data.rent,
+    current_month_paid: false,
+    current_month_receipt_url: null,
+    last_paid_month: null,
+    last_receipt_url: null,
+    lhdn_status: "none",
+    status: "Pending",
+    contract_start: start,
+    contract_end: data.contractEnd,
+    contract_duration_months: durationMonths ?? null,
+    replied_tenant: "pending",
+    replied_owner: "pending",
+    lifecycle_stage: "active",
+  });
+
+  const commissionAmt = data.commissionType === "full_year" ? Math.round(data.rent) : Math.round(data.rent * 0.5);
+  await recordCommissionEvent({
+    tenancy_id: newTenancy.id,
+    owner_lead_id: id,
+    type: "renewal",
+    amount: commissionAmt,
+    earned_on: start,
+    notes: `Won back from competitor (${data.commissionType === "full_year" ? "1 year rental" : "50%"})`,
+  });
+
+  await updateOwnerLead(id, { stage: "archived", is_managed: true, is_competitor_target: false, competitor_stage: "watching", competitor_contract_end: null });
+  await setOwnerLeadHasActiveTenancy(id, true);
+
+  invalidateCache();
+  revalidatePath("/lost-listing");
+  revalidatePath("/existing-listing");
+  revalidatePath("/my-listing");
+  revalidatePath("/performance");
+  return { ok: true };
+}
+
 export async function archiveCompetitorLeadAction(id: string): Promise<{ ok: boolean }> {
   "use server";
   await archiveCompetitorLead(id);

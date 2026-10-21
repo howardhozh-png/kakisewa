@@ -81,9 +81,26 @@ if (SERVICE_KEY) {
   })();
 } else {
   // User mode — authenticate with personal token
-  // autoRefreshToken: false — blaster must never rotate the shared refresh token
-  // (rotation invalidates the browser session). Access token lasts 1 hour then
-  // exitTokenExpired() fires with a clear re-download message.
+  // autoRefreshToken: false only disables the SDK's background refresh timer.
+  // setSession() itself still auto-refreshes internally if the access token it's
+  // given has already expired — and that refresh ROTATES the shared refresh token,
+  // invalidating the browser session it was copied from. The installer's launcher
+  // script bakes the token pair in at download time and reuses it across restarts,
+  // so a stale (already-expired) access token can reach us here. Checking expiry
+  // ourselves first means we exit cleanly instead of ever triggering that rotation.
+  const decodeExpiry = (jwt) => {
+    try {
+      const payload = JSON.parse(Buffer.from(jwt.split(".")[1], "base64url").toString("utf-8"));
+      return payload.exp ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const exp = decodeExpiry(KAKI_TOKEN);
+  if (exp !== null && exp * 1000 <= Date.now()) {
+    console.error("✗ Your blaster token has expired. Get a fresh command from kakisewa.com → Link WhatsApp.");
+    process.exit(1);
+  }
   db = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false, autoRefreshToken: false }, ...supabaseRealtime });
   const { data, error } = await db.auth.setSession({
     access_token: KAKI_TOKEN,

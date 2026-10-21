@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { OwnerLead, CompetitorStage, daysUntil, effectiveColumn, getBusinessToday } from "@/lib/types";
-import { setCompetitorStageAction, winCompetitorUnitAction, buildCompetitorOwnerPing } from "@/lib/actions";
+import { setCompetitorStageAction, winCompetitorUnitAction, winCompetitorUnitAsTenancyAction, buildCompetitorOwnerPing } from "@/lib/actions";
 import { FilterSelect } from "@/components/filter-select";
 import { CompetitorTimeline } from "@/components/competitor-timeline";
 import { EditCompetitorDialog } from "@/components/edit-competitor-dialog";
@@ -177,8 +177,12 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
     else router.refresh();
   }
 
-  async function handleWin(id: string) {
-    const res = await winCompetitorUnitAction(id);
+  // Owner is renewing with the agent and the unit is already occupied — unlike
+  // handleWin (which parks the lead on My Listing with no tenancy, for a unit
+  // that still needs a tenant found), this creates a real active tenancy and
+  // commission straight away, landing the card on Existing Listing.
+  async function handleWinWithCommission(id: string, data: { commissionType: "full_year" | "half_month"; rent: number; contractStart: string | null; contractEnd: string }) {
+    const res = await winCompetitorUnitAsTenancyAction(id, data);
     if (!res.ok) {
       if (res.reason === "plan_cap_reached") {
         setCapBlock({ currentPlan: res.current_plan ?? "silver", currentCount: res.current_count ?? 0, currentCap: res.current_cap ?? 0, upgradeToId: res.upgrade_to ?? "gold", upgradeCap: res.upgrade_cap ?? null });
@@ -188,7 +192,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
       return;
     }
     setLocal((prev) => prev.filter((x) => x.id !== id));
-    toast.success("Moved to My Listing. Start finding a tenant.");
+    toast.success("Commission recorded. Moved to Existing Listing.");
     router.refresh();
   }
 
@@ -305,7 +309,7 @@ export function CompetitorBoard({ leads, highlightId }: Props) {
                       today={today}
                       isDragging={draggingId === l.id}
                       onOpen={() => setEditLead(l)}
-                      onWin={handleWin}
+                      onWinWithCommission={handleWinWithCommission}
                       onMoveToRenewing={handleMoveToRenewing}
                       onMoveToMyListing={handleMoveToMyListing}
                       onBackToWatching={handleBackToWatching}
@@ -492,13 +496,13 @@ function CardPreview({ lead }: { lead: OwnerLead }) {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, onMoveToMyListing, onBackToWatching }: {
+function Card({ lead, col, today, isDragging, onOpen, onWinWithCommission, onMoveToRenewing, onMoveToMyListing, onBackToWatching }: {
   lead: OwnerLead;
   col: ColMeta;
   today: Date;
   isDragging: boolean;
   onOpen: () => void;
-  onWin: (id: string) => void;
+  onWinWithCommission: (id: string, data: { commissionType: "full_year" | "half_month"; rent: number; contractStart: string | null; contractEnd: string }) => void;
   onMoveToRenewing: (id: string) => void;
   onMoveToMyListing: (id: string, availableFrom?: string) => void;
   onBackToWatching: (id: string) => void;
@@ -632,7 +636,7 @@ function Card({ lead, col, today, isDragging, onOpen, onWin, onMoveToRenewing, o
 
       {/* Actions — Renewing column */}
       {isRenewing && (
-        <MovedInAction lead={lead} onWin={onWin} />
+        <MovedInAction lead={lead} onWinWithCommission={onWinWithCommission} />
       )}
 
       {/* Actions — Watching column */}
@@ -678,8 +682,30 @@ function MessageOwnerAction({ lead }: { lead: OwnerLead }) {
 
 // ─── "Moved in" action for Renewing cards ────────────────────────────────────
 
-function MovedInAction({ lead, onWin }: { lead: OwnerLead; onWin: (id: string) => void }) {
+function MovedInAction({ lead, onWinWithCommission }: {
+  lead: OwnerLead;
+  onWinWithCommission: (id: string, data: { commissionType: "full_year" | "half_month"; rent: number; contractStart: string | null; contractEnd: string }) => void;
+}) {
   const [confirming, setConfirming] = useState(false);
+  const [commissionType, setCommissionType] = useState<"full_year" | "half_month">("full_year");
+  const [rentVal, setRentVal] = useState(() => String(lead.expected_rent ?? ""));
+  const [contractStart, setContractStart] = useState(() => new Date().toISOString().slice(0, 10));
+  // competitor_contract_end tracks the OLD (competitor's) contract — only useful
+  // as a default for the new one if it's still in the future. A lapsed date would
+  // silently create a tenancy whose contract has already "ended" before it starts.
+  const [contractEnd, setContractEnd] = useState(() => {
+    const d = lead.competitor_contract_end;
+    return d && d > new Date().toISOString().slice(0, 10) ? d : "";
+  });
+
+  const effectiveRent = parseFloat(rentVal) || 0;
+  const commissionAmt = commissionType === "full_year" ? Math.round(effectiveRent) : Math.round(effectiveRent * 0.5);
+
+  function confirm() {
+    if (!contractEnd || effectiveRent <= 0) return;
+    setConfirming(false);
+    onWinWithCommission(lead.id, { commissionType, rent: effectiveRent, contractStart: contractStart || null, contractEnd });
+  }
 
   return (
     <>
@@ -707,7 +733,7 @@ function MovedInAction({ lead, onWin }: { lead: OwnerLead; onWin: (id: string) =
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Tenant moved in?</p>
+                    <p className="text-[15px] font-semibold" style={{ color: "var(--kk-ink)" }}>Commission Received</p>
                     <p className="text-[12px]" style={{ color: "var(--kk-ink-faint)" }}>{lead.owner_name} · {lead.property_name}</p>
                   </div>
                 </div>
@@ -715,19 +741,78 @@ function MovedInAction({ lead, onWin }: { lead: OwnerLead; onWin: (id: string) =
                   <XCircle className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Commission type toggle */}
+              <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--kk-line)" }}>
+                {(["full_year", "half_month"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setCommissionType(type); }}
+                    className="flex-1 py-2 text-[12px] font-semibold transition-colors"
+                    style={{
+                      background: commissionType === type ? "#1F8B4C" : "var(--kk-surface-2)",
+                      color: commissionType === type ? "#fff" : "var(--kk-ink-mute)",
+                    }}
+                  >
+                    {type === "full_year" ? "1 year rental" : "50% of month"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Commission summary */}
               <div className="rounded-xl p-4" style={{ background: "rgba(52,199,89,0.12)" }}>
-                <p className="text-[13px] leading-relaxed" style={{ color: "#1F8B4C" }}>
-                  This will move the unit to Existing listing and record your commission.
+                <p className="text-[12px] font-medium" style={{ color: "#1F8B4C" }}>Commission earned</p>
+                <p className="text-[22px] font-bold tabular-nums mt-1" style={{ color: "#1F8B4C" }}>
+                  RM {commissionAmt.toLocaleString()}
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: "#1F8B4C", opacity: 0.75 }}>
+                  {commissionType === "full_year"
+                    ? `1 month rent · RM ${effectiveRent.toLocaleString()}/mo`
+                    : `50% of RM ${effectiveRent.toLocaleString()}/mo rent`}
                 </p>
               </div>
+
+              {/* Rent + contract fields */}
+              <div className="flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>Monthly rent (RM)</label>
+                  <input
+                    type="number"
+                    value={rentVal}
+                    onChange={(e) => setRentVal(e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    step={100}
+                    min={0}
+                    className="kk-input"
+                    style={{ fontSize: 14 }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>Contract start</label>
+                  <DateInput value={contractStart} onChange={setContractStart} className="kk-input" style={{ fontSize: 14 }} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium" style={{ color: "var(--kk-ink-mute)" }}>Contract end</label>
+                  <DateInput value={contractEnd} onChange={setContractEnd} className="kk-input" style={{ fontSize: 14 }} />
+                </div>
+              </div>
+
+              <p className="text-[11px]" style={{ color: "var(--kk-ink-faint)" }}>
+                This card will move to{" "}
+                <span className="font-semibold" style={{ color: "var(--kk-ink-mute)" }}>Existing listing</span>.
+                Tenant name and phone can be filled in later.
+              </p>
+
               <div className="flex gap-2">
                 <button onClick={(e) => { e.stopPropagation(); setConfirming(false); }} className="flex-1 kk-pill kk-pill-ghost text-[13px] py-2">
                   Cancel
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setConfirming(false); onWin(lead.id); }}
+                  onClick={(e) => { e.stopPropagation(); confirm(); }}
+                  disabled={!contractEnd || effectiveRent <= 0}
                   className="flex-1 kk-scale-hover flex items-center justify-center gap-1.5 text-[13px] font-semibold py-2 rounded-full"
-                  style={{ background: "#1F8B4C", color: "#fff" }}
+                  style={{ background: "#1F8B4C", color: "#fff", opacity: (!contractEnd || effectiveRent <= 0) ? 0.5 : 1 }}
                 >
                   Yes, moved in →
                 </button>
