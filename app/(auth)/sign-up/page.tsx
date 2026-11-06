@@ -166,7 +166,7 @@ function SignUpForm() {
 
             <div className="flex flex-col gap-1.5">
               <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Passcode</Label>
-              <PasscodeInput value={form.passcode} onChange={v => setForm(f => ({ ...f, passcode: v }))} autoComplete="new-password" required variant="create" />
+              <PasscodeInput value={form.passcode} onChange={v => setForm(f => ({ ...f, passcode: v }))} autoComplete="new-password" required />
               <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Create your own 8-digit passcode, you&apos;ll use it to sign in next time.</p>
             </div>
 
