@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
 import { PoweredByBadge } from "@/components/powered-by-badge"
+import { Logo } from "@/components/logo"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
@@ -85,7 +86,7 @@ function SignUpForm() {
   }
 
   const card = (children: React.ReactNode) => (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-6" style={{ background: "var(--kk-bg)" }}>
       <div className="w-full max-w-sm mb-4">
         <Link href="/" className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-60"
           style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
@@ -96,8 +97,8 @@ function SignUpForm() {
         </Link>
       </div>
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>kakisewa</p>
+        <div className="text-center mb-6">
+          <Logo variant="wordmark" size={30} />
         </div>
         {children}
       </div>
@@ -106,7 +107,7 @@ function SignUpForm() {
 
   if (view === "email_sent") {
     return card(
-      <div className="rounded-2xl p-7 flex flex-col items-center gap-4 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+      <div className="rounded-2xl p-7 flex flex-col items-center gap-4 text-center" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(29,29,31,0.05), 0 20px 44px -22px rgba(29,29,31,0.25)" }}>
         <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "#DCFCE7" }}>
           <svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="var(--kk-green)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M20 6L9 17l-5-5" />
@@ -133,7 +134,7 @@ function SignUpForm() {
 
   // Default: signup form
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-6" style={{ background: "var(--kk-bg)" }}>
       <div className="w-full max-w-sm mb-4">
         <Link href="/" className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-60"
           style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
@@ -145,18 +146,18 @@ function SignUpForm() {
       </div>
 
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <p className="serif font-semibold" style={{ fontSize: "1.375rem", color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>kakisewa</p>
-          <h1 className="serif mt-3" style={{ fontSize: "1.75rem", lineHeight: 1.2, letterSpacing: "-0.01em", color: "var(--kk-ink)" }}>
+        <div className="text-center mb-5">
+          <Logo variant="wordmark" size={30} />
+          <h1 className="serif mt-2.5" style={{ fontSize: "1.5rem", lineHeight: 1.2, letterSpacing: "-0.01em", color: "var(--kk-ink)" }}>
             Renewals you won&apos;t forget.
           </h1>
-          <p className="mt-2.5 text-[13.5px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-            Track every owner and contract in one place. kakisewa reminds you automatically before each renewal is due.
+          <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+            kakisewa reminds you automatically before every renewal is due.
           </p>
         </div>
 
-        <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <div className="rounded-2xl p-6 flex flex-col gap-3.5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(29,29,31,0.05), 0 20px 44px -22px rgba(29,29,31,0.25)" }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
               <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email</Label>
               <Input type="email" required autoComplete="email" inputMode="email" value={form.email} onChange={set("email")} placeholder="you@example.com"
@@ -236,13 +237,13 @@ function SignUpForm() {
           </form>
         </div>
 
-        <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
+        <p className="text-center mt-4" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
           Already have an account?{" "}
           <Link href="/sign-in" style={{ color: "var(--kk-blue)", fontWeight: 600, textDecoration: "none" }}>
             Sign in
           </Link>
         </p>
-        <p className="text-center mt-3" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", lineHeight: 1.6 }}>
+        <p className="text-center mt-2" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)", lineHeight: 1.6 }}>
           By creating an account you agree to our{" "}
           <Link href="/terms" style={{ textDecoration: "underline", textUnderlineOffset: 2 }}>Terms</Link>
           {" "}and{" "}

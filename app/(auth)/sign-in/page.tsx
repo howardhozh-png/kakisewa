@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
 import { PoweredByBadge } from "@/components/powered-by-badge"
+import { Logo } from "@/components/logo"
 
 // See sign-up/page.tsx for why this overrides --primary via a wrapper div
 // instead of passing style directly to the Button primitive.
@@ -58,7 +59,7 @@ function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-6" style={{ background: "var(--kk-bg)" }}>
 
       {/* Back link */}
       <div className="w-full max-w-sm mb-4">
@@ -77,15 +78,13 @@ function SignInForm() {
       <div className="w-full max-w-sm">
 
         {/* Logo */}
-        <div className="text-center mb-8">
-          <p className="serif font-semibold" style={{ fontSize: "1.375rem", color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
-            kakisewa
-          </p>
-          <h1 className="serif mt-3" style={{ fontSize: "1.75rem", lineHeight: 1.2, letterSpacing: "-0.01em", color: "var(--kk-ink)" }}>
+        <div className="text-center mb-5">
+          <Logo variant="wordmark" size={30} />
+          <h1 className="serif mt-2.5" style={{ fontSize: "1.5rem", lineHeight: 1.2, letterSpacing: "-0.01em", color: "var(--kk-ink)" }}>
             Welcome back.
           </h1>
-          <p className="mt-2.5 text-[13.5px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
-            Your renewals are still being tracked. Sign in to see what&apos;s coming up.
+          <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+            Your renewals are still being tracked.
           </p>
         </div>
 
@@ -97,9 +96,9 @@ function SignInForm() {
         )}
 
         {/* Card */}
-        <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
+        <div className="rounded-2xl p-6 flex flex-col gap-3.5" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)", boxShadow: "0 1px 2px rgba(29,29,31,0.05), 0 20px 44px -22px rgba(29,29,31,0.25)" }}>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
             <div className="flex flex-col gap-1.5">
               <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Email</Label>
@@ -158,7 +157,7 @@ function SignInForm() {
           </form>
         </div>
 
-        <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
+        <p className="text-center mt-4" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
           Don&apos;t have an account?{" "}
           <Link
             href="/sign-up"
