@@ -36,7 +36,7 @@ function CreatePasscodeField({ value, onChange, autoComplete, required }: Omit<P
         required={required}
         onChange={e => onChange(e.target.value.replace(/\D/g, ""))}
         autoComplete={autoComplete}
-        placeholder="Choose an 8-digit passcode"
+        placeholder="8-digit passcode"
         aria-label="Choose an 8-digit passcode"
         className="rounded-xl h-auto py-2.5 px-3.5"
         style={{

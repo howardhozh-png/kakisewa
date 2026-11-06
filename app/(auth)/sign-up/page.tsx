@@ -10,25 +10,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
-import { FloatingCards, type FloatingCardData } from "@/components/floating-cards"
+import { PoweredByBadge } from "@/components/powered-by-badge"
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "howardhozh@gmail.com"
 
 const sharedInputCls = "rounded-xl h-auto py-2.5 px-3.5"
 const sharedInputStyle: React.CSSProperties = { fontSize: "var(--kk-body)", background: "var(--kk-bg)", color: "var(--kk-ink)" }
-
-// Same floating-card treatment as sign-in, built from the landing page's
-// loss-aversion hooks plus the pricing/referral messaging — replaces the
-// plain stacked text that was here before (looked flat, not "beautifully
-// designed" per feedback).
-const SIGNUP_SHAPES: FloatingCardData[] = [
-  { label: "I lost RM150,000", sub: "last year. I didn't know.", accentColor: "#FF3B30", x: "-3%", y: "10%", rotate: -7, delay: 0 },
-  { label: "I lost almost all of them", sub: "I thought I could track 50 units", accentColor: "#FF3B30", x: "68%", y: "6%", rotate: 5, delay: 0.3 },
-  { label: "Now I get passive income", sub: "just by tracking existing listings", accentColor: "#0071E3", x: "5%", y: "62%", rotate: -4, delay: 0.6 },
-  { label: "Starting at RM1/day", sub: "1 month free trial", x: "70%", y: "55%", rotate: 5, delay: 0.15 },
-  { label: "Referral credit ✓", sub: "1 month free per referral", x: "-3%", y: "38%", rotate: -5, delay: 0.5 },
-  { label: "I forgot to message him", sub: "found out 2 months too late", accentColor: "#FF9500", x: "66%", y: "32%", rotate: 3, delay: 0.8 },
-]
+// Overrides the Button primitive's own --primary/--primary-foreground tokens
+// (not an inline style on the Button itself) so the existing bg-primary
+// utility every Button in the app already relies on just resolves to blue.
+// Passing style directly to Button caused a hydration mismatch inside
+// base-ui's internal prop-merging, this avoids it entirely.
+const primaryBtnVars = { "--primary": "var(--kk-blue)", "--primary-foreground": "#fff" } as React.CSSProperties
 
 export default function SignUpPage() {
   return (
@@ -46,6 +39,7 @@ function SignUpForm() {
 
   const [form, setForm] = useState({ email: "", passcode: "" })
   const [refCode, setRefCode] = useState(searchParams.get("ref") ?? "")
+  const [refOpen, setRefOpen] = useState(() => !!searchParams.get("ref"))
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<View>("form")
@@ -139,9 +133,7 @@ function SignUpForm() {
 
   // Default: signup form
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 overflow-hidden" style={{ background: "var(--kk-bg)" }}>
-      <FloatingCards cards={SIGNUP_SHAPES} />
-
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
       <div className="w-full max-w-sm mb-4">
         <Link href="/" className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-60"
           style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
@@ -152,10 +144,15 @@ function SignUpForm() {
         </Link>
       </div>
 
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>kakisewa</p>
-          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Join kakisewa today!</p>
+          <p className="serif font-semibold" style={{ fontSize: "1.375rem", color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>kakisewa</p>
+          <h1 className="serif mt-3" style={{ fontSize: "1.75rem", lineHeight: 1.2, letterSpacing: "-0.01em", color: "var(--kk-ink)" }}>
+            Renewals you won&apos;t forget.
+          </h1>
+          <p className="mt-2.5 text-[13.5px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+            Track every owner and contract in one place. kakisewa reminds you automatically before each renewal is due.
+          </p>
         </div>
 
         <div className="rounded-2xl p-7 flex flex-col gap-4" style={{ background: "var(--kk-surface)", border: "1px solid var(--kk-line)" }}>
@@ -172,35 +169,46 @@ function SignUpForm() {
               <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Create your own 8-digit passcode, you&apos;ll use it to sign in next time.</p>
             </div>
 
-            {/* Referral code */}
-            <div className="flex flex-col gap-1.5">
-              <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>
-                Referral code{" "}
-                <span style={{ color: "var(--kk-ink-faint)", fontWeight: 400 }}>(optional)</span>
-              </Label>
-              <div style={{ position: "relative" }}>
-                <Input
-                  type="text"
-                  value={refCode}
-                  onChange={e => setRefCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. AB3F92C1"
-                  className={sharedInputCls}
-                  style={{ ...sharedInputStyle, letterSpacing: "0.05em", paddingRight: refCode ? 80 : undefined }}
-                />
-                {refCode && (
-                  <span style={{
-                    position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                    fontSize: 11, fontWeight: 700, color: "var(--kk-green)",
-                    display: "flex", alignItems: "center", gap: 3,
-                  }}>
-                    <svg viewBox="0 0 12 12" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 6l3 3 5-5" />
-                    </svg>
-                    Applied
-                  </span>
-                )}
+            {/* Referral code, collapsed by default so it doesn't sit open with
+                example text for the vast majority of signups that don't have one.
+                Starts open if a ?ref= code arrived via a referral link. */}
+            <details
+              open={refOpen}
+              onToggle={e => setRefOpen(e.currentTarget.open)}
+              style={{ borderTop: "1px solid var(--kk-line)", paddingTop: 2 }}
+            >
+              <summary
+                className="list-none"
+                style={{ fontSize: "var(--kk-sm)", fontWeight: 600, color: "var(--kk-blue)", cursor: "pointer", paddingTop: 10 }}
+              >
+                Have a referral code?
+              </summary>
+              <div className="flex flex-col gap-1.5 mt-3.5">
+                <Label style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink)" }}>Referral code</Label>
+                <div style={{ position: "relative" }}>
+                  <Input
+                    type="text"
+                    value={refCode}
+                    onChange={e => setRefCode(e.target.value.toUpperCase())}
+                    className={sharedInputCls}
+                    style={{ ...sharedInputStyle, letterSpacing: "0.05em", paddingRight: refCode ? 80 : undefined }}
+                  />
+                  {refCode && (
+                    <span style={{
+                      position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                      fontSize: 11, fontWeight: 700, color: "var(--kk-green)",
+                      display: "flex", alignItems: "center", gap: 3,
+                    }}>
+                      <svg viewBox="0 0 12 12" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 6l3 3 5-5" />
+                      </svg>
+                      Applied
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>Whoever referred you gets a free month once you subscribe.</p>
               </div>
-            </div>
+            </details>
 
             {/* Divider */}
             <div className="relative flex items-center gap-3 my-1">
@@ -217,9 +225,11 @@ function SignUpForm() {
               </p>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full rounded-xl h-auto py-2.5 mt-0.5">
-              {loading ? "Creating account…" : "Create account"}
-            </Button>
+            <div style={primaryBtnVars}>
+              <Button type="submit" disabled={loading} className="w-full rounded-xl h-auto py-2.5 mt-0.5">
+                {loading ? "Creating account…" : "Create account"}
+              </Button>
+            </div>
             <p className="text-center" style={{ fontSize: "var(--kk-xs)", color: "var(--kk-ink-faint)" }}>
               Starting at RM1/day. 1 month free trial. Cancel anytime.
             </p>
@@ -228,7 +238,7 @@ function SignUpForm() {
 
         <p className="text-center mt-5" style={{ fontSize: "var(--kk-sm)", color: "var(--kk-ink-mute)" }}>
           Already have an account?{" "}
-          <Link href="/sign-in" style={{ color: "var(--kk-ink)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>
+          <Link href="/sign-in" style={{ color: "var(--kk-blue)", fontWeight: 600, textDecoration: "none" }}>
             Sign in
           </Link>
         </p>
@@ -238,6 +248,7 @@ function SignUpForm() {
           {" "}and{" "}
           <Link href="/privacy" style={{ textDecoration: "underline", textUnderlineOffset: 2 }}>Privacy Policy</Link>.
         </p>
+        <PoweredByBadge />
       </div>
     </div>
   )

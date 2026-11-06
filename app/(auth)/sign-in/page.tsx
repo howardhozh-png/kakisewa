@@ -10,19 +10,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PasscodeInput } from "@/components/passcode-input"
-import { FloatingCards, type FloatingCardData } from "@/components/floating-cards"
+import { PoweredByBadge } from "@/components/powered-by-badge"
 
-const SHAPES: FloatingCardData[] = [
-  { label: "3 bed · 2 bath", sub: "Mont Kiara · RM 4,200/mo", x: "-2%", y: "12%", rotate: -8, delay: 0 },
-  { label: "Lease renewed ✓", sub: "Damansara Perdana · 2 yr", x: "66%", y: "8%", rotate: 6, delay: 0.3 },
-  { label: "New tenant matched", sub: "Aishah Tan · RM 2,800/mo", x: "8%", y: "65%", rotate: -4, delay: 0.6 },
-  { label: "Support contact saved ✓", sub: "TNB electrician · Ampang", x: "70%", y: "58%", rotate: 5, delay: 0.15 },
-  { label: "Commission due", sub: "Shah Alam · RM 2,400", x: "-3%", y: "40%", rotate: -5, delay: 0.5 },
-  { label: "Contract expiring", sub: "Bandar Utama · 30 days", x: "68%", y: "33%", rotate: 3, delay: 0.8 },
-  { label: "Owner intro call ✓", sub: "Encik Farid · Cheras", x: "33%", y: "86%", rotate: -2, delay: 0.95 },
-  { label: "Referral credit ✓", sub: "1 month free applied", x: "4%", y: "84%", rotate: 4, delay: 0.45 },
-  { label: "I lost RM150,000", sub: "before I found kakisewa", accentColor: "#FF3B30", x: "76%", y: "82%", rotate: -6, delay: 0.7 },
-]
+// See sign-up/page.tsx for why this overrides --primary via a wrapper div
+// instead of passing style directly to the Button primitive.
+const primaryBtnVars = { "--primary": "var(--kk-blue)", "--primary-foreground": "#fff" } as React.CSSProperties
 
 export default function SignInPage() {
   return <Suspense><SignInForm /></Suspense>;
@@ -66,10 +58,7 @@ function SignInForm() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden" style={{ background: "var(--kk-bg)" }}>
-
-      {/* Floating property cards */}
-      <FloatingCards cards={SHAPES} />
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: "var(--kk-bg)" }}>
 
       {/* Back link */}
       <div className="w-full max-w-sm mb-4">
@@ -85,14 +74,19 @@ function SignInForm() {
         </Link>
       </div>
 
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="w-full max-w-sm">
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <p className="serif font-bold tracking-tight" style={{ fontSize: "1.75rem", color: "var(--kk-ink)", letterSpacing: "-0.03em" }}>
+          <p className="serif font-semibold" style={{ fontSize: "1.375rem", color: "var(--kk-ink)", letterSpacing: "-0.01em" }}>
             kakisewa
           </p>
-          <p className="mt-1.5 text-[13px]" style={{ color: "var(--kk-ink-mute)" }}>Welcome back</p>
+          <h1 className="serif mt-3" style={{ fontSize: "1.75rem", lineHeight: 1.2, letterSpacing: "-0.01em", color: "var(--kk-ink)" }}>
+            Welcome back.
+          </h1>
+          <p className="mt-2.5 text-[13.5px] leading-relaxed" style={{ color: "var(--kk-ink-mute)" }}>
+            Your renewals are still being tracked. Sign in to see what&apos;s coming up.
+          </p>
         </div>
 
         {/* Session timeout notice */}
@@ -151,13 +145,15 @@ function SignInForm() {
               </p>
             )}
 
-            <Button
-              type="submit"
-              disabled={loading || googleLoading}
-              className="w-full rounded-xl h-auto py-2.5"
-            >
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
+            <div style={primaryBtnVars}>
+              <Button
+                type="submit"
+                disabled={loading || googleLoading}
+                className="w-full rounded-xl h-auto py-2.5"
+              >
+                {loading ? "Signing in…" : "Sign in"}
+              </Button>
+            </div>
 
           </form>
         </div>
@@ -166,11 +162,12 @@ function SignInForm() {
           Don&apos;t have an account?{" "}
           <Link
             href="/sign-up"
-            style={{ color: "var(--kk-ink)", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}
+            style={{ color: "var(--kk-blue)", fontWeight: 600, textDecoration: "none" }}
           >
             Sign up
           </Link>
         </p>
+        <PoweredByBadge />
 
       </div>
     </div>
